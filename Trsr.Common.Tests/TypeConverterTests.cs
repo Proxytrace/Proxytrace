@@ -463,6 +463,48 @@ public sealed class TypeConverterTests : BaseTest<Module>
         Value3 = 2
     }
 
+    [TestMethod]
+    public void As_WithValidCast_ReturnsCastedObject()
+    {
+        // Arrange
+        object obj = "test string";
+
+        // Act
+        var result = TypeConversionExtensions.As<string>(obj);
+
+        // Assert
+        result.Should().Be("test string");
+    }
+
+    [TestMethod]
+    public void As_WithInvalidCast_ThrowsInvalidCastException()
+    {
+        // Arrange
+        object obj = 42;
+
+        // Act & Assert
+        var action = () => TypeConversionExtensions.As<string>(obj);
+        action.Should().Throw<InvalidCastException>()
+            .WithMessage("Cannot cast object of type System.Int32 to type System.String");
+    }
+
+    [TestMethod]
+    public void As_WithDerivedClass_ReturnsBaseType()
+    {
+        // Arrange
+        object obj = new DerivedClass();
+
+        // Act
+        var result = TypeConversionExtensions.As<BaseClass>(obj);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeOfType<DerivedClass>();
+    }
+
+    private class BaseClass { }
+    private class DerivedClass : BaseClass { }
+
     private class ComplexType
     {
         public int Value { get; set; }

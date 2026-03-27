@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using AwesomeAssertions;
+using Trsr.Common.Validation;
 
 namespace Trsr.Common.Tests;
 
@@ -300,6 +301,54 @@ public sealed class ValidationTests
 
         // Assert
         result.Should().Be(ValidationResult.Success);
+    }
+
+    [TestMethod]
+    public void Validate_WithValidObject_DoesNotThrow()
+    {
+        // Arrange
+        var validObject = new ValidatableTestObject { Name = "Valid Name", Age = 25 };
+
+        // Act & Assert
+        var action = () => validObject.Validate();
+        action.Should().NotThrow();
+    }
+
+    [TestMethod]
+    public void Validate_WithInvalidObject_ThrowsValidationException()
+    {
+        // Arrange
+        var invalidObject = new ValidatableTestObject { Name = "", Age = 25 };
+
+        // Act & Assert
+        var action = () => invalidObject.Validate();
+        action.Should().Throw<ValidationException>();
+    }
+
+    [TestMethod]
+    public void Validate_WithMultipleValidationErrors_ThrowsValidationException()
+    {
+        // Arrange
+        var invalidObject = new ValidatableTestObject { Name = "", Age = -5 };
+
+        // Act & Assert
+        var action = () => invalidObject.Validate();
+        action.Should().Throw<ValidationException>();
+    }
+
+    private class ValidatableTestObject : IValidatableObject
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (string.IsNullOrWhiteSpace(Name))
+                yield return new ValidationResult("Name is required", new[] { nameof(Name) });
+
+            if (Age < 0)
+                yield return new ValidationResult("Age must be non-negative", new[] { nameof(Age) });
+        }
     }
 
     private struct TestStruct
