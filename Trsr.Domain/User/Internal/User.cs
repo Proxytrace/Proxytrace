@@ -13,8 +13,9 @@ internal record User : DomainEntity, IUser
         Name  = name;
     }
 
-    public User(IUserData existing) : this(existing.Name)
+    public User(IUserData existing) : base(existing)
     {
+        Name = existing.Name;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

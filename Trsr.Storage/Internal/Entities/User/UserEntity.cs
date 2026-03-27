@@ -9,13 +9,4 @@ internal record UserEntity : Entity, IUser
     /// <see cref="IUser.Name"/>
     /// </summary>
     public required string Name { get; init; }
-
-    public UserEntity()
-    {
-    }
-
-    public UserEntity(IUser user) : base(user)
-    {
-        Name = user.Name;
-    }
 }

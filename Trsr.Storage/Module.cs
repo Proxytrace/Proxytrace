@@ -59,9 +59,6 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
 
-        builder.RegisterGeneric(typeof(Mapper<,>))
-            .As(typeof(IMapper<,>));
-        
         builder
             .Register(context => new AutofacServiceProvider(context.Resolve<ILifetimeScope>()))
             .InstancePerLifetimeScope()
@@ -83,7 +80,8 @@ public sealed class Module : Autofac.Module
 
     private static void ConfigureEntity(Type storedEntityType, ContainerBuilder builder)
     {
-        
+        builder.RegisterType(storedEntityType)
+            .AsSelf();
         
         var configurationBaseType = typeof(AbstractEntityConfiguration<>).MakeGenericType(storedEntityType);
 
@@ -96,7 +94,7 @@ public sealed class Module : Autofac.Module
 
         builder
             .RegisterType(configurationType)
-            .As<IModelConfiguration>()
+            .AsImplementedInterfaces()
             .InstancePerLifetimeScope();
 
         // get the StoredDomainEntity attribute to locate the associated Domain Entity Type

@@ -1,6 +1,6 @@
 namespace Trsr.Domain.User;
 
-public interface IUserData
+public interface IUserData : IDomainEntityData
 {
     public string Name { get; }
 }

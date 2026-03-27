@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
-using Trsr.Domain;
 
 namespace Trsr.Storage.Internal.Entities;
 
@@ -9,17 +8,6 @@ namespace Trsr.Storage.Internal.Entities;
 /// </summary>
 internal abstract record Entity : IEntity
 {
-    protected Entity()
-    {
-    }
-
-    protected Entity(IDomainEntity entity)
-    {
-        Id  = entity.Id;
-        CreatedAt = entity.CreatedAt;
-        UpdatedAt = entity.UpdatedAt;
-    }
-    
     /// <inheritdoc />
     public required Guid Id { get; init; }
 
