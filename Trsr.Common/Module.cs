@@ -1,6 +1,8 @@
 using Autofac;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
+using Trsr.Common.Random;
+using Trsr.Common.Random.Internal;
 
 namespace Trsr.Common;
 
@@ -10,8 +12,13 @@ public class Module : Autofac.Module
     {
         base.Load(builder);
         
-        builder.RegisterType<TypeConverter>()
+        builder
+            .RegisterType<TypeConverter>()
             .As<ITypeConverter>()
             .SingleInstance();
+
+        builder
+            .RegisterType<SeededRandom>()
+            .As<IRandom>();
     }
 }
