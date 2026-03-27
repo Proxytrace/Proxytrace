@@ -22,6 +22,7 @@ public class Module : Autofac.Module
         
         builder
             .Register(c => c.Resolve<SeededRandom.Factory>()(seed: 420))
-            .As<IRandom>();
+            .As<IRandom>()
+            .SingleInstance();
     }
 }

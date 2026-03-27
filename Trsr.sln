@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Storage.Tests", "Trsr.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Testing", "Trsr.Testing\Trsr.Testing.csproj", "{7ADC8063-F462-402C-844D-A2719BECB44F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Common.Tests", "Trsr.Common.Tests\Trsr.Common.Tests.csproj", "{D9DAC0CF-11DA-4008-8529-721C37BB8C19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{7ADC8063-F462-402C-844D-A2719BECB44F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7ADC8063-F462-402C-844D-A2719BECB44F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7ADC8063-F462-402C-844D-A2719BECB44F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
