@@ -8,19 +8,9 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="9.1.0" />
+      <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
       <PackageReference Include="AwesomeAssertions" Version="9.4.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="Autofac.Extensions.DependencyInjection">
-        <HintPath>..\..\..\.nuget\packages\autofac.extensions.dependencyinjection\10.0.0\lib\net8.0\Autofac.Extensions.DependencyInjection.dll</HintPath>
-      </Reference>
-      <Reference Include="MSTest.TestFramework">
-        <HintPath>..\..\..\.nuget\packages\mstest.testframework\4.0.2\lib\net9.0\MSTest.TestFramework.dll</HintPath>
-      </Reference>
-      <Reference Include="MSTest.TestFramework.Extensions">
-        <HintPath>..\..\..\.nuget\packages\mstest.testframework\4.0.2\buildTransitive\net9.0\MSTest.TestFramework.Extensions.dll</HintPath>
-      </Reference>
+      <PackageReference Include="MSTest.TestFramework" Version="4.0.2" />
     </ItemGroup>
 
 </Project>
