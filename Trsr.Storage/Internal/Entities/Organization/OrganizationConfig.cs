@@ -22,10 +22,11 @@ internal class OrganizationConfig : AbstractEntityConfiguration<OrganizationEnti
             .HasIndex(e => new { e.Name })
             .IsUnique();
         
-        // Configure many-to-many relationship with User
+        // Configure many-to-many relationship with User through the join table
         builder
             .HasMany(o => o.UserEntities)
-            .WithMany();
+            .WithOne()
+            .HasForeignKey(ou => ou.OrganizationId);
         
         // Ignore the computed Users property as it's derived from UserEntities
         builder.Ignore(e => e.Users);
