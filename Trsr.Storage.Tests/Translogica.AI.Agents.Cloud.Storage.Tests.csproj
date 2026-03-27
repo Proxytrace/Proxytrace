@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AwesomeAssertions" Version="9.1.0" />
+        <PackageReference Include="coverlet.collector" Version="6.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="InfPro.Core.DependencyInjection" Version="1.0.0.437" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
+        <PackageReference Include="MSTest.TestAdapter" Version="3.10.4"/>
+        <PackageReference Include="MSTest.TestFramework" Version="3.10.4"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Translogica.AI.Agents.Cloud.Storage\Translogica.AI.Agents.Cloud.Storage.csproj" />
+      <ProjectReference Include="..\Translogica.AI.Agents.Testing\Translogica.AI.Agents.Testing.csproj" />
+    </ItemGroup>
+
+</Project>
