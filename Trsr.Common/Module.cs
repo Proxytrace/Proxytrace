@@ -17,8 +17,11 @@ public class Module : Autofac.Module
             .As<ITypeConverter>()
             .SingleInstance();
 
+        builder.RegisterType<SeededRandom>()
+            .AsSelf();
+        
         builder
-            .RegisterType<SeededRandom>()
+            .Register(c => c.Resolve<SeededRandom.Factory>()(seed: 420))
             .As<IRandom>();
     }
 }

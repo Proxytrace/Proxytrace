@@ -1,4 +1,5 @@
 using Trsr.Common.Async;
+using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 
 namespace Trsr.Domain.User.Internal;
@@ -9,11 +10,14 @@ internal class UserGenerator : DomainEntityGenerator<IUser>
 
     public UserGenerator(
         IUser.CreateNew factory,
-        IRepository<IUser> repository) : base(repository)
+        IRepository<IUser> repository,
+        IRandom random) : base(repository, random)
     {
         this.factory = factory;
     }
 
     public override Task<IUser> GenerateAsync(CancellationToken cancellationToken = default) 
-        => factory(Guid.NewGuid().ToString()).ToTaskResult();
+        => factory(
+                name: random.String())
+            .ToTaskResult();
 }

@@ -12,6 +12,8 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
+        builder.RegisterModule<Common.Module>();
+
         // discover domain entity types
         // they all live in assembly Cloud.Domain and implement IDomainEntity 
         var domainInterfaceTypes = typeof(Module).Assembly

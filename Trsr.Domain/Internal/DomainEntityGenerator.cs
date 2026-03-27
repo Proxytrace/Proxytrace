@@ -1,4 +1,6 @@
-﻿namespace Trsr.Domain.Internal;
+﻿using Trsr.Common.Random;
+
+namespace Trsr.Domain.Internal;
 
 /// <summary>
 /// Base class for generating domain entities and saving them to the repository
@@ -7,10 +9,14 @@ internal abstract class DomainEntityGenerator<TDomainEntity> : IDomainEntityGene
     where TDomainEntity : IDomainEntity
 {
     protected readonly IRepository<TDomainEntity> repository;
+    protected readonly IRandom random;
 
-    protected DomainEntityGenerator(IRepository<TDomainEntity> repository)
+    protected DomainEntityGenerator(
+        IRepository<TDomainEntity> repository,
+        IRandom random)
     {
         this.repository = repository;
+        this.random = random;
     }
 
     /// <inheritdoc />
