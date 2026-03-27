@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Testing", "Trsr.Testin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Common.Tests", "Trsr.Common.Tests\Trsr.Common.Tests.csproj", "{D9DAC0CF-11DA-4008-8529-721C37BB8C19}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trsr.Domain.Tests", "Trsr.Domain.Tests\Trsr.Domain.Tests.csproj", "{A7E5E9E4-3487-4160-8621-2D5F35A73567}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9DAC0CF-11DA-4008-8529-721C37BB8C19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7E5E9E4-3487-4160-8621-2D5F35A73567}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7E5E9E4-3487-4160-8621-2D5F35A73567}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7E5E9E4-3487-4160-8621-2D5F35A73567}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7E5E9E4-3487-4160-8621-2D5F35A73567}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
