@@ -1,5 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Net.NetworkInformation;
+using System.Text.Json.Serialization;
 using Autofac;
+using Trsr.Common.DependencyInjection;
 
 namespace Trsr.Domain;
 
@@ -26,6 +29,9 @@ public sealed class Module : Autofac.Module
         {
             ConfigureEntity(builder, domainInterfaceType);
         }
+        
+        builder.RegisterAllGeneric(typeof(JsonConverter<>), ThisAssembly)
+            .SingleInstance();
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)

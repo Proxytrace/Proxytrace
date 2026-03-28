@@ -1,8 +1,10 @@
+using System.Text.Json;
 using Autofac;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
 using Trsr.Common.Random;
 using Trsr.Common.Random.Internal;
+using Trsr.Common.Serialization;
 
 namespace Trsr.Common;
 
@@ -23,6 +25,10 @@ public class Module : Autofac.Module
         builder
             .Register(c => c.Resolve<SeededRandom.Factory>()(seed: 420))
             .As<IRandom>()
+            .SingleInstance();
+
+        builder.RegisterType<Serialization.Internal.JsonSerializer>()
+            .As<ISerializer>()
             .SingleInstance();
     }
 }
