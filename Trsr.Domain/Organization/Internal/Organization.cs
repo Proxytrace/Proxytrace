@@ -30,7 +30,7 @@ internal record Organization : DomainEntity, IOrganization
         
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhitespace(Name, nameof(Name));
+            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
         }
     }
 }

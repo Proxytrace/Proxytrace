@@ -22,7 +22,7 @@ internal record User : DomainEntity, IUser
     {
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhitespace(Name);
+            yield return Validation.NotNullOrWhiteSpace(Name);
         }
     }
 }

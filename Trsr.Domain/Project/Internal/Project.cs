@@ -30,7 +30,7 @@ internal record Project : DomainEntity, IProject
         
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhitespace(Name, nameof(Name));
+            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
         }
         
         if (Organization == Guid.Empty)

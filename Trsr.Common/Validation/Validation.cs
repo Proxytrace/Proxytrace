@@ -1,3 +1,4 @@
+using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 
@@ -5,7 +6,17 @@ namespace Trsr.Common.Validation;
 
 public static class Validation
 {
-    public static ValidationResult NotNullOrWhitespace(string value, [CallerMemberName] string memberName = "") 
+    public static ValidationResult NotNull(object? value, [CallerMemberName] string memberName = "")
+        => value is null
+            ? new ValidationResult($"{memberName} cannot be null", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult Null(object? value, [CallerMemberName] string memberName = "")
+        => value is not null
+            ? new ValidationResult($"{memberName} must be null", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult NotNullOrWhiteSpace(string? value, [CallerMemberName] string memberName = "") 
         => string.IsNullOrWhiteSpace(value)
             ? new ValidationResult($"{memberName} cannot be empty", [memberName]) 
             : ValidationResult.Success!;
@@ -24,4 +35,28 @@ public static class Validation
         => value < minValue
             ? new ValidationResult($"{memberName} cannot be before {minValue}", [memberName]) 
             : ValidationResult.Success!;
+    
+    public static ValidationResult NotNegative(decimal value, [CallerMemberName] string memberName = "")
+        => value < 0
+            ? new ValidationResult($"{memberName} cannot be negative", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult HasCount<T>(IReadOnlyCollection<T> value, int count, [CallerMemberName] string memberName = "")
+        => value.Count != count
+            ? new ValidationResult($"{memberName} must have {count} items", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult MaxLength(string? value, int maxLength, [CallerMemberName] string memberName = "")
+        => value.Length > maxLength
+            ? new ValidationResult($"{memberName} cannot be longer than {maxLength} characters", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult MinLength(string? value, int minLength, [CallerMemberName] string memberName = "")
+        => value.Length < minLength
+            ? new ValidationResult($"{memberName} cannot be shorter than {minLength} characters", [memberName]) 
+            : ValidationResult.Success!;
+    
+    public static ValidationResult NotEmpty(string? value, [CallerMemberName] string memberName = "")
+        => MinLength(value, 1, memberName);
+        
 }

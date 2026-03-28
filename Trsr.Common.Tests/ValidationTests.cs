@@ -14,7 +14,7 @@ public sealed class ValidationTests
         var validString = "Valid Input";
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(validString);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(validString);
 
         // Assert
         result.Should().Be(ValidationResult.Success);
@@ -27,7 +27,7 @@ public sealed class ValidationTests
         string? nullString = null;
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(nullString!);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(nullString!);
 
         // Assert
         result.Should().NotBeNull();
@@ -42,7 +42,7 @@ public sealed class ValidationTests
         var emptyString = string.Empty;
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(emptyString);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(emptyString);
 
         // Assert
         result.Should().NotBeNull();
@@ -57,7 +57,7 @@ public sealed class ValidationTests
         var whitespaceString = "   ";
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(whitespaceString);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(whitespaceString);
 
         // Assert
         result.Should().NotBeNull();
@@ -72,7 +72,7 @@ public sealed class ValidationTests
         var tabString = "\t\t\t";
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(tabString);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(tabString);
 
         // Assert
         result.Should().NotBeNull();
@@ -86,7 +86,7 @@ public sealed class ValidationTests
         var newlineString = "\n\r\n";
 
         // Act
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(newlineString);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(newlineString);
 
         // Assert
         result.Should().NotBeNull();
@@ -268,7 +268,7 @@ public sealed class ValidationTests
     public void ValidationResults_IncludeMemberName()
     {
         // Arrange
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhitespace(string.Empty);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(string.Empty);
 
         // Assert
         result.MemberNames.Should().NotBeEmpty();

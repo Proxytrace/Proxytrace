@@ -18,4 +18,13 @@
       <ProjectReference Include="..\Trsr.Common\Trsr.Common.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="JetBrains.Annotations">
+        <HintPath>..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Memory.Data">
+        <HintPath>..\..\..\.nuget\packages\system.memory.data\8.0.1\lib\net8.0\System.Memory.Data.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>
