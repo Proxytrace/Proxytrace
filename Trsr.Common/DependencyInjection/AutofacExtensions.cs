@@ -15,16 +15,4 @@ public static class AutofacExtensions
         config(services);
         builder.Populate(services);
     }
-
-    public static IRegistrationBuilder<object, ScanningActivatorData, DynamicRegistrationStyle> RegisterAllGeneric(
-        this ContainerBuilder builder,
-        Type type,
-        Assembly assembly)
-    {
-        // register all types that implement JsonConverter<>
-        return builder.RegisterAssemblyTypes(assembly)
-            .Where(t => t.GetInterfaces().Any(i =>
-                i.IsGenericType && i.GetGenericTypeDefinition() == type))
-            .AsImplementedInterfaces();
-    }
 }

@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Common.DependencyInjection;
+using Trsr.Domain.Message.Internal;
 
 namespace Trsr.Domain;
 
@@ -39,7 +40,8 @@ public sealed class Module : Autofac.Module
                 i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEntityGenerator<>)))
             .AsImplementedInterfaces();
 
-        builder.RegisterAllGeneric(typeof(JsonConverter<>), ThisAssembly)
+        builder.RegisterType<ContentJsonConverter>()
+            .As<JsonConverter>()
             .SingleInstance();
     }
 
