@@ -30,6 +30,15 @@ public sealed class Module : Autofac.Module
             ConfigureEntity(builder, domainInterfaceType);
         }
         
+        // Register generators for concrete domain object types (value objects without a repository)
+        builder.RegisterAssemblyTypes(ThisAssembly)
+            .Where(t => !t.IsAbstract && !t.IsInterface)
+            .Where(t => t.GetInterfaces().Any(i =>
+                i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainObjectGenerator<>)))
+            .Where(t => !t.GetInterfaces().Any(i =>
+                i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEntityGenerator<>)))
+            .AsImplementedInterfaces();
+
         builder.RegisterAllGeneric(typeof(JsonConverter<>), ThisAssembly)
             .SingleInstance();
     }

@@ -5,22 +5,22 @@ namespace Trsr.Domain.Internal;
 /// <summary>
 /// Base class for generating domain entities and saving them to the repository
 /// </summary>
-internal abstract class DomainEntityGenerator<TDomainEntity> : IDomainEntityGenerator<TDomainEntity>
+internal abstract class DomainEntityGenerator<TDomainEntity> :
+    DomainObjectGenerator<TDomainEntity>,
+    IDomainEntityGenerator<TDomainEntity>
     where TDomainEntity : IDomainEntity
 {
     protected readonly IRepository<TDomainEntity> repository;
-    protected readonly IRandom random;
 
     protected DomainEntityGenerator(
         IRepository<TDomainEntity> repository,
-        IRandom random)
+        IRandom random) : base(random)
     {
         this.repository = repository;
-        this.random = random;
     }
 
     /// <inheritdoc />
-    public async Task<TDomainEntity> CreateAsync(CancellationToken cancellationToken = default)
+    public override async Task<TDomainEntity> CreateAsync(CancellationToken cancellationToken = default)
     {
         TDomainEntity instance = await GenerateAsync(cancellationToken);
         return await repository.AddAsync(instance, cancellationToken);
