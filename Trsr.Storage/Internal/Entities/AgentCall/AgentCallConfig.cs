@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Serialization;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Domain.Usage;
@@ -11,18 +12,17 @@ namespace Trsr.Storage.Internal.Entities.AgentCall;
 internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, IMapper<IAgentCall, AgentCallEntity>
 {
     private readonly IAgentCall.CreateExisting factory;
-    private readonly JsonSerializerOptions jsonOptions;
+    private readonly ISerializer serializer;
 
-    public AgentCallConfig(IAgentCall.CreateExisting factory, IEnumerable<JsonConverter> converters)
+    public AgentCallConfig(IAgentCall.CreateExisting factory, ISerializer serializer)
     {
         this.factory = factory;
-        jsonOptions = new JsonSerializerOptions();
-        foreach (var converter in converters)
-            jsonOptions.Converters.Add(converter);
+        this.serializer = serializer;
     }
 
     public override void Configure(EntityTypeBuilder<AgentCallEntity> builder)
     {
+        builder.HasIndex(e => e.AgentId);
         builder.HasIndex(e => e.Provider);
         builder.HasIndex(e => e.Model);
         builder.HasIndex(e => e.CreatedAt);
@@ -31,23 +31,34 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.Property(e => e.Provider).HasMaxLength(64);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
+        
+        builder
+            .Property(e => e.Request)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.DeserializeRequired<Conversation>(v)
+            );
+        
+        builder
+            .Property(e => e.Response)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.DeserializeRequired<AssistantMessage>(v)
+            );
     }
 
-    public IAgentCall Map(AgentCallEntity stored)
-    {
-        var conversation = JsonSerializer.Deserialize<Conversation>(stored.RequestJson, jsonOptions)!;
-        var agentMessage = JsonSerializer.Deserialize<AssistantMessage>(stored.ResponseJson, jsonOptions)!;
-        return factory(new AgentCallData(stored, conversation, agentMessage));
-    }
+    public IAgentCall Map(AgentCallEntity stored) 
+        => factory(stored);
 
     public AgentCallEntity Map(IAgentCall domain)
         => new()
         {
+            AgentId = domain.AgentId,
             Id = domain.Id,
             Model = domain.Model,
             Provider = domain.Provider,
-            RequestJson = JsonSerializer.Serialize(domain.Request, jsonOptions),
-            ResponseJson = JsonSerializer.Serialize(domain.Response, jsonOptions),
+            Request = domain.Request,
+            Response = domain.Response,
             InputTokens = (int)domain.Usage.InputTokenCount,
             OutputTokens = (int)domain.Usage.OutputTokenCount,
             DurationMs = (long)domain.Duration.TotalMilliseconds,
@@ -57,21 +68,4 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         };
-
-    private sealed record AgentCallData(
-        AgentCallEntity Entity,
-        Conversation Request,
-        AssistantMessage Response) : IAgentCallData
-    {
-        public Guid Id => Entity.Id;
-        public DateTimeOffset CreatedAt => Entity.CreatedAt;
-        public DateTimeOffset UpdatedAt => Entity.UpdatedAt;
-        public string Model => Entity.Model;
-        public string Provider => Entity.Provider;
-        public TokenUsage Usage => Entity.Usage;
-        public TimeSpan Duration => Entity.Duration;
-        public HttpStatusCode HttpStatus => (HttpStatusCode)Entity.HttpStatus;
-        public string? FinishReason => Entity.FinishReason;
-        public string? ErrorMessage => Entity.ErrorMessage;
-    }
 }

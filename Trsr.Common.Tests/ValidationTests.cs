@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using AwesomeAssertions;
+using JetBrains.Annotations;
 using Trsr.Common.Validation;
+// ReSharper disable PropertyCanBeMadeInitOnly.Local
 
 namespace Trsr.Common.Tests;
 
@@ -27,6 +29,7 @@ public sealed class ValidationTests
         string? nullString = null;
 
         // Act
+        // ReSharper disable once NullableWarningSuppressionIsUsed
         var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(nullString!);
 
         // Assert
@@ -344,15 +347,19 @@ public sealed class ValidationTests
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (string.IsNullOrWhiteSpace(Name))
-                yield return new ValidationResult("Name is required", new[] { nameof(Name) });
+            {
+                yield return new ValidationResult("Name is required", [nameof(Name)]);
+            }
 
             if (Age < 0)
-                yield return new ValidationResult("Age must be non-negative", new[] { nameof(Age) });
+            {
+                yield return new ValidationResult("Age must be non-negative", [nameof(Age)]);
+            }
         }
     }
 
     private struct TestStruct
     {
-        public int Value { get; set; }
+        public int Value { [UsedImplicitly] get; set; }
     }
 }

@@ -27,7 +27,7 @@ public sealed class StorageConfigurationTests
         // Assert
         var inMemoryConfig = config as InMemoryConfiguration;
         inMemoryConfig.Should().NotBeNull();
-        inMemoryConfig!.SupportsMigrations.Should().BeFalse();
+        inMemoryConfig.SupportsMigrations.Should().BeFalse();
     }
 
     [TestMethod]
@@ -73,7 +73,7 @@ public sealed class StorageConfigurationTests
         // Assert
         var sqlServerConfig = config as SqlServerConfiguration;
         sqlServerConfig.Should().NotBeNull();
-        sqlServerConfig!.SupportsMigrations.Should().BeTrue();
+        sqlServerConfig.SupportsMigrations.Should().BeTrue();
     }
 
     [TestMethod]
@@ -88,6 +88,6 @@ public sealed class StorageConfigurationTests
         // Assert
         var sqlServerConfig = config as SqlServerConfiguration;
         sqlServerConfig.Should().NotBeNull();
-        sqlServerConfig!.ConnectionString.Should().Be(connectionString);
+        sqlServerConfig.ConnectionString.Should().Be(connectionString);
     }
 }

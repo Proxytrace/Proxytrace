@@ -9,6 +9,7 @@ namespace Trsr.Domain.AgentCall.Internal;
 
 internal record AgentCall : DomainEntity, IAgentCall
 {
+    public Guid AgentId { get; }
     public string Model { get; }
     public string Provider { get; }
     public Conversation Request { get; }
@@ -20,6 +21,7 @@ internal record AgentCall : DomainEntity, IAgentCall
     public string? ErrorMessage { get; }
 
     public AgentCall(
+        Guid agentId,
         string model,
         string provider,
         Conversation request,
@@ -30,6 +32,7 @@ internal record AgentCall : DomainEntity, IAgentCall
         string? finishReason,
         string? errorMessage)
     {
+        AgentId = agentId;
         Model = model;
         Provider = provider;
         Request = request;
@@ -43,6 +46,7 @@ internal record AgentCall : DomainEntity, IAgentCall
 
     public AgentCall(IAgentCallData existing) : base(existing)
     {
+        AgentId = existing.AgentId;
         Model = existing.Model;
         Provider = existing.Provider;
         Request = existing.Request;

@@ -28,7 +28,10 @@ public sealed class RandomTests : BaseTest<Module>
         for (int i = 0; i < 100; i++)
         {
             results.Add(random.Bool());
-            if (results.Count == 2) break;
+            if (results.Count == 2)
+            {
+                break;
+            }
         }
         
         results.Count.Should().Be(2);

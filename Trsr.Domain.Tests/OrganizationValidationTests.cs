@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Organization;
 using Trsr.Testing;
+// ReSharper disable CollectionNeverUpdated.Local
 
 namespace Trsr.Domain.Tests;
 
@@ -63,6 +64,7 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         var users = new List<Guid>();
 
         // Act & Assert
+        // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(nullName!, users);
         action.Should().Throw<Exception>();
     }
@@ -264,11 +266,11 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         // Since Organization is a record, we verify immutability
         var nameProperty = organization.GetType().GetProperty("Name");
         nameProperty.Should().NotBeNull();
-        nameProperty!.SetMethod.Should().BeNull(); // No setter, or init-only
+        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
 
         var usersProperty = organization.GetType().GetProperty("Users");
         usersProperty.Should().NotBeNull();
-        usersProperty!.SetMethod.Should().BeNull(); // No setter, or init-only
+        usersProperty.SetMethod.Should().BeNull(); // No setter, or init-only
     }
 
     private class OrganizationDataStub : IOrganizationData

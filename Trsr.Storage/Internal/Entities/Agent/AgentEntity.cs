@@ -13,6 +13,11 @@ internal record AgentEntity : Entity, IAgentData
     public required Guid Project { get; set; }
 
     /// <summary>
+    /// SHA-256 fingerprint of the system message + tools, used for efficient get-or-create lookups.
+    /// </summary>
+    public required string Fingerprint { get; init; }
+
+    /// <summary>
     /// <see cref="IAgent.SystemMessage"/> - stored as JSON in the database
     /// </summary>
     public required SystemMessage SystemMessage { get; set; }

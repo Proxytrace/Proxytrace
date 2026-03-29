@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Trsr.Storage;
@@ -11,9 +12,11 @@ using Trsr.Storage;
 namespace Trsr.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329181350_AddAgentFingerprint_AgentCallAgentId")]
+    partial class AddAgentFingerprint_AgentCallAgentId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,7 +39,7 @@ namespace Trsr.Storage.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
-                    b.Property<Guid>("Project")
+                    b.Property<Guid?>("Project")
                         .HasColumnType("uuid");
 
                     b.Property<string>("SystemMessage")
@@ -54,8 +57,6 @@ namespace Trsr.Storage.Migrations
 
                     b.HasIndex("Fingerprint")
                         .IsUnique();
-
-                    b.HasIndex("Project");
 
                     b.ToTable("AgentEntity");
                 });
@@ -216,15 +217,6 @@ namespace Trsr.Storage.Migrations
                         .IsUnique();
 
                     b.ToTable("UserEntity");
-                });
-
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Agent.AgentEntity", b =>
-                {
-                    b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
-                        .WithMany()
-                        .HasForeignKey("Project")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationUserEntity", b =>

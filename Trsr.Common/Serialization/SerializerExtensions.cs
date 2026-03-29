@@ -28,4 +28,8 @@ public static class SerializerExtensions
     
     public static T? Deserialize<T>(this ISerializer serializer, string serialized)
         => DeserializeAsync<T>(serializer, serialized).SynchronouslyAwait();
+    
+    public static T DeserializeRequired<T>(this ISerializer serializer, string serialized)
+        => Deserialize<T>(serializer, serialized)
+           ?? throw new InvalidOperationException($"Deserialization of type {typeof(T).FullName} resulted in null.");
 }

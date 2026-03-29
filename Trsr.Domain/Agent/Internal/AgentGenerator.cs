@@ -26,7 +26,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>
         var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
             systemMessage: new SystemMessage(random.String()),
-            project: project.Id,
-            tools: Array.Empty<ToolSpecification>());
+            tools: [],
+            project: project.Id);
     }
 }

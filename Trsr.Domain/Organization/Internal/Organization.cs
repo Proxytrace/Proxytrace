@@ -12,7 +12,7 @@ internal record Organization : DomainEntity, IOrganization
     public Organization(string name, IReadOnlyCollection<Guid>? users = null)
     {
         Name = name;
-        Users = users ?? Array.Empty<Guid>();
+        Users = users ?? [];
     }
 
     public Organization(IOrganizationData existing) : base(existing)

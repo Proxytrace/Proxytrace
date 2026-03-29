@@ -6,6 +6,7 @@ namespace Trsr.Domain.AgentCall;
 
 public interface IAgentCallData : IDomainEntityData
 {
+    Guid AgentId { get; }
     string Model { get; }
     string Provider { get; }
     Conversation Request { get; }

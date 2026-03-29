@@ -4,47 +4,70 @@ using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Services;
+using Trsr.Domain.Organization;
+using Trsr.Domain.Project;
 
 namespace Trsr.Api.Controllers;
 
 /// <summary>
 /// Transparent reverse proxy for OpenAI-compatible APIs.
-/// Clients point their <c>base_url</c> here instead of <c>https://api.openai.com</c>.
-/// Every call is forwarded upstream, captured, and persisted as an <c>IAgentCall</c>.
+/// Clients point their <c>base_url</c> to <c>/{orgName}/{projectName}/openai/v1</c>.
+/// The organization and project names are resolved to IDs; every call is forwarded upstream,
+/// captured, and persisted as an <c>IAgentCall</c> associated with the resolved project.
 /// </summary>
 [ApiController]
-[Route("openai")]
+[Route("{orgName}/{projectName}/openai")]
 public class OpenAiProxyController : ControllerBase
 {
-    private static readonly HashSet<string> ForwardedRequestHeaders =
+    private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
     [
         "authorization", "content-type", "openai-organization", "openai-project"
-    ];
+    ]);
 
-    private static readonly HashSet<string> ForwardedResponseHeaders =
+    private static readonly IReadOnlyCollection<string> ForwardedResponseHeaders = new HashSet<string>(
     [
         "content-type", "openai-model", "openai-processing-ms", "openai-version",
         "x-request-id", "x-ratelimit-limit-requests", "x-ratelimit-remaining-requests",
         "x-ratelimit-reset-requests"
-    ];
+    ]);
 
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IServiceScopeFactory scopeFactory;
+    private readonly IOrganizationRepository organizationRepository;
+    private readonly IProjectRepository projectRepository;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
         IServiceScopeFactory scopeFactory,
+        IOrganizationRepository organizationRepository,
+        IProjectRepository projectRepository,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.scopeFactory = scopeFactory;
+        this.organizationRepository = organizationRepository;
+        this.projectRepository = projectRepository;
         this.logger = logger;
     }
 
     [Route("v1/{**path}")]
-    public async Task Proxy(string path, CancellationToken cancellationToken)
+    public async Task Proxy(string orgName, string projectName, string path, CancellationToken cancellationToken)
     {
+        var org = await organizationRepository.FindByNameAsync(orgName, cancellationToken);
+        if (org is null)
+        {
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        var project = await projectRepository.FindByNameAsync(projectName, org, cancellationToken);
+        if (project is null)
+        {
+            Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
         // Read request body up-front (we always need it for ingestion)
         using var requestBodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(requestBodyStream, cancellationToken);
@@ -78,23 +101,25 @@ public class OpenAiProxyController : ControllerBase
         foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
         {
             if (ForwardedResponseHeaders.Contains(header.Key.ToLowerInvariant()))
+            {
                 Response.Headers[header.Key] = string.Join(", ", header.Value);
+            }
         }
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(path, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyStreamingResponseAsync(project, requestBody, upstreamResponse, sw, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(path, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyBufferedResponseAsync(project, requestBody, upstreamResponse, sw, cancellationToken);
         }
     }
 
     // ── Non-streaming ─────────────────────────────────────────────────────────
 
     private async Task ProxyBufferedResponseAsync(
-        string path,
+        IProject project,
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
@@ -105,13 +130,13 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        _ = IngestSafeAsync(requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
+        _ = IngestSafeAsync(project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
 
     private async Task ProxyStreamingResponseAsync(
-        string path,
+        IProject project,
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
@@ -125,7 +150,10 @@ public class OpenAiProxyController : ControllerBase
         while (true)
         {
             var line = await reader.ReadLineAsync(cancellationToken);
-            if (line is null) break;
+            if (line is null)
+            {
+                break;
+            }
 
             accumulated.AppendLine(line);
 
@@ -136,13 +164,13 @@ public class OpenAiProxyController : ControllerBase
 
         sw.Stop();
 
-        // Store accumulated SSE content after streaming is complete
-        _ = IngestSafeAsync(requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
+        _ = IngestSafeAsync(project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private async Task IngestSafeAsync(
+        IProject project,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
@@ -154,6 +182,7 @@ public class OpenAiProxyController : ControllerBase
             var svc = scope.ServiceProvider.GetRequiredService<IAgentCallIngestionService>();
             await svc.IngestAsync(
                 provider: "openai",
+                project: project,
                 requestBody: requestBody,
                 responseBody: responseBody,
                 duration: duration,
@@ -177,13 +206,20 @@ public class OpenAiProxyController : ControllerBase
 
         foreach (var header in Request.Headers)
         {
-            if (!ForwardedRequestHeaders.Contains(header.Key.ToLowerInvariant())) continue;
+            if (!ForwardedRequestHeaders.Contains(header.Key.ToLowerInvariant()))
+            {
+                continue;
+            }
 
             if (header.Key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
+            {
                 upstreamRequest.Content.Headers.ContentType =
                     MediaTypeHeaderValue.Parse(header.Value.ToString());
+            }
             else
+            {
                 upstreamRequest.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value);
+            }
         }
 
         return upstreamRequest;
@@ -193,13 +229,17 @@ public class OpenAiProxyController : ControllerBase
     {
         if (!string.IsNullOrEmpty(contentType) &&
             contentType.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase))
+        {
             return true;
+        }
 
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(requestBody);
             if (doc.RootElement.TryGetProperty("stream", out var stream))
+            {
                 return stream.ValueKind == System.Text.Json.JsonValueKind.True;
+            }
         }
         catch { /* not JSON or no stream field */ }
 

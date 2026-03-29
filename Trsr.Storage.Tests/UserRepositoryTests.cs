@@ -23,7 +23,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Id.Should().Be(user.Id);
+        foundUser.Id.Should().Be(user.Id);
         foundUser.Name.Should().Be(user.Name);
     }
 
@@ -77,7 +77,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Id.Should().Be(user2.Id);
+        foundUser.Id.Should().Be(user2.Id);
         foundUser.Name.Should().Be("Jane Doe");
     }
 
@@ -100,7 +100,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         // Assert
         // Behavior depends on database collation - typically case-sensitive in code
         foundExact.Should().NotBeNull();
-        foundExact!.Name.Should().Be("TestUser");
+        foundExact.Name.Should().Be("TestUser");
     }
 
     [TestMethod]
@@ -120,7 +120,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Name.Should().Be(specialName);
+        foundUser.Name.Should().Be(specialName);
     }
 
     [TestMethod]
@@ -140,7 +140,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Name.Should().Be(unicodeName);
+        foundUser.Name.Should().Be(unicodeName);
     }
 
     [TestMethod]
@@ -160,7 +160,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Name.Should().Be(nameWithSpaces);
+        foundUser.Name.Should().Be(nameWithSpaces);
     }
 
     [TestMethod]
@@ -190,7 +190,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         // Assert
         foundByOldName.Should().BeNull();
         foundByNewName.Should().NotBeNull();
-        foundByNewName!.Id.Should().Be(initialUser.Id);
+        foundByNewName.Id.Should().Be(initialUser.Id);
         foundByNewName.Name.Should().Be("Updated Name");
     }
 
@@ -244,13 +244,13 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundAlice.Should().NotBeNull();
-        foundAlice!.Name.Should().Be("Alice");
+        foundAlice.Name.Should().Be("Alice");
 
         foundCharlie.Should().NotBeNull();
-        foundCharlie!.Name.Should().Be("Charlie");
+        foundCharlie.Name.Should().Be("Charlie");
 
         foundEve.Should().NotBeNull();
-        foundEve!.Name.Should().Be("Eve");
+        foundEve.Name.Should().Be("Eve");
     }
 
     [TestMethod]
@@ -270,7 +270,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         // Assert
         foundUser.Should().NotBeNull();
-        foundUser!.Name.Should().Be(longName);
+        foundUser.Name.Should().Be(longName);
     }
 
     [TestMethod]
@@ -291,9 +291,9 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         found1.Should().NotBeNull();
         found2.Should().NotBeNull();
         found3.Should().NotBeNull();
-        found1!.Id.Should().Be(user.Id);
-        found2!.Id.Should().Be(user.Id);
-        found3!.Id.Should().Be(user.Id);
+        found1.Id.Should().Be(user.Id);
+        found2.Id.Should().Be(user.Id);
+        found3.Id.Should().Be(user.Id);
     }
 
     [TestMethod]

@@ -12,7 +12,7 @@ internal record Agent : DomainEntity, IAgent
     public SystemMessage SystemMessage { get; set; }
     public IReadOnlyCollection<ToolSpecification> Tools { get; }
 
-    public Agent(SystemMessage systemMessage, Guid project, IReadOnlyCollection<ToolSpecification> tools)
+    public Agent(SystemMessage systemMessage, IReadOnlyCollection<ToolSpecification> tools, Guid project)
     {
         SystemMessage = systemMessage;
         Project = project;

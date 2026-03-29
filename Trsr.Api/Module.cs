@@ -25,6 +25,10 @@ internal sealed class Module : Autofac.Module
         var upstreamBaseUrl = configuration.GetSection("ModelProvider").GetValue<string>("UpstreamBaseUrl")
                               ?? throw new InvalidOperationException("Configuration 'ModelProvider:UpstreamBaseUrl' is required. ");
         
+        builder.RegisterType<OpenAiCallParser>()
+            .As<IOpenAiCallParser>()
+            .SingleInstance();
+
         builder.RegisterType<AgentCallIngestionService>()
             .As<IAgentCallIngestionService>()
             .InstancePerDependency();

@@ -1,4 +1,5 @@
 using System.Net;
+using Trsr.Domain.Project;
 
 namespace Trsr.Api.Services;
 
@@ -10,6 +11,7 @@ public interface IAgentCallIngestionService
     /// </summary>
     Task IngestAsync(
         string provider,
+        IProject project,
         string requestBody,
         string? responseBody,
         TimeSpan duration,

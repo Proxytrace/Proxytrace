@@ -15,7 +15,8 @@ public interface IAgentCall : IDomainEntity, IAgentCallData
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage);
+        string? errorMessage,
+        Guid? agentId = null);
 
     public delegate IAgentCall CreateExisting(IAgentCallData existing);
 }

@@ -9,22 +9,30 @@ namespace Trsr.Domain.Tests;
 public sealed class UserValidationTests : BaseTest<Module>
 {
     [TestMethod]
-    public async Task CreateNew_WithValidName_CreatesUser()
+    public Task CreateNew_WithValidName_CreatesUser()
     {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var name = "John Doe";
+        try
+        {
+            // Arrange
+            IServiceProvider services = GetServices();
+            var factory = services.GetRequiredService<IUser.CreateNew>();
+            var name = "John Doe";
 
-        // Act
-        var user = factory(name);
+            // Act
+            var user = factory(name);
 
-        // Assert
-        user.Should().NotBeNull();
-        user.Name.Should().Be(name);
-        user.Id.Should().NotBe(Guid.Empty);
-        user.CreatedAt.Should().NotBe(default);
-        user.UpdatedAt.Should().NotBe(default);
+            // Assert
+            user.Should().NotBeNull();
+            user.Name.Should().Be(name);
+            user.Id.Should().NotBe(Guid.Empty);
+            user.CreatedAt.Should().NotBe(default);
+            user.UpdatedAt.Should().NotBe(default);
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 
     [TestMethod]
@@ -36,6 +44,7 @@ public sealed class UserValidationTests : BaseTest<Module>
         string? nullName = null;
 
         // Act & Assert
+        // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(nullName!);
         action.Should().Throw<Exception>();
     }
@@ -159,7 +168,7 @@ public sealed class UserValidationTests : BaseTest<Module>
         // This test verifies that the User type doesn't have property setters
         var nameProperty = user.GetType().GetProperty("Name");
         nameProperty.Should().NotBeNull();
-        nameProperty!.SetMethod.Should().BeNull(); // No setter, or init-only
+        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
     }
 
     [TestMethod]

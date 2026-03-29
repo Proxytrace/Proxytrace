@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AwesomeAssertions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Common.Conversion;
 using Trsr.Testing;
@@ -249,10 +250,11 @@ public sealed class TypeConverterTests : BaseTest<Module>
         var jsonElement = JsonDocument.Parse(json).RootElement;
 
         // Act
-        var result = Converter.ChangeType(jsonElement, typeof(DateTime));
+        object? result = Converter.ChangeType(jsonElement, typeof(DateTime));
 
         // Assert
-        ((DateTime)result!).Should().BeCloseTo(dateTime, TimeSpan.FromMilliseconds(1));
+        result.Should().NotBeNull();
+        ((DateTime)result).Should().BeCloseTo(dateTime, TimeSpan.FromMilliseconds(1));
     }
 
     [TestMethod]
@@ -267,7 +269,8 @@ public sealed class TypeConverterTests : BaseTest<Module>
         var result = Converter.ChangeType(jsonElement, typeof(DateTimeOffset));
 
         // Assert
-        ((DateTimeOffset)result!).Should().BeCloseTo(dateTimeOffset, TimeSpan.FromMilliseconds(1));
+        result.Should().NotBeNull();
+        ((DateTimeOffset)result).Should().BeCloseTo(dateTimeOffset, TimeSpan.FromMilliseconds(1));
     }
 
     [TestMethod]
@@ -283,7 +286,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
         // Assert
         result.Should().NotBeNull();
-        var guidList = (List<Guid>)result!;
+        var guidList = (List<Guid>)result;
         guidList.Count.Should().Be(2);
         guidList.Should().Contain(guid1);
         guidList.Should().Contain(guid2);
@@ -300,7 +303,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
         // Assert
         result.Should().NotBeNull();
-        var stringList = (List<string>)result!;
+        var stringList = (List<string>)result;
         stringList.Count.Should().Be(3);
         stringList.Should().Contain("1");
         stringList.Should().Contain("2");
@@ -318,8 +321,8 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
         // Assert
         result.Should().NotBeNull();
-        var enumerable = (IEnumerable<int>)result!;
-        enumerable.Should().BeEquivalentTo(new[] { 1, 2, 3 });
+        var enumerable = (IEnumerable<int>)result;
+        enumerable.Should().BeEquivalentTo([1, 2, 3]);
     }
 
     [TestMethod]
@@ -333,7 +336,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
         // Assert
         result.Should().NotBeNull();
-        var intList = (List<int>)result!;
+        var intList = (List<int>)result;
         intList.Should().BeEmpty();
     }
 
@@ -451,7 +454,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
         // Assert
         result.Should().NotBeNull();
-        var complexResult = (ComplexType)result!;
+        var complexResult = (ComplexType)result;
         complexResult.Value.Should().Be(42);
         complexResult.Name.Should().Be("Test");
     }
@@ -460,6 +463,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
     {
         Value1 = 0,
         Value2 = 1,
+        // ReSharper disable once UnusedMember.Local
         Value3 = 2
     }
 
@@ -507,7 +511,7 @@ public sealed class TypeConverterTests : BaseTest<Module>
 
     private class ComplexType
     {
-        public int Value { get; set; }
+        public int Value { get; [UsedImplicitly] set; }
         public string Name { get; set; } = string.Empty;
     }
 }

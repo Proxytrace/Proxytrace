@@ -39,6 +39,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var organizationId = Guid.NewGuid();
 
         // Act & Assert
+        // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(nullName!, organizationId);
         action.Should().Throw<Exception>();
     }
@@ -106,7 +107,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
         var name = "Test Project";
-        var defaultOrganizationId = default(Guid);
+        var defaultOrganizationId = Guid.Empty;
 
         // Act & Assert
         var action = () => factory(name, defaultOrganizationId);
@@ -286,7 +287,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Act & Assert
         var nameProperty = project.GetType().GetProperty("Name");
         nameProperty.Should().NotBeNull();
-        nameProperty!.SetMethod.Should().BeNull(); // No setter, or init-only
+        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
     }
 
     private class ProjectDataStub : IProjectData
