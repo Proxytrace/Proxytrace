@@ -1,7 +1,7 @@
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 
-namespace Trsr.Domain.Message.Internal;
+namespace Trsr.Domain.Tools.Internal;
 
 internal class ToolSpecificationGenerator : DomainObjectGenerator<ToolSpecification>
 {

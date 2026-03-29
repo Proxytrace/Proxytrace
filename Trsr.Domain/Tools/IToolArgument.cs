@@ -1,4 +1,4 @@
-﻿namespace Trsr.Domain.Message;
+﻿namespace Trsr.Domain.Tools;
 
 /// <summary>
 /// A tool argument

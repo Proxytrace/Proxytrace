@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Trsr.Common.Validation;
 
-namespace Trsr.Domain.Message;
+namespace Trsr.Domain.Tools;
 
 /// <summary>
 /// A tool argument defined by a JSON schema.

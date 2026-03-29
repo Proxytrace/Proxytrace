@@ -2,7 +2,7 @@ using Trsr.Common.Async;
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 
-namespace Trsr.Domain.Message.Internal;
+namespace Trsr.Domain.Usage.Internal;
 
 internal class TokenUsageGenerator : DomainObjectGenerator<TokenUsage>
 {

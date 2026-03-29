@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Trsr.Common.Validation;
 
-namespace Trsr.Domain.Message
+namespace Trsr.Domain.Tools
 {
     /// <summary>
     /// The arguments a tool accepts

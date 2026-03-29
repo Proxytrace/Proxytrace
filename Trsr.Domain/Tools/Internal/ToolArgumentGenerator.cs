@@ -3,7 +3,7 @@ using Trsr.Common.Async;
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 
-namespace Trsr.Domain.Message.Internal;
+namespace Trsr.Domain.Tools.Internal;
 
 internal class ToolArgumentGenerator : DomainObjectGenerator<IToolArgument>
 {
