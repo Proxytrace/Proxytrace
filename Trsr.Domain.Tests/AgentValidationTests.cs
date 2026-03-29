@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.Tools;
 using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
@@ -19,7 +20,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var projectId = Guid.NewGuid();
 
         // Act
-        var agent = factory(systemMessage, projectId);
+        var agent = factory(systemMessage, projectId, []);
 
         // Assert
         agent.Should().NotBeNull();
@@ -39,7 +40,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var projectId = Guid.NewGuid();
 
         // Act & Assert
-        var action = () => factory(null!, projectId);
+        var action = () => factory(null!, projectId, []);
         action.Should().Throw<Exception>();
     }
 
@@ -52,7 +53,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var systemMessage = new SystemMessage("You are a helpful assistant");
 
         // Act & Assert
-        var action = () => factory(systemMessage, Guid.Empty);
+        var action = () => factory(systemMessage, Guid.Empty, []);
         action.Should().Throw<Exception>();
     }
 
@@ -65,7 +66,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var systemMessage = new SystemMessage("You are a helpful assistant");
 
         // Act & Assert
-        var action = () => factory(systemMessage, default);
+        var action = () => factory(systemMessage, default, []);
         action.Should().Throw<Exception>();
     }
 
@@ -119,8 +120,8 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var projectId = Guid.NewGuid();
 
         // Act
-        var agent1 = factory(systemMessage, projectId);
-        var agent2 = factory(systemMessage, projectId);
+        var agent1 = factory(systemMessage, projectId, []);
+        var agent2 = factory(systemMessage, projectId, []);
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);
@@ -133,6 +134,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         public DateTimeOffset UpdatedAt { get; set; }
         public Guid Project { get; set; }
         public SystemMessage SystemMessage { get; set; }
+        public IReadOnlyCollection<ToolSpecification> Tools { get; set; } = Array.Empty<ToolSpecification>();
 
         public AgentDataStub(IAgent agent)
         {
@@ -141,6 +143,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
             UpdatedAt = agent.UpdatedAt;
             Project = agent.Project;
             SystemMessage = agent.SystemMessage;
+            Tools = agent.Tools;
         }
     }
 }

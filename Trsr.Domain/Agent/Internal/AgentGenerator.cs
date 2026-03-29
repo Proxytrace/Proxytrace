@@ -2,6 +2,7 @@ using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.Project;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent.Internal;
 
@@ -25,6 +26,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>
         var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
             systemMessage: new SystemMessage(random.String()),
-            project: project.Id);
+            project: project.Id,
+            tools: Array.Empty<ToolSpecification>());
     }
 }

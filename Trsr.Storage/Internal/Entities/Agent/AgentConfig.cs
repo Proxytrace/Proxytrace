@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Serialization;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.Tools;
 using Trsr.Storage.Internal.Entities.Project;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
@@ -36,6 +37,13 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
                 v => serializer.Serialize(v),
                 v => serializer.Deserialize<SystemMessage>(v)!
             );
+
+        builder
+            .Property(e => e.Tools)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<IReadOnlyCollection<ToolSpecification>>(v) ?? Array.Empty<ToolSpecification>()
+            );
     }
 
     public IAgent Map(AgentEntity storedEntity)
@@ -47,6 +55,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             Id = domainEntity.Id,
             Project = domainEntity.Project,
             SystemMessage = domainEntity.SystemMessage,
+            Tools = domainEntity.Tools,
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,
         };

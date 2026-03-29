@@ -1,5 +1,6 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
 
@@ -15,4 +16,9 @@ internal record AgentEntity : Entity, IAgent
     /// <see cref="IAgent.SystemMessage"/> - stored as JSON in the database
     /// </summary>
     public required SystemMessage SystemMessage { get; set; }
+
+    /// <summary>
+    /// <see cref="IAgent.Tools"/> - stored as JSON in the database
+    /// </summary>
+    public required IReadOnlyCollection<ToolSpecification> Tools { get; init; }
 }
