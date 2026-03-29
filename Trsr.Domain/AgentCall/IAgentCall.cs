@@ -9,8 +9,8 @@ public interface IAgentCall : IDomainEntity, IAgentCallData
     public delegate IAgentCall CreateNew(
         string model,
         string provider,
-        Conversation conversation,
-        AssistantMessage agentMessage,
+        Conversation request,
+        AssistantMessage response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,

@@ -52,8 +52,8 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
             var call = factory(
                 model: model,
                 provider: provider,
-                conversation: conversation,
-                agentMessage: agentMessage,
+                request: conversation,
+                response: agentMessage,
                 usage: new TokenUsage((ulong)(inputTokens ?? 0), (ulong)(outputTokens ?? 0)),
                 duration: duration,
                 httpStatus: httpStatus,

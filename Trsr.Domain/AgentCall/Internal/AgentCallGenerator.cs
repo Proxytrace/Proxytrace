@@ -32,8 +32,8 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>
         => factory(
             model: random.Any(Models),
             provider: "openai",
-            conversation: await conversationGenerator.CreateAsync(cancellationToken),
-            agentMessage: await assistantMessageGenerator.CreateAsync(cancellationToken),
+            request: await conversationGenerator.CreateAsync(cancellationToken),
+            response: await assistantMessageGenerator.CreateAsync(cancellationToken),
             usage: await usageGenerator.CreateAsync(cancellationToken),
             duration: random.TimeSpan(),
             httpStatus: HttpStatusCode.OK,

@@ -11,8 +11,8 @@ internal record AgentCall : DomainEntity, IAgentCall
 {
     public string Model { get; }
     public string Provider { get; }
-    public Conversation Conversation { get; }
-    public AssistantMessage AgentMessage { get; }
+    public Conversation Request { get; }
+    public AssistantMessage Response { get; }
     public TokenUsage Usage { get; }
     public TimeSpan Duration { get; }
     public HttpStatusCode HttpStatus { get; }
@@ -22,8 +22,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     public AgentCall(
         string model,
         string provider,
-        Conversation conversation,
-        AssistantMessage agentMessage,
+        Conversation request,
+        AssistantMessage response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,
@@ -32,8 +32,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     {
         Model = model;
         Provider = provider;
-        Conversation = conversation;
-        AgentMessage = agentMessage;
+        Request = request;
+        Response = response;
         Usage = usage;
         Duration = duration;
         HttpStatus = httpStatus;
@@ -45,8 +45,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     {
         Model = existing.Model;
         Provider = existing.Provider;
-        Conversation = existing.Conversation;
-        AgentMessage = existing.AgentMessage;
+        Request = existing.Request;
+        Response = existing.Response;
         Usage = existing.Usage;
         Duration = existing.Duration;
         HttpStatus = existing.HttpStatus;
@@ -61,12 +61,12 @@ internal record AgentCall : DomainEntity, IAgentCall
             yield return result;
         }
         
-        foreach (var result in Conversation.Validate(validationContext))
+        foreach (var result in Request.Validate(validationContext))
         {
             yield return result;
         }
         
-        foreach (var result in AgentMessage.Validate(validationContext))
+        foreach (var result in Response.Validate(validationContext))
         {
             yield return result;
         }

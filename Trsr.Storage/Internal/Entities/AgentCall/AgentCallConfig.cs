@@ -35,8 +35,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
 
     public IAgentCall Map(AgentCallEntity stored)
     {
-        var conversation = JsonSerializer.Deserialize<Conversation>(stored.ConversationJson, jsonOptions)!;
-        var agentMessage = JsonSerializer.Deserialize<AssistantMessage>(stored.AgentMessageJson, jsonOptions)!;
+        var conversation = JsonSerializer.Deserialize<Conversation>(stored.RequestJson, jsonOptions)!;
+        var agentMessage = JsonSerializer.Deserialize<AssistantMessage>(stored.ResponseJson, jsonOptions)!;
         return factory(new AgentCallData(stored, conversation, agentMessage));
     }
 
@@ -46,8 +46,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             Id = domain.Id,
             Model = domain.Model,
             Provider = domain.Provider,
-            ConversationJson = JsonSerializer.Serialize(domain.Conversation, jsonOptions),
-            AgentMessageJson = JsonSerializer.Serialize(domain.AgentMessage, jsonOptions),
+            RequestJson = JsonSerializer.Serialize(domain.Request, jsonOptions),
+            ResponseJson = JsonSerializer.Serialize(domain.Response, jsonOptions),
             InputTokens = (int)domain.Usage.InputTokenCount,
             OutputTokens = (int)domain.Usage.OutputTokenCount,
             DurationMs = (long)domain.Duration.TotalMilliseconds,
@@ -60,8 +60,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
 
     private sealed record AgentCallData(
         AgentCallEntity Entity,
-        Conversation Conversation,
-        AssistantMessage AgentMessage) : IAgentCallData
+        Conversation Request,
+        AssistantMessage Response) : IAgentCallData
     {
         public Guid Id => Entity.Id;
         public DateTimeOffset CreatedAt => Entity.CreatedAt;

@@ -8,8 +8,8 @@ internal record AgentCallEntity : Entity
 {
     public required string Model { get; init; }
     public required string Provider { get; init; }
-    public required string ConversationJson { get; init; }
-    public required string AgentMessageJson { get; init; }
+    public required string RequestJson { get; init; }
+    public required string ResponseJson { get; init; }
     public TokenUsage Usage => new((ulong)InputTokens, (ulong)OutputTokens);
     public TimeSpan Duration => TimeSpan.FromMilliseconds(DurationMs);
     public int InputTokens { get; init; }

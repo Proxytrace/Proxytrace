@@ -8,8 +8,8 @@ public interface IAgentCallData : IDomainEntityData
 {
     string Model { get; }
     string Provider { get; }
-    Conversation Conversation { get; }
-    AssistantMessage AgentMessage { get; }
+    Conversation Request { get; }
+    AssistantMessage Response { get; }
     TokenUsage Usage { get; }
     TimeSpan Duration { get; }
     HttpStatusCode HttpStatus { get; }
