@@ -4,3 +4,7 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 TestResults/
+
+# Development configuration files
+**/appsettings.development.json
+
