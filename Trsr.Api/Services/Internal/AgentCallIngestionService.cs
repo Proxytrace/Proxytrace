@@ -1,6 +1,8 @@
+using System.Net;
 using System.Text.Json;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Api.Services.Internal;
 
@@ -24,24 +26,23 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         string provider,
         string requestBody,
         string? responseBody,
-        long durationMs,
-        int httpStatus,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
         CancellationToken cancellationToken)
     {
         try
         {
             var model = ParseModel(requestBody);
             var (inputTokens, outputTokens, finishReason) = ParseResponse(responseBody);
-            var errorMessage = httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
+            var errorMessage = (int)httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
 
             var call = factory(
                 model: model,
                 provider: provider,
                 request: requestBody,
                 response: responseBody,
-                inputTokens: inputTokens,
-                outputTokens: outputTokens,
-                durationMs: durationMs,
+                usage: new TokenUsage((ulong)(inputTokens ?? 0), (ulong)(outputTokens ?? 0)),
+                duration: duration,
                 httpStatus: httpStatus,
                 finishReason: finishReason,
                 errorMessage: errorMessage);

@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace Trsr.Api.Services;
 
 public interface IAgentCallIngestionService
@@ -10,7 +12,7 @@ public interface IAgentCallIngestionService
         string provider,
         string requestBody,
         string? responseBody,
-        long durationMs,
-        int httpStatus,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
         CancellationToken cancellationToken);
 }

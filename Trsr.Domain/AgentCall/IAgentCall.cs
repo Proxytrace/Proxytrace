@@ -1,3 +1,6 @@
+using System.Net;
+using Trsr.Domain.Usage;
+
 namespace Trsr.Domain.AgentCall;
 
 public interface IAgentCall : IDomainEntity, IAgentCallData
@@ -7,10 +10,9 @@ public interface IAgentCall : IDomainEntity, IAgentCallData
         string provider,
         string request,
         string? response,
-        int? inputTokens,
-        int? outputTokens,
-        long durationMs,
-        int httpStatus,
+        TokenUsage usage,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage);
 

@@ -8,4 +8,5 @@ public interface IRandom
     public string UniqueString();
     public int Int(int? min = null, int? max = null);
     public T Any<T>(IReadOnlyCollection<T> options);
+    public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null);
 }

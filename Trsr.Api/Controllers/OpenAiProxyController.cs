@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
@@ -104,8 +105,12 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        _ = IngestSafeAsync(requestBody, responseBody, sw.ElapsedMilliseconds,
-            (int)upstreamResponse.StatusCode, cancellationToken);
+        _ = IngestSafeAsync(
+            requestBody, 
+            responseBody, 
+            sw.Elapsed,
+            upstreamResponse.StatusCode, 
+            cancellationToken);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -137,8 +142,8 @@ public class OpenAiProxyController : ControllerBase
         sw.Stop();
 
         // Store accumulated SSE content after streaming is complete
-        _ = IngestSafeAsync(requestBody, accumulated.ToString(), sw.ElapsedMilliseconds,
-            (int)upstreamResponse.StatusCode, cancellationToken);
+        _ = IngestSafeAsync(requestBody, accumulated.ToString(), sw.Elapsed,
+            upstreamResponse.StatusCode, cancellationToken);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -146,8 +151,8 @@ public class OpenAiProxyController : ControllerBase
     private async Task IngestSafeAsync(
         string requestBody,
         string? responseBody,
-        long durationMs,
-        int httpStatus,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
         CancellationToken cancellationToken)
     {
         try
@@ -156,7 +161,7 @@ public class OpenAiProxyController : ControllerBase
                 provider: "openai",
                 requestBody: requestBody,
                 responseBody: responseBody,
-                durationMs: durationMs,
+                duration: duration,
                 httpStatus: httpStatus,
                 cancellationToken);
         }

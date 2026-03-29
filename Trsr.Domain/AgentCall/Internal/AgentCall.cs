@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall.Internal;
 
@@ -10,10 +12,9 @@ internal record AgentCall : DomainEntity, IAgentCall
     public string Provider { get; }
     public string Request { get; }
     public string? Response { get; }
-    public int? InputTokens { get; }
-    public int? OutputTokens { get; }
-    public long DurationMs { get; }
-    public int HttpStatus { get; }
+    public TokenUsage Usage { get; }
+    public TimeSpan Duration { get; }
+    public HttpStatusCode HttpStatus { get; }
     public string? FinishReason { get; }
     public string? ErrorMessage { get; }
 
@@ -22,10 +23,9 @@ internal record AgentCall : DomainEntity, IAgentCall
         string provider,
         string request,
         string? response,
-        int? inputTokens,
-        int? outputTokens,
-        long durationMs,
-        int httpStatus,
+        TokenUsage usage,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage)
     {
@@ -33,9 +33,8 @@ internal record AgentCall : DomainEntity, IAgentCall
         Provider = provider;
         Request = request;
         Response = response;
-        InputTokens = inputTokens;
-        OutputTokens = outputTokens;
-        DurationMs = durationMs;
+        Usage = usage;
+        Duration = duration;
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
@@ -47,9 +46,8 @@ internal record AgentCall : DomainEntity, IAgentCall
         Provider = existing.Provider;
         Request = existing.Request;
         Response = existing.Response;
-        InputTokens = existing.InputTokens;
-        OutputTokens = existing.OutputTokens;
-        DurationMs = existing.DurationMs;
+        Usage = existing.Usage;
+        Duration = existing.Duration;
         HttpStatus = existing.HttpStatus;
         FinishReason = existing.FinishReason;
         ErrorMessage = existing.ErrorMessage;
