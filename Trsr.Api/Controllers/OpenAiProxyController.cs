@@ -127,7 +127,7 @@ public class OpenAiProxyController : ControllerBase
         await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(upstreamStream, Encoding.UTF8, leaveOpen: true);
 
-        while (!reader.EndOfStream)
+        while (true)
         {
             var line = await reader.ReadLineAsync(cancellationToken);
             if (line is null) break;

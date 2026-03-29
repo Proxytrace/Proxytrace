@@ -47,13 +47,13 @@ public static class Validation
             : ValidationResult.Success!;
     
     public static ValidationResult MaxLength(string? value, int maxLength, [CallerMemberName] string memberName = "")
-        => value.Length > maxLength
-            ? new ValidationResult($"{memberName} cannot be longer than {maxLength} characters", [memberName]) 
+        => (value?.Length ?? 0) > maxLength
+            ? new ValidationResult($"{memberName} cannot be longer than {maxLength} characters", [memberName])
             : ValidationResult.Success!;
-    
+
     public static ValidationResult MinLength(string? value, int minLength, [CallerMemberName] string memberName = "")
-        => value.Length < minLength
-            ? new ValidationResult($"{memberName} cannot be shorter than {minLength} characters", [memberName]) 
+        => (value?.Length ?? 0) < minLength
+            ? new ValidationResult($"{memberName} cannot be shorter than {minLength} characters", [memberName])
             : ValidationResult.Success!;
     
     public static ValidationResult NotEmpty(string? value, [CallerMemberName] string memberName = "")
