@@ -18,8 +18,7 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
     public StorageDbContextFactory()
     {
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.Development.json", optional: false)
+            .AddJsonFile("appsettings.development.json", optional: false)
             .Build();
         
         string connectionString = configuration.GetConnectionString("MigrationDatabase") 

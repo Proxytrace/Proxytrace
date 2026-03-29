@@ -42,6 +42,14 @@ internal sealed class Module : Autofac.Module
 
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
-        builder.RegisterModule(new Storage.Module(StorageConfiguration.SqlServer(connectionString)));
+        var storageConfig = IsPostgresConnectionString(connectionString)
+            ? StorageConfiguration.Postgres(connectionString)
+            : StorageConfiguration.SqlServer(connectionString);
+        builder.RegisterModule(new Storage.Module(storageConfig));
     }
+
+    // Npgsql connection strings use "Host=" whereas SQL Server uses "Server=" / "Data Source="
+    private static bool IsPostgresConnectionString(string connectionString)
+        => connectionString.Contains("host=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("port=", StringComparison.OrdinalIgnoreCase);
 }

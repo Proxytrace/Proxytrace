@@ -128,6 +128,10 @@ public sealed class Module : Autofac.Module
                 options.UseSqlServer(sqlServer.ConnectionString,
                     sqlOptions => sqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
+            case PostgresConfiguration postgres:
+                options.UseNpgsql(postgres.ConnectionString,
+                    npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
+                break;
             case InMemoryConfiguration inMemory:
                 options.UseInMemoryDatabase(Guid.NewGuid() + inMemory.Name);
                 break;

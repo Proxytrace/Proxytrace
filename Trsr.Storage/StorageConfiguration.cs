@@ -24,9 +24,21 @@ public abstract record StorageConfiguration
     /// Creates a configuration for SQL Server storage
     /// </summary>
     public static StorageConfiguration SqlServer(
-        string connectionString, 
+        string connectionString,
         string? cryptographyKeyBase64 = null)
         => new SqlServerConfiguration
+        {
+            ConnectionString = connectionString,
+            CryptographyKeyBase64 = cryptographyKeyBase64
+        };
+
+    /// <summary>
+    /// Creates a configuration for PostgreSQL storage
+    /// </summary>
+    public static StorageConfiguration Postgres(
+        string connectionString,
+        string? cryptographyKeyBase64 = null)
+        => new PostgresConfiguration
         {
             ConnectionString = connectionString,
             CryptographyKeyBase64 = cryptographyKeyBase64
