@@ -15,19 +15,19 @@ namespace Trsr.Storage.Migrations
                 name: "AgentCallEntity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Model = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    Provider = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
-                    Request = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Response = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    InputTokens = table.Column<int>(type: "int", nullable: false),
-                    OutputTokens = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Model = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    Provider = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Request = table.Column<string>(type: "text", nullable: false),
+                    Response = table.Column<string>(type: "text", nullable: true),
+                    InputTokens = table.Column<int>(type: "integer", nullable: false),
+                    OutputTokens = table.Column<int>(type: "integer", nullable: false),
                     DurationMs = table.Column<long>(type: "bigint", nullable: false),
-                    HttpStatus = table.Column<int>(type: "int", nullable: false),
-                    FinishReason = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true),
-                    ErrorMessage = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    HttpStatus = table.Column<int>(type: "integer", nullable: false),
+                    FinishReason = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    ErrorMessage = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -38,10 +38,10 @@ namespace Trsr.Storage.Migrations
                 name: "OrganizationEntity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,10 +52,10 @@ namespace Trsr.Storage.Migrations
                 name: "UserEntity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -66,11 +66,11 @@ namespace Trsr.Storage.Migrations
                 name: "ProjectEntity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Organization = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Organization = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -87,8 +87,8 @@ namespace Trsr.Storage.Migrations
                 name: "OrganizationUserEntity",
                 columns: table => new
                 {
-                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    OrganizationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -111,12 +111,12 @@ namespace Trsr.Storage.Migrations
                 name: "AgentEntity",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Project = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SystemMessage = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Tools = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Project = table.Column<Guid>(type: "uuid", nullable: false),
+                    SystemMessage = table.Column<string>(type: "text", nullable: false),
+                    Tools = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

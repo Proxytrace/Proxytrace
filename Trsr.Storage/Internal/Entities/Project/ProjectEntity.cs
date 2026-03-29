@@ -3,7 +3,7 @@ using Trsr.Domain.Project;
 namespace Trsr.Storage.Internal.Entities.Project;
 
 [StoredDomainEntity(typeof(IProject))]
-internal record ProjectEntity : Entity, IProject
+internal record ProjectEntity : Entity, IProjectData
 {
     /// <summary>
     /// <see cref="IProject.Name"/>

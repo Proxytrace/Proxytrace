@@ -4,7 +4,7 @@ using Trsr.Storage.Internal.Entities.User;
 namespace Trsr.Storage.Internal.Entities.Organization;
 
 [StoredDomainEntity(typeof(IOrganization))]
-internal record OrganizationEntity : Entity, IOrganization
+internal record OrganizationEntity : Entity, IOrganizationData
 {
     /// <summary>
     /// <see cref="IOrganization.Name"/>

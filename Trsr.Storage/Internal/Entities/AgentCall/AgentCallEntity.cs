@@ -5,7 +5,7 @@ using Trsr.Domain.Usage;
 namespace Trsr.Storage.Internal.Entities.AgentCall;
 
 [StoredDomainEntity(typeof(IAgentCall))]
-internal record AgentCallEntity : Entity, IAgentCall
+internal record AgentCallEntity : Entity, IAgentCallData
 {
     public required string Model { get; init; }
     public required string Provider { get; init; }

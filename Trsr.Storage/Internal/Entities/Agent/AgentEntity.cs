@@ -5,7 +5,7 @@ using Trsr.Domain.Tools;
 namespace Trsr.Storage.Internal.Entities.Agent;
 
 [StoredDomainEntity(typeof(IAgent))]
-internal record AgentEntity : Entity, IAgent
+internal record AgentEntity : Entity, IAgentData
 {
     /// <summary>
     /// <see cref="IAgent.Project"/>

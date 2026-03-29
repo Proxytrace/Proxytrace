@@ -3,7 +3,7 @@
 namespace Trsr.Storage.Internal.Entities.User;
 
 [StoredDomainEntity(typeof(IUser))]
-internal record UserEntity : Entity, IUser
+internal record UserEntity : Entity, IUserData
 {
     /// <summary>
     /// <see cref="IUser.Name"/>

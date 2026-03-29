@@ -29,16 +29,16 @@ public class OpenAiProxyController : ControllerBase
     ];
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IAgentCallIngestionService ingestionService;
+    private readonly IServiceScopeFactory scopeFactory;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
-        IAgentCallIngestionService ingestionService,
+        IServiceScopeFactory scopeFactory,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
-        this.ingestionService = ingestionService;
+        this.scopeFactory = scopeFactory;
         this.logger = logger;
     }
 
@@ -105,12 +105,7 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        _ = IngestSafeAsync(
-            requestBody, 
-            responseBody, 
-            sw.Elapsed,
-            upstreamResponse.StatusCode, 
-            cancellationToken);
+        _ = IngestSafeAsync(requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -142,8 +137,7 @@ public class OpenAiProxyController : ControllerBase
         sw.Stop();
 
         // Store accumulated SSE content after streaming is complete
-        _ = IngestSafeAsync(requestBody, accumulated.ToString(), sw.Elapsed,
-            upstreamResponse.StatusCode, cancellationToken);
+        _ = IngestSafeAsync(requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -152,18 +146,19 @@ public class OpenAiProxyController : ControllerBase
         string requestBody,
         string? responseBody,
         TimeSpan duration,
-        HttpStatusCode httpStatus,
-        CancellationToken cancellationToken)
+        HttpStatusCode httpStatus)
     {
         try
         {
-            await ingestionService.IngestAsync(
+            using var scope = scopeFactory.CreateScope();
+            var svc = scope.ServiceProvider.GetRequiredService<IAgentCallIngestionService>();
+            await svc.IngestAsync(
                 provider: "openai",
                 requestBody: requestBody,
                 responseBody: responseBody,
                 duration: duration,
                 httpStatus: httpStatus,
-                cancellationToken);
+                cancellationToken: CancellationToken.None);
         }
         catch (Exception ex)
         {

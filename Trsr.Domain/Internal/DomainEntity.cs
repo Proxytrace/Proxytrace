@@ -31,8 +31,8 @@ internal abstract record DomainEntity : IDomainEntity
     protected DomainEntity()
     {
         Id = Guid.NewGuid();
-        CreatedAt = DateTimeOffset.Now;
-        UpdatedAt = DateTimeOffset.Now;
+        CreatedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
     
     /// <inheritdoc />

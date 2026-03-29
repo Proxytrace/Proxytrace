@@ -24,22 +24,24 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
     }
 
-    public IAgentCall Map(AgentCallEntity stored) => factory(stored);
+    public IAgentCall Map(AgentCallEntity stored)
+        => factory(stored);
 
-    public AgentCallEntity Map(IAgentCall domain) => new()
-    {
-        Id = domain.Id,
-        Model = domain.Model,
-        Provider = domain.Provider,
-        Request = domain.Request,
-        Response = domain.Response,
-        InputTokens = (int)domain.Usage.InputTokenCount,
-        OutputTokens = (int)domain.Usage.OutputTokenCount,
-        DurationMs = (long)domain.Duration.TotalMilliseconds,
-        HttpStatus = (int)domain.HttpStatus,
-        FinishReason = domain.FinishReason,
-        ErrorMessage = domain.ErrorMessage,
-        CreatedAt = domain.CreatedAt,
-        UpdatedAt = domain.UpdatedAt,
-    };
+    public AgentCallEntity Map(IAgentCall domain)
+        => new()
+        {
+            Id = domain.Id,
+            Model = domain.Model,
+            Provider = domain.Provider,
+            Request = domain.Request,
+            Response = domain.Response,
+            InputTokens = (int)domain.Usage.InputTokenCount,
+            OutputTokens = (int)domain.Usage.OutputTokenCount,
+            DurationMs = (long)domain.Duration.TotalMilliseconds,
+            HttpStatus = (int)domain.HttpStatus,
+            FinishReason = domain.FinishReason,
+            ErrorMessage = domain.ErrorMessage,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        };
 }
