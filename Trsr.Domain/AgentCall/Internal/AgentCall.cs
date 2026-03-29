@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Message;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall.Internal;
@@ -10,8 +11,8 @@ internal record AgentCall : DomainEntity, IAgentCall
 {
     public string Model { get; }
     public string Provider { get; }
-    public string Request { get; }
-    public string? Response { get; }
+    public Conversation Conversation { get; }
+    public AssistantMessage AgentMessage { get; }
     public TokenUsage Usage { get; }
     public TimeSpan Duration { get; }
     public HttpStatusCode HttpStatus { get; }
@@ -21,8 +22,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     public AgentCall(
         string model,
         string provider,
-        string request,
-        string? response,
+        Conversation conversation,
+        AssistantMessage agentMessage,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,
@@ -31,8 +32,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     {
         Model = model;
         Provider = provider;
-        Request = request;
-        Response = response;
+        Conversation = conversation;
+        AgentMessage = agentMessage;
         Usage = usage;
         Duration = duration;
         HttpStatus = httpStatus;
@@ -44,8 +45,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     {
         Model = existing.Model;
         Provider = existing.Provider;
-        Request = existing.Request;
-        Response = existing.Response;
+        Conversation = existing.Conversation;
+        AgentMessage = existing.AgentMessage;
         Usage = existing.Usage;
         Duration = existing.Duration;
         HttpStatus = existing.HttpStatus;
@@ -56,10 +57,22 @@ internal record AgentCall : DomainEntity, IAgentCall
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
+        {
             yield return result;
+        }
+        
+        foreach (var result in Conversation.Validate(validationContext))
+        {
+            yield return result;
+        }
+        
+        foreach (var result in AgentMessage.Validate(validationContext))
+        {
+            yield return result;
+        }
 
         yield return Validation.NotNullOrWhiteSpace(Model, nameof(Model));
         yield return Validation.NotNullOrWhiteSpace(Provider, nameof(Provider));
-        yield return Validation.NotNullOrWhiteSpace(Request, nameof(Request));
+        
     }
 }

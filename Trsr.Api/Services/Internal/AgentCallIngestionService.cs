@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Message;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Api.Services.Internal;
@@ -32,15 +33,27 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     {
         try
         {
+            var conversation = ParseConversation(requestBody);
+            if (conversation is null)
+            {
+                return;
+            }
+
+            var agentMessage = ParseAgentMessage(responseBody);
+            if (agentMessage is null)
+            {
+                return;
+            }
+
             var model = ParseModel(requestBody);
-            var (inputTokens, outputTokens, finishReason) = ParseResponse(responseBody);
+            var (inputTokens, outputTokens, finishReason) = ParseUsage(responseBody);
             var errorMessage = (int)httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
 
             var call = factory(
                 model: model,
                 provider: provider,
-                request: requestBody,
-                response: responseBody,
+                conversation: conversation,
+                agentMessage: agentMessage,
                 usage: new TokenUsage((ulong)(inputTokens ?? 0), (ulong)(outputTokens ?? 0)),
                 duration: duration,
                 httpStatus: httpStatus,
@@ -56,6 +69,122 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         }
     }
 
+    // ── OpenAI request → Conversation ────────────────────────────────────────
+
+    private static Conversation? ParseConversation(string requestBody)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(requestBody);
+            if (!doc.RootElement.TryGetProperty("messages", out var messagesEl))
+                return null;
+
+            var conversation = Conversation.Create();
+            foreach (var msgEl in messagesEl.EnumerateArray())
+            {
+                var role = msgEl.TryGetProperty("role", out var rp) ? rp.GetString() : null;
+                var message = ParseMessage(role, msgEl);
+                if (message is null) return null;
+
+                if (message is SystemMessage sys)
+                    conversation.AddSystemMessage(sys);
+                else
+                    conversation.Add(message);
+            }
+            return conversation;
+        }
+        catch { return null; }
+    }
+
+    private static Message? ParseMessage(string? role, JsonElement el) => role switch
+    {
+        "system"    => new SystemMessage(ParseContents(el)),
+        "user"      => new UserMessage(ParseContents(el)),
+        "assistant" => new AssistantMessage(ParseContents(el), ParseToolRequests(el)),
+        "tool"      => ParseToolMessage(el),
+        _           => null
+    };
+
+    private static IReadOnlyList<Content> ParseContents(JsonElement el)
+    {
+        if (!el.TryGetProperty("content", out var content)) return [];
+        if (content.ValueKind == JsonValueKind.Null) return [];
+
+        if (content.ValueKind == JsonValueKind.String)
+            return [Content.FromText(content.GetString() ?? "")];
+
+        if (content.ValueKind == JsonValueKind.Array)
+        {
+            return content.EnumerateArray()
+                .Where(p => p.TryGetProperty("type", out var t) && t.GetString() == "text"
+                         && p.TryGetProperty("text", out _))
+                .Select(p => Content.FromText(p.GetProperty("text").GetString() ?? ""))
+                .ToArray();
+        }
+
+        return [];
+    }
+
+    private static IReadOnlyList<ToolRequest> ParseToolRequests(JsonElement el)
+    {
+        if (!el.TryGetProperty("tool_calls", out var toolCalls)) return [];
+        var result = new List<ToolRequest>();
+        foreach (var tc in toolCalls.EnumerateArray())
+        {
+            var id = tc.TryGetProperty("id", out var idProp) ? idProp.GetString() ?? "" : "";
+            var name = "";
+            var arguments = "{}";
+            if (tc.TryGetProperty("function", out var fn))
+            {
+                if (fn.TryGetProperty("name", out var nameProp)) name = nameProp.GetString() ?? "";
+                if (fn.TryGetProperty("arguments", out var argsProp)) arguments = argsProp.GetString() ?? "{}";
+            }
+            result.Add(new ToolRequest(id, name, arguments));
+        }
+        return result;
+    }
+
+    private static ToolMessage? ParseToolMessage(JsonElement el)
+    {
+        var id = el.TryGetProperty("tool_call_id", out var idProp) ? idProp.GetString() : null;
+        if (string.IsNullOrEmpty(id)) return null;
+
+        var contents = ParseContents(el);
+        // ToolMessage requires exactly one result content alongside the id
+        var resultContent = contents.Count switch
+        {
+            0 => Content.FromText("(no result)"),
+            1 => contents[0],
+            _ => Content.FromText(string.Concat(contents.Select(c => c.Text ?? "")))
+        };
+
+        return new ToolMessage(new ToolResponse(id, [resultContent], success: true, error: null));
+    }
+
+    // ── OpenAI response → AssistantMessage ───────────────────────────────────
+
+    private static AssistantMessage? ParseAgentMessage(string? responseBody)
+    {
+        if (responseBody is null) return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            if (!doc.RootElement.TryGetProperty("choices", out var choices)
+                || choices.GetArrayLength() == 0)
+                return null;
+
+            if (!choices[0].TryGetProperty("message", out var msg)) return null;
+
+            var role = msg.TryGetProperty("role", out var rp) ? rp.GetString() : null;
+            if (role != "assistant") return null;
+
+            return new AssistantMessage(ParseContents(msg), ParseToolRequests(msg));
+        }
+        catch { return null; }
+    }
+
+    // ── Scalar field extraction ───────────────────────────────────────────────
+
     private static string ParseModel(string requestBody)
     {
         try
@@ -68,7 +197,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         return "unknown";
     }
 
-    private static (int? inputTokens, int? outputTokens, string? finishReason) ParseResponse(string? responseBody)
+    private static (int? inputTokens, int? outputTokens, string? finishReason) ParseUsage(string? responseBody)
     {
         if (responseBody is null) return (null, null, null);
         try
@@ -86,8 +215,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                 if (usage.TryGetProperty("completion_tokens", out var ct)) outputTokens = ct.GetInt32();
             }
 
-            if (root.TryGetProperty("choices", out var choices) &&
-                choices.GetArrayLength() > 0)
+            if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
             {
                 var first = choices[0];
                 if (first.TryGetProperty("finish_reason", out var fr) && fr.ValueKind != JsonValueKind.Null)

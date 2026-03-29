@@ -1,4 +1,5 @@
 using System.Net;
+using Trsr.Domain.Message;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall;
@@ -7,8 +8,8 @@ public interface IAgentCallData : IDomainEntityData
 {
     string Model { get; }
     string Provider { get; }
-    string Request { get; }
-    string? Response { get; }
+    Conversation Conversation { get; }
+    AssistantMessage AgentMessage { get; }
     TokenUsage Usage { get; }
     TimeSpan Duration { get; }
     HttpStatusCode HttpStatus { get; }
