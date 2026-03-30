@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Serialization;
 using Trsr.Domain.TestSuite;
 using Trsr.Storage.Internal.Entities.Agent;
+using Trsr.Storage.Internal.Entities.Evaluator;
 
 namespace Trsr.Storage.Internal.Entities.TestSuite;
 
@@ -26,6 +27,12 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
+            .HasOne<EvaluatorEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.Evaluator)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
             .Property(e => e.TestCases)
             .HasConversion(
                 v => serializer.Serialize(v),
@@ -41,6 +48,7 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
         {
             Id = domainEntity.Id,
             Agent = domainEntity.Agent,
+            Evaluator = domainEntity.Evaluator,
             TestCases = domainEntity.TestCases,
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,

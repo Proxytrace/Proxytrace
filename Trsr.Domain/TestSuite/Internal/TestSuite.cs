@@ -7,17 +7,20 @@ namespace Trsr.Domain.TestSuite.Internal;
 internal record TestSuite : DomainEntity, ITestSuite
 {
     public Guid Agent { get; }
+    public Guid Evaluator { get; }
     public IReadOnlyCollection<Guid> TestCases { get; }
 
-    public TestSuite(Guid agent, IReadOnlyCollection<Guid> testCases)
+    public TestSuite(Guid agent, Guid evaluator, IReadOnlyCollection<Guid> testCases)
     {
         Agent = agent;
+        Evaluator = evaluator;
         TestCases = testCases;
     }
 
     public TestSuite(ITestSuiteData existing) : base(existing)
     {
         Agent = existing.Agent;
+        Evaluator = existing.Evaluator;
         TestCases = existing.TestCases;
     }
 
@@ -31,6 +34,11 @@ internal record TestSuite : DomainEntity, ITestSuite
         if (Agent == Guid.Empty)
         {
             yield return Validation.NotDefault(Agent, nameof(Agent));
+        }
+
+        if (Evaluator == Guid.Empty)
+        {
+            yield return Validation.NotDefault(Evaluator, nameof(Evaluator));
         }
     }
 }
