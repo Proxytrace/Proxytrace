@@ -8,6 +8,8 @@
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="9.1.0" />
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+      <PackageReference Include="System.Memory.Data" Version="8.0.1" />
     </ItemGroup>
     
     <ItemGroup>
@@ -16,15 +18,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Trsr.Common\Trsr.Common.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Reference Include="JetBrains.Annotations">
-        <HintPath>..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
-      </Reference>
-      <Reference Include="System.Memory.Data">
-        <HintPath>..\..\..\.nuget\packages\system.memory.data\8.0.1\lib\net8.0\System.Memory.Data.dll</HintPath>
-      </Reference>
     </ItemGroup>
 
 </Project>
