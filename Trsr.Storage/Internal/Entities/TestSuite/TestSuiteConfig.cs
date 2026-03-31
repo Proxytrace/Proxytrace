@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
 using Trsr.Common.Serialization;
+using Trsr.Domain;
+using Trsr.Domain.Agent;
+using Trsr.Domain.Evaluator;
+using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Evaluator;
@@ -9,11 +14,22 @@ namespace Trsr.Storage.Internal.Entities.TestSuite;
 
 internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, IMapper<ITestSuite, TestSuiteEntity>
 {
+    private readonly IRepository<IAgent> agents;
+    private readonly IRepository<IEvaluator> evaluators;
+    private readonly IRepository<ITestCase> testCases;
     private readonly ITestSuite.CreateExisting factory;
     private readonly ISerializer serializer;
 
-    public TestSuiteConfig(ITestSuite.CreateExisting factory, ISerializer serializer)
+    public TestSuiteConfig(
+        IRepository<IAgent> agents,
+        IRepository<IEvaluator> evaluators,
+        IRepository<ITestCase> testCases,
+        ITestSuite.CreateExisting factory, 
+        ISerializer serializer)
     {
+        this.agents = agents;
+        this.evaluators = evaluators;
+        this.testCases = testCases;
         this.factory = factory;
         this.serializer = serializer;
     }
@@ -40,17 +56,21 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             );
     }
 
-    public ITestSuite Map(TestSuiteEntity storedEntity)
-        => factory(storedEntity);
+    public async Task<ITestSuite> Map(TestSuiteEntity storedEntity, CancellationToken cancellationToken = default) 
+        => factory(
+            agent: await agents.GetAsync(storedEntity.Agent, cancellationToken),
+            evaluator: await evaluators.GetAsync(storedEntity.Evaluator, cancellationToken),
+            testCases: await testCases.GetManyAsync(storedEntity.TestCases, cancellationToken),
+            existing: storedEntity);
 
-    public TestSuiteEntity Map(ITestSuite domainEntity)
-        => new()
+    public Task<TestSuiteEntity> Map(ITestSuite domainEntity, CancellationToken cancellationToken = default)
+        => new TestSuiteEntity
         {
             Id = domainEntity.Id,
-            Agent = domainEntity.Agent,
-            Evaluator = domainEntity.Evaluator,
-            TestCases = domainEntity.TestCases,
+            Agent = domainEntity.Agent.Id,
+            Evaluator = domainEntity.Evaluator.Id,
+            TestCases = domainEntity.TestCases.Select(x => x.Id).ToArray(),
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,
-        };
+        }.ToTaskResult();
 }

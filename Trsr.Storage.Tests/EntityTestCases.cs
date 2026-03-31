@@ -46,8 +46,8 @@ internal class EntityTestCases<TStoredEntity, TDomainEntity> : IEntityTestCases
     public async Task Map_ToDomainAndBack_Works()
     {
         var domain = await generator.CreateAsync();
-        var stored = mapper.Map(domain);
-        var mappedBack = mapper.Map(stored);
+        var stored = await mapper.Map(domain);
+        var mappedBack = await mapper.Map(stored);
         mappedBack.Should().BeEquivalentTo(domain);
     }
 

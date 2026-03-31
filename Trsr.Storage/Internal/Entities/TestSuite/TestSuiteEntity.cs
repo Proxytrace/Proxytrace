@@ -3,7 +3,7 @@ using Trsr.Domain.TestSuite;
 namespace Trsr.Storage.Internal.Entities.TestSuite;
 
 [StoredDomainEntity(typeof(ITestSuite))]
-internal record TestSuiteEntity : Entity, ITestSuiteData
+internal record TestSuiteEntity : Entity
 {
     /// <summary>
     /// <see cref="ITestSuite.Agent"/>

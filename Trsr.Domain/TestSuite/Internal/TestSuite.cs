@@ -1,27 +1,33 @@
 using System.ComponentModel.DataAnnotations;
-using Trsr.Common.Validation;
+using Trsr.Domain.Agent;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Internal;
+using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestSuite.Internal;
 
 internal record TestSuite : DomainEntity, ITestSuite
 {
-    public Guid Agent { get; }
-    public Guid Evaluator { get; }
-    public IReadOnlyCollection<Guid> TestCases { get; }
+    public IAgent Agent { get; }
+    public IEvaluator Evaluator { get; }
+    public IReadOnlyCollection<ITestCase> TestCases { get; }
 
-    public TestSuite(Guid agent, Guid evaluator, IReadOnlyCollection<Guid> testCases)
+    public TestSuite(IAgent agent, IEvaluator evaluator, IReadOnlyCollection<ITestCase> testCases)
     {
         Agent = agent;
         Evaluator = evaluator;
-        TestCases = testCases;
+        TestCases = testCases.ToArray();
     }
 
-    public TestSuite(ITestSuiteData existing) : base(existing)
+    public TestSuite(
+        IAgent agent,
+        IEvaluator evaluator, 
+        IReadOnlyCollection<ITestCase> testCases,
+        IDomainEntityData existing) : base(existing)
     {
-        Agent = existing.Agent;
-        Evaluator = existing.Evaluator;
-        TestCases = existing.TestCases;
+        Agent = agent;
+        Evaluator = evaluator;
+        TestCases = testCases.ToArray();
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -30,15 +36,20 @@ internal record TestSuite : DomainEntity, ITestSuite
         {
             yield return result;
         }
-
-        if (Agent == Guid.Empty)
+        
+        foreach (var result in Agent.Validate(validationContext))
         {
-            yield return Validation.NotDefault(Agent, nameof(Agent));
+            yield return result;
         }
-
-        if (Evaluator == Guid.Empty)
+        
+        foreach (var result in Evaluator.Validate(validationContext))
         {
-            yield return Validation.NotDefault(Evaluator, nameof(Evaluator));
+            yield return result;
+        }
+        
+        foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
+        {
+            yield return result;
         }
     }
 }

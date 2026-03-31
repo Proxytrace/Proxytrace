@@ -34,6 +34,11 @@ public interface IRepository<TDomainEntity>
     Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Returns all entities for the given primary keys
+    /// </summary>
+    Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Returns the first entity of type <typeparamref name="TDomainEntity"/>, or null if none exist
     /// </summary>
     Task<TDomainEntity?> FindFirstAsync(CancellationToken cancellationToken = default);

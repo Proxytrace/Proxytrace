@@ -7,6 +7,6 @@ internal interface IMapper<TDomainEntity, TStoredEntity>
     where TDomainEntity : IDomainEntity
     where TStoredEntity : class, IEntity
 {
-    public TDomainEntity Map(TStoredEntity storedEntity);
-    public TStoredEntity Map(TDomainEntity domainEntity);
+    public Task<TDomainEntity> Map(TStoredEntity storedEntity, CancellationToken cancellationToken = default);
+    public Task<TStoredEntity> Map(TDomainEntity domainEntity, CancellationToken cancellationToken = default);
 }

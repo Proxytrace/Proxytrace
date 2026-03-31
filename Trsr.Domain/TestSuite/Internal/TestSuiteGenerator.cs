@@ -32,6 +32,6 @@ internal class TestSuiteGenerator : DomainEntityGenerator<ITestSuite>
         var agent = await agentGenerator.GetOrCreateAsync(cancellationToken);
         var evaluator = await evaluatorGenerator.GetOrCreateAsync(cancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(cancellationToken);
-        return factory(agent: agent.Id, evaluator: evaluator.Id, testCases: [testCase.Id]);
+        return factory(agent: agent, evaluator: evaluator, testCases: [testCase]);
     }
 }
