@@ -10,7 +10,7 @@ internal record ExactMatchEvaluator : DomainEntity, IEvaluator
 
     public ExactMatchEvaluator() { }
 
-    public ExactMatchEvaluator(IEvaluatorData existing) : base(existing) { }
+    public ExactMatchEvaluator(EvaluatorKind kind, IDomainEntityData existing) : base(existing) { }
 
     public bool Evaluate(AssistantMessage expected, AssistantMessage actual)
         => expected.Equals(actual);

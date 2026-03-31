@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -33,16 +34,16 @@ internal class TestCaseConfig : AbstractEntityConfiguration<TestCaseEntity>, IMa
             );
     }
 
-    public ITestCase Map(TestCaseEntity storedEntity)
-        => factory(storedEntity);
+    public Task<ITestCase> Map(TestCaseEntity stored, CancellationToken cancellationToken = default)
+        => factory(stored.Input, stored.ExpectedOutput, stored).ToTaskResult();
 
-    public TestCaseEntity Map(ITestCase domainEntity)
-        => new()
+    public Task<TestCaseEntity> Map(ITestCase domain, CancellationToken cancellationToken = default)
+        => new TestCaseEntity
         {
-            Id = domainEntity.Id,
-            Input = domainEntity.Input,
-            ExpectedOutput = domainEntity.ExpectedOutput,
-            CreatedAt = domainEntity.CreatedAt,
-            UpdatedAt = domainEntity.UpdatedAt,
-        };
+            Id = domain.Id,
+            Input = domain.Input,
+            ExpectedOutput = domain.ExpectedOutput,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
 }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Trsr.Common.Validation;
+using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.Usage;
@@ -9,7 +10,7 @@ namespace Trsr.Domain.AgentCall.Internal;
 
 internal record AgentCall : DomainEntity, IAgentCall
 {
-    public Guid AgentId { get; }
+    public IAgent? Agent { get; }
     public string Model { get; }
     public string Provider { get; }
     public Conversation Request { get; }
@@ -21,7 +22,6 @@ internal record AgentCall : DomainEntity, IAgentCall
     public string? ErrorMessage { get; }
 
     public AgentCall(
-        Guid agentId,
         string model,
         string provider,
         Conversation request,
@@ -30,9 +30,10 @@ internal record AgentCall : DomainEntity, IAgentCall
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage)
+        string? errorMessage,
+        IAgent? agent = null)
     {
-        AgentId = agentId;
+        Agent = agent;
         Model = model;
         Provider = provider;
         Request = request;
@@ -44,18 +45,29 @@ internal record AgentCall : DomainEntity, IAgentCall
         ErrorMessage = errorMessage;
     }
 
-    public AgentCall(IAgentCallData existing) : base(existing)
+    public AgentCall(
+        string model,
+        string provider,
+        Conversation request,
+        AssistantMessage response,
+        TokenUsage usage,
+        TimeSpan duration,
+        HttpStatusCode httpStatus,
+        string? finishReason,
+        string? errorMessage,
+        IDomainEntityData existing,
+        IAgent? agent = null) : base(existing)
     {
-        AgentId = existing.AgentId;
-        Model = existing.Model;
-        Provider = existing.Provider;
-        Request = existing.Request;
-        Response = existing.Response;
-        Usage = existing.Usage;
-        Duration = existing.Duration;
-        HttpStatus = existing.HttpStatus;
-        FinishReason = existing.FinishReason;
-        ErrorMessage = existing.ErrorMessage;
+        Agent = agent;
+        Model = model;
+        Provider = provider;
+        Request = request;
+        Response = response;
+        Usage = usage;
+        Duration = duration;
+        HttpStatus = httpStatus;
+        FinishReason = finishReason;
+        ErrorMessage = errorMessage;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -64,12 +76,12 @@ internal record AgentCall : DomainEntity, IAgentCall
         {
             yield return result;
         }
-        
+
         foreach (var result in Request.Validate(validationContext))
         {
             yield return result;
         }
-        
+
         foreach (var result in Response.Validate(validationContext))
         {
             yield return result;
@@ -77,6 +89,5 @@ internal record AgentCall : DomainEntity, IAgentCall
 
         yield return Validation.NotNullOrWhiteSpace(Model, nameof(Model));
         yield return Validation.NotNullOrWhiteSpace(Provider, nameof(Provider));
-        
     }
 }

@@ -1,18 +1,15 @@
-using Trsr.Domain.Project;
-
 namespace Trsr.Storage.Internal.Entities.Project;
 
-[StoredDomainEntity(typeof(IProject))]
-internal record ProjectEntity : Entity, IProjectData
+[StoredDomainEntity(typeof(Trsr.Domain.Project.IProject))]
+internal record ProjectEntity : Entity
 {
     /// <summary>
-    /// <see cref="IProject.Name"/>
+    /// <see cref="Trsr.Domain.Project.IProject.Name"/>
     /// </summary>
     public required string Name { get; init; }
-    
-    /// <summary>
-    /// <see cref="IProject.Organization"/>
-    /// </summary>
-    public required Guid Organization { get; set; }
-}
 
+    /// <summary>
+    /// <see cref="Trsr.Domain.Project.IProject.Organization"/>
+    /// </summary>
+    public required Guid Organization { get; init; }
+}

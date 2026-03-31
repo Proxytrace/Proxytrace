@@ -15,11 +15,12 @@ internal class OrganizationRepository : AbstractRepository<IOrganization, Organi
     {
     }
 
-    public async Task<IOrganization?> FindByNameAsync(string name, CancellationToken cancellationToken = default) 
-        => await contextFactory()
+    public async Task<IOrganization?> FindByNameAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var entity = await contextFactory()
             .Set<OrganizationEntity>()
-            .Include(o => o.UserEntities)
             .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.Name == name, cancellationToken)
-            .ContinueWith(t => Map(t.Result), cancellationToken);
+            .FirstOrDefaultAsync(o => o.Name == name, cancellationToken);
+        return await Map(entity, cancellationToken);
+    }
 }

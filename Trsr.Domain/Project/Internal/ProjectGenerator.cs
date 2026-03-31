@@ -22,9 +22,6 @@ internal class ProjectGenerator : DomainEntityGenerator<IProject>
     public override async Task<IProject> GenerateAsync(CancellationToken cancellationToken = default)
     {
         var organization = await organizationGenerator.GetOrCreateAsync(cancellationToken);
-        return factory(
-            name: random.String(),
-            organization: organization.Id);
+        return factory(name: random.String(), organization: organization);
     }
 }
-

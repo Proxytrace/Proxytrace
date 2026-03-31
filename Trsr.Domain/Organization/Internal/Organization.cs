@@ -1,24 +1,25 @@
 using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.User;
 
 namespace Trsr.Domain.Organization.Internal;
 
 internal record Organization : DomainEntity, IOrganization
 {
     public string Name { get; }
-    public IReadOnlyCollection<Guid> Users { get; }
+    public IReadOnlyCollection<IUser> Users { get; }
 
-    public Organization(string name, IReadOnlyCollection<Guid>? users = null)
+    public Organization(string name, IReadOnlyCollection<IUser>? users = null)
     {
         Name = name;
         Users = users ?? [];
     }
 
-    public Organization(IOrganizationData existing) : base(existing)
+    public Organization(string name, IReadOnlyCollection<IUser> users, IDomainEntityData existing) : base(existing)
     {
-        Name = existing.Name;
-        Users = existing.Users;
+        Name = name;
+        Users = users;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -27,11 +28,16 @@ internal record Organization : DomainEntity, IOrganization
         {
             yield return result;
         }
-        
+
         if (string.IsNullOrWhiteSpace(Name))
         {
             yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
         }
     }
-}
 
+    public virtual bool Equals(Organization? other) 
+        => base.Equals(other) && Name == other.Name && Users.SequenceEqual(other.Users);
+
+    public override int GetHashCode() 
+        => HashCode.Combine(base.GetHashCode(), Name, Users);
+}

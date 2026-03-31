@@ -1,30 +1,28 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
+using Trsr.Domain;
+using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Storage.Internal.Entities.Organization;
 
 namespace Trsr.Storage.Internal.Entities.Project;
 
-/// <summary>
-/// Entity Framework configuration for <see cref="ProjectEntity"/>
-/// </summary>
 internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapper<IProject, ProjectEntity>
 {
     private readonly IProject.CreateExisting factory;
+    private readonly IRepository<IOrganization> organizations;
 
-    public ProjectConfig(IProject.CreateExisting factory)
+    public ProjectConfig(IProject.CreateExisting factory, IRepository<IOrganization> organizations)
     {
         this.factory = factory;
+        this.organizations = organizations;
     }
-    
-    /// <inheritdoc />
+
     public override void Configure(EntityTypeBuilder<ProjectEntity> builder)
     {
-        builder
-            .HasIndex(e => new { e.Name, e.Organization })
-            .IsUnique();
-        
-        // Foreign key relationship to Organization
+        builder.HasIndex(e => new { e.Name, e.Organization }).IsUnique();
+
         builder
             .HasOne<OrganizationEntity>()
             .WithMany()
@@ -32,17 +30,19 @@ internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapp
             .OnDelete(DeleteBehavior.Restrict);
     }
 
-    public IProject Map(ProjectEntity storedEntity)
-        => factory(storedEntity);
+    public async Task<IProject> Map(ProjectEntity stored, CancellationToken cancellationToken = default)
+    {
+        var organization = await organizations.GetAsync(stored.Organization, cancellationToken);
+        return factory(stored.Name, organization, stored);
+    }
 
-    public ProjectEntity Map(IProject domainEntity)
-        => new()
+    public Task<ProjectEntity> Map(IProject domain, CancellationToken cancellationToken = default)
+        => new ProjectEntity
         {
-            Id = domainEntity.Id,
-            Name = domainEntity.Name,
-            Organization = domainEntity.Organization,
-            CreatedAt = domainEntity.CreatedAt,
-            UpdatedAt = domainEntity.UpdatedAt,
-        };
+            Id = domain.Id,
+            Name = domain.Name,
+            Organization = domain.Organization.Id,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
 }
-

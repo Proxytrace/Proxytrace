@@ -1,4 +1,5 @@
-﻿using AwesomeAssertions;
+﻿using System.ComponentModel.DataAnnotations;
+using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Exceptions;
@@ -23,14 +24,14 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
 
         var modifier = new ConcurrentModifier(user);
         var factory = services.GetRequiredService<IUser.CreateExisting>();
-        var modified = factory(modifier);
+        var modified = factory(modifier.Name, modifier);
         
         await FluentActions.Invoking(() => repo.UpdateAsync(modified, CancellationToken))
             .Should()
             .ThrowAsync<OptimisticConcurrencyException>();
     }
 
-    private record ConcurrentModifier : IUserData
+    private record ConcurrentModifier : IUser
     {
         private readonly IUser user;
 
@@ -42,6 +43,11 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public ConcurrentModifier(IUser user)
         {
             this.user = user;
+        }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            return [];
         }
     }
 }

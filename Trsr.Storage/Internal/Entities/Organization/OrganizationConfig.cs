@@ -1,52 +1,50 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
+using Trsr.Common.Serialization;
+using Trsr.Domain;
 using Trsr.Domain.Organization;
+using Trsr.Domain.User;
 
 namespace Trsr.Storage.Internal.Entities.Organization;
 
-/// <summary>
-/// Entity Framework configuration for <see cref="OrganizationEntity"/>
-/// </summary>
 internal class OrganizationConfig : AbstractEntityConfiguration<OrganizationEntity>, IMapper<IOrganization, OrganizationEntity>
 {
     private readonly IOrganization.CreateExisting factory;
+    private readonly IRepository<IUser> users;
+    private readonly ISerializer serializer;
 
-    public OrganizationConfig(IOrganization.CreateExisting factory)
+    public OrganizationConfig(IOrganization.CreateExisting factory, IRepository<IUser> users, ISerializer serializer)
     {
         this.factory = factory;
+        this.users = users;
+        this.serializer = serializer;
     }
-    
-    /// <inheritdoc />
+
     public override void Configure(EntityTypeBuilder<OrganizationEntity> builder)
     {
+        builder.HasIndex(e => e.Name).IsUnique();
+
         builder
-            .HasIndex(e => new { e.Name })
-            .IsUnique();
-        
-        // Configure many-to-many relationship with User through the join table
-        builder
-            .HasMany(o => o.UserEntities)
-            .WithOne()
-            .HasForeignKey(ou => ou.OrganizationId);
-        
-        // Ignore the computed Users property as it's derived from UserEntities
-        builder.Ignore(e => e.Users);
+            .Property(e => e.UserIds)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<IReadOnlyCollection<Guid>>(v) ?? Array.Empty<Guid>()
+            );
     }
 
-    public IOrganization Map(OrganizationEntity storedEntity)
-        => factory(storedEntity);
+    public async Task<IOrganization> Map(OrganizationEntity stored, CancellationToken cancellationToken = default)
+    {
+        var loadedUsers = await users.GetManyAsync(stored.UserIds, cancellationToken);
+        return factory(stored.Name, loadedUsers, stored);
+    }
 
-    public OrganizationEntity Map(IOrganization domainEntity) 
-        => new()
+    public Task<OrganizationEntity> Map(IOrganization domain, CancellationToken cancellationToken = default)
+        => new OrganizationEntity
         {
-            Id = domainEntity.Id,
-            Name = domainEntity.Name,
-            CreatedAt = domainEntity.CreatedAt,
-            UpdatedAt = domainEntity.UpdatedAt,
-            UserEntities = domainEntity.Users.Select(userId => new OrganizationUserEntity
-            {
-                OrganizationId = domainEntity.Id,
-                UserId = userId
-            }).ToList()
-        };
+            Id = domain.Id,
+            Name = domain.Name,
+            UserIds = domain.Users.Select(u => u.Id).ToArray(),
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
 }
-

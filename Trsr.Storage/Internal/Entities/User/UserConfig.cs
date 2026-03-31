@@ -1,12 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
 using Trsr.Domain.User;
-using Trsr.Storage.Internal.Entities.Organization;
 
 namespace Trsr.Storage.Internal.Entities.User;
 
-/// <summary>
-/// Entity Framework configuration for <see cref="UserEntity"/>
-/// </summary>
 internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUser, UserEntity>
 {
     private readonly IUser.CreateExisting factory;
@@ -15,30 +12,21 @@ internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUs
     {
         this.factory = factory;
     }
-    
-    /// <inheritdoc />
+
     public override void Configure(EntityTypeBuilder<UserEntity> builder)
     {
-        builder
-            .HasIndex(e => new{ e.Name })
-            .IsUnique();
-        
-        // Configure the other side of the many-to-many relationship with Organization
-        builder
-            .HasMany<OrganizationUserEntity>()
-            .WithOne()
-            .HasForeignKey(ou => ou.UserId);
+        builder.HasIndex(e => e.Name).IsUnique();
     }
 
-    public IUser Map(UserEntity storedEntity)
-        => factory(storedEntity);
+    public Task<IUser> Map(UserEntity stored, CancellationToken cancellationToken = default)
+        => factory(stored.Name, stored).ToTaskResult();
 
-    public UserEntity Map(IUser domainEntity)
-        => new()
+    public Task<UserEntity> Map(IUser domain, CancellationToken cancellationToken = default)
+        => new UserEntity
         {
-            Id = domainEntity.Id,
-            Name = domainEntity.Name,
-            CreatedAt = domainEntity.CreatedAt,
-            UpdatedAt = domainEntity.UpdatedAt,
-        };
+            Id = domain.Id,
+            Name = domain.Name,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
 }

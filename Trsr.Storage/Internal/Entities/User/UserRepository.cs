@@ -1,31 +1,27 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.User;
 
 namespace Trsr.Storage.Internal.Entities.User;
 
-/// <inheritdoc cref="IUserRepository" />
 [UsedImplicitly]
 internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepository
 {
     public UserRepository(
         IMapper<IUser, UserEntity> mapper,
         Func<StorageDbContext> context,
-        ITransaction transaction) : base(
-        mapper,
-        context,
-        transaction)
+        ITransaction transaction) : base(mapper, context, transaction)
     {
     }
 
-    /// <inheritdoc />
-    public async Task<IUser?> FindByName(
-        string name,
-        CancellationToken cancellationToken = default) 
-        => await contextFactory()
+    public async Task<IUser?> FindByName(string name, CancellationToken cancellationToken = default)
+    {
+        var entity = await contextFactory()
             .Set<UserEntity>()
+            .AsNoTracking()
             .Where(x => x.Name == name)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ContinueWith(result => Map(result.Result), cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
+        return await Map(entity, cancellationToken);
+    }
 }

@@ -16,10 +16,10 @@ internal record TestCase : DomainEntity, ITestCase
         ExpectedOutput = expectedOutput;
     }
 
-    public TestCase(ITestCaseData existing) : base(existing)
+    public TestCase(Conversation input, AssistantMessage expectedOutput, IDomainEntityData existing) : base(existing)
     {
-        Input = existing.Input;
-        ExpectedOutput = existing.ExpectedOutput;
+        Input = input;
+        ExpectedOutput = expectedOutput;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

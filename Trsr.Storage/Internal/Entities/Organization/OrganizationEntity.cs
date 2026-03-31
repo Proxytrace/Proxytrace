@@ -1,25 +1,15 @@
-using Trsr.Domain.Organization;
-using Trsr.Storage.Internal.Entities.User;
-
 namespace Trsr.Storage.Internal.Entities.Organization;
 
-[StoredDomainEntity(typeof(IOrganization))]
-internal record OrganizationEntity : Entity, IOrganizationData
+[StoredDomainEntity(typeof(Trsr.Domain.Organization.IOrganization))]
+internal record OrganizationEntity : Entity
 {
     /// <summary>
-    /// <see cref="IOrganization.Name"/>
+    /// <see cref="Trsr.Domain.Organization.IOrganization.Name"/>
     /// </summary>
     public required string Name { get; init; }
 
     /// <summary>
-    /// Navigation property for many-to-many relationship with Users
+    /// <see cref="Trsr.Domain.Organization.IOrganization.Users"/> - stored as JSON in the database
     /// </summary>
-    public required IReadOnlyCollection<OrganizationUserEntity> UserEntities { get; init; } = [];
-    
-    /// <summary>
-    /// <see cref="IOrganization.Users"/>
-    /// </summary>
-    public IReadOnlyCollection<Guid> Users 
-        => UserEntities.Select(u => u.UserId).ToList();
+    public required IReadOnlyCollection<Guid> UserIds { get; init; }
 }
-

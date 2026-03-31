@@ -176,11 +176,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var initialName = initialUser.Name;
 
         // Update the user
-        var updatedData = new UserDataStub(initialUser)
-        {
-            Name = "Updated Name"
-        };
-        var updatedUser = createExisting(updatedData);
+        var updatedUser = createExisting("Updated Name", initialUser);
         await repository.UpdateAsync(updatedUser, CancellationToken);
 
         // Act
@@ -313,19 +309,4 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         foundUser.Should().BeEquivalentTo(user);
     }
 
-    private class UserDataStub : IUserData
-    {
-        public Guid Id { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public string Name { get; set; }
-
-        public UserDataStub(IUser user)
-        {
-            Id = user.Id;
-            CreatedAt = user.CreatedAt;
-            UpdatedAt = user.UpdatedAt;
-            Name = user.Name;
-        }
-    }
 }

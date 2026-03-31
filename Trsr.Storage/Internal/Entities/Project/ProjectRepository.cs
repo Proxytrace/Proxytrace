@@ -17,12 +17,14 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
     }
 
     public async Task<IProject?> FindByNameAsync(
-        string name, 
-        IOrganization organization, 
-        CancellationToken cancellationToken = default) 
-        => await contextFactory()
+        string name,
+        IOrganization organization,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await contextFactory()
             .Set<ProjectEntity>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Name == name && p.Organization == organization.Id, cancellationToken)
-            .ContinueWith(t => Map(t.Result), cancellationToken);
+            .FirstOrDefaultAsync(p => p.Name == name && p.Organization == organization.Id, cancellationToken);
+        return await Map(entity, cancellationToken);
+    }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Trsr.Common.Async;
 using Trsr.Domain.Evaluator;
 
 namespace Trsr.Storage.Internal.Entities.Evaluator;
@@ -17,15 +18,15 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         builder.HasIndex(e => e.Kind);
     }
 
-    public IEvaluator Map(EvaluatorEntity storedEntity)
-        => factory(storedEntity);
+    public Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)
+        => factory(stored.Kind, stored).ToTaskResult();
 
-    public EvaluatorEntity Map(IEvaluator domainEntity)
-        => new()
+    public Task<EvaluatorEntity> Map(IEvaluator domain, CancellationToken cancellationToken = default)
+        => new EvaluatorEntity
         {
-            Id = domainEntity.Id,
-            Kind = domainEntity.Kind,
-            CreatedAt = domainEntity.CreatedAt,
-            UpdatedAt = domainEntity.UpdatedAt,
-        };
+            Id = domain.Id,
+            Kind = domain.Kind,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
 }

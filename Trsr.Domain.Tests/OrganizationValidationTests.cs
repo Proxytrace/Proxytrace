@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Organization;
+using Trsr.Domain.User;
 using Trsr.Testing;
 // ReSharper disable CollectionNeverUpdated.Local
 
@@ -16,10 +17,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var name = "Test Organization";
-        var users = new List<Guid>();
 
         // Act
-        var organization = factory(name, users);
+        var organization = factory(name, []);
 
         // Assert
         organization.Should().NotBeNull();
@@ -38,20 +38,19 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var name = "Test Organization";
-        var userId1 = Guid.NewGuid();
-        var userId2 = Guid.NewGuid();
-        var users = new List<Guid> { userId1, userId2 };
+        var user1 = CreateTestUser(services, "User 1");
+        var user2 = CreateTestUser(services, "User 2");
 
         // Act
-        var organization = factory(name, users);
+        var organization = factory(name, [user1, user2]);
 
         // Assert
         organization.Should().NotBeNull();
         organization.Name.Should().Be(name);
         organization.Users.Should().NotBeNull();
         organization.Users.Count.Should().Be(2);
-        organization.Users.Should().Contain(userId1);
-        organization.Users.Should().Contain(userId2);
+        organization.Users.Should().Contain(user1);
+        organization.Users.Should().Contain(user2);
     }
 
     [TestMethod]
@@ -61,11 +60,10 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         string? nullName = null;
-        var users = new List<Guid>();
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(nullName!, users);
+        var action = () => factory(nullName!, []);
         action.Should().Throw<Exception>();
     }
 
@@ -75,11 +73,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
-        var emptyName = string.Empty;
-        var users = new List<Guid>();
 
         // Act & Assert
-        var action = () => factory(emptyName, users);
+        var action = () => factory(string.Empty, []);
         action.Should().Throw<Exception>();
     }
 
@@ -89,11 +85,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
-        var whitespaceName = "   ";
-        var users = new List<Guid>();
 
         // Act & Assert
-        var action = () => factory(whitespaceName, users);
+        var action = () => factory("   ", []);
         action.Should().Throw<Exception>();
     }
 
@@ -103,11 +97,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
-        var tabsName = "\t\t\t";
-        var users = new List<Guid>();
 
         // Act & Assert
-        var action = () => factory(tabsName, users);
+        var action = () => factory("\t\t\t", []);
         action.Should().Throw<Exception>();
     }
 
@@ -121,7 +113,7 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         var existingOrganization = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var organization = createExisting(existingOrganization);
+        var organization = createExisting(existingOrganization.Name, existingOrganization.Users, existingOrganization);
 
         // Assert
         organization.Should().NotBeNull();
@@ -141,13 +133,8 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
         var existingOrganization = await generator.CreateAsync(CancellationToken);
 
-        var invalidData = new OrganizationDataStub(existingOrganization)
-        {
-            Name = string.Empty
-        };
-
         // Act & Assert
-        var action = () => createExisting(invalidData);
+        var action = () => createExisting(string.Empty, existingOrganization.Users, existingOrganization);
         action.Should().Throw<Exception>();
     }
 
@@ -157,33 +144,31 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
-        var users = new List<Guid>();
 
         // Act
-        var org1 = factory("Organization 1", users);
-        var org2 = factory("Organization 2", users);
+        var org1 = factory("Organization 1", []);
+        var org2 = factory("Organization 2", []);
 
         // Assert
         org1.Id.Should().NotBe(org2.Id);
     }
 
     [TestMethod]
-    public void CreateNew_WithDuplicateUserIds_KeepsDuplicates()
+    public void CreateNew_WithDuplicateUsers_KeepsDuplicates()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var name = "Test Organization";
-        var userId = Guid.NewGuid();
-        var users = new List<Guid> { userId, userId, userId };
+        var user = CreateTestUser(services, "Duplicate User");
 
         // Act
-        var organization = factory(name, users);
+        var organization = factory(name, [user, user, user]);
 
         // Assert
         organization.Should().NotBeNull();
         // The implementation may or may not deduplicate, we just verify it accepts the input
-        organization.Users.Should().Contain(userId);
+        organization.Users.Should().Contain(user);
     }
 
     [TestMethod]
@@ -193,7 +178,8 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var name = "Large Organization";
-        var users = Enumerable.Range(0, 100).Select(_ => Guid.NewGuid()).ToList();
+        var userFactory = services.GetRequiredService<IUser.CreateNew>();
+        var users = Enumerable.Range(0, 100).Select(i => userFactory($"User {i}")).ToList();
 
         // Act
         var organization = factory(name, users);
@@ -210,10 +196,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var longName = new string('A', 1000);
-        var users = new List<Guid>();
 
         // Act
-        var organization = factory(longName, users);
+        var organization = factory(longName, []);
 
         // Assert
         organization.Should().NotBeNull();
@@ -227,10 +212,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var specialName = "Organization @#$% 123 !&*()";
-        var users = new List<Guid>();
 
         // Act
-        var organization = factory(specialName, users);
+        var organization = factory(specialName, []);
 
         // Assert
         organization.Should().NotBeNull();
@@ -244,10 +228,9 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOrganization.CreateNew>();
         var unicodeName = "组织 José Müller GmbH";
-        var users = new List<Guid>();
 
         // Act
-        var organization = factory(unicodeName, users);
+        var organization = factory(unicodeName, []);
 
         // Assert
         organization.Should().NotBeNull();
@@ -273,21 +256,6 @@ public sealed class OrganizationValidationTests : BaseTest<Module>
         usersProperty.SetMethod.Should().BeNull(); // No setter, or init-only
     }
 
-    private class OrganizationDataStub : IOrganizationData
-    {
-        public Guid Id { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public string Name { get; set; }
-        public IReadOnlyCollection<Guid> Users { get; set; }
-
-        public OrganizationDataStub(IOrganization organization)
-        {
-            Id = organization.Id;
-            CreatedAt = organization.CreatedAt;
-            UpdatedAt = organization.UpdatedAt;
-            Name = organization.Name;
-            Users = organization.Users;
-        }
-    }
+    private static IUser CreateTestUser(IServiceProvider services, string name)
+        => services.GetRequiredService<IUser.CreateNew>()(name);
 }

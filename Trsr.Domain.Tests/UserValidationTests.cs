@@ -111,7 +111,7 @@ public sealed class UserValidationTests : BaseTest<Module>
         var existingUser = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var user = createExisting(existingUser);
+        var user = createExisting(existingUser.Name, existingUser);
 
         // Assert
         user.Should().NotBeNull();
@@ -130,13 +130,8 @@ public sealed class UserValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
         var existingUser = await generator.CreateAsync(CancellationToken);
 
-        var invalidData = new UserDataStub(existingUser)
-        {
-            Name = string.Empty
-        };
-
         // Act & Assert
-        var action = () => createExisting(invalidData);
+        var action = () => createExisting(string.Empty, existingUser);
         action.Should().Throw<Exception>();
     }
 
@@ -219,19 +214,4 @@ public sealed class UserValidationTests : BaseTest<Module>
         user.Name.Should().Be(unicodeName);
     }
 
-    private class UserDataStub : IUserData
-    {
-        public Guid Id { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public string Name { get; set; }
-
-        public UserDataStub(IUser user)
-        {
-            Id = user.Id;
-            CreatedAt = user.CreatedAt;
-            UpdatedAt = user.UpdatedAt;
-            Name = user.Name;
-        }
-    }
 }

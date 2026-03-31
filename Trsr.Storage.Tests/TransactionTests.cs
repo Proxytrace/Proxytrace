@@ -290,32 +290,12 @@ public sealed class TransactionTests : BaseTest<Module>
         // Act
         await transaction.InvokeAsync(async () =>
         {
-            var updatedData = new UserDataStub(initialUser)
-            {
-                Name = "Updated Name"
-            };
-            var updatedUser = createExisting(updatedData);
+            var updatedUser = createExisting("Updated Name", initialUser);
             await repository.UpdateAsync(updatedUser, CancellationToken);
         });
 
         // Assert
         var retrievedUser = await repository.GetAsync(initialUser.Id, CancellationToken);
         retrievedUser.Name.Should().Be("Updated Name");
-    }
-
-    private class UserDataStub : IUserData
-    {
-        public Guid Id { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public string Name { get; set; }
-
-        public UserDataStub(IUser user)
-        {
-            Id = user.Id;
-            CreatedAt = user.CreatedAt;
-            UpdatedAt = user.UpdatedAt;
-            Name = user.Name;
-        }
     }
 }

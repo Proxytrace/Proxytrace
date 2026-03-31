@@ -2,7 +2,9 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
-using Trsr.Domain.Tools;
+using Trsr.Domain.Organization;
+using Trsr.Domain.Project;
+using Trsr.Domain.User;
 using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
@@ -17,15 +19,15 @@ public sealed class AgentValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var systemMessage = new SystemMessage("You are a helpful assistant");
-        var projectId = Guid.NewGuid();
+        var project = CreateTestProject(services);
 
         // Act
-        var agent = factory(systemMessage, [], projectId);
+        var agent = factory(systemMessage, [], project);
 
         // Assert
         agent.Should().NotBeNull();
         agent.SystemMessage.Should().Be(systemMessage);
-        agent.Project.Should().Be(projectId);
+        agent.Project.Should().Be(project);
         agent.Id.Should().NotBe(Guid.Empty);
         agent.CreatedAt.Should().NotBe(default);
         agent.UpdatedAt.Should().NotBe(default);
@@ -37,16 +39,16 @@ public sealed class AgentValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
-        var projectId = Guid.NewGuid();
+        var project = CreateTestProject(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, [], projectId);
+        var action = () => factory(null!, [], project);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public void CreateNew_WithEmptyProjectId_ThrowsValidationException()
+    public void CreateNew_WithNullProject_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -54,7 +56,8 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var systemMessage = new SystemMessage("You are a helpful assistant");
 
         // Act & Assert
-        var action = () => factory(systemMessage, [], Guid.Empty);
+        // ReSharper disable once NullableWarningSuppressionIsUsed
+        var action = () => factory(systemMessage, [], null!);
         action.Should().Throw<Exception>();
     }
 
@@ -68,7 +71,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var agent = createExisting(existingAgent);
+        var agent = createExisting(existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
 
         // Assert
         agent.Should().NotBeNull();
@@ -80,7 +83,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task CreateExisting_WithInvalidProject_ThrowsValidationException()
+    public async Task CreateExisting_WithNullProject_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -88,13 +91,9 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
-        var invalidData = new AgentDataStub(existingAgent)
-        {
-            Project = Guid.Empty
-        };
-
         // Act & Assert
-        var action = () => createExisting(invalidData);
+        // ReSharper disable once NullableWarningSuppressionIsUsed
+        var action = () => createExisting(null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
         action.Should().Throw<Exception>();
     }
 
@@ -105,34 +104,23 @@ public sealed class AgentValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var systemMessage = new SystemMessage("You are a helpful assistant");
-        var projectId = Guid.NewGuid();
+        var project = CreateTestProject(services);
 
         // Act
-        var agent1 = factory(systemMessage, [], projectId);
-        var agent2 = factory(systemMessage, [], projectId);
+        var agent1 = factory(systemMessage, [], project);
+        var agent2 = factory(systemMessage, [], project);
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);
     }
 
-    private class AgentDataStub : IAgentData
+    private static IProject CreateTestProject(IServiceProvider services)
     {
-        public Guid Id { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
-        public Guid Project { get; set; }
-        public SystemMessage SystemMessage { get; set; }
-        // ReSharper disable once MemberInitializerValueIgnored
-        public IReadOnlyCollection<ToolSpecification> Tools { get; set; } = [];
-
-        public AgentDataStub(IAgent agent)
-        {
-            Id = agent.Id;
-            CreatedAt = agent.CreatedAt;
-            UpdatedAt = agent.UpdatedAt;
-            Project = agent.Project;
-            SystemMessage = agent.SystemMessage;
-            Tools = agent.Tools;
-        }
+        var userFactory = services.GetRequiredService<IUser.CreateNew>();
+        var orgFactory = services.GetRequiredService<IOrganization.CreateNew>();
+        var projectFactory = services.GetRequiredService<IProject.CreateNew>();
+        var user = userFactory("Test User");
+        var org = orgFactory("Test Org", [user]);
+        return projectFactory("Test Project", org);
     }
 }

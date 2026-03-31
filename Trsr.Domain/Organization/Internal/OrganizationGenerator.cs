@@ -25,10 +25,6 @@ internal class OrganizationGenerator : DomainEntityGenerator<IOrganization>
         var users = await Enumerable.Range(0, random.Int(max: 5))
             .Select(_ => userGenerator.GetOrCreateAsync(cancellationToken))
             .Await();
-        return factory(
-            name: random.String(),
-            users: users.Select(x => x.Id).ToList());
+        return factory(name: random.String(), users: users.ToList());
     }
 }
-
-

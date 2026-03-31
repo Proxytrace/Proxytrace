@@ -45,15 +45,14 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                 return;
             }
 
-            Guid? agentId = null;
+            IAgent? agent = null;
             if (parsed.SystemMessage is not null)
             {
-                var agent = await agentRepository.GetOrCreateAsync(
+                agent = await agentRepository.GetOrCreateAsync(
                     parsed.SystemMessage,
                     parsed.Tools,
                     project,
                     cancellationToken);
-                agentId = agent.Id;
             }
 
             var call = factory(
@@ -66,7 +65,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                 httpStatus: parsed.HttpStatus,
                 finishReason: parsed.FinishReason,
                 errorMessage: parsed.ErrorMessage,
-                agentId: agentId);
+                agent: agent);
 
             await repository.AddAsync(call, cancellationToken);
         }

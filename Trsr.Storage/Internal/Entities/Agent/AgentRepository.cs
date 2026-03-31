@@ -39,29 +39,22 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
         if (existing is not null)
         {
-            return Map(existing);
+            return (await Map(existing, cancellationToken))!;
         }
 
-        var agent = createNew(systemMessage, tools, project.Id);
+        var agent = createNew(systemMessage, tools, project);
         return await AddAsync(agent, cancellationToken);
     }
-    
-    /// <summary>
-    /// Computes a stable SHA-256 fingerprint from a system message and tool specifications.
-    /// Two agents with the same system message text and the same tools (by name, description,
-    /// and schema) will produce the same fingerprint.
-    /// </summary>
+
     public string GetAgentFingerprint(SystemMessage systemMessage, IReadOnlyCollection<ToolSpecification> tools)
     {
         var sb = new StringBuilder();
 
-        // System message: concatenate all text contents
         foreach (var content in systemMessage.Contents)
             sb.Append(content.Text ?? "");
 
         sb.Append('\0');
 
-        // Tools: sort by name for stability, then append name + description + schema
         foreach (var tool in tools.OrderBy(t => t.Name, StringComparer.Ordinal))
         {
             sb.Append(tool.Name).Append('\0');

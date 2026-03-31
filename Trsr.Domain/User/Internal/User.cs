@@ -10,16 +10,21 @@ internal record User : DomainEntity, IUser
 
     public User(string name)
     {
-        Name  = name;
+        Name = name;
     }
 
-    public User(IUserData existing) : base(existing)
+    public User(string name, IDomainEntityData existing) : base(existing)
     {
-        Name = existing.Name;
+        Name = name;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        foreach (var result in base.Validate(validationContext))
+        {
+            yield return result;
+        }
+
         if (string.IsNullOrWhiteSpace(Name))
         {
             yield return Validation.NotNullOrWhiteSpace(Name);
