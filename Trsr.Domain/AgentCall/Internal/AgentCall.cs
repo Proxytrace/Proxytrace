@@ -77,14 +77,28 @@ internal record AgentCall : DomainEntity, IAgentCall
             yield return result;
         }
 
-        foreach (var result in Request.Validate(validationContext))
+        if (Request is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Request, nameof(Request));
+        }
+        else
+        {
+            foreach (var result in Request.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
 
-        foreach (var result in Response.Validate(validationContext))
+        if (Response is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Response, nameof(Response));
+        }
+        else
+        {
+            foreach (var result in Response.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
 
         yield return Validation.NotNullOrWhiteSpace(Model, nameof(Model));

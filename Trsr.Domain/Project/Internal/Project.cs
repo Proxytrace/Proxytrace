@@ -34,9 +34,16 @@ internal record Project : DomainEntity, IProject
             yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
         }
 
-        foreach (var result in Organization.Validate(validationContext))
+        if (Organization is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Organization, nameof(Organization));
+        }
+        else
+        {
+            foreach (var result in Organization.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
     }
 }

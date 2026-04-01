@@ -34,14 +34,28 @@ internal record Agent : DomainEntity, IAgent
             yield return result;
         }
         
-        foreach (var result in SystemMessage.Validate(validationContext))
+        if (SystemMessage is null)
         {
-            yield return result;
+            yield return Validation.NotNull(SystemMessage, nameof(SystemMessage));
+        }
+        else
+        {
+            foreach (var result in SystemMessage.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
 
-        foreach (var result in Project.Validate(validationContext))
+        if (Project is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Project, nameof(Project));
+        }
+        else
+        {
+            foreach (var result in Project.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
     }
 }

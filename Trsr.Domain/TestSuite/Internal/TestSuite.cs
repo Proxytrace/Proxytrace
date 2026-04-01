@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Internal;
@@ -37,19 +38,40 @@ internal record TestSuite : DomainEntity, ITestSuite
             yield return result;
         }
         
-        foreach (var result in Agent.Validate(validationContext))
+        if (Agent is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Agent, nameof(Agent));
         }
-        
-        foreach (var result in Evaluator.Validate(validationContext))
+        else
         {
-            yield return result;
+            foreach (var result in Agent.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
-        
-        foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
+
+        if (Evaluator is null)
         {
-            yield return result;
+            yield return Validation.NotNull(Evaluator, nameof(Evaluator));
+        }
+        else
+        {
+            foreach (var result in Evaluator.Validate(validationContext))
+            {
+                yield return result;
+            }
+        }
+
+        if (TestCases is null)
+        {
+            yield return Validation.NotNull(TestCases, nameof(TestCases));
+        }
+        else
+        {
+            foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
+            {
+                yield return result;
+            }
         }
     }
 }
