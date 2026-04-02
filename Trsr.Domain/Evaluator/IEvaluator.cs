@@ -2,8 +2,12 @@ using Trsr.Domain.Message;
 
 namespace Trsr.Domain.Evaluator;
 
+/// <summary>
+/// Evaluates whether an actual assistant response matches an expected output.
+/// </summary>
 public interface IEvaluator : IDomainEntity
 {
+    /// <summary>The evaluation strategy used by this evaluator.</summary>
     EvaluatorKind Kind { get; }
 
     /// <summary>

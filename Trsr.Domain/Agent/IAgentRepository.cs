@@ -4,6 +4,9 @@ using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent;
 
+/// <summary>
+/// Repository for <see cref="IAgent"/> entities with agent-specific lookup operations.
+/// </summary>
 public interface IAgentRepository : IRepository<IAgent>
 {
     /// <summary>
@@ -16,9 +19,15 @@ public interface IAgentRepository : IRepository<IAgent>
         IProject project,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Computes a stable fingerprint for an agent defined by the given <paramref name="systemMessage"/> and <paramref name="tools"/>.
+    /// </summary>
     string GetAgentFingerprint(
-        SystemMessage systemMessage, 
+        SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools);
-    
+
+    /// <summary>
+    /// Computes a stable fingerprint for the given <paramref name="agent"/>.
+    /// </summary>
     string GetAgentFingerprint(IAgent agent);
 }
