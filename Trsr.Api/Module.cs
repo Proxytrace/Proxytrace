@@ -33,12 +33,25 @@ internal sealed class Module : Autofac.Module
             .As<IAgentCallIngestionService>()
             .InstancePerDependency();
 
+        var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
+                          ?? "http://localhost:5000";
+
+        builder.RegisterType<TestRunnerService>()
+            .As<ITestRunnerService>()
+            .InstancePerDependency();
+
         builder.RegisterServiceCollection(services =>
         {
             services.AddHttpClient("openai", client =>
             {
                 client.BaseAddress = new Uri(upstreamBaseUrl.TrimEnd('/') + "/");
                 client.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient("self", client =>
+            {
+                client.BaseAddress = new Uri(selfBaseUrl.TrimEnd('/') + "/");
+                client.Timeout = TimeSpan.FromMinutes(10);
             });
         });
 

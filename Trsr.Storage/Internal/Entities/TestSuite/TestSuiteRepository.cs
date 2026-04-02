@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.TestSuite;
 
@@ -12,5 +13,16 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
         Func<StorageDbContext> contextFactory,
         ITransaction transaction) : base(mapper, contextFactory, transaction)
     {
+    }
+
+    public async Task<IReadOnlyList<ITestSuite>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<TestSuiteEntity>()
+            .AsNoTracking()
+            .Where(e => e.Agent == agentId)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
     }
 }

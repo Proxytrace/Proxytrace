@@ -21,4 +21,12 @@
     <ProjectReference Include="..\Trsr.Storage\Trsr.Storage.csproj" />
   </ItemGroup>
 
+  <Target Name="BuildAngularFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="npm run build -- --configuration production" WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
+    <ItemGroup>
+      <FrontendFiles Include="$(MSBuildThisFileDirectory)../frontend/dist/frontend/browser/**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot/%(RecursiveDir)" />
+  </Target>
+
 </Project>

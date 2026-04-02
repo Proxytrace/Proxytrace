@@ -59,6 +59,10 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
 
+        builder.RegisterType<StatisticsQueryService>()
+            .As<IStatisticsQueryService>()
+            .InstancePerDependency();
+
         builder
             .Register(context => new AutofacServiceProvider(context.Resolve<ILifetimeScope>()))
             .InstancePerLifetimeScope()
