@@ -1,0 +1,76 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Page header -->
+  <div class="mb-8">
+    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Dashboard</h1>
+    <p class="text-sm" style="color: var(--text-muted);">Overview of your agent tracing and evaluation activity.</p>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    @for (stat of stats; track stat.label) {
+      <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+        <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">{{ stat.label }}</p>
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">{{ stat.value }}</p>
+        <p class="text-xs" style="color: var(--text-muted);">{{ stat.delta }}</p>
+      </div>
+    }
+  </div>
+
+  <!-- Recent activity placeholder -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Recent Traces -->
+    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
+        <h2 class="text-sm font-medium" style="color: var(--text-primary);">Recent Traces</h2>
+        <a routerLink="/traces" class="text-xs transition-colors" style="color: var(--accent-primary);">View all →</a>
+      </div>
+      <div class="flex flex-col items-center justify-center py-12 px-4">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3"
+             style="background-color: var(--bg-secondary);">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               style="color: var(--text-muted);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <p class="text-sm mb-1" style="color: var(--text-secondary);">No traces yet</p>
+        <p class="text-xs text-center" style="color: var(--text-muted);">
+          Route your agent through the Trsr proxy to start capturing traces.
+        </p>
+      </div>
+    </div>
+
+    <!-- Getting started -->
+    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <div class="px-4 py-3 border-b" style="border-color: var(--border-color);">
+        <h2 class="text-sm font-medium" style="color: var(--text-primary);">Getting Started</h2>
+      </div>
+      <div class="p-4 space-y-3">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+               style="background-color: var(--accent-subtle); color: var(--accent-primary);">1</div>
+          <div>
+            <p class="text-sm font-medium" style="color: var(--text-primary);">Configure your proxy</p>
+            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Point your OpenAI-compatible client at the Trsr proxy endpoint.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+               style="background-color: var(--bg-secondary); color: var(--text-muted);">2</div>
+          <div>
+            <p class="text-sm font-medium" style="color: var(--text-secondary);">Capture traces</p>
+            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Run your agent — Trsr will capture every LLM interaction automatically.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+               style="background-color: var(--bg-secondary); color: var(--text-muted);">3</div>
+          <div>
+            <p class="text-sm font-medium" style="color: var(--text-secondary);">Build test suites</p>
+            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Promote interesting traces to test cases and evaluate over time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
