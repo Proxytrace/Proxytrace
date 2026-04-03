@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Trsr.Api.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Trsr.Domain\Trsr.Domain.csproj" />
     <ProjectReference Include="..\Trsr.Storage\Trsr.Storage.csproj" />
   </ItemGroup>
