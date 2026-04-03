@@ -14,9 +14,4 @@ internal record TestCaseEntity : Entity
     /// <see cref="Trsr.Domain.TestCase.ITestCase.ExpectedOutput"/> - stored as JSON in the database
     /// </summary>
     public required AssistantMessage ExpectedOutput { get; init; }
-
-    /// <summary>
-    /// <see cref="Trsr.Domain.TestCase.ITestCase.SourceAgentCallId"/>
-    /// </summary>
-    public Guid? SourceAgentCallId { get; init; }
 }

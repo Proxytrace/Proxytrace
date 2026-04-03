@@ -13,8 +13,7 @@ public record TestSuiteDto(
 public record TestCaseDto(
     Guid Id,
     IReadOnlyList<MessageDto> Input,
-    MessageDto ExpectedOutput,
-    Guid? SourceAgentCallId);
+    MessageDto ExpectedOutput);
 
 public record MessageDto(string Role, string Content);
 

@@ -25,6 +25,5 @@ internal class TestCaseGenerator : DomainEntityGenerator<ITestCase>
     public override async Task<ITestCase> GenerateAsync(CancellationToken cancellationToken = default)
         => factory(
             input: await conversationGenerator.CreateAsync(cancellationToken),
-            expectedOutput: await assistantMessageGenerator.CreateAsync(cancellationToken),
-            sourceAgentCallId: null);
+            expectedOutput: await assistantMessageGenerator.CreateAsync(cancellationToken));
 }

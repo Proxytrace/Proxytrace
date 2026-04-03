@@ -9,20 +9,17 @@ internal record TestCase : DomainEntity, ITestCase
 {
     public Conversation Input { get; }
     public AssistantMessage ExpectedOutput { get; }
-    public Guid? SourceAgentCallId { get; }
 
-    public TestCase(Conversation input, AssistantMessage expectedOutput, Guid? sourceAgentCallId = null)
+    public TestCase(Conversation input, AssistantMessage expectedOutput)
     {
         Input = input;
         ExpectedOutput = expectedOutput;
-        SourceAgentCallId = sourceAgentCallId;
     }
 
-    public TestCase(Conversation input, AssistantMessage expectedOutput, IDomainEntityData existing, Guid? sourceAgentCallId = null) : base(existing)
+    public TestCase(Conversation input, AssistantMessage expectedOutput, IDomainEntityData existing) : base(existing)
     {
         Input = input;
         ExpectedOutput = expectedOutput;
-        SourceAgentCallId = sourceAgentCallId;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

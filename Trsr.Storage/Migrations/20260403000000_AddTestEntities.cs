@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Trsr.Storage.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTestEntitiesAndSourceAgentCallId : Migration
+    public partial class AddTestEntities : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -32,7 +32,6 @@ namespace Trsr.Storage.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Input = table.Column<string>(type: "text", nullable: false),
                     ExpectedOutput = table.Column<string>(type: "text", nullable: false),
-                    SourceAgentCallId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },

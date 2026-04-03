@@ -160,7 +160,7 @@ public class TestSuitesController : ControllerBase
                 return BadRequest($"Agent call {callId} not found.");
 
             var call = await agentCallRepository.GetAsync(callId, cancellationToken);
-            var testCase = createTestCase(call.Request, call.Response, callId);
+            var testCase = createTestCase(call.Request, call.Response);
             var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
             testCases.Add(saved);
         }
@@ -215,7 +215,7 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            return createTestCase(call.Request, call.Response, fromAgentCallId.Value);
+            return createTestCase(call.Request, call.Response);
         }
 
         if (inputMessages is not null && expectedOutput is not null)
@@ -255,8 +255,7 @@ public class TestSuitesController : ControllerBase
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
             tc.Input.Messages.Select(m => new Dto.TestSuites.MessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? ""))),
-            tc.SourceAgentCallId
+            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);
