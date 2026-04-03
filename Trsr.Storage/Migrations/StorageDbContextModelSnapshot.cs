@@ -126,6 +126,142 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("AgentCallEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Evaluator.EvaluatorEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind");
+
+                    b.ToTable("EvaluatorEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestCase.TestCaseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Input")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExpectedOutput")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TestCaseEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Agent")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Evaluator")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TestCases")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Agent");
+
+                    b.HasIndex("Evaluator");
+
+                    b.ToTable("TestSuiteEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TestCase")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActualResponse")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Evaluation")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TestCase");
+
+                    b.ToTable("TestResultEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestRun.TestRunEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Agent")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TestResults")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Agent");
+
+                    b.ToTable("TestRunEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -247,6 +383,39 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", null)
                         .WithMany()
                         .HasForeignKey("Organization")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Agent")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.Evaluator.EvaluatorEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Evaluator")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.TestCase.TestCaseEntity", null)
+                        .WithMany()
+                        .HasForeignKey("TestCase")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestRun.TestRunEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Agent")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

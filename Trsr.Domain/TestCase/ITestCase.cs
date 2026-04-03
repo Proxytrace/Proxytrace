@@ -14,8 +14,13 @@ public interface ITestCase : IDomainEntity
     AssistantMessage ExpectedOutput { get; }
 
     /// <summary>Factory delegate for creating a new test case.</summary>
-    public delegate ITestCase CreateNew(Conversation input, AssistantMessage expectedOutput);
+    public delegate ITestCase CreateNew(
+        Conversation input,
+        AssistantMessage expectedOutput);
 
     /// <summary>Factory delegate for reconstituting an existing test case from persistence.</summary>
-    public delegate ITestCase CreateExisting(Conversation input, AssistantMessage expectedOutput, IDomainEntityData existing);
+    public delegate ITestCase CreateExisting(
+        Conversation input,
+        AssistantMessage expectedOutput,
+        IDomainEntityData existing);
 }
