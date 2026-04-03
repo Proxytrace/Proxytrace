@@ -133,6 +133,43 @@ public class TestSuitesController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
+    /// <summary>
+    /// Creates a new test suite by promoting a curated selection of traced agent calls.
+    /// Each selected trace becomes a test case whose expected output is the actual response
+    /// recorded during that call, preserving the link back to the source trace.
+    /// </summary>
+    [HttpPost("from-traces")]
+    public async Task<ActionResult<TestSuiteDto>> PromoteFromTraces(
+        [FromBody] PromoteTracesRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
+            return BadRequest($"Agent {request.AgentId} not found.");
+
+        if (request.AgentCallIds.Count == 0)
+            return BadRequest("At least one agent call ID must be provided.");
+
+        var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
+        var evaluator = createEvaluator();
+        var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
+
+        var testCases = new List<ITestCase>();
+        foreach (var callId in request.AgentCallIds)
+        {
+            if (!await agentCallRepository.ContainsAsync(callId, cancellationToken))
+                return BadRequest($"Agent call {callId} not found.");
+
+            var call = await agentCallRepository.GetAsync(callId, cancellationToken);
+            var testCase = createTestCase(call.Request, call.Response, callId);
+            var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
+            testCases.Add(saved);
+        }
+
+        var suite = createSuite(agent, savedEvaluator, testCases);
+        var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
+        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
+    }
+
     [HttpPost("{id:guid}/test-cases")]
     public async Task<ActionResult<TestSuiteDto>> AddTestCase(
         Guid id,
@@ -178,7 +215,7 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            return createTestCase(call.Request, call.Response);
+            return createTestCase(call.Request, call.Response, fromAgentCallId.Value);
         }
 
         if (inputMessages is not null && expectedOutput is not null)
@@ -218,7 +255,8 @@ public class TestSuitesController : ControllerBase
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
             tc.Input.Messages.Select(m => new Dto.TestSuites.MessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
+            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? ""))),
+            tc.SourceAgentCallId
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);

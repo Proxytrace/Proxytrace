@@ -35,7 +35,7 @@ internal class TestCaseConfig : AbstractEntityConfiguration<TestCaseEntity>, IMa
     }
 
     public Task<ITestCase> Map(TestCaseEntity stored, CancellationToken cancellationToken = default)
-        => factory(stored.Input, stored.ExpectedOutput, stored).ToTaskResult();
+        => factory(stored.Input, stored.ExpectedOutput, stored, stored.SourceAgentCallId).ToTaskResult();
 
     public Task<TestCaseEntity> Map(ITestCase domain, CancellationToken cancellationToken = default)
         => new TestCaseEntity
@@ -43,6 +43,7 @@ internal class TestCaseConfig : AbstractEntityConfiguration<TestCaseEntity>, IMa
             Id = domain.Id,
             Input = domain.Input,
             ExpectedOutput = domain.ExpectedOutput,
+            SourceAgentCallId = domain.SourceAgentCallId,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
