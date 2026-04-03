@@ -97,6 +97,12 @@ This is not yet a runnable product. The foundational work happening now is what 
 
 ---
 
+## API Discoverability
+
+When running in **Development** mode, Swagger UI is available at `/swagger` and the raw OpenAPI JSON at `/swagger/v1/swagger.json`. This lets you inspect and exercise every endpoint without any external tooling.
+
+---
+
 ## Tech Stack
 
 - **Backend:** C# / .NET 10, ASP.NET Core
