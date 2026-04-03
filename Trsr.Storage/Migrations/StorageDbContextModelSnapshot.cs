@@ -276,6 +276,51 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("TestRunEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Agent")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Rationale")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProposedSystemMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProposedTools")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EvidenceTestRunIds")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Agent");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("OptimizationProposalEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -373,6 +418,15 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
                         .WithMany()
                         .HasForeignKey("Project")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Agent")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
