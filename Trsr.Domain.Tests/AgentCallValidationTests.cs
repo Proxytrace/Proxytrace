@@ -259,6 +259,6 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         var user = userFactory("Test User");
         var org = orgFactory("Test Org", [user]);
         var project = projectFactory("Test Project", org);
-        return agentFactory(systemMessage, [], project);
+        return agentFactory(systemMessage, [], "gpt-4o", "openai", project);
     }
 }

@@ -36,6 +36,16 @@ namespace Trsr.Storage.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
 
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<Guid>("Project")
                         .HasColumnType("uuid");
 
@@ -55,7 +65,11 @@ namespace Trsr.Storage.Migrations
                     b.HasIndex("Fingerprint")
                         .IsUnique();
 
+                    b.HasIndex("Model");
+
                     b.HasIndex("Project");
+
+                    b.HasIndex("Provider");
 
                     b.ToTable("AgentEntity");
                 });
