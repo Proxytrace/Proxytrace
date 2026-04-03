@@ -51,6 +51,8 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                 agent = await agentRepository.GetOrCreateAsync(
                     parsed.SystemMessage,
                     parsed.Tools,
+                    parsed.Model,
+                    parsed.Provider,
                     project,
                     cancellationToken);
             }
