@@ -6,6 +6,24 @@ interface StatCard {
   value: string;
   delta: string;
   positive: boolean;
+  icon: string;
+}
+
+interface RecentTrace {
+  id: string;
+  agent: string;
+  model: string;
+  latency: number;
+  tokens: number;
+  status: 'success' | 'error';
+  timestamp: string;
+}
+
+interface AgentSummary {
+  name: string;
+  traces: number;
+  model: string;
+  errorRate: number;
 }
 
 @Component({
@@ -16,9 +34,28 @@ interface StatCard {
 })
 export class Dashboard {
   readonly stats: StatCard[] = [
-    { label: 'Total Traces', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Agents Detected', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Test Suites', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Avg Latency', value: '—', delta: 'No data yet', positive: true },
+    { label: 'Total Traces', value: '1,248', delta: '+12% vs last week', positive: true, icon: 'activity' },
+    { label: 'Active Agents', value: '4', delta: '+1 this week', positive: true, icon: 'agents' },
+    { label: 'Test Suites', value: '3', delta: '73 test cases total', positive: true, icon: 'clipboard' },
+    { label: 'Avg Latency', value: '1.1s', delta: '−80ms vs last week', positive: true, icon: 'clock' },
   ];
+
+  readonly recentTraces: RecentTrace[] = [
+    { id: 'trc_1a2b3c', agent: 'customer-support-v2', model: 'gpt-4o', latency: 1240, tokens: 1823, status: 'success', timestamp: '2 min ago' },
+    { id: 'trc_4d5e6f', agent: 'content-writer', model: 'claude-3-5-sonnet', latency: 890, tokens: 942, status: 'success', timestamp: '5 min ago' },
+    { id: 'trc_7g8h9i', agent: 'code-reviewer', model: 'gpt-4o', latency: 3200, tokens: 4521, status: 'error', timestamp: '12 min ago' },
+    { id: 'trc_jklmno', agent: 'customer-support-v2', model: 'gpt-4o', latency: 980, tokens: 1105, status: 'success', timestamp: '18 min ago' },
+    { id: 'trc_pqrstu', agent: 'summarizer', model: 'claude-3-haiku', latency: 320, tokens: 421, status: 'success', timestamp: '25 min ago' },
+  ];
+
+  readonly topAgents: AgentSummary[] = [
+    { name: 'customer-support-v2', traces: 512, model: 'gpt-4o', errorRate: 2.1 },
+    { name: 'content-writer', traces: 289, model: 'claude-3-5-sonnet', errorRate: 0.7 },
+    { name: 'code-reviewer', traces: 198, model: 'gpt-4o', errorRate: 4.5 },
+    { name: 'summarizer', traces: 249, model: 'claude-3-haiku', errorRate: 1.2 },
+  ];
+
+  formatLatency(ms: number): string {
+    return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${ms}ms`;
+  }
 }

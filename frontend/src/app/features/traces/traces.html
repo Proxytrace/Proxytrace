@@ -3,12 +3,19 @@
   <div class="flex items-center justify-between mb-6">
     <div>
       <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Traces</h1>
-      <p class="text-sm" style="color: var(--text-muted);">All captured agent invocations.</p>
+      <p class="text-sm" style="color: var(--text-muted);">All captured agent invocations through the Trsr proxy.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs px-2.5 py-1 rounded-full font-medium"
+            style="background-color: var(--accent-subtle); color: var(--accent-primary);">
+        {{ filtered().length }} traces
+      </span>
     </div>
   </div>
 
   <!-- Filters bar -->
   <div class="flex items-center gap-3 mb-4">
+    <!-- Search -->
     <div class="flex-1 max-w-sm relative">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
            fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -18,61 +25,102 @@
       </svg>
       <input
         type="text"
-        placeholder="Search traces..."
+        placeholder="Search by ID, agent, or model..."
         [value]="searchQuery()"
         (input)="onSearch($event)"
         class="w-full pl-9 pr-3 py-2 text-sm rounded-md border outline-none transition-colors"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-primary);"
       />
     </div>
-    <button
-      class="px-3 py-2 text-sm rounded-md border transition-colors"
-      style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);">
-      Filter
-    </button>
+
+    <!-- Status filter pills -->
+    <div class="flex items-center gap-1 p-1 rounded-md" style="background-color: var(--bg-card); border: 1px solid var(--border-color);">
+      @for (s of [['all','All'],['success','Success'],['error','Error']]; track s[0]) {
+        <button
+          (click)="setStatus(s[0] === 'all' ? 'all' : s[0] === 'success' ? 'success' : 'error')"
+          class="px-3 py-1 text-xs rounded transition-colors font-medium"
+          [style]="selectedStatus() === s[0]
+            ? 'background-color: var(--accent-subtle); color: var(--accent-primary);'
+            : 'color: var(--text-muted);'">
+          {{ s[1] }}
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Table -->
   <div class="rounded-lg border overflow-hidden" style="background-color: var(--bg-card); border-color: var(--border-color);">
     <!-- Table header -->
     <div class="grid text-xs font-medium px-4 py-3 border-b"
-         style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; border-color: var(--border-color); color: var(--text-muted);">
+         style="grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1fr 1fr 1fr; border-color: var(--border-color); color: var(--text-muted);">
       <span>Trace ID</span>
       <span>Agent</span>
       <span>Model</span>
       <span>Latency</span>
-      <span>Timestamp</span>
+      <span>Tokens</span>
+      <span>Cost</span>
+      <span>Status</span>
     </div>
 
-    <!-- Empty state -->
-    <div class="flex flex-col items-center justify-center py-16 px-4">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-           style="background-color: var(--bg-secondary);">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-             style="color: var(--text-muted);">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
+    @if (filtered().length === 0) {
+      <div class="flex flex-col items-center justify-center py-16 px-4">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4"
+             style="background-color: var(--bg-secondary);">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               style="color: var(--text-muted);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <p class="text-sm font-medium mb-1" style="color: var(--text-secondary);">No traces match your filters</p>
+        <p class="text-xs text-center max-w-xs" style="color: var(--text-muted);">
+          Try adjusting the search or status filter.
+        </p>
       </div>
-      <p class="text-sm font-medium mb-1" style="color: var(--text-secondary);">No traces captured yet</p>
-      <p class="text-xs text-center max-w-xs" style="color: var(--text-muted);">
-        Once you route your agent through the Trsr proxy, all LLM interactions will appear here.
-      </p>
-    </div>
+    } @else {
+      @for (trace of filtered(); track trace.id) {
+        <div class="grid items-center px-4 py-3 border-b last:border-0 hover:bg-white/[0.02] transition-colors cursor-default"
+             style="grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1fr 1fr 1fr; border-color: var(--border-color);">
+          <span class="text-xs font-mono pr-2 truncate" style="color: var(--accent-primary);">{{ trace.id }}</span>
+          <span class="text-xs pr-2 truncate" style="color: var(--text-secondary);">{{ trace.agent }}</span>
+          <span class="text-xs pr-2 truncate" style="color: var(--text-muted);">{{ trace.model }}</span>
+          <span class="text-xs" style="color: var(--text-secondary);">{{ formatLatency(trace.latency) }}</span>
+          <span class="text-xs" style="color: var(--text-muted);">{{ trace.tokens.toLocaleString() }}</span>
+          <span class="text-xs" style="color: var(--text-muted);">{{ formatCost(trace.cost) }}</span>
+          <span>
+            @if (trace.status === 'success') {
+              <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                    style="background-color: rgba(34,197,94,0.12); color: #4ade80;">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                ok
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                    style="background-color: rgba(239,68,68,0.12); color: #f87171;">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                error
+              </span>
+            }
+          </span>
+        </div>
+      }
+    }
   </div>
 
-  <!-- Pagination placeholder -->
+  <!-- Footer: count + pagination -->
   <div class="flex items-center justify-between mt-4">
-    <p class="text-xs" style="color: var(--text-muted);">0 traces</p>
+    <p class="text-xs" style="color: var(--text-muted);">
+      Showing {{ filtered().length }} of {{ allTraces.length }} traces
+    </p>
     <div class="flex items-center gap-1">
       <button
-        class="px-3 py-1.5 text-xs rounded border disabled:opacity-40"
+        class="px-3 py-1.5 text-xs rounded-md border disabled:opacity-40"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
         disabled>
         Previous
       </button>
       <button
-        class="px-3 py-1.5 text-xs rounded border disabled:opacity-40"
+        class="px-3 py-1.5 text-xs rounded-md border disabled:opacity-40"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
         disabled>
         Next

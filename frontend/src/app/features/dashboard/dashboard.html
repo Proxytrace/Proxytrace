@@ -1,76 +1,172 @@
 <div class="max-w-6xl mx-auto">
   <!-- Page header -->
-  <div class="mb-8">
+  <div class="mb-6">
     <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Dashboard</h1>
     <p class="text-sm" style="color: var(--text-muted);">Overview of your agent tracing and evaluation activity.</p>
   </div>
 
   <!-- Stat cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     @for (stat of stats; track stat.label) {
       <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-        <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">{{ stat.label }}</p>
+        <div class="flex items-start justify-between mb-3">
+          <p class="text-xs font-medium" style="color: var(--text-muted);">{{ stat.label }}</p>
+          <div class="w-7 h-7 rounded-md flex items-center justify-center"
+               style="background-color: var(--accent-subtle);">
+            @switch (stat.icon) {
+              @case ('activity') {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     style="color: var(--accent-primary);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+              @case ('agents') {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     style="color: var(--accent-primary);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                </svg>
+              }
+              @case ('clipboard') {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     style="color: var(--accent-primary);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              }
+              @case ('clock') {
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     style="color: var(--accent-primary);">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            }
+          </div>
+        </div>
         <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">{{ stat.value }}</p>
-        <p class="text-xs" style="color: var(--text-muted);">{{ stat.delta }}</p>
+        <p class="text-xs flex items-center gap-1" [style.color]="stat.positive ? 'var(--color-success)' : 'var(--color-error)'">
+          @if (stat.positive) {
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+            </svg>
+          }
+          {{ stat.delta }}
+        </p>
       </div>
     }
   </div>
 
-  <!-- Recent activity placeholder -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <!-- Recent Traces -->
-    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+  <!-- Main grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Recent Traces (spans 2 cols) -->
+    <div class="lg:col-span-2 rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
       <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
         <h2 class="text-sm font-medium" style="color: var(--text-primary);">Recent Traces</h2>
-        <a routerLink="/traces" class="text-xs transition-colors" style="color: var(--accent-primary);">View all →</a>
+        <a routerLink="/traces" class="text-xs transition-colors hover:underline" style="color: var(--accent-primary);">View all →</a>
       </div>
-      <div class="flex flex-col items-center justify-center py-12 px-4">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-             style="background-color: var(--bg-secondary);">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-               style="color: var(--text-muted);">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+
+      <!-- Table header -->
+      <div class="grid text-xs font-medium px-4 py-2.5 border-b"
+           style="grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr; border-color: var(--border-color); color: var(--text-muted);">
+        <span>Trace ID</span>
+        <span>Agent</span>
+        <span>Latency</span>
+        <span>Tokens</span>
+        <span>Status</span>
+      </div>
+
+      @for (trace of recentTraces; track trace.id) {
+        <div class="grid items-center px-4 py-3 border-b last:border-0 hover:bg-white/[0.02] transition-colors cursor-default"
+             style="grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr; border-color: var(--border-color);">
+          <span class="text-xs font-mono truncate pr-2" style="color: var(--accent-primary);">{{ trace.id }}</span>
+          <span class="text-xs truncate pr-2" style="color: var(--text-secondary);">{{ trace.agent }}</span>
+          <span class="text-xs" style="color: var(--text-secondary);">{{ formatLatency(trace.latency) }}</span>
+          <span class="text-xs" style="color: var(--text-muted);">{{ trace.tokens.toLocaleString() }}</span>
+          <span>
+            @if (trace.status === 'success') {
+              <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                    style="background-color: rgba(34,197,94,0.12); color: #4ade80;">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                ok
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                    style="background-color: rgba(239,68,68,0.12); color: #f87171;">
+                <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                error
+              </span>
+            }
+          </span>
         </div>
-        <p class="text-sm mb-1" style="color: var(--text-secondary);">No traces yet</p>
-        <p class="text-xs text-center" style="color: var(--text-muted);">
-          Route your agent through the Trsr proxy to start capturing traces.
-        </p>
-      </div>
+      }
     </div>
 
-    <!-- Getting started -->
-    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <div class="px-4 py-3 border-b" style="border-color: var(--border-color);">
-        <h2 class="text-sm font-medium" style="color: var(--text-primary);">Getting Started</h2>
-      </div>
-      <div class="p-4 space-y-3">
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--accent-subtle); color: var(--accent-primary);">1</div>
-          <div>
-            <p class="text-sm font-medium" style="color: var(--text-primary);">Configure your proxy</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Point your OpenAI-compatible client at the Trsr proxy endpoint.</p>
-          </div>
+    <!-- Right column -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Top Agents -->
+      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+        <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
+          <h2 class="text-sm font-medium" style="color: var(--text-primary);">Top Agents</h2>
+          <a routerLink="/agents" class="text-xs transition-colors hover:underline" style="color: var(--accent-primary);">View all →</a>
         </div>
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--bg-secondary); color: var(--text-muted);">2</div>
-          <div>
-            <p class="text-sm font-medium" style="color: var(--text-secondary);">Capture traces</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Run your agent — Trsr will capture every LLM interaction automatically.</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--bg-secondary); color: var(--text-muted);">3</div>
-          <div>
-            <p class="text-sm font-medium" style="color: var(--text-secondary);">Build test suites</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Promote interesting traces to test cases and evaluate over time.</p>
-          </div>
+        <div class="p-3 space-y-2">
+          @for (agent of topAgents; track agent.name) {
+            <div class="flex items-center gap-3 p-2 rounded-md" style="background-color: var(--bg-secondary);">
+              <div class="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold shrink-0"
+                   style="background-color: var(--accent-subtle); color: var(--accent-primary);">
+                {{ agent.name[0].toUpperCase() }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-medium truncate" style="color: var(--text-primary);">{{ agent.name }}</p>
+                <p class="text-xs truncate" style="color: var(--text-muted);">{{ agent.traces }} traces</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-xs" [style.color]="agent.errorRate > 3 ? '#f87171' : '#4ade80'">
+                  {{ agent.errorRate }}% err
+                </p>
+              </div>
+            </div>
+          }
         </div>
       </div>
+
+      <!-- Getting Started -->
+      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+        <div class="px-4 py-3 border-b" style="border-color: var(--border-color);">
+          <h2 class="text-sm font-medium" style="color: var(--text-primary);">Getting Started</h2>
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                 style="background-color: var(--accent-subtle); color: var(--accent-primary);">1</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-primary);">Configure proxy</p>
+              <p class="text-xs mt-0.5" style="color: var(--text-muted);">Point your OpenAI-compatible client at the Trsr endpoint.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                 style="background-color: var(--accent-subtle); color: var(--accent-primary);">2</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-primary);">Capture traces</p>
+              <p class="text-xs mt-0.5" style="color: var(--text-muted);">Run your agent — every LLM call is captured automatically.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                 style="background-color: var(--accent-subtle); color: var(--accent-primary);">3</div>
+            <div>
+              <p class="text-xs font-medium" style="color: var(--text-primary);">Build test suites</p>
+              <p class="text-xs mt-0.5" style="color: var(--text-muted);">Promote traces to test cases and evaluate continuously.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

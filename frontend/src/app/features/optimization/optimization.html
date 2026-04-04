@@ -1,0 +1,105 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Page header -->
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Optimization</h1>
+    <p class="text-sm" style="color: var(--text-muted);">Run prompt experiments and surface improvement opportunities across your agents.</p>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+    <!-- Experiments (main) -->
+    <div class="lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold" style="color: var(--text-primary);">Experiments</h2>
+        <button class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-medium"
+                style="background-color: var(--accent-primary); color: #fff;">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          New Experiment
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        @for (exp of experiments; track exp.id) {
+          <div class="rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-sm font-medium" style="color: var(--text-primary);">{{ exp.name }}</h3>
+                  @if (exp.status === 'running') {
+                    <span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                          style="background-color: rgba(124,58,237,0.15); color: var(--accent-primary);">
+                      <span class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                      running
+                    </span>
+                  } @else if (exp.status === 'completed') {
+                    <span class="text-xs px-2 py-0.5 rounded-full"
+                          style="background-color: rgba(34,197,94,0.12); color: #4ade80;">completed</span>
+                  } @else {
+                    <span class="text-xs px-2 py-0.5 rounded-full"
+                          style="background-color: var(--bg-secondary); color: var(--text-muted);">draft</span>
+                  }
+                </div>
+                <p class="text-xs" style="color: var(--text-muted);">{{ exp.description }}</p>
+              </div>
+              @if (exp.status === 'draft') {
+                <button class="shrink-0 text-xs px-2.5 py-1.5 rounded-md border transition-colors"
+                        style="border-color: var(--border-color); color: var(--text-secondary); background-color: var(--bg-secondary);">
+                  Start
+                </button>
+              }
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 pt-3 border-t" style="border-color: var(--border-color);">
+              <div>
+                <p class="text-xs mb-1" style="color: var(--text-muted);">Agent</p>
+                <p class="text-xs font-medium truncate" style="color: var(--text-secondary);">{{ exp.agent }}</p>
+              </div>
+              <div>
+                <p class="text-xs mb-1" style="color: var(--text-muted);">Variants</p>
+                <p class="text-xs font-medium" style="color: var(--text-secondary);">{{ exp.variants }}</p>
+              </div>
+              <div>
+                @if (exp.winner) {
+                  <p class="text-xs mb-1" style="color: var(--text-muted);">Winner</p>
+                  <p class="text-xs font-medium" style="color: #4ade80;">
+                    {{ exp.winner }}
+                    @if (exp.improvement) {
+                      <span style="color: var(--text-muted);"> (+{{ exp.improvement }}%)</span>
+                    }
+                  </p>
+                } @else {
+                  <p class="text-xs mb-1" style="color: var(--text-muted);">Created</p>
+                  <p class="text-xs" style="color: var(--text-muted);">{{ exp.createdAt }}</p>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Insights sidebar -->
+    <div>
+      <h2 class="text-sm font-semibold mb-3" style="color: var(--text-primary);">Insights</h2>
+      <div class="space-y-3">
+        @for (tip of tips; track tip.title) {
+          <div class="rounded-lg border p-3" style="background-color: var(--bg-card); border-color: var(--border-color);">
+            <div class="flex items-start gap-2 mb-2">
+              <span class="mt-0.5 shrink-0 text-xs px-1.5 py-0.5 rounded font-medium uppercase tracking-wide"
+                    [style]="'background-color: ' + impactBg(tip.impact) + '; color: ' + impactColor(tip.impact) + ';'">
+                {{ tip.impact }}
+              </span>
+            </div>
+            <p class="text-xs font-medium mb-1" style="color: var(--text-primary);">{{ tip.title }}</p>
+            <p class="text-xs leading-relaxed" style="color: var(--text-muted);">{{ tip.detail }}</p>
+            <p class="text-xs mt-2" style="color: var(--text-muted);">Agent: {{ tip.agent }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>

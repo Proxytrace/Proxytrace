@@ -7,6 +7,11 @@ interface NavItem {
   route: string;
 }
 
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
@@ -23,9 +28,28 @@ interface NavItem {
 export class Shell {
   readonly sidebarCollapsed = signal(false);
 
-  readonly navItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'grid', route: '/dashboard' },
-    { label: 'Traces', icon: 'activity', route: '/traces' },
+  readonly navSections: NavSection[] = [
+    {
+      label: 'Observe',
+      items: [
+        { label: 'Dashboard', icon: 'grid', route: '/dashboard' },
+        { label: 'Traces', icon: 'activity', route: '/traces' },
+        { label: 'Agents', icon: 'agents', route: '/agents' },
+      ],
+    },
+    {
+      label: 'Evaluate',
+      items: [
+        { label: 'Test Suites', icon: 'clipboard', route: '/test-suites' },
+        { label: 'Test Runs', icon: 'play', route: '/test-runs' },
+      ],
+    },
+    {
+      label: 'Improve',
+      items: [
+        { label: 'Optimization', icon: 'sparkles', route: '/optimization' },
+      ],
+    },
   ];
 
   toggleSidebar() {

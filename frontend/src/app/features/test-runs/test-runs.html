@@ -1,0 +1,84 @@
+<div class="max-w-6xl mx-auto">
+  <!-- Page header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Test Runs</h1>
+      <p class="text-sm" style="color: var(--text-muted);">History of all test suite executions.</p>
+    </div>
+    <a routerLink="/test-suites"
+       class="flex items-center gap-2 px-3 py-2 text-sm rounded-md font-medium border transition-colors"
+       style="border-color: var(--border-color); color: var(--text-secondary); background-color: var(--bg-card);">
+      View Suites →
+    </a>
+  </div>
+
+  <!-- Table -->
+  <div class="rounded-lg border overflow-hidden" style="background-color: var(--bg-card); border-color: var(--border-color);">
+    <!-- Header -->
+    <div class="grid text-xs font-medium px-4 py-3 border-b"
+         style="grid-template-columns: 1.5fr 2fr 1fr 1fr 1fr 1fr; border-color: var(--border-color); color: var(--text-muted);">
+      <span>Run ID</span>
+      <span>Suite</span>
+      <span>Result</span>
+      <span>Pass Rate</span>
+      <span>Duration</span>
+      <span>When</span>
+    </div>
+
+    @for (run of runs; track run.id) {
+      <div class="grid items-center px-4 py-3.5 border-b last:border-0 hover:bg-white/[0.02] transition-colors"
+           style="grid-template-columns: 1.5fr 2fr 1fr 1fr 1fr 1fr; border-color: var(--border-color);">
+
+        <!-- Run ID -->
+        <span class="text-xs font-mono" style="color: var(--accent-primary);">{{ run.id }}</span>
+
+        <!-- Suite name -->
+        <span class="text-xs pr-2 truncate" style="color: var(--text-secondary);">{{ run.suite }}</span>
+
+        <!-- Pass/fail counts -->
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-medium" style="color: #4ade80;">{{ run.passed }} pass</span>
+          @if (run.failed > 0) {
+            <span class="text-xs font-medium" style="color: #f87171;">{{ run.failed }} fail</span>
+          }
+        </div>
+
+        <!-- Pass rate + bar -->
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-medium" [style.color]="passRateColor(passRate(run))">
+              {{ passRate(run) }}%
+            </span>
+            <div class="w-12 h-1.5 rounded-full overflow-hidden" style="background-color: var(--bg-secondary);">
+              <div class="h-full rounded-full" [style.width]="passRate(run) + '%'"
+                   [style.background-color]="passRateColor(passRate(run))"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <span class="text-xs" style="color: var(--text-muted);">{{ run.duration }}</span>
+
+        <!-- Timestamp -->
+        <span class="text-xs" style="color: var(--text-muted);">{{ run.timestamp }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Footer -->
+  <div class="flex items-center justify-between mt-4">
+    <p class="text-xs" style="color: var(--text-muted);">{{ runs.length }} runs total</p>
+    <div class="flex items-center gap-1">
+      <button class="px-3 py-1.5 text-xs rounded-md border disabled:opacity-40"
+              style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
+              disabled>
+        Previous
+      </button>
+      <button class="px-3 py-1.5 text-xs rounded-md border disabled:opacity-40"
+              style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
+              disabled>
+        Next
+      </button>
+    </div>
+  </div>
+</div>
