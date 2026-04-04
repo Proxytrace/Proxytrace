@@ -85,6 +85,28 @@ This is not yet a runnable product. The foundational work happening now is what 
 
 ---
 
+## Getting Started
+
+### Database Configuration
+
+Trsr supports multiple database providers with automatic detection:
+- **SQLite** (recommended for development) - zero-config file-based database
+- **SQL Server** (default) - enterprise-grade relational database
+- **PostgreSQL** - open-source relational database
+
+For quick local setup with SQLite, update `Trsr.Api/appsettings.json`:
+```json
+{
+  "ConnectionStrings": {
+    "Default": "Data Source=trsr.db"
+  }
+}
+```
+
+See [DATABASE.md](DATABASE.md) for detailed configuration options and migration instructions.
+
+---
+
 ## Near-Term Direction
 
 - Complete the OpenAI proxy ingestion pipeline with full trace capture

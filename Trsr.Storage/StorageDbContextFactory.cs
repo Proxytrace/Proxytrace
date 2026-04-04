@@ -23,10 +23,7 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
             ?? throw new InvalidOperationException(
                 "Set ConnectionStrings:Default in appsettings.json or appsettings.development.json.");
 
-        var storageConfig = connectionString.Contains("host=", StringComparison.OrdinalIgnoreCase)
-                         || connectionString.Contains("port=", StringComparison.OrdinalIgnoreCase)
-            ? StorageConfiguration.Postgres(connectionString)
-            : StorageConfiguration.SqlServer(connectionString);
+        var storageConfig = DetermineStorageConfiguration(connectionString);
 
         var containerBuilder = new ContainerBuilder();
         containerBuilder.RegisterModule(new Module(storageConfig));
@@ -34,4 +31,30 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
 
         return container.Resolve<StorageDbContext>();
     }
+
+    private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
+    {
+        if (IsPostgresConnectionString(connectionString))
+        {
+            return StorageConfiguration.Postgres(connectionString);
+        }
+        
+        if (IsSqliteConnectionString(connectionString))
+        {
+            return StorageConfiguration.Sqlite(connectionString);
+        }
+        
+        // Default to SQL Server
+        return StorageConfiguration.SqlServer(connectionString);
+    }
+
+    private static bool IsPostgresConnectionString(string connectionString)
+        => connectionString.Contains("host=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("port=", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsSqliteConnectionString(string connectionString)
+        => connectionString.Contains("data source=", StringComparison.OrdinalIgnoreCase)
+        && (connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase)
+            || connectionString.Contains(".sqlite", StringComparison.OrdinalIgnoreCase)
+            || connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase));
 }

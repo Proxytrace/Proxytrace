@@ -43,4 +43,16 @@ public abstract record StorageConfiguration
             ConnectionString = connectionString,
             CryptographyKeyBase64 = cryptographyKeyBase64
         };
+
+    /// <summary>
+    /// Creates a configuration for SQLite storage
+    /// </summary>
+    public static StorageConfiguration Sqlite(
+        string connectionString,
+        string? cryptographyKeyBase64 = null)
+        => new SqliteConfiguration
+        {
+            ConnectionString = connectionString,
+            CryptographyKeyBase64 = cryptographyKeyBase64
+        };
 }

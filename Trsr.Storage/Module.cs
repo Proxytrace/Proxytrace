@@ -121,10 +121,23 @@ public sealed class Module : Autofac.Module
     private static void ConfigureStorage(DbContextOptionsBuilder options, StorageConfiguration configuration)
     {
         options
-            .ConfigureWarnings(b => b.Log(
-                (RelationalEventId.ConnectionOpened, LogLevel.Debug),
-                (RelationalEventId.CommandExecuted, LogLevel.Debug),
-                (RelationalEventId.ConnectionClosed, LogLevel.Debug)));
+            .ConfigureWarnings(b =>
+            {
+                b.Log(
+                    (RelationalEventId.ConnectionOpened, LogLevel.Debug),
+                    (RelationalEventId.CommandExecuted, LogLevel.Debug),
+                    (RelationalEventId.ConnectionClosed, LogLevel.Debug));
+                
+                // SQLite doesn't support ambient transactions
+                if (configuration is SqliteConfiguration)
+                {
+                    b.Ignore(RelationalEventId.AmbientTransactionWarning);
+                    // Suppress pending model changes warning for SQLite
+                    // This occurs because migrations were created for SQL Server/PostgreSQL
+                    // and have provider-specific type differences (e.g., timestamp vs datetimeoffset)
+                    b.Ignore(RelationalEventId.PendingModelChangesWarning);
+                }
+            });
 
         switch (configuration)
         {
@@ -135,6 +148,10 @@ public sealed class Module : Autofac.Module
             case PostgresConfiguration postgres:
                 options.UseNpgsql(postgres.ConnectionString,
                     npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
+                break;
+            case SqliteConfiguration sqlite:
+                options.UseSqlite(sqlite.ConnectionString,
+                    sqliteOptions => sqliteOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
             case InMemoryConfiguration inMemory:
                 options.UseInMemoryDatabase(Guid.NewGuid() + inMemory.Name);
