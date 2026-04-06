@@ -1,6 +1,7 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using Trsr.Api.Services.Internal;
 using Module = Trsr.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,9 @@ if (builder.Environment.IsDevelopment())
     {
         c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo { Title = "Trsr API", Version = "v1" });
     });
+
+    // Seed demo data on first run so the UI is immediately populated
+    builder.Services.AddHostedService<DemoDataSeeder>();
 }
 
 var app = builder.Build();
