@@ -8,3 +8,4 @@ TestResults/
 # Development configuration files
 **/appsettings.development.json
 
+**/*.db-*
