@@ -1,24 +1,29 @@
 /* stylelint-disable-next-line scss/at-rule-no-unknown */
 @import "tailwindcss";
 
-/* Custom CSS variables for dark-first design */
+/* Custom CSS variables for dark-first floating design */
 :root {
-  --bg-primary: #0f0f0f;
-  --bg-secondary: #1a1a1a;
-  --bg-sidebar: #111111;
-  --bg-card: #1e1e1e;
-  --border-color: #2a2a2a;
+  --bg-primary: #141414;
+  --bg-secondary: #1c1c1c;
+  --bg-sidebar: #1c1c1c;
+  --bg-card: #222222;
+  --border-color: #2e2e2e;
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
-  --accent-primary: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-subtle: rgba(124, 58, 237, 0.15);
+  --accent-primary: #f97316;
+  --accent-hover: #ea580c;
+  --accent-subtle: rgba(249, 115, 22, 0.15);
+  --shadow-float: 0 4px 24px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-panel: 4px 0 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.45);
+  --color-success: #4ade80;
+  --color-error: #f87171;
 }
 
 /* Sidebar nav active state */
 .nav-item:hover {
-  background-color: var(--bg-card);
+  background-color: rgba(255, 255, 255, 0.05);
   color: var(--text-primary) !important;
 }
 
