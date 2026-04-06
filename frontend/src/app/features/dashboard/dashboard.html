@@ -8,7 +8,7 @@
   <!-- Stat cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     @for (stat of stats; track stat.label) {
-      <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color); box-shadow: var(--shadow-card);">
         <div class="flex items-start justify-between mb-3">
           <p class="text-xs font-medium" style="color: var(--text-muted);">{{ stat.label }}</p>
           <div class="w-7 h-7 rounded-md flex items-center justify-center"
@@ -62,7 +62,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
     <!-- Recent Traces (spans 2 cols) -->
-    <div class="lg:col-span-2 rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+    <div class="lg:col-span-2 rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color); box-shadow: var(--shadow-card);">
       <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
         <h2 class="text-sm font-medium" style="color: var(--text-primary);">Recent Traces</h2>
         <a routerLink="/traces" class="text-xs transition-colors hover:underline" style="color: var(--accent-primary);">View all →</a>
@@ -108,7 +108,7 @@
     <div class="flex flex-col gap-4">
 
       <!-- Top Agents -->
-      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color); box-shadow: var(--shadow-card);">
         <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
           <h2 class="text-sm font-medium" style="color: var(--text-primary);">Top Agents</h2>
           <a routerLink="/agents" class="text-xs transition-colors hover:underline" style="color: var(--accent-primary);">View all →</a>
@@ -134,8 +134,30 @@
         </div>
       </div>
 
+      <!-- Optimization Insights -->
+      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color); box-shadow: var(--shadow-card);">
+        <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
+          <h2 class="text-sm font-medium" style="color: var(--text-primary);">Optimization Insights</h2>
+          <a routerLink="/optimization" class="text-xs transition-colors hover:underline" style="color: var(--accent-primary);">View all →</a>
+        </div>
+        <div class="p-3 space-y-2">
+          @for (insight of insights; track insight.title) {
+            <div class="rounded-md p-3" style="background-color: var(--bg-secondary);">
+              <div class="flex items-start gap-2 mb-1.5">
+                <span class="mt-0.5 shrink-0 text-xs px-1.5 py-0.5 rounded font-medium uppercase tracking-wide"
+                      [style]="'background-color: ' + impactBg(insight.impact) + '; color: ' + impactColor(insight.impact) + ';'">
+                  {{ insight.impact }}
+                </span>
+              </div>
+              <p class="text-xs font-medium mb-0.5" style="color: var(--text-primary);">{{ insight.title }}</p>
+              <p class="text-xs leading-relaxed" style="color: var(--text-muted);">{{ insight.detail }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
       <!-- Getting Started -->
-      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color); box-shadow: var(--shadow-card);">
         <div class="px-4 py-3 border-b" style="border-color: var(--border-color);">
           <h2 class="text-sm font-medium" style="color: var(--text-primary);">Getting Started</h2>
         </div>
