@@ -1,7 +1,5 @@
-/* stylelint-disable-next-line scss/at-rule-no-unknown */
 @import "tailwindcss";
 
-/* Custom CSS variables for dark-first design */
 :root {
   --bg-primary: #0f0f0f;
   --bg-secondary: #1a1a1a;
@@ -16,7 +14,6 @@
   --accent-subtle: rgba(124, 58, 237, 0.15);
 }
 
-/* Sidebar nav active state */
 .nav-item:hover {
   background-color: var(--bg-card);
   color: var(--text-primary) !important;
