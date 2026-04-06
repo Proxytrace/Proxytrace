@@ -65,7 +65,8 @@
               "buildTarget": "trsr-ui:build:production"
             },
             "development": {
-              "buildTarget": "trsr-ui:build:development"
+              "buildTarget": "trsr-ui:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
