@@ -57,7 +57,7 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Development environment is running!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo -e "API:      ${YELLOW}http://localhost:5000${NC}"
-echo -e "Frontend: ${YELLOW}http://localhost:4200${NC}"
+echo -e "Frontend: ${YELLOW}http://localhost:4300${NC}"
 echo -e "\n${YELLOW}Press Ctrl+C to stop all services${NC}\n"
 
 # Wait for both processes
