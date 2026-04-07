@@ -68,7 +68,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var total = await query.CountAsync(cancellationToken);
 
         var stored = await query
-            .OrderByDescending(e => e.CreatedAt)
+            .OrderByDescending(e => e.CreatedAt.UtcTicks)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

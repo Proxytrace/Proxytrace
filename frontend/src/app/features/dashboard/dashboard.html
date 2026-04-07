@@ -7,16 +7,72 @@
 
   <!-- Stat cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    @for (stat of stats; track stat.label) {
-      <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-        <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">{{ stat.label }}</p>
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">{{ stat.value }}</p>
-        <p class="text-xs" style="color: var(--text-muted);">{{ stat.delta }}</p>
-      </div>
-    }
+    <!-- Total Traces -->
+    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Total Traces</p>
+      @if (summaryState() === 'loading') {
+        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
+      } @else if (summaryState() === 'error') {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
+        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
+      } @else {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">{{ summary()?.totalCalls ?? 0 }}</p>
+        <p class="text-xs" style="color: var(--text-muted);">LLM calls captured</p>
+      }
+    </div>
+
+    <!-- Total Tokens -->
+    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Total Tokens</p>
+      @if (summaryState() === 'loading') {
+        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
+      } @else if (summaryState() === 'error') {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
+        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
+      } @else {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
+          {{ ((summary()?.totalInputTokens ?? 0) + (summary()?.totalOutputTokens ?? 0)).toLocaleString() }}
+        </p>
+        <p class="text-xs" style="color: var(--text-muted);">
+          {{ (summary()?.totalInputTokens ?? 0).toLocaleString() }} in / {{ (summary()?.totalOutputTokens ?? 0).toLocaleString() }} out
+        </p>
+      }
+    </div>
+
+    <!-- Avg Latency -->
+    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Avg Latency</p>
+      @if (summaryState() === 'loading') {
+        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
+      } @else if (summaryState() === 'error') {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
+        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
+      } @else {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
+          {{ formatLatency(summary()?.avgLatencyMs ?? 0) }}
+        </p>
+        <p class="text-xs" style="color: var(--text-muted);">per LLM call</p>
+      }
+    </div>
+
+    <!-- Pass Rate -->
+    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Pass Rate</p>
+      @if (summaryState() === 'loading') {
+        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
+      } @else if (summaryState() === 'error') {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
+        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
+      } @else {
+        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
+          {{ Math.round(summary()?.overallPassRate ?? 0) }}%
+        </p>
+        <p class="text-xs" style="color: var(--text-muted);">across test runs</p>
+      }
+    </div>
   </div>
 
-  <!-- Recent activity placeholder -->
+  <!-- Recent activity -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <!-- Recent Traces -->
     <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
@@ -24,20 +80,46 @@
         <h2 class="text-sm font-medium" style="color: var(--text-primary);">Recent Traces</h2>
         <a routerLink="/traces" class="text-xs transition-colors" style="color: var(--accent-primary);">View all →</a>
       </div>
-      <div class="flex flex-col items-center justify-center py-12 px-4">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-             style="background-color: var(--bg-secondary);">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-               style="color: var(--text-muted);">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+
+      @if (recentTracesState() === 'loading') {
+        <div class="flex flex-col items-center justify-center py-12 px-4">
+          <p class="text-sm animate-pulse" style="color: var(--text-muted);">Loading…</p>
         </div>
-        <p class="text-sm mb-1" style="color: var(--text-secondary);">No traces yet</p>
-        <p class="text-xs text-center" style="color: var(--text-muted);">
-          Route your agent through the Trsr proxy to start capturing traces.
-        </p>
-      </div>
+      } @else if (recentTracesState() === 'error') {
+        <div class="flex flex-col items-center justify-center py-12 px-4">
+          <p class="text-sm" style="color: var(--text-muted);">Failed to load traces.</p>
+        </div>
+      } @else if (recentTraces().length === 0) {
+        <div class="flex flex-col items-center justify-center py-12 px-4">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3"
+               style="background-color: var(--bg-secondary);">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                 style="color: var(--text-muted);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <p class="text-sm mb-1" style="color: var(--text-secondary);">No traces yet</p>
+          <p class="text-xs text-center" style="color: var(--text-muted);">
+            Route your agent through the Trsr proxy to start capturing traces.
+          </p>
+        </div>
+      } @else {
+        <ul class="divide-y" style="border-color: var(--border-color);">
+          @for (trace of recentTraces(); track trace.id) {
+            <li class="px-4 py-3 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-xs font-mono truncate" style="color: var(--text-primary);">{{ truncateId(trace.id) }}</p>
+                <p class="text-xs mt-0.5 truncate" style="color: var(--text-muted);">{{ trace.model }}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-xs" style="color: var(--text-secondary);">{{ formatLatency(trace.durationMs) }}</p>
+                <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ formatDate(trace.createdAt) }}</p>
+              </div>
+            </li>
+          }
+        </ul>
+      }
     </div>
 
     <!-- Getting started -->
