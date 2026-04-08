@@ -18,18 +18,13 @@
       </svg>
       <input
         type="text"
-        placeholder="Search traces..."
+        placeholder="Filter by model…"
         [value]="searchQuery()"
         (input)="onSearch($event)"
         class="w-full pl-9 pr-3 py-2 text-sm rounded-md border outline-none transition-colors"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-primary);"
       />
     </div>
-    <button
-      class="px-3 py-2 text-sm rounded-md border transition-colors"
-      style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);">
-      Filter
-    </button>
   </div>
 
   <!-- Table -->
@@ -38,43 +33,78 @@
     <div class="grid text-xs font-medium px-4 py-3 border-b"
          style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; border-color: var(--border-color); color: var(--text-muted);">
       <span>Trace ID</span>
-      <span>Agent</span>
       <span>Model</span>
+      <span>Status</span>
       <span>Latency</span>
       <span>Timestamp</span>
     </div>
 
-    <!-- Empty state -->
-    <div class="flex flex-col items-center justify-center py-16 px-4">
-      <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4"
-           style="background-color: var(--bg-secondary);">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-             style="color: var(--text-muted);">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
+    @if (loadState() === 'loading') {
+      <div class="flex flex-col items-center justify-center py-16 px-4">
+        <p class="text-sm animate-pulse" style="color: var(--text-muted);">Loading traces…</p>
       </div>
-      <p class="text-sm font-medium mb-1" style="color: var(--text-secondary);">No traces captured yet</p>
-      <p class="text-xs text-center max-w-xs" style="color: var(--text-muted);">
-        Once you route your agent through the Trsr proxy, all LLM interactions will appear here.
-      </p>
-    </div>
+    } @else if (loadState() === 'error') {
+      <div class="flex flex-col items-center justify-center py-16 px-4">
+        <p class="text-sm font-medium mb-1" style="color: var(--text-secondary);">Failed to load traces</p>
+        <p class="text-xs text-center" style="color: var(--text-muted);">Check that the backend is running at localhost:5000.</p>
+      </div>
+    } @else if (traces().length === 0) {
+      <div class="flex flex-col items-center justify-center py-16 px-4">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center mb-4"
+             style="background-color: var(--bg-secondary);">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               style="color: var(--text-muted);">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <p class="text-sm font-medium mb-1" style="color: var(--text-secondary);">No traces captured yet</p>
+        <p class="text-xs text-center max-w-xs" style="color: var(--text-muted);">
+          Once you route your agent through the Trsr proxy, all LLM interactions will appear here.
+        </p>
+      </div>
+    } @else {
+      @for (trace of traces(); track trace.id) {
+        <div class="grid px-4 py-3 border-b text-sm hover:bg-black/5 transition-colors"
+             style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; border-color: var(--border-color);">
+          <span class="font-mono text-xs truncate" style="color: var(--text-primary);" [title]="trace.id">
+            {{ truncateId(trace.id) }}
+          </span>
+          <span class="text-xs truncate" style="color: var(--text-secondary);">{{ trace.model }}</span>
+          <span class="text-xs font-medium" [class]="statusClass(trace.httpStatus)">{{ trace.httpStatus }}</span>
+          <span class="text-xs" style="color: var(--text-secondary);">{{ formatLatency(trace.durationMs) }}</span>
+          <span class="text-xs" style="color: var(--text-muted);">{{ formatDate(trace.createdAt) }}</span>
+        </div>
+      }
+    }
   </div>
 
-  <!-- Pagination placeholder -->
+  <!-- Pagination -->
   <div class="flex items-center justify-between mt-4">
-    <p class="text-xs" style="color: var(--text-muted);">0 traces</p>
+    @if (loadState() === 'loaded') {
+      <p class="text-xs" style="color: var(--text-muted);">
+        @if (total() === 0) {
+          0 traces
+        } @else {
+          {{ rangeStart() }}–{{ rangeEnd() }} of {{ total() }} traces
+        }
+      </p>
+    } @else {
+      <p class="text-xs" style="color: var(--text-muted);">—</p>
+    }
     <div class="flex items-center gap-1">
       <button
-        class="px-3 py-1.5 text-xs rounded border disabled:opacity-40"
+        class="px-3 py-1.5 text-xs rounded border transition-colors"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
-        disabled>
+        [disabled]="!hasPrev()"
+        (click)="prevPage()">
         Previous
       </button>
       <button
-        class="px-3 py-1.5 text-xs rounded border disabled:opacity-40"
+        class="px-3 py-1.5 text-xs rounded border transition-colors"
         style="background-color: var(--bg-card); border-color: var(--border-color); color: var(--text-secondary);"
-        disabled>
+        [disabled]="!hasNext()"
+        (click)="nextPage()">
         Next
       </button>
     </div>

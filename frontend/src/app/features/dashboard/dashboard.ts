@@ -1,12 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { StatisticsService } from '../../core/api/statistics.service';
+import { AgentCallsService } from '../../core/api/agent-calls.service';
+import { SummaryDto, AgentCallDto } from '../../core/api/models';
 
-interface StatCard {
-  label: string;
-  value: string;
-  delta: string;
-  positive: boolean;
-}
+type LoadState = 'loading' | 'loaded' | 'error';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,11 +12,44 @@ interface StatCard {
   templateUrl: './dashboard.html',
   styles: ``,
 })
-export class Dashboard {
-  readonly stats: StatCard[] = [
-    { label: 'Total Traces', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Agents Detected', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Test Suites', value: '—', delta: 'No data yet', positive: true },
-    { label: 'Avg Latency', value: '—', delta: 'No data yet', positive: true },
-  ];
+export class Dashboard implements OnInit {
+  readonly Math = Math;
+  private readonly statisticsService = inject(StatisticsService);
+  private readonly agentCallsService = inject(AgentCallsService);
+
+  readonly summaryState = signal<LoadState>('loading');
+  readonly summary = signal<SummaryDto | null>(null);
+
+  readonly recentTracesState = signal<LoadState>('loading');
+  readonly recentTraces = signal<AgentCallDto[]>([]);
+
+  ngOnInit() {
+    this.statisticsService.getSummary().subscribe({
+      next: (data) => {
+        this.summary.set(data);
+        this.summaryState.set('loaded');
+      },
+      error: () => this.summaryState.set('error'),
+    });
+
+    this.agentCallsService.getAll({ page: 1, pageSize: 5 }).subscribe({
+      next: (result) => {
+        this.recentTraces.set(result.items);
+        this.recentTracesState.set('loaded');
+      },
+      error: () => this.recentTracesState.set('error'),
+    });
+  }
+
+  formatLatency(ms: number): string {
+    return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  formatDate(iso: string): string {
+    return new Date(iso).toLocaleString();
+  }
+
+  truncateId(id: string): string {
+    return id.substring(0, 8) + '…';
+  }
 }
