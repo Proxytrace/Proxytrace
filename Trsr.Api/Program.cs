@@ -6,7 +6,9 @@ using Module = Trsr.Api.Module;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder => containerBuilder.RegisterModule<Module>());
+bool isDevelopment = builder.Environment.IsDevelopment();
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+    containerBuilder.RegisterModule(new Module(isDevelopment)));
 
 builder.Services.AddCors(options =>
 {

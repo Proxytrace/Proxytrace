@@ -1,4 +1,5 @@
 using Autofac;
+using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Services;
 using Trsr.Api.Services.Internal;
 using Trsr.Common.DependencyInjection;
@@ -8,6 +9,13 @@ namespace Trsr.Api;
 
 internal sealed class Module : Autofac.Module
 {
+    private readonly bool isDevelopment;
+
+    public Module(bool isDevelopment = false)
+    {
+        this.isDevelopment = isDevelopment;
+    }
+
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
@@ -61,6 +69,14 @@ internal sealed class Module : Autofac.Module
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
         var storageConfig = DetermineStorageConfiguration(connectionString);
         builder.RegisterModule(new Storage.Module(storageConfig));
+
+        if (isDevelopment)
+        {
+            builder.RegisterServiceCollection(services =>
+            {
+                services.AddHostedService<DemoDataSeeder>();
+            });
+        }
     }
 
     private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
