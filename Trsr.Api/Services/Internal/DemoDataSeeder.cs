@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
+using Trsr.Storage;
 
 namespace Trsr.Api.Services.Internal;
 
@@ -28,6 +29,11 @@ internal sealed class DemoDataSeeder : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = serviceProvider.CreateScope();
+
+        // Ensure database is created and migrated before attempting to seed data
+        // This is critical because DemoDataSeeder might start before DatabaseInitializationService
+        var dbInitializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
+        await dbInitializer.EnsureDatabaseReadyAsync(cancellationToken);
 
         var agentCallRepository = scope.ServiceProvider.GetRequiredService<IRepository<IAgentCall>>();
         var count = await agentCallRepository.CountAsync(cancellationToken);

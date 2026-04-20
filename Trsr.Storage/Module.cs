@@ -44,6 +44,11 @@ public sealed class Module : Autofac.Module
             }
         });
 
+        // Register the database initializer interface (accessible even if migrations not supported)
+        builder.RegisterType<DatabaseInitializationService>()
+            .As<IDatabaseInitializer>()
+            .SingleInstance();
+
         builder.Register<DbContextOptions<StorageDbContext>>(_ =>
         {
             var dbBuilder = new DbContextOptionsBuilder<StorageDbContext>();
