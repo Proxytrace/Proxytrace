@@ -12,7 +12,7 @@ namespace Trsr.Domain.Tests;
 [TestClass]
 public sealed class DomainEntityGeneratorTests : BaseTest<Module>
 {
-    protected override void ConfigureContainer(Autofac.ContainerBuilder builder)
+    protected override void ConfigureContainer(ContainerBuilder builder)
     {
         base.ConfigureContainer(builder);
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));

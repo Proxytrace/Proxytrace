@@ -14,12 +14,13 @@ internal sealed class ContentJsonConverter : JsonConverter<Content>
 
         if (root.TryGetProperty("Text", out var textProp) && textProp.ValueKind == JsonValueKind.String)
         {
-            return Content.FromText(textProp.GetString()!);
+            var text = textProp.GetString() ?? string.Empty;
+            return Content.FromText(text);
         }
 
         if (root.TryGetProperty("Data", out var dataProp) && dataProp.ValueKind == JsonValueKind.String)
         {
-            return Content.FromImage(BinaryData.FromBytes(Convert.FromBase64String(dataProp.GetString()!)));
+            return Content.FromImage(BinaryData.FromBytes(Convert.FromBase64String(dataProp.GetString() ?? string.Empty)));
         }
 
         throw new JsonException("Cannot deserialize Content: missing Text or Data property");

@@ -254,8 +254,8 @@ public class TestSuitesController : ControllerBase
         s.Evaluator.Kind,
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
-            tc.Input.Messages.Select(m => new Dto.TestSuites.MessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
+            tc.Input.Messages.Select(m => new MessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
+            new MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);

@@ -14,8 +14,8 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     where TStoredEntity : class, IEntity
 {
     protected readonly Func<StorageDbContext> contextFactory;
-    protected readonly ITransaction transaction;
-    private readonly IMapper<TDomainEntity, TStoredEntity> mapper;
+    private readonly ITransaction transaction;
+    protected readonly IMapper<TDomainEntity, TStoredEntity> mapper;
 
     protected AbstractRepository(
         IMapper<TDomainEntity, TStoredEntity> mapper,
@@ -119,7 +119,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         => transaction.InvokeAsync(async () =>
         {
             Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
-            var context = this.contextFactory();
+            var context = contextFactory();
 
             // Find the existing entity with tracking enabled
             TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
@@ -176,7 +176,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     public Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default) 
         => transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = this.contextFactory();
+            StorageDbContext context = contextFactory();
             TStoredEntity? existing = await FindAsync(context, id, cancellationToken);
             if (existing is null)
             {
@@ -211,7 +211,8 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
                 if (ownedEntry.CurrentValue is not null)
                 {
                     // Update existing owned entity
-                    var ownedEntityEntry = ownedEntry.TargetEntry!;
+                    EntityEntry ownedEntityEntry = ownedEntry.TargetEntry 
+                                                    ?? throw new InvalidOperationException($"Owned entity entry for navigation '{ownedProperty}' is null.");
                     ownedEntityEntry.CurrentValues.SetValues(updatedOwnedValue);
                 }
                 else

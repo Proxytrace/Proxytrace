@@ -41,7 +41,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
         if (existing is not null)
         {
-            return (await Map(existing, cancellationToken))!;
+            return await mapper.Map(existing, cancellationToken);
         }
 
         var agent = createNew(systemMessage, tools, model, provider, project);

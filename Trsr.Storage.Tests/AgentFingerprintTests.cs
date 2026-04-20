@@ -18,7 +18,7 @@ namespace Trsr.Storage.Tests;
 [TestClass]
 public sealed class AgentFingerprintTests : BaseTest<Module>
 {
-    protected override void ConfigureContainer(Autofac.ContainerBuilder builder)
+    protected override void ConfigureContainer(ContainerBuilder builder)
     {
         base.ConfigureContainer(builder);
         builder.RegisterModule<Module>();
