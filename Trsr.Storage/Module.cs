@@ -8,6 +8,7 @@ using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;
 using Trsr.Storage.Internal.Entities;
+using Trsr.Storage.Internal.Entities.Organization;
 
 namespace Trsr.Storage;
 
@@ -55,6 +56,7 @@ public sealed class Module : Autofac.Module
             .InstancePerDependency();
 
         ConfigureEntities(builder);
+        ConfigureEntity(typeof(OrganizationUserEntity), builder);
 
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
@@ -86,7 +88,7 @@ public sealed class Module : Autofac.Module
     {
         builder.RegisterType(storedEntityType)
             .AsSelf();
-        
+
         var configurationBaseType = typeof(AbstractEntityConfiguration<>).MakeGenericType(storedEntityType);
 
         // find the type that derives from configurationBaseType
@@ -103,18 +105,21 @@ public sealed class Module : Autofac.Module
 
         // get the StoredDomainEntity attribute to locate the associated Domain Entity Type
         var domainEntityType = storedEntityType.GetDomainEntityType();
-        var repositoryBaseType = typeof(AbstractRepository<,>).MakeGenericType(domainEntityType, storedEntityType);
-        // find the type that derives from repositoryBaseType
-        Type repositoryType = typeof(Module).Assembly
-                                  .GetTypes()
-                                  .SingleOrDefault(t => t.IsSubclassOf(repositoryBaseType))
-                              ?? throw new InvalidOperationException(
-                                  $"No repository type found for entity type {storedEntityType.Name}");
-
-        // register repository type as all registered interfaces
-        foreach (Type interfaceType in repositoryType.GetInterfaces())
+        if (domainEntityType != null)
         {
-            builder.RegisterType(repositoryType).As(interfaceType);
+            var repositoryBaseType = typeof(AbstractRepository<,>).MakeGenericType(domainEntityType, storedEntityType);
+            // find the type that derives from repositoryBaseType
+            Type repositoryType = typeof(Module).Assembly
+                                      .GetTypes()
+                                      .SingleOrDefault(t => t.IsSubclassOf(repositoryBaseType))
+                                  ?? throw new InvalidOperationException(
+                                      $"No repository type found for entity type {storedEntityType.Name}");
+
+            // register repository type as all registered interfaces
+            foreach (Type interfaceType in repositoryType.GetInterfaces())
+            {
+                builder.RegisterType(repositoryType).As(interfaceType);
+            }
         }
     }
 
@@ -127,7 +132,7 @@ public sealed class Module : Autofac.Module
                     (RelationalEventId.ConnectionOpened, LogLevel.Debug),
                     (RelationalEventId.CommandExecuted, LogLevel.Debug),
                     (RelationalEventId.ConnectionClosed, LogLevel.Debug));
-                
+
                 // SQLite doesn't support ambient transactions
                 if (configuration is SqliteConfiguration)
                 {
@@ -147,11 +152,13 @@ public sealed class Module : Autofac.Module
                 break;
             case PostgresConfiguration postgres:
                 options.UseNpgsql(postgres.ConnectionString,
-                    npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
+                    npgsqlOptions =>
+                        npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
             case SqliteConfiguration sqlite:
                 options.UseSqlite(sqlite.ConnectionString,
-                    sqliteOptions => sqliteOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
+                    sqliteOptions =>
+                        sqliteOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
             case InMemoryConfiguration inMemory:
                 options.UseInMemoryDatabase(Guid.NewGuid() + inMemory.Name);

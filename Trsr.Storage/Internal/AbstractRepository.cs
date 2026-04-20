@@ -165,12 +165,22 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             // Handle owned entities manually
             UpdateOwnedEntities(entry, updated);
 
+            await UpdateRelationsAsync(context, updated, cancellationToken);
+
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
 
             // Return the updated domain entity
             return await mapper.Map(existing, cancellationToken);
         });
+
+    protected virtual Task UpdateRelationsAsync(
+        StorageDbContext context, 
+        TStoredEntity storedEntity,
+        CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
 
     /// <inheritdoc />
     public Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default) 
