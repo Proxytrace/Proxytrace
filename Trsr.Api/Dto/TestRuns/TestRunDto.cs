@@ -13,9 +13,9 @@ public record TestRunDto(
 public record TestResultDto(
     Guid Id,
     Guid TestCaseId,
-    MessageDto ActualResponse,
+    TestRunMessageDto ActualResponse,
     Evaluation Evaluation);
 
-public record MessageDto(string Role, string Content);
+public record TestRunMessageDto(string Role, string Content);
 
 public record CreateTestRunRequest(Guid TestSuiteId);

@@ -74,7 +74,7 @@ public class TestRunsController : ControllerBase
         r.TestResults.Select(result => new TestResultDto(
             result.Id,
             result.TestCase.Id,
-            new MessageDto("assistant", string.Concat(result.ActualResponse.Contents.Select(c => c.Text ?? ""))),
+            new TestRunMessageDto("assistant", string.Concat(result.ActualResponse.Contents.Select(c => c.Text ?? ""))),
             result.Evaluation
         )).ToArray(),
         r.CreatedAt,
