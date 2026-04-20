@@ -7,8 +7,8 @@ public record AgentCallDto(
     Guid? AgentId,
     string Model,
     string Provider,
-    IReadOnlyList<MessageDto> Request,
-    MessageDto Response,
+    IReadOnlyList<AgentCallMessageDto> Request,
+    AgentCallMessageDto Response,
     long InputTokens,
     long OutputTokens,
     double DurationMs,
@@ -18,4 +18,4 @@ public record AgentCallDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record MessageDto(string Role, string Content);
+public record AgentCallMessageDto(string Role, string Content);

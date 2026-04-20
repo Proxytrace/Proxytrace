@@ -12,10 +12,10 @@ public record TestSuiteDto(
 
 public record TestCaseDto(
     Guid Id,
-    IReadOnlyList<MessageDto> Input,
-    MessageDto ExpectedOutput);
+    IReadOnlyList<TestSuiteMessageDto> Input,
+    TestSuiteMessageDto ExpectedOutput);
 
-public record MessageDto(string Role, string Content);
+public record TestSuiteMessageDto(string Role, string Content);
 
 public record CreateTestSuiteRequest(
     Guid AgentId,
@@ -24,13 +24,13 @@ public record CreateTestSuiteRequest(
 
 public record CreateTestCaseRequest(
     Guid? FromAgentCallId,
-    IReadOnlyList<MessageDto>? Input,
-    MessageDto? ExpectedOutput);
+    IReadOnlyList<TestSuiteMessageDto>? Input,
+    TestSuiteMessageDto? ExpectedOutput);
 
 public record AddTestCaseRequest(
     Guid? FromAgentCallId,
-    IReadOnlyList<MessageDto>? Input,
-    MessageDto? ExpectedOutput);
+    IReadOnlyList<TestSuiteMessageDto>? Input,
+    TestSuiteMessageDto? ExpectedOutput);
 
 /// <summary>
 /// Request to create a test suite by promoting one or more traced agent calls.

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Trsr.Common.Conversion.Internal;
@@ -37,7 +38,7 @@ internal class TypeConverter : ITypeConverter
         }
 
         // Handle collection conversions (e.g., List<object> to List<Guid>)
-        if (underlyingType.IsGenericType && value is System.Collections.IEnumerable enumerable)
+        if (underlyingType.IsGenericType && value is IEnumerable enumerable)
         {
             var genericTypeDef = underlyingType.GetGenericTypeDefinition();
             
@@ -49,7 +50,8 @@ internal class TypeConverter : ITypeConverter
             {
                 var elementType = underlyingType.GetGenericArguments()[0];
                 var listType = typeof(List<>).MakeGenericType(elementType);
-                var list = (System.Collections.IList)Activator.CreateInstance(listType)!;
+                IList list = Activator.CreateInstance(listType) as IList
+                    ?? throw new InvalidCastException($"Cannot create list of type {listType.Name}.");
                 
                 foreach (var item in enumerable)
                 {

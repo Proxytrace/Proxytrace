@@ -137,7 +137,7 @@ namespace Trsr.Domain.Tools
                 {
                     if (item.ValueKind == JsonValueKind.String)
                     {
-                        requiredFields.Add(item.GetString()!);
+                        requiredFields.Add(item.GetString() ?? string.Empty);
                     }
                 }
             }

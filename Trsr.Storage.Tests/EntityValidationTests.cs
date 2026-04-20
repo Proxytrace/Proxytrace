@@ -41,9 +41,9 @@ public sealed class EntityValidationTests
         var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
         // Assert
-        validationResults.Should().Contain(result =>
-            result != ValidationResult.Success &&
-            result.ErrorMessage!.Contains("Id"));
+        var errorResult = validationResults.FirstOrDefault(r => r != ValidationResult.Success);
+        errorResult.Should().NotBeNull();
+        errorResult.ErrorMessage.Should().Contain("Id");
     }
 
     [TestMethod]
@@ -61,9 +61,9 @@ public sealed class EntityValidationTests
         var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
         // Assert
-        validationResults.Should().Contain(result =>
-            result != ValidationResult.Success &&
-            result.ErrorMessage!.Contains("CreatedAt"));
+        var errorResult = validationResults.FirstOrDefault(r => r != ValidationResult.Success);
+        errorResult.Should().NotBeNull();
+        errorResult.ErrorMessage.Should().Contain("CreatedAt");
     }
 
     [TestMethod]
@@ -81,10 +81,9 @@ public sealed class EntityValidationTests
         var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
         // Assert
-        validationResults.Should().Contain(result =>
-            result != ValidationResult.Success &&
-            result.ErrorMessage!.Contains("CreatedAt") &&
-            result.ErrorMessage!.Contains("past"));
+        var errorResult = validationResults.FirstOrDefault(r => r != ValidationResult.Success);
+        errorResult.Should().NotBeNull();
+        errorResult.ErrorMessage.Should().Contain("CreatedAt").And.Contain("past");
     }
 
     [TestMethod]
@@ -100,11 +99,11 @@ public sealed class EntityValidationTests
 
         // Act
         var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
-
+        
         // Assert
-        validationResults.Should().Contain(result =>
-            result != ValidationResult.Success &&
-            result.ErrorMessage!.Contains("UpdatedAt"));
+        var errorResult = validationResults.FirstOrDefault(r => r != ValidationResult.Success);
+        errorResult.Should().NotBeNull();
+        errorResult.ErrorMessage.Should().Contain("UpdatedAt");
     }
 
     [TestMethod]
@@ -122,10 +121,9 @@ public sealed class EntityValidationTests
         var validationResults = entity.Validate(new ValidationContext(entity)).ToList();
 
         // Assert
-        validationResults.Should().Contain(result =>
-            result != ValidationResult.Success &&
-            result.ErrorMessage!.Contains("UpdatedAt") &&
-            result.ErrorMessage!.Contains("past"));
+        var errorResult = validationResults.FirstOrDefault(r => r != ValidationResult.Success);
+        errorResult.Should().NotBeNull();
+        errorResult.ErrorMessage.Should().Contain("UpdatedAt").And.Contain("past");
     }
 
     [TestMethod]

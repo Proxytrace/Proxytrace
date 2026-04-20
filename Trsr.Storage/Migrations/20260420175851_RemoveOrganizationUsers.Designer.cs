@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trsr.Storage;
 
@@ -10,9 +11,11 @@ using Trsr.Storage;
 namespace Trsr.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260420175851_RemoveOrganizationUsers")]
+    partial class RemoveOrganizationUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -226,26 +229,6 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("OrganizationEntity");
                 });
 
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationUserEntity", b =>
-                {
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("OrganizationEntityId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("OrganizationId", "UserId");
-
-                    b.HasIndex("OrganizationEntityId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("OrganizationUserEntity");
-                });
-
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -431,25 +414,6 @@ namespace Trsr.Storage.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationUserEntity", b =>
-                {
-                    b.HasOne("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", null)
-                        .WithMany("OrganizationUsers")
-                        .HasForeignKey("OrganizationEntityId");
-
-                    b.HasOne("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", null)
-                        .WithMany()
-                        .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Trsr.Storage.Internal.Entities.User.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectEntity", b =>
                 {
                     b.HasOne("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", null)
@@ -490,11 +454,6 @@ namespace Trsr.Storage.Migrations
                         .HasForeignKey("Evaluator")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", b =>
-                {
-                    b.Navigation("OrganizationUsers");
                 });
 #pragma warning restore 612, 618
         }

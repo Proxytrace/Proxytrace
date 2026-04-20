@@ -10,7 +10,7 @@ namespace Trsr.Storage.Internal;
 internal abstract class AbstractEntityConfiguration<TEntity> :
     IEntityTypeConfiguration<TEntity>, 
     IModelConfiguration
-    where TEntity : class, IEntity
+    where TEntity : class
 {
     /// <inheritdoc />
     public abstract void Configure(EntityTypeBuilder<TEntity> builder);

@@ -52,6 +52,7 @@ public class OpenAiProxyController : ControllerBase
     }
 
     [Route("v1/{**path}")]
+    [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
     public async Task Proxy(string orgName, string projectName, string path, CancellationToken cancellationToken)
     {
         var org = await organizationRepository.FindByNameAsync(orgName, cancellationToken);

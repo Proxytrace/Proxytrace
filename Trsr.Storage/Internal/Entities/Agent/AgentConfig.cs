@@ -49,7 +49,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             .Property(e => e.SystemMessage)
             .HasConversion(
                 v => serializer.Serialize(v),
-                v => serializer.Deserialize<SystemMessage>(v)!
+                v => serializer.Deserialize<SystemMessage>(v) ?? new SystemMessage(string.Empty)
             );
 
         builder

@@ -7,9 +7,9 @@ internal record OrganizationEntity : Entity
     /// <see cref="Trsr.Domain.Organization.IOrganization.Name"/>
     /// </summary>
     public required string Name { get; init; }
-
+    
     /// <summary>
-    /// <see cref="Trsr.Domain.Organization.IOrganization.Users"/> - stored as JSON in the database
+    /// Navigation property for the many-to-many relationship with users.
     /// </summary>
-    public required IReadOnlyCollection<Guid> UserIds { get; init; }
+    public required ICollection<OrganizationUserEntity> OrganizationUsers { get; init; }
 }

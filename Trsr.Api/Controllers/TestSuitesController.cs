@@ -208,8 +208,8 @@ public class TestSuitesController : ControllerBase
 
     private async Task<ITestCase?> BuildTestCase(
         Guid? fromAgentCallId,
-        IReadOnlyList<MessageDto>? inputMessages,
-        MessageDto? expectedOutput,
+        IReadOnlyList<TestSuiteMessageDto>? inputMessages,
+        TestSuiteMessageDto? expectedOutput,
         CancellationToken cancellationToken)
     {
         if (fromAgentCallId.HasValue)
@@ -228,7 +228,7 @@ public class TestSuitesController : ControllerBase
         return null;
     }
 
-    private static Conversation BuildConversation(IReadOnlyList<MessageDto> messages)
+    private static Conversation BuildConversation(IReadOnlyList<TestSuiteMessageDto> messages)
     {
         var msgs = new List<Message>();
         foreach (var m in messages)
@@ -245,7 +245,7 @@ public class TestSuitesController : ControllerBase
         return new Conversation(Guid.NewGuid(), msgs);
     }
 
-    private static AssistantMessage BuildAssistantMessage(MessageDto m)
+    private static AssistantMessage BuildAssistantMessage(TestSuiteMessageDto m)
         => new([Domain.Message.Content.FromText(m.Content)], []);
 
     private static TestSuiteDto ToDto(ITestSuite s) => new(
@@ -254,8 +254,8 @@ public class TestSuitesController : ControllerBase
         s.Evaluator.Kind,
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
-            tc.Input.Messages.Select(m => new Dto.TestSuites.MessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new Dto.TestSuites.MessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
+            tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
+            new TestSuiteMessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);
