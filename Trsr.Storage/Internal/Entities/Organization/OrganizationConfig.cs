@@ -23,19 +23,11 @@ internal class OrganizationConfig : AbstractEntityConfiguration<OrganizationEnti
     public override void Configure(EntityTypeBuilder<OrganizationEntity> builder)
     {
         builder.HasIndex(e => e.Name).IsUnique();
-
-        builder
-            .Property(e => e.UserIds)
-            .HasConversion(
-                v => serializer.Serialize(v),
-                v => serializer.Deserialize<IReadOnlyCollection<Guid>>(v) ?? Array.Empty<Guid>()
-            );
     }
 
     public async Task<IOrganization> Map(OrganizationEntity stored, CancellationToken cancellationToken = default)
     {
-        var loadedUsers = await users.GetManyAsync(stored.UserIds, cancellationToken);
-        return factory(stored.Name, loadedUsers, stored);
+        return factory(stored.Name, [], stored);
     }
 
     public Task<OrganizationEntity> Map(IOrganization domain, CancellationToken cancellationToken = default)
@@ -43,7 +35,6 @@ internal class OrganizationConfig : AbstractEntityConfiguration<OrganizationEnti
         {
             Id = domain.Id,
             Name = domain.Name,
-            UserIds = domain.Users.Select(u => u.Id).ToArray(),
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
