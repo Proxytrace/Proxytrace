@@ -68,12 +68,12 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var total = await query.CountAsync(cancellationToken);
 
         var stored = await query
-            .OrderByDescending(e => e.CreatedAt.UtcTicks)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
         var items = await Map(stored, cancellationToken);
+        items = items.OrderByDescending(i => i.CreatedAt).ToArray();
         return (items, total);
     }
 }
