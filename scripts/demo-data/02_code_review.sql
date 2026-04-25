@@ -1,0 +1,311 @@
+-- Agent 2: Code Review Assistant (claude-sonnet-4-6 / anthropic)
+-- Tools: check_lint, get_file, run_tests
+-- Fingerprint generated with: python3 scripts/compute_fingerprint.py --agent code_review
+
+INSERT INTO AgentEntity (Id, Project, SystemMessage, Tools, Model, Provider, Fingerprint, CreatedAt, UpdatedAt)
+VALUES (
+  '20000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-000000000003',
+  '{"Contents":[{"Text":"You are an expert software engineer specialising in code review. Analyse code for bugs, security vulnerabilities, performance issues, and best-practice adherence. Provide clear, actionable, and constructive feedback with specific line references."}]}',
+  '[{"Name":"check_lint","Description":"Run linting on the specified files and return a list of violations with severity levels.","Arguments":{"type":"object","properties":{"files":{"type":"string","description":"Comma-separated list of file paths to lint"}},"required":["files"]}},{"Name":"get_file","Description":"Retrieve the content of a source file from the repository.","Arguments":{"type":"object","properties":{"path":{"type":"string","description":"Repository-relative path to the file"}},"required":["path"]}},{"Name":"run_tests","Description":"Run the test suite matching the given pattern and return pass/fail results with error details.","Arguments":{"type":"object","properties":{"pattern":{"type":"string","description":"Test name pattern or file glob to run"}},"required":["pattern"]}}]',
+  'claude-sonnet-4-6',
+  'anthropic',
+  '82a1310b96a613aca0c3d072411edcd6c0a19f47089e6e34dc407f81b2fd654b',
+  '2026-03-01T08:00:00.0000000+00:00',
+  '2026-03-01T08:00:00.0000000+00:00'
+);
+
+-- ── Agent Calls (Traces) ──────────────────────────────────────────────────────
+
+-- Trace 1: SQL injection vulnerability in auth module (uses get_file + check_lint)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000001","Messages":[{"Role":"User","Contents":[{"Text":"Please review src/auth/login.py for security issues."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_n01","Name":"get_file","Arguments":"{"path":"src/auth/login.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_n01","Contents":[{"Text":"call_n01"},{"Text":"def login(username, password):\n    query = f\"SELECT * FROM users WHERE username='{username}' AND password='{password}'\"\n    result = db.execute(query)\n    return result.fetchone()"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_n02","Name":"check_lint","Arguments":"{"files":"src/auth/login.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_n02","Contents":[{"Text":"call_n02"},{"Text":"src/auth/login.py:2: W0612 - f-string used in SQL query (high severity)\nsrc/auth/login.py:4: W0611 - Plain text password comparison (critical)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Critical security vulnerabilities found in src/auth/login.py:\n\n**SQL Injection (Critical) — Line 2:** The f-string interpolation directly embeds user input into the SQL query. An attacker can input `' OR '1'='1` as the username to bypass authentication entirely. Fix: use parameterised queries — `db.execute('SELECT * FROM users WHERE username=? AND password=?', (username, password))`.\n\n**Plain-text Password Comparison (Critical) — Line 4:** Passwords should never be stored or compared in plain text. Store passwords as salted hashes (e.g. bcrypt) and compare using `bcrypt.checkpw(password.encode(), stored_hash)`.\n\nThese are must-fix issues before this code goes anywhere near production."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Critical security vulnerabilities found in src/auth/login.py:\n\n**SQL Injection (Critical) — Line 2:** The f-string interpolation directly embeds user input into the SQL query. An attacker can input `'"'"' OR '"'"'1'"'"'='"'"'1` as the username to bypass authentication entirely. Fix: use parameterised queries.\n\n**Plain-text Password Comparison (Critical) — Line 4:** Passwords should never be stored or compared in plain text. Store passwords as salted hashes (e.g. bcrypt) and compare using `bcrypt.checkpw`."}]}',
+  892, 231, 3420, 200, 'stop', NULL, '2026-03-02T09:00:00.0000000+00:00', '2026-03-02T09:00:00.0000000+00:00'
+);
+
+-- Trace 2: N+1 query problem in API endpoint (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000002","Messages":[{"Role":"User","Contents":[{"Text":"Review src/api/orders.py - the /orders endpoint is really slow in production."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_o01","Name":"get_file","Arguments":"{"path":"src/api/orders.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_o01","Contents":[{"Text":"call_o01"},{"Text":"@app.route('/orders')\ndef get_orders():\n    orders = Order.query.all()\n    result = []\n    for order in orders:\n        user = User.query.get(order.user_id)  # query per order\n        result.append({'order': order.to_dict(), 'user': user.to_dict()})\n    return jsonify(result)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Found the performance bottleneck: a classic N+1 query problem.\n\n**Issue — Line 5:** `User.query.get(order.user_id)` executes one database query per order. If you have 1,000 orders, this endpoint makes 1,001 database round trips.\n\n**Fix:** Use a JOIN or eager loading:\n```python\norders = Order.query.options(joinedload(Order.user)).all()\n```\nThis fetches all orders and their users in a single query. With SQLAlchemy, add `relationship('User')` to the Order model and use `joinedload`. Expected performance improvement: 50-100x faster on large datasets."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Found the performance bottleneck: a classic N+1 query problem. Line 5 executes one database query per order. Fix using eager loading: `Order.query.options(joinedload(Order.user)).all()`. This reduces 1,001 queries to 1 query. Expected improvement: 50-100x faster on large datasets."}]}',
+  743, 198, 2890, 200, 'stop', NULL, '2026-03-03T10:15:00.0000000+00:00', '2026-03-03T10:15:00.0000000+00:00'
+);
+
+-- Trace 3: Missing input validation on API endpoint (uses get_file + check_lint)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000003","Messages":[{"Role":"User","Contents":[{"Text":"Can you check src/api/users.py for any obvious issues?"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_p01","Name":"get_file","Arguments":"{"path":"src/api/users.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_p01","Contents":[{"Text":"call_p01"},{"Text":"@app.route('/users', methods=['POST'])\ndef create_user():\n    data = request.json\n    user = User(name=data['name'], email=data['email'], role=data.get('role', 'user'))\n    db.session.add(user)\n    db.session.commit()\n    return jsonify(user.to_dict()), 201"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_p02","Name":"check_lint","Arguments":"{"files":"src/api/users.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_p02","Contents":[{"Text":"call_p02"},{"Text":"src/api/users.py:3: W0501 - No input validation before using request data (high)\nsrc/api/users.py:3: W0502 - role field accepted from client without whitelist (critical)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Two security issues in src/api/users.py:\n\n**No Input Validation (High) — Line 3:** `data['name']` and `data['email']` are used without validation. A missing key causes a 500 error; malformed data goes straight to the database. Use a validation library (e.g. marshmallow or pydantic) to validate and sanitise inputs first.\n\n**Privilege Escalation (Critical) — Line 3:** `role=data.get('role', 'user')` allows any client to pass `role=admin` and become an administrator. Never accept privilege-level fields from client input. The role should be set server-side based on business logic only."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Two security issues: missing input validation on line 3 (causes 500 errors and passes unvalidated data to DB), and a critical privilege escalation bug where clients can set their own role to admin. Fix: use pydantic/marshmallow for validation, and never accept the role field from client input."}]}',
+  834, 187, 3180, 200, 'stop', NULL, '2026-03-04T11:30:00.0000000+00:00', '2026-03-04T11:30:00.0000000+00:00'
+);
+
+-- Trace 4: Race condition in payment handler (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000004","Messages":[{"Role":"User","Contents":[{"Text":"Review the payment processing logic in src/payments/charge.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_q01","Name":"get_file","Arguments":"{"path":"src/payments/charge.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_q01","Contents":[{"Text":"call_q01"},{"Text":"def charge_user(user_id, amount):\n    user = User.query.get(user_id)\n    if user.balance >= amount:\n        user.balance -= amount\n        db.session.commit()\n        return True\n    return False"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Race condition vulnerability in src/payments/charge.py:\n\n**TOCTOU Race Condition (Critical) — Lines 2-5:** Between reading `user.balance` and writing the updated balance, another concurrent request could read the same value. Two simultaneous payments of $50 from a $60 balance could both see `balance >= amount` as true and both succeed, draining the account by $100.\n\n**Fix:** Use a database-level atomic update with row locking:\n```python\nresult = db.session.execute(\n    update(User)\n    .where(User.id == user_id, User.balance >= amount)\n    .values(balance=User.balance - amount)\n    .returning(User.id)\n)\nreturn result.rowcount == 1\n```\nThis ensures the check and update are atomic at the database level."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Race condition vulnerability: lines 2-5 have a TOCTOU bug where two concurrent requests can both pass the balance check and both deduct from the same balance. Fix with a database-level atomic UPDATE WHERE that combines the check and update into one operation."}]}',
+  761, 215, 3090, 200, 'stop', NULL, '2026-03-05T13:45:00.0000000+00:00', '2026-03-05T13:45:00.0000000+00:00'
+);
+
+-- Trace 5: Tests failing after refactor (uses run_tests)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000005', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000005","Messages":[{"Role":"User","Contents":[{"Text":"I refactored the auth module. Can you run the tests to see if anything broke?"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_r01","Name":"run_tests","Arguments":"{"pattern":"tests/auth/"}"}],"Contents":[]},{"Role":"Tool","Id":"call_r01","Contents":[{"Text":"call_r01"},{"Text":"Tests run: 12. Passed: 9. Failed: 3.\nFAILED tests/auth/test_login.py::test_invalid_password - AssertionError: expected 401, got 200\nFAILED tests/auth/test_login.py::test_locked_account - AttributeError: User has no attribute is_locked\nFAILED tests/auth/test_session.py::test_session_expiry - AssertionError: session did not expire after 30 minutes"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"3 tests are failing after your refactor:\n\n1. **test_invalid_password:** The login endpoint now returns 200 for invalid passwords instead of 401. Your refactor likely removed the password validation check or changed the return path. Check the `login()` function return value on failed authentication.\n\n2. **test_locked_account:** The `User` model no longer has an `is_locked` attribute. If you renamed or removed this field, update the model and migration, or update the test if the behaviour changed intentionally.\n\n3. **test_session_expiry:** Sessions are not expiring after 30 minutes. Check your session middleware configuration — the expiry timeout may have been reset to a default value during the refactor."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"3 tests failing: invalid password now returns 200 instead of 401 (broken auth logic), User.is_locked attribute was removed or renamed (update model or tests), and sessions no longer expire at 30 minutes (check session middleware timeout config)."}]}',
+  812, 208, 3250, 200, 'stop', NULL, '2026-03-06T09:20:00.0000000+00:00', '2026-03-06T09:20:00.0000000+00:00'
+);
+
+-- Trace 6: Missing error handling in file upload (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000006', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000006","Messages":[{"Role":"User","Contents":[{"Text":"Please review our file upload handler at src/api/upload.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_s01","Name":"get_file","Arguments":"{"path":"src/api/upload.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_s01","Contents":[{"Text":"call_s01"},{"Text":"@app.route('/upload', methods=['POST'])\ndef upload_file():\n    file = request.files['file']\n    filename = file.filename\n    file.save(os.path.join(UPLOAD_DIR, filename))\n    return jsonify({'path': filename}), 200"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Three security issues in the file upload handler:\n\n**Path Traversal (Critical) — Line 4:** Using `file.filename` directly allows an attacker to upload to `../../etc/passwd` or any path on the server. Always sanitise with `werkzeug.utils.secure_filename(file.filename)` and validate the result is non-empty.\n\n**No File Type Validation (High) — Line 3:** Any file type is accepted. Validate the MIME type and extension against an allowlist (e.g. images only: jpg, png, gif). Never trust the Content-Type header — inspect the actual file bytes.\n\n**No File Size Limit (Medium) — Line 3:** A client can upload an arbitrarily large file, causing disk exhaustion. Set `MAX_CONTENT_LENGTH` in your Flask config and handle the `RequestEntityTooLarge` exception."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Three security issues: path traversal via unsanitised filename (fix with secure_filename), no file type validation (add MIME type allowlist), and no file size limit (set MAX_CONTENT_LENGTH in Flask config)."}]}',
+  798, 196, 3120, 200, 'stop', NULL, '2026-03-07T14:00:00.0000000+00:00', '2026-03-07T14:00:00.0000000+00:00'
+);
+
+-- Trace 7: Test coverage analysis (uses run_tests)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000007', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000007","Messages":[{"Role":"User","Contents":[{"Text":"Run the full test suite and tell me how things look."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_t01","Name":"run_tests","Arguments":"{"pattern":"tests/"}"}],"Contents":[]},{"Role":"Tool","Id":"call_t01","Contents":[{"Text":"call_t01"},{"Text":"Tests run: 87. Passed: 82. Failed: 5. Coverage: 61%.\nFailed: test_payment_timeout, test_concurrent_checkout, test_refund_partial, test_email_bounce, test_webhook_signature"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Test run summary: 82/87 passing (94.3%), 61% code coverage.\n\nThe 5 failures cluster around two themes: payment edge cases (test_payment_timeout, test_concurrent_checkout, test_refund_partial) and external integrations (test_email_bounce, test_webhook_signature). The payment failures suggest the payment module needs attention — likely a timeout or concurrency issue introduced recently. The integration test failures may be environment-related (missing API keys or network access in CI).\n\n61% coverage is below the recommended 80% threshold. The payment, email, and webhook modules appear under-tested — I would prioritise adding tests there before the next release."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"82/87 tests passing (94.3%), 61% coverage. 5 failures cluster around payment edge cases and external integrations. Coverage is below the 80% recommended threshold — prioritise adding tests for the payment, email, and webhook modules."}]}',
+  789, 189, 3060, 200, 'stop', NULL, '2026-03-08T09:00:00.0000000+00:00', '2026-03-08T09:00:00.0000000+00:00'
+);
+
+-- Trace 8: Inefficient string concatenation in loop (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000008', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000008","Messages":[{"Role":"User","Contents":[{"Text":"This CSV export function is slow for large exports. src/reports/csv_export.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_u01","Name":"get_file","Arguments":"{"path":"src/reports/csv_export.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_u01","Contents":[{"Text":"call_u01"},{"Text":"def export_to_csv(records):\n    output = ''\n    for record in records:\n        output += ','.join(str(v) for v in record.values()) + '\\n'\n    return output"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Performance issue found in src/reports/csv_export.py:\n\n**O(n²) String Concatenation — Lines 2-4:** Using `output += ...` in a loop creates a new string object on every iteration. For 10,000 records this results in ~50 million character copies. For large exports this is the bottleneck.\n\n**Fix:** Use a list and join at the end:\n```python\ndef export_to_csv(records):\n    lines = [','.join(str(v) for v in record.values()) for record in records]\n    return '\\n'.join(lines)\n```\nOr use Python's built-in `csv` module with `StringIO` for proper CSV escaping (handles values containing commas or newlines that your current code would corrupt)."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"The bottleneck is O(n2) string concatenation in the loop (lines 2-4). Fix by building a list and joining once at the end, or use the csv module with StringIO for correct escaping of values containing commas."}]}',
+  756, 183, 2980, 200, 'stop', NULL, '2026-03-09T11:30:00.0000000+00:00', '2026-03-09T11:30:00.0000000+00:00'
+);
+
+-- Trace 9: Missing index causing slow queries (uses get_file + check_lint)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000009', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000009","Messages":[{"Role":"User","Contents":[{"Text":"Our user search API is slow. Can you look at src/api/search.py?"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_v01","Name":"get_file","Arguments":"{"path":"src/api/search.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_v01","Contents":[{"Text":"call_v01"},{"Text":"@app.route('/search')\ndef search_users():\n    q = request.args.get('q', '')\n    users = User.query.filter(User.email.like(f'%{q}%')).all()\n    return jsonify([u.to_dict() for u in users])"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_v02","Name":"check_lint","Arguments":"{"files":"src/api/search.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_v02","Contents":[{"Text":"call_v02"},{"Text":"src/api/search.py:4: W0701 - LIKE query with leading wildcard prevents index use (high)\nsrc/api/search.py:2: W0502 - No rate limiting on search endpoint (medium)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Two issues with the search endpoint:\n\n**Full-table Scan (High) — Line 4:** `LIKE '%query%'` with a leading wildcard cannot use a B-tree index, forcing a full table scan. For scalable search, add a GIN index on the `email` column with `pg_trgm` extension (PostgreSQL), or switch to a dedicated search solution like Elasticsearch for large datasets.\n\n**No Rate Limiting (Medium) — Line 2:** The search endpoint has no rate limiting, making it vulnerable to enumeration attacks. Add Flask-Limiter or similar to restrict requests per IP."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Two issues: the LIKE wildcard query prevents index use (full table scan) - use pg_trgm GIN index or a search service for scale. Also missing rate limiting on the endpoint, which enables enumeration attacks."}]}',
+  867, 202, 3360, 200, 'stop', NULL, '2026-03-10T13:00:00.0000000+00:00', '2026-03-10T13:00:00.0000000+00:00'
+);
+
+-- Trace 10: Hardcoded secrets in source code (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000010","Messages":[{"Role":"User","Contents":[{"Text":"Quick review of src/config.py please."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_w01","Name":"get_file","Arguments":"{"path":"src/config.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_w01","Contents":[{"Text":"call_w01"},{"Text":"DEBUG = True\nSECRET_KEY = 'mysupersecretkey123'\nDATABASE_URL = 'postgresql://admin:password123@prod-db.internal:5432/shopdb'\nSTRIPE_KEY = 'sk_live_abc123xyz'"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Multiple critical security issues in src/config.py:\n\n**Hardcoded Secrets (Critical) — Lines 2-4:** Production credentials are committed to source control. The database password and Stripe live key are compromised the moment this file is pushed to any repository. Rotate ALL of these credentials immediately.\n\n**Fix:** Move all secrets to environment variables and use `os.environ.get()` or a secrets manager (AWS Secrets Manager, HashiCorp Vault).\n\n**DEBUG=True in Production (High) — Line 1:** Debug mode exposes stack traces and an interactive debugger to users. This must be `False` in production. Use environment-specific configuration files or an environment variable to control this."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Critical: production credentials (database password, Stripe live key) are hardcoded in source code. Rotate all credentials immediately and move secrets to environment variables or a secrets manager. Also disable DEBUG mode for production."}]}',
+  798, 218, 3150, 200, 'stop', NULL, '2026-03-11T09:45:00.0000000+00:00', '2026-03-11T09:45:00.0000000+00:00'
+);
+
+-- Trace 11: Missing pagination on list endpoint (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000011","Messages":[{"Role":"User","Contents":[{"Text":"Review src/api/products.py - the /products endpoint sometimes times out."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_x01","Name":"get_file","Arguments":"{"path":"src/api/products.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_x01","Contents":[{"Text":"call_x01"},{"Text":"@app.route('/products')\ndef list_products():\n    products = Product.query.all()\n    return jsonify([p.to_dict() for p in products])"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Root cause of the timeout: no pagination.\n\n**Unbounded Query (High) — Line 2:** `Product.query.all()` fetches every product in the database into memory. As the catalogue grows, this causes timeouts and out-of-memory errors.\n\n**Fix:** Add pagination:\n```python\npage = request.args.get('page', 1, type=int)\nper_page = min(request.args.get('per_page', 20, type=int), 100)\nresult = Product.query.paginate(page=page, per_page=per_page)\nreturn jsonify({'items': [p.to_dict() for p in result.items], 'total': result.total, 'pages': result.pages})\n```\nAlso add an index on `Product.created_at` for efficient ordering."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Root cause: no pagination. Line 2 fetches all products into memory. Fix with SQLAlchemy paginate(), cap per_page at 100, and add a created_at index for efficient ordering."}]}',
+  742, 186, 2920, 200, 'stop', NULL, '2026-03-12T10:30:00.0000000+00:00', '2026-03-12T10:30:00.0000000+00:00'
+);
+
+-- Trace 12: CORS misconfiguration (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000012","Messages":[{"Role":"User","Contents":[{"Text":"Check our CORS setup in src/middleware/cors.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_y01","Name":"get_file","Arguments":"{"path":"src/middleware/cors.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_y01","Contents":[{"Text":"call_y01"},{"Text":"CORS(app, resources={r'/*': {'origins': '*'}}, supports_credentials=True)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Security misconfiguration in src/middleware/cors.py:\n\n**Wildcard Origin with Credentials (Critical) — Line 1:** Combining `origins='*'` with `supports_credentials=True` is a security violation. Browsers block this combination for good reason: it would allow any malicious website to make authenticated cross-origin requests using the user credentials. In practice, most browsers will reject this configuration.\n\n**Fix:** Specify an explicit allowlist of trusted origins:\n```python\nCORS(app,\n  origins=['https://app.techshop.com', 'https://admin.techshop.com'],\n  supports_credentials=True)\n```\nNever use `*` with credentials."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Critical CORS misconfiguration: wildcard origin combined with credentials is a security violation. Browsers block this. Fix by specifying an explicit allowlist of trusted origins instead of using the wildcard."}]}',
+  723, 192, 2870, 200, 'stop', NULL, '2026-03-13T14:00:00.0000000+00:00', '2026-03-13T14:00:00.0000000+00:00'
+);
+
+-- Trace 13: Linting check on entire src/ directory (uses check_lint)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000013","Messages":[{"Role":"User","Contents":[{"Text":"Run a lint check across the whole src directory before we cut the release."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_z01","Name":"check_lint","Arguments":"{"files":"src/"}"}],"Contents":[]},{"Role":"Tool","Id":"call_z01","Contents":[{"Text":"call_z01"},{"Text":"Total violations: 23 (3 critical, 8 high, 12 medium)\nCritical: src/auth/login.py:2 (SQL injection), src/api/users.py:3 (privilege escalation), src/config.py:2 (hardcoded secret)\nHigh: src/api/orders.py:5 (N+1 query x2), src/api/products.py:2 (unbounded query), src/middleware/cors.py:1 (CORS wildcard), src/api/upload.py:4 (path traversal), src/reports/csv_export.py:3 (O(n2) concat)\nMedium: 12 style and minor issues"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Pre-release lint report: 23 violations (3 critical, 8 high, 12 medium).\n\nThe 3 critical issues must be resolved before release: SQL injection in auth/login.py, privilege escalation in api/users.py, and hardcoded production credentials in config.py. These are exploitable vulnerabilities.\n\nOf the 8 high-severity issues, the path traversal in upload.py and the CORS misconfiguration are also security-relevant and should be fixed before release. The N+1 queries and unbounded query are performance concerns that will cause degradation under load.\n\nI would recommend blocking the release until at minimum the 3 criticals and 2 security-related highs are resolved."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"23 violations found. Block release on 3 criticals (SQL injection, privilege escalation, hardcoded secrets) and 2 security highs (path traversal, CORS). Performance highs (N+1, unbounded query) should also be addressed before release."}]}',
+  901, 234, 3580, 200, 'stop', NULL, '2026-03-14T16:00:00.0000000+00:00', '2026-03-14T16:00:00.0000000+00:00'
+);
+
+-- Trace 14: Unhandled exception in async worker (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000014', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000014","Messages":[{"Role":"User","Contents":[{"Text":"Our background job worker keeps crashing silently. Review src/workers/email_sender.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_aa01","Name":"get_file","Arguments":"{"path":"src/workers/email_sender.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_aa01","Contents":[{"Text":"call_aa01"},{"Text":"def send_email_job(job_data):\n    recipient = job_data['to']\n    subject = job_data['subject']\n    body = job_data['body']\n    smtp.sendmail(FROM, recipient, body)\n    mark_job_complete(job_data['id'])"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"The silent crash issue is caused by zero error handling:\n\n**No Exception Handling (High) — Lines 1-6:** Any error — SMTP timeout, malformed email address, missing job_data key — causes an unhandled exception that crashes the worker thread silently. The job is then neither completed nor retried.\n\n**Fix:** Wrap the operation in try/except with explicit job failure handling:\n```python\ntry:\n    smtp.sendmail(FROM, recipient, body)\n    mark_job_complete(job_data['id'])\nexcept Exception as e:\n    logger.error(f'Email job {job_data[\"id\"]} failed: {e}')\n    mark_job_failed(job_data['id'], str(e))\n    raise  # allow the job queue to handle retry logic\n```\nAlso add input validation for job_data keys before use."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"The silent crash is caused by zero error handling - any SMTP or data error crashes the worker thread without logging. Fix with try/except that logs the error, marks the job as failed, and re-raises for the job queue retry mechanism."}]}',
+  769, 197, 3010, 200, 'stop', NULL, '2026-03-15T11:00:00.0000000+00:00', '2026-03-15T11:00:00.0000000+00:00'
+);
+
+-- Trace 15: Good clean code — positive review (uses get_file + run_tests)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000015', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000015","Messages":[{"Role":"User","Contents":[{"Text":"Review src/utils/validators.py and run its tests."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_bb01","Name":"get_file","Arguments":"{"path":"src/utils/validators.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_bb01","Contents":[{"Text":"call_bb01"},{"Text":"import re\nfrom dataclasses import dataclass\n\nEMAIL_RE = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')\n\ndef validate_email(email: str) -> bool:\n    if not isinstance(email, str) or len(email) > 254:\n        return False\n    return bool(EMAIL_RE.match(email))\n\ndef validate_phone(phone: str) -> bool:\n    cleaned = re.sub(r'[\\s\\-\\(\\)]', '', phone)\n    return bool(re.match(r'^\\+?[1-9]\\d{6,14}$', cleaned))"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_bb02","Name":"run_tests","Arguments":"{"pattern":"tests/utils/test_validators.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_bb02","Contents":[{"Text":"call_bb02"},{"Text":"Tests run: 18. Passed: 18. Failed: 0. Coverage: 97%."}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"This is well-written code — no significant issues found.\n\n**Positive observations:** Type annotations are present, the email regex pre-compiles at module level (good for performance), input validation checks both type and length before regex (correct order), and the phone validator strips formatting characters before matching.\n\n**All 18 tests pass with 97% coverage** — excellent.\n\n**Minor suggestions (non-blocking):** Consider adding a docstring explaining the validation rules accepted. The phone validator could also return the normalised number on success rather than just True/False, which would make it more useful at call sites."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Clean code - all 18 tests pass with 97% coverage. Well-structured with pre-compiled regex, type annotations, and correct input ordering. Minor suggestion: add docstrings and consider returning the normalised phone number on success for better usability."}]}',
+  834, 201, 3270, 200, 'stop', NULL, '2026-03-16T09:30:00.0000000+00:00', '2026-03-16T09:30:00.0000000+00:00'
+);
+
+-- Trace 16: Dependency version pinning review (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000016', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000016","Messages":[{"Role":"User","Contents":[{"Text":"Look at our requirements.txt and tell me if there are any concerns."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_cc01","Name":"get_file","Arguments":"{"path":"requirements.txt"}"}],"Contents":[]},{"Role":"Tool","Id":"call_cc01","Contents":[{"Text":"call_cc01"},{"Text":"flask\nrequests\nsqlalchemy\nstripe\nbcrypt\npillow"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Major dependency management issue: no version pinning.\n\n**Unpinned Dependencies (High):** All six dependencies are listed without version constraints. This means `pip install` will always fetch the latest version, which can silently introduce breaking changes or security regressions on your next deployment or CI run.\n\n**Fix:** Pin to exact versions in production:\n```\nflask==3.0.3\nrequests==2.31.0\nsqlalchemy==2.0.29\nstripe==8.9.0\nbcrypt==4.1.2\npillow==10.3.0\n```\nUse `pip freeze > requirements.txt` to capture your current working versions. Also consider adding a `requirements-dev.txt` for development-only dependencies, and using `pip-audit` to scan for known vulnerabilities."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"All dependencies are unpinned, which means any deployment can silently pick up a breaking or vulnerable version. Fix: pin exact versions with pip freeze, separate dev dependencies, and run pip-audit regularly."}]}',
+  748, 184, 2950, 200, 'stop', NULL, '2026-03-17T13:30:00.0000000+00:00', '2026-03-17T13:30:00.0000000+00:00'
+);
+
+-- Trace 17: XSS vulnerability in template rendering (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000017', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000017","Messages":[{"Role":"User","Contents":[{"Text":"Our customer-facing email templates are in src/templates/email.py. Any issues?"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_dd01","Name":"get_file","Arguments":"{"path":"src/templates/email.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_dd01","Contents":[{"Text":"call_dd01"},{"Text":"def render_welcome_email(user_name, promo_code):\n    return f'<html><body><h1>Welcome {user_name}!</h1><p>Use code {promo_code} for 10% off.</p></body></html>'"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"XSS vulnerability in src/templates/email.py:\n\n**Unescaped User Input in HTML (High) — Line 2:** `user_name` is interpolated directly into HTML without escaping. If a user registers with a name like `<script>alert(1)</script>`, this script tag will be rendered as HTML in the email client, potentially executing malicious code.\n\n**Fix:** HTML-escape all user-supplied values before embedding in HTML:\n```python\nfrom html import escape\nreturn f'<html><body><h1>Welcome {escape(user_name)}!</h1><p>Use code {escape(promo_code)} for 10% off.</p></body></html>'\n```\nBetter yet, use a proper templating engine like Jinja2 with auto-escaping enabled, which handles this automatically."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"XSS vulnerability: user_name is interpolated into HTML without escaping. Fix with html.escape() on all user-supplied values, or switch to Jinja2 with auto-escaping enabled."}]}',
+  731, 188, 2890, 200, 'stop', NULL, '2026-03-18T10:00:00.0000000+00:00', '2026-03-18T10:00:00.0000000+00:00'
+);
+
+-- Trace 18: Insecure direct object reference (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000018', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000018","Messages":[{"Role":"User","Contents":[{"Text":"Can you review the order detail endpoint in src/api/order_detail.py?"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_ee01","Name":"get_file","Arguments":"{"path":"src/api/order_detail.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_ee01","Contents":[{"Text":"call_ee01"},{"Text":"@app.route('/orders/<order_id>')\n@login_required\ndef get_order(order_id):\n    order = Order.query.get(order_id)\n    return jsonify(order.to_dict())"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Insecure Direct Object Reference (IDOR) vulnerability:\n\n**Missing Ownership Check (Critical) — Lines 3-4:** Any authenticated user can view any order by changing the `order_id` in the URL. `@login_required` only checks that the user is logged in — it does not verify they own the requested order.\n\n**Fix:** Add an ownership check:\n```python\norder = Order.query.filter_by(id=order_id, user_id=current_user.id).first_or_404()\n```\nThis ensures users can only access their own orders. Also handle the case where `order_id` is not a valid UUID to avoid leaking information about whether IDs exist."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"IDOR vulnerability: any logged-in user can access any order by guessing the ID. Fix: add user_id to the query filter to enforce ownership. login_required only checks authentication, not authorisation."}]}',
+  743, 194, 2940, 200, 'stop', NULL, '2026-03-19T14:30:00.0000000+00:00', '2026-03-19T14:30:00.0000000+00:00'
+);
+
+-- Trace 19: Regression tests after dependency upgrade (uses run_tests)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000019', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000019","Messages":[{"Role":"User","Contents":[{"Text":"We just upgraded SQLAlchemy from 1.4 to 2.0. Run the integration tests."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_ff01","Name":"run_tests","Arguments":"{"pattern":"tests/integration/"}"}],"Contents":[]},{"Role":"Tool","Id":"call_ff01","Contents":[{"Text":"call_ff01"},{"Text":"Tests run: 34. Passed: 21. Failed: 13.\nMost failures: AttributeError: Query object has no attribute 'get' (deprecated)\nAlso: SAWarning: relationship 'User.orders' will copy column orders.user_id to column users.id (passive_deletes)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"13/34 integration tests failing after the SQLAlchemy 2.0 upgrade — expected for a major version bump.\n\n**Breaking Change — `Query.get()` removed:** SQLAlchemy 2.0 removed the legacy `Query.get()` method. Replace all `Model.query.get(id)` calls with `db.session.get(Model, id)`. This is the most common failure.\n\n**Passive Deletes Warning:** The relationship configuration needs updating. Add `passive_deletes=True` to relationships where you rely on database-level cascades, or explicitly configure cascade behaviour in your model definitions.\n\nThe migration guide at docs.sqlalchemy.org/en/20/changelog/migration_20.html covers all breaking changes. I would estimate 2-3 hours of work to resolve the 13 failures given the pattern is consistent."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"13/34 failures after SQLAlchemy 2.0 upgrade. Main issue: Query.get() was removed - replace with db.session.get(Model, id). Also fix relationship passive_deletes configuration. Estimated 2-3 hours to resolve given the consistent pattern."}]}',
+  867, 216, 3390, 200, 'stop', NULL, '2026-03-20T09:00:00.0000000+00:00', '2026-03-20T09:00:00.0000000+00:00'
+);
+
+-- Trace 20: Memory leak in image processing (uses get_file)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000020', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000020","Messages":[{"Role":"User","Contents":[{"Text":"Our image thumbnail service leaks memory over time. Check src/images/thumbnail.py."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_gg01","Name":"get_file","Arguments":"{"path":"src/images/thumbnail.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_gg01","Contents":[{"Text":"call_gg01"},{"Text":"def create_thumbnail(image_path, size=(200, 200)):\n    img = Image.open(image_path)\n    img.thumbnail(size)\n    return img"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Memory leak identified in src/images/thumbnail.py:\n\n**Unclosed Image (High) — Lines 2-4:** `Image.open()` opens a file handle and loads image data into memory. The `img` object is returned but never explicitly closed. If the caller does not close it (which is easy to forget), both the file handle and the decompressed image data remain in memory until garbage collection runs.\n\n**Fix:** Use a context manager or return the image data in a format that does not hold a file handle:\n```python\ndef create_thumbnail(image_path, size=(200, 200)) -> bytes:\n    with Image.open(image_path) as img:\n        img.thumbnail(size)\n        buf = io.BytesIO()\n        img.save(buf, format='JPEG')\n        return buf.getvalue()\n```\nThis closes the file handle immediately and returns serialised bytes, eliminating the leak."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Memory leak: Image.open() file handles are never closed. Fix by using a context manager (with Image.open() as img) and returning serialised bytes instead of the Image object, so the caller cannot accidentally hold the file handle open."}]}',
+  754, 195, 2970, 200, 'stop', NULL, '2026-03-21T11:00:00.0000000+00:00', '2026-03-21T11:00:00.0000000+00:00'
+);
+
+-- Trace 21: Missing type annotations review (uses get_file + check_lint)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000021', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000021","Messages":[{"Role":"User","Contents":[{"Text":"We are adding type checking with mypy. Start with src/utils/formatters.py"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_hh01","Name":"get_file","Arguments":"{"path":"src/utils/formatters.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_hh01","Contents":[{"Text":"call_hh01"},{"Text":"def format_price(amount, currency='USD'):\n    if currency == 'USD':\n        return f'${amount:.2f}'\n    return f'{amount:.2f} {currency}'\n\ndef truncate(text, max_len):\n    return text[:max_len] + '...' if len(text) > max_len else text"}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_hh02","Name":"check_lint","Arguments":"{"files":"src/utils/formatters.py"}"}],"Contents":[]},{"Role":"Tool","Id":"call_hh02","Contents":[{"Text":"call_hh02"},{"Text":"src/utils/formatters.py:1: I0001 - Missing type annotations (info)\nsrc/utils/formatters.py:6: I0001 - Missing type annotations (info)"}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"The functions work correctly but need type annotations for mypy:\n\n```python\ndef format_price(amount: float, currency: str = 'USD') -> str:\n    if currency == 'USD':\n        return f'${amount:.2f}'\n    return f'{amount:.2f} {currency}'\n\ndef truncate(text: str, max_len: int) -> str:\n    return text[:max_len] + '...' if len(text) > max_len else text\n```\n\nNote: `truncate` has a subtle bug — if `max_len` is 0 and `len(text) > 0`, the function appends `'...'` to an empty string instead of returning an empty string. Consider adding a guard: `if max_len <= 0: return ''`."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Added type annotations for both functions. Also flagged a subtle bug in truncate: when max_len is 0, it returns ... instead of an empty string. Add a guard: if max_len <= 0: return empty string."}]}',
+  812, 198, 3190, 200, 'stop', NULL, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+
+-- Trace 22: All tests green after security fixes (uses run_tests)
+INSERT INTO AgentCallEntity (Id, AgentId, Model, Provider, Request, Response, InputTokens, OutputTokens, DurationMs, HttpStatus, FinishReason, ErrorMessage, CreatedAt, UpdatedAt) VALUES (
+  '21000000-0000-0000-0000-000000000022', '20000000-0000-0000-0000-000000000000', 'claude-sonnet-4-6', 'anthropic',
+  '{"Id":"cc200000-0000-0000-0000-000000000022","Messages":[{"Role":"User","Contents":[{"Text":"We applied all the security fixes. Run the full test suite to confirm."}]},{"Role":"Assistant","ToolRequests":[{"Id":"call_ii01","Name":"run_tests","Arguments":"{"pattern":"tests/"}"}],"Contents":[]},{"Role":"Tool","Id":"call_ii01","Contents":[{"Text":"call_ii01"},{"Text":"Tests run: 94. Passed: 94. Failed: 0. Coverage: 78%."}]},{"Role":"Assistant","ToolRequests":[],"Contents":[{"Text":"Excellent — all 94 tests are passing after the security fixes. Coverage has improved from 61% to 78%, which is close to the 80% target.\n\nThe fixes appear to be working correctly. Before releasing, I would recommend: running the lint check one more time to confirm the critical violations are resolved, doing a final manual test of the authentication flow and file upload endpoint, and scheduling a penetration test if this is a public-facing service. Well done on addressing the issues systematically."}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"All 94 tests passing after security fixes. Coverage improved from 61% to 78% - close to the 80% target. Recommend a final lint check and manual test of auth and file upload before release."}]}',
+  789, 176, 3020, 200, 'stop', NULL, '2026-03-23T10:00:00.0000000+00:00', '2026-03-23T10:00:00.0000000+00:00'
+);
+
+-- ── Test Cases ────────────────────────────────────────────────────────────────
+
+INSERT INTO TestCaseEntity (Id, Input, ExpectedOutput, CreatedAt, UpdatedAt) VALUES (
+  '23000000-0000-0000-0000-000000000001',
+  '{"Id":"tc200000-0000-0000-0000-000000000001","Messages":[{"Role":"User","Contents":[{"Text":"What is wrong with this Python code: cursor.execute(\"SELECT * FROM users WHERE id=\" + user_id)"}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"This code is vulnerable to SQL injection. The user_id is concatenated directly into the query string. Fix using parameterised queries: cursor.execute(\"SELECT * FROM users WHERE id=%s\", (user_id,))"}]}',
+  '2026-03-05T08:00:00.0000000+00:00', '2026-03-05T08:00:00.0000000+00:00'
+);
+INSERT INTO TestCaseEntity (Id, Input, ExpectedOutput, CreatedAt, UpdatedAt) VALUES (
+  '23000000-0000-0000-0000-000000000002',
+  '{"Id":"tc200000-0000-0000-0000-000000000002","Messages":[{"Role":"User","Contents":[{"Text":"How do I fix an N+1 query problem in SQLAlchemy?"}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use eager loading with joinedload or selectinload: Model.query.options(joinedload(Model.relationship)).all(). This fetches related objects in a single query instead of one query per row."}]}',
+  '2026-03-05T08:00:00.0000000+00:00', '2026-03-05T08:00:00.0000000+00:00'
+);
+INSERT INTO TestCaseEntity (Id, Input, ExpectedOutput, CreatedAt, UpdatedAt) VALUES (
+  '23000000-0000-0000-0000-000000000003',
+  '{"Id":"tc200000-0000-0000-0000-000000000003","Messages":[{"Role":"User","Contents":[{"Text":"Why is storing passwords in plain text dangerous?"}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Plain text passwords are exposed immediately if the database is breached. Use bcrypt or argon2 to store salted hashes. Never store or log plain text passwords."}]}',
+  '2026-03-05T08:00:00.0000000+00:00', '2026-03-05T08:00:00.0000000+00:00'
+);
+INSERT INTO TestCaseEntity (Id, Input, ExpectedOutput, CreatedAt, UpdatedAt) VALUES (
+  '23000000-0000-0000-0000-000000000004',
+  '{"Id":"tc200000-0000-0000-0000-000000000004","Messages":[{"Role":"User","Contents":[{"Text":"What is an IDOR vulnerability?"}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Insecure Direct Object Reference: an API exposes internal IDs without verifying the requesting user owns the resource. Fix by adding ownership checks in queries, e.g. filter by both resource ID and user ID."}]}',
+  '2026-03-05T08:00:00.0000000+00:00', '2026-03-05T08:00:00.0000000+00:00'
+);
+INSERT INTO TestCaseEntity (Id, Input, ExpectedOutput, CreatedAt, UpdatedAt) VALUES (
+  '23000000-0000-0000-0000-000000000005',
+  '{"Id":"tc200000-0000-0000-0000-000000000005","Messages":[{"Role":"User","Contents":[{"Text":"Why should dependencies be pinned in requirements.txt?"}]}]}',
+  '{"ToolRequests":[],"Contents":[{"Text":"Unpinned dependencies mean pip always installs the latest version, which can introduce breaking changes or security regressions on any deployment. Pin exact versions and use pip-audit to scan for vulnerabilities."}]}',
+  '2026-03-05T08:00:00.0000000+00:00', '2026-03-05T08:00:00.0000000+00:00'
+);
+
+-- ── Test Suite ────────────────────────────────────────────────────────────────
+
+INSERT INTO TestSuiteEntity (Id, Agent, Evaluator, TestCases, CreatedAt, UpdatedAt) VALUES (
+  '22000000-0000-0000-0000-000000000000',
+  '20000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-000000000004',
+  '["23000000-0000-0000-0000-000000000001","23000000-0000-0000-0000-000000000002","23000000-0000-0000-0000-000000000003","23000000-0000-0000-0000-000000000004","23000000-0000-0000-0000-000000000005"]',
+  '2026-03-08T08:00:00.0000000+00:00', '2026-03-08T08:00:00.0000000+00:00'
+);
+
+-- ── Test Results ─────────────────────────────────────────────────────────────
+
+-- Run 1: 2 pass, 2 fail, 1 undecided
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000001', '23000000-0000-0000-0000-000000000001',
+  '{"ToolRequests":[],"Contents":[{"Text":"This code is vulnerable to SQL injection. The user_id is concatenated directly into the query string. Fix using parameterised queries: cursor.execute(\"SELECT * FROM users WHERE id=%s\", (user_id,))"}]}',
+  0, '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000002', '23000000-0000-0000-0000-000000000002',
+  '{"ToolRequests":[],"Contents":[{"Text":"To fix N+1 queries, fetch related objects in the same query using joins."}]}',
+  1, '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000003', '23000000-0000-0000-0000-000000000003',
+  '{"ToolRequests":[],"Contents":[{"Text":"Plain text passwords are exposed immediately if the database is breached. Use bcrypt or argon2 to store salted hashes. Never store or log plain text passwords."}]}',
+  0, '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000004', '23000000-0000-0000-0000-000000000004',
+  '{"ToolRequests":[],"Contents":[{"Text":"IDOR means a user can access objects they should not by guessing IDs."}]}',
+  1, '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000005', '23000000-0000-0000-0000-000000000005',
+  '{"ToolRequests":[],"Contents":[{"Text":"Pinning dependencies ensures reproducible builds."}]}',
+  2, '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+
+-- Run 2: 4 pass, 1 fail (improved)
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000011', '23000000-0000-0000-0000-000000000001',
+  '{"ToolRequests":[],"Contents":[{"Text":"This code is vulnerable to SQL injection. The user_id is concatenated directly into the query string. Fix using parameterised queries: cursor.execute(\"SELECT * FROM users WHERE id=%s\", (user_id,))"}]}',
+  0, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000012', '23000000-0000-0000-0000-000000000002',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use eager loading with joinedload or selectinload: Model.query.options(joinedload(Model.relationship)).all(). This fetches related objects in a single query instead of one query per row."}]}',
+  0, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000013', '23000000-0000-0000-0000-000000000003',
+  '{"ToolRequests":[],"Contents":[{"Text":"Plain text passwords are exposed immediately if the database is breached. Use bcrypt or argon2 to store salted hashes. Never store or log plain text passwords."}]}',
+  0, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000014', '23000000-0000-0000-0000-000000000004',
+  '{"ToolRequests":[],"Contents":[{"Text":"Insecure Direct Object Reference: an API exposes internal IDs without verifying the requesting user owns the resource. Fix by adding ownership checks in queries, e.g. filter by both resource ID and user ID."}]}',
+  0, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000015', '23000000-0000-0000-0000-000000000005',
+  '{"ToolRequests":[],"Contents":[{"Text":"Pinned dependencies ensure consistent builds. Use pip freeze and pip-audit for vulnerability scanning."}]}',
+  1, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+
+-- ── Test Runs ─────────────────────────────────────────────────────────────────
+
+INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
+  '24000000-0000-0000-0000-000000000001',
+  '2026-03-12T09:00:00.0000000+00:00',
+  '20000000-0000-0000-0000-000000000000',
+  '["25000000-0000-0000-0000-000000000001","25000000-0000-0000-0000-000000000002","25000000-0000-0000-0000-000000000003","25000000-0000-0000-0000-000000000004","25000000-0000-0000-0000-000000000005"]',
+  '2026-03-12T09:00:00.0000000+00:00', '2026-03-12T09:00:00.0000000+00:00'
+);
+
+INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
+  '24000000-0000-0000-0000-000000000002',
+  '2026-03-22T09:00:00.0000000+00:00',
+  '20000000-0000-0000-0000-000000000000',
+  '["25000000-0000-0000-0000-000000000011","25000000-0000-0000-0000-000000000012","25000000-0000-0000-0000-000000000013","25000000-0000-0000-0000-000000000014","25000000-0000-0000-0000-000000000015"]',
+  '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
