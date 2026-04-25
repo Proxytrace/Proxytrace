@@ -27,12 +27,10 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
     public async Task<IAgent> GetOrCreateAsync(
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
-        string model,
-        string provider,
         IProject project,
         CancellationToken cancellationToken = default)
     {
-        var fingerprint = GetAgentFingerprint(systemMessage, tools, model, provider);
+        var fingerprint = GetAgentFingerprint(systemMessage, tools);
 
         var existing = await contextFactory()
             .Set<AgentEntity>()
@@ -44,11 +42,13 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var agent = createNew(systemMessage, tools, model, provider, project);
+        var agent = createNew(systemMessage, tools, project);
         return await AddAsync(agent, cancellationToken);
     }
 
-    public string GetAgentFingerprint(SystemMessage systemMessage, IReadOnlyCollection<ToolSpecification> tools, string model, string provider)
+    public string GetAgentFingerprint(
+        SystemMessage systemMessage,
+        IReadOnlyCollection<ToolSpecification> tools)
     {
         var sb = new StringBuilder();
 
@@ -64,15 +64,10 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             sb.Append(tool.Arguments.JsonSchema).Append('\0');
         }
 
-        sb.Append('\0');
-        sb.Append(model);
-        sb.Append('\0');
-        sb.Append(provider);
-
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     public string GetAgentFingerprint(IAgent agent)
-        => GetAgentFingerprint(agent.SystemMessage, agent.Tools, agent.Model, agent.Provider);
+        => GetAgentFingerprint(agent.SystemMessage, agent.Tools);
 }

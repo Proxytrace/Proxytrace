@@ -1,18 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
-using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall.Internal;
 
 internal record AgentCall : DomainEntity, IAgentCall
 {
-    public IAgent? Agent { get; }
-    public string Model { get; }
-    public string Provider { get; }
+    public IAgent Agent { get; }
+    public IModelEndpoint Endpoint { get; }
     public Conversation Request { get; }
     public AssistantMessage Response { get; }
     public TokenUsage Usage { get; }
@@ -22,20 +21,18 @@ internal record AgentCall : DomainEntity, IAgentCall
     public string? ErrorMessage { get; }
 
     public AgentCall(
-        string model,
-        string provider,
+        IAgent agent,
+        IModelEndpoint endpoint,
         Conversation request,
         AssistantMessage response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage,
-        IAgent? agent = null)
+        string? errorMessage)
     {
         Agent = agent;
-        Model = model;
-        Provider = provider;
+        Endpoint = endpoint;
         Request = request;
         Response = response;
         Usage = usage;
@@ -46,8 +43,8 @@ internal record AgentCall : DomainEntity, IAgentCall
     }
 
     public AgentCall(
-        string model,
-        string provider,
+        IAgent agent,
+        IModelEndpoint endpoint,
         Conversation request,
         AssistantMessage response,
         TokenUsage usage,
@@ -55,12 +52,10 @@ internal record AgentCall : DomainEntity, IAgentCall
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
-        IDomainEntityData existing,
-        IAgent? agent = null) : base(existing)
+        IDomainEntityData existing) : base(existing)
     {
         Agent = agent;
-        Model = model;
-        Provider = provider;
+        Endpoint = endpoint;
         Request = request;
         Response = response;
         Usage = usage;
@@ -76,32 +71,25 @@ internal record AgentCall : DomainEntity, IAgentCall
         {
             yield return result;
         }
-
-        if (Request is null)
+        
+        foreach (var result in Agent.Validate(validationContext))
         {
-            yield return Validation.NotNull(Request, nameof(Request));
+            yield return result;
         }
-        else
+        
+        foreach (var result in Endpoint.Validate(validationContext))
         {
-            foreach (var result in Request.Validate(validationContext))
-            {
-                yield return result;
-            }
+            yield return result;
         }
 
-        if (Response is null)
+        foreach (var result in Request.Validate(validationContext))
         {
-            yield return Validation.NotNull(Response, nameof(Response));
+            yield return result;
         }
-        else
+        
+        foreach (var result in Response.Validate(validationContext))
         {
-            foreach (var result in Response.Validate(validationContext))
-            {
-                yield return result;
-            }
+            yield return result;
         }
-
-        yield return Validation.NotNullOrWhiteSpace(Model, nameof(Model));
-        yield return Validation.NotNullOrWhiteSpace(Provider, nameof(Provider));
     }
 }

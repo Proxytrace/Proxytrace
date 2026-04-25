@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using Trsr.Api.Services;
 using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestResult;
@@ -51,7 +50,7 @@ internal class TestRunnerService : ITestRunnerService
 
         foreach (var testCase in suite.TestCases)
         {
-            var requestBody = BuildRequestBody(testCase.Input, agent.SystemMessage, suite);
+            var requestBody = BuildRequestBody(testCase.Input, agent.SystemMessage);
             var requestBytes = Encoding.UTF8.GetBytes(requestBody);
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, proxyPath)
@@ -60,7 +59,7 @@ internal class TestRunnerService : ITestRunnerService
             };
             httpRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
-            string? responseBody = null;
+            string? responseBody;
             System.Net.HttpStatusCode httpStatus;
 
             try
@@ -76,8 +75,7 @@ internal class TestRunnerService : ITestRunnerService
                 continue;
             }
 
-            var parsed = parser.Parse("self", requestBody, responseBody, TimeSpan.Zero, httpStatus);
-            if (parsed?.Response is null)
+            if (!parser.TryParse("self", requestBody, responseBody, TimeSpan.Zero, httpStatus, out var parsed))
             {
                 logger.LogWarning("Could not parse response for test case {TestCaseId}", testCase.Id);
                 continue;
@@ -97,11 +95,9 @@ internal class TestRunnerService : ITestRunnerService
         return testRun;
     }
 
-    private static string BuildRequestBody(Conversation input, SystemMessage systemMessage, ITestSuite suite)
+    private static string BuildRequestBody(Conversation input, SystemMessage systemMessage)
     {
-        var messages = new List<object>();
-
-        messages.Add(new { role = "system", content = GetText(systemMessage.Contents) });
+        var messages = new List<object> { new { role = "system", content = GetText(systemMessage.Contents) } };
 
         foreach (var message in input.Messages)
         {

@@ -21,10 +21,10 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endPointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endPointId);
         var result = await statistics.GetSummaryAsync(filter, cancellationToken);
         return new SummaryDto(result.TotalCalls, result.TotalInputTokens, result.TotalOutputTokens, result.AvgLatencyMs, result.OverallPassRate);
     }
@@ -35,12 +35,12 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endPointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endPointId);
         var results = await statistics.GetTokenUsageAsync(filter, cancellationToken);
-        return results.Select(r => new TokenUsageDto(r.Date, r.Model, r.InputTokens, r.OutputTokens)).ToArray();
+        return results.Select(r => new TokenUsageDto(r.Date, r.EndpointId, r.InputTokens, r.OutputTokens)).ToArray();
     }
 
     [HttpGet("latency")]
@@ -49,12 +49,12 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endpointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetLatencyAsync(filter, cancellationToken);
-        return results.Select(r => new LatencyDto(r.Model, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray();
+        return results.Select(r => new LatencyDto(r.EndpointId, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray();
     }
 
     [HttpGet("pass-rates")]
@@ -63,10 +63,10 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endpointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetPassRatesAsync(filter, cancellationToken);
         return results.Select(r => new PassRateDto(r.AgentId, r.RunTimestamp, r.PassCount, r.FailCount, r.UndecidedCount)).ToArray();
     }
@@ -77,12 +77,12 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endpointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetErrorRatesAsync(filter, cancellationToken);
-        return results.Select(r => new ErrorRateDto(r.Model, r.Provider, r.TotalCalls, r.ErrorCalls, r.ErrorRate)).ToArray();
+        return results.Select(r => new ErrorRateDto(r.EndpointId, r.TotalCalls, r.ErrorCalls, r.ErrorRate)).ToArray();
     }
 
     [HttpGet("model-breakdown")]
@@ -91,12 +91,12 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endpointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetModelBreakdownAsync(filter, cancellationToken);
-        return results.Select(r => new ModelBreakdownDto(r.Model, r.CallCount, r.TotalInputTokens, r.TotalOutputTokens, r.AvgDurationMs)).ToArray();
+        return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.CallCount, r.TotalInputTokens, r.TotalOutputTokens, r.AvgDurationMs)).ToArray();
     }
 
     [HttpGet("cost-estimate")]
@@ -105,11 +105,11 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
+        [FromQuery] Guid? endpointId = null,
         CancellationToken cancellationToken = default)
     {
-        var filter = new StatisticsFilter(from, to, projectId, agentId, model);
+        var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetCostEstimateAsync(filter, cancellationToken);
-        return results.Select(r => new CostEstimateDto(r.Model, r.InputCostUsd, r.OutputCostUsd, r.TotalCostUsd)).ToArray();
+        return results.Select(r => new CostEstimateDto(r.EndpointId, r.InputCostEur, r.OutputCostEur, r.TotalCostEur)).ToArray();
     }
 }

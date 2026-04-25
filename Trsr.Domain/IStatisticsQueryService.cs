@@ -32,7 +32,7 @@ public record StatisticsFilter(
     DateTimeOffset? To = null,
     Guid? ProjectId = null,
     Guid? AgentId = null,
-    string? Model = null);
+    Guid? EndpointId = null);
 
 public record StatisticsSummary(
     long TotalCalls,
@@ -43,12 +43,12 @@ public record StatisticsSummary(
 
 public record TokenUsageStat(
     DateOnly Date,
-    string Model,
+    Guid EndpointId,
     long InputTokens,
     long OutputTokens);
 
 public record LatencyStat(
-    string Model,
+    Guid EndpointId,
     double P50Ms,
     double P95Ms,
     double P99Ms,
@@ -64,21 +64,20 @@ public record PassRateStat(
     int UndecidedCount);
 
 public record ErrorRateStat(
-    string Model,
-    string Provider,
+    Guid EndpointId,
     int TotalCalls,
     int ErrorCalls,
     double ErrorRate);
 
 public record ModelBreakdownStat(
-    string Model,
+    Guid EndpointId,
     int CallCount,
     long TotalInputTokens,
     long TotalOutputTokens,
     double AvgDurationMs);
 
 public record CostEstimateStat(
-    string Model,
-    decimal InputCostUsd,
-    decimal OutputCostUsd,
-    decimal TotalCostUsd);
+    Guid EndpointId,
+    decimal InputCostEur,
+    decimal OutputCostEur,
+    decimal TotalCostEur);

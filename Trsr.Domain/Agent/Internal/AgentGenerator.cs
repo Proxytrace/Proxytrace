@@ -7,9 +7,6 @@ namespace Trsr.Domain.Agent.Internal;
 
 internal class AgentGenerator : DomainEntityGenerator<IAgent>
 {
-    private static readonly IReadOnlyCollection<string> Models = ["gpt-4o", "gpt-4o-mini", "claude-sonnet-4-6"];
-    private static readonly IReadOnlyCollection<string> Providers = ["openai", "anthropic"];
-
     private readonly IAgent.CreateNew factory;
     private readonly IDomainEntityGenerator<IProject> projectGenerator;
 
@@ -29,8 +26,6 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>
         return factory(
             systemMessage: new SystemMessage(random.String()),
             tools: [],
-            model: random.Any(Models),
-            provider: random.Any(Providers),
             project: project);
     }
 }

@@ -4,19 +4,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
-using Trsr.Domain.Organization;
-using Trsr.Domain.Project;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
-using Trsr.Domain.User;
-using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
 
 [TestClass]
-public sealed class AgentCallValidationTests : BaseTest<Module>
+public sealed class AgentCallValidationTests : DomainTest<Module>
 {
     [TestMethod]
-    public void CreateNew_WithValidInputs_CreatesAgentCall()
+    public async Task CreateNew_WithValidInputs_CreatesAgentCall()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -24,11 +21,13 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         var request = Conversation.Create();
         var response = new AssistantMessage([Content.FromText("Hello")], []);
         var usage = new TokenUsage(100, 50);
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
         var agentCall = factory(
-            model: "gpt-4o",
-            provider: "openai",
+            agent: agent,
+            endpoint: endpoint,
             request: request,
             response: response,
             usage: usage,
@@ -39,8 +38,8 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
 
         // Assert
         agentCall.Should().NotBeNull();
-        agentCall.Model.Should().Be("gpt-4o");
-        agentCall.Provider.Should().Be("openai");
+        agentCall.Agent.Should().Be(agent);
+        agentCall.Endpoint.Should().Be(endpoint);
         agentCall.Request.Should().Be(request);
         agentCall.Response.Should().Be(response);
         agentCall.HttpStatus.Should().Be(HttpStatusCode.OK);
@@ -51,47 +50,50 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void CreateNew_WithOptionalAgent_CreatesAgentCall()
+    public async Task CreateNew_WithOptionalAgent_CreatesAgentCall()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var agent = CreateTestAgent(services);
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
         var request = Conversation.Create();
         var response = new AssistantMessage([Content.FromText("Hello")], []);
         var usage = new TokenUsage(100, 50);
-
+        
         // Act
         var agentCall = factory(
-            model: "gpt-4o",
-            provider: "openai",
+            agent: agent,
+            endpoint: endpoint,
             request: request,
             response: response,
             usage: usage,
             duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null,
-            agent: agent);
+            errorMessage: null);
 
         // Assert
         agentCall.Agent.Should().Be(agent);
     }
 
     [TestMethod]
-    public void CreateNew_WithNullRequest_ThrowsValidationException()
+    public async Task CreateNew_WithNullRequest_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
         var response = new AssistantMessage([Content.FromText("Hello")], []);
         var usage = new TokenUsage(100, 50);
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(
-            model: "gpt-4o",
-            provider: "openai",
+            agent: agent,
+            endpoint: endpoint,
             request: null!,
             response: response,
             usage: usage,
@@ -103,19 +105,21 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void CreateNew_WithNullResponse_ThrowsValidationException()
+    public async Task CreateNew_WithNullResponse_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
         var request = Conversation.Create();
         var usage = new TokenUsage(100, 50);
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(
-            model: "gpt-4o",
-            provider: "openai",
+            agent: agent,
+            endpoint: endpoint,
             request: request,
             response: null!,
             usage: usage,
@@ -127,7 +131,7 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void CreateNew_WithNullModel_ThrowsValidationException()
+    public async Task CreateNew_WithNullModel_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -135,12 +139,14 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         var request = Conversation.Create();
         var response = new AssistantMessage([Content.FromText("Hello")], []);
         var usage = new TokenUsage(100, 50);
-
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+        
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
         var action = () => factory(
-            model: null!,
-            provider: "openai",
+            agent: agent,
+            endpoint: endpoint,
             request: request,
             response: response,
             usage: usage,
@@ -151,54 +157,6 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         action.Should().Throw<Exception>();
     }
 
-    [TestMethod]
-    public void CreateNew_WithWhitespaceModel_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
-
-        // Act & Assert
-        var action = () => factory(
-            model: "   ",
-            provider: "openai",
-            request: request,
-            response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
-            httpStatus: HttpStatusCode.OK,
-            finishReason: "stop",
-            errorMessage: null);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public void CreateNew_WithNullProvider_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(
-            model: "gpt-4o",
-            provider: null!,
-            request: request,
-            response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
-            httpStatus: HttpStatusCode.OK,
-            finishReason: "stop",
-            errorMessage: null);
-        action.Should().Throw<Exception>();
-    }
 
     [TestMethod]
     public async Task CreateExisting_WithValidData_CreatesAgentCall()
@@ -211,8 +169,8 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
 
         // Act
         var agentCall = createExisting(
-            existing.Model,
-            existing.Provider,
+            existing.Agent,
+            existing.Endpoint,
             existing.Request,
             existing.Response,
             existing.Usage,
@@ -225,14 +183,14 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         // Assert
         agentCall.Should().NotBeNull();
         agentCall.Id.Should().Be(existing.Id);
-        agentCall.Model.Should().Be(existing.Model);
-        agentCall.Provider.Should().Be(existing.Provider);
+        agentCall.Agent.Should().Be(existing.Agent);
+        agentCall.Endpoint.Should().Be(existing.Endpoint);
         agentCall.CreatedAt.Should().Be(existing.CreatedAt);
         agentCall.UpdatedAt.Should().Be(existing.UpdatedAt);
     }
 
     [TestMethod]
-    public void Id_IsUniqueForEachNewAgentCall()
+    public async Task Id_IsUniqueForEachNewAgentCall()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -240,25 +198,14 @@ public sealed class AgentCallValidationTests : BaseTest<Module>
         var request = Conversation.Create();
         var response = new AssistantMessage([Content.FromText("Hello")], []);
         var usage = new TokenUsage(100, 50);
-
+        var agent = await GetOrCreate<IAgent>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+        
         // Act
-        var agentCall1 = factory("gpt-4o", "openai", request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
-        var agentCall2 = factory("gpt-4o", "openai", request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
+        var agentCall1 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
+        var agentCall2 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
 
         // Assert
         agentCall1.Id.Should().NotBe(agentCall2.Id);
-    }
-
-    private static IAgent CreateTestAgent(IServiceProvider services)
-    {
-        var userFactory = services.GetRequiredService<IUser.CreateNew>();
-        var orgFactory = services.GetRequiredService<IOrganization.CreateNew>();
-        var projectFactory = services.GetRequiredService<IProject.CreateNew>();
-        var agentFactory = services.GetRequiredService<IAgent.CreateNew>();
-        var systemMessage = new SystemMessage("You are a helpful assistant");
-        var user = userFactory("Test User");
-        var org = orgFactory("Test Org", [user]);
-        var project = projectFactory("Test Project", org);
-        return agentFactory(systemMessage, [], "gpt-4o", "openai", project);
     }
 }

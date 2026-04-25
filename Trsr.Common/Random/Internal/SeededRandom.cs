@@ -49,6 +49,17 @@ internal class SeededRandom : IRandom
         }
     }
 
+    public decimal Decimal(decimal? min = null, decimal? max = null)
+    {
+        lock (lockObject)
+        {
+            min ??= 0;
+            max ??= decimal.MaxValue;
+            var nextDecimal = (decimal)random.NextDouble();
+            return min.Value + (nextDecimal * (max.Value - min.Value));
+        }
+    }
+
     public T Any<T>(IReadOnlyCollection<T> options) 
         => options.ElementAt(Int(min: 0, max: options.Count));
 

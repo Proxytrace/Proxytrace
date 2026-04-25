@@ -15,5 +15,5 @@ internal sealed record OpenAiCallParseResult(
     HttpStatusCode HttpStatus,
     string? FinishReason,
     string? ErrorMessage,
-    SystemMessage? SystemMessage,
+    SystemMessage SystemMessage,
     IReadOnlyCollection<ToolSpecification> Tools);

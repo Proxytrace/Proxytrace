@@ -59,5 +59,19 @@ public static class Validation
     
     public static ValidationResult NotEmpty(string? value, [CallerMemberName] string memberName = "")
         => MinLength(value, 1, memberName);
-        
+
+    public static ValidationResult Positive(decimal value, [CallerMemberName] string memberName = "")
+        => value <= 0
+            ? new ValidationResult($"{memberName} must be positive")
+            : ValidationResult.Success!;
+
+    public static ValidationResult LessThan(decimal value, decimal maxValue, [CallerMemberName] string memberName = "") 
+        => value >= maxValue
+            ? new ValidationResult($"{memberName} must be less than {maxValue}")
+            : ValidationResult.Success!;
+
+    public static ValidationResult LessThanOrEqual(decimal value, decimal maxValue, [CallerMemberName] string memberName = "") 
+        => value > maxValue
+            ? new ValidationResult($"{memberName} must be less than or equal to {maxValue}")
+            : ValidationResult.Success!;
 }
