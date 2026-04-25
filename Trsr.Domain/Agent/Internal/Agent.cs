@@ -13,31 +13,26 @@ internal record Agent : DomainEntity, IAgent
     public IProject Project { get; }
     public SystemMessage SystemMessage { get; }
     public IReadOnlyCollection<ToolSpecification> Tools { get; }
-    public IModelEndpoint Endpoint { get; }
 
     public Agent(
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
-        IModelEndpoint endpoint,
         IProject project)
     {
         SystemMessage = systemMessage;
         Project = project;
         Tools = tools;
-        Endpoint = endpoint;
     }
 
     public Agent(
-        IProject project,
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
-        IModelEndpoint endpoint,
+        IProject project,
         IDomainEntityData existing) : base(existing)
     {
         Project = project;
         SystemMessage = systemMessage;
         Tools = tools;
-        Endpoint = endpoint;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -53,11 +48,6 @@ internal record Agent : DomainEntity, IAgent
         }
 
         foreach (var result in Project.Validate(validationContext))
-        {
-            yield return result;
-        }
-        
-        foreach (var result in Endpoint.Validate(validationContext))
         {
             yield return result;
         }

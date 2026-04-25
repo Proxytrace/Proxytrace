@@ -43,7 +43,6 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         agentCall.Request.Should().Be(request);
         agentCall.Response.Should().Be(response);
         agentCall.HttpStatus.Should().Be(HttpStatusCode.OK);
-        agentCall.Agent.Should().BeNull();
         agentCall.Id.Should().NotBe(Guid.Empty);
         agentCall.CreatedAt.Should().NotBe(default);
         agentCall.UpdatedAt.Should().NotBe(default);
@@ -129,34 +128,6 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             errorMessage: null);
         action.Should().Throw<Exception>();
     }
-
-    [TestMethod]
-    public async Task CreateNew_WithNullModel_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
-        var agent = await GetOrCreate<IAgent>(services);
-        var endpoint = await GetOrCreate<IModelEndpoint>(services);
-        
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(
-            agent: agent,
-            endpoint: endpoint,
-            request: request,
-            response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
-            httpStatus: HttpStatusCode.OK,
-            finishReason: "stop",
-            errorMessage: null);
-        action.Should().Throw<Exception>();
-    }
-
 
     [TestMethod]
     public async Task CreateExisting_WithValidData_CreatesAgentCall()

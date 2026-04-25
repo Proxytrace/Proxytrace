@@ -13,7 +13,11 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
     public decimal InputTokenCost { get; }
     public decimal OutputTokenCost { get; }
 
-    public ModelEndpoint(IModel model, IModelProvider provider, decimal inputTokenCost, decimal outputTokenCost)
+    public ModelEndpoint(
+        IModel model,
+        IModelProvider provider,
+        decimal inputTokenCost,
+        decimal outputTokenCost)
     {
         Model = model;
         Provider = provider;
