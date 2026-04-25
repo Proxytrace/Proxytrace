@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Trsr is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
+## Working on UI
+
+When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
+
 ## Commands
 
 ### Backend (.NET 10)
