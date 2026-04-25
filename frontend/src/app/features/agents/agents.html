@@ -1,0 +1,211 @@
+<div style="max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:14px; padding-bottom:24px; height:calc(100vh - 80px); overflow:hidden;">
+
+  <!-- Header -->
+  <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-shrink:0;">
+    <div>
+      <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0 0 4px;">Agents</h1>
+      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">System prompts, tool definitions, and version history.</p>
+    </div>
+    <button style="padding:8px 14px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:12.5px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Agent
+    </button>
+  </div>
+
+  <!-- Master-detail -->
+  <div class="fade-up" style="animation-delay:60ms; display:grid; grid-template-columns:300px 1fr; gap:12px; flex:1; min-height:0;">
+
+    <!-- Agent list -->
+    <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding:8px;">
+      @for (agent of agents; track agent.id) {
+        <button (click)="selectedAgentId.set(agent.id)"
+                style="width:100%; text-align:left; padding:12px 14px; border-radius:10px; transition:background 0.1s; position:relative;"
+                [style.background]="selectedAgentId() === agent.id ? 'rgba(139,92,246,0.08)' : 'transparent'">
+
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:7px;">
+            <!-- Agent color avatar -->
+            <div style="width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:13px; font-weight:700; color:#fff;"
+                 [style.background]="'linear-gradient(135deg,' + agentColor(agent.name) + 'cc,' + agentColor(agent.name) + '88)'">
+              {{agent.name[0]}}
+            </div>
+            <div style="min-width:0; flex:1;">
+              <div style="font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{agent.name}}</div>
+              <div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{agent.model}}</div>
+            </div>
+            @if (agent.passRate !== null) {
+              <span style="font-size:12.5px; font-weight:700; flex-shrink:0;" [style.color]="passColor(agent.passRate)">{{agent.passRate}}%</span>
+            }
+          </div>
+
+          <p style="font-size:11.5px; color:var(--text-muted); margin:0 0 7px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">{{agent.description}}</p>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--text-muted);">
+            <span>{{agent.runs}} runs</span>
+            <span>{{agent.lastRun}}</span>
+          </div>
+
+          @if (selectedAgentId() === agent.id) {
+            <span style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:50%; background:var(--accent-primary); border-radius:0 2px 2px 0;"></span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- Agent detail -->
+    @if (selectedAgent(); as agent) {
+      <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; overflow:hidden;">
+
+        <!-- Detail header -->
+        <div style="padding:18px 20px; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+          <div style="display:flex; align-items:flex-start; gap:14px; margin-bottom:14px;">
+            <div style="width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px; font-weight:700; color:#fff;"
+                 [style.background]="'linear-gradient(135deg,' + agentColor(agent.name) + 'cc,' + agentColor(agent.name) + '88)'">
+              {{agent.name[0]}}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                <h2 style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin:0;">{{agent.name}}</h2>
+                @for (tag of agent.tags; track tag) {
+                  <span style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; background:var(--bg-card-2); color:var(--text-muted);">{{tag}}</span>
+                }
+              </div>
+              <p style="font-size:12.5px; color:var(--text-muted); margin:0;">{{agent.description}}</p>
+            </div>
+          </div>
+
+          <!-- KPI row -->
+          <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px;">
+            <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Model</div>
+              <div style="font-size:12px; font-weight:600; font-family:'JetBrains Mono',monospace;" [style.color]="modelColor(agent.model)">{{agent.model}}</div>
+            </div>
+            <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Pass rate</div>
+              <div style="font-size:16px; font-weight:700;" [style.color]="passColor(agent.passRate)">{{agent.passRate !== null ? agent.passRate + '%' : '—'}}</div>
+            </div>
+            <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Avg latency</div>
+              <div style="font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace;">{{agent.avgLatency}}</div>
+            </div>
+            <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Avg cost</div>
+              <div style="font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace;">${{agent.avgCost.toFixed(2)}}</div>
+            </div>
+            <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
+              <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Total tokens</div>
+              <div style="font-size:14px; font-weight:700; font-family:'JetBrains Mono',monospace; white-space:nowrap;">{{(agent.totalTokensIn + agent.totalTokensOut).toLocaleString()}}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div style="display:flex; gap:2px; padding:10px 20px 0; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+          @for (tab of tabs; track tab) {
+            <button (click)="activeTab.set(tab)"
+                    style="padding:7px 14px; font-size:12.5px; font-weight:500; border-radius:8px 8px 0 0; transition:color 0.15s, background 0.15s; border-bottom:2px solid transparent; margin-bottom:-1px;"
+                    [style.color]="activeTab() === tab ? 'var(--accent-hover)' : 'var(--text-muted)'"
+                    [style.border-bottom-color]="activeTab() === tab ? 'var(--accent-primary)' : 'transparent'"
+                    [style.background]="activeTab() === tab ? 'rgba(139,92,246,0.06)' : 'transparent'">
+              @switch (tab) {
+                @case ('prompt') { System Prompt }
+                @case ('tools') { Tools ({{agent.tools.length}}) }
+                @case ('versions') { Versions ({{agent.versions.length}}) }
+              }
+            </button>
+          }
+        </div>
+
+        <!-- Tab content -->
+        <div style="flex:1; overflow-y:auto; padding:18px 20px;">
+
+          <!-- System Prompt tab -->
+          @if (activeTab() === 'prompt') {
+            <div style="position:relative;">
+              <div style="position:absolute; top:10px; right:10px; z-index:1;">
+                <button style="padding:5px 10px; background:var(--bg-card-2); border-radius:7px; font-size:11px; font-weight:500; color:var(--text-muted); display:inline-flex; align-items:center; gap:5px;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
+              </div>
+              <pre style="background:var(--bg-card-2); border-radius:12px; padding:16px; font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; word-break:break-word; margin:0;">{{agent.systemPrompt}}</pre>
+            </div>
+          }
+
+          <!-- Tools tab -->
+          @if (activeTab() === 'tools') {
+            @if (agent.tools.length === 0) {
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:40px 0; color:var(--text-muted);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <p style="font-size:13px; color:var(--text-secondary); margin:0;">No tools — this agent uses text output only</p>
+              </div>
+            } @else {
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                @for (tool of agent.tools; track tool.name) {
+                  <div style="background:var(--bg-card-2); border-radius:11px; padding:13px 15px; display:flex; align-items:flex-start; gap:12px;">
+                    <div style="width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;" [style.background]="toolCategoryBg(tool.category)">
+                      @switch (tool.category) {
+                        @case ('read') {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [style.color]="toolCategoryColor(tool.category)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        }
+                        @case ('write') {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [style.color]="toolCategoryColor(tool.category)"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        }
+                        @case ('system') {
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [style.color]="toolCategoryColor(tool.category)"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        }
+                      }
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="font-size:12.5px; font-weight:600; font-family:'JetBrains Mono',monospace; color:var(--text-primary);">{{tool.name}}</span>
+                        <span style="padding:1px 7px; border-radius:100px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;" [style.background]="toolCategoryBg(tool.category)" [style.color]="toolCategoryColor(tool.category)">{{tool.category}}</span>
+                      </div>
+                      <p style="font-size:12px; color:var(--text-muted); margin:0; line-height:1.5;">{{tool.description}}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          <!-- Versions tab -->
+          @if (activeTab() === 'versions') {
+            <div style="position:relative; padding-left:16px;">
+              <!-- Timeline line -->
+              <div style="position:absolute; left:6px; top:8px; bottom:8px; width:1px; background:var(--hairline);"></div>
+
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                @for (v of agent.versions; track v.version) {
+                  <div style="position:relative;">
+                    <!-- Timeline dot -->
+                    <div style="position:absolute; left:-13px; top:10px; width:8px; height:8px; border-radius:50%; border:2px solid;" [style.background]="v.active ? 'var(--accent-primary)' : 'var(--bg-card-2)'" [style.border-color]="v.active ? 'var(--accent-primary)' : 'var(--border-color)'"></div>
+
+                    <div style="background:var(--bg-card-2); border-radius:11px; padding:13px 15px;" [style.border]="v.active ? '1px solid rgba(139,92,246,0.2)' : '1px solid transparent'">
+                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                        <span style="font-size:13px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--text-primary);">{{v.version}}</span>
+                        @if (v.active) {
+                          <span style="padding:2px 8px; border-radius:100px; font-size:10px; font-weight:600; background:var(--accent-subtle); color:var(--accent-hover);">active</span>
+                        }
+                        @if (v.label && !v.active) {
+                          <span style="padding:2px 8px; border-radius:100px; font-size:10px; font-weight:500; background:var(--bg-card); color:var(--text-muted);">{{v.label}}</span>
+                        }
+                        <span style="font-size:11px; color:var(--text-muted); margin-left:auto;">{{v.date}}</span>
+                      </div>
+                      <p style="font-size:12px; color:var(--text-muted); margin:0; line-height:1.5;">{{v.change}}</p>
+                      @if (!v.active) {
+                        <button style="margin-top:8px; padding:4px 10px; background:var(--bg-card); border-radius:7px; font-size:11px; font-weight:500; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px;">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                          Restore
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

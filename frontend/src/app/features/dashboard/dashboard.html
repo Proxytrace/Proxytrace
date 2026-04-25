@@ -1,156 +1,428 @@
-<div class="max-w-6xl mx-auto">
-  <!-- Page header -->
-  <div class="mb-8">
-    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">Dashboard</h1>
-    <p class="text-sm" style="color: var(--text-muted);">Overview of your agent tracing and evaluation activity.</p>
+<div style="max-width:1320px; margin:0 auto; display:flex; flex-direction:column; gap:16px; padding-bottom:24px;">
+
+  <!-- ── Title row ─────────────────────────────────────────────────────────── -->
+  <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0;">Dashboard</h1>
+        <span style="
+          display:flex; align-items:center; gap:5px;
+          font-size:11px; color:var(--success); font-weight:600;
+          padding:3px 8px; background:var(--success-subtle);
+          border:1px solid rgba(16,185,129,0.2); border-radius:100px;
+          white-space:nowrap; flex-shrink:0;
+        ">
+          <span style="width:6px; height:6px; border-radius:50%; background:var(--success);" class="pulse-dot"></span>
+          Proxy online
+        </span>
+      </div>
+      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Overview of your agent tracing and evaluation activity.</p>
+    </div>
+    <div style="display:flex; gap:4px; padding:4px; background:var(--bg-card); border-radius:10px; box-shadow:var(--shadow-pill); flex-shrink:0;">
+      @for (r of ['1h', '24h', '7d', '30d']; track r) {
+        <button (click)="volRange = r" style="
+          padding:6px 12px; font-size:12px; font-weight:500; border-radius:7px;
+          transition: background 0.15s, color 0.15s;
+        "
+        [style.background]="volRange === r ? 'var(--bg-card-2)' : 'transparent'"
+        [style.color]="volRange === r ? 'var(--text-primary)' : 'var(--text-muted)'"
+        [style.box-shadow]="volRange === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none'">
+          {{r}}
+        </button>
+      }
+    </div>
   </div>
 
-  <!-- Stat cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <!-- Total Traces -->
-    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Total Traces</p>
-      @if (summaryState() === 'loading') {
-        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
-      } @else if (summaryState() === 'error') {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
-        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
-      } @else {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">{{ summary()?.totalCalls ?? 0 }}</p>
-        <p class="text-xs" style="color: var(--text-muted);">LLM calls captured</p>
-      }
+  <!-- ── KPI Row ──────────────────────────────────────────────────────────── -->
+  <div class="fade-up" style="animation-delay:40ms; display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
+
+    <!-- Total Traces (accent) -->
+    <div class="kpi-card accent">
+      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(139,92,246,0.18), transparent 70%);"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; position:relative;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:7px; background:var(--accent-subtle); color:var(--accent-hover); display:flex; align-items:center; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">Total Traces</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px; font-size:11px; font-weight:600; color:var(--success); padding:2px 6px; border-radius:5px; background:var(--success-subtle);">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          +24%
+        </div>
+      </div>
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; position:relative;">
+        <div>
+          <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
+            @if (summaryState() === 'loading') { <span style="color:var(--text-muted); animation:pulse 1.5s infinite;">—</span> }
+            @else { {{ summary()?.totalCalls ?? 0 }} }
+          </div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">LLM calls captured</div>
+        </div>
+        <svg [attr.viewBox]="'0 0 72 24'" width="72" height="24" style="display:block; overflow:visible;">
+          <path [attr.d]="kpiSparklines['traces'].path" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['traces'].endX" [attr.cy]="kpiSparklines['traces'].endY" r="2" fill="#8b5cf6"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Total Tokens -->
-    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Total Tokens</p>
-      @if (summaryState() === 'loading') {
-        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
-      } @else if (summaryState() === 'error') {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
-        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
-      } @else {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
-          {{ ((summary()?.totalInputTokens ?? 0) + (summary()?.totalOutputTokens ?? 0)).toLocaleString() }}
-        </p>
-        <p class="text-xs" style="color: var(--text-muted);">
-          {{ (summary()?.totalInputTokens ?? 0).toLocaleString() }} in / {{ (summary()?.totalOutputTokens ?? 0).toLocaleString() }} out
-        </p>
-      }
+    <div class="kpi-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:7px; background:var(--bg-card-2); color:var(--text-secondary); display:flex; align-items:center; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/></svg>
+          </div>
+          <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">Total Tokens</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px; font-size:11px; font-weight:600; color:var(--success); padding:2px 6px; border-radius:5px; background:var(--success-subtle);">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          +12%
+        </div>
+      </div>
+      <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+        <div>
+          <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
+            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @else { {{ formatTokensK((summary()?.totalInputTokens ?? 0) + (summary()?.totalOutputTokens ?? 0)) }} }
+          </div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">
+            @if (summaryState() === 'loaded') {
+              {{ (summary()?.totalInputTokens ?? 0).toLocaleString() }} in · {{ (summary()?.totalOutputTokens ?? 0).toLocaleString() }} out
+            } @else { &nbsp; }
+          </div>
+        </div>
+        <svg [attr.viewBox]="'0 0 72 24'" width="72" height="24" style="display:block;">
+          <path [attr.d]="kpiSparklines['tokens'].path" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['tokens'].endX" [attr.cy]="kpiSparklines['tokens'].endY" r="2" fill="#06b6d4"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Avg Latency -->
-    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Avg Latency</p>
-      @if (summaryState() === 'loading') {
-        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
-      } @else if (summaryState() === 'error') {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
-        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
-      } @else {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
-          {{ formatLatency(summary()?.avgLatencyMs ?? 0) }}
-        </p>
-        <p class="text-xs" style="color: var(--text-muted);">per LLM call</p>
-      }
+    <div class="kpi-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:7px; background:var(--bg-card-2); color:var(--text-secondary); display:flex; align-items:center; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">Avg Latency</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px; font-size:11px; font-weight:600; color:var(--success); padding:2px 6px; border-radius:5px; background:var(--success-subtle);">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          -8%
+        </div>
+      </div>
+      <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+        <div>
+          <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
+            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @else { {{ formatLatency(summary()?.avgLatencyMs ?? 0) }} }
+          </div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">p95 4.1s · p99 6.2s</div>
+        </div>
+        <svg [attr.viewBox]="'0 0 72 24'" width="72" height="24" style="display:block;">
+          <path [attr.d]="kpiSparklines['latency'].path" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['latency'].endX" [attr.cy]="kpiSparklines['latency'].endY" r="2" fill="#f59e0b"/>
+        </svg>
+      </div>
     </div>
 
     <!-- Pass Rate -->
-    <div class="rounded-lg p-4 border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <p class="text-xs font-medium mb-2" style="color: var(--text-muted);">Pass Rate</p>
-      @if (summaryState() === 'loading') {
-        <p class="text-2xl font-bold mb-1 animate-pulse" style="color: var(--text-muted);">—</p>
-      } @else if (summaryState() === 'error') {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-muted);">—</p>
-        <p class="text-xs" style="color: var(--text-muted);">Failed to load</p>
-      } @else {
-        <p class="text-2xl font-bold mb-1" style="color: var(--text-primary);">
-          {{ Math.round(summary()?.overallPassRate ?? 0) }}%
-        </p>
-        <p class="text-xs" style="color: var(--text-muted);">across test runs</p>
-      }
+    <div class="kpi-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px; height:28px; border-radius:7px; background:var(--bg-card-2); color:var(--text-secondary); display:flex; align-items:center; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <span style="font-size:12px; color:var(--text-secondary); font-weight:500;">Pass Rate</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:2px; font-size:11px; font-weight:600; color:var(--success); padding:2px 6px; border-radius:5px; background:var(--success-subtle);">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          +7pt
+        </div>
+      </div>
+      <div style="display:flex; align-items:flex-end; justify-content:space-between;">
+        <div>
+          <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
+            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @else { {{ Math.round(summary()?.overallPassRate ?? 0) }}<span style="font-size:18px; color:var(--text-muted);">%</span> }
+          </div>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">8 runs · Support suite v2</div>
+        </div>
+        <svg [attr.viewBox]="'0 0 72 24'" width="72" height="24" style="display:block;">
+          <path [attr.d]="kpiSparklines['passRate'].path" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['passRate'].endX" [attr.cy]="kpiSparklines['passRate'].endY" r="2" fill="#10b981"/>
+        </svg>
+      </div>
     </div>
   </div>
 
-  <!-- Recent activity -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <!-- Recent Traces -->
-    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <div class="flex items-center justify-between px-4 py-3 border-b" style="border-color: var(--border-color);">
-        <h2 class="text-sm font-medium" style="color: var(--text-primary);">Recent Traces</h2>
-        <a routerLink="/traces" class="text-xs transition-colors" style="color: var(--accent-primary);">View all →</a>
-      </div>
+  <!-- ── Charts Row 1: Trace Volume + Latency Distribution ──────────────── -->
+  <div class="fade-up" style="animation-delay:80ms; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px;">
 
-      @if (recentTracesState() === 'loading') {
-        <div class="flex flex-col items-center justify-center py-12 px-4">
-          <p class="text-sm animate-pulse" style="color: var(--text-muted);">Loading…</p>
+    <!-- Trace Volume area chart -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Trace Volume</h3>
+          <p>Last 24 hours · hourly buckets</p>
         </div>
-      } @else if (recentTracesState() === 'error') {
-        <div class="flex flex-col items-center justify-center py-12 px-4">
-          <p class="text-sm" style="color: var(--text-muted);">Failed to load traces.</p>
-        </div>
-      } @else if (recentTraces().length === 0) {
-        <div class="flex flex-col items-center justify-center py-12 px-4">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-               style="background-color: var(--bg-secondary);">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                 style="color: var(--text-muted);">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
+        <div style="display:flex; align-items:center; gap:14px; flex-shrink:0;">
+          <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted);">
+            <span style="width:8px; height:8px; border-radius:2px; background:#8b5cf6; display:inline-block;"></span>
+            Traces
           </div>
-          <p class="text-sm mb-1" style="color: var(--text-secondary);">No traces yet</p>
-          <p class="text-xs text-center" style="color: var(--text-muted);">
-            Route your agent through the Trsr proxy to start capturing traces.
-          </p>
+          <button style="color:var(--text-muted); padding:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </button>
         </div>
-      } @else {
-        <ul class="divide-y" style="border-color: var(--border-color);">
-          @for (trace of recentTraces(); track trace.id) {
-            <li class="px-4 py-3 flex items-center justify-between gap-2">
-              <div class="min-w-0">
-                <p class="text-xs font-mono truncate" style="color: var(--text-primary);">{{ truncateId(trace.id) }}</p>
-                <p class="text-xs mt-0.5 truncate" style="color: var(--text-muted);">{{ trace.model }}</p>
-              </div>
-              <div class="text-right shrink-0">
-                <p class="text-xs" style="color: var(--text-secondary);">{{ formatLatency(trace.durationMs) }}</p>
-                <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ formatDate(trace.createdAt) }}</p>
-              </div>
-            </li>
+      </div>
+      <div class="card-body" style="padding:0 18px 18px;">
+        <svg viewBox="0 0 820 240" width="100%" height="240" style="display:block; overflow:visible;" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="volGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          @for (g of volumeArea.grid; track g.y) {
+            <line [attr.x1]="38" [attr.x2]="810" [attr.y1]="g.y.toFixed(1)" [attr.y2]="g.y.toFixed(1)"
+                  stroke="#23232e" [attr.stroke-dasharray]="g.isDashed ? '3 4' : '0'" stroke-width="1"/>
+            <text [attr.x]="30" [attr.y]="g.y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{g.val}}</text>
           }
-        </ul>
-      }
+          <path [attr.d]="volumeArea.areaPath" fill="url(#volGrad)"/>
+          <path [attr.d]="volumeArea.linePath" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="8" fill="#8b5cf6" opacity="0.15"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="4" fill="#8b5cf6"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="2" fill="#08080b"/>
+          @for (l of volumeArea.xLabels; track l.x) {
+            <text [attr.x]="l.x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{l.label}}</text>
+          }
+        </svg>
+      </div>
     </div>
 
-    <!-- Getting started -->
-    <div class="rounded-lg border" style="background-color: var(--bg-card); border-color: var(--border-color);">
-      <div class="px-4 py-3 border-b" style="border-color: var(--border-color);">
-        <h2 class="text-sm font-medium" style="color: var(--text-primary);">Getting Started</h2>
+    <!-- Latency Distribution histogram -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Latency Distribution</h3>
+          <p>60 samples · p95 4.1s</p>
+        </div>
       </div>
-      <div class="p-4 space-y-3">
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--accent-subtle); color: var(--accent-primary);">1</div>
+      <div class="card-body">
+        <svg viewBox="0 0 360 200" width="100%" height="200" style="display:block;" preserveAspectRatio="none">
+          <line x1="38" [attr.x2]="350" [attr.y1]="histData.baselineY" [attr.y2]="histData.baselineY" stroke="#23232e"/>
+          @for (rect of histData.rects; track rect.label) {
+            <rect [attr.x]="rect.x.toFixed(1)" [attr.y]="rect.y.toFixed(1)" [attr.width]="rect.w.toFixed(1)" [attr.height]="rect.h.toFixed(1)" fill="#06b6d4" opacity="0.85" rx="2"/>
+            <text [attr.x]="rect.labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{rect.label}}</text>
+          }
+        </svg>
+        <div style="display:flex; gap:16px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle);">
+          @for (stat of [['p50','2.4s'],['p90','3.8s'],['p95','4.1s'],['p99','6.2s']]; track stat[0]) {
+            <div>
+              <div style="font-size:10.5px; color:var(--text-muted); font-weight:500; letter-spacing:0.05em; text-transform:uppercase;">{{stat[0]}}</div>
+              <div style="font-size:14px; font-weight:600; font-family:'JetBrains Mono',monospace; margin-top:2px;">{{stat[1]}}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row 2: Token Usage + Pass Rate ─────────────────────────── -->
+  <div class="fade-up" style="animation-delay:120ms; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:12px;">
+
+    <!-- Token Usage by Agent stacked bar -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Token Usage by Agent</h3>
+          <p>Last 7 days · stacked</p>
+        </div>
+        <div style="display:flex; gap:10px; font-size:10.5px; color:var(--text-secondary); flex-wrap:wrap; justify-content:flex-end; max-width:300px; flex-shrink:0;">
+          @for (entry of agentColorEntries; track entry.name) {
+            <div style="display:flex; align-items:center; gap:5px;">
+              <span style="width:8px; height:8px; border-radius:2px; display:inline-block;" [style.background]="entry.color"></span>
+              {{entry.name}}
+            </div>
+          }
+        </div>
+      </div>
+      <div class="card-body" style="padding:0 18px 18px;">
+        <svg viewBox="0 0 820 220" width="100%" height="220" style="display:block;" preserveAspectRatio="none">
+          @for (g of stackedBarData.grid; track g.y) {
+            <line [attr.x1]="38" [attr.x2]="810" [attr.y1]="g.y.toFixed(1)" [attr.y2]="g.y.toFixed(1)"
+                  stroke="#23232e" [attr.stroke-dasharray]="g.isDashed ? '3 4' : '0'"/>
+            <text [attr.x]="30" [attr.y]="g.y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{g.val}}</text>
+          }
+          @for (bar of stackedBarData.bars; track bar.label) {
+            @for (seg of bar.segments; track seg.color) {
+              <rect [attr.x]="seg.x.toFixed(1)" [attr.y]="seg.y.toFixed(1)"
+                    [attr.width]="seg.w.toFixed(1)" [attr.height]="seg.h.toFixed(1)"
+                    [attr.fill]="seg.color" [attr.rx]="seg.rx"/>
+            }
+            <text [attr.x]="bar.labelX.toFixed(1)" [attr.y]="bar.labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{bar.label}}</text>
+          }
+        </svg>
+      </div>
+    </div>
+
+    <!-- Pass Rate Over Runs -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Pass Rate Over Runs</h3>
+          <p>Customer Support · Suite v2</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex; align-items:center; gap:18px; padding:4px 0 16px;">
+          <svg width="80" height="80" style="display:block; transform:rotate(-90deg); flex-shrink:0;">
+            <circle cx="40" cy="40" r="37" fill="none" stroke="#23232e" stroke-width="6"/>
+            <circle cx="40" cy="40" r="37" fill="none" stroke="#10b981" stroke-width="6"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="radialCircumference"
+                    [attr.stroke-dashoffset]="radialDashoffset"
+                    style="transition:stroke-dashoffset 0.6s ease;"/>
+          </svg>
           <div>
-            <p class="text-sm font-medium" style="color: var(--text-primary);">Configure your proxy</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Point your OpenAI-compatible client at the Trsr proxy endpoint.</p>
+            <div style="font-size:30px; font-weight:700; letter-spacing:-0.02em; color:var(--success);">82<span style="font-size:18px; color:var(--text-muted);">%</span></div>
+            <div style="font-size:11.5px; color:var(--text-muted);">last run · +7pt vs prev</div>
           </div>
         </div>
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--bg-secondary); color: var(--text-muted);">2</div>
-          <div>
-            <p class="text-sm font-medium" style="color: var(--text-secondary);">Capture traces</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Run your agent — Trsr will capture every LLM interaction automatically.</p>
-          </div>
+        <svg viewBox="0 0 360 120" width="100%" height="120" style="display:block;" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="passGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="passRateArea.areaPath" fill="url(#passGrad)"/>
+          <path [attr.d]="passRateArea.linePath" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="4" fill="#10b981"/>
+          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="2" fill="#08080b"/>
+        </svg>
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top:4px; font-family:'JetBrains Mono',monospace;">
+          <span>Run 1</span><span>Run 4</span><span>Run 8</span>
         </div>
-        <div class="flex items-start gap-3">
-          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-               style="background-color: var(--bg-secondary); color: var(--text-muted);">3</div>
-          <div>
-            <p class="text-sm font-medium" style="color: var(--text-secondary);">Build test suites</p>
-            <p class="text-xs mt-0.5" style="color: var(--text-muted);">Promote interesting traces to test cases and evaluate over time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Row: Recent Traces + Agents ────────────────────────────── -->
+  <div class="fade-up" style="animation-delay:160ms; display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:12px;">
+
+    <!-- Recent Traces -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Recent Traces</h3>
+        </div>
+        <a routerLink="/traces" style="font-size:12px; color:var(--accent-hover); font-weight:500; padding:0 18px 0 0; white-space:nowrap;">View all →</a>
+      </div>
+      <div class="card-body-flush">
+        <!-- Header row -->
+        <div style="display:grid; grid-template-columns:1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr; padding:10px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; border-bottom:1px solid var(--border-subtle);">
+          <span>Trace ID</span><span>Model</span><span>Status</span><span>Tokens</span><span>Latency</span><span></span>
+        </div>
+
+        @if (recentTracesState() === 'loading') {
+          <div style="padding:32px 18px; text-align:center; font-size:12px; color:var(--text-muted);">Loading…</div>
+        } @else if (recentTracesState() === 'error') {
+          <div style="padding:32px 18px; text-align:center; font-size:12px; color:var(--text-muted);">Failed to load traces.</div>
+        } @else if (recentTraces().length === 0) {
+          <div style="padding:40px 18px; text-align:center;">
+            <p style="font-size:13px; color:var(--text-secondary); margin:0 0 4px;">No traces yet</p>
+            <p style="font-size:11.5px; color:var(--text-muted); margin:0;">Route your agent through the Trsr proxy to start capturing traces.</p>
           </div>
+        } @else {
+          @for (trace of recentTraces(); track trace.id) {
+            <div class="trace-row">
+              <span class="mono" style="color:var(--text-primary); font-size:11.5px;">{{truncateId(trace.id)}}</span>
+              <span>
+                <span class="model-pill" [style.background]="modelPillColor(trace.model) + '1f'" [style.color]="modelPillColor(trace.model)" [style.border]="'1px solid ' + modelPillColor(trace.model) + '33'">
+                  <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="modelPillColor(trace.model)"></span>
+                  {{trace.model}}
+                </span>
+              </span>
+              <span style="display:inline-flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px;" [style.color]="statusColor(trace.httpStatus)">
+                <span class="status-dot" [style.background]="statusColor(trace.httpStatus)" [style.box-shadow]="'0 0 6px ' + statusColor(trace.httpStatus)"></span>
+                {{trace.httpStatus}}
+              </span>
+              <span class="mono" style="color:var(--text-secondary); font-size:11px;">{{(trace.inputTokens + trace.outputTokens).toLocaleString()}}</span>
+              <span class="mono" style="color:var(--text-secondary); font-size:11px;">{{formatLatency(trace.durationMs)}}</span>
+              <span style="color:var(--text-muted); font-size:10.5px; text-align:right;">{{formatDate(trace.createdAt)}}</span>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="dash-card">
+      <div class="card-header">
+        <div style="min-width:0; flex:1;">
+          <h3>Agents</h3>
+          <p>Detected from traces</p>
+        </div>
+        <button style="font-size:11px; color:var(--text-secondary); padding:4px 10px; background:var(--bg-card-2); border-radius:6px; border:1px solid var(--border-color); flex-shrink:0;">Manage</button>
+      </div>
+      <div class="card-body" style="padding:14px 18px; display:flex; flex-direction:column; gap:10px;">
+        @for (agent of agentCards; track agent.name) {
+          <div style="
+            padding:12px; background:var(--bg-card-2); border-radius:12px;
+            display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:center;
+            box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25);
+          ">
+            <div style="min-width:0;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:13px; font-weight:600;">{{agent.name}}</span>
+                <span style="font-size:9.5px; padding:1px 5px; background:var(--bg-card); border-radius:4px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{agent.version}}</span>
+              </div>
+              <div style="margin-top:5px; display:flex; gap:6px; align-items:center;">
+                <span class="model-pill" [style.background]="modelPillColor(agent.model) + '1f'" [style.color]="modelPillColor(agent.model)" [style.border]="'1px solid ' + modelPillColor(agent.model) + '33'">
+                  <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="modelPillColor(agent.model)"></span>
+                  {{agent.model}}
+                </span>
+                <span style="font-size:11px; color:var(--text-muted);">· {{agent.traces}} traces</span>
+              </div>
+            </div>
+            <!-- Sparkline -->
+            <svg [attr.viewBox]="'0 0 64 24'" width="64" height="24" style="display:block;">
+              <path [attr.d]="agent.sparkline.path" fill="none" [attr.stroke]="agent.passColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle [attr.cx]="agent.sparkline.endX" [attr.cy]="agent.sparkline.endY" r="2" [attr.fill]="agent.passColor"/>
+            </svg>
+            <!-- Pass rate -->
+            <div style="text-align:right;">
+              <div style="font-size:14px; font-weight:700;" [style.color]="agent.passColor">{{agent.pass}}%</div>
+              <div style="font-size:9.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">pass</div>
+            </div>
+          </div>
+        }
+
+        <!-- Proposal teaser -->
+        <div style="
+          margin-top:4px; padding:12px; border-radius:12px;
+          background:linear-gradient(135deg, rgba(139,92,246,0.14), rgba(6,182,212,0.08));
+          display:flex; gap:10px; align-items:flex-start;
+          box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 4px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(139,92,246,0.3);
+        ">
+          <div style="
+            width:28px; height:28px; border-radius:7px; flex-shrink:0;
+            background:linear-gradient(135deg, #8b5cf6, #06b6d4);
+            display:flex; align-items:center; justify-content:center; color:#fff;
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>
+            </svg>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:12px; font-weight:600;">2 optimization proposals ready</div>
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Est. +14% pass rate for Customer Support</div>
+          </div>
+          <button style="font-size:11px; font-weight:600; color:var(--accent-hover); padding:5px 10px; border-radius:6px; background:rgba(139,92,246,0.15); white-space:nowrap; flex-shrink:0;">Review</button>
         </div>
       </div>
     </div>
