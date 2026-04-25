@@ -10,6 +10,28 @@ namespace Trsr.Storage.Internal;
 /// </summary>
 internal class DatabaseInitializationService : IHostedService, IDatabaseInitializer
 {
+    /// <inheritdoc />
+    public async Task ExecuteSqlScriptAsync(string sql, CancellationToken cancellationToken = default)
+    {
+        var statements = sql
+            .Split('\n')
+            .Where(line => !line.TrimStart().StartsWith("--"))
+            .Aggregate(new System.Text.StringBuilder(), (sb, line) => sb.AppendLine(line))
+            .ToString()
+            .Split(';')
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToArray();
+
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<StorageDbContext>();
+
+        foreach (var statement in statements)
+        {
+            await context.Database.ExecuteSqlRawAsync(statement, cancellationToken);
+        }
+    }
+
     private readonly IServiceProvider serviceProvider;
     private readonly ILogger<DatabaseInitializationService> logger;
 

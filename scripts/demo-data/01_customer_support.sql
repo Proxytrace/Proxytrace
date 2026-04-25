@@ -332,6 +332,38 @@ INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedA
   1, '2026-03-20T09:00:00.0000000+00:00', '2026-03-20T09:00:00.0000000+00:00'
 );
 
+-- Run 3 results: 6 pass (all fixed after optimization proposal applied)
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000021', '13000000-0000-0000-0000-000000000001',
+  '{"ToolRequests":[],"Contents":[{"Text":"Our return policy allows returns within 30 days of purchase for most electronics. Items must be in original condition with all accessories and packaging included. Refunds are processed within 3-5 business days."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000022', '13000000-0000-0000-0000-000000000002',
+  '{"ToolRequests":[],"Contents":[{"Text":"Refunds are processed within 3-5 business days. Once released by TechShop, it may take an additional 2-5 business days to appear on your bank statement depending on your card provider."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000023', '13000000-0000-0000-0000-000000000003',
+  '{"ToolRequests":[],"Contents":[{"Text":"Unfortunately our standard return window is 30 days from delivery. An item purchased 6 weeks ago would fall outside this window. However, if the item is faulty it may still be covered under the manufacturer warranty."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000024', '13000000-0000-0000-0000-000000000004',
+  '{"ToolRequests":[],"Contents":[{"Text":"Yes, TechShop offers free standard shipping on all orders over $50. Orders under $50 are charged $4.99 for standard shipping. Express and same-day options are available at additional cost."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000025', '13000000-0000-0000-0000-000000000005',
+  '{"ToolRequests":[],"Contents":[{"Text":"I am sorry to hear that. Please check with neighbours and any secure delivery locations first. If the package is still missing, I can open a missing parcel investigation with the carrier on your behalf."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '15000000-0000-0000-0000-000000000026', '13000000-0000-0000-0000-000000000006',
+  '{"ToolRequests":[],"Contents":[{"Text":"Yes, all products sold at TechShop include the manufacturer warranty. Most electronics come with a 1-year warranty. Additionally, TechShop offers an extended protection plan covering accidental damage for up to 3 years."}]}',
+  0, '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+
 -- ── Test Runs ─────────────────────────────────────────────────────────────────
 
 INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
@@ -348,4 +380,28 @@ INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, Updated
   '10000000-0000-0000-0000-000000000000',
   '["15000000-0000-0000-0000-000000000011","15000000-0000-0000-0000-000000000012","15000000-0000-0000-0000-000000000013","15000000-0000-0000-0000-000000000014","15000000-0000-0000-0000-000000000015","15000000-0000-0000-0000-000000000016"]',
   '2026-03-20T09:00:00.0000000+00:00', '2026-03-20T09:00:00.0000000+00:00'
+);
+
+INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
+  '14000000-0000-0000-0000-000000000003',
+  '2026-04-05T09:00:00.0000000+00:00',
+  '10000000-0000-0000-0000-000000000000',
+  '["15000000-0000-0000-0000-000000000021","15000000-0000-0000-0000-000000000022","15000000-0000-0000-0000-000000000023","15000000-0000-0000-0000-000000000024","15000000-0000-0000-0000-000000000025","15000000-0000-0000-0000-000000000026"]',
+  '2026-04-05T09:00:00.0000000+00:00', '2026-04-05T09:00:00.0000000+00:00'
+);
+
+-- ── Optimization Proposal ─────────────────────────────────────────────────────
+-- ProposalKind: SystemPrompt = 0  |  ProposalStatus: Draft = 0, Accepted = 1
+
+-- ProposedTools is empty because this is a SystemPrompt-only proposal.
+INSERT INTO OptimizationProposalEntity (Id, Agent, Kind, Status, Rationale, ProposedSystemMessage, ProposedTools, EvidenceTestRunIds, CreatedAt, UpdatedAt) VALUES (
+  '40000000-0000-0000-0000-000000000001',
+  '10000000-0000-0000-0000-000000000000',
+  0,
+  1,
+  'Run 1 showed two recurring failure patterns: (1) refund timelines quoted inaccurately — the expected answer specifies 3-5 business days plus 2-5 bank days, but the agent omitted the bank-processing window; (2) warranty answers omitted the 3-year accidental damage protection plan. Updating the system prompt with explicit SLA figures and warranty tier details resolved both failures in Run 2 and Run 3.',
+  '{"Contents":[{"Text":"You are a helpful customer support agent for TechShop, an online electronics retailer. Help customers with order tracking, refunds, and product availability. Always be professional, empathetic, and solution-focused.\n\nKey policies to include whenever relevant:\n- Return window: 30 days from delivery for most electronics; items must be in original condition with all accessories and packaging.\n- Refund timeline: 3-5 business days to process on our side, plus an additional 2-5 business days for the refund to appear on the customer''s bank statement.\n- Warranty: All products include the manufacturer warranty (typically 1 year). TechShop also offers an extended protection plan covering accidental damage for up to 3 years.\n- Shipping: Free standard shipping on orders over $50; $4.99 for orders under $50; express shipping $9.99 (1-2 business days); same-day delivery available in select cities for $14.99."}]}',
+  '[]',
+  '["14000000-0000-0000-0000-000000000001","14000000-0000-0000-0000-000000000002"]',
+  '2026-03-25T08:00:00.0000000+00:00', '2026-03-25T08:00:00.0000000+00:00'
 );

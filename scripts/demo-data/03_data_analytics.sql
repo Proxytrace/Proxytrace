@@ -292,6 +292,38 @@ INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedA
   0, '2026-03-25T09:00:00.0000000+00:00', '2026-03-25T09:00:00.0000000+00:00'
 );
 
+-- Run 3 results: 6 pass (all fixed after optimization proposal applied)
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000021', '33000000-0000-0000-0000-000000000001',
+  '{"ToolRequests":[],"Contents":[{"Text":"HAVING. The WHERE clause filters individual rows before grouping; HAVING filters groups after the GROUP BY is applied. Example: SELECT status, COUNT(*) FROM orders GROUP BY status HAVING COUNT(*) > 100."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000022', '33000000-0000-0000-0000-000000000002',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use GROUP BY on the columns that should be unique and filter with HAVING COUNT(*) > 1. Example: SELECT email, COUNT(*) FROM customers GROUP BY email HAVING COUNT(*) > 1. This returns all email values that appear more than once."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000023', '33000000-0000-0000-0000-000000000003',
+  '{"ToolRequests":[],"Contents":[{"Text":"A LEFT JOIN returns all rows from the left table plus matching rows from the right table. Where there is no match, right-side columns are NULL. An INNER JOIN returns only rows where a match exists in both tables. Use LEFT JOIN when you need all records from the primary table including those with no related records."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000024', '33000000-0000-0000-0000-000000000004',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use the LAG window function to access the previous row value: SELECT month, revenue, ROUND((revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0 / LAG(revenue) OVER (ORDER BY month), 2) AS pct_change FROM monthly_revenue. LAG retrieves the prior period value for comparison."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000025', '33000000-0000-0000-0000-000000000005',
+  '{"ToolRequests":[],"Contents":[{"Text":"COUNT(*) counts all rows including those with NULL values. COUNT(column_name) counts only rows where that column is NOT NULL. Use COUNT(*) for total row counts and COUNT(column_name) when you need to count non-null values in a specific column."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '35000000-0000-0000-0000-000000000026', '33000000-0000-0000-0000-000000000006',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use a subquery when the result is a single scalar value (e.g. WHERE total > (SELECT AVG(total) FROM orders)), or when the logic is clearer as a nested step. Use a JOIN when you need columns from both tables in the output or when performance matters, since optimisers often handle JOINs more efficiently than correlated subqueries."}]}',
+  0, '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+
 -- ── Test Runs ─────────────────────────────────────────────────────────────────
 
 INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
@@ -308,4 +340,28 @@ INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, Updated
   '30000000-0000-0000-0000-000000000000',
   '["35000000-0000-0000-0000-000000000011","35000000-0000-0000-0000-000000000012","35000000-0000-0000-0000-000000000013","35000000-0000-0000-0000-000000000014","35000000-0000-0000-0000-000000000015","35000000-0000-0000-0000-000000000016"]',
   '2026-03-25T09:00:00.0000000+00:00', '2026-03-25T09:00:00.0000000+00:00'
+);
+
+INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
+  '34000000-0000-0000-0000-000000000003',
+  '2026-04-10T09:00:00.0000000+00:00',
+  '30000000-0000-0000-0000-000000000000',
+  '["35000000-0000-0000-0000-000000000021","35000000-0000-0000-0000-000000000022","35000000-0000-0000-0000-000000000023","35000000-0000-0000-0000-000000000024","35000000-0000-0000-0000-000000000025","35000000-0000-0000-0000-000000000026"]',
+  '2026-04-10T09:00:00.0000000+00:00', '2026-04-10T09:00:00.0000000+00:00'
+);
+
+-- ── Optimization Proposal ─────────────────────────────────────────────────────
+-- ProposalKind: SystemPrompt = 0  |  ProposalStatus: Draft = 0, Accepted = 1
+-- Status is Draft: this proposal is pending human review.
+
+INSERT INTO OptimizationProposalEntity (Id, Agent, Kind, Status, Rationale, ProposedSystemMessage, ProposedTools, EvidenceTestRunIds, CreatedAt, UpdatedAt) VALUES (
+  '40000000-0000-0000-0000-000000000003',
+  '30000000-0000-0000-0000-000000000000',
+  0,
+  0,
+  'Runs 1 and 2 showed two consistent failure patterns: (1) month-over-month percentage change answers described a self-join approach rather than using the LAG() window function, which is the expected idiomatic SQL answer; (2) answers about window functions vs GROUP BY lacked a runnable example query. Propose updating the system prompt to require the LAG/LEAD pattern for time-series comparisons and to mandate a concrete example for all SQL concept explanations.',
+  '{"Contents":[{"Text":"You are a data analytics assistant. Help users explore datasets, write and execute SQL queries, and interpret results. Always explain your reasoning, suggest follow-up analyses, and flag data quality issues when you spot them.\n\nWhen explaining SQL concepts or providing query examples:\n- Always include a concrete, runnable example query.\n- For month-over-month or period-over-period comparisons, use the LAG() window function rather than a self-join. Example pattern: ROUND((revenue - LAG(revenue) OVER (ORDER BY month)) * 100.0 / LAG(revenue) OVER (ORDER BY month), 2) AS pct_change.\n- For window function explanations, show both the OVER(ORDER BY ...) pattern for running aggregates and the OVER(PARTITION BY ...) pattern for group-level calculations.\n- When a query fails with an error, inspect the available schema and suggest a corrected query before giving up."}]}',
+  '[]',
+  '["34000000-0000-0000-0000-000000000001","34000000-0000-0000-0000-000000000002"]',
+  '2026-04-12T08:00:00.0000000+00:00', '2026-04-12T08:00:00.0000000+00:00'
 );

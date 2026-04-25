@@ -292,6 +292,33 @@ INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedA
   1, '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
 );
 
+-- Run 3 results: 5 pass (all fixed after optimization proposal applied)
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000021', '23000000-0000-0000-0000-000000000001',
+  '{"ToolRequests":[],"Contents":[{"Text":"This code is vulnerable to SQL injection. The user_id is concatenated directly into the query string. Fix using parameterised queries: cursor.execute(\"SELECT * FROM users WHERE id=%s\", (user_id,))"}]}',
+  0, '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000022', '23000000-0000-0000-0000-000000000002',
+  '{"ToolRequests":[],"Contents":[{"Text":"Use eager loading with joinedload or selectinload: Model.query.options(joinedload(Model.relationship)).all(). This fetches related objects in a single query instead of one query per row."}]}',
+  0, '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000023', '23000000-0000-0000-0000-000000000003',
+  '{"ToolRequests":[],"Contents":[{"Text":"Plain text passwords are exposed immediately if the database is breached. Use bcrypt or argon2 to store salted hashes. Never store or log plain text passwords."}]}',
+  0, '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000024', '23000000-0000-0000-0000-000000000004',
+  '{"ToolRequests":[],"Contents":[{"Text":"Insecure Direct Object Reference: an API exposes internal IDs without verifying the requesting user owns the resource. Fix by adding ownership checks in queries, e.g. filter by both resource ID and user ID."}]}',
+  0, '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+INSERT INTO TestResultEntity (Id, TestCase, ActualResponse, Evaluation, CreatedAt, UpdatedAt) VALUES (
+  '25000000-0000-0000-0000-000000000025', '23000000-0000-0000-0000-000000000005',
+  '{"ToolRequests":[],"Contents":[{"Text":"Unpinned dependencies mean pip always installs the latest version, which can introduce breaking changes or security regressions on any deployment. Pin exact versions and use pip-audit to scan for vulnerabilities."}]}',
+  0, '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+
 -- ── Test Runs ─────────────────────────────────────────────────────────────────
 
 INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
@@ -308,4 +335,27 @@ INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, Updated
   '20000000-0000-0000-0000-000000000000',
   '["25000000-0000-0000-0000-000000000011","25000000-0000-0000-0000-000000000012","25000000-0000-0000-0000-000000000013","25000000-0000-0000-0000-000000000014","25000000-0000-0000-0000-000000000015"]',
   '2026-03-22T09:00:00.0000000+00:00', '2026-03-22T09:00:00.0000000+00:00'
+);
+
+INSERT INTO TestRunEntity (Id, Timestamp, Agent, TestResults, CreatedAt, UpdatedAt) VALUES (
+  '24000000-0000-0000-0000-000000000003',
+  '2026-04-08T09:00:00.0000000+00:00',
+  '20000000-0000-0000-0000-000000000000',
+  '["25000000-0000-0000-0000-000000000021","25000000-0000-0000-0000-000000000022","25000000-0000-0000-0000-000000000023","25000000-0000-0000-0000-000000000024","25000000-0000-0000-0000-000000000025"]',
+  '2026-04-08T09:00:00.0000000+00:00', '2026-04-08T09:00:00.0000000+00:00'
+);
+
+-- ── Optimization Proposal ─────────────────────────────────────────────────────
+-- ProposalKind: SystemPrompt = 0  |  ProposalStatus: Draft = 0, Accepted = 1
+
+INSERT INTO OptimizationProposalEntity (Id, Agent, Kind, Status, Rationale, ProposedSystemMessage, ProposedTools, EvidenceTestRunIds, CreatedAt, UpdatedAt) VALUES (
+  '40000000-0000-0000-0000-000000000002',
+  '20000000-0000-0000-0000-000000000000',
+  0,
+  1,
+  'Run 1 identified two failure patterns: (1) N+1 query answers mentioned joins but not the specific SQLAlchemy eager-loading API (joinedload/selectinload); (2) dependency management answers were too brief and omitted pip-audit for vulnerability scanning. Updating the system prompt to require specific API references and security tooling recommendations resolved both failures by Run 3.',
+  '{"Contents":[{"Text":"You are an expert software engineer specialising in code review. Analyse code for bugs, security vulnerabilities, performance issues, and best-practice adherence. Provide clear, actionable, and constructive feedback with specific line references.\n\nFor every issue found:\n1. State the severity level: Critical, High, Medium, or Low.\n2. Explain the attack vector or failure mode so the developer understands why it matters.\n3. Provide a concrete code fix or corrective approach, not just a general recommendation.\n\nFor dependency management issues, always recommend both version pinning (using pip freeze) and running pip-audit (or equivalent) to scan for known vulnerabilities.\n\nFor performance issues involving database queries, name the specific ORM API to use — for example, SQLAlchemy joinedload or selectinload for eager loading — rather than describing the concept generically."}]}',
+  '[]',
+  '["24000000-0000-0000-0000-000000000001","24000000-0000-0000-0000-000000000002"]',
+  '2026-03-28T08:00:00.0000000+00:00', '2026-03-28T08:00:00.0000000+00:00'
 );

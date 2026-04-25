@@ -26,6 +26,12 @@
     <ProjectReference Include="..\Trsr.Storage\Trsr.Storage.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\scripts\demo-data\*.sql">
+      <Link>DemoData\%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <Target Name="BuildAngularFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="npm run build -- --configuration production" WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
     <ItemGroup>
