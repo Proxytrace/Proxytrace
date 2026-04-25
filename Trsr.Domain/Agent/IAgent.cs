@@ -1,4 +1,5 @@
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 
@@ -19,11 +20,10 @@ public interface IAgent : IDomainEntity
     /// <summary>The tools available to this agent.</summary>
     IReadOnlyCollection<ToolSpecification> Tools { get; }
 
-    /// <summary>The model identifier used by this agent (e.g. <c>gpt-4o</c>).</summary>
-    string Model { get; }
-
-    /// <summary>The provider that serves the model (e.g. <c>openai</c>).</summary>
-    string Provider { get; }
+    /// <summary>
+    /// The endpoint the agent is using (e.g. "Azure Foundry + GPT-5")
+    /// </summary>
+    IModelEndpoint Endpoint { get; }
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(SystemMessage systemMessage, IReadOnlyCollection<ToolSpecification> tools, string model, string provider, IProject project);
