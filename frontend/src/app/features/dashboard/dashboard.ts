@@ -10,15 +10,21 @@ interface GridLine { y: number; val: string; isDashed: boolean; }
 interface XLabel { x: number; label: string; }
 interface AreaChartData {
   linePath: string; areaPath: string;
+  solidGridPath: string; dashedGridPath: string;
   grid: GridLine[]; xLabels: XLabel[];
   endX: number; endY: number;
 }
 interface SparklineData { path: string; endX: number; endY: number; }
-interface BarSegment { x: number; y: number; w: number; h: number; color: string; rx: number; }
-interface BarDay { label: string; labelX: number; labelY: number; segments: BarSegment[]; }
-interface StackedBarData { bars: BarDay[]; grid: GridLine[]; baselineY: number; }
+interface BarDay { label: string; labelX: number; labelY: number; }
+interface StackedBarData {
+  bars: BarDay[];
+  grid: GridLine[];
+  solidGridPath: string; dashedGridPath: string;
+  colorPaths: Array<{ color: string; path: string }>;
+  baselineY: number;
+}
 interface HistRect { x: number; y: number; w: number; h: number; label: string; labelX: number; }
-interface HistData { rects: HistRect[]; baselineY: number; }
+interface HistData { rects: HistRect[]; barsPath: string; baselineY: number; }
 interface AgentCard {
   name: string; model: string; version: string; traces: number; pass: number;
   tokens: number; latency: string; sparkline: SparklineData; passColor: string;
@@ -115,6 +121,12 @@ export class Dashboard implements OnInit {
     return { path, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
   }
 
+  private buildGridPaths(grid: GridLine[], x1: number, x2: number): { solidGridPath: string; dashedGridPath: string } {
+    const solid = grid.filter(g => !g.isDashed).map(g => `M ${x1} ${g.y.toFixed(1)} L ${x2} ${g.y.toFixed(1)}`).join(' ');
+    const dashed = grid.filter(g => g.isDashed).map(g => `M ${x1} ${g.y.toFixed(1)} L ${x2} ${g.y.toFixed(1)}`).join(' ');
+    return { solidGridPath: solid, dashedGridPath: dashed };
+  }
+
   private computeAreaChart(
     data: number[], width: number, height: number,
     padL: number, padR: number, padT: number, padB: number,
@@ -135,7 +147,8 @@ export class Dashboard implements OnInit {
     const xLabels: XLabel[] = showAxis ? [0, 6, 12, 18, 23].map(i => ({
       x: padL + i * stepX, label: `${24 - i}h`,
     })) : [];
-    return { linePath: linePts, areaPath, grid, xLabels, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
+    const { solidGridPath, dashedGridPath } = this.buildGridPaths(grid, padL, padL + w);
+    return { linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
   }
 
   private computeHistogram(data: number[], width: number, height: number): HistData {
@@ -149,7 +162,10 @@ export class Dashboard implements OnInit {
       y: padT + h - (v / max) * h, h: (v / max) * h,
       label: labels[i], labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
     }));
-    return { rects, baselineY: padT + h };
+    const barsPath = rects.map(r =>
+      `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
+    ).join(' ');
+    return { rects, barsPath, baselineY: padT + h };
   }
 
   private computeStackedBars(
@@ -168,24 +184,32 @@ export class Dashboard implements OnInit {
       isDashed: i !== yTicks - 1,
     }));
     const segsSpec = [
-      { key: 'support', color: '#8b5cf6' },
-      { key: 'code', color: '#06b6d4' },
-      { key: 'triage', color: '#10b981' },
-      { key: 'classify', color: '#f59e0b' },
-    ] as const;
+      { key: 'support' as const, color: '#8b5cf6' },
+      { key: 'code' as const, color: '#06b6d4' },
+      { key: 'triage' as const, color: '#10b981' },
+      { key: 'classify' as const, color: '#f59e0b' },
+    ];
+    // Collect path segments per color
+    const pathsByColor: Record<string, string[]> = {};
+    segsSpec.forEach(s => { pathsByColor[s.color] = []; });
+
     const bars: BarDay[] = data.map((d, i) => {
       const x = padL + i * (bw + gap) + gap / 2;
       let y = padT + h;
-      const segments = segsSpec.map((spec, j) => {
-        const v = d[spec.key];
-        const segH = (v / max) * h;
+      segsSpec.forEach(spec => {
+        const segH = (d[spec.key] / max) * h;
         const rectY = y - segH;
         y = rectY;
-        return { x, y: rectY, w: bw, h: Math.max(segH, 0), color: spec.color, rx: j === 0 ? 3 : 0 };
+        pathsByColor[spec.color].push(
+          `M ${x.toFixed(1)} ${rectY.toFixed(1)} h ${bw.toFixed(1)} v ${segH.toFixed(1)} h -${bw.toFixed(1)} Z`
+        );
       });
-      return { label: d.d, labelX: x + bw / 2, labelY: height - 10, segments };
+      return { label: d.d, labelX: x + bw / 2, labelY: height - 10 };
     });
-    return { bars, grid, baselineY: padT + h };
+
+    const colorPaths = segsSpec.map(s => ({ color: s.color, path: pathsByColor[s.color].join(' ') }));
+    const { solidGridPath, dashedGridPath } = this.buildGridPaths(grid, padL, padL + w);
+    return { bars, grid, solidGridPath, dashedGridPath, colorPaths, baselineY: padT + h };
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────

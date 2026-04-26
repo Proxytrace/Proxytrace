@@ -28,14 +28,6 @@ export class Shell {
   readonly sidebarCollapsed = signal(false);
   private readonly router = inject(Router);
 
-  readonly currentPageLabel = toSignal(
-    this.router.events.pipe(
-      startWith(null),
-      map(() => this.navItems.find(n => this.router.url.includes(n.route.replace('/', '')))?.label ?? 'Dashboard')
-    ),
-    { initialValue: 'Dashboard' }
-  );
-
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'grid', route: '/dashboard' },
     { label: 'Traces', icon: 'activity', route: '/traces', badge: '60' },
@@ -44,6 +36,14 @@ export class Shell {
     { label: 'Test Runs', icon: 'play', route: '/runs' },
     { label: 'Proposals', icon: 'sparkles', route: '/proposals', badge: '2', badgeAccent: true },
   ];
+
+  readonly currentPageLabel = toSignal(
+    this.router.events.pipe(
+      startWith(null),
+      map(() => this.navItems.find(n => this.router.url.includes(n.route.replace('/', '')))?.label ?? 'Dashboard')
+    ),
+    { initialValue: 'Dashboard' }
+  );
 
   toggleSidebar() {
     this.sidebarCollapsed.update((v) => !v);
