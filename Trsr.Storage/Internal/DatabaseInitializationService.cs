@@ -13,22 +13,15 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     /// <inheritdoc />
     public async Task ExecuteSqlScriptAsync(string sql, CancellationToken cancellationToken = default)
     {
-        var statements = sql
-            .Split('\n')
-            .Where(line => !line.TrimStart().StartsWith("--"))
-            .Aggregate(new System.Text.StringBuilder(), (sb, line) => sb.AppendLine(line))
-            .ToString()
-            .Split(';')
-            .Select(s => s.Trim())
-            .Where(s => !string.IsNullOrWhiteSpace(s))
-            .ToArray();
-
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<StorageDbContext>();
 
-        foreach (var statement in statements)
+        foreach (var statement in SplitSqlStatements(sql))
         {
-            await context.Database.ExecuteSqlRawAsync(statement, cancellationToken);
+            // EF Core runs String.Format on the SQL to substitute {0}/{1}/… parameter placeholders,
+            // so literal braces in JSON column values must be doubled to avoid FormatException.
+            var escaped = statement.Replace("{", "{{").Replace("}", "}}");
+            await context.Database.ExecuteSqlRawAsync(escaped, cancellationToken);
         }
     }
 
@@ -72,6 +65,58 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     }
 
     /// <inheritdoc />
-    public Task StopAsync(CancellationToken cancellationToken) 
+    public Task StopAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
+
+    // Splits a SQL script into individual statements on ';', correctly ignoring
+    // semicolons inside single-quoted string literals and '--' line comments.
+    private static IEnumerable<string> SplitSqlStatements(string sql)
+    {
+        var current = new System.Text.StringBuilder();
+        bool inString = false;
+
+        for (int i = 0; i < sql.Length; i++)
+        {
+            char c = sql[i];
+
+            if (inString)
+            {
+                current.Append(c);
+                if (c == '\'')
+                {
+                    // '' is an escaped single quote inside a string literal, not the end of the string
+                    if (i + 1 < sql.Length && sql[i + 1] == '\'')
+                        current.Append(sql[++i]);
+                    else
+                        inString = false;
+                }
+            }
+            else if (c == '\'' )
+            {
+                inString = true;
+                current.Append(c);
+            }
+            else if (c == '-' && i + 1 < sql.Length && sql[i + 1] == '-')
+            {
+                // Skip to end of line
+                while (i < sql.Length && sql[i] != '\n')
+                    i++;
+            }
+            else if (c == ';')
+            {
+                var stmt = current.ToString().Trim();
+                if (!string.IsNullOrWhiteSpace(stmt))
+                    yield return stmt;
+                current.Clear();
+            }
+            else
+            {
+                current.Append(c);
+            }
+        }
+
+        var last = current.ToString().Trim();
+        if (!string.IsNullOrWhiteSpace(last))
+            yield return last;
+    }
 }
