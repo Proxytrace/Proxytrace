@@ -1,18 +1,16 @@
 # Trsr
 
-**The feedback loop for agent engineering.**
+**Observability, evaluation, and continuous improvement for production AI agents.**
 
-Trsr is an intelligent platform for tracing, testing, and optimizing AI agents. It captures every LLM interaction through an OpenAI-compatible proxy, lets you curate those traces into benchmark-style test suites, and generates data-driven optimization suggestions to improve agent behavior over time.
+Trsr is an enterprise AI agent observability platform that captures every LLM interaction through an OpenAI-compatible proxy, enables teams to curate production traces into rigorous benchmark test suites, and generates data-driven optimization proposals — closing the feedback loop between deployment and improvement.
 
 ---
 
-## Why Trsr Exists
+## The Problem
 
-Building AI agents is easy. Making them *reliably good* is hard.
+Production AI agents are largely black boxes. Teams ship prompt changes, tweak tool definitions, and swap model parameters with no systematic way to measure impact, catch regressions, or prove that a change made things better. Traditional software engineering disciplines — instrumentation, regression testing, iterative optimization — have not yet been fully applied to agent development.
 
-Most teams start with vibes-based evaluation: they tweak a system prompt, eyeball a few responses, and ship. There's no feedback loop, no regression detection, no systematic way to know if a change made things better or worse.
-
-Trsr is built to close that gap. It gives agent engineering teams the same instrumentation, test rigor, and iterative improvement cycle that software engineers have for traditional code — applied to the specific challenges of LLM-based agents.
+Trsr bridges that gap.
 
 ---
 
@@ -21,7 +19,7 @@ Trsr is built to close that gap. It gives agent engineering teams the same instr
 ```
                   ┌──────────────────────────────────────────────┐
                   │                                              │
-  Your Agent  ──► │  OpenAI-compatible Proxy (Trsr)              │  ──► LLM Provider
+  Your Agent  ──► │  OpenAI-Compatible Proxy  (Trsr)             │  ──► LLM Provider
                   │  Captures: prompt, tools, params, response   │
                   │                                              │
                   └──────────────────┬───────────────────────────┘
@@ -44,19 +42,19 @@ Trsr is built to close that gap. It gives agent engineering teams the same instr
             (system prompt + tool suggestions)
 ```
 
-### Step-by-step
+### The Workflow
 
-1. **Route your calls through Trsr.** Point your OpenAI-compatible client at Trsr's proxy endpoint. No SDK changes required — just a base URL swap.
+1. **Route traffic through Trsr.** Point any OpenAI-compatible client at Trsr's proxy endpoint. No SDK changes, no code modifications — a single base URL change is all that is required.
 
-2. **Traces are captured automatically.** Every call is logged: messages, tool definitions, model parameters, provider, and the full response.
+2. **Automatic trace capture.** Every LLM call is captured in full: message history, tool definitions, model parameters, provider, latency, and the complete response. No instrumentation code required.
 
-3. **Trsr identifies your agents.** From traces, Trsr extracts and groups agent definitions — including system prompt, tool set, model, provider, and parameters. It tracks versions as these evolve.
+3. **Automatic agent detection.** Trsr extracts and tracks agent definitions from your traces — system prompt, tool set, model, provider, and parameters — and versions them automatically as they evolve over time.
 
-4. **Curate traces into test suites.** Select traces that represent important or edge-case behaviors and promote them into benchmark-style test suites. Each test case anchors an expected input/output contract.
+4. **Curate traces into test suites.** Promote production traces that represent critical behaviors, edge cases, or regression scenarios into durable, reproducible benchmark test suites.
 
-5. **Run evaluations.** Execute test suites against an agent. Trsr computes metrics and tracks results over time, giving you a concrete signal for whether a change regressed or improved behavior.
+5. **Run structured evaluations.** Execute test suites against any agent version. Trsr computes evaluation metrics per test case and tracks results over time, giving teams a concrete, comparable signal for every change.
 
-6. **Receive optimization proposals.** Based on test suite results and evaluation metrics, Trsr generates targeted suggestions for improving system prompts and tool definitions.
+6. **Receive targeted optimization proposals.** Grounded in evaluation results and trace data, Trsr generates specific, actionable suggestions for improving system prompts and tool definitions.
 
 ---
 
@@ -64,37 +62,45 @@ Trsr is built to close that gap. It gives agent engineering teams the same instr
 
 | Concept | Description |
 |---|---|
-| **Trace** | A captured agent invocation: messages, tools, model, params, provider, and response. |
-| **Agent** | A named definition extracted from traces: system prompt, tools, model, provider, parameters, and version history. |
-| **Test Suite** | A curated collection of test cases, each derived from a trace, forming a reproducible benchmark. |
-| **Test Case** | A single input/expected-output pair used to evaluate an agent. |
-| **Test Run** | An execution of a test suite against an agent, producing metrics and per-case evaluations. |
+| **Trace** | A fully captured agent invocation: messages, tools, model, parameters, provider, and response. |
+| **Agent** | A versioned definition extracted from traces: system prompt, tool set, model, provider, and parameter history. |
+| **Test Suite** | A curated, reproducible benchmark composed of test cases derived from production traces. |
+| **Test Case** | A single input/expected-output pair used to evaluate an agent's behavior. |
+| **Test Run** | An execution of a test suite against a specific agent version, producing per-case evaluations and aggregate metrics. |
 | **Evaluator** | A configurable scoring function that grades agent responses against expected outputs. |
-| **Optimization Proposal** | A data-driven suggestion for improving a specific agent's system prompt or tool definitions, grounded in test run results. |
-| **Project / Organization** | Organizational constructs for grouping agents, test suites, and members across teams. |
+| **Optimization Proposal** | A data-driven recommendation for improving an agent's system prompt or tool definitions, grounded in test run outcomes. |
+| **Project / Organization** | Organizational constructs for grouping agents, test suites, runs, and team members across an enterprise. |
 
 ---
 
 ## Current Status
 
-Trsr is in an **early architecture phase**.
+Trsr is in **early architecture phase**.
 
-The core data model, layered backend architecture, and OpenAI proxy integration are being established. The entities and API surface that underpin the trace-to-optimization loop — agents, test suites, test runs, evaluators, and optimization proposals — are defined and taking shape.
-
-This is not yet a runnable product. The foundational work happening now is what every subsequent capability will be built on.
+The foundational data model, layered backend architecture, and OpenAI proxy integration are actively being established. The full entity graph and API surface underpinning the trace-to-optimization loop — agents, test suites, test runs, evaluators, and optimization proposals — are defined and taking shape. Every capability built going forward depends on this foundation.
 
 ---
 
 ## Getting Started
 
+### Prerequisites
+
+- .NET 10 SDK
+- Node.js 22+ (for the frontend)
+- A supported database (SQLite recommended for local development)
+
 ### Database Configuration
 
-Trsr supports multiple database providers with automatic detection:
-- **SQLite** (recommended for development) - zero-config file-based database
-- **SQL Server** (default) - enterprise-grade relational database
-- **PostgreSQL** - open-source relational database
+Trsr supports multiple database providers with automatic detection based on the connection string:
 
-For quick local setup with SQLite, update `Trsr.Api/appsettings.json`:
+| Provider | Use Case | Connection String |
+|---|---|---|
+| **SQLite** | Local development (recommended) | `Data Source=trsr.db` |
+| **PostgreSQL** | Production, open-source deployments | Contains `Host=` or `Port=` |
+| **SQL Server** | Enterprise deployments | All other formats |
+
+For a zero-configuration local setup, update `Trsr.Api/appsettings.json`:
+
 ```json
 {
   "ConnectionStrings": {
@@ -103,39 +109,54 @@ For quick local setup with SQLite, update `Trsr.Api/appsettings.json`:
 }
 ```
 
-See [DATABASE.md](DATABASE.md) for detailed configuration options and migration instructions.
+See [DATABASE.md](DATABASE.md) for full configuration details and migration instructions.
+
+### Running Locally
+
+```bash
+# Start backend (port 5001) + frontend (port 4201) with demo data
+./dev.sh
+```
+
+Or start services individually:
+
+```bash
+# Backend
+cd Trsr.Api && dotnet run
+
+# Frontend
+cd frontend && npm install && npm start
+```
+
+Swagger UI is available at `http://localhost:5001/swagger` in Development mode.
 
 ---
 
-## Near-Term Direction
+## Roadmap
 
-- Complete the OpenAI proxy ingestion pipeline with full trace capture
-- Agent detection and version tracking from traces
-- Test suite builder: promote traces to test cases
-- Test run execution with evaluator-based scoring
-- Metrics and comparison views across test runs
+- OpenAI proxy ingestion pipeline with complete trace capture
+- Agent detection and automatic version tracking from traces
+- Test suite builder: promote production traces to test cases
+- Test run execution with configurable evaluator-based scoring
+- Metrics dashboards and comparison views across test runs
 - Optimization proposal generation for system prompts and tool definitions
 - Self-hosted deployment via Docker
 
 ---
 
-## API Discoverability
-
-When running in **Development** mode, Swagger UI is available at `/swagger` and the raw OpenAPI JSON at `/swagger/v1/swagger.json`. This lets you inspect and exercise every endpoint without any external tooling.
-
----
-
 ## Tech Stack
 
-- **Backend:** C# / .NET 10, ASP.NET Core
-- **Database:** PostgreSQL or SQL Server via Entity Framework Core
-- **Frontend:** Angular
-- **Deployment target:** Docker (self-hosted or cloud-hosted)
+| Layer | Technology |
+|---|---|
+| **Backend** | C# / .NET 10, ASP.NET Core |
+| **Database** | PostgreSQL, SQL Server, or SQLite via Entity Framework Core |
+| **Frontend** | Angular 21, Tailwind CSS 4 |
+| **Deployment** | Docker (self-hosted or cloud-hosted) |
 
 ---
 
 ## Who Trsr Is For
 
-- **AI agent builders** who want to move from intuition-based iteration to systematic improvement
-- **Dev teams** shipping LLM-powered features who need regression detection and eval coverage
-- **Companies** that need accountability and traceability across their agent fleet
+- **AI engineering teams** moving from intuition-based iteration to systematic, measurement-driven improvement
+- **Platform and infrastructure teams** that need observability and regression coverage across an agent fleet
+- **Organizations** requiring audit trails, traceability, and accountability for production LLM usage
