@@ -16,9 +16,9 @@ using Trsr.Testing;
 namespace Trsr.Api.Tests;
 
 /// <summary>
-/// Integration tests that execute the real demo-data SQL scripts against a SQLite database
+/// Integration tests that execute the real demo-data JSON scenario files against a SQLite database
 /// and assert the expected entities are created. These act as a schema-compatibility guard:
-/// any future change to the domain model or SQL scripts that breaks seeding will fail here.
+/// any future change to the domain model or JSON scenario files that breaks seeding will fail here.
 /// </summary>
 [TestClass]
 public sealed class DemoDataScriptsIntegrationTests : BaseTest<Module>
@@ -53,7 +53,6 @@ public sealed class DemoDataScriptsIntegrationTests : BaseTest<Module>
                 // ignore
             }
         }
-            
     }
 
     private DemoDataSeeder BuildSeeder(IServiceProvider services) =>
@@ -73,7 +72,7 @@ public sealed class DemoDataScriptsIntegrationTests : BaseTest<Module>
     public async Task DemoDataScripts_CreateTwoModelProviders()
     {
         IServiceProvider services = GetServices();
-        
+
         await BuildSeeder(services).StartAsync(CancellationToken.None);
 
         var count = await services.GetRequiredService<IRepository<IModelProvider>>()
@@ -86,7 +85,7 @@ public sealed class DemoDataScriptsIntegrationTests : BaseTest<Module>
     public async Task DemoDataScripts_CreateThreeModels()
     {
         IServiceProvider services = GetServices();
-        
+
         await BuildSeeder(services).StartAsync(CancellationToken.None);
 
         var count = await services.GetRequiredService<IRepository<IModel>>()
@@ -135,30 +134,24 @@ public sealed class DemoDataScriptsIntegrationTests : BaseTest<Module>
     // ── Idempotency ───────────────────────────────────────────────────────────
 
     [TestMethod]
-    public async Task DemoDataScripts_SecondSeedRun_DoesNotThrow()
+    public async Task DemoDataScripts_CalledTwice_DoesNotThrow()
     {
         IServiceProvider services = GetServices();
+
         // First run seeds the data.
         await BuildSeeder(services).StartAsync(CancellationToken.None);
 
-        // Clear agent calls so the seeder's "is empty?" check returns true and it runs the
-        // scripts again. INSERT OR IGNORE must silently skip the fixed-ID rows that already exist.
-        var dbInit = services.GetRequiredService<IDatabaseInitializer>();
-        await dbInit.ExecuteSqlScriptAsync("DELETE FROM AgentCallEntity;");
-
+        // Second run sees existing data and should skip without error.
         var action = () => BuildSeeder(services).StartAsync(CancellationToken.None);
         await action.Should().NotThrowAsync();
     }
 
     [TestMethod]
-    public async Task DemoDataScripts_AfterIdempotentReRun_AgentCallCountUnchanged()
+    public async Task DemoDataScripts_CalledTwice_AgentCallCountUnchanged()
     {
         IServiceProvider services = GetServices();
+
         await BuildSeeder(services).StartAsync(CancellationToken.None);
-
-        var dbInit = services.GetRequiredService<IDatabaseInitializer>();
-        await dbInit.ExecuteSqlScriptAsync("DELETE FROM AgentCallEntity;");
-
         await BuildSeeder(services).StartAsync(CancellationToken.None);
 
         var count = await services.GetRequiredService<IRepository<IAgentCall>>()

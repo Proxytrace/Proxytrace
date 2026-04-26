@@ -58,7 +58,7 @@ public sealed class DemoDataSeederTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task StartAsync_WhenDatabaseIsEmpty_ExecutesSqlScripts()
+    public async Task StartAsync_WhenDatabaseIsEmpty_SeedsAgentCalls()
     {
         // Arrange
         var fake = new FakeDatabaseInitializer();
@@ -69,41 +69,13 @@ public sealed class DemoDataSeederTests : BaseTest<Module>
         await seeder.StartAsync(CancellationToken);
 
         // Assert
-        fake.ExecutedSql.Should().NotBeEmpty();
+        var count = await services.GetRequiredService<IRepository<IAgentCall>>()
+            .CountAsync(CancellationToken);
+        count.Should().BeGreaterThan(0);
     }
 
     [TestMethod]
-    public async Task StartAsync_WhenDatabaseIsEmpty_ExecutesAllFourEmbeddedScripts()
-    {
-        // Arrange
-        var fake = new FakeDatabaseInitializer();
-        var services = GetServicesWithFakeInitializer(fake);
-        var seeder = BuildSeeder(services);
-
-        // Act
-        await seeder.StartAsync(CancellationToken);
-
-        // Assert
-        fake.ExecutedSql.Should().HaveCount(4);
-    }
-
-    [TestMethod]
-    public async Task StartAsync_WhenDatabaseIsEmpty_RunsFoundationScriptFirst()
-    {
-        // Arrange
-        var fake = new FakeDatabaseInitializer();
-        var services = GetServicesWithFakeInitializer(fake);
-        var seeder = BuildSeeder(services);
-
-        // Act
-        await seeder.StartAsync(CancellationToken);
-
-        // Assert – 00_foundation.sql inserts into OrganizationEntity first
-        fake.ExecutedSql[0].Should().Contain("OrganizationEntity");
-    }
-
-    [TestMethod]
-    public async Task StartAsync_WhenDatabaseHasData_DoesNotExecuteSqlScripts()
+    public async Task StartAsync_WhenDatabaseHasData_DoesNotSeedAdditionalAgentCalls()
     {
         // Arrange
         var fake = new FakeDatabaseInitializer();
@@ -117,8 +89,10 @@ public sealed class DemoDataSeederTests : BaseTest<Module>
         // Act
         await seeder.StartAsync(CancellationToken);
 
-        // Assert
-        fake.ExecutedSql.Should().BeEmpty();
+        // Assert — only the one pre-existing call remains; seeder skipped
+        var count = await services.GetRequiredService<IRepository<IAgentCall>>()
+            .CountAsync(CancellationToken);
+        count.Should().Be(1);
     }
 
     [TestMethod]
@@ -140,17 +114,10 @@ public sealed class DemoDataSeederTests : BaseTest<Module>
 internal sealed class FakeDatabaseInitializer : IDatabaseInitializer
 {
     public bool EnsureDatabaseReadyCalled { get; private set; }
-    public List<string> ExecutedSql { get; } = [];
 
     public Task EnsureDatabaseReadyAsync(CancellationToken cancellationToken = default)
     {
         EnsureDatabaseReadyCalled = true;
-        return Task.CompletedTask;
-    }
-
-    public Task ExecuteSqlScriptAsync(string sql, CancellationToken cancellationToken = default)
-    {
-        ExecutedSql.Add(sql);
         return Task.CompletedTask;
     }
 }
