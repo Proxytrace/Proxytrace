@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Storage;
@@ -63,7 +60,8 @@ internal sealed class DemoDataSeeder : IHostedService
             .OrderBy(n => n, StringComparer.Ordinal)
             .Select(resourceName =>
             {
-                using var stream = assembly.GetManifestResourceStream(resourceName)!;
+                using var stream = assembly.GetManifestResourceStream(resourceName)
+                    ?? throw new InvalidOperationException($"Failed to load embedded resource: {resourceName}");
                 using var reader = new StreamReader(stream);
                 return (Name: resourceName[ResourcePrefix.Length..], Sql: reader.ReadToEnd());
             })
