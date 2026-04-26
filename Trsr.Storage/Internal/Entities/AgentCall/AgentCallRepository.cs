@@ -33,21 +33,16 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         if (filter.ProjectId.HasValue)
         {
             var projectId = filter.ProjectId.Value;
-            query = query.Where(e => e.AgentId.HasValue &&
+            query = query.Where(e => 
                 context.Set<AgentEntity>()
                     .Where(a => a.Project == projectId)
-                    .Select(a => (Guid?)a.Id)
+                    .Select(a => a.Id)
                     .Contains(e.AgentId));
         }
 
-        if (filter.Model is not null)
+        if (filter.EndpointId is not null)
         {
-            query = query.Where(e => e.Model == filter.Model);
-        }
-
-        if (filter.Provider is not null)
-        {
-            query = query.Where(e => e.Provider == filter.Provider);
+            query = query.Where(e => e.EndpointId == filter.EndpointId);
         }
 
         if (filter.From.HasValue)

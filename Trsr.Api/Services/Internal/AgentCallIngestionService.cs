@@ -2,6 +2,7 @@ using System.Net;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Agent;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Services.Internal;
@@ -12,6 +13,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     private readonly IAgentCall.CreateNew factory;
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
+    private readonly IModelEndpointRepository endpointRepository;
     private readonly ILogger<AgentCallIngestionService> logger;
 
     public AgentCallIngestionService(
@@ -19,12 +21,14 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         IAgentCall.CreateNew factory,
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
+        IModelEndpointRepository endpointRepository,
         ILogger<AgentCallIngestionService> logger)
     {
         this.repository = repository;
         this.factory = factory;
         this.parser = parser;
         this.agentRepository = agentRepository;
+        this.endpointRepository = endpointRepository;
         this.logger = logger;
     }
 
@@ -39,35 +43,30 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     {
         try
         {
-            OpenAiCallParseResult? parsed = parser.Parse(provider, requestBody, responseBody, duration, httpStatus);
-            if (parsed is null)
+            if (!parser.TryParse(provider, requestBody, responseBody, duration, httpStatus, out OpenAiCallParseResult? parsed))
             {
                 return;
             }
+            
+            var endpoint = await endpointRepository
+                .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
 
-            IAgent? agent = null;
-            if (parsed.SystemMessage is not null)
-            {
-                agent = await agentRepository.GetOrCreateAsync(
+            var agent = await agentRepository.GetOrCreateAsync(
                     parsed.SystemMessage,
                     parsed.Tools,
-                    parsed.Model,
-                    parsed.Provider,
                     project,
                     cancellationToken);
-            }
 
             var call = factory(
-                model: parsed.Model,
-                provider: parsed.Provider,
+                agent: agent,
+                endpoint: endpoint,
                 request: parsed.Request,
                 response: parsed.Response,
                 usage: parsed.Usage,
                 duration: parsed.Duration,
                 httpStatus: parsed.HttpStatus,
                 finishReason: parsed.FinishReason,
-                errorMessage: parsed.ErrorMessage,
-                agent: agent);
+                errorMessage: parsed.ErrorMessage);
 
             await repository.AddAsync(call, cancellationToken);
         }

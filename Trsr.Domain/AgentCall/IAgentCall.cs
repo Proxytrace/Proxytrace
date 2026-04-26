@@ -1,6 +1,7 @@
 using System.Net;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall;
@@ -11,13 +12,9 @@ namespace Trsr.Domain.AgentCall;
 public interface IAgentCall : IDomainEntity
 {
     /// <summary>The agent that initiated this call, if associated.</summary>
-    IAgent? Agent { get; }
-
-    /// <summary>The model identifier used for this call (e.g. <c>claude-sonnet-4-6</c>).</summary>
-    string Model { get; }
-
-    /// <summary>The provider that served the model (e.g. <c>anthropic</c>).</summary>
-    string Provider { get; }
+    IAgent Agent { get; }
+    
+    IModelEndpoint Endpoint { get; }
 
     /// <summary>The conversation sent as the request.</summary>
     Conversation Request { get; }
@@ -41,20 +38,19 @@ public interface IAgentCall : IDomainEntity
     string? ErrorMessage { get; }
 
     public delegate IAgentCall CreateNew(
-        string model,
-        string provider,
+        IAgent agent,
+        IModelEndpoint endpoint,
         Conversation request,
         AssistantMessage response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage,
-        IAgent? agent = null);
+        string? errorMessage);
 
     public delegate IAgentCall CreateExisting(
-        string model,
-        string provider,
+        IAgent agent,
+        IModelEndpoint endpoint,
         Conversation request,
         AssistantMessage response,
         TokenUsage usage,
@@ -62,6 +58,5 @@ public interface IAgentCall : IDomainEntity
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
-        IDomainEntityData existing,
-        IAgent? agent = null);
+        IDomainEntityData existing);
 }

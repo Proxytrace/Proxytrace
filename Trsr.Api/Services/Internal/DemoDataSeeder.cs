@@ -1,21 +1,22 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System.Net;
+using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.OptimizationProposal;
+using Trsr.Domain.TestCase;
+using Trsr.Domain.TestResult;
+using Trsr.Domain.TestRun;
+using Trsr.Domain.TestSuite;
+using Trsr.Domain.Usage;
 using Trsr.Storage;
 
 namespace Trsr.Api.Services.Internal;
 
-/// <summary>
-/// Seeds demo data when the backend starts in development mode and the database is empty.
-/// Reuses existing domain generators so the data is realistic and consistent.
-/// </summary>
 internal sealed class DemoDataSeeder : IHostedService
 {
-    private const int DemoAgentCount = 3;
-    private const int DemoAgentCallCount = 60;
+    private const string ResourcePrefix = "Trsr.Api.DemoData.";
 
     private readonly IServiceProvider serviceProvider;
     private readonly ILogger<DemoDataSeeder> logger;
@@ -30,37 +31,181 @@ internal sealed class DemoDataSeeder : IHostedService
     {
         using var scope = serviceProvider.CreateScope();
 
-        // Ensure database is created and migrated before attempting to seed data
-        // This is critical because DemoDataSeeder might start before DatabaseInitializationService
         var dbInitializer = scope.ServiceProvider.GetRequiredService<IDatabaseInitializer>();
         await dbInitializer.EnsureDatabaseReadyAsync(cancellationToken);
 
         var agentCallRepository = scope.ServiceProvider.GetRequiredService<IRepository<IAgentCall>>();
-        var count = await agentCallRepository.CountAsync(cancellationToken);
-        if (count > 0)
+        if (await agentCallRepository.CountAsync(cancellationToken) > 0)
         {
             logger.LogInformation("Database already contains data — skipping demo data seeding");
             return;
         }
 
-        logger.LogInformation("Database is empty — seeding {AgentCount} agents and {CallCount} agent calls for local development",
-            DemoAgentCount, DemoAgentCallCount);
+        logger.LogInformation("Database is empty — seeding demo data");
 
-        var agentGenerator = scope.ServiceProvider.GetRequiredService<IDomainEntityGenerator<IAgent>>();
-        var agentCallGenerator = scope.ServiceProvider.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        var foundation = await new FoundationSeeder(scope.ServiceProvider).SeedAsync(cancellationToken);
 
-        for (int i = 0; i < DemoAgentCount; i++)
+        var serializer = scope.ServiceProvider.GetRequiredService<ISerializer>();
+        var scenarios = await LoadScenariosAsync(serializer, cancellationToken);
+
+        foreach (var (name, scenario) in scenarios)
         {
-            await agentGenerator.CreateAsync(cancellationToken);
-        }
-
-        for (int i = 0; i < DemoAgentCallCount; i++)
-        {
-            await agentCallGenerator.CreateAsync(cancellationToken);
+            logger.LogDebug("Seeding demo scenario: {ScenarioName}", name);
+            await SeedScenarioAsync(scope.ServiceProvider, foundation, scenario, cancellationToken);
         }
 
         logger.LogInformation("Demo data seeding complete");
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task<IReadOnlyList<(string Name, AgentScenarioFile Scenario)>> LoadScenariosAsync(
+        ISerializer serializer,
+        CancellationToken cancellationToken)
+    {
+        var assembly = typeof(DemoDataSeeder).Assembly;
+        var resourceNames = assembly
+            .GetManifestResourceNames()
+            .Where(n => n.StartsWith(ResourcePrefix, StringComparison.Ordinal) && n.EndsWith(".json", StringComparison.Ordinal))
+            .OrderBy(n => n, StringComparer.Ordinal)
+            .ToList();
+
+        var result = new List<(string, AgentScenarioFile)>(resourceNames.Count);
+        foreach (var resourceName in resourceNames)
+        {
+            await using var stream = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidOperationException($"Failed to load embedded resource: {resourceName}");
+            var scenario = await serializer.DeserializeAsync<AgentScenarioFile>(stream, cancellationToken)
+                ?? throw new InvalidOperationException($"Scenario file deserialised to null: {resourceName}");
+            result.Add((resourceName[ResourcePrefix.Length..], scenario));
+        }
+        return result;
+    }
+
+    private static async Task SeedScenarioAsync(
+        IServiceProvider services,
+        FoundationData foundation,
+        AgentScenarioFile scenario,
+        CancellationToken ct)
+    {
+        var endpoint = foundation.Endpoints[scenario.Agent.EndpointId];
+        var data = new DemoEntityData(scenario.Agent.Id, scenario.Agent.CreatedAt, scenario.Agent.CreatedAt);
+
+        var agentFactory = services.GetRequiredService<IAgent.CreateExisting>();
+        var agent = await services.GetRequiredService<IRepository<IAgent>>()
+            .UpsertAsync(agentFactory(foundation.Project, scenario.Agent.SystemMessage, scenario.Agent.Tools, data), ct);
+
+        await SeedCallsAsync(services, agent, endpoint, scenario.Calls, ct);
+        var testCases = await SeedTestCasesAsync(services, scenario.TestCases, ct);
+        await SeedTestSuiteAsync(services, foundation, agent, testCases, scenario.TestSuite, ct);
+        var testRuns = await SeedTestRunsAsync(services, agent, testCases, scenario.TestRuns, ct);
+        await SeedOptimizationProposalsAsync(services, agent, scenario.OptimizationProposals, ct);
+    }
+
+    private static async Task SeedCallsAsync(
+        IServiceProvider services,
+        IAgent agent,
+        IModelEndpoint endpoint,
+        IReadOnlyList<AgentCallSeedData> calls,
+        CancellationToken ct)
+    {
+        var factory = services.GetRequiredService<IAgentCall.CreateExisting>();
+        var repo = services.GetRequiredService<IRepository<IAgentCall>>();
+        foreach (var call in calls)
+        {
+            var data = new DemoEntityData(call.Id, call.CreatedAt, call.CreatedAt);
+            var entity = factory(
+                agent,
+                endpoint,
+                call.Request,
+                call.Response,
+                new TokenUsage(call.InputTokens, call.OutputTokens),
+                TimeSpan.FromMilliseconds(call.DurationMs),
+                (HttpStatusCode)call.HttpStatus,
+                call.FinishReason,
+                call.ErrorMessage,
+                data);
+            await repo.UpsertAsync(entity, ct);
+        }
+    }
+
+    private static async Task<IReadOnlyDictionary<Guid, ITestCase>> SeedTestCasesAsync(
+        IServiceProvider services,
+        IReadOnlyList<TestCaseSeedData> testCases,
+        CancellationToken ct)
+    {
+        var factory = services.GetRequiredService<ITestCase.CreateExisting>();
+        var repo = services.GetRequiredService<IRepository<ITestCase>>();
+        var result = new Dictionary<Guid, ITestCase>();
+        foreach (var tc in testCases)
+        {
+            var data = new DemoEntityData(tc.Id, tc.CreatedAt, tc.CreatedAt);
+            var entity = await repo.UpsertAsync(factory(tc.Input, tc.ExpectedOutput, data), ct);
+            result[tc.Id] = entity;
+        }
+        return result;
+    }
+
+    private static async Task SeedTestSuiteAsync(
+        IServiceProvider services,
+        FoundationData foundation,
+        IAgent agent,
+        IReadOnlyDictionary<Guid, ITestCase> testCases,
+        TestSuiteSeedData suite,
+        CancellationToken ct)
+    {
+        var factory = services.GetRequiredService<ITestSuite.CreateExisting>();
+        var repo = services.GetRequiredService<IRepository<ITestSuite>>();
+        var data = new DemoEntityData(suite.Id, suite.CreatedAt, suite.CreatedAt);
+        await repo.UpsertAsync(factory(agent, foundation.Evaluator, testCases.Values.ToList(), data), ct);
+    }
+
+    private static async Task<IReadOnlyDictionary<Guid, ITestRun>> SeedTestRunsAsync(
+        IServiceProvider services,
+        IAgent agent,
+        IReadOnlyDictionary<Guid, ITestCase> testCases,
+        IReadOnlyList<TestRunSeedData> testRuns,
+        CancellationToken ct)
+    {
+        var resultFactory = services.GetRequiredService<ITestResult.CreateExisting>();
+        var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
+        var runFactory = services.GetRequiredService<ITestRun.CreateExisting>();
+        var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
+
+        var runs = new Dictionary<Guid, ITestRun>();
+        foreach (var run in testRuns)
+        {
+            var seededResults = new List<ITestResult>();
+            foreach (var result in run.Results)
+            {
+                var resultData = new DemoEntityData(result.Id, result.CreatedAt, result.CreatedAt);
+                var testCase = testCases[result.TestCaseId];
+                var entity = await resultRepo.UpsertAsync(
+                    resultFactory(testCase, result.ActualResponse, result.Evaluation, resultData), ct);
+                seededResults.Add(entity);
+            }
+            var runData = new DemoEntityData(run.Id, run.Timestamp, run.Timestamp);
+            var seededRun = await runRepo.UpsertAsync(runFactory(run.Timestamp, agent, seededResults, runData), ct);
+            runs[run.Id] = seededRun;
+        }
+        return runs;
+    }
+
+    private static async Task SeedOptimizationProposalsAsync(
+        IServiceProvider services,
+        IAgent agent,
+        IReadOnlyList<OptimizationProposalSeedData> proposals,
+        CancellationToken ct)
+    {
+        var factory = services.GetRequiredService<IOptimizationProposal.CreateExisting>();
+        var repo = services.GetRequiredService<IRepository<IOptimizationProposal>>();
+        foreach (var proposal in proposals)
+        {
+            var data = new DemoEntityData(proposal.Id, proposal.CreatedAt, proposal.CreatedAt);
+            var evidenceIds = proposal.EvidenceTestRunIds.ToList();
+            await repo.UpsertAsync(
+                factory(agent, proposal.Kind, proposal.Status, proposal.Rationale,
+                    proposal.ProposedSystemMessage, proposal.ProposedTools, evidenceIds, data), ct);
+        }
+    }
 }

@@ -10,7 +10,7 @@ namespace Trsr.Storage.Internal;
 /// </summary>
 internal class DatabaseInitializationService : IHostedService, IDatabaseInitializer
 {
-    private readonly IServiceProvider serviceProvider;
+        private readonly IServiceProvider serviceProvider;
     private readonly ILogger<DatabaseInitializationService> logger;
 
     public DatabaseInitializationService(
@@ -50,6 +50,7 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     }
 
     /// <inheritdoc />
-    public Task StopAsync(CancellationToken cancellationToken) 
+    public Task StopAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
+
 }

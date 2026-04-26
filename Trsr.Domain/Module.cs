@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain.Message.Internal;
+using Trsr.Domain.Tools.Internal;
 
 namespace Trsr.Domain;
 
@@ -41,6 +42,10 @@ public sealed class Module : Autofac.Module
             .AsImplementedInterfaces();
 
         builder.RegisterType<ContentJsonConverter>()
+            .As<JsonConverter>()
+            .SingleInstance();
+
+        builder.RegisterType<ToolArgumentsJsonConverter>()
             .As<JsonConverter>()
             .SingleInstance();
     }

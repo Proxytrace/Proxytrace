@@ -5,9 +5,8 @@ namespace Trsr.Storage.Internal.Entities.AgentCall;
 [StoredDomainEntity(typeof(Trsr.Domain.AgentCall.IAgentCall))]
 internal record AgentCallEntity : Entity
 {
-    public Guid? AgentId { get; init; }
-    public required string Model { get; init; }
-    public required string Provider { get; init; }
+    public required Guid AgentId { get; init; }
+    public required Guid EndpointId { get; init; }
     public required Conversation Request { get; init; }
     public required AssistantMessage Response { get; init; }
     public int InputTokens { get; init; }

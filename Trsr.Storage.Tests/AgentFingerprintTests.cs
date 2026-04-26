@@ -43,8 +43,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var msg  = new SystemMessage("You are a helpful assistant");
         var tools = (IReadOnlyCollection<ToolSpecification>)[MakeTool("search")];
 
-        var fp1 = repo.GetAgentFingerprint(msg, tools, "gpt-4o", "openai");
-        var fp2 = repo.GetAgentFingerprint(msg, tools, "gpt-4o", "openai");
+        var fp1 = repo.GetAgentFingerprint(msg, tools);
+        var fp2 = repo.GetAgentFingerprint(msg, tools);
 
         fp1.Should().Be(fp2);
     }
@@ -54,7 +54,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     {
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
-        var fp = repo.GetAgentFingerprint(new SystemMessage("test"), [], "gpt-4o", "openai");
+        var fp = repo.GetAgentFingerprint(new SystemMessage("test"), []);
 
         fp.Should().HaveLength(64);
         fp.Should().MatchRegex("^[0-9a-f]+$");
@@ -68,34 +68,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
 
-        var fp1 = repo.GetAgentFingerprint(new SystemMessage("You are agent A"), [], "gpt-4o", "openai");
-        var fp2 = repo.GetAgentFingerprint(new SystemMessage("You are agent B"), [], "gpt-4o", "openai");
-
-        fp1.Should().NotBe(fp2);
-    }
-
-    [TestMethod]
-    public void GetAgentFingerprint_DifferentModel_ReturnsDifferentFingerprint()
-    {
-        var services = GetServices();
-        var repo = services.GetRequiredService<IAgentRepository>();
-        var msg = new SystemMessage("You are a helpful assistant");
-
-        var fp1 = repo.GetAgentFingerprint(msg, [], "gpt-4o", "openai");
-        var fp2 = repo.GetAgentFingerprint(msg, [], "gpt-4o-mini", "openai");
-
-        fp1.Should().NotBe(fp2);
-    }
-
-    [TestMethod]
-    public void GetAgentFingerprint_DifferentProvider_ReturnsDifferentFingerprint()
-    {
-        var services = GetServices();
-        var repo = services.GetRequiredService<IAgentRepository>();
-        var msg = new SystemMessage("You are a helpful assistant");
-
-        var fp1 = repo.GetAgentFingerprint(msg, [], "claude-sonnet-4-6", "anthropic");
-        var fp2 = repo.GetAgentFingerprint(msg, [], "claude-sonnet-4-6", "bedrock");
+        var fp1 = repo.GetAgentFingerprint(new SystemMessage("You are agent A"), []);
+        var fp2 = repo.GetAgentFingerprint(new SystemMessage("You are agent B"), []);
 
         fp1.Should().NotBe(fp2);
     }
@@ -107,8 +81,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo = services.GetRequiredService<IAgentRepository>();
         var msg = new SystemMessage("You are a helpful assistant");
 
-        var fp1 = repo.GetAgentFingerprint(msg, [MakeTool("search")], "gpt-4o", "openai");
-        var fp2 = repo.GetAgentFingerprint(msg, [MakeTool("calculator")], "gpt-4o", "openai");
+        var fp1 = repo.GetAgentFingerprint(msg, [MakeTool("search")]);
+        var fp2 = repo.GetAgentFingerprint(msg, [MakeTool("calculator")]);
 
         fp1.Should().NotBe(fp2);
     }
@@ -122,8 +96,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var toolA = MakeTool("aaa");
         var toolB = MakeTool("bbb");
 
-        var fp1 = repo.GetAgentFingerprint(msg, [toolA, toolB], "gpt-4o", "openai");
-        var fp2 = repo.GetAgentFingerprint(msg, [toolB, toolA], "gpt-4o", "openai");
+        var fp1 = repo.GetAgentFingerprint(msg, [toolA, toolB]);
+        var fp2 = repo.GetAgentFingerprint(msg, [toolB, toolA]);
 
         fp1.Should().Be(fp2);
     }
@@ -137,43 +111,12 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
         var msg     = new SystemMessage("You are a helpful assistant");
+        
 
-        var agent1 = await repo.GetOrCreateAsync(msg, [], "gpt-4o", "openai", project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], "gpt-4o", "openai", project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
 
         agent1.Id.Should().Be(agent2.Id);
-    }
-
-    [TestMethod]
-    public async Task GetOrCreateAsync_DifferentModel_CreatesSeparateAgent()
-    {
-        var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        var msg     = new SystemMessage("You are a helpful assistant");
-
-        var agent1 = await repo.GetOrCreateAsync(msg, [], "gpt-4o", "openai", project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], "gpt-4o-mini", "openai", project, CancellationToken);
-
-        agent1.Id.Should().NotBe(agent2.Id);
-        agent1.Model.Should().Be("gpt-4o");
-        agent2.Model.Should().Be("gpt-4o-mini");
-    }
-
-    [TestMethod]
-    public async Task GetOrCreateAsync_DifferentProvider_CreatesSeparateAgent()
-    {
-        var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        var msg     = new SystemMessage("You are a helpful assistant");
-
-        var agent1 = await repo.GetOrCreateAsync(msg, [], "claude-sonnet-4-6", "anthropic", project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], "claude-sonnet-4-6", "bedrock",    project, CancellationToken);
-
-        agent1.Id.Should().NotBe(agent2.Id);
-        agent1.Provider.Should().Be("anthropic");
-        agent2.Provider.Should().Be("bedrock");
     }
 
     [TestMethod]
@@ -182,9 +125,10 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var services = GetServices();
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
+        
 
-        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], "gpt-4o", "openai", project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], "gpt-4o", "openai", project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, CancellationToken);
 
         agent1.Id.Should().NotBe(agent2.Id);
     }
@@ -196,11 +140,9 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
         var msg     = new SystemMessage("You are a helpful assistant");
+        
+        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, CancellationToken);
 
-        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], "gpt-4o", "openai", project, CancellationToken);
-
-        agent.Model.Should().Be("gpt-4o");
-        agent.Provider.Should().Be("openai");
         agent.SystemMessage.Should().Be(msg);
         agent.Tools.Should().HaveCount(1);
         agent.Project.Id.Should().Be(project.Id);
@@ -213,9 +155,10 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
         var msg     = new SystemMessage("You are a helpful assistant");
+        
 
-        var agent = await repo.GetOrCreateAsync(msg, [], "gpt-4o", "openai", project, CancellationToken);
-        var expected = repo.GetAgentFingerprint(msg, [], "gpt-4o", "openai");
+        var agent = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var expected = repo.GetAgentFingerprint(msg, []);
 
         repo.GetAgentFingerprint(agent).Should().Be(expected);
     }

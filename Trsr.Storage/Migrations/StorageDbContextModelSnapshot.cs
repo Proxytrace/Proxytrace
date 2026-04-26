@@ -31,17 +31,7 @@ namespace Trsr.Storage.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
                     b.Property<Guid>("Project")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SystemMessage")
@@ -60,11 +50,7 @@ namespace Trsr.Storage.Migrations
                     b.HasIndex("Fingerprint")
                         .IsUnique();
 
-                    b.HasIndex("Model");
-
                     b.HasIndex("Project");
-
-                    b.HasIndex("Provider");
 
                     b.ToTable("AgentEntity");
                 });
@@ -75,7 +61,7 @@ namespace Trsr.Storage.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("AgentId")
+                    b.Property<Guid>("AgentId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -83,6 +69,9 @@ namespace Trsr.Storage.Migrations
 
                     b.Property<long>("DurationMs")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("EndpointId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ErrorMessage")
                         .HasMaxLength(2048)
@@ -98,18 +87,8 @@ namespace Trsr.Storage.Migrations
                     b.Property<int>("InputTokens")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("OutputTokens")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("Request")
                         .IsRequired()
@@ -128,9 +107,7 @@ namespace Trsr.Storage.Migrations
 
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("Model");
-
-                    b.HasIndex("Provider");
+                    b.HasIndex("EndpointId");
 
                     b.ToTable("AgentCallEntity");
                 });
@@ -155,6 +132,102 @@ namespace Trsr.Storage.Migrations
                     b.HasIndex("Kind");
 
                     b.ToTable("EvaluatorEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Model.ModelEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ModelEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("InputTokenCost")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Model")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("OutputTokenCost")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Provider")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Provider");
+
+                    b.HasIndex("Model", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("ModelEndpointEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ApiKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ModelProviderEntity");
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>
@@ -418,6 +491,30 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
                         .WithMany()
                         .HasForeignKey("Project")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.AgentCall.AgentCallEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
+                        .WithMany()
+                        .HasForeignKey("EndpointId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Model.ModelEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Model")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Provider")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

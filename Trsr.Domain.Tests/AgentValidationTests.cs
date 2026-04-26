@@ -13,7 +13,7 @@ namespace Trsr.Domain.Tests;
 public sealed class AgentValidationTests : BaseTest<Module>
 {
     [TestMethod]
-    public void CreateNew_WithValidInputs_CreatesAgent()
+    public async Task CreateNew_WithValidInputs_CreatesAgent()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -22,21 +22,19 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var project = CreateTestProject(services);
 
         // Act
-        var agent = factory(systemMessage, [], "gpt-4o", "openai", project);
+        var agent = factory(systemMessage, [], project);
 
         // Assert
         agent.Should().NotBeNull();
         agent.SystemMessage.Should().Be(systemMessage);
         agent.Project.Should().Be(project);
-        agent.Model.Should().Be("gpt-4o");
-        agent.Provider.Should().Be("openai");
         agent.Id.Should().NotBe(Guid.Empty);
         agent.CreatedAt.Should().NotBe(default);
         agent.UpdatedAt.Should().NotBe(default);
     }
 
     [TestMethod]
-    public void CreateNew_WithNullSystemMessage_ThrowsValidationException()
+    public async Task CreateNew_WithNullSystemMessage_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -45,12 +43,12 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, [], "gpt-4o", "openai", project);
+        var action = () => factory(null!, [], project);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public void CreateNew_WithNullProject_ThrowsValidationException()
+    public async Task CreateNew_WithNullProject_ThrowsValidationException()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -59,7 +57,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(systemMessage, [], "gpt-4o", "openai", null!);
+        var action = () => factory(systemMessage, [], null!);
         action.Should().Throw<Exception>();
     }
 
@@ -73,15 +71,13 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var agent = createExisting(existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Model, existingAgent.Provider, existingAgent);
+        var agent = createExisting(existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
 
         // Assert
         agent.Should().NotBeNull();
         agent.Id.Should().Be(existingAgent.Id);
         agent.Project.Should().Be(existingAgent.Project);
         agent.SystemMessage.Should().Be(existingAgent.SystemMessage);
-        agent.Model.Should().Be(existingAgent.Model);
-        agent.Provider.Should().Be(existingAgent.Provider);
         agent.CreatedAt.Should().Be(existingAgent.CreatedAt);
         agent.UpdatedAt.Should().Be(existingAgent.UpdatedAt);
     }
@@ -97,12 +93,12 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Model, existingAgent.Provider, existingAgent);
+        var action = () => createExisting(null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public void Id_IsUniqueForEachNewAgent()
+    public async Task Id_IsUniqueForEachNewAgent()
     {
         // Arrange
         IServiceProvider services = GetServices();
@@ -111,8 +107,8 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var project = CreateTestProject(services);
 
         // Act
-        var agent1 = factory(systemMessage, [], "gpt-4o", "openai", project);
-        var agent2 = factory(systemMessage, [], "gpt-4o", "openai", project);
+        var agent1 = factory(systemMessage, [], project);
+        var agent2 = factory(systemMessage, [], project);
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);

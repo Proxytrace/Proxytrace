@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
@@ -10,23 +12,14 @@ namespace Trsr.Storage.Internal;
 
 internal class StatisticsQueryService : IStatisticsQueryService
 {
-    // Approximate token pricing per million tokens (input / output) in USD
-    private static readonly Dictionary<string, (decimal Input, decimal Output)> PriceTable = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["gpt-4o"]           = (2.50m, 10.00m),
-        ["gpt-4o-mini"]      = (0.15m,  0.60m),
-        ["gpt-4-turbo"]      = (10.00m, 30.00m),
-        ["gpt-4"]            = (30.00m, 60.00m),
-        ["gpt-3.5-turbo"]    = (0.50m,  1.50m),
-        ["claude-3-5-sonnet"] = (3.00m, 15.00m),
-        ["claude-3-5-haiku"]  = (0.80m,  4.00m),
-        ["claude-3-opus"]     = (15.00m, 75.00m),
-    };
-
+    private readonly IRepository<IModelEndpoint> endpoints;
     private readonly Func<StorageDbContext> contextFactory;
 
-    public StatisticsQueryService(Func<StorageDbContext> contextFactory)
+    public StatisticsQueryService(
+        IRepository<IModelEndpoint> endpoints,
+        Func<StorageDbContext> contextFactory)
     {
+        this.endpoints = endpoints;
         this.contextFactory = contextFactory;
     }
 
@@ -68,14 +61,14 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .ToListAsync(cancellationToken);
 
         return calls
-            .GroupBy(e => (Date: DateOnly.FromDateTime(e.CreatedAt.UtcDateTime.Date), e.Model))
+            .GroupBy(e => (Date: DateOnly.FromDateTime(e.CreatedAt.UtcDateTime.Date), e.EndpointId))
             .Select(g => new TokenUsageStat(
                 Date: g.Key.Date,
-                Model: g.Key.Model,
+                EndpointId: g.Key.EndpointId,
                 InputTokens: g.Sum(e => (long)e.InputTokens),
                 OutputTokens: g.Sum(e => (long)e.OutputTokens)))
             .OrderBy(s => s.Date)
-            .ThenBy(s => s.Model)
+            .ThenBy(s => s.EndpointId)
             .ToArray();
     }
 
@@ -86,12 +79,12 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .ToListAsync(cancellationToken);
 
         return calls
-            .GroupBy(e => e.Model)
+            .GroupBy(e => e.EndpointId)
             .Select(g =>
             {
                 var sorted = g.Select(e => (double)e.DurationMs).OrderBy(x => x).ToArray();
                 return new LatencyStat(
-                    Model: g.Key,
+                    EndpointId: g.Key,
                     P50Ms: Percentile(sorted, 0.50),
                     P95Ms: Percentile(sorted, 0.95),
                     P99Ms: Percentile(sorted, 0.99),
@@ -99,7 +92,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
                     MaxMs: sorted.Length > 0 ? sorted[^1] : 0,
                     SampleCount: sorted.Length);
             })
-            .OrderBy(s => s.Model)
+            .OrderBy(s => s.EndpointId)
             .ToArray();
     }
 
@@ -154,14 +147,13 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .ToListAsync(cancellationToken);
 
         return calls
-            .GroupBy(e => (e.Model, e.Provider))
+            .GroupBy(e => e.EndpointId)
             .Select(g => new ErrorRateStat(
-                Model: g.Key.Model,
-                Provider: g.Key.Provider,
+                EndpointId: g.Key,
                 TotalCalls: g.Count(),
                 ErrorCalls: g.Count(e => e.HttpStatus >= 400),
-                ErrorRate: g.Count() == 0 ? 0 : (double)g.Count(e => e.HttpStatus >= 400) / g.Count()))
-            .OrderBy(s => s.Model)
+                ErrorRate: !g.Any() ? 0 : (double)g.Count(e => e.HttpStatus >= 400) / g.Count()))
+            .OrderBy(s => s.EndpointId)
             .ToArray();
     }
 
@@ -169,10 +161,10 @@ internal class StatisticsQueryService : IStatisticsQueryService
     {
         var context = contextFactory();
         var stats = await ApplyCallFilter(context.Set<AgentCallEntity>().AsNoTracking(), filter, context)
-            .GroupBy(e => e.Model)
+            .GroupBy(e => e.EndpointId)
             .Select(g => new
             {
-                Model = g.Key,
+                EndpointId = g.Key,
                 CallCount = g.Count(),
                 TotalInputTokens = (long)g.Sum(e => e.InputTokens),
                 TotalOutputTokens = (long)g.Sum(e => e.OutputTokens),
@@ -182,7 +174,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
         return stats
             .Select(s => new ModelBreakdownStat(
-                Model: s.Model,
+                EndpointId: s.EndpointId,
                 CallCount: s.CallCount,
                 TotalInputTokens: s.TotalInputTokens,
                 TotalOutputTokens: s.TotalOutputTokens,
@@ -193,23 +185,22 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
     public async Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
-        var breakdown = await GetModelBreakdownAsync(filter, cancellationToken);
+        IReadOnlyList<ModelBreakdownStat> breakdown = await GetModelBreakdownAsync(filter, cancellationToken);
 
-        return breakdown.Select(b =>
+        return await breakdown.Select(async b =>
         {
-            var priceKey = PriceTable.Keys.FirstOrDefault(k => b.Model.Contains(k, StringComparison.OrdinalIgnoreCase));
-            var (inputPrice, outputPrice) = priceKey is not null ? PriceTable[priceKey] : (0m, 0m);
-
-            var inputCost = b.TotalInputTokens / 1_000_000m * inputPrice;
-            var outputCost = b.TotalOutputTokens / 1_000_000m * outputPrice;
+            var endpoint = await endpoints.GetAsync(b.EndpointId, cancellationToken);
+            var inputCost = b.TotalInputTokens / 1_000_000m * endpoint.InputTokenCost;
+            var outputCost = b.TotalOutputTokens / 1_000_000m * endpoint.OutputTokenCost;
 
             return new CostEstimateStat(
-                Model: b.Model,
-                InputCostUsd: Math.Round(inputCost, 4),
-                OutputCostUsd: Math.Round(outputCost, 4),
-                TotalCostUsd: Math.Round(inputCost + outputCost, 4));
+                EndpointId: b.EndpointId,
+                InputCostEur: Math.Round(inputCost, 4),
+                OutputCostEur: Math.Round(outputCost, 4),
+                TotalCostEur: Math.Round(inputCost + outputCost, 4));
         })
-        .ToArray();
+        .Await()
+        .ContinueWith(x => x.Result.ToList(), cancellationToken);
     }
 
     private static IQueryable<AgentCallEntity> ApplyCallFilter(
@@ -223,15 +214,14 @@ internal class StatisticsQueryService : IStatisticsQueryService
         if (filter.ProjectId.HasValue)
         {
             var projectId = filter.ProjectId.Value;
-            query = query.Where(e => e.AgentId.HasValue &&
-                context.Set<AgentEntity>()
+            query = query.Where(e => context.Set<AgentEntity>()
                     .Where(a => a.Project == projectId)
                     .Select(a => (Guid?)a.Id)
                     .Contains(e.AgentId));
         }
 
-        if (filter.Model is not null)
-            query = query.Where(e => e.Model == filter.Model);
+        if (filter.EndpointId is not null)
+            query = query.Where(e => e.EndpointId == filter.EndpointId);
 
         if (filter.From.HasValue)
             query = query.Where(e => e.CreatedAt >= filter.From.Value);

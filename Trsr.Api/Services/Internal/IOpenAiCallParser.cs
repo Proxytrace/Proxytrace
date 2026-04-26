@@ -1,13 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace Trsr.Api.Services.Internal;
 
 internal interface IOpenAiCallParser
 {
-    OpenAiCallParseResult? Parse(
+    bool TryParse(
         string provider,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
-        HttpStatusCode httpStatus);
+        HttpStatusCode httpStatus,
+        [NotNullWhen(true)] out OpenAiCallParseResult? result);
 }

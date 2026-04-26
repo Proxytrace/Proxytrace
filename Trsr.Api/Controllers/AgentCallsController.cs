@@ -21,8 +21,7 @@ public class AgentCallsController : ControllerBase
     public async Task<PagedResult<AgentCallDto>> GetAll(
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
-        [FromQuery] string? model = null,
-        [FromQuery] string? provider = null,
+        [FromQuery] Guid? endpointId = null,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] int? httpStatus = null,
@@ -30,7 +29,7 @@ public class AgentCallsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var filter = new AgentCallFilter(agentId, projectId, model, provider, from, to, httpStatus);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, from, to, httpStatus);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallDto>(items.Select(ToDto).ToArray(), total, page, pageSize);
     }
@@ -53,9 +52,9 @@ public class AgentCallsController : ControllerBase
 
     private static AgentCallDto ToDto(IAgentCall c) => new(
         c.Id,
-        c.Agent?.Id,
-        c.Model,
-        c.Provider,
+        c.Agent.Id,
+        c.Endpoint.Model.Name,
+        c.Endpoint.Provider.Name,
         c.Request.Messages.Select(m => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
         new AgentCallMessageDto("assistant", GetText(c.Response)),
         (long)c.Usage.InputTokenCount,

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 using Trsr.Domain.Message;
@@ -8,32 +9,41 @@ namespace Trsr.Api.Services.Internal;
 
 internal class OpenAiCallParser : IOpenAiCallParser
 {
-    public OpenAiCallParseResult? Parse(
+    public bool TryParse(
         string provider,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
-        HttpStatusCode httpStatus)
+        HttpStatusCode httpStatus,
+        [NotNullWhen(true)] out OpenAiCallParseResult? result)
     {
         var conversation = ParseConversation(requestBody);
         if (conversation is null)
         {
-            return null;
+            result = null;
+            return false;
         }
 
         var agentMessage = ParseAgentMessage(responseBody);
         if (agentMessage is null)
         {
-            return null;
+            result = null;
+            return false;
         }
 
         var model = ParseModel(requestBody);
         var (inputTokens, outputTokens, finishReason) = ParseUsage(responseBody);
         var errorMessage = (int)httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
         var systemMessage = ParseSystemMessage(requestBody);
+        if(systemMessage is null)
+        {
+            result = null;
+            return false;
+        }
+        
         var tools = ParseTools(requestBody);
 
-        return new OpenAiCallParseResult(
+        result = new OpenAiCallParseResult(
             Model: model,
             Provider: provider,
             Request: conversation,
@@ -45,6 +55,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
             ErrorMessage: errorMessage,
             SystemMessage: systemMessage,
             Tools: tools);
+        return true;
     }
 
     // ── OpenAI request → Conversation ────────────────────────────────────────
