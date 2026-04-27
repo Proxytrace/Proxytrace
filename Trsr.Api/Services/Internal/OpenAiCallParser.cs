@@ -259,6 +259,12 @@ internal class OpenAiCallParser : IOpenAiCallParser
             return null;
         }
 
+        // SSE streaming: lines are "data: <json>" or "data: [DONE]"
+        if (responseBody.Contains("data: "))
+        {
+            return ParseAgentMessageFromSse(responseBody);
+        }
+
         try
         {
             using var doc = JsonDocument.Parse(responseBody);
@@ -275,10 +281,58 @@ internal class OpenAiCallParser : IOpenAiCallParser
 
             var role = msg.TryGetProperty("role", out var rp) ? rp.GetString() : null;
             return role != "assistant"
-                ? null 
+                ? null
                 : new AssistantMessage(ParseContents(msg), ParseToolRequests(msg));
         }
         catch { return null; }
+    }
+
+    private static AssistantMessage? ParseAgentMessageFromSse(string responseBody)
+    {
+        var text = new System.Text.StringBuilder();
+        var toolRequests = new List<ToolRequest>();
+
+        foreach (var line in responseBody.Split('\n'))
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("data: ") || trimmed == "data: [DONE]")
+            {
+                continue;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed["data: ".Length..]);
+                if (!doc.RootElement.TryGetProperty("choices", out var choices)
+                    || choices.GetArrayLength() == 0)
+                {
+                    continue;
+                }
+
+                var choice = choices[0];
+                if (!choice.TryGetProperty("delta", out var delta))
+                {
+                    continue;
+                }
+
+                if (delta.TryGetProperty("content", out var content)
+                    && content.ValueKind == JsonValueKind.String)
+                {
+                    text.Append(content.GetString());
+                }
+
+                toolRequests.AddRange(ParseToolRequests(delta));
+            }
+            catch { /* skip malformed chunk */ }
+        }
+
+        var contents = text.Length > 0
+            ? (IReadOnlyList<Content>)[Content.FromText(text.ToString())]
+            : [];
+
+        return contents.Count == 0 && toolRequests.Count == 0
+            ? null
+            : new AssistantMessage(contents, toolRequests);
     }
 
     // ── Scalar field extraction ───────────────────────────────────────────────
@@ -304,40 +358,76 @@ internal class OpenAiCallParser : IOpenAiCallParser
             return (null, null, null);
         }
 
+        if (responseBody.Contains("data: "))
+        {
+            return ParseUsageFromSse(responseBody);
+        }
+
         try
         {
             using var doc = JsonDocument.Parse(responseBody);
-            var root = doc.RootElement;
-
-            int? inputTokens = null;
-            int? outputTokens = null;
-            string? finishReason = null;
-
-            if (root.TryGetProperty("usage", out var usage))
-            {
-                if (usage.TryGetProperty("prompt_tokens", out var pt))
-                {
-                    inputTokens = pt.GetInt32();
-                }
-
-                if (usage.TryGetProperty("completion_tokens", out var ct))
-                {
-                    outputTokens = ct.GetInt32();
-                }
-            }
-
-            if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
-            {
-                var first = choices[0];
-                if (first.TryGetProperty("finish_reason", out var fr) && fr.ValueKind != JsonValueKind.Null)
-                {
-                    finishReason = fr.GetString();
-                }
-            }
-
-            return (inputTokens, outputTokens, finishReason);
+            return ExtractUsageFromElement(doc.RootElement);
         }
         catch { return (null, null, null); }
+    }
+
+    private static (int? inputTokens, int? outputTokens, string? finishReason) ParseUsageFromSse(string responseBody)
+    {
+        int? inputTokens = null;
+        int? outputTokens = null;
+        string? finishReason = null;
+
+        foreach (var line in responseBody.Split('\n'))
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith("data: ") || trimmed == "data: [DONE]")
+            {
+                continue;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed["data: ".Length..]);
+                var (pt, ct, fr) = ExtractUsageFromElement(doc.RootElement);
+                inputTokens ??= pt;
+                outputTokens ??= ct;
+                finishReason ??= fr;
+            }
+            catch { /* skip malformed chunk */ }
+        }
+
+        return (inputTokens, outputTokens, finishReason);
+    }
+
+    private static (int? inputTokens, int? outputTokens, string? finishReason) ExtractUsageFromElement(JsonElement root)
+    {
+        int? inputTokens = null;
+        int? outputTokens = null;
+        string? finishReason = null;
+
+        if (root.TryGetProperty("usage", out var usage))
+        {
+            if (usage.TryGetProperty("prompt_tokens", out var pt))
+            {
+                inputTokens = pt.GetInt32();
+            }
+
+            if (usage.TryGetProperty("completion_tokens", out var ct))
+            {
+                outputTokens = ct.GetInt32();
+            }
+        }
+
+        if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+        {
+            var first = choices[0];
+            if (first.TryGetProperty("finish_reason", out var fr) && fr.ValueKind != JsonValueKind.Null)
+            {
+                finishReason = fr.GetString();
+            }
+        }
+
+        return (inputTokens, outputTokens, finishReason);
     }
 
     private static string? ParseErrorMessage(string? responseBody)
