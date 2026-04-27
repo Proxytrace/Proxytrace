@@ -42,7 +42,7 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
             .HasOne<ModelProviderEntity>()
             .WithMany()
             .HasForeignKey(e => e.Provider)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public async Task<IApiKey> Map(ApiKeyEntity stored, CancellationToken cancellationToken = default)

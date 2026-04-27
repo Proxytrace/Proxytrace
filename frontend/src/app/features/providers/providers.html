@@ -1,0 +1,395 @@
+<div style="max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:14px; padding-bottom:24px; height:calc(100vh - 80px); overflow:hidden;">
+
+  <!-- Header -->
+  <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-shrink:0;">
+    <div>
+      <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0 0 4px;">Providers</h1>
+      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Configure upstream model providers and manage Trsr API keys.</p>
+    </div>
+    <button (click)="openNewProvider()"
+            style="padding:8px 14px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:12.5px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Provider
+    </button>
+  </div>
+
+  <!-- Master-detail -->
+  <div class="fade-up" style="animation-delay:60ms; display:grid; grid-template-columns:280px 1fr; gap:12px; flex:1; min-height:0;">
+
+    <!-- Provider list -->
+    <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow-y:auto; display:flex; flex-direction:column; gap:2px; padding:8px;">
+      @if (loadState() === 'loading') {
+        <div style="display:flex; align-items:center; justify-content:center; padding:40px 0; color:var(--text-muted); font-size:13px;">Loading…</div>
+      }
+      @if (loadState() === 'error') {
+        <div style="padding:20px; text-align:center; color:var(--danger); font-size:13px;">Failed to load providers.</div>
+      }
+      @if (loadState() === 'loaded') {
+        @if (providers().length === 0) {
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:40px 16px; text-align:center; color:var(--text-muted);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <p style="font-size:13px; margin:0;">No providers yet.<br>Add one to get started.</p>
+          </div>
+        }
+        @for (p of providers(); track p.id) {
+          <button (click)="selectProvider(p.id)"
+                  style="width:100%; text-align:left; padding:12px 14px; border-radius:10px; transition:background 0.1s; position:relative;"
+                  [style.background]="selectedId() === p.id ? 'rgba(139,92,246,0.08)' : 'transparent'">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:13px; font-weight:700; color:#fff;"
+                   [style.background]="'linear-gradient(135deg,' + providerColor(p.name) + 'cc,' + providerColor(p.name) + '88)'">
+                {{ p.name[0] }}
+              </div>
+              <div style="min-width:0; flex:1;">
+                <div style="font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</div>
+                <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'JetBrains Mono',monospace;">{{ p.organizationName }}</div>
+              </div>
+            </div>
+            @if (selectedId() === p.id) {
+              <span style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:50%; background:var(--accent-primary); border-radius:0 2px 2px 0;"></span>
+            }
+          </button>
+        }
+      }
+    </div>
+
+    <!-- Detail panel -->
+    @if (selected(); as provider) {
+      <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; overflow:hidden;">
+
+        <!-- Provider header -->
+        <div style="padding:18px 20px; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+          <div style="display:flex; align-items:flex-start; gap:14px;">
+            <div style="width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px; font-weight:700; color:#fff;"
+                 [style.background]="'linear-gradient(135deg,' + providerColor(provider.name) + 'cc,' + providerColor(provider.name) + '88)'">
+              {{ provider.name[0] }}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                <h2 style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin:0;">{{ provider.name }}</h2>
+                <span style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; background:var(--bg-card-2); color:var(--text-muted);">{{ provider.organizationName }}</span>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{ provider.endpoint }}</div>
+            </div>
+            <button (click)="openDeleteProviderDialog()"
+                    style="padding:6px 10px; border-radius:8px; font-size:12px; font-weight:500; color:var(--danger); background:rgba(239,68,68,0.08); display:inline-flex; align-items:center; gap:5px; transition:background 0.15s; flex-shrink:0;"
+                    onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='rgba(239,68,68,0.08)'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Delete provider
+            </button>
+          </div>
+
+          <!-- Upstream key row -->
+          <div style="margin-top:14px; padding:10px 14px; background:var(--bg-card-2); border-radius:10px; display:flex; align-items:center; gap:10px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted); flex-shrink:0;"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+            <span style="font-size:11.5px; color:var(--text-muted); white-space:nowrap;">Upstream API key</span>
+            <code style="flex:1; font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ upstreamKeyRevealed() ? provider.upstreamApiKey : maskKey(provider.upstreamApiKey) }}
+            </code>
+            <button (click)="upstreamKeyRevealed.update(v => !v)"
+                    style="font-size:11px; color:var(--text-muted); padding:3px 8px; border-radius:6px; background:var(--bg-card); white-space:nowrap; flex-shrink:0;">
+              {{ upstreamKeyRevealed() ? 'Hide' : 'Reveal' }}
+            </button>
+            <button (click)="copyToClipboard(provider.upstreamApiKey, 'Upstream key copied')"
+                    style="font-size:11px; color:var(--text-muted); padding:3px 8px; border-radius:6px; background:var(--bg-card); white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center; gap:4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- API Keys section -->
+        <div style="flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
+
+          <!-- Section header -->
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:2px;">Trsr API Keys</div>
+              <div style="font-size:12px; color:var(--text-muted);">Keys that authenticate clients at the Trsr proxy for this provider.</div>
+            </div>
+            <button (click)="openNewKey()"
+                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12.5px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Generate Key
+            </button>
+          </div>
+
+          <!-- Newly created key banner -->
+          @if (newlyCreatedKey(); as created) {
+            <div style="padding:12px 16px; border-radius:11px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); display:flex; align-items:center; gap:12px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:12px; font-weight:600; color:#10b981; margin-bottom:4px;">Key "{{ created.name }}" created — copy it now</div>
+                <code style="font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); word-break:break-all;">{{ created.keyValue }}</code>
+              </div>
+              <button (click)="copyToClipboard(created.keyValue, 'API key copied')"
+                      style="padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; background:#10b981; color:#fff; white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center; gap:5px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+              <button (click)="dismissCreatedKey()" style="color:var(--text-muted); padding:4px; flex-shrink:0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          }
+
+          <!-- New key form -->
+          @if (showNewKey()) {
+            <div style="padding:14px 16px; background:var(--bg-card-2); border-radius:12px; border:1px solid var(--hairline); display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; font-weight:600;">Generate New Key</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Key name</label>
+                  <input [ngModel]="newKeyName()" (ngModelChange)="newKeyName.set($event)"
+                         placeholder="e.g. production-agent"
+                         style="padding:8px 10px; background:var(--bg-card); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Project</label>
+                  <select [ngModel]="newKeyProjectId()" (ngModelChange)="newKeyProjectId.set($event)"
+                          style="padding:8px 10px; background:var(--bg-card); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);">
+                    @for (proj of projects(); track proj.id) {
+                      <option [value]="proj.id">{{ proj.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button (click)="cancelNewKey()"
+                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
+                <button (click)="submitNewKey()"
+                        [disabled]="savingKey() || !newKeyName() || !newKeyProjectId()"
+                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                        [style.opacity]="(savingKey() || !newKeyName() || !newKeyProjectId()) ? '0.5' : '1'">
+                  {{ savingKey() ? 'Generating…' : 'Generate' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Keys table -->
+          @if (keysState() === 'loading') {
+            <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">Loading keys…</div>
+          }
+
+          @if (keysState() === 'loaded') {
+            @if (keys().length === 0 && !showNewKey()) {
+              <div style="display:flex; flex-direction:column; align-items:center; gap:10px; padding:40px; text-align:center; color:var(--text-muted); border:1px dashed var(--hairline); border-radius:12px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+                <p style="font-size:13px; margin:0;">No API keys yet.<br>Generate one to start proxying requests.</p>
+              </div>
+            }
+
+            @if (keys().length > 0) {
+              <div style="background:var(--bg-card-2); border-radius:12px; overflow:hidden;">
+                <div style="display:grid; grid-template-columns:1.5fr 1.2fr 2fr 1fr auto; padding:10px 16px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                  <span>Name</span><span>Project</span><span>Key</span><span>Created</span><span></span>
+                </div>
+                @for (key of keys(); track key.id) {
+                  <div style="display:grid; grid-template-columns:1.5fr 1.2fr 2fr 1fr auto; padding:12px 16px; align-items:center;"
+                       [style.border-bottom]="$last ? 'none' : '1px solid var(--hairline)'">
+                    <span style="font-size:13px; font-weight:600; color:var(--text-primary);">{{ key.name }}</span>
+                    <span style="font-size:12px; color:var(--text-secondary);">{{ key.projectName }}</span>
+                    <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                      <code style="font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">{{ maskKey(key.keyValue) }}</code>
+                      <button (click)="copyToClipboard(key.keyValue, 'API key copied')"
+                              style="flex-shrink:0; color:var(--text-muted); padding:3px 6px; border-radius:5px; background:var(--bg-card); display:inline-flex; align-items:center;" title="Copy key">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      </button>
+                    </div>
+                    <span style="font-size:12px; color:var(--text-muted);">{{ formatDate(key.createdAt) }}</span>
+                    <button (click)="openDeleteKeyDialog(key)"
+                            style="padding:5px 8px; border-radius:7px; color:var(--danger); background:transparent; transition:background 0.15s; display:inline-flex; align-items:center;"
+                            onmouseenter="this.style.background='rgba(239,68,68,0.08)'" onmouseleave="this.style.background='transparent'"
+                            title="Delete key">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    @if (!selected() && loadState() === 'loaded' && providers().length === 0) {
+      <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--text-muted);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <p style="font-size:14px; margin:0; text-align:center;">Add your first provider<br>to get started.</p>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ═══════════════════ Add Provider modal ═══════════════════ -->
+@if (showNewProvider()) {
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);"
+       (click)="cancelNewProvider()">
+    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:460px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid var(--hairline);"
+         (click)="$event.stopPropagation()">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <h3 style="font-size:16px; font-weight:700; margin:0;">Add Provider</h3>
+        <button (click)="cancelNewProvider()" style="color:var(--text-muted); padding:4px; border-radius:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider name</label>
+          <input [ngModel]="newProvider().name" (ngModelChange)="newProvider.update(v => ({...v, name: $event}))"
+                 placeholder="e.g. Anthropic"
+                 style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Endpoint URL</label>
+          <input [ngModel]="newProvider().endpoint" (ngModelChange)="newProvider.update(v => ({...v, endpoint: $event}))"
+                 placeholder="https://api.anthropic.com/v1"
+                 style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Upstream API key</label>
+          <input [ngModel]="newProvider().upstreamApiKey" (ngModelChange)="newProvider.update(v => ({...v, upstreamApiKey: $event}))"
+                 type="password" placeholder="sk-ant-…"
+                 style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Organization</label>
+          <select [ngModel]="newProvider().organizationId" (ngModelChange)="newProvider.update(v => ({...v, organizationId: $event}))"
+                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;">
+            @for (org of organizations(); track org.id) {
+              <option [value]="org.id">{{ org.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:20px;">
+        <button (click)="cancelNewProvider()"
+                style="padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+        <button (click)="submitNewProvider()"
+                [disabled]="savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId"
+                style="padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                [style.opacity]="(savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId) ? '0.5' : '1'">
+          {{ savingProvider() ? 'Saving…' : 'Add Provider' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════ Delete Provider dialog ═══════════════════ -->
+@if (showDeleteProviderDialog() && selected(); as provider) {
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"
+       (click)="cancelDeleteProvider()">
+    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:420px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(239,68,68,0.2);"
+         (click)="$event.stopPropagation()">
+      <!-- Icon + title -->
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </div>
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--text-primary);">Delete provider</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:1px;">This action cannot be undone</div>
+        </div>
+      </div>
+      <!-- Warning -->
+      <div style="padding:12px 14px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:10px; margin-bottom:18px;">
+        <p style="font-size:13px; color:var(--text-secondary); margin:0; line-height:1.6;">
+          Deleting <strong style="color:var(--text-primary);">{{ provider.name }}</strong> will permanently remove all its
+          API keys, model endpoints, and captured traces. This cannot be recovered.
+        </p>
+      </div>
+      <!-- Name confirmation -->
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:20px;">
+        <label style="font-size:12px; color:var(--text-muted);">
+          Type <strong style="color:var(--text-primary); font-family:'JetBrains Mono',monospace;">{{ provider.name }}</strong> to confirm
+        </label>
+        <input [ngModel]="deleteProviderNameInput()" (ngModelChange)="deleteProviderNameInput.set($event)"
+               [placeholder]="provider.name"
+               style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); outline:none; width:100%; box-sizing:border-box;"
+               [style.box-shadow]="deleteProviderNameMatches() ? 'inset 0 0 0 1.5px rgba(239,68,68,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button (click)="cancelDeleteProvider()"
+                style="padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+        <button (click)="confirmDeleteProvider()"
+                [disabled]="!deleteProviderNameMatches() || deletingProvider()"
+                style="padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:var(--danger); transition:opacity 0.15s;"
+                [style.opacity]="(!deleteProviderNameMatches() || deletingProvider()) ? '0.4' : '1'">
+          {{ deletingProvider() ? 'Deleting…' : 'Delete provider' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════ Delete Key dialog ═══════════════════ -->
+@if (deleteKeyTarget(); as key) {
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"
+       (click)="cancelDeleteKey()">
+    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:400px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(239,68,68,0.2);"
+         (click)="$event.stopPropagation()">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+        </div>
+        <div>
+          <div style="font-size:16px; font-weight:700; color:var(--text-primary);">Delete API key</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:1px;">Clients using this key will lose access immediately</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:10px; margin-bottom:18px;">
+        <p style="font-size:13px; color:var(--text-secondary); margin:0; line-height:1.6;">
+          Deleting key <strong style="color:var(--text-primary);">{{ key.name }}</strong> (project: {{ key.projectName }}) is permanent.
+          Any agent using it will receive 401 errors.
+        </p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:20px;">
+        <label style="font-size:12px; color:var(--text-muted);">
+          Type <strong style="color:var(--text-primary); font-family:'JetBrains Mono',monospace;">{{ key.name }}</strong> to confirm
+        </label>
+        <input [ngModel]="deleteKeyNameInput()" (ngModelChange)="deleteKeyNameInput.set($event)"
+               [placeholder]="key.name"
+               style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); outline:none; width:100%; box-sizing:border-box;"
+               [style.box-shadow]="deleteKeyNameMatches() ? 'inset 0 0 0 1.5px rgba(239,68,68,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button (click)="cancelDeleteKey()"
+                style="padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+        <button (click)="confirmDeleteKey()"
+                [disabled]="!deleteKeyNameMatches() || deletingKey()"
+                style="padding:8px 18px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:var(--danger); transition:opacity 0.15s;"
+                [style.opacity]="(!deleteKeyNameMatches() || deletingKey()) ? '0.4' : '1'">
+          {{ deletingKey() ? 'Deleting…' : 'Delete key' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════ Snackbar ═══════════════════ -->
+@if (snackbarMessage(); as msg) {
+  <div style="
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:200; pointer-events:none;
+    padding:10px 18px;
+    background:var(--bg-card);
+    border:1px solid var(--hairline);
+    border-radius:100px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:500; color:var(--text-primary);
+    animation: snack-in 0.18s ease;
+  ">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    {{ msg }}
+  </div>
+}
+
+<style>
+  @keyframes snack-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+</style>

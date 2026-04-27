@@ -35,6 +35,7 @@ export class Shell {
     { label: 'Test Suites', icon: 'checkbox', route: '/suites' },
     { label: 'Test Runs', icon: 'play', route: '/runs' },
     { label: 'Proposals', icon: 'sparkles', route: '/proposals', badge: '2', badgeAccent: true },
+    { label: 'Providers', icon: 'server', route: '/providers' },
   ];
 
   readonly currentPageLabel = toSignal(

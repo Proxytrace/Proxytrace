@@ -41,7 +41,7 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
             .HasOne<ModelProviderEntity>()
             .WithMany()
             .HasForeignKey(e => e.Provider)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => new { e.Model, e.Provider }).IsUnique();
     }

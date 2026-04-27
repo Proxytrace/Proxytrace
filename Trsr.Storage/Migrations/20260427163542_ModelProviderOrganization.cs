@@ -11,12 +11,27 @@ namespace Trsr.Storage.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // SQLite cannot change a column's nullability, so EF rebuilds the table.
+            // Existing rows get Guid.Empty as the placeholder; we backfill before re-enabling
+            // FK enforcement so the constraint is never violated.
+            migrationBuilder.Sql("PRAGMA foreign_keys = OFF;", suppressTransaction: true);
+
             migrationBuilder.AddColumn<Guid>(
                 name: "Organization",
                 table: "ModelProviderEntity",
                 type: "TEXT",
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+
+            // Assign any un-backfilled rows to the first organization in the database.
+            // On a fresh database there are no rows yet, so this is a no-op.
+            migrationBuilder.Sql("""
+                UPDATE ModelProviderEntity
+                SET Organization = (SELECT Id FROM OrganizationEntity LIMIT 1)
+                WHERE Organization = '00000000-0000-0000-0000-000000000000';
+                """);
+
+            migrationBuilder.Sql("PRAGMA foreign_keys = ON;", suppressTransaction: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ModelProviderEntity_Organization",
