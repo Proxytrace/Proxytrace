@@ -4,7 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Services;
-using Trsr.Domain.Organization;
+using Trsr.Domain.ApiKey;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Controllers;
@@ -33,39 +33,29 @@ public class OpenAiProxyController : ControllerBase
 
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IServiceScopeFactory scopeFactory;
-    private readonly IOrganizationRepository organizationRepository;
-    private readonly IProjectRepository projectRepository;
+    private readonly IApiKeyRepository apiKeyRepository;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
         IServiceScopeFactory scopeFactory,
-        IOrganizationRepository organizationRepository,
-        IProjectRepository projectRepository,
+        IApiKeyRepository apiKeyRepository,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.scopeFactory = scopeFactory;
-        this.organizationRepository = organizationRepository;
-        this.projectRepository = projectRepository;
+        this.apiKeyRepository = apiKeyRepository;
         this.logger = logger;
     }
 
     [Route("v1/{**path}")]
     [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
-    public async Task Proxy(string orgName, string projectName, string path, CancellationToken cancellationToken)
+    public async Task Proxy(string path, CancellationToken cancellationToken)
     {
-        var org = await organizationRepository.FindByNameAsync(orgName, cancellationToken);
-        if (org is null)
+        IApiKey? apiKey = await GetApiKeyAsync(cancellationToken);
+        if (apiKey is null)
         {
-            Response.StatusCode = StatusCodes.Status404NotFound;
-            return;
-        }
-
-        var project = await projectRepository.FindByNameAsync(projectName, org, cancellationToken);
-        if (project is null)
-        {
-            Response.StatusCode = StatusCodes.Status404NotFound;
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
 
@@ -109,12 +99,27 @@ public class OpenAiProxyController : ControllerBase
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyStreamingResponseAsync(apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyBufferedResponseAsync(apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
         }
+    }
+
+    private async Task<IApiKey?> GetApiKeyAsync(CancellationToken cancellationToken)
+    {
+        var authHeader = Request.Headers.Authorization.ToString();
+        var rawKey = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+            ? authHeader["Bearer ".Length..].Trim()
+            : null;
+
+        if (string.IsNullOrEmpty(rawKey))
+        {
+            return null;
+        }
+
+        return await apiKeyRepository.FindByKeyAsync(rawKey, cancellationToken);
     }
 
     // ── Non-streaming ─────────────────────────────────────────────────────────
