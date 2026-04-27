@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Trsr.Domain;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 
 namespace Trsr.Storage.Internal.Entities.ModelEndpoint;
 
@@ -14,7 +15,7 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
     {
     }
 
-    public Task<IModelEndpoint> GetOrCreateAsync(string modelName, string providerName, CancellationToken cancellationToken = default)
+    public Task<IModelEndpoint> GetOrCreateAsync(string modelName, IModelProvider provider, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

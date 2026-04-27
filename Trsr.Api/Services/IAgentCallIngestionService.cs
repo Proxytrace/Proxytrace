@@ -1,4 +1,5 @@
 using System.Net;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Services;
@@ -10,7 +11,7 @@ public interface IAgentCallIngestionService
     /// Never throws — failures are logged and swallowed so the proxy never breaks the client.
     /// </summary>
     Task IngestAsync(
-        string provider,
+        IModelProvider provider,
         IProject project,
         string requestBody,
         string? responseBody,

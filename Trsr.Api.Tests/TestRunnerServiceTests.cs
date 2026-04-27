@@ -6,6 +6,7 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
@@ -71,9 +72,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
@@ -91,9 +93,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
@@ -112,9 +115,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         var runner = services.GetRequiredService<ITestRunnerService>();
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert – the result is retrievable from the repository with correct evaluation
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
@@ -134,9 +138,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         var runner = services.GetRequiredService<ITestRunnerService>();
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
@@ -155,9 +160,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         var runner = services.GetRequiredService<ITestRunnerService>();
         var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert
         var storedRun = await runRepo.GetAsync(testRun.Id, CancellationToken);
@@ -178,9 +184,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert – actual response contains the text the fake agent returned
         var actualText = string.Concat(
@@ -219,9 +226,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         await testSuiteRepo.AddAsync(suite, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, CancellationToken);
+        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
 
         // Assert – both results should pass since both expectations match
         testRun.TestResults.Should().HaveCount(2);

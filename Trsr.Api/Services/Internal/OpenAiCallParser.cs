@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 
@@ -10,7 +11,7 @@ namespace Trsr.Api.Services.Internal;
 internal class OpenAiCallParser : IOpenAiCallParser
 {
     public bool TryParse(
-        string provider,
+        IModelProvider provider,
         string requestBody,
         string? responseBody,
         TimeSpan duration,

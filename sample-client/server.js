@@ -14,7 +14,7 @@ app.use(express.static("public"));
 // To call OpenAI directly instead, set TRSR_BASE_URL=https://api.openai.com/v1
 // ───────────────────────────────────────────────────────────────────────────
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.TRSR_API_KEY,
   baseURL: process.env.TRSR_BASE_URL ?? "https://api.openai.com/v1",
 });
 
@@ -33,6 +33,7 @@ app.post("/chat", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
 
   try {
+    console.log(`[chat] → ${MODEL}  messages=${messages.length}`);
     const stream = await openai.chat.completions.create({
       model: MODEL,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
@@ -45,8 +46,11 @@ app.post("/chat", async (req, res) => {
         res.write(`data: ${JSON.stringify({ text: delta })}\n\n`);
       }
     }
+    console.log(`[chat] ✓ done`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    console.error(`[chat] ✗ ${err?.constructor?.name}: ${message}`);
+    if (err?.status) console.error(`[chat]   HTTP ${err.status} from ${openai.baseURL}`);
     res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
   }
 

@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Trsr.Domain;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
@@ -36,7 +37,10 @@ internal class TestRunnerService : ITestRunnerService
         this.logger = logger;
     }
 
-    public async Task<ITestRun> RunAsync(ITestSuite suite, CancellationToken cancellationToken = default)
+    public async Task<ITestRun> RunAsync(
+        ITestSuite suite,
+        IModelEndpoint endpoint,
+        CancellationToken cancellationToken = default)
     {
         var agent = suite.Agent;
         var org = agent.Project.Organization;
@@ -75,7 +79,7 @@ internal class TestRunnerService : ITestRunnerService
                 continue;
             }
 
-            if (!parser.TryParse("self", requestBody, responseBody, TimeSpan.Zero, httpStatus, out var parsed))
+            if (!parser.TryParse(endpoint.Provider, requestBody, responseBody, TimeSpan.Zero, httpStatus, out var parsed))
             {
                 logger.LogWarning("Could not parse response for test case {TestCaseId}", testCase.Id);
                 continue;
