@@ -17,5 +17,9 @@ internal record ModelProviderEntity : Entity
     /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.ApiKey"/>
     /// </summary>
     public required string ApiKey { get; init; }
-}
 
+    /// <summary>
+    /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.Organization"/>
+    /// </summary>
+    public required Guid Organization { get; init; }
+}

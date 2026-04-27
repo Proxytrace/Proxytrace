@@ -58,7 +58,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             .HasOne<ModelEndpointEntity>()
             .WithMany()
             .HasForeignKey(e => e.EndpointId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public async Task<IAgentCall> Map(AgentCallEntity stored, CancellationToken cancellationToken = default)
