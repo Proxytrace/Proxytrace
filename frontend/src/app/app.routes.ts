@@ -32,6 +32,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/runs/runs').then((m) => m.Runs),
       },
+      {
+        path: 'providers',
+        loadComponent: () =>
+          import('./features/providers/providers').then((m) => m.Providers),
+      },
     ],
   },
 ];

@@ -1,3 +1,5 @@
+using Trsr.Domain.Organization;
+
 namespace Trsr.Domain.ModelProvider;
 
 /// <summary>
@@ -16,13 +18,27 @@ public interface IModelProvider : IDomainEntity
     Uri Endpoint { get; }
 
     /// <summary>
-    /// The API key
+    /// The API key for authenticating at the model provider (this is not the Trsr Api Key)
     /// </summary>
     string ApiKey { get; }
+    
+    /// <summary>
+    /// The organization the model provider is configured for
+    /// </summary>
+    IOrganization Organization { get; }
 
     /// <summary>Factory delegate for creating a new model provider.</summary>
-    public delegate IModelProvider CreateNew(string name, Uri endpoint, string apiKey);
+    public delegate IModelProvider CreateNew(
+        string name,
+        Uri endpoint,
+        string apiKey,
+        IOrganization organization);
 
     /// <summary>Factory delegate for reconstituting an existing model provider from persistence.</summary>
-    public delegate IModelProvider CreateExisting(string name, Uri endpoint, string apiKey, IDomainEntityData existing);
+    public delegate IModelProvider CreateExisting(
+        string name, 
+        Uri endpoint,
+        string apiKey, 
+        IOrganization organization, 
+        IDomainEntityData existing);
 }

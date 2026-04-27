@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trsr.Storage;
 
@@ -10,9 +11,11 @@ using Trsr.Storage;
 namespace Trsr.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427161448_ApiKey")]
+    partial class ApiKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -259,9 +262,6 @@ namespace Trsr.Storage.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("Organization")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -269,8 +269,6 @@ namespace Trsr.Storage.Migrations
 
                     b.HasIndex("Name")
                         .IsUnique();
-
-                    b.HasIndex("Organization");
 
                     b.ToTable("ModelProviderEntity");
                 });
@@ -545,7 +543,7 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
                         .WithMany()
                         .HasForeignKey("EndpointId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -560,7 +558,7 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", null)
                         .WithMany()
                         .HasForeignKey("Provider")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -575,15 +573,6 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", null)
                         .WithMany()
                         .HasForeignKey("Provider")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", b =>
-                {
-                    b.HasOne("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", null)
-                        .WithMany()
-                        .HasForeignKey("Organization")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
