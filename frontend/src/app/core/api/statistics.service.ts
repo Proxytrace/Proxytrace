@@ -13,9 +13,10 @@ export class StatisticsService {
     return this.http.get<SummaryDto>('/api/statistics/summary', { params });
   }
 
-  getModelBreakdown(from?: string): Observable<ModelBreakdownDto[]> {
+  getModelBreakdown(filter: { from?: string; agentId?: string } = {}): Observable<ModelBreakdownDto[]> {
     let params = new HttpParams();
-    if (from) params = params.set('from', from);
+    if (filter.from) params = params.set('from', filter.from);
+    if (filter.agentId) params = params.set('agentId', filter.agentId);
     return this.http.get<ModelBreakdownDto[]>('/api/statistics/model-breakdown', { params });
   }
 }

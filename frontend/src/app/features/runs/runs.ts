@@ -79,7 +79,7 @@ const RUNS_DATA: Run[] = [
 @Component({
   selector: 'app-runs',
   templateUrl: './runs.html',
-  styles: ``,
+  styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
 export class Runs {
   readonly Math = Math;

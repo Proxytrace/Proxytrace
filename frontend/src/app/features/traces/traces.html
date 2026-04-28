@@ -1,13 +1,18 @@
-<div style="max-width:1320px; margin:0 auto; display:flex; flex-direction:column; gap:14px; padding-bottom:24px;">
+<div style="width:100%; max-width:1320px; margin:0 auto; display:flex; flex-direction:column; gap:14px; flex:1; min-height:0; padding-bottom:16px;">
 
   <!-- Header -->
   <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
     <div>
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
         <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0;">Traces</h1>
-        <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--success); font-weight:600; padding:3px 8px; background:var(--success-subtle); border-radius:100px; white-space:nowrap;">
-          <span style="width:6px; height:6px; border-radius:50%; background:var(--success);" class="pulse-dot"></span>
-          Live
+        <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:100px; white-space:nowrap;"
+              [style.color]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"
+              [style.background]="health.isOnline() ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
+              [style.border]="health.isOnline() ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)'">
+          <span style="width:6px; height:6px; border-radius:50%;"
+                [class.pulse-dot]="health.isOnline()"
+                [style.background]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"></span>
+          {{ health.isOnline() ? 'Live' : 'Offline' }}
         </span>
       </div>
       <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Every LLM call captured by the proxy, grouped by model.</p>
@@ -121,10 +126,33 @@
         </div>
       }
     </div>
-    <button style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:500; background:var(--bg-card-2); color:var(--text-primary); box-shadow:var(--shadow-pill);">
-      <span style="color:var(--text-muted);">Range:</span><span>Last 24h</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
+    <!-- Range filter -->
+    <div style="position:relative;">
+      <button (click)="toggleRangeDropdown()"
+              style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:500; background:var(--bg-card-2); color:var(--text-primary); box-shadow:var(--shadow-pill);">
+        <span style="color:var(--text-muted);">Range:</span>
+        <span>{{ rangeLabelFor(rangeKey()) }}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      @if (rangeDropdownOpen()) {
+        <div (click)="closeRangeDropdown()" style="position:fixed; inset:0; z-index:10;"></div>
+        <div style="position:absolute; top:calc(100% + 6px); left:0; min-width:160px;
+                    background:var(--bg-card-2); border:1px solid var(--hairline); border-radius:10px;
+                    box-shadow:var(--shadow-float); z-index:11; overflow:hidden;">
+          @for (r of ranges; track r.key) {
+            <button (click)="setRange(r.key)"
+                    style="width:100%; text-align:left; padding:9px 12px; font-size:12px; display:block; transition:background 0.1s;"
+                    [style.background]="rangeKey() === r.key ? 'var(--accent-subtle)' : 'transparent'"
+                    [style.color]="rangeKey() === r.key ? 'var(--accent-hover)' : 'var(--text-secondary)'"
+                    [style.border-top]="$index > 0 ? '1px solid var(--hairline)' : 'none'"
+                    onmouseenter="if(!this.style.background.includes('accent'))this.style.background='rgba(255,255,255,0.04)'"
+                    onmouseleave="if(!this.style.background.includes('accent'))this.style.background='transparent'">
+              {{ r.label }}
+            </button>
+          }
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Results count -->
@@ -137,9 +165,9 @@
   }
 
   <!-- Table -->
-  <div class="fade-up" style="animation-delay:160ms; background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow:hidden;">
+  <div class="fade-up" style="animation-delay:160ms; background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow:hidden; flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column;">
     <!-- Header -->
-    <div style="display:grid; grid-template-columns:1.6fr 1.5fr 0.7fr 1.1fr 1.1fr 0.9fr; padding:12px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+    <div style="display:grid; grid-template-columns:1.6fr 1.5fr 0.7fr 1.1fr 1.1fr 0.9fr; padding:12px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); position:sticky; top:0; background:var(--bg-card); z-index:1; flex-shrink:0;">
       <span>Trace ID</span>
       <span>Model</span>
       <span>Status</span>

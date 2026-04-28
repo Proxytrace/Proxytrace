@@ -24,6 +24,7 @@ const PROVIDER_COLORS: Record<string, string> = {
   selector: 'app-providers',
   imports: [FormsModule],
   templateUrl: './providers.html',
+  styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
 export class Providers implements OnInit {
   private readonly svc = inject(ProvidersService);

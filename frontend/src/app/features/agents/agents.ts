@@ -122,7 +122,7 @@ Output ONLY the JSON. No prose. No markdown.`,
 @Component({
   selector: 'app-agents',
   templateUrl: './agents.html',
-  styles: ``,
+  styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
 export class Agents {
   readonly agentColors = AGENT_COLORS;

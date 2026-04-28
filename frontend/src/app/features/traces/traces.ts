@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { StatisticsService } from '../../core/api/statistics.service';
+import { HealthService } from '../../core/api/health.service';
 import { AgentCallDto, AgentDto } from '../../core/api/models';
 import { TraceDetail } from './trace-detail/trace-detail';
 
@@ -16,17 +17,28 @@ interface HistBar { x: number; y: number; w: number; h: number; }
   selector: 'app-traces',
   imports: [TraceDetail],
   templateUrl: './traces.html',
-  styles: ``,
+  styles: `:host { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }`,
 })
 export class Traces implements OnInit, OnDestroy {
   private readonly agentCallsService = inject(AgentCallsService);
   private readonly agentsService = inject(AgentsService);
   private readonly statisticsService = inject(StatisticsService);
+  readonly health = inject(HealthService);
 
   readonly searchQuery = signal('');
   readonly agentFilter = signal<AgentDto | null>(null);
   readonly agentDropdownOpen = signal(false);
+  readonly rangeDropdownOpen = signal(false);
+  readonly rangeKey = signal<string>('24h');
   readonly page = signal(1);
+
+  readonly ranges: Array<{ key: string; label: string }> = [
+    { key: '1h',  label: 'Last 1 hour' },
+    { key: '24h', label: 'Last 24 hours' },
+    { key: '7d',  label: 'Last 7 days' },
+    { key: '30d', label: 'Last 30 days' },
+    { key: 'all', label: 'All time' },
+  ];
   readonly loadState = signal<LoadState>('loading');
   readonly traces = signal<AgentCallDto[]>([]);
   readonly total = signal(0);
@@ -88,8 +100,23 @@ export class Traces implements OnInit, OnDestroy {
     this.load();
   }
 
-  toggleAgentDropdown() { this.agentDropdownOpen.update(v => !v); }
+  toggleAgentDropdown() { this.agentDropdownOpen.update(v => !v); this.rangeDropdownOpen.set(false); }
   closeAgentDropdown() { this.agentDropdownOpen.set(false); }
+  toggleRangeDropdown() { this.rangeDropdownOpen.update(v => !v); this.agentDropdownOpen.set(false); }
+  closeRangeDropdown() { this.rangeDropdownOpen.set(false); }
+  setRange(key: string) { this.rangeKey.set(key); this.rangeDropdownOpen.set(false); this.page.set(1); this.loadModelBreakdown(); this.load(); }
+  rangeLabelFor(key: string): string { return this.ranges.find(r => r.key === key)?.label ?? key; }
+
+  private fromIso(): string | undefined {
+    const now = new Date();
+    switch (this.rangeKey()) {
+      case '1h':  now.setHours(now.getHours() - 1); return now.toISOString();
+      case '24h': now.setHours(now.getHours() - 24); return now.toISOString();
+      case '7d':  now.setDate(now.getDate() - 7); return now.toISOString();
+      case '30d': now.setDate(now.getDate() - 30); return now.toISOString();
+      default:    return undefined;
+    }
+  }
 
   agentLabel(agent: AgentDto): string {
     const text = agent.systemMessage.trim();
@@ -106,13 +133,17 @@ export class Traces implements OnInit, OnDestroy {
     return {
       model: this.searchQuery().trim() || undefined,
       agentId: this.agentFilter()?.id ?? undefined,
+      from: this.fromIso(),
       page: this.page(),
       pageSize: PAGE_SIZE,
     };
   }
 
   private loadModelBreakdown() {
-    this.statisticsService.getModelBreakdown().subscribe({
+    this.statisticsService.getModelBreakdown({
+      from: this.fromIso(),
+      agentId: this.agentFilter()?.id,
+    }).subscribe({
       next: (items) => this.modelSummaries.set(
         items.map(i => ({ model: i.modelName, count: i.callCount }))
       ),

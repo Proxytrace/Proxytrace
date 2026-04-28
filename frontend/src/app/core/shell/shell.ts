@@ -18,9 +18,12 @@ interface NavItem {
   styles: `
     :host {
       display: flex;
+      width: 100%;
       height: 100vh;
       overflow: hidden;
       background-color: var(--bg-primary);
+      position: relative;
+      z-index: 1;
     }
   `,
 })
