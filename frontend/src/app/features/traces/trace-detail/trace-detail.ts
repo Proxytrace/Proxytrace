@@ -53,4 +53,10 @@ export class TraceDetail {
       hour: '2-digit', minute: '2-digit', second: '2-digit',
     });
   }
+
+  formatCost(eur: number): string {
+    if (eur < 0.0001) return `€${eur.toExponential(2)}`;
+    if (eur < 0.01) return `€${eur.toFixed(5)}`;
+    return `€${eur.toFixed(4)}`;
+  }
 }

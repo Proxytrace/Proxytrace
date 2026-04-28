@@ -4,6 +4,7 @@ import {
   ProvidersService,
   ProviderDto,
   ApiKeyDto,
+  ModelEndpointDto,
   ProjectDto,
   OrganizationDto,
   CreateProviderRequest,
@@ -57,6 +58,23 @@ export class Providers implements OnInit {
   readonly deleteKeyNameInput = signal('');
   readonly deletingKey = signal(false);
 
+  // Models
+  readonly models = signal<ModelEndpointDto[]>([]);
+  readonly modelsState = signal<LoadState>('loaded');
+
+  // Add model form
+  readonly showNewModel = signal(false);
+  readonly newModelName = signal('');
+  readonly newModelInputCost = signal<number | null>(null);
+  readonly newModelOutputCost = signal<number | null>(null);
+  readonly savingModel = signal(false);
+
+  // Edit model pricing
+  readonly editingModel = signal<ModelEndpointDto | null>(null);
+  readonly editInputCost = signal<number | null>(null);
+  readonly editOutputCost = signal<number | null>(null);
+  readonly savingModelPricing = signal(false);
+
   // Reveal upstream key
   readonly upstreamKeyRevealed = signal(false);
 
@@ -93,9 +111,12 @@ export class Providers implements OnInit {
   selectProvider(id: string) {
     this.selectedId.set(id);
     this.showNewKey.set(false);
+    this.showNewModel.set(false);
+    this.editingModel.set(null);
     this.newlyCreatedKey.set(null);
     this.upstreamKeyRevealed.set(false);
     this.loadKeys(id);
+    this.loadModels(id);
   }
 
   private loadKeys(providerId: string) {
@@ -103,6 +124,14 @@ export class Providers implements OnInit {
     this.svc.getKeys(providerId).subscribe({
       next: ks => { this.keys.set(ks); this.keysState.set('loaded'); },
       error: () => this.keysState.set('error'),
+    });
+  }
+
+  private loadModels(providerId: string) {
+    this.modelsState.set('loading');
+    this.svc.getModels(providerId).subscribe({
+      next: ms => { this.models.set(ms); this.modelsState.set('loaded'); },
+      error: () => this.modelsState.set('error'),
     });
   }
 
@@ -154,6 +183,70 @@ export class Providers implements OnInit {
         if (remaining.length > 0) this.loadKeys(remaining[0].id);
       },
       error: () => this.deletingProvider.set(false),
+    });
+  }
+
+  // ── Add model ────────────────────────────────────────────────────────────────
+
+  openNewModel() {
+    this.showNewModel.set(true);
+    this.newModelName.set('');
+    this.newModelInputCost.set(null);
+    this.newModelOutputCost.set(null);
+    this.editingModel.set(null);
+  }
+
+  cancelNewModel() { this.showNewModel.set(false); }
+
+  submitNewModel() {
+    const providerId = this.selectedId();
+    if (!providerId || !this.newModelName()) return;
+    this.savingModel.set(true);
+    this.svc.createModel(providerId, {
+      modelName: this.newModelName(),
+      inputTokenCost: this.newModelInputCost(),
+      outputTokenCost: this.newModelOutputCost(),
+    }).subscribe({
+      next: m => {
+        this.models.update(list => [...list, m]);
+        this.showNewModel.set(false);
+        this.savingModel.set(false);
+      },
+      error: () => this.savingModel.set(false),
+    });
+  }
+
+  // ── Edit model pricing ───────────────────────────────────────────────────────
+
+  openEditPricing(model: ModelEndpointDto) {
+    this.editingModel.set(model);
+    this.editInputCost.set(model.inputTokenCost);
+    this.editOutputCost.set(model.outputTokenCost);
+    this.showNewModel.set(false);
+  }
+
+  parseCost(value: string): number | null {
+    const n = parseFloat(value);
+    return isNaN(n) ? null : n;
+  }
+
+  cancelEditPricing() { this.editingModel.set(null); }
+
+  submitEditPricing() {
+    const providerId = this.selectedId();
+    const model = this.editingModel();
+    if (!providerId || !model) return;
+    this.savingModelPricing.set(true);
+    this.svc.updateModelPricing(providerId, model.id, {
+      inputTokenCost: this.editInputCost(),
+      outputTokenCost: this.editOutputCost(),
+    }).subscribe({
+      next: updated => {
+        this.models.update(list => list.map(m => m.id === updated.id ? updated : m));
+        this.editingModel.set(null);
+        this.savingModelPricing.set(false);
+      },
+      error: () => this.savingModelPricing.set(false),
     });
   }
 

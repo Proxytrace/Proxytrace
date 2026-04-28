@@ -17,4 +17,4 @@ public record ErrorRateDto(Guid EndpointId, int TotalCalls, int ErrorCalls, doub
 
 public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount, long TotalInputTokens, long TotalOutputTokens, double AvgDurationMs);
 
-public record CostEstimateDto(Guid EndpointId, decimal InputCostUsd, decimal OutputCostUsd, decimal TotalCostUsd);
+public record CostEstimateDto(Guid EndpointId, decimal? InputCostEur, decimal? OutputCostEur, decimal? TotalCostEur);

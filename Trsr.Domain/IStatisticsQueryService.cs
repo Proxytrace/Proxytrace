@@ -79,6 +79,6 @@ public record ModelBreakdownStat(
 
 public record CostEstimateStat(
     Guid EndpointId,
-    decimal InputCostEur,
-    decimal OutputCostEur,
-    decimal TotalCostEur);
+    decimal? InputCostEur,
+    decimal? OutputCostEur,
+    decimal? TotalCostEur);

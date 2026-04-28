@@ -64,8 +64,20 @@ public class AgentCallsController : ControllerBase
         (int)c.HttpStatus,
         c.FinishReason,
         c.ErrorMessage,
+        ComputeCost(c),
         c.CreatedAt,
         c.UpdatedAt);
+
+    private static decimal? ComputeCost(IAgentCall c)
+    {
+        var e = c.Endpoint;
+        if (e.InputTokenCost is null || e.OutputTokenCost is null)
+        {
+            return null;
+        }
+        return (c.Usage.InputTokenCount / 1_000_000m) * e.InputTokenCost.Value
+             + (c.Usage.OutputTokenCount / 1_000_000m) * e.OutputTokenCost.Value;
+    }
 
     private static string GetText(Message m) => m switch
     {

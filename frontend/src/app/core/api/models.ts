@@ -23,6 +23,7 @@ export interface AgentCallDto {
   httpStatus: number;
   finishReason: string | null;
   errorMessage: string | null;
+  costEur: number | null;
   createdAt: string;
   updatedAt: string;
 }

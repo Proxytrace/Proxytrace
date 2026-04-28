@@ -202,14 +202,18 @@ internal class StatisticsQueryService : IStatisticsQueryService
         return await breakdown.Select(async b =>
         {
             var endpoint = await endpoints.GetAsync(b.EndpointId, cancellationToken);
-            var inputCost = b.TotalInputTokens / 1_000_000m * endpoint.InputTokenCost;
-            var outputCost = b.TotalOutputTokens / 1_000_000m * endpoint.OutputTokenCost;
+            var inputCost = endpoint.InputTokenCost.HasValue
+                ? b.TotalInputTokens / 1_000_000m * endpoint.InputTokenCost.Value
+                : (decimal?)null;
+            var outputCost = endpoint.OutputTokenCost.HasValue
+                ? b.TotalOutputTokens / 1_000_000m * endpoint.OutputTokenCost.Value
+                : (decimal?)null;
 
             return new CostEstimateStat(
                 EndpointId: b.EndpointId,
-                InputCostEur: Math.Round(inputCost, 4),
-                OutputCostEur: Math.Round(outputCost, 4),
-                TotalCostEur: Math.Round(inputCost + outputCost, 4));
+                InputCostEur: inputCost.HasValue ? Math.Round(inputCost.Value, 4) : (decimal?)null,
+                OutputCostEur: outputCost.HasValue ? Math.Round(outputCost.Value, 4) : (decimal?)null,
+                TotalCostEur: inputCost.HasValue && outputCost.HasValue ? Math.Round(inputCost.Value + outputCost.Value, 4) : (decimal?)null);
         })
         .Await()
         .ContinueWith(x => x.Result.ToList(), cancellationToken);

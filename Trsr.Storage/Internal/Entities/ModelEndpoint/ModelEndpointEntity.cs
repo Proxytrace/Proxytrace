@@ -16,11 +16,11 @@ internal record ModelEndpointEntity : Entity
     /// <summary>
     /// <see cref="Trsr.Domain.ModelEndpoint.IModelEndpoint.InputTokenCost"/>
     /// </summary>
-    public required decimal InputTokenCost { get; init; }
+    public required decimal? InputTokenCost { get; init; }
 
     /// <summary>
     /// <see cref="Trsr.Domain.ModelEndpoint.IModelEndpoint.OutputTokenCost"/>
     /// </summary>
-    public required decimal OutputTokenCost { get; init; }
+    public required decimal? OutputTokenCost { get; init; }
 }
 

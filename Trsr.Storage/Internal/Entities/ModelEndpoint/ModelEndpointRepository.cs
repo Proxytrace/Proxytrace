@@ -52,8 +52,7 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
             ? await modelRepository.GetAsync(modelEntity.Id, cancellationToken)
             : await modelRepository.AddAsync(createNewModel(modelName), cancellationToken);
 
-        // costs are unknown for auto-discovered endpoints; use placeholder until configured manually
-        var endpoint = createNewEndpoint(model, provider, 0.000001m, 0.000001m);
+        var endpoint = createNewEndpoint(model, provider, null, null);
         return await AddAsync(endpoint, cancellationToken);
     }
 }
