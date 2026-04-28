@@ -1,5 +1,6 @@
 using System.Net;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 
@@ -7,7 +8,7 @@ namespace Trsr.Api.Services.Internal;
 
 internal sealed record OpenAiCallParseResult(
     string Model,
-    string Provider,
+    IModelProvider Provider,
     Conversation Request,
     AssistantMessage Response,
     TokenUsage Usage,

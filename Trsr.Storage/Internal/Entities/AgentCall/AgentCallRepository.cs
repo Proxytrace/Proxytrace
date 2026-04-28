@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
+using Trsr.Storage.Internal.Entities.Model;
+using Trsr.Storage.Internal.Entities.ModelEndpoint;
 
 namespace Trsr.Storage.Internal.Entities.AgentCall;
 
@@ -45,6 +47,16 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.EndpointId == filter.EndpointId);
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.Model))
+        {
+            var search = filter.Model;
+            var matchingEndpointIds = context.Set<ModelEndpointEntity>()
+                .Where(me => context.Set<ModelEntity>()
+                    .Any(m => m.Id == me.Model && EF.Functions.Like(m.Name, $"%{search}%")))
+                .Select(me => me.Id);
+            query = query.Where(e => matchingEndpointIds.Contains(e.EndpointId));
+        }
+
         if (filter.From.HasValue)
         {
             query = query.Where(e => e.CreatedAt >= filter.From.Value);
@@ -63,12 +75,12 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var total = await query.CountAsync(cancellationToken);
 
         var stored = await query
+            .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
         var items = await Map(stored, cancellationToken);
-        items = items.OrderByDescending(i => i.CreatedAt).ToArray();
         return (items, total);
     }
 }

@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Services;
 using Trsr.Domain.ApiKey;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Controllers;
@@ -16,7 +17,7 @@ namespace Trsr.Api.Controllers;
 /// captured, and persisted as an <c>IAgentCall</c> associated with the resolved project.
 /// </summary>
 [ApiController]
-[Route("{orgName}/{projectName}/openai")]
+[Route("openai")]
 public class OpenAiProxyController : ControllerBase
 {
     private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
@@ -67,7 +68,13 @@ public class OpenAiProxyController : ControllerBase
 
         var isStreaming = IsStreamingRequest(requestBody, Request.ContentType);
 
-        var upstream = BuildUpstreamRequest(path, requestBodyBytes);
+        if (isStreaming)
+        {
+            requestBodyBytes = InjectStreamUsageOption(requestBodyBytes);
+            requestBody = Encoding.UTF8.GetString(requestBodyBytes);
+        }
+
+        var upstream = BuildUpstreamRequest(path, requestBodyBytes, apiKey.Provider.ApiKey, apiKey.Provider.Endpoint);
         var client = httpClientFactory.CreateClient("openai");
         var sw = Stopwatch.StartNew();
 
@@ -99,11 +106,11 @@ public class OpenAiProxyController : ControllerBase
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyStreamingResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyBufferedResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
         }
     }
 
@@ -125,6 +132,7 @@ public class OpenAiProxyController : ControllerBase
     // ── Non-streaming ─────────────────────────────────────────────────────────
 
     private async Task ProxyBufferedResponseAsync(
+        IModelProvider provider,
         IProject project,
         string requestBody,
         HttpResponseMessage upstreamResponse,
@@ -136,12 +144,13 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        _ = IngestSafeAsync(project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
+        _ = IngestSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
 
     private async Task ProxyStreamingResponseAsync(
+        IModelProvider provider,
         IProject project,
         string requestBody,
         HttpResponseMessage upstreamResponse,
@@ -170,12 +179,13 @@ public class OpenAiProxyController : ControllerBase
 
         sw.Stop();
 
-        _ = IngestSafeAsync(project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
+        _ = IngestSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private async Task IngestSafeAsync(
+        IModelProvider provider,
         IProject project,
         string requestBody,
         string? responseBody,
@@ -187,7 +197,7 @@ public class OpenAiProxyController : ControllerBase
             using var scope = scopeFactory.CreateScope();
             var svc = scope.ServiceProvider.GetRequiredService<IAgentCallIngestionService>();
             await svc.IngestAsync(
-                provider: "openai",
+                provider: provider,
                 project: project,
                 requestBody: requestBody,
                 responseBody: responseBody,
@@ -201,12 +211,13 @@ public class OpenAiProxyController : ControllerBase
         }
     }
 
-    private HttpRequestMessage BuildUpstreamRequest(string path, byte[] bodyBytes)
+    private HttpRequestMessage BuildUpstreamRequest(string path, byte[] bodyBytes, string providerApiKey, Uri providerEndpoint)
     {
+        var baseUrl = providerEndpoint.ToString().TrimEnd('/');
         var upstreamRequest = new HttpRequestMessage
         {
             Method = new HttpMethod(Request.Method),
-            RequestUri = new Uri($"v1/{path}{Request.QueryString}", UriKind.Relative),
+            RequestUri = new Uri($"{baseUrl}/{path}{Request.QueryString}"),
             Content = new ByteArrayContent(bodyBytes),
         };
 
@@ -222,6 +233,11 @@ public class OpenAiProxyController : ControllerBase
                 upstreamRequest.Content.Headers.ContentType =
                     MediaTypeHeaderValue.Parse(header.Value.ToString());
             }
+            else if (header.Key.Equals("authorization", StringComparison.OrdinalIgnoreCase))
+            {
+                // Replace the Trsr API key with the model provider's actual API key
+                upstreamRequest.Headers.TryAddWithoutValidation("Authorization", $"Bearer {providerApiKey}");
+            }
             else
             {
                 upstreamRequest.Headers.TryAddWithoutValidation(header.Key, (IEnumerable<string?>)header.Value);
@@ -229,6 +245,37 @@ public class OpenAiProxyController : ControllerBase
         }
 
         return upstreamRequest;
+    }
+
+    private static byte[] InjectStreamUsageOption(byte[] bodyBytes)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(bodyBytes);
+            if (doc.RootElement.TryGetProperty("stream_options", out _))
+            {
+                return bodyBytes;
+            }
+
+            using var ms = new MemoryStream();
+            using var writer = new System.Text.Json.Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                prop.WriteTo(writer);
+            }
+            writer.WritePropertyName("stream_options");
+            writer.WriteStartObject();
+            writer.WriteBoolean("include_usage", true);
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.Flush();
+            return ms.ToArray();
+        }
+        catch
+        {
+            return bodyBytes;
+        }
     }
 
     private static bool IsStreamingRequest(string requestBody, string? contentType)

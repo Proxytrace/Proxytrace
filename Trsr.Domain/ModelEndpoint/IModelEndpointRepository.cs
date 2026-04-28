@@ -1,3 +1,5 @@
+using Trsr.Domain.ModelProvider;
+
 namespace Trsr.Domain.ModelEndpoint;
 
 /// <summary>
@@ -10,7 +12,7 @@ public interface IModelEndpointRepository : IRepository<IModelEndpoint>
     /// </summary>
     Task<IModelEndpoint> GetOrCreateAsync(
         string modelName,
-        string providerName,
+        IModelProvider provider,
         CancellationToken cancellationToken = default);
 }
 

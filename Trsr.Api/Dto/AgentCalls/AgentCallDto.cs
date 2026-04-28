@@ -15,6 +15,7 @@ public record AgentCallDto(
     int HttpStatus,
     string? FinishReason,
     string? ErrorMessage,
+    decimal? CostEur,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 

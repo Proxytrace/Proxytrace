@@ -98,6 +98,127 @@
           </div>
         </div>
 
+        <!-- Models section -->
+        <div style="padding:16px 20px; border-bottom:1px solid var(--hairline); display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:2px;">Models</div>
+              <div style="font-size:12px; color:var(--text-muted);">Models served by this provider. Set pricing to compute trace costs.</div>
+            </div>
+            <button (click)="openNewModel()"
+                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12.5px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Model
+            </button>
+          </div>
+
+          <!-- Add model form -->
+          @if (showNewModel()) {
+            <div style="padding:14px 16px; background:var(--bg-card-2); border-radius:12px; border:1px solid var(--hairline); display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; font-weight:600;">Add Model</div>
+              <div style="display:flex; flex-direction:column; gap:5px;">
+                <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Model name</label>
+                <input [ngModel]="newModelName()" (ngModelChange)="newModelName.set($event)"
+                       placeholder="e.g. claude-sonnet-4-5"
+                       style="padding:8px 10px; background:var(--bg-card); border-radius:8px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Input cost / 1M tokens (€) <span style="font-weight:400; text-transform:none;">optional</span></label>
+                  <input type="number" min="0" step="0.01"
+                         [ngModel]="newModelInputCost()" (ngModelChange)="newModelInputCost.set(parseCost($event))"
+                         placeholder="e.g. 3.00"
+                         style="padding:8px 10px; background:var(--bg-card); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Output cost / 1M tokens (€) <span style="font-weight:400; text-transform:none;">optional</span></label>
+                  <input type="number" min="0" step="0.01"
+                         [ngModel]="newModelOutputCost()" (ngModelChange)="newModelOutputCost.set(parseCost($event))"
+                         placeholder="e.g. 15.00"
+                         style="padding:8px 10px; background:var(--bg-card); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+                </div>
+              </div>
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <button (click)="cancelNewModel()"
+                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
+                <button (click)="submitNewModel()"
+                        [disabled]="savingModel() || !newModelName()"
+                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                        [style.opacity]="(savingModel() || !newModelName()) ? '0.5' : '1'">
+                  {{ savingModel() ? 'Adding…' : 'Add Model' }}
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Models table -->
+          @if (modelsState() === 'loading') {
+            <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">Loading models…</div>
+          }
+          @if (modelsState() === 'loaded') {
+            @if (models().length === 0 && !showNewModel()) {
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:24px; text-align:center; color:var(--text-muted); border:1px dashed var(--hairline); border-radius:12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <p style="font-size:12.5px; margin:0;">No models yet. Add one or let Trsr auto-discover them from traces.</p>
+              </div>
+            }
+            @if (models().length > 0) {
+              <div style="background:var(--bg-card-2); border-radius:12px; overflow:hidden;">
+                <div style="display:grid; grid-template-columns:2fr 1fr 1fr auto; padding:10px 16px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                  <span>Model</span><span>Input / 1M €</span><span>Output / 1M €</span><span></span>
+                </div>
+                @for (m of models(); track m.id) {
+                  <div [style.border-bottom]="$last ? 'none' : '1px solid var(--hairline)'">
+                    <div style="display:grid; grid-template-columns:2fr 1fr 1fr auto; padding:11px 16px; align-items:center;">
+                      <span class="mono" style="font-size:12.5px; color:var(--text-primary);">{{ m.modelName }}</span>
+                      <span style="font-size:12.5px; color:var(--text-secondary);">{{ m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—' }}</span>
+                      <span style="font-size:12.5px; color:var(--text-secondary);">{{ m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—' }}</span>
+                      <button (click)="openEditPricing(m)"
+                              style="padding:5px 8px; border-radius:7px; color:var(--text-muted); background:transparent; transition:background 0.15s; display:inline-flex; align-items:center;"
+                              onmouseenter="this.style.background='var(--bg-card)'" onmouseleave="this.style.background='transparent'"
+                              title="Edit pricing">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    </div>
+                    <!-- Inline pricing editor -->
+                    @if (editingModel()?.id === m.id) {
+                      <div style="padding:12px 16px 14px; background:var(--bg-card); border-top:1px solid var(--hairline); display:flex; flex-direction:column; gap:10px;">
+                        <div style="font-size:12px; font-weight:600; color:var(--text-secondary);">Edit pricing for {{ m.modelName }}</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                          <div style="display:flex; flex-direction:column; gap:5px;">
+                            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Input / 1M tokens (€) <span style="font-weight:400; text-transform:none;">optional</span></label>
+                            <input type="number" min="0" step="0.01"
+                                   [ngModel]="editInputCost()" (ngModelChange)="editInputCost.set(parseCost($event))"
+                                   placeholder="not set"
+                                   style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+                          </div>
+                          <div style="display:flex; flex-direction:column; gap:5px;">
+                            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Output / 1M tokens (€) <span style="font-weight:400; text-transform:none;">optional</span></label>
+                            <input type="number" min="0" step="0.01"
+                                   [ngModel]="editOutputCost()" (ngModelChange)="editOutputCost.set(parseCost($event))"
+                                   placeholder="not set"
+                                   style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline);" />
+                          </div>
+                        </div>
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                          <button (click)="cancelEditPricing()"
+                                  style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+                          <button (click)="submitEditPricing()"
+                                  [disabled]="savingModelPricing()"
+                                  style="padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); transition:opacity 0.15s;"
+                                  [style.opacity]="savingModelPricing() ? '0.5' : '1'">
+                            {{ savingModelPricing() ? 'Saving…' : 'Save' }}
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </div>
+
         <!-- API Keys section -->
         <div style="flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
 

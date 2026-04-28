@@ -23,6 +23,17 @@ export interface AgentCallDto {
   httpStatus: number;
   finishReason: string | null;
   errorMessage: string | null;
+  costEur: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentDto {
+  id: string;
+  projectId: string;
+  projectName: string;
+  systemMessage: string;
+  tools: { name: string; description: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -33,6 +44,15 @@ export interface SummaryDto {
   totalOutputTokens: number;
   avgLatencyMs: number;
   overallPassRate: number;
+}
+
+export interface ModelBreakdownDto {
+  endpointId: string;
+  modelName: string;
+  callCount: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  avgDurationMs: number;
 }
 
 export interface AgentCallFilter {

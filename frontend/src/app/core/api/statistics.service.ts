@@ -1,13 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SummaryDto } from './models';
+import { SummaryDto, ModelBreakdownDto } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
   private readonly http = inject(HttpClient);
 
-  getSummary(): Observable<SummaryDto> {
-    return this.http.get<SummaryDto>('/api/statistics/summary');
+  getSummary(from?: string): Observable<SummaryDto> {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    return this.http.get<SummaryDto>('/api/statistics/summary', { params });
+  }
+
+  getModelBreakdown(from?: string): Observable<ModelBreakdownDto[]> {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    return this.http.get<ModelBreakdownDto[]>('/api/statistics/model-breakdown', { params });
   }
 }

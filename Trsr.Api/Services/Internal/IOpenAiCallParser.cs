@@ -1,12 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using Trsr.Domain.ModelProvider;
 
 namespace Trsr.Api.Services.Internal;
 
 internal interface IOpenAiCallParser
 {
     bool TryParse(
-        string provider,
+        IModelProvider provider,
         string requestBody,
         string? responseBody,
         TimeSpan duration,

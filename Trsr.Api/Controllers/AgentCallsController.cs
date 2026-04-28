@@ -22,6 +22,7 @@ public class AgentCallsController : ControllerBase
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
         [FromQuery] Guid? endpointId = null,
+        [FromQuery] string? model = null,
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] int? httpStatus = null,
@@ -29,7 +30,7 @@ public class AgentCallsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, from, to, httpStatus);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallDto>(items.Select(ToDto).ToArray(), total, page, pageSize);
     }
@@ -63,8 +64,20 @@ public class AgentCallsController : ControllerBase
         (int)c.HttpStatus,
         c.FinishReason,
         c.ErrorMessage,
+        ComputeCost(c),
         c.CreatedAt,
         c.UpdatedAt);
+
+    private static decimal? ComputeCost(IAgentCall c)
+    {
+        var e = c.Endpoint;
+        if (e.InputTokenCost is null || e.OutputTokenCost is null)
+        {
+            return null;
+        }
+        return (c.Usage.InputTokenCount / 1_000_000m) * e.InputTokenCost.Value
+             + (c.Usage.OutputTokenCount / 1_000_000m) * e.OutputTokenCost.Value;
+    }
 
     private static string GetText(Message m) => m switch
     {

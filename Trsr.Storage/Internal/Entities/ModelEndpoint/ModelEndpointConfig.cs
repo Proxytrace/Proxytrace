@@ -28,8 +28,8 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
 
     public override void Configure(EntityTypeBuilder<ModelEndpointEntity> builder)
     {
-        builder.Property(e => e.InputTokenCost).HasPrecision(18, 6).IsRequired();
-        builder.Property(e => e.OutputTokenCost).HasPrecision(18, 6).IsRequired();
+        builder.Property(e => e.InputTokenCost).HasPrecision(18, 6).IsRequired(false);
+        builder.Property(e => e.OutputTokenCost).HasPrecision(18, 6).IsRequired(false);
 
         builder
             .HasOne<ModelEntity>()

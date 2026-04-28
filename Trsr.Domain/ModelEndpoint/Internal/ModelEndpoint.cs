@@ -10,14 +10,14 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
 {
     public IModel Model { get; }
     public IModelProvider Provider { get; }
-    public decimal InputTokenCost { get; }
-    public decimal OutputTokenCost { get; }
+    public decimal? InputTokenCost { get; }
+    public decimal? OutputTokenCost { get; }
 
     public ModelEndpoint(
         IModel model,
         IModelProvider provider,
-        decimal inputTokenCost,
-        decimal outputTokenCost)
+        decimal? inputTokenCost,
+        decimal? outputTokenCost)
     {
         Model = model;
         Provider = provider;
@@ -26,10 +26,10 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
     }
 
     public ModelEndpoint(
-        IModel model, 
-        IModelProvider provider, 
-        decimal inputTokenCost,
-        decimal outputTokenCost,
+        IModel model,
+        IModelProvider provider,
+        decimal? inputTokenCost,
+        decimal? outputTokenCost,
         IDomainEntityData existing)
         : base(existing)
     {
@@ -42,25 +42,22 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
-        {
             yield return result;
-        }
 
         foreach (var result in Model.Validate(validationContext))
-        {
             yield return result;
-        }
 
         foreach (var result in Provider.Validate(validationContext))
-        {
             yield return result;
-        }
 
-        yield return Validation.Positive(InputTokenCost);
-        yield return Validation.Positive(OutputTokenCost);
-        
-        // sanity check -> input token cost is always less than or equal to outputtoken cost
-        yield return Validation.LessThanOrEqual(InputTokenCost, OutputTokenCost);
+        if (InputTokenCost.HasValue)
+            yield return Validation.Positive(InputTokenCost.Value, nameof(InputTokenCost));
+
+        if (OutputTokenCost.HasValue)
+            yield return Validation.Positive(OutputTokenCost.Value, nameof(OutputTokenCost));
+
+        if (InputTokenCost.HasValue && OutputTokenCost.HasValue)
+            yield return Validation.LessThanOrEqual(InputTokenCost.Value, OutputTokenCost.Value, nameof(InputTokenCost));
     }
 }
 

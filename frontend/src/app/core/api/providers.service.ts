@@ -39,6 +39,28 @@ export interface OrganizationDto {
   name: string;
 }
 
+export interface ModelEndpointDto {
+  id: string;
+  modelName: string;
+  providerId: string;
+  providerName: string;
+  inputTokenCost: number | null;
+  outputTokenCost: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateModelEndpointRequest {
+  modelName: string;
+  inputTokenCost: number | null;
+  outputTokenCost: number | null;
+}
+
+export interface UpdateModelEndpointPricingRequest {
+  inputTokenCost: number | null;
+  outputTokenCost: number | null;
+}
+
 export interface CreateProviderRequest {
   name: string;
   endpoint: string;
@@ -69,6 +91,18 @@ export class ProvidersService {
 
   deleteProvider(id: string): Observable<void> {
     return this.http.delete<void>(`/api/providers/${id}`);
+  }
+
+  getModels(providerId: string): Observable<ModelEndpointDto[]> {
+    return this.http.get<ModelEndpointDto[]>(`/api/providers/${providerId}/models`);
+  }
+
+  createModel(providerId: string, req: CreateModelEndpointRequest): Observable<ModelEndpointDto> {
+    return this.http.post<ModelEndpointDto>(`/api/providers/${providerId}/models`, req);
+  }
+
+  updateModelPricing(providerId: string, endpointId: string, req: UpdateModelEndpointPricingRequest): Observable<ModelEndpointDto> {
+    return this.http.put<ModelEndpointDto>(`/api/providers/${providerId}/models/${endpointId}`, req);
   }
 
   getKeys(providerId: string): Observable<ApiKeyDto[]> {

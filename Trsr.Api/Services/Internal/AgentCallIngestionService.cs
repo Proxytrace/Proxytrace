@@ -3,6 +3,7 @@ using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Services.Internal;
@@ -33,7 +34,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     }
 
     public async Task IngestAsync(
-        string provider,
+        IModelProvider provider,
         IProject project,
         string requestBody,
         string? responseBody,

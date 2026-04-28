@@ -19,18 +19,18 @@ public interface IModelEndpoint : IDomainEntity
     IModelProvider Provider { get; }
     
     /// <summary>
-    /// Price of 1M input tokens (EUR)
+    /// Price of 1M input tokens (EUR), or <c>null</c> if not configured.
     /// </summary>
-    decimal InputTokenCost { get; }
-    
+    decimal? InputTokenCost { get; }
+
     /// <summary>
-    /// Price of 1M output tokens (EUR)
+    /// Price of 1M output tokens (EUR), or <c>null</c> if not configured.
     /// </summary>
-    decimal OutputTokenCost { get; }
+    decimal? OutputTokenCost { get; }
 
     /// <summary>Factory delegate for creating a new model endpoint.</summary>
-    public delegate IModelEndpoint CreateNew(IModel model, IModelProvider provider, decimal inputTokenCost, decimal outputTokenCost);
+    public delegate IModelEndpoint CreateNew(IModel model, IModelProvider provider, decimal? inputTokenCost, decimal? outputTokenCost);
 
     /// <summary>Factory delegate for reconstituting an existing model endpoint from persistence.</summary>
-    public delegate IModelEndpoint CreateExisting(IModel model, IModelProvider provider, decimal inputTokenCost, decimal outputTokenCost, IDomainEntityData existing);
+    public delegate IModelEndpoint CreateExisting(IModel model, IModelProvider provider, decimal? inputTokenCost, decimal? outputTokenCost, IDomainEntityData existing);
 }

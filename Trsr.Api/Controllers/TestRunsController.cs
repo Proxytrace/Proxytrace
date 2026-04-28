@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Services;
+using Trsr.Domain;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
@@ -13,15 +15,18 @@ public class TestRunsController : ControllerBase
 {
     private readonly ITestRunRepository repository;
     private readonly ITestSuiteRepository suiteRepository;
+    private readonly IRepository<IModelEndpoint> endpoints;
     private readonly ITestRunnerService runner;
 
     public TestRunsController(
         ITestRunRepository repository,
         ITestSuiteRepository suiteRepository,
+        IRepository<IModelEndpoint> endpoints,
         ITestRunnerService runner)
     {
         this.repository = repository;
         this.suiteRepository = suiteRepository;
+        this.endpoints = endpoints;
         this.runner = runner;
     }
 
@@ -56,7 +61,8 @@ public class TestRunsController : ControllerBase
         if (!await suiteRepository.ContainsAsync(request.TestSuiteId, cancellationToken))
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
         var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
-        var run = await runner.RunAsync(suite, cancellationToken);
+        var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
+        var run = await runner.RunAsync(suite, endpoint, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
     }
 

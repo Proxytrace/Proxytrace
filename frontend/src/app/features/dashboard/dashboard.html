@@ -20,13 +20,13 @@
     </div>
     <div style="display:flex; gap:4px; padding:4px; background:var(--bg-card); border-radius:10px; box-shadow:var(--shadow-pill); flex-shrink:0;">
       @for (r of ['1h', '24h', '7d', '30d']; track r) {
-        <button (click)="volRange = r" style="
+        <button (click)="setVolRange(r)" style="
           padding:6px 12px; font-size:12px; font-weight:500; border-radius:7px;
           transition: background 0.15s, color 0.15s;
         "
-        [style.background]="volRange === r ? 'var(--bg-card-2)' : 'transparent'"
-        [style.color]="volRange === r ? 'var(--text-primary)' : 'var(--text-muted)'"
-        [style.box-shadow]="volRange === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none'">
+        [style.background]="volRange() === r ? 'var(--bg-card-2)' : 'transparent'"
+        [style.color]="volRange() === r ? 'var(--text-primary)' : 'var(--text-muted)'"
+        [style.box-shadow]="volRange() === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none'">
           {{r}}
         </button>
       }
@@ -166,7 +166,7 @@
       <div class="card-header">
         <div style="min-width:0; flex:1;">
           <h3>Trace Volume</h3>
-          <p>Last 24 hours · hourly buckets</p>
+          <p>{{rangeLabel()}}</p>
         </div>
         <div style="display:flex; align-items:center; gap:14px; flex-shrink:0;">
           <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted);">

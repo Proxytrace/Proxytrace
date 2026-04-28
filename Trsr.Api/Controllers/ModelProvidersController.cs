@@ -4,6 +4,8 @@ using Trsr.Api.Dto.ApiKeys;
 using Trsr.Api.Dto.ModelProviders;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
+using Trsr.Domain.Model;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
@@ -18,26 +20,41 @@ public class ModelProvidersController : ControllerBase
     private readonly IOrganizationRepository organizationRepository;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly IProjectRepository projectRepository;
+    private readonly IModelEndpointRepository endpointRepository;
+    private readonly IRepository<IModel> modelRepository;
     private readonly IModelProvider.CreateNew createProvider;
     private readonly IModelProvider.CreateExisting updateProvider;
     private readonly IApiKey.CreateNew createApiKey;
+    private readonly IModel.CreateNew createModel;
+    private readonly IModelEndpoint.CreateNew createEndpoint;
+    private readonly IModelEndpoint.CreateExisting updateEndpoint;
 
     public ModelProvidersController(
         IRepository<IModelProvider> providerRepository,
         IOrganizationRepository organizationRepository,
         IApiKeyRepository apiKeyRepository,
         IProjectRepository projectRepository,
+        IModelEndpointRepository endpointRepository,
+        IRepository<IModel> modelRepository,
         IModelProvider.CreateNew createProvider,
         IModelProvider.CreateExisting updateProvider,
-        IApiKey.CreateNew createApiKey)
+        IApiKey.CreateNew createApiKey,
+        IModel.CreateNew createModel,
+        IModelEndpoint.CreateNew createEndpoint,
+        IModelEndpoint.CreateExisting updateEndpoint)
     {
         this.providerRepository = providerRepository;
         this.organizationRepository = organizationRepository;
         this.apiKeyRepository = apiKeyRepository;
         this.projectRepository = projectRepository;
+        this.endpointRepository = endpointRepository;
+        this.modelRepository = modelRepository;
         this.createProvider = createProvider;
         this.updateProvider = updateProvider;
         this.createApiKey = createApiKey;
+        this.createModel = createModel;
+        this.createEndpoint = createEndpoint;
+        this.updateEndpoint = updateEndpoint;
     }
 
     [HttpGet]
@@ -93,6 +110,68 @@ public class ModelProvidersController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
+    // ── Models ────────────────────────────────────────────────────────────────
+
+    [HttpGet("{providerId:guid}/models")]
+    public async Task<ActionResult<IReadOnlyList<ModelEndpointDto>>> GetModels(Guid providerId, CancellationToken cancellationToken)
+    {
+        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+            return NotFound("Provider not found.");
+        var all = await endpointRepository.GetAllAsync(cancellationToken);
+        return all.Where(e => e.Provider.Id == providerId).Select(ToEndpointDto).ToArray();
+    }
+
+    [HttpPost("{providerId:guid}/models")]
+    public async Task<ActionResult<ModelEndpointDto>> CreateModel(
+        Guid providerId,
+        [FromBody] CreateModelEndpointRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+            return NotFound("Provider not found.");
+        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
+
+        var all = await endpointRepository.GetAllAsync(cancellationToken);
+        if (all.Any(e => e.Provider.Id == providerId && e.Model.Name == request.ModelName))
+            return Conflict($"A model endpoint for '{request.ModelName}' already exists for this provider.");
+
+        var allModels = await modelRepository.GetAllAsync(cancellationToken);
+        IModel model = allModels.FirstOrDefault(m => m.Name == request.ModelName)
+            ?? await modelRepository.AddAsync(createModel(request.ModelName), cancellationToken);
+
+        var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
+        var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
+        return CreatedAtAction(nameof(GetModels), new { providerId }, ToEndpointDto(saved));
+    }
+
+    [HttpPut("{providerId:guid}/models/{endpointId:guid}")]
+    public async Task<ActionResult<ModelEndpointDto>> UpdateModelPricing(
+        Guid providerId,
+        Guid endpointId,
+        [FromBody] UpdateModelEndpointPricingRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+        {
+            return NotFound("Provider not found.");
+        }
+
+        if (!await endpointRepository.ContainsAsync(endpointId, cancellationToken))
+        {
+            return NotFound("Model endpoint not found.");
+        }
+
+        var existing = await endpointRepository.GetAsync(endpointId, cancellationToken);
+        if (existing.Provider.Id != providerId)
+        {
+            return NotFound("Model endpoint not found.");
+        }
+
+        var updated = updateEndpoint(existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost, existing);
+        var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);
+        return ToEndpointDto(saved);
+    }
+
     // ── API Keys ──────────────────────────────────────────────────────────────
 
     [HttpGet("{providerId:guid}/keys")]
@@ -137,4 +216,7 @@ public class ModelProvidersController : ControllerBase
 
     private static ApiKeyDto ToKeyDto(IApiKey k) =>
         new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);
+
+    private static ModelEndpointDto ToEndpointDto(IModelEndpoint e) =>
+        new(e.Id, e.Model.Name, e.Provider.Id, e.Provider.Name, e.InputTokenCost, e.OutputTokenCost, e.CreatedAt, e.UpdatedAt);
 }
