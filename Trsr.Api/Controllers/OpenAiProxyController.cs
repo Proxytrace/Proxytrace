@@ -68,6 +68,12 @@ public class OpenAiProxyController : ControllerBase
 
         var isStreaming = IsStreamingRequest(requestBody, Request.ContentType);
 
+        if (isStreaming)
+        {
+            requestBodyBytes = InjectStreamUsageOption(requestBodyBytes);
+            requestBody = Encoding.UTF8.GetString(requestBodyBytes);
+        }
+
         var upstream = BuildUpstreamRequest(path, requestBodyBytes, apiKey.Provider.ApiKey, apiKey.Provider.Endpoint);
         var client = httpClientFactory.CreateClient("openai");
         var sw = Stopwatch.StartNew();
@@ -239,6 +245,37 @@ public class OpenAiProxyController : ControllerBase
         }
 
         return upstreamRequest;
+    }
+
+    private static byte[] InjectStreamUsageOption(byte[] bodyBytes)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(bodyBytes);
+            if (doc.RootElement.TryGetProperty("stream_options", out _))
+            {
+                return bodyBytes;
+            }
+
+            using var ms = new MemoryStream();
+            using var writer = new System.Text.Json.Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+            {
+                prop.WriteTo(writer);
+            }
+            writer.WritePropertyName("stream_options");
+            writer.WriteStartObject();
+            writer.WriteBoolean("include_usage", true);
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.Flush();
+            return ms.ToArray();
+        }
+        catch
+        {
+            return bodyBytes;
+        }
     }
 
     private static bool IsStreamingRequest(string requestBody, string? contentType)
