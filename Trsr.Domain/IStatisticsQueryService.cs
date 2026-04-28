@@ -71,6 +71,7 @@ public record ErrorRateStat(
 
 public record ModelBreakdownStat(
     Guid EndpointId,
+    string ModelName,
     int CallCount,
     long TotalInputTokens,
     long TotalOutputTokens,

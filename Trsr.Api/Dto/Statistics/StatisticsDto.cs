@@ -15,6 +15,6 @@ public record PassRateDto(Guid AgentId, DateTimeOffset RunTimestamp, int PassCou
 
 public record ErrorRateDto(Guid EndpointId, int TotalCalls, int ErrorCalls, double ErrorRate);
 
-public record ModelBreakdownDto(Guid EndpointId, int CallCount, long TotalInputTokens, long TotalOutputTokens, double AvgDurationMs);
+public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount, long TotalInputTokens, long TotalOutputTokens, double AvgDurationMs);
 
 public record CostEstimateDto(Guid EndpointId, decimal InputCostUsd, decimal OutputCostUsd, decimal TotalCostUsd);

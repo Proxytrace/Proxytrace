@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trsr.Storage.Internal;
 
 namespace Trsr.Storage;
@@ -26,6 +27,31 @@ internal class StorageDbContext : DbContext
         foreach (IModelConfiguration configuration in configurations)
         {
             configuration.CreateModel(modelBuilder);
+        }
+
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            ApplySqliteDateTimeOffsetConversions(modelBuilder);
+        }
+    }
+
+    // SQLite can't translate DateTimeOffset in ORDER BY, so we register a string
+    // converter that keeps the same ISO 8601 TEXT format already on disk.
+    private static void ApplySqliteDateTimeOffsetConversions(ModelBuilder modelBuilder)
+    {
+        var converter = new ValueConverter<DateTimeOffset, string>(
+            v => v.ToString("o"),
+            v => DateTimeOffset.Parse(v, null, System.Globalization.DateTimeStyles.RoundtripKind));
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTimeOffset))
+                {
+                    property.SetValueConverter(converter);
+                }
+            }
         }
     }
 
