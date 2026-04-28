@@ -27,12 +27,31 @@ export interface AgentCallDto {
   updatedAt: string;
 }
 
+export interface AgentDto {
+  id: string;
+  projectId: string;
+  projectName: string;
+  systemMessage: string;
+  tools: { name: string; description: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SummaryDto {
   totalCalls: number;
   totalInputTokens: number;
   totalOutputTokens: number;
   avgLatencyMs: number;
   overallPassRate: number;
+}
+
+export interface ModelBreakdownDto {
+  endpointId: string;
+  modelName: string;
+  callCount: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  avgDurationMs: number;
 }
 
 export interface AgentCallFilter {

@@ -46,7 +46,7 @@ export class Dashboard implements OnInit {
   readonly recentTracesState = signal<LoadState>('loading');
   readonly recentTraces = signal<AgentCallDto[]>([]);
 
-  volRange = '24h';
+  readonly volRange = signal('24h');
 
   // ── Mock chart data (real API for KPI values) ──────────────────────────────
   private readonly volumeRaw = [2, 4, 3, 1, 0, 2, 5, 8, 12, 18, 14, 22, 28, 34, 29, 36, 40, 32, 26, 20, 14, 18, 22, 15];
@@ -215,11 +215,41 @@ export class Dashboard implements OnInit {
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   ngOnInit() {
-    this.statisticsService.getSummary().subscribe({
+    this.loadData();
+  }
+
+  setVolRange(r: string) {
+    this.volRange.set(r);
+    this.loadData();
+  }
+
+  rangeLabel(): string {
+    const r = this.volRange();
+    if (r === '1h') return 'Last hour · 5-minute buckets';
+    if (r === '24h') return 'Last 24 hours · hourly buckets';
+    if (r === '7d') return 'Last 7 days · daily buckets';
+    return 'Last 30 days · daily buckets';
+  }
+
+  private fromIso(): string {
+    const r = this.volRange();
+    const now = new Date();
+    if (r === '1h') now.setHours(now.getHours() - 1);
+    else if (r === '24h') now.setHours(now.getHours() - 24);
+    else if (r === '7d') now.setDate(now.getDate() - 7);
+    else now.setDate(now.getDate() - 30);
+    return now.toISOString();
+  }
+
+  private loadData() {
+    const from = this.fromIso();
+    this.summaryState.set('loading');
+    this.recentTracesState.set('loading');
+    this.statisticsService.getSummary(from).subscribe({
       next: (data) => { this.summary.set(data); this.summaryState.set('loaded'); },
       error: () => this.summaryState.set('error'),
     });
-    this.agentCallsService.getAll({ page: 1, pageSize: 7 }).subscribe({
+    this.agentCallsService.getAll({ page: 1, pageSize: 7, from }).subscribe({
       next: (result) => { this.recentTraces.set(result.items); this.recentTracesState.set('loaded'); },
       error: () => this.recentTracesState.set('error'),
     });

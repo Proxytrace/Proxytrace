@@ -96,7 +96,7 @@ public class StatisticsController : ControllerBase
     {
         var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetModelBreakdownAsync(filter, cancellationToken);
-        return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.CallCount, r.TotalInputTokens, r.TotalOutputTokens, r.AvgDurationMs)).ToArray();
+        return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens, r.TotalOutputTokens, r.AvgDurationMs)).ToArray();
     }
 
     [HttpGet("cost-estimate")]

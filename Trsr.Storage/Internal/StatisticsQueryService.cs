@@ -5,6 +5,8 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
+using Trsr.Storage.Internal.Entities.Model;
+using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
 
@@ -172,9 +174,19 @@ internal class StatisticsQueryService : IStatisticsQueryService
             })
             .ToListAsync(cancellationToken);
 
+        var endpointIds = stats.Select(s => s.EndpointId).Distinct().ToList();
+        var modelNames = await context.Set<ModelEndpointEntity>()
+            .Where(me => endpointIds.Contains(me.Id))
+            .Join(context.Set<ModelEntity>(),
+                me => me.Model,
+                m => m.Id,
+                (me, m) => new { me.Id, m.Name })
+            .ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+
         return stats
             .Select(s => new ModelBreakdownStat(
                 EndpointId: s.EndpointId,
+                ModelName: modelNames.GetValueOrDefault(s.EndpointId, "unknown"),
                 CallCount: s.CallCount,
                 TotalInputTokens: s.TotalInputTokens,
                 TotalOutputTokens: s.TotalOutputTokens,
