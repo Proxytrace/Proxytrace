@@ -51,13 +51,40 @@
     <div style="background:var(--bg-card); border-radius:14px; padding:14px; box-shadow:var(--shadow-card); display:flex; flex-direction:column;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
         <span style="font-size:12px; font-weight:600;">Latency</span>
-        <span style="font-size:10.5px; color:var(--text-muted);" class="mono">p95 · 4.1s</span>
+        <span style="font-size:10.5px; color:var(--text-muted);" class="mono">p95 · {{ p95Label() }}</span>
       </div>
-      <svg viewBox="0 0 280 56" width="100%" height="56" style="display:block;" preserveAspectRatio="none">
-        @for (b of histBars; track b.x) {
-          <rect [attr.x]="b.x.toFixed(1)" [attr.y]="b.y.toFixed(1)" [attr.width]="b.w.toFixed(1)" [attr.height]="b.h.toFixed(1)" fill="#06b6d4" opacity="0.8" rx="2"/>
+      <!-- Wrapper provides relative positioning for the tooltip -->
+      <div style="position:relative;">
+        @if (hoveredBar(); as bar) {
+          <div style="
+            position:absolute; bottom:calc(100% + 6px); z-index:20;
+            transform:translateX(-50%);
+            background:var(--bg-card-2); border:1px solid var(--hairline);
+            border-radius:8px; padding:6px 10px;
+            font-size:11px; white-space:nowrap; pointer-events:none;
+            box-shadow:var(--shadow-float);
+          " [style.left]="((bar.x + bar.w / 2) / 280 * 100) + '%'">
+            <div style="font-weight:600; color:var(--text-primary); font-family:'JetBrains Mono',monospace;">{{ bar.label }}</div>
+            <div style="color:var(--text-muted); margin-top:3px;">
+              ~{{ bar.pct.toFixed(0) }}% of requests
+              @if (bar.count > 0) { · {{ bar.count }} calls }
+            </div>
+          </div>
         }
-      </svg>
+        <svg viewBox="0 0 280 56" width="100%" height="56" style="display:block; cursor:crosshair;" preserveAspectRatio="none">
+          @for (b of histBars(); track b.x) {
+            <rect
+              [attr.x]="b.x.toFixed(1)" [attr.y]="b.y.toFixed(1)"
+              [attr.width]="b.w.toFixed(1)" [attr.height]="b.h.toFixed(1)"
+              rx="2"
+              [attr.fill]="hoveredBar() === b ? '#22d3ee' : '#06b6d4'"
+              [attr.opacity]="hoveredBar() !== null && hoveredBar() !== b ? '0.4' : '0.85'"
+              (mouseenter)="hoveredBar.set(b)"
+              (mouseleave)="hoveredBar.set(null)"
+            />
+          }
+        </svg>
+      </div>
     </div>
   </div>
 

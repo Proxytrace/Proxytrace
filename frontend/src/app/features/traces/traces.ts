@@ -3,15 +3,16 @@ import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { StatisticsService } from '../../core/api/statistics.service';
 import { HealthService } from '../../core/api/health.service';
-import { AgentCallDto, AgentDto } from '../../core/api/models';
+import { AgentCallDto, AgentDto, LatencyStatDto } from '../../core/api/models';
 import { TraceDetail } from './trace-detail/trace-detail';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
 const PAGE_SIZE = 20;
 const POLL_INTERVAL_MS = 5000;
+const HIST_W = 280, HIST_H = 56, HIST_BUCKETS = 10;
 
-interface HistBar { x: number; y: number; w: number; h: number; }
+interface HistBar { x: number; y: number; w: number; h: number; label: string; pct: number; count: number; }
 
 @Component({
   selector: 'app-traces',
@@ -45,7 +46,11 @@ export class Traces implements OnInit, OnDestroy {
   readonly agents = signal<AgentDto[]>([]);
   readonly selectedTrace = signal<AgentCallDto | null>(null);
   readonly modelSummaries = signal<{ model: string; count: number }[]>([]);
+  readonly latencyStats = signal<LatencyStatDto | null>(null);
+  readonly hoveredBar = signal<HistBar | null>(null);
+
   private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalPages = computed(() => Math.ceil(this.total() / PAGE_SIZE));
   readonly hasPrev = computed(() => this.page() > 1);
@@ -53,23 +58,24 @@ export class Traces implements OnInit, OnDestroy {
   readonly rangeStart = computed(() => this.total() === 0 ? 0 : (this.page() - 1) * PAGE_SIZE + 1);
   readonly rangeEnd = computed(() => Math.min(this.page() * PAGE_SIZE, this.total()));
 
-  readonly histBars: HistBar[];
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  // Histogram bars derived from real latency percentile data.
+  // Uses a piecewise-linear CDF over [min, p50, p95, p99, max] to estimate
+  // per-bucket density, giving a faithful shape without needing raw samples.
+  readonly histBars = computed((): HistBar[] => {
+    const s = this.latencyStats();
+    if (!s || s.sampleCount === 0) return this.emptyHistBars();
+    return this.histFromPercentiles(s);
+  });
 
-  constructor() {
-    const hist = [4, 12, 28, 42, 32, 22, 11, 7, 3, 2];
-    const W = 280, H = 56;
-    const max = Math.max(...hist) * 1.1;
-    const bw = W / hist.length * 0.86, gap = W / hist.length * 0.14;
-    this.histBars = hist.map((v, i) => ({
-      x: i * (bw + gap) + gap / 2, w: bw,
-      y: H - (v / max) * H, h: (v / max) * H,
-    }));
-  }
+  readonly p95Label = computed((): string => {
+    const s = this.latencyStats();
+    if (!s) return '—';
+    return this.formatLatency(s.p95Ms);
+  });
 
   ngOnInit() {
     this.agentsService.getAll().subscribe({ next: (r) => this.agents.set(r.items) });
-    this.loadModelBreakdown();
+    this.loadStats();
     this.load();
     this.pollTimer = setInterval(() => this.refresh(), POLL_INTERVAL_MS);
   }
@@ -96,7 +102,7 @@ export class Traces implements OnInit, OnDestroy {
     this.agentFilter.set(agent);
     this.agentDropdownOpen.set(false);
     this.page.set(1);
-    this.loadModelBreakdown();
+    this.loadStats();
     this.load();
   }
 
@@ -104,7 +110,7 @@ export class Traces implements OnInit, OnDestroy {
   closeAgentDropdown() { this.agentDropdownOpen.set(false); }
   toggleRangeDropdown() { this.rangeDropdownOpen.update(v => !v); this.agentDropdownOpen.set(false); }
   closeRangeDropdown() { this.rangeDropdownOpen.set(false); }
-  setRange(key: string) { this.rangeKey.set(key); this.rangeDropdownOpen.set(false); this.page.set(1); this.loadModelBreakdown(); this.load(); }
+  setRange(key: string) { this.rangeKey.set(key); this.rangeDropdownOpen.set(false); this.page.set(1); this.loadStats(); this.load(); }
   rangeLabelFor(key: string): string { return this.ranges.find(r => r.key === key)?.label ?? key; }
 
   private fromIso(): string | undefined {
@@ -129,6 +135,10 @@ export class Traces implements OnInit, OnDestroy {
   prevPage() { if (this.hasPrev()) { this.page.update(p => p - 1); this.load(); } }
   nextPage() { if (this.hasNext()) { this.page.update(p => p + 1); this.load(); } }
 
+  private statsFilter() {
+    return { from: this.fromIso(), agentId: this.agentFilter()?.id };
+  }
+
   private buildFilter() {
     return {
       model: this.searchQuery().trim() || undefined,
@@ -139,14 +149,13 @@ export class Traces implements OnInit, OnDestroy {
     };
   }
 
-  private loadModelBreakdown() {
-    this.statisticsService.getModelBreakdown({
-      from: this.fromIso(),
-      agentId: this.agentFilter()?.id,
-    }).subscribe({
-      next: (items) => this.modelSummaries.set(
-        items.map(i => ({ model: i.modelName, count: i.callCount }))
-      ),
+  private loadStats() {
+    const filter = this.statsFilter();
+    this.statisticsService.getModelBreakdown(filter).subscribe({
+      next: (items) => this.modelSummaries.set(items.map(i => ({ model: i.modelName, count: i.callCount }))),
+    });
+    this.statisticsService.getLatency(filter).subscribe({
+      next: (items) => this.latencyStats.set(this.aggregateLatency(items)),
     });
   }
 
@@ -161,6 +170,80 @@ export class Traces implements OnInit, OnDestroy {
   private refresh() {
     this.agentCallsService.getAll(this.buildFilter()).subscribe({
       next: (r) => { this.traces.set(r.items); this.total.set(r.total); this.loadState.set('loaded'); },
+    });
+  }
+
+  // Aggregate per-endpoint latency stats into one overall stat.
+  // Percentiles are weighted by sample count; min/max are global extremes.
+  private aggregateLatency(items: LatencyStatDto[]): LatencyStatDto | null {
+    if (items.length === 0) return null;
+    const total = items.reduce((s, i) => s + i.sampleCount, 0);
+    if (total === 0) return null;
+    const w = (field: keyof LatencyStatDto) =>
+      items.reduce((s, i) => s + (i[field] as number) * i.sampleCount, 0) / total;
+    return {
+      endpointId: '',
+      p50Ms: w('p50Ms'),
+      p95Ms: w('p95Ms'),
+      p99Ms: w('p99Ms'),
+      minMs: Math.min(...items.map(i => i.minMs)),
+      maxMs: Math.max(...items.map(i => i.maxMs)),
+      sampleCount: total,
+    };
+  }
+
+  // Build histogram bars from percentile landmarks using a piecewise-linear CDF.
+  // Buckets span [0, chartMax] evenly; each bucket height = CDF(right) - CDF(left).
+  private histFromPercentiles(s: LatencyStatDto): HistBar[] {
+    const chartMax = Math.max(s.maxMs, s.p99Ms * 1.3);
+    const bucketMs = chartMax / HIST_BUCKETS;
+
+    // CDF landmark pairs [ms, percentile]
+    const cdf: [number, number][] = [
+      [0, 0],
+      [s.minMs, 0],
+      [s.p50Ms, 50],
+      [s.p95Ms, 95],
+      [s.p99Ms, 99],
+      [chartMax, 100],
+    ];
+
+    const pctAt = (x: number): number => {
+      for (let i = 1; i < cdf.length; i++) {
+        const [x0, p0] = cdf[i - 1], [x1, p1] = cdf[i];
+        if (x <= x1) {
+          const t = x1 === x0 ? 1 : (x - x0) / (x1 - x0);
+          return p0 + t * (p1 - p0);
+        }
+      }
+      return 100;
+    };
+
+    const buckets = Array.from({ length: HIST_BUCKETS }, (_, i) => {
+      const lo = i * bucketMs, hi = (i + 1) * bucketMs;
+      return {
+        pct: pctAt(hi) - pctAt(lo),
+        label: `${this.formatLatency(lo)} – ${this.formatLatency(hi)}`,
+        count: Math.round((pctAt(hi) - pctAt(lo)) / 100 * s.sampleCount),
+      };
+    });
+    return this.barsFromBuckets(buckets);
+  }
+
+  private emptyHistBars(): HistBar[] {
+    const buckets = Array.from({ length: HIST_BUCKETS }, (_, i) => ({
+      pct: 0, count: 0, label: `bucket ${i + 1}`,
+    }));
+    return this.barsFromBuckets(buckets);
+  }
+
+  private barsFromBuckets(buckets: { pct: number; label: string; count: number }[]): HistBar[] {
+    const maxPct = Math.max(...buckets.map(b => b.pct), 1);
+    const bw = HIST_W / buckets.length * 0.86;
+    const gap = HIST_W / buckets.length * 0.14;
+    return buckets.map((b, i) => {
+      const h = (b.pct / maxPct) * HIST_H;
+      return { x: i * (bw + gap) + gap / 2, w: bw, y: HIST_H - h, h, label: b.label, pct: b.pct, count: b.count };
     });
   }
 

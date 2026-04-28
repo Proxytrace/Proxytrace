@@ -55,6 +55,16 @@ export interface ModelBreakdownDto {
   avgDurationMs: number;
 }
 
+export interface LatencyStatDto {
+  endpointId: string;
+  p50Ms: number;
+  p95Ms: number;
+  p99Ms: number;
+  minMs: number;
+  maxMs: number;
+  sampleCount: number;
+}
+
 export interface AgentCallFilter {
   projectId?: string;
   agentId?: string;
