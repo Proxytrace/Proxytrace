@@ -22,10 +22,11 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var project = CreateTestProject(services);
 
         // Act
-        var agent = factory(systemMessage, [], project);
+        var agent = factory("Test Agent", systemMessage, [], project);
 
         // Assert
         agent.Should().NotBeNull();
+        agent.Name.Should().Be("Test Agent");
         agent.SystemMessage.Should().Be(systemMessage);
         agent.Project.Should().Be(project);
         agent.Id.Should().NotBe(Guid.Empty);
@@ -43,7 +44,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, [], project);
+        var action = () => factory("Test Agent", null!, [], project);
         action.Should().Throw<Exception>();
     }
 
@@ -57,7 +58,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(systemMessage, [], null!);
+        var action = () => factory("Test Agent", systemMessage, [], null!);
         action.Should().Throw<Exception>();
     }
 
@@ -71,11 +72,12 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var agent = createExisting(existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
+        var agent = createExisting(existingAgent.Name, existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
 
         // Assert
         agent.Should().NotBeNull();
         agent.Id.Should().Be(existingAgent.Id);
+        agent.Name.Should().Be(existingAgent.Name);
         agent.Project.Should().Be(existingAgent.Project);
         agent.SystemMessage.Should().Be(existingAgent.SystemMessage);
         agent.CreatedAt.Should().Be(existingAgent.CreatedAt);
@@ -93,7 +95,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
+        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
         action.Should().Throw<Exception>();
     }
 
@@ -107,8 +109,8 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var project = CreateTestProject(services);
 
         // Act
-        var agent1 = factory(systemMessage, [], project);
-        var agent2 = factory(systemMessage, [], project);
+        var agent1 = factory("Agent 1", systemMessage, [], project);
+        var agent2 = factory("Agent 2", systemMessage, [], project);
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);

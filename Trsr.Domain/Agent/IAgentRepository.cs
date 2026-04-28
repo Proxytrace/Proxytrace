@@ -13,11 +13,14 @@ public interface IAgentRepository : IRepository<IAgent>
     /// <summary>
     /// Returns the agent matching the given system message, tools, and endpoint,
     /// creating one if it does not yet exist.
+    /// The <paramref name="nameFactory"/> is invoked only when a new agent is created;
+    /// it should return a short human-readable name for the agent.
     /// </summary>
     Task<IAgent> GetOrCreateAsync(
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project,
+        Func<CancellationToken, Task<string>> nameFactory,
         CancellationToken cancellationToken = default);
 
     /// <summary>

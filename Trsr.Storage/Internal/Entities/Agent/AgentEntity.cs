@@ -12,6 +12,11 @@ internal record AgentEntity : Entity
     public required Guid Project { get; init; }
 
     /// <summary>
+    /// Human-readable name for the agent, generated automatically by an LLM during ingestion.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
     /// SHA-256 fingerprint of system message + tools + model + provider, used for efficient get-or-create lookups.
     /// </summary>
     public required string Fingerprint { get; init; }

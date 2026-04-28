@@ -19,6 +19,7 @@ internal sealed record AgentScenarioFile(
 [UsedImplicitly]
 internal sealed record AgentSeedData(
     Guid Id,
+    string Name,
     Guid EndpointId,
     SystemMessage SystemMessage,
     IReadOnlyList<ToolSpecification> Tools,

@@ -28,6 +28,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project,
+        Func<CancellationToken, Task<string>> nameFactory,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemMessage, tools);
@@ -42,7 +43,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var agent = createNew(systemMessage, tools, project);
+        var name = await nameFactory(cancellationToken);
+        var agent = createNew(name, systemMessage, tools, project);
         return await AddAsync(agent, cancellationToken);
     }
 

@@ -14,6 +14,9 @@ public interface IAgent : IDomainEntity
     /// <summary>The project this agent belongs to.</summary>
     IProject Project { get; }
 
+    /// <summary>Human-readable name for the agent, generated automatically from its system message and tools.</summary>
+    string Name { get; }
+
     /// <summary>The system message that defines this agent's behaviour.</summary>
     SystemMessage SystemMessage { get; }
 
@@ -22,12 +25,14 @@ public interface IAgent : IDomainEntity
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
+        string name,
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(
+        string name,
         IProject project,
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,

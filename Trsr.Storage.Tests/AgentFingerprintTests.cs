@@ -113,8 +113,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var msg     = new SystemMessage("You are a helpful assistant");
         
 
-        var agent1 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, _ => Task.FromResult("Test Agent"), CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, _ => Task.FromResult("Test Agent"), CancellationToken);
 
         agent1.Id.Should().Be(agent2.Id);
     }
@@ -125,10 +125,9 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var services = GetServices();
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
-        
 
-        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, _ => Task.FromResult("Agent A"), CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, _ => Task.FromResult("Agent B"), CancellationToken);
 
         agent1.Id.Should().NotBe(agent2.Id);
     }
@@ -140,12 +139,41 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
         var msg     = new SystemMessage("You are a helpful assistant");
-        
-        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, CancellationToken);
+
+        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, _ => Task.FromResult("Search Agent"), CancellationToken);
 
         agent.SystemMessage.Should().Be(msg);
         agent.Tools.Should().HaveCount(1);
         agent.Project.Id.Should().Be(project.Id);
+    }
+
+    [TestMethod]
+    public async Task GetOrCreateAsync_NameIsSetFromFactory()
+    {
+        var services = GetServices();
+        var repo    = services.GetRequiredService<IAgentRepository>();
+        var project = await CreateProjectAsync(services, CancellationToken);
+        var msg     = new SystemMessage("You are a helpful assistant");
+
+        var agent = await repo.GetOrCreateAsync(msg, [], project, _ => Task.FromResult("My Named Agent"), CancellationToken);
+
+        agent.Name.Should().Be("My Named Agent");
+    }
+
+    [TestMethod]
+    public async Task GetOrCreateAsync_ExistingAgent_NameFactoryNotCalled()
+    {
+        var services = GetServices();
+        var repo    = services.GetRequiredService<IAgentRepository>();
+        var project = await CreateProjectAsync(services, CancellationToken);
+        var msg     = new SystemMessage("You are a helpful assistant");
+
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, _ => Task.FromResult("Original Name"), CancellationToken);
+        var factoryCalled = false;
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, _ => { factoryCalled = true; return Task.FromResult("New Name"); }, CancellationToken);
+
+        factoryCalled.Should().BeFalse();
+        agent2.Name.Should().Be("Original Name");
     }
 
     [TestMethod]
@@ -155,9 +183,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo    = services.GetRequiredService<IAgentRepository>();
         var project = await CreateProjectAsync(services, CancellationToken);
         var msg     = new SystemMessage("You are a helpful assistant");
-        
 
-        var agent = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var agent = await repo.GetOrCreateAsync(msg, [], project, _ => Task.FromResult("Test Agent"), CancellationToken);
         var expected = repo.GetAgentFingerprint(msg, []);
 
         repo.GetAgentFingerprint(agent).Should().Be(expected);

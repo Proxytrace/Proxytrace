@@ -15,6 +15,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly IModelEndpointRepository endpointRepository;
+    private readonly IAgentNamingService namingService;
     private readonly ILogger<AgentCallIngestionService> logger;
 
     public AgentCallIngestionService(
@@ -23,6 +24,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         IModelEndpointRepository endpointRepository,
+        IAgentNamingService namingService,
         ILogger<AgentCallIngestionService> logger)
     {
         this.repository = repository;
@@ -30,6 +32,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         this.parser = parser;
         this.agentRepository = agentRepository;
         this.endpointRepository = endpointRepository;
+        this.namingService = namingService;
         this.logger = logger;
     }
 
@@ -48,7 +51,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
             {
                 return;
             }
-            
+
             var endpoint = await endpointRepository
                 .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
 
@@ -56,6 +59,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                     parsed.SystemMessage,
                     parsed.Tools,
                     project,
+                    (ct) => namingService.GenerateNameAsync(provider, parsed.SystemMessage, parsed.Tools, ct),
                     cancellationToken);
 
             var call = factory(

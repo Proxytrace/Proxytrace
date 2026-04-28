@@ -37,6 +37,10 @@ internal sealed class Module : Autofac.Module
             .As<IOpenAiCallParser>()
             .SingleInstance();
 
+        builder.RegisterType<AgentNamingService>()
+            .As<IAgentNamingService>()
+            .InstancePerDependency();
+
         builder.RegisterType<AgentCallIngestionService>()
             .As<IAgentCallIngestionService>()
             .InstancePerDependency();
