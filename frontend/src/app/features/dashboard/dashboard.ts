@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { StatisticsService } from '../../core/api/statistics.service';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
+import { HealthService } from '../../core/api/health.service';
 import { SummaryDto, AgentCallDto } from '../../core/api/models';
 
 type LoadState = 'loading' | 'loaded' | 'error';
@@ -34,12 +35,13 @@ interface AgentCard {
   selector: 'app-dashboard',
   imports: [RouterLink],
   templateUrl: './dashboard.html',
-  styles: ``,
+  styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
 export class Dashboard implements OnInit {
   readonly Math = Math;
   private readonly statisticsService = inject(StatisticsService);
   private readonly agentCallsService = inject(AgentCallsService);
+  readonly health = inject(HealthService);
 
   readonly summaryState = signal<LoadState>('loading');
   readonly summary = signal<SummaryDto | null>(null);

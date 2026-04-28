@@ -32,7 +32,7 @@ const SUITES_DATA: Suite[] = [
 @Component({
   selector: 'app-suites',
   templateUrl: './suites.html',
-  styles: ``,
+  styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
 export class Suites {
   readonly Math = Math;

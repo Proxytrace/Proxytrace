@@ -7,13 +7,16 @@
         <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0;">Dashboard</h1>
         <span style="
           display:flex; align-items:center; gap:5px;
-          font-size:11px; color:var(--success); font-weight:600;
-          padding:3px 8px; background:var(--success-subtle);
-          border:1px solid rgba(16,185,129,0.2); border-radius:100px;
+          font-size:11px; font-weight:600;
+          padding:3px 8px; border-radius:100px;
           white-space:nowrap; flex-shrink:0;
-        ">
-          <span style="width:6px; height:6px; border-radius:50%; background:var(--success);" class="pulse-dot"></span>
-          Proxy online
+        " [style.color]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"
+           [style.background]="health.isOnline() ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
+           [style.border]="health.isOnline() ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)'">
+          <span style="width:6px; height:6px; border-radius:50%;"
+                [class.pulse-dot]="health.isOnline()"
+                [style.background]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"></span>
+          {{ health.isOnline() ? 'Proxy online' : 'Proxy offline' }}
         </span>
       </div>
       <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Overview of your agent tracing and evaluation activity.</p>
