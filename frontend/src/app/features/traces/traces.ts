@@ -125,8 +125,7 @@ export class Traces implements OnInit, OnDestroy {
   }
 
   agentLabel(agent: AgentDto): string {
-    const text = agent.systemMessage.trim();
-    return text.length > 48 ? text.slice(0, 48) + '…' : text || agent.id.slice(0, 8);
+    return agent.name || agent.id.slice(0, 8);
   }
 
   openTrace(t: AgentCallDto) { this.selectedTrace.set(t); }

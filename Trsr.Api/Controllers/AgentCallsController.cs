@@ -54,6 +54,7 @@ public class AgentCallsController : ControllerBase
     private static AgentCallDto ToDto(IAgentCall c) => new(
         c.Id,
         c.Agent.Id,
+        c.Agent.Name,
         c.Endpoint.Model.Name,
         c.Endpoint.Provider.Name,
         c.Request.Messages.Select(m => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),

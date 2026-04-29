@@ -7,6 +7,11 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal record AgentEntity : Entity
 {
     /// <summary>
+    /// <see cref="Trsr.Domain.Agent.IAgent.Name"/>
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
     /// <see cref="Trsr.Domain.Agent.IAgent.Project"/>
     /// </summary>
     public required Guid Project { get; init; }

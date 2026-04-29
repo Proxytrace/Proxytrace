@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 using Trsr.Testing;
@@ -23,12 +24,22 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         base.ConfigureContainer(builder);
         builder.RegisterModule<Module>();
         builder.RegisterModule<Domain.Module>();
+        builder.RegisterInstance<IAgentNameGenerator>(new StubNameGenerator()).SingleInstance();
+    }
+
+    private sealed class StubNameGenerator : IAgentNameGenerator
+    {
+        public Task<string> GenerateNameAsync(SystemMessage systemMessage, IModelEndpoint endpoint, CancellationToken cancellationToken = default)
+            => Task.FromResult("Test Agent");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private static async Task<IProject> CreateProjectAsync(IServiceProvider services, CancellationToken ct)
         => await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(ct);
+
+    private static async Task<IModelEndpoint> CreateEndpointAsync(IServiceProvider services, CancellationToken ct)
+        => await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().CreateAsync(ct);
 
     private static ToolSpecification MakeTool(string name)
         => new(name, $"{name} description", ToolArguments.None);
@@ -108,13 +119,13 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     public async Task GetOrCreateAsync_SameInputs_ReturnsSameAgent()
     {
         var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        var msg     = new SystemMessage("You are a helpful assistant");
-        
+        var repo     = services.GetRequiredService<IAgentRepository>();
+        var project  = await CreateProjectAsync(services, CancellationToken);
+        var endpoint = await CreateEndpointAsync(services, CancellationToken);
+        var msg      = new SystemMessage("You are a helpful assistant");
 
-        var agent1 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
 
         agent1.Id.Should().Be(agent2.Id);
     }
@@ -123,12 +134,12 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     public async Task GetOrCreateAsync_DifferentSystemMessage_CreatesSeparateAgent()
     {
         var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        
+        var repo     = services.GetRequiredService<IAgentRepository>();
+        var project  = await CreateProjectAsync(services, CancellationToken);
+        var endpoint = await CreateEndpointAsync(services, CancellationToken);
 
-        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, endpoint, CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, endpoint, CancellationToken);
 
         agent1.Id.Should().NotBe(agent2.Id);
     }
@@ -137,12 +148,14 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     public async Task GetOrCreateAsync_CreatedAgentHasCorrectFields()
     {
         var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        var msg     = new SystemMessage("You are a helpful assistant");
-        
-        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, CancellationToken);
+        var repo     = services.GetRequiredService<IAgentRepository>();
+        var project  = await CreateProjectAsync(services, CancellationToken);
+        var endpoint = await CreateEndpointAsync(services, CancellationToken);
+        var msg      = new SystemMessage("You are a helpful assistant");
 
+        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, endpoint, CancellationToken);
+
+        agent.Name.Should().Be("Test Agent");
         agent.SystemMessage.Should().Be(msg);
         agent.Tools.Should().HaveCount(1);
         agent.Project.Id.Should().Be(project.Id);
@@ -152,12 +165,12 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     public async Task GetAgentFingerprint_OnAgent_MatchesComputedFingerprint()
     {
         var services = GetServices();
-        var repo    = services.GetRequiredService<IAgentRepository>();
-        var project = await CreateProjectAsync(services, CancellationToken);
-        var msg     = new SystemMessage("You are a helpful assistant");
-        
+        var repo     = services.GetRequiredService<IAgentRepository>();
+        var project  = await CreateProjectAsync(services, CancellationToken);
+        var endpoint = await CreateEndpointAsync(services, CancellationToken);
+        var msg      = new SystemMessage("You are a helpful assistant");
 
-        var agent = await repo.GetOrCreateAsync(msg, [], project, CancellationToken);
+        var agent    = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
         var expected = repo.GetAgentFingerprint(msg, []);
 
         repo.GetAgentFingerprint(agent).Should().Be(expected);

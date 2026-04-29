@@ -52,6 +52,7 @@ public class AgentsController : ControllerBase
         a.Id,
         a.Project.Id,
         a.Project.Name,
+        a.Name,
         GetSystemMessageText(a.SystemMessage),
         a.Tools.Select(t => new ToolSpecificationDto(t.Name, t.Description)).ToArray(),
         a.CreatedAt,

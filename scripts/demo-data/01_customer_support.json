@@ -2,6 +2,7 @@
   "Agent": {
     "Id": "10000000-0000-0000-0000-000000000000",
     "EndpointId": "f0000000-0000-0000-0000-000000000020",
+    "Name": "TechShop Support",
     "SystemMessage": {
       "Contents": [{"Text": "You are a helpful customer support agent for TechShop, an online electronics retailer. Help customers with order tracking, refunds, and product availability. Always be professional, empathetic, and solution-focused."}]
     },

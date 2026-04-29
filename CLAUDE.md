@@ -14,7 +14,7 @@ All work follows an issue-based flow. Adhere to these steps in order:
 2. **Clarify ambiguities before coding.** Read the issue in full. If anything is unclear — scope, expected behaviour, edge cases, design decisions — ask the user before writing any code. Do not make assumptions and discover them wrong mid-implementation.
 3. **Sync and branch.** Pull the latest `master` (`git fetch origin && git checkout master && git pull`), then create a feature branch named `[issue-no]-short-summary` (e.g. `42-add-trace-filter`).
 4. **Develop on the feature branch.** Make all commits there; never commit directly to `master`.
-5. **Push and open a PR only when the user explicitly approves the work.** Push the branch and create a PR with `gh pr create`, linking it to the issue (include `Closes #[issue-no]` in the PR body).
+5. (Backend Only) **Write tests.** For any new feature or bug fix, write a failing test that captures the expected behaviour before implementing the code to make it pass. This ensures correctness and prevents regressions.
 
 ## Working on UI
 

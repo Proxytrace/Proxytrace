@@ -13,6 +13,7 @@ export interface MessageDto {
 export interface AgentCallDto {
   id: string;
   agentId: string | null;
+  agentName: string | null;
   model: string;
   provider: string;
   request: MessageDto[];
@@ -32,6 +33,7 @@ export interface AgentDto {
   id: string;
   projectId: string;
   projectName: string;
+  name: string;
   systemMessage: string;
   tools: { name: string; description: string }[];
   createdAt: string;

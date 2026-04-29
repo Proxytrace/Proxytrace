@@ -5,6 +5,7 @@ namespace Trsr.Api.Dto.AgentCalls;
 public record AgentCallDto(
     Guid Id,
     Guid? AgentId,
+    string? AgentName,
     string Model,
     string Provider,
     IReadOnlyList<AgentCallMessageDto> Request,
