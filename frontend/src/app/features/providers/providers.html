@@ -41,7 +41,12 @@
                 {{ p.name[0] }}
               </div>
               <div style="min-width:0; flex:1;">
-                <div style="font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <div style="font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</div>
+                  <span style="flex-shrink:0; padding:1px 6px; border-radius:100px; font-size:10px; font-weight:600; letter-spacing:0.02em;"
+                        [style.background]="providerKindColor(p.kind) + '22'"
+                        [style.color]="providerKindColor(p.kind)">{{ providerKindLabel(p.kind) }}</span>
+                </div>
                 <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'JetBrains Mono',monospace;">{{ p.organizationName }}</div>
               </div>
             </div>
@@ -67,6 +72,30 @@
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
                 <h2 style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin:0;">{{ provider.name }}</h2>
+                @if (!editingKind()) {
+                  <button (click)="openEditKind()" title="Change provider kind"
+                          style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:600; letter-spacing:0.02em; cursor:pointer; transition:filter 0.15s;"
+                          onmouseenter="this.style.filter='brightness(1.2)'" onmouseleave="this.style.filter='brightness(1)'"
+                          [style.background]="providerKindColor(provider.kind) + '22'"
+                          [style.color]="providerKindColor(provider.kind)">{{ providerKindLabel(provider.kind) }}</button>
+                } @else {
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <select [ngModel]="editKindValue()" (ngModelChange)="editKindValue.set($event)"
+                            style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:600; outline:none; cursor:pointer;"
+                            [style.background]="providerKindColor(editKindValue()) + '22'"
+                            [style.color]="providerKindColor(editKindValue())"
+                            [style.box-shadow]="'inset 0 0 0 1px ' + providerKindColor(editKindValue()) + '44'">
+                      @for (opt of providerKindOptions; track opt.value) {
+                        <option [value]="opt.value" style="background:var(--bg-card); color:var(--text-primary);">{{ opt.label }}</option>
+                      }
+                    </select>
+                    <button (click)="submitEditKind()" [disabled]="savingKind()"
+                            style="padding:2px 10px; border-radius:100px; font-size:10.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); transition:opacity 0.15s;"
+                            [style.opacity]="savingKind() ? '0.5' : '1'">{{ savingKind() ? '…' : 'Save' }}</button>
+                    <button (click)="cancelEditKind()"
+                            style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+                  </div>
+                }
                 <span style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; background:var(--bg-card-2); color:var(--text-muted);">{{ provider.organizationName }}</span>
               </div>
               <div style="font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{ provider.endpoint }}</div>
@@ -375,6 +404,15 @@
                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider Kind <span style="color:var(--danger);">*</span></label>
+          <select [ngModel]="newProvider().kind" (ngModelChange)="newProvider.update(v => ({...v, kind: $event}))"
+                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;">
+            @for (opt of providerKindOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
           <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Organization</label>
           <select [ngModel]="newProvider().organizationId" (ngModelChange)="newProvider.update(v => ({...v, organizationId: $event}))"
                   style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;">
@@ -388,9 +426,9 @@
         <button (click)="cancelNewProvider()"
                 style="padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
         <button (click)="submitNewProvider()"
-                [disabled]="savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId"
+                [disabled]="savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId || newProvider().kind === ModelProviderKind.Unknown"
                 style="padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
-                [style.opacity]="(savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId) ? '0.5' : '1'">
+                [style.opacity]="(savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId || newProvider().kind === ModelProviderKind.Unknown) ? '0.5' : '1'">
           {{ savingProvider() ? 'Saving…' : 'Add Provider' }}
         </button>
       </div>
