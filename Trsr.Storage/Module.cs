@@ -32,6 +32,7 @@ public sealed class Module : Autofac.Module
         base.Load(builder);
 
         builder.RegisterModule<Domain.Module>();
+        builder.RegisterModule<Application.Module>();
 
         builder.RegisterInstance(configuration).SingleInstance();
 

@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
 namespace Trsr.Domain.Message;
@@ -26,5 +28,38 @@ public sealed record SystemMessage : Message
     public SystemMessage(string prompt)
         : base(Role.System, [Content.FromText(prompt)])
     {
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (Content content in Contents)
+        {
+            if (content.Kind != ContentKind.Text)
+            {
+                yield return new ValidationResult(
+                    $"SystemMessage content must be of kind Text. Found content with kind {content.Kind}.",
+                    [nameof(Contents)]);
+            }
+            
+            foreach (var validationResult in content.Validate(validationContext))
+            {
+                yield return validationResult;
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        foreach (var content in Contents)
+        {
+            if (content.Text != null)
+            {
+                sb.AppendLine(content.Text);
+            }
+        }
+        return sb.ToString().TrimEnd();
     }
 }
