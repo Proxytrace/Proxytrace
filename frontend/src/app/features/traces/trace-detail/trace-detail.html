@@ -298,53 +298,84 @@
     @if (activeTab() === 'Messages') {
       <div style="display:flex; flex-direction:column; gap:10px;">
 
-        @for (msg of allMessages; track $index) {
+        @for (item of conversationItems; track $index) {
 
-          <!-- Tool result messages -->
-          @if (isToolRoleMsg(msg)) {
-            <div class="result-block" style="border-radius:10px; border:1px solid rgba(6,182,212,0.25); overflow:hidden;">
-              <div style="display:flex; align-items:center; gap:8px; padding:9px 13px;
-                          background:rgba(6,182,212,0.08); cursor:pointer;"
-                   (click)="toggleMsg($index)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(6,182,212,0.8)"
-                     stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline [attr.points]="isMsgExpanded($index) ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
-                </svg>
-                <span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
-                              color:rgba(6,182,212,0.9);">Tool Result</span>
-              </div>
-              @if (isMsgExpanded($index)) {
-                <pre style="margin:0; padding:12px 14px; font-size:11.5px; line-height:1.6;
-                             color:var(--text-primary); overflow-x:auto; white-space:pre-wrap;
-                             word-break:break-all; background:var(--bg-card);">{{msg.content}}</pre>
-              }
-            </div>
-
-          <!-- Regular messages -->
-          } @else {
+          <!-- Regular message bubble -->
+          @if (item.kind === 'message') {
             <div style="display:flex; flex-direction:column; gap:5px;">
               <div style="display:flex; align-items:center; gap:7px;">
                 <span style="width:6px; height:6px; border-radius:50%; flex-shrink:0;"
-                      [style.background]="roleColor(msg.role)"></span>
+                      [style.background]="roleColor(item.msg.role)"></span>
                 <span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;"
-                      [style.color]="roleColor(msg.role)">{{roleLabel(msg.role)}}</span>
+                      [style.color]="roleColor(item.msg.role)">{{roleLabel(item.msg.role)}}</span>
               </div>
               <div style="margin-left:13px; padding:11px 13px; border-radius:10px;
                           background:var(--bg-card); border:1px solid var(--hairline);
                           font-size:13px; line-height:1.65; color:var(--text-primary);
                           white-space:pre-wrap; word-break:break-word;"
-                   [style.border-left]="'2px solid ' + roleColor(msg.role) + '55'">
-                @if (msg.content) {
-                  {{msg.content}}
+                   [style.border-left]="'2px solid ' + roleColor(item.msg.role) + '55'">
+                @if (item.msg.content) {
+                  {{item.msg.content}}
                 } @else {
                   <span style="color:var(--text-muted); font-style:italic;">empty</span>
                 }
               </div>
             </div>
           }
+
+          <!-- Tool invocation group: one card per call+result pair -->
+          @if (item.kind === 'tool-group') {
+            @for (inv of item.invocations; track inv.id) {
+              <div style="margin-left:13px; border-radius:10px; overflow:hidden;
+                          border:1px solid rgba(99,102,241,0.25);">
+                <!-- Header row (always visible, click to expand) -->
+                <div style="display:flex; align-items:center; gap:9px; padding:9px 13px;
+                            background:rgba(99,102,241,0.08); cursor:pointer;"
+                     (click)="toggleInvocation(inv.id)">
+                  <!-- Lightning bolt icon -->
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="rgba(99,102,241,0.8)" stroke="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  </svg>
+                  <span style="font-size:11.5px; font-weight:500; color:rgba(99,102,241,0.95); font-family:monospace; flex:1;">
+                    {{inv.name}}
+                  </span>
+                  <span class="mono" style="font-size:10px; color:var(--text-muted);">{{inv.id}}</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(99,102,241,0.6)"
+                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline [attr.points]="isInvocationExpanded(inv.id) ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+                  </svg>
+                </div>
+
+                <!-- Expanded body: arguments + result side by side via sections -->
+                @if (isInvocationExpanded(inv.id)) {
+                  <div style="background:var(--bg-card);">
+                    <!-- Arguments section -->
+                    <div style="padding:10px 13px 8px; border-top:1px solid rgba(99,102,241,0.15);">
+                      <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+                                  color:rgba(99,102,241,0.6); margin-bottom:6px;">Arguments</div>
+                      <pre style="margin:0; font-size:11.5px; line-height:1.6; color:var(--text-primary);
+                                  overflow-x:auto; white-space:pre-wrap; word-break:break-all;"
+                           [innerHTML]="sanitizer.bypassSecurityTrustHtml(highlightedJson(toolRequestArgs(inv)))"></pre>
+                    </div>
+                    <!-- Result section -->
+                    <div style="padding:8px 13px 10px; border-top:1px solid rgba(99,102,241,0.1);">
+                      <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+                                  color:rgba(99,102,241,0.6); margin-bottom:6px;">Result</div>
+                      @if (inv.result) {
+                        <pre style="margin:0; font-size:11.5px; line-height:1.6; color:var(--text-primary);
+                                    overflow-x:auto; white-space:pre-wrap; word-break:break-all;">{{inv.result}}</pre>
+                      } @else {
+                        <span style="font-size:12px; color:var(--text-muted); font-style:italic;">no result</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
         }
 
-        <!-- Assistant response -->
+        <!-- Final assistant response -->
         <div style="display:flex; flex-direction:column; gap:5px;">
           <div style="display:flex; align-items:center; gap:7px;">
             <span style="width:6px; height:6px; border-radius:50%; flex-shrink:0;"
