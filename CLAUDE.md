@@ -6,6 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Trsr is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
+## Development Workflow
+
+All work follows an issue-based flow. Adhere to these steps in order:
+
+1. **Start from a GitHub issue.** If the user names a specific issue, use it. If not, search existing issues with `gh issue list` for a matching one. If none exists, create one with `gh issue create` before doing any work.
+2. **Clarify ambiguities before coding.** Read the issue in full. If anything is unclear — scope, expected behaviour, edge cases, design decisions — ask the user before writing any code. Do not make assumptions and discover them wrong mid-implementation.
+3. **Sync and branch.** Pull the latest `master` (`git fetch origin && git checkout master && git pull`), then create a feature branch named `[issue-no]-short-summary` (e.g. `42-add-trace-filter`).
+4. **Develop on the feature branch.** Make all commits there; never commit directly to `master`.
+5. **Push and open a PR only when the user explicitly approves the work.** Push the branch and create a PR with `gh pr create`, linking it to the issue (include `Closes #[issue-no]` in the PR body).
+
 ## Working on UI
 
 When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
@@ -32,7 +42,7 @@ dotnet ef database update
 ### Frontend (Angular 21, inside `frontend/`)
 ```bash
 npm install
-npm start           # Dev server on http://localhost:4200
+npm start           # Dev server on http://localhost:4201
 npm run build       # Production build
 npm test            # Vitest unit tests
 ```
@@ -51,62 +61,73 @@ Trsr.Api  →  Trsr.Domain  →  Trsr.Common
 Trsr.Storage  →  Trsr.Domain  →  Trsr.Common
 ```
 
-- **Trsr.Api** — ASP.NET Core controllers, DTOs, services (ingestion, test runner, proxy)
+- **Trsr.Api** — ASP.NET Core controllers, DTOs, services (ingestion, test runner, OpenAI proxy)
 - **Trsr.Domain** — Business entities, interfaces, value objects, repository contracts
 - **Trsr.Storage** — EF Core entities, configurations, mappers, migrations
 - **Trsr.Common** — Shared utilities: validation helpers, async extensions, DI extensions
 - **Trsr.Testing** — `BaseTest<TModule>` and shared test infrastructure
 - **frontend/** — Angular 21 standalone components with Tailwind CSS 4
 
-The API serves the compiled Angular app in production (`wwwroot/`).
+DI is wired with Autofac. `Trsr.Domain.Module` and `Trsr.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations. The API serves the compiled Angular app in production (`wwwroot/`).
 
 ## Domain Entity Pattern
 
-Every domain concept requires **six files**:
+Every domain concept requires **five files**:
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `I[Entity]Data.cs` | `Trsr.Domain/[Entity]/` | Properties interface (extends `IDomainEntityData`) |
-| `I[Entity].cs` | `Trsr.Domain/[Entity]/` | Entity interface + factory delegates (extends `IDomainEntity, I[Entity]Data`) |
-| `[Entity].cs` | `Trsr.Domain/[Entity]/Internal/` | Immutable record implementing `I[Entity]`, extends `DomainEntity` |
+| `I[Entity].cs` | `Trsr.Domain/[Entity]/` | Public interface declaring properties + `CreateNew`/`CreateExisting` delegates (extends `IDomainEntity`) |
+| `[Entity].cs` | `Trsr.Domain/[Entity]/Internal/` | Immutable `internal record` implementing `I[Entity]`, extends `DomainEntity` |
 | `[Entity]Generator.cs` | `Trsr.Domain/[Entity]/Internal/` | Test data factory, extends `DomainEntityGenerator<I[Entity]>` |
-| `[Entity]Entity.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | EF record with `[StoredDomainEntity(typeof(I[Entity]))]` |
-| `[Entity]Config.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | Extends `AbstractEntityConfiguration<T>`, implements `IMapper<I[Entity], [Entity]Entity>` |
+| `[Entity]Entity.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | EF `internal record` extending `Entity`, decorated with `[StoredDomainEntity(typeof(I[Entity]))]` |
+| `[Entity]Config.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | Extends `AbstractEntityConfiguration<[Entity]Entity>`, implements `IMapper<I[Entity], [Entity]Entity>` |
 
-A custom `[Entity]Repository.cs` is only needed for N:M relationships or non-trivial queries.
+A `I[Entity]Repository.cs` interface (in `Trsr.Domain/[Entity]/`) plus `[Entity]Repository.cs` (in `Trsr.Storage/Internal/Entities/[Entity]/`) is only needed for N:M relationships or non-trivial queries. Decorate the storage repository with `[UsedImplicitly]` so reflection-based DI picks it up.
 
-**No manual DI registration is ever needed.** `Trsr.Domain.Module` and `Trsr.Storage.Module` auto-register everything via reflection on startup.
+`IDomainEntity` already provides `Id`, `CreatedAt`, `UpdatedAt` — do not redeclare them and do not introduce a separate `I[Entity]Data` interface.
 
 ### Factory delegates
-Each domain interface defines exactly two delegates:
+Each domain interface declares exactly two delegates. `CreateExisting` takes the same positional properties as `CreateNew` plus a trailing `IDomainEntityData existing`:
 ```csharp
-public delegate IUser CreateNew(string name);         // for new entities
-public delegate IUser CreateExisting(IUserData data); // for loading from storage
+public delegate IProject CreateNew(string name, IOrganization organization);
+public delegate IProject CreateExisting(string name, IOrganization organization, IDomainEntityData existing);
 ```
 
 ### Domain entity constructors
+Mirror the delegate signatures one-to-one:
 ```csharp
-// New entity — sets new Id, CreatedAt, UpdatedAt
-public User(string name) { Name = name; }
+// New — base ctor assigns fresh Id, CreatedAt, UpdatedAt
+public Project(string name, IOrganization organization)
+{
+    Name = name;
+    Organization = organization;
+}
 
-// Existing entity — copies Id, CreatedAt, UpdatedAt from data
-public User(IUserData existing) : base(existing) { Name = existing.Name; }
+// Existing — base(existing) copies Id, CreatedAt, UpdatedAt
+public Project(string name, IOrganization organization, IDomainEntityData existing) : base(existing)
+{
+    Name = name;
+    Organization = organization;
+}
 ```
 
 ### Validation
-Override `Validate()` on every domain entity and call `base.Validate()` first. Use helpers from `Trsr.Common.Validation`:
+Domain entities are validated by Autofac on activation (`OnActivated` runs `Validator.ValidateObject`) and again before repository `Add`/`Update`. Override `Validate(ValidationContext)` and yield `base.Validate(...)` first. Use helpers from `Trsr.Common.Validation`:
 ```csharp
-Validation.NotNullOrWhitespace(Name, nameof(Name))
-Validation.NotDefault(OrganizationId, nameof(OrganizationId))
+Validation.NotNullOrWhiteSpace(Name, nameof(Name))   // note: capital S in "WhiteSpace"
+Validation.NotNull(Organization, nameof(Organization))
+Validation.NotDefault(SomeGuid, nameof(SomeGuid))
 Validation.InPast(CreatedAt, nameof(CreatedAt))
 Validation.NotBefore(UpdatedAt, CreatedAt, nameof(UpdatedAt))
 ```
+For referenced entities, cascade validation: `foreach (var r in Organization.Validate(validationContext)) yield return r;`.
 
 ### Foreign key conventions
-- **1:N** — store parent key as `Guid` property in domain; `HasOne<>().WithMany().HasForeignKey()` in config
-- **N:M** — store as `IReadOnlyCollection<Guid>` in domain; storage entity has navigation property + computed property; requires junction entity and custom repository overriding Add/Update
-- **Delete behavior** — use `Restrict` for optional references, `Cascade` for owned children
-- Always `builder.Ignore(e => e.ComputedCollectionProperty)` for computed properties
+The boundary is sharp: **domain layer references the full entity, storage layer holds the `Guid`.**
+
+- **1:N** — domain holds the parent as `IOrganization Organization { get; }`; storage holds `Guid Organization`; mapper resolves the parent via the parent's repository in `Map(stored, ct)`. Configure with `HasOne<OrganizationEntity>().WithMany().HasForeignKey(e => e.Organization).OnDelete(DeleteBehavior.Restrict)`.
+- **N:M** — domain holds `IReadOnlyCollection<IUser> Users { get; }`; storage uses a junction entity (e.g. `OrganizationUserEntity` with `OrganizationId`/`UserId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Trsr.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `OrganizationRepository`).
+- **Delete behavior** — `Restrict` for optional references, `Cascade` for owned children.
 
 ## Testing Conventions
 
@@ -138,28 +159,23 @@ public class MyTests : BaseTest<Module>
 - Override `ConfigureContainer(ContainerBuilder)` to customize the DI container for a test class
 - Use `generator.GenerateAsync()` for in-memory-only test objects; `CreateAsync()` to persist
 
-**Exception assertions:**
+**Exception assertions** — use `FluentActions.Invoking(...).Should().ThrowAsync<T>()`:
 ```csharp
-// Async
 await FluentActions
     .Invoking(() => repo.UpdateAsync(entity, CancellationToken))
     .Should().ThrowAsync<EntityNotFoundException>();
-
-// Sync
-var ex = await Assert.ThrowsAsync<EntityNotFoundException>(
-    () => repo.GetAsync(nonExistentId));
-ex.Should().NotBeNull();
 ```
 
 ## Key Conventions
 
 - All timestamps are `DateTimeOffset`, never `DateTime`
-- Domain entities are immutable records — no setters on domain-layer properties
+- Domain entities are immutable `internal record` types — no setters on domain-layer properties
+- Domain interfaces are `public`; implementations and storage entities are `internal`
 - Repositories return domain entities (`I[Entity]`), never storage entities
 - Always pass `CancellationToken` to every async method
-- Use `IReadOnlyCollection<Guid>` for FK collections in domain interfaces, not navigation properties
-- Storage entities use `required` properties with `init` accessors
-- Decorate custom repositories with `[UsedImplicitly]` so Autofac discovers them
+- Domain references hold the related entity (e.g. `IOrganization`, `IReadOnlyCollection<IUser>`); storage entities hold the `Guid` foreign key
+- Storage entities use `required` properties with `init` accessors and extend `Entity`
+- Decorate custom storage repositories with `[UsedImplicitly]` so reflection-based DI discovers them
 
 ## Database Configuration
 
@@ -173,11 +189,21 @@ Provider is auto-detected from the connection string in `Trsr.Api/appsettings.js
 
 SQLite is recommended for local development (zero config). See `DATABASE.md` for full details.
 
+## Frontend Architecture
+
+Angular 21 with strict standalone components — no NgModules. Layout:
+
+- `src/app/core/api/` — typed HTTP services (`agents.service.ts`, `agent-calls.service.ts`, `providers.service.ts`, `statistics.service.ts`) and shared `models.ts`
+- `src/app/core/shell/` — top-level chrome (nav, layout)
+- `src/app/features/` — one folder per route: `dashboard`, `traces`, `agents`, `suites`, `runs`, `providers`. Each is a standalone component, lazy-loaded via `loadComponent` in `app.routes.ts`
+- Tailwind CSS 4 via `@tailwindcss/vite`; component styles use `.scss` or `.css`
+- Tests use Vitest (`*.spec.ts`) — not Karma/Jasmine
+
+Backend endpoints are reached through the dev proxy when running `./dev.sh` (frontend 4201 → backend 5001).
+
 ## Reference Implementations
 
-When implementing a new entity, refer to existing ones:
-- **Simple entity (no relationships):** `User`
-- **1:N relationship:** `Project` → `Organization`
-- **N:M relationship:** `Organization` ↔ `User`
-
-The complete step-by-step checklist for new entities is in `SKILL_CREATE_DOMAIN_ENTITY.md`.
+When implementing a new entity, the existing ones are the source of truth:
+- **No relationships:** `User`
+- **1:N relationship:** `Project` references one `IOrganization`
+- **N:M relationship:** `Organization` holds `IReadOnlyCollection<IUser>`, junction is `OrganizationUserEntity`, custom `OrganizationRepository` overrides `UpdateRelationsAsync`
