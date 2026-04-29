@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, HostListener, signal, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AgentCallDto, MessageDto, TestSuiteDto } from '../../../core/api/models';
 import { TestSuitesService } from '../../../core/api/test-suites.service';
@@ -68,6 +69,7 @@ export class TraceDetail {
 
   private readonly testSuitesService = inject(TestSuitesService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
 
   readonly tabs: Tab[] = ['Messages', 'Raw JSON', 'Metadata'];
 
@@ -128,6 +130,12 @@ export class TraceDetail {
       this.copiedId.set(true);
       setTimeout(() => this.copiedId.set(false), 1500);
     });
+  }
+
+  openAgent() {
+    if (!this.trace.agentId) return;
+    this.closeDialog.emit();
+    this.router.navigate(['/agents'], { queryParams: { id: this.trace.agentId } });
   }
 
   // ── Conversation helpers ───────────────────────────────────────────────────

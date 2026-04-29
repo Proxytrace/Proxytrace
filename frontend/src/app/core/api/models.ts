@@ -29,15 +29,30 @@ export interface AgentCallDto {
   updatedAt: string;
 }
 
+export interface ToolArgumentDto {
+  name: string;
+  description: string | null;
+  type: string;
+  isRequired: boolean;
+  enumValues: string[] | null;
+}
+
+export interface ToolSpecDto {
+  name: string;
+  description: string;
+  arguments: ToolArgumentDto[];
+}
+
 export interface AgentDto {
   id: string;
   projectId: string;
   projectName: string;
   name: string;
   systemMessage: string;
-  tools: { name: string; description: string }[];
+  tools: ToolSpecDto[];
   createdAt: string;
   updatedAt: string;
+  lastUsedAt: string | null;
 }
 
 export interface SummaryDto {

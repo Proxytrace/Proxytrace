@@ -83,4 +83,16 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var items = await Map(stored, cancellationToken);
         return (items, total);
     }
+
+    public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var result = await context.Set<AgentCallEntity>()
+            .AsNoTracking()
+            .GroupBy(e => e.AgentId)
+            .Select(g => new { AgentId = g.Key, LastUsedAt = g.Max(e => e.CreatedAt) })
+            .ToDictionaryAsync(x => x.AgentId, x => x.LastUsedAt, cancellationToken);
+        return result;
+    }
 }
