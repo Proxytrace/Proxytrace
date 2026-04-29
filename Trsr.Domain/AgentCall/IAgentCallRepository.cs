@@ -13,4 +13,11 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the timestamp of the most recent call for each agent, keyed by agent ID.
+    /// Agents with no calls are omitted.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
+        CancellationToken cancellationToken = default);
 }

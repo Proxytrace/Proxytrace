@@ -1,151 +1,117 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AgentDto, ToolSpecDto } from '../../core/api/models';
+import { AgentsService } from '../../core/api/agents.service';
 
-interface AgentTool {
-  name: string; description: string; category: 'read' | 'write' | 'system';
-}
-interface AgentVersion {
-  version: string; label: string; date: string; change: string; active: boolean;
-}
-interface Agent {
-  id: string; name: string; description: string; model: string;
-  runs: number; passRate: number | null; lastRun: string;
-  tags: string[]; tools: AgentTool[];
-  systemPrompt: string;
-  versions: AgentVersion[];
-  avgLatency: string; avgCost: number;
-  totalTokensIn: number; totalTokensOut: number;
-}
+const PALETTE = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#14b8a6'];
 
-const AGENT_COLORS: Record<string, string> = {
-  'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
-  'Ticket Triage': '#10b981', 'Classifier': '#f59e0b',
+const TYPE_COLORS: Record<string, string> = {
+  string: '#67e8f9',
+  integer: '#fbbf24',
+  number: '#fbbf24',
+  boolean: '#c4b5fd',
+  enum: '#6ee7b7',
+  object: '#f9a8d4',
+  array: '#86efac',
 };
-const MODEL_COLORS: Record<string, string> = {
-  'gpt-4o': '#8b5cf6', 'gpt-4o-mini': '#06b6d4',
-  'gpt-3.5-turbo': '#f59e0b', 'claude-3.5-sonnet': '#10b981',
-};
-
-const AGENTS_DATA: Agent[] = [
-  {
-    id: 'agent-cs', name: 'Customer Support', description: 'Handles order inquiries, refunds, billing questions and escalations via tool calls.',
-    model: 'gpt-4o', runs: 11, passRate: 76, lastRun: '2h ago',
-    tags: ['production', 'tool-use', 'escalation'],
-    avgLatency: '2.1s', avgCost: 0.34, totalTokensIn: 145000, totalTokensOut: 68000,
-    tools: [
-      { name: 'lookup_order', description: 'Fetch order details by ID or email.', category: 'read' },
-      { name: 'issue_refund', description: 'Initiate a full or partial refund for an order.', category: 'write' },
-      { name: 'escalate_ticket', description: 'Escalate a case to tier-2 support with priority flag.', category: 'write' },
-      { name: 'get_shipping_status', description: 'Query carrier API for live tracking status.', category: 'read' },
-      { name: 'update_order_note', description: 'Append an internal note to the order record.', category: 'write' },
-    ],
-    systemPrompt: `You are a customer support agent for Trsr. Your goal is to resolve customer issues efficiently and empathetically.
-
-Always follow this workflow:
-1. Use lookup_order to fetch the customer's order before making any changes.
-2. Acknowledge the customer's frustration before proposing a solution.
-3. For refunds above $200, escalate via escalate_ticket with priority=P1.
-4. Never promise delivery dates — use get_shipping_status and report facts.
-
-Tone: professional, warm, concise. Avoid corporate jargon.`,
-    versions: [
-      { version: 'v1.3', label: 'current', date: 'Apr 22', change: 'Added escalate_ticket tool, improved refund logic', active: true },
-      { version: 'v1.2', label: '', date: 'Apr 18', change: 'Rewrote empathy handling instructions', active: false },
-      { version: 'v1.1', label: '', date: 'Apr 12', change: 'Added get_shipping_status tool', active: false },
-      { version: 'v1.0', label: 'initial', date: 'Apr 8', change: 'Initial version', active: false },
-    ],
-  },
-  {
-    id: 'agent-code', name: 'Code Helper', description: 'Localises bugs and proposes fixes by searching and reading source files before acting.',
-    model: 'gpt-4o-mini', runs: 5, passRate: 73, lastRun: '4h ago',
-    tags: ['dev-tools', 'tool-use', 'csharp'],
-    avgLatency: '3.4s', avgCost: 0.08, totalTokensIn: 88000, totalTokensOut: 42000,
-    tools: [
-      { name: 'search_code', description: 'Full-text search across the repository.', category: 'read' },
-      { name: 'read_file', description: 'Read the contents of a specific file.', category: 'read' },
-      { name: 'propose_fix', description: 'Return a structured diff for a code change.', category: 'system' },
-    ],
-    systemPrompt: `You are a code debugging assistant. You MUST follow the tool call sequence exactly:
-1. ALWAYS call search_code first to find relevant files.
-2. ALWAYS call read_file to verify context before proposing a fix.
-3. Only then call propose_fix with a minimal, targeted change.
-
-Never skip step 1 or 2. Skipping these steps is evaluated as a failure.`,
-    versions: [
-      { version: 'v1.1', label: 'current', date: 'Apr 19', change: 'Enforced strict tool-call ordering in prompt', active: true },
-      { version: 'v1.0', label: 'initial', date: 'Apr 15', change: 'Initial version', active: false },
-    ],
-  },
-  {
-    id: 'agent-triage', name: 'Ticket Triage', description: 'Assigns P0–P3 priority and routes tickets to the correct team.',
-    model: 'claude-3.5-sonnet', runs: 4, passRate: 78, lastRun: '6h ago',
-    tags: ['production', 'classification', 'routing'],
-    avgLatency: '1.8s', avgCost: 0.51, totalTokensIn: 72000, totalTokensOut: 28000,
-    tools: [
-      { name: 'get_account_tier', description: 'Fetch account tier (enterprise / pro / free).', category: 'read' },
-      { name: 'route_ticket', description: 'Assign ticket to team with priority label.', category: 'write' },
-    ],
-    systemPrompt: `You are a ticket triage agent. Assign every incoming ticket a priority (P0–P3) and route it to the correct team.
-
-Priority rules:
-- P0: Data loss, security incident, full service outage
-- P1: Major feature broken for enterprise customer
-- P2: Bug with workaround, billing issue
-- P3: Feature request, general question
-
-Always call get_account_tier before routing — enterprise tickets are auto-elevated one level.`,
-    versions: [
-      { version: 'v1.2', label: 'current', date: 'Apr 20', change: 'Added enterprise auto-elevation rule', active: true },
-      { version: 'v1.1', label: '', date: 'Apr 17', change: 'Defined explicit P0–P3 rules', active: false },
-      { version: 'v1.0', label: 'initial', date: 'Apr 14', change: 'Initial version', active: false },
-    ],
-  },
-  {
-    id: 'agent-cls', name: 'Classifier', description: 'Classifies support tickets into categories with a confidence score.',
-    model: 'gpt-3.5-turbo', runs: 1, passRate: 45, lastRun: '3d ago',
-    tags: ['json-output', 'classification'],
-    avgLatency: '0.9s', avgCost: 0.01, totalTokensIn: 22000, totalTokensOut: 8000,
-    tools: [],
-    systemPrompt: `You are a ticket classification model. Given a ticket body, output a JSON object:
-{
-  "category": "billing" | "bug" | "feature" | "other",
-  "confidence": 0.0–1.0,
-  "reason": "one-sentence explanation"
-}
-
-Output ONLY the JSON. No prose. No markdown.`,
-    versions: [
-      { version: 'v1.0', label: 'current', date: 'Apr 14', change: 'Initial version', active: true },
-    ],
-  },
-];
 
 @Component({
   selector: 'app-agents',
   templateUrl: './agents.html',
   styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
-export class Agents {
-  readonly agentColors = AGENT_COLORS;
-  readonly modelColors = MODEL_COLORS;
+export class Agents implements OnInit {
+  private readonly agentsService = inject(AgentsService);
+  private readonly route = inject(ActivatedRoute);
 
-  readonly selectedAgentId = signal(AGENTS_DATA[0].id);
-  readonly activeTab = signal<'prompt' | 'tools' | 'versions'>('prompt');
-  readonly tabs: Array<'prompt' | 'tools' | 'versions'> = ['prompt', 'tools', 'versions'];
+  readonly loading = signal(true);
+  readonly agents = signal<AgentDto[]>([]);
+  readonly selectedAgentId = signal<string | null>(null);
+  readonly activeTab = signal<'prompt' | 'tools'>('prompt');
+  readonly openTools = signal<Set<string>>(new Set());
+  readonly copied = signal(false);
 
-  readonly selectedAgent = computed(() => AGENTS_DATA.find(a => a.id === this.selectedAgentId()) ?? AGENTS_DATA[0]);
+  readonly selectedAgent = computed(() => {
+    const id = this.selectedAgentId();
+    return this.agents().find(a => a.id === id) ?? null;
+  });
 
-  readonly agents = AGENTS_DATA;
-
-  agentColor(name: string) { return AGENT_COLORS[name] ?? '#8b5cf6'; }
-  modelColor(model: string) { return MODEL_COLORS[model] ?? '#888'; }
-  passColor(rate: number | null) {
-    if (rate === null) return 'var(--text-muted)';
-    return rate >= 75 ? 'var(--success)' : rate >= 55 ? 'var(--warn)' : 'var(--danger)';
+  ngOnInit() {
+    const preselect = this.route.snapshot.queryParamMap.get('id');
+    this.agentsService.getAll().subscribe({
+      next: (result) => {
+        this.agents.set(result.items);
+        const target = preselect
+          ? result.items.find(a => a.id === preselect)
+          : null;
+        this.selectedAgentId.set((target ?? result.items[0])?.id ?? null);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
-  toolCategoryColor(cat: 'read' | 'write' | 'system') {
-    return cat === 'read' ? 'var(--teal)' : cat === 'write' ? 'var(--warn)' : 'var(--accent-primary)';
+
+  selectAgent(id: string) {
+    this.selectedAgentId.set(id);
+    this.activeTab.set('prompt');
+    this.openTools.set(new Set());
   }
-  toolCategoryBg(cat: 'read' | 'write' | 'system') {
-    return cat === 'read' ? 'rgba(6,182,212,0.12)' : cat === 'write' ? 'rgba(245,158,11,0.12)' : 'rgba(139,92,246,0.12)';
+
+  toggleTool(name: string) {
+    this.openTools.update(set => {
+      const next = new Set(set);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  isToolOpen(name: string) {
+    return this.openTools().has(name);
+  }
+
+  agentColor(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffff;
+    return PALETTE[hash % PALETTE.length];
+  }
+
+  agentColorBg(name: string): string { return this.agentColor(name) + '1e'; }
+  agentColorBorder(name: string): string { return this.agentColor(name) + '33'; }
+  agentColorGlow(name: string): string { return `0 0 24px ${this.agentColor(name)}33`; }
+
+  typeColor(type: string): string { return TYPE_COLORS[type] ?? '#888'; }
+  typeBg(type: string): string { return this.typeColor(type) + '20'; }
+
+  requiredParams(tool: ToolSpecDto): string {
+    const req = tool.arguments.filter(a => a.isRequired).map(a => a.name);
+    return req.length ? `(${req.join(', ')})` : '()';
+  }
+
+  async copyPrompt(text: string) {
+    await navigator.clipboard.writeText(text);
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 2000);
+  }
+
+  formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  formatRelative(dateStr: string | null): string {
+    if (!dateStr) return 'Never';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const m = Math.floor(diff / 60_000);
+    if (m < 1)   return 'just now';
+    if (m < 60)  return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24)  return `${h}h ago`;
+    const d = Math.floor(h / 24);
+    if (d < 30)  return `${d}d ago`;
+    return this.formatDate(dateStr);
+  }
+
+  promptPreview(prompt: string): string {
+    return prompt.slice(0, 80).replace(/\n/g, ' ') + (prompt.length > 80 ? '…' : '');
   }
 }
