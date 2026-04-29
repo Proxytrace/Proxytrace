@@ -1,4 +1,5 @@
 using System.Net;
+using Trsr.Api.Dto.Agents;
 
 namespace Trsr.Api.Dto.AgentCalls;
 
@@ -10,6 +11,7 @@ public record AgentCallDto(
     string Provider,
     IReadOnlyList<AgentCallMessageDto> Request,
     AgentCallMessageDto Response,
+    IReadOnlyList<ToolSpecificationDto> Tools,
     long InputTokens,
     long OutputTokens,
     double DurationMs,
@@ -20,4 +22,6 @@ public record AgentCallDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record AgentCallMessageDto(string Role, string Content);
+public record AgentCallMessageDto(string Role, string Content, IReadOnlyList<AgentCallToolRequestDto> ToolRequests, string? ToolCallId = null);
+
+public record AgentCallToolRequestDto(string Id, string Name, string Arguments);

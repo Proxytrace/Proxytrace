@@ -5,9 +5,17 @@ export interface PagedResult<T> {
   pageSize: number;
 }
 
+export interface ToolRequestDto {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
 export interface MessageDto {
   role: string;
   content: string;
+  toolRequests: ToolRequestDto[];
+  toolCallId: string | null;
 }
 
 export interface AgentCallDto {
@@ -18,6 +26,7 @@ export interface AgentCallDto {
   provider: string;
   request: MessageDto[];
   response: MessageDto;
+  tools: ToolSpecDto[];
   inputTokens: number;
   outputTokens: number;
   durationMs: number;

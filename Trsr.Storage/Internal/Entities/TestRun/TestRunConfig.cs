@@ -35,7 +35,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             .HasOne<AgentEntity>()
             .WithMany()
             .HasForeignKey(e => e.Agent)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .Property(e => e.TestResults)

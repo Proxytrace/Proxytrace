@@ -1,8 +1,11 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
+using Trsr.Api.Dto.Agents;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Api.Controllers;
 
@@ -57,8 +60,9 @@ public class AgentCallsController : ControllerBase
         c.Agent.Name,
         c.Endpoint.Model.Name,
         c.Endpoint.Provider.Name,
-        c.Request.Messages.Select(m => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-        new AgentCallMessageDto("assistant", GetText(c.Response)),
+        c.Request.Messages.Select(ToMessageDto).ToArray(),
+        ToMessageDto(c.Response),
+        c.Agent.Tools.Select(ToToolSpecDto).ToArray(),
         (long)c.Usage.InputTokenCount,
         (long)c.Usage.OutputTokenCount,
         c.Duration.TotalMilliseconds,
@@ -68,6 +72,46 @@ public class AgentCallsController : ControllerBase
         ComputeCost(c),
         c.CreatedAt,
         c.UpdatedAt);
+
+    private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t) => new(
+        t.Name,
+        t.Description,
+        t.Arguments.Arguments.Select(ToToolArgumentDto).ToArray());
+
+    private static ToolArgumentDto ToToolArgumentDto(IToolArgument arg)
+    {
+        var type = "object";
+        List<string>? enumValues = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(arg.JsonSchema);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("type", out var typeEl))
+                type = typeEl.GetString() ?? "object";
+            if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
+                enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
+        }
+        catch { }
+        return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
+    }
+
+    private static AgentCallMessageDto ToMessageDto(Message m) => m switch
+    {
+        AssistantMessage a => new AgentCallMessageDto(
+            "assistant",
+            GetText(a),
+            a.ToolRequests.Select(tr => new AgentCallToolRequestDto(tr.Id, tr.Name, tr.Arguments)).ToArray()),
+        ToolMessage t => new AgentCallMessageDto("tool", GetText(t), [], GetToolCallId(t)),
+        _ => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m), [])
+    };
+
+    private static string GetToolCallId(ToolMessage t)
+        => t.Contents.Count > 0 ? t.Contents[0].Text ?? "" : "";
+
+    private static AgentCallMessageDto ToMessageDto(AssistantMessage m) => new(
+        "assistant",
+        GetText(m),
+        m.ToolRequests.Select(tr => new AgentCallToolRequestDto(tr.Id, tr.Name, tr.Arguments)).ToArray());
 
     private static decimal? ComputeCost(IAgentCall c)
     {

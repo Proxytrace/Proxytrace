@@ -11,4 +11,8 @@ export class AgentsService {
     const params = new HttpParams().set('pageSize', '200');
     return this.http.get<PagedResult<AgentDto>>('/api/agents', { params });
   }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/agents/${id}`);
+  }
 }

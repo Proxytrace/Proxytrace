@@ -1,11 +1,23 @@
 import { Component, Input, Output, EventEmitter, HostListener, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { AgentCallDto, MessageDto, TestSuiteDto } from '../../../core/api/models';
+import { AgentCallDto, MessageDto, TestSuiteDto, ToolRequestDto, ToolSpecDto } from '../../../core/api/models';
 import { TestSuitesService } from '../../../core/api/test-suites.service';
 
 type Tab = 'Messages' | 'Raw JSON' | 'Metadata';
 type PromoteState = 'idle' | 'open' | 'loading' | 'success' | 'error';
+
+interface ToolInvocation {
+  id: string;
+  name: string;
+  arguments: string;
+  result: string | null;
+}
+
+type ConversationItem =
+  | { kind: 'message'; msg: MessageDto }
+  | { kind: 'tool-group'; invocations: ToolInvocation[] }
+  | { kind: 'tools-spec'; tools: ToolSpecDto[] };
 
 @Component({
   selector: 'app-trace-detail',
@@ -61,6 +73,9 @@ export class TraceDetail {
   readonly activeTab = signal<Tab>('Messages');
   readonly copiedId = signal(false);
   readonly expandedMsgs = signal<Set<number>>(new Set());
+  readonly expandedToolCalls = signal<Set<string>>(new Set());
+  readonly expandedInvocations = signal<Set<string>>(new Set());
+  readonly expandedToolSpecs = signal<Set<string>>(new Set());
 
   // ── Promote to test case ───────────────────────────────────────────────────
   readonly promoteState = signal<PromoteState>('idle');
@@ -68,7 +83,7 @@ export class TraceDetail {
   readonly promoteError = signal('');
 
   private readonly testSuitesService = inject(TestSuitesService);
-  private readonly sanitizer = inject(DomSanitizer);
+  readonly sanitizer = inject(DomSanitizer);
   private readonly router = inject(Router);
 
   readonly tabs: Tab[] = ['Messages', 'Raw JSON', 'Metadata'];
@@ -85,6 +100,30 @@ export class TraceDetail {
   }
 
   isMsgExpanded(i: number): boolean { return this.expandedMsgs().has(i); }
+
+  toggleToolCall(id: string) {
+    const s = new Set(this.expandedToolCalls());
+    s.has(id) ? s.delete(id) : s.add(id);
+    this.expandedToolCalls.set(s);
+  }
+
+  isToolCallExpanded(id: string): boolean { return this.expandedToolCalls().has(id); }
+
+  toggleInvocation(id: string) {
+    const s = new Set(this.expandedInvocations());
+    s.has(id) ? s.delete(id) : s.add(id);
+    this.expandedInvocations.set(s);
+  }
+
+  isInvocationExpanded(id: string): boolean { return this.expandedInvocations().has(id); }
+
+  toggleToolSpec(name: string) {
+    const s = new Set(this.expandedToolSpecs());
+    s.has(name) ? s.delete(name) : s.add(name);
+    this.expandedToolSpecs.set(s);
+  }
+
+  isToolSpecExpanded(name: string): boolean { return this.expandedToolSpecs().has(name); }
 
   openPromote() {
     this.promoteState.set('loading');
@@ -142,7 +181,53 @@ export class TraceDetail {
 
   get allMessages(): MessageDto[] { return this.trace.request ?? []; }
 
+  get conversationItems(): ConversationItem[] {
+    const msgs = this.allMessages;
+    const resultByCallId = new Map<string, string>();
+    for (const msg of msgs) {
+      if (msg.role === 'tool' && msg.toolCallId) {
+        resultByCallId.set(msg.toolCallId, msg.content);
+      }
+    }
+
+    const items: ConversationItem[] = [];
+    const tools = this.trace.tools ?? [];
+
+    for (const msg of msgs) {
+      if (msg.role === 'tool') continue;
+
+      if (msg.role === 'assistant' && msg.toolRequests?.length > 0) {
+        if (msg.content) {
+          items.push({ kind: 'message', msg: { ...msg, toolRequests: [] } });
+        }
+        items.push({
+          kind: 'tool-group',
+          invocations: msg.toolRequests.map(tr => ({
+            id: tr.id,
+            name: tr.name,
+            arguments: tr.arguments,
+            result: resultByCallId.get(tr.id) ?? null,
+          })),
+        });
+        continue;
+      }
+
+      items.push({ kind: 'message', msg });
+
+      // Inject tool specs right after the system message
+      if (msg.role === 'system' && tools.length > 0) {
+        items.push({ kind: 'tools-spec', tools });
+      }
+    }
+
+    return items;
+  }
+
   isToolRoleMsg(msg: MessageDto): boolean { return msg.role === 'tool'; }
+
+  hasToolRequests(msg: MessageDto): boolean {
+    return msg.toolRequests?.length > 0;
+  }
 
   tryParseJson(s: string | null | undefined): unknown | null {
     if (!s) return null;
@@ -152,6 +237,11 @@ export class TraceDetail {
   toolResultContent(msg: MessageDto): unknown {
     const parsed = this.tryParseJson(msg.content);
     return parsed ?? msg.content;
+  }
+
+  toolRequestArgs(tr: { arguments: string }): unknown {
+    const parsed = this.tryParseJson(tr.arguments);
+    return parsed ?? tr.arguments;
   }
 
   // ── Style helpers ──────────────────────────────────────────────────────────
