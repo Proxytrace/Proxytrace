@@ -1,8 +1,11 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
+using Trsr.Api.Dto.Agents;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Api.Controllers;
 
@@ -59,6 +62,7 @@ public class AgentCallsController : ControllerBase
         c.Endpoint.Provider.Name,
         c.Request.Messages.Select(ToMessageDto).ToArray(),
         ToMessageDto(c.Response),
+        c.Agent.Tools.Select(ToToolSpecDto).ToArray(),
         (long)c.Usage.InputTokenCount,
         (long)c.Usage.OutputTokenCount,
         c.Duration.TotalMilliseconds,
@@ -68,6 +72,28 @@ public class AgentCallsController : ControllerBase
         ComputeCost(c),
         c.CreatedAt,
         c.UpdatedAt);
+
+    private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t) => new(
+        t.Name,
+        t.Description,
+        t.Arguments.Arguments.Select(ToToolArgumentDto).ToArray());
+
+    private static ToolArgumentDto ToToolArgumentDto(IToolArgument arg)
+    {
+        var type = "object";
+        List<string>? enumValues = null;
+        try
+        {
+            using var doc = JsonDocument.Parse(arg.JsonSchema);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("type", out var typeEl))
+                type = typeEl.GetString() ?? "object";
+            if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
+                enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
+        }
+        catch { }
+        return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
+    }
 
     private static AgentCallMessageDto ToMessageDto(Message m) => m switch
     {

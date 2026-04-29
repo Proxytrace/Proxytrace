@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, HostListener, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { AgentCallDto, MessageDto, TestSuiteDto, ToolRequestDto } from '../../../core/api/models';
+import { AgentCallDto, MessageDto, TestSuiteDto, ToolRequestDto, ToolSpecDto } from '../../../core/api/models';
 import { TestSuitesService } from '../../../core/api/test-suites.service';
 
 type Tab = 'Messages' | 'Raw JSON' | 'Metadata';
@@ -16,7 +16,8 @@ interface ToolInvocation {
 
 type ConversationItem =
   | { kind: 'message'; msg: MessageDto }
-  | { kind: 'tool-group'; invocations: ToolInvocation[] };
+  | { kind: 'tool-group'; invocations: ToolInvocation[] }
+  | { kind: 'tools-spec'; tools: ToolSpecDto[] };
 
 @Component({
   selector: 'app-trace-detail',
@@ -74,6 +75,7 @@ export class TraceDetail {
   readonly expandedMsgs = signal<Set<number>>(new Set());
   readonly expandedToolCalls = signal<Set<string>>(new Set());
   readonly expandedInvocations = signal<Set<string>>(new Set());
+  readonly expandedToolSpecs = signal<Set<string>>(new Set());
 
   // ── Promote to test case ───────────────────────────────────────────────────
   readonly promoteState = signal<PromoteState>('idle');
@@ -114,6 +116,14 @@ export class TraceDetail {
   }
 
   isInvocationExpanded(id: string): boolean { return this.expandedInvocations().has(id); }
+
+  toggleToolSpec(name: string) {
+    const s = new Set(this.expandedToolSpecs());
+    s.has(name) ? s.delete(name) : s.add(name);
+    this.expandedToolSpecs.set(s);
+  }
+
+  isToolSpecExpanded(name: string): boolean { return this.expandedToolSpecs().has(name); }
 
   openPromote() {
     this.promoteState.set('loading');
@@ -181,13 +191,11 @@ export class TraceDetail {
     }
 
     const items: ConversationItem[] = [];
-    const handledToolIds = new Set<string>();
+    const tools = this.trace.tools ?? [];
 
     for (const msg of msgs) {
-      if (msg.role === 'tool') {
-        handledToolIds.add(msg.toolCallId ?? '');
-        continue;
-      }
+      if (msg.role === 'tool') continue;
+
       if (msg.role === 'assistant' && msg.toolRequests?.length > 0) {
         if (msg.content) {
           items.push({ kind: 'message', msg: { ...msg, toolRequests: [] } });
@@ -203,7 +211,13 @@ export class TraceDetail {
         });
         continue;
       }
+
       items.push({ kind: 'message', msg });
+
+      // Inject tool specs right after the system message
+      if (msg.role === 'system' && tools.length > 0) {
+        items.push({ kind: 'tools-spec', tools });
+      }
     }
 
     return items;

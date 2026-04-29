@@ -26,6 +26,7 @@ export interface AgentCallDto {
   provider: string;
   request: MessageDto[];
   response: MessageDto;
+  tools: ToolSpecDto[];
   inputTokens: number;
   outputTokens: number;
   durationMs: number;
