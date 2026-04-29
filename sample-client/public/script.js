@@ -51,6 +51,58 @@ function addError(text) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+// Renders a tool-call card. Returns the card element so the result can be
+// injected into it when the toolResult event arrives.
+function addToolCard(name, argsJson) {
+  emptyEl.style.display = "none";
+
+  let args;
+  try { args = JSON.parse(argsJson); } catch { args = argsJson; }
+  const argsText = typeof args === "object"
+    ? Object.entries(args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(", ")
+    : String(args);
+
+  const card = document.createElement("div");
+  card.className = "tool-card";
+
+  card.innerHTML = `
+    <div class="tool-card-header">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+      </svg>
+      <span class="tool-name">${name}</span>
+      <span class="tool-args">${argsText}</span>
+      <span class="tool-status pending">calling…</span>
+    </div>
+    <div class="tool-result" hidden></div>
+  `;
+
+  messagesEl.appendChild(card);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return card;
+}
+
+// Fills in the result section of a previously created tool card.
+function resolveToolCard(card, resultJson) {
+  const status = card.querySelector(".tool-status");
+  status.textContent = "done";
+  status.className = "tool-status done";
+
+  let result;
+  try { result = JSON.parse(resultJson); } catch { result = resultJson; }
+  const pretty = typeof result === "object"
+    ? JSON.stringify(result, null, 2)
+    : String(result);
+
+  const resultEl = card.querySelector(".tool-result");
+  resultEl.textContent = pretty;
+  resultEl.hidden = false;
+
+  const header = card.querySelector(".tool-card-header");
+  header.style.cursor = "pointer";
+  header.addEventListener("click", () => { resultEl.hidden = !resultEl.hidden; });
+}
+
 async function send() {
   const text = inputEl.value.trim();
   if (!text || streaming) return;
@@ -66,6 +118,9 @@ async function send() {
   const assistantBubble = addMessage("assistant");
   assistantBubble.classList.add("cursor");
   let assistantText = "";
+
+  // Track pending tool cards keyed by tool name (one at a time per name)
+  const pendingCards = new Map();
 
   try {
     const res = await fetch("/chat", {
@@ -97,7 +152,24 @@ async function send() {
         if (payload === "[DONE]") break;
 
         const json = JSON.parse(payload);
+
         if (json.error) throw new Error(json.error);
+
+        if (json.toolCall) {
+          // Insert card before the assistant bubble's parent
+          const card = addToolCard(json.toolCall.name, json.toolCall.arguments);
+          // Move the card above the assistant message
+          assistantBubble.closest(".message").before(card);
+          pendingCards.set(json.toolCall.name, card);
+          continue;
+        }
+
+        if (json.toolResult) {
+          const card = pendingCards.get(json.toolResult.name);
+          if (card) resolveToolCard(card, json.toolResult.result);
+          continue;
+        }
+
         assistantText += json.text ?? "";
         assistantBubble.textContent = assistantText;
         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -125,4 +197,12 @@ inputEl.addEventListener("keydown", (e) => {
 
 inputEl.addEventListener("input", autoResize);
 sendBtn.addEventListener("click", send);
+
+// Demo chip — fills the input with a question that triggers both demo tools
+document.getElementById("demo-chip")?.addEventListener("click", () => {
+  inputEl.value = "What's the weather in Vienna right now, and what are the top 3 tourist attractions there?";
+  autoResize();
+  inputEl.focus();
+});
+
 inputEl.focus();

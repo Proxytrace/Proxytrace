@@ -14,6 +14,10 @@ public class Module : Autofac.Module
              .AsSelf()
              .InstancePerDependency();
 
+         builder.RegisterType<ToolCallSimulator>()
+             .AsSelf()
+             .InstancePerDependency();
+
          builder.Register(_ =>
          {
              ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
