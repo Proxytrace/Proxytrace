@@ -160,7 +160,11 @@ public class TestSuitesController : ControllerBase
                 return BadRequest($"Agent call {callId} not found.");
 
             var call = await agentCallRepository.GetAsync(callId, cancellationToken);
-            var testCase = createTestCase(call.Request, call.Response);
+            var nonSystemMessages = call.Request.Messages
+                .Where(m => m is not SystemMessage)
+                .ToList();
+            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
+            var testCase = createTestCase(input, call.Response);
             var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
             testCases.Add(saved);
         }
@@ -215,7 +219,11 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            return createTestCase(call.Request, call.Response);
+            var nonSystemMessages = call.Request.Messages
+                .Where(m => m is not SystemMessage)
+                .ToList();
+            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
+            return createTestCase(input, call.Response);
         }
 
         if (inputMessages is not null && expectedOutput is not null)

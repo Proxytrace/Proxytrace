@@ -65,6 +65,15 @@ export interface LatencyStatDto {
   sampleCount: number;
 }
 
+export interface TestSuiteDto {
+  id: string;
+  agentId: string;
+  evaluatorKind: number;
+  testCases: { id: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AgentCallFilter {
   projectId?: string;
   agentId?: string;

@@ -1,14 +1,19 @@
 import { Component, Input, Output, EventEmitter, HostListener, signal, computed, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { AgentCallDto, MessageDto } from '../../../core/api/models';
+import { AgentCallDto, MessageDto, TestSuiteDto } from '../../../core/api/models';
+import { TestSuitesService } from '../../../core/api/test-suites.service';
 
 type Tab = 'Messages' | 'Raw JSON' | 'Metadata';
+type PromoteState = 'idle' | 'open' | 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-trace-detail',
   imports: [],
   templateUrl: './trace-detail.html',
   styles: `
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
     @keyframes slide-in {
       from { transform: translateX(100%); opacity: 0; }
       to   { transform: translateX(0);    opacity: 1; }
@@ -56,6 +61,12 @@ export class TraceDetail {
   readonly copiedId = signal(false);
   readonly expandedMsgs = signal<Set<number>>(new Set());
 
+  // ── Promote to test case ───────────────────────────────────────────────────
+  readonly promoteState = signal<PromoteState>('idle');
+  readonly suites = signal<TestSuiteDto[]>([]);
+  readonly promoteError = signal('');
+
+  private readonly testSuitesService = inject(TestSuitesService);
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly tabs: Tab[] = ['Messages', 'Raw JSON', 'Metadata'];
@@ -72,6 +83,45 @@ export class TraceDetail {
   }
 
   isMsgExpanded(i: number): boolean { return this.expandedMsgs().has(i); }
+
+  openPromote() {
+    this.promoteState.set('loading');
+    this.testSuitesService.getAll(this.trace.agentId).subscribe({
+      next: (res) => { this.suites.set(res.items); this.promoteState.set('open'); },
+      error: () => this.promoteState.set('idle'),
+    });
+  }
+
+  cancelPromote() { this.promoteState.set('idle'); }
+
+  promoteToSuite(suiteId: string) {
+    this.promoteState.set('loading');
+    this.testSuitesService.addTestCase(suiteId, this.trace.id).subscribe({
+      next: () => {
+        this.promoteState.set('success');
+        setTimeout(() => this.promoteState.set('idle'), 2000);
+      },
+      error: (e) => { this.promoteError.set(e?.error?.detail ?? 'Request failed'); this.promoteState.set('error'); },
+    });
+  }
+
+  promoteToNewSuite() {
+    if (!this.trace.agentId) return;
+    this.promoteState.set('loading');
+    this.testSuitesService.createFromTrace(this.trace.agentId, this.trace.id).subscribe({
+      next: () => {
+        this.promoteState.set('success');
+        setTimeout(() => this.promoteState.set('idle'), 2000);
+      },
+      error: (e) => { this.promoteError.set(e?.error?.detail ?? 'Request failed'); this.promoteState.set('error'); },
+    });
+  }
+
+  formatSuiteLabel(s: TestSuiteDto): string {
+    const n = s.testCases.length;
+    const d = new Date(s.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return `${n} case${n !== 1 ? 's' : ''} · ${d}`;
+  }
 
   copyId() {
     navigator.clipboard.writeText(this.trace.id).then(() => {
