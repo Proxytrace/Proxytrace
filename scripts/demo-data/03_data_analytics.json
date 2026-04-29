@@ -2,6 +2,7 @@
   "Agent": {
     "Id": "30000000-0000-0000-0000-000000000000",
     "EndpointId": "f0000000-0000-0000-0000-000000000022",
+    "Name": "Data Analytics Assistant",
     "SystemMessage": {
       "Contents": [{"Text": "You are a data analytics assistant. Help users explore datasets, write and execute SQL queries, and interpret results. Always explain your reasoning, suggest follow-up analyses, and flag data quality issues when you spot them."}]
     },

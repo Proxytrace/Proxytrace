@@ -11,13 +11,15 @@ namespace Trsr.Domain.Agent;
 public interface IAgentRepository : IRepository<IAgent>
 {
     /// <summary>
-    /// Returns the agent matching the given system message, tools, and endpoint,
-    /// creating one if it does not yet exist.
+    /// Returns the agent matching the given system message and tools, creating one if it does not yet exist.
+    /// When a new agent is created, its name is generated via <see cref="IAgentNameGenerator"/>
+    /// using the supplied <paramref name="endpoint"/>.
     /// </summary>
     Task<IAgent> GetOrCreateAsync(
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project,
+        IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);
 
     /// <summary>

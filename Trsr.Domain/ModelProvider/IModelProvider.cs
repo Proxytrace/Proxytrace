@@ -21,7 +21,12 @@ public interface IModelProvider : IDomainEntity
     /// The API key for authenticating at the model provider (this is not the Trsr Api Key)
     /// </summary>
     string ApiKey { get; }
-    
+
+    /// <summary>
+    /// The kind of model provider (determines which SDK/protocol is used for AI calls)
+    /// </summary>
+    ModelProviderKind Kind { get; }
+
     /// <summary>
     /// The organization the model provider is configured for
     /// </summary>
@@ -32,13 +37,15 @@ public interface IModelProvider : IDomainEntity
         string name,
         Uri endpoint,
         string apiKey,
+        ModelProviderKind kind,
         IOrganization organization);
 
     /// <summary>Factory delegate for reconstituting an existing model provider from persistence.</summary>
     public delegate IModelProvider CreateExisting(
-        string name, 
+        string name,
         Uri endpoint,
-        string apiKey, 
-        IOrganization organization, 
+        string apiKey,
+        ModelProviderKind kind,
+        IOrganization organization,
         IDomainEntityData existing);
 }

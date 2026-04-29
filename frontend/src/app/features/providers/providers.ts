@@ -5,6 +5,7 @@ import {
   ProviderDto,
   ApiKeyDto,
   ModelEndpointDto,
+  ModelProviderKind,
   ProjectDto,
   OrganizationDto,
   CreateProviderRequest,
@@ -39,8 +40,19 @@ export class Providers implements OnInit {
 
   // New provider form
   readonly showNewProvider = signal(false);
-  readonly newProvider = signal<CreateProviderRequest>({ name: '', endpoint: '', upstreamApiKey: '', organizationId: '' });
+  readonly ModelProviderKind = ModelProviderKind;
+  readonly providerKindOptions = [
+    { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
+    { value: ModelProviderKind.OpenAi, label: 'OpenAI' },
+    { value: ModelProviderKind.OpenAiCompatible, label: 'OpenAI-compatible' },
+  ];
+  readonly newProvider = signal<CreateProviderRequest>({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: '' });
   readonly savingProvider = signal(false);
+
+  // Edit provider kind
+  readonly editingKind = signal(false);
+  readonly editKindValue = signal<ModelProviderKind>(ModelProviderKind.Unknown);
+  readonly savingKind = signal(false);
 
   // New key form
   readonly showNewKey = signal(false);
@@ -114,6 +126,7 @@ export class Providers implements OnInit {
     this.showNewKey.set(false);
     this.showNewModel.set(false);
     this.editingModel.set(null);
+    this.editingKind.set(false);
     this.newlyCreatedKey.set(null);
     this.upstreamKeyRevealed.set(false);
     this.loadKeys(id);
@@ -140,14 +153,14 @@ export class Providers implements OnInit {
 
   openNewProvider() {
     this.showNewProvider.set(true);
-    this.newProvider.set({ name: '', endpoint: '', upstreamApiKey: '', organizationId: this.organizations()[0]?.id ?? '' });
+    this.newProvider.set({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: this.organizations()[0]?.id ?? '' });
   }
 
   cancelNewProvider() { this.showNewProvider.set(false); }
 
   submitNewProvider() {
     const req = this.newProvider();
-    if (!req.name || !req.endpoint || !req.upstreamApiKey || !req.organizationId) return;
+    if (!req.name || !req.endpoint || !req.upstreamApiKey || !req.organizationId || req.kind === ModelProviderKind.Unknown) return;
     this.savingProvider.set(true);
     this.svc.createProvider(req).subscribe({
       next: p => {
@@ -157,6 +170,34 @@ export class Providers implements OnInit {
         this.selectProvider(p.id);
       },
       error: () => this.savingProvider.set(false),
+    });
+  }
+
+  // ── Edit provider kind ──────────────────────────────────────────────────────
+
+  openEditKind() {
+    this.editKindValue.set(this.selected()?.kind ?? ModelProviderKind.Unknown);
+    this.editingKind.set(true);
+  }
+
+  cancelEditKind() { this.editingKind.set(false); }
+
+  submitEditKind() {
+    const provider = this.selected();
+    if (!provider || this.editKindValue() === ModelProviderKind.Unknown) return;
+    this.savingKind.set(true);
+    this.svc.updateProvider(provider.id, {
+      name: provider.name,
+      endpoint: provider.endpoint,
+      upstreamApiKey: provider.upstreamApiKey,
+      kind: this.editKindValue(),
+    }).subscribe({
+      next: updated => {
+        this.providers.update(list => list.map(p => p.id === updated.id ? updated : p));
+        this.editingKind.set(false);
+        this.savingKind.set(false);
+      },
+      error: () => this.savingKind.set(false),
     });
   }
 
@@ -320,6 +361,24 @@ export class Providers implements OnInit {
 
   providerColor(name: string): string {
     return PROVIDER_COLORS[name] ?? '#8b5cf6';
+  }
+
+  providerKindLabel(kind: ModelProviderKind): string {
+    switch (kind) {
+      case ModelProviderKind.Anthropic: return 'Anthropic';
+      case ModelProviderKind.OpenAi: return 'OpenAI';
+      case ModelProviderKind.OpenAiCompatible: return 'OpenAI-compatible';
+      default: return 'Unknown';
+    }
+  }
+
+  providerKindColor(kind: ModelProviderKind): string {
+    switch (kind) {
+      case ModelProviderKind.Anthropic: return '#f59e0b';
+      case ModelProviderKind.OpenAi: return '#10b981';
+      case ModelProviderKind.OpenAiCompatible: return '#06b6d4';
+      default: return '#6b7280';
+    }
   }
 
   maskKey(key: string): string {

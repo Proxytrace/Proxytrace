@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 
@@ -14,20 +15,24 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgentRepository
 {
     private readonly IAgent.CreateNew createNew;
+    private readonly IAgentNameGenerator nameGenerator;
 
     public AgentRepository(
         IMapper<IAgent, AgentEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IAgent.CreateNew createNew) : base(mapper, contextFactory, transaction)
+        IAgent.CreateNew createNew,
+        IAgentNameGenerator nameGenerator) : base(mapper, contextFactory, transaction)
     {
         this.createNew = createNew;
+        this.nameGenerator = nameGenerator;
     }
 
     public async Task<IAgent> GetOrCreateAsync(
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project,
+        IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemMessage, tools);
@@ -42,7 +47,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var agent = createNew(systemMessage, tools, project);
+        var name = await nameGenerator.GenerateNameAsync(systemMessage, endpoint, cancellationToken);
+        var agent = createNew(name, systemMessage, tools, project);
         return await AddAsync(agent, cancellationToken);
     }
 

@@ -11,6 +11,9 @@ namespace Trsr.Domain.Agent;
 /// </summary>
 public interface IAgent : IDomainEntity
 {
+    /// <summary>Short human-readable name generated from the system message at creation time.</summary>
+    string Name { get; }
+
     /// <summary>The project this agent belongs to.</summary>
     IProject Project { get; }
 
@@ -22,12 +25,14 @@ public interface IAgent : IDomainEntity
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
+        string name,
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,
         IProject project);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(
+        string name,
         IProject project,
         SystemMessage systemMessage,
         IReadOnlyCollection<ToolSpecification> tools,

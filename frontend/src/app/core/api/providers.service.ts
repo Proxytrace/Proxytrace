@@ -8,6 +8,7 @@ export interface ProviderDto {
   name: string;
   endpoint: string;
   upstreamApiKey: string;
+  kind: ModelProviderKind;
   organizationId: string;
   organizationName: string;
   createdAt: string;
@@ -61,10 +62,18 @@ export interface UpdateModelEndpointPricingRequest {
   outputTokenCost: number | null;
 }
 
+export enum ModelProviderKind {
+  Unknown = 'Unknown',
+  Anthropic = 'Anthropic',
+  OpenAi = 'OpenAi',
+  OpenAiCompatible = 'OpenAiCompatible',
+}
+
 export interface CreateProviderRequest {
   name: string;
   endpoint: string;
   upstreamApiKey: string;
+  kind: ModelProviderKind;
   organizationId: string;
 }
 
@@ -85,7 +94,7 @@ export class ProvidersService {
     return this.http.post<ProviderDto>('/api/providers', req);
   }
 
-  updateProvider(id: string, req: { name: string; endpoint: string; upstreamApiKey: string }): Observable<ProviderDto> {
+  updateProvider(id: string, req: { name: string; endpoint: string; upstreamApiKey: string; kind: ModelProviderKind }): Observable<ProviderDto> {
     return this.http.put<ProviderDto>(`/api/providers/${id}`, req);
   }
 

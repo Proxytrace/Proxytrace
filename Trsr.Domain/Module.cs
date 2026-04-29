@@ -3,6 +3,8 @@ using System.Net.NetworkInformation;
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Common.DependencyInjection;
+using Trsr.Domain.Agent;
+using Trsr.Domain.Agent.Internal;
 using Trsr.Domain.Message.Internal;
 using Trsr.Domain.Tools.Internal;
 
@@ -40,6 +42,11 @@ public sealed class Module : Autofac.Module
             .Where(t => !t.GetInterfaces().Any(i =>
                 i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEntityGenerator<>)))
             .AsImplementedInterfaces();
+
+        // Fallback — overridden by the real LLM-backed implementation registered in Trsr.Api.
+        builder.RegisterType<AgentNameGenerator>()
+            .As<IAgentNameGenerator>()
+            .IfNotRegistered(typeof(IAgentNameGenerator));
 
         builder.RegisterType<ContentJsonConverter>()
             .As<JsonConverter>()

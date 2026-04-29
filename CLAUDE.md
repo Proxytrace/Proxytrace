@@ -14,7 +14,7 @@ All work follows an issue-based flow. Adhere to these steps in order:
 2. **Clarify ambiguities before coding.** Read the issue in full. If anything is unclear — scope, expected behaviour, edge cases, design decisions — ask the user before writing any code. Do not make assumptions and discover them wrong mid-implementation.
 3. **Sync and branch.** Pull the latest `master` (`git fetch origin && git checkout master && git pull`), then create a feature branch named `[issue-no]-short-summary` (e.g. `42-add-trace-filter`).
 4. **Develop on the feature branch.** Make all commits there; never commit directly to `master`.
-5. **Push and open a PR only when the user explicitly approves the work.** Push the branch and create a PR with `gh pr create`, linking it to the issue (include `Closes #[issue-no]` in the PR body).
+5. (Backend Only) **Write tests.** For any new feature or bug fix, write a failing test that captures the expected behaviour before implementing the code to make it pass. This ensures correctness and prevents regressions.
 
 ## Working on UI
 
@@ -32,6 +32,18 @@ cd Trsr.Api && dotnet run        # Start API on http://localhost:5001
 ```
 
 Swagger UI is available at `http://localhost:5001/swagger` in Development mode.
+
+#### Code Style
+- Do not use primary constructors. Use constructor injection with DI and `this(...)` chaining for domain entities.
+- Use `record` types for all domain entities and storage entities (even if mutable)
+- Make types `internal` by default; only interfaces or POCO types should be `public`
+- Use `required` properties with `init` accessors for storage entities
+- Prefer immutability and statelessness; storage entities can be mutable if needed for EF Core
+- Use `var` when the type is obvious from the right-hand side, otherwise be explicit
+- Use expression-bodied members for simple one-liners; otherwise use block bodies with braces
+- Use `this(...)` constructor chaining to avoid duplication between "new" and "existing" constructors on domain entities
+- Use `nameof(...)` for all parameter names in exceptions and validation
+- Prefer collection expressions when possible
 
 ### EF Core Migrations (run from Trsr.Storage/)
 ```bash

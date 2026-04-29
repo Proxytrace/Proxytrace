@@ -2,6 +2,7 @@
   "Agent": {
     "Id": "20000000-0000-0000-0000-000000000000",
     "EndpointId": "f0000000-0000-0000-0000-000000000021",
+    "Name": "Code Reviewer",
     "SystemMessage": {
       "Contents": [{"Text": "You are an expert software engineer specialising in code review. Analyse code for bugs, security vulnerabilities, performance issues, and best-practice adherence. Provide clear, actionable, and constructive feedback with specific line references."}]
     },

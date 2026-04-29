@@ -25,6 +25,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
         builder.Property(e => e.Name).HasMaxLength(256).IsRequired();
         builder.Property(e => e.Endpoint).HasMaxLength(2048).IsRequired();
         builder.Property(e => e.ApiKey).HasMaxLength(512).IsRequired();
+        builder.Property(e => e.Kind).IsRequired();
 
         builder
             .HasOne<OrganizationEntity>()
@@ -36,7 +37,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
     public async Task<IModelProvider> Map(ModelProviderEntity stored, CancellationToken cancellationToken = default)
     {
         var organization = await organizations.GetAsync(stored.Organization, cancellationToken);
-        return factory(stored.Name, new Uri(stored.Endpoint), stored.ApiKey, organization, stored);
+        return factory(stored.Name, new Uri(stored.Endpoint), stored.ApiKey, stored.Kind, organization, stored);
     }
 
     public Task<ModelProviderEntity> Map(IModelProvider domain, CancellationToken cancellationToken = default)
@@ -46,6 +47,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
             Name = domain.Name,
             Endpoint = domain.Endpoint.ToString(),
             ApiKey = domain.ApiKey,
+            Kind = domain.Kind,
             Organization = domain.Organization.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

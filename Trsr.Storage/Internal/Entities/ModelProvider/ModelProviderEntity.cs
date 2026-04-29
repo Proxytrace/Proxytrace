@@ -1,3 +1,5 @@
+using Trsr.Domain.ModelProvider;
+
 namespace Trsr.Storage.Internal.Entities.ModelProvider;
 
 [StoredDomainEntity(typeof(Trsr.Domain.ModelProvider.IModelProvider))]
@@ -17,6 +19,11 @@ internal record ModelProviderEntity : Entity
     /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.ApiKey"/>
     /// </summary>
     public required string ApiKey { get; init; }
+
+    /// <summary>
+    /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.Kind"/>
+    /// </summary>
+    public required ModelProviderKind Kind { get; init; }
 
     /// <summary>
     /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.Organization"/>

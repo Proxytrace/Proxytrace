@@ -34,6 +34,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     {
         builder.HasIndex(e => e.Fingerprint).IsUnique();
         builder.Property(e => e.Fingerprint).HasMaxLength(64);
+        builder.Property(e => e.Name).HasMaxLength(200);
 
         builder
             .HasOne<ProjectEntity>()
@@ -59,13 +60,14 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public async Task<IAgent> Map(AgentEntity stored, CancellationToken cancellationToken = default)
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
-        return factory(project, stored.SystemMessage, stored.Tools, stored);
+        return factory(stored.Name, project, stored.SystemMessage, stored.Tools, stored);
     }
 
     public Task<AgentEntity> Map(IAgent domain, CancellationToken cancellationToken = default)
         => new AgentEntity
         {
             Id = domain.Id,
+            Name = domain.Name,
             Project = domain.Project.Id,
             Fingerprint = repository.Value.GetAgentFingerprint(domain),
             SystemMessage = domain.SystemMessage,

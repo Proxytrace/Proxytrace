@@ -56,6 +56,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                     parsed.SystemMessage,
                     parsed.Tools,
                     project,
+                    endpoint,
                     cancellationToken);
 
             var call = factory(

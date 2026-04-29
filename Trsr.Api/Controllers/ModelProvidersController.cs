@@ -84,7 +84,7 @@ public class ModelProvidersController : ControllerBase
         if (!await organizationRepository.ContainsAsync(request.OrganizationId, cancellationToken))
             return BadRequest($"Organization {request.OrganizationId} not found.");
         var org = await organizationRepository.GetAsync(request.OrganizationId, cancellationToken);
-        var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, org);
+        var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, org);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
@@ -98,7 +98,7 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var existing = await providerRepository.GetAsync(id, cancellationToken);
-        var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, existing.Organization, existing);
+        var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing.Organization, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -212,7 +212,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     private static ModelProviderDto ToDto(IModelProvider p) =>
-        new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Organization.Id, p.Organization.Name, p.CreatedAt, p.UpdatedAt);
+        new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Kind, p.Organization.Id, p.Organization.Name, p.CreatedAt, p.UpdatedAt);
 
     private static ApiKeyDto ToKeyDto(IApiKey k) =>
         new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);

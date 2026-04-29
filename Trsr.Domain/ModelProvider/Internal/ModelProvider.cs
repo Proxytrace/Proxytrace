@@ -10,21 +10,24 @@ internal record ModelProvider : DomainEntity, IModelProvider
     public string Name { get; }
     public Uri Endpoint { get; }
     public string ApiKey { get; }
+    public ModelProviderKind Kind { get; }
     public IOrganization Organization { get; }
 
-    public ModelProvider(string name, Uri endpoint, string apiKey, IOrganization organization)
+    public ModelProvider(string name, Uri endpoint, string apiKey, ModelProviderKind kind, IOrganization organization)
     {
         Name = name;
         Endpoint = endpoint;
         ApiKey = apiKey;
+        Kind = kind;
         Organization = organization;
     }
 
-    public ModelProvider(string name, Uri endpoint, string apiKey, IOrganization organization, IDomainEntityData existing) : base(existing)
+    public ModelProvider(string name, Uri endpoint, string apiKey, ModelProviderKind kind, IOrganization organization, IDomainEntityData existing) : base(existing)
     {
         Name = name;
         Endpoint = endpoint;
         ApiKey = apiKey;
+        Kind = kind;
         Organization = organization;
     }
 

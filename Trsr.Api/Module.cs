@@ -2,6 +2,7 @@ using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Services;
 using Trsr.Api.Services.Internal;
+using Trsr.Application;
 using Trsr.Common.DependencyInjection;
 using Trsr.Storage;
 
@@ -64,6 +65,7 @@ internal sealed class Module : Autofac.Module
         });
 
         builder.RegisterModule<Domain.Module>();
+        builder.RegisterModule<Application.Module>();
 
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");

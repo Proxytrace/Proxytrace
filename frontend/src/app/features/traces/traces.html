@@ -190,8 +190,9 @@
   <!-- Table -->
   <div class="fade-up" style="animation-delay:160ms; background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow:hidden; flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column;">
     <!-- Header -->
-    <div style="display:grid; grid-template-columns:1.6fr 1.5fr 0.7fr 1.1fr 1.1fr 0.9fr; padding:12px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); position:sticky; top:0; background:var(--bg-card); z-index:1; flex-shrink:0;">
+    <div style="display:grid; grid-template-columns:1.4fr 1.2fr 1.2fr 0.6fr 1fr 1fr 0.8fr; padding:12px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); position:sticky; top:0; background:var(--bg-card); z-index:1; flex-shrink:0;">
       <span>Trace ID</span>
+      <span>Agent</span>
       <span>Model</span>
       <span>Status</span>
       <span>Tokens</span>
@@ -214,11 +215,14 @@
     } @else {
       @for (t of traces(); track t.id) {
         <div (click)="openTrace(t)"
-             style="display:grid; grid-template-columns:1.6fr 1.5fr 0.7fr 1.1fr 1.1fr 0.9fr; padding:12px 18px; align-items:center; font-size:12px; border-top:1px solid var(--hairline); transition:background 0.1s; cursor:pointer;"
+             style="display:grid; grid-template-columns:1.4fr 1.2fr 1.2fr 0.6fr 1fr 1fr 0.8fr; padding:12px 18px; align-items:center; font-size:12px; border-top:1px solid var(--hairline); transition:background 0.1s; cursor:pointer;"
              onmouseenter="this.style.background='rgba(139,92,246,0.04)'" onmouseleave="this.style.background='transparent'">
           <span style="display:flex; align-items:center; gap:8px;">
             <span style="width:3px; height:20px; border-radius:2px; flex-shrink:0; display:inline-block;" [style.background]="modelColor(t.model)"></span>
             <span class="mono" style="color:var(--text-primary); font-size:11.5px;">{{truncateId(t.id)}}</span>
+          </span>
+          <span style="font-size:11.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="t.agentName ?? ''">
+            {{ t.agentName ?? '—' }}
           </span>
           <span>
             <span class="model-pill" [style.background]="modelColor(t.model) + '1f'" [style.color]="modelColor(t.model)" [style.border]="'1px solid ' + modelColor(t.model) + '33'">
