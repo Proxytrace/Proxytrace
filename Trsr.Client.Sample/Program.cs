@@ -30,4 +30,13 @@ var simulator = services.Resolve<AgentCallSimulator>();
 await simulator.Run();
 Console.WriteLine();
 
+Console.WriteLine("Scenario: multi-turn tool calls (demonstrates Trsr tool-call decoding)");
+Console.WriteLine("  Trsr captures tool definitions, tool_calls responses, tool results,");
+Console.WriteLine("  and the final assistant answer — all decoded and visible in the trace UI.");
+Console.WriteLine();
+
+var toolCallSimulator = services.Resolve<ToolCallSimulator>();
+await toolCallSimulator.Run();
+Console.WriteLine();
+
 Console.WriteLine("Done.");
