@@ -9,6 +9,7 @@ using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
+using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 
 namespace Trsr.Storage.Internal.Entities.AgentCall;
@@ -36,6 +37,12 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
     {
         builder.HasIndex(e => e.AgentId);
         builder.HasIndex(e => e.EndpointId);
+
+        builder
+            .HasOne<AgentEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AgentId)
+            .OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(e => e.CreatedAt);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);

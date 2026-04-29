@@ -2,6 +2,8 @@ using Autofac;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Trsr.Storage;
 
@@ -27,6 +29,8 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
 
         var containerBuilder = new ContainerBuilder();
         containerBuilder.RegisterModule(new Module(storageConfig));
+        containerBuilder.RegisterInstance(NullLoggerFactory.Instance).As<ILoggerFactory>();
+        containerBuilder.RegisterGeneric(typeof(NullLogger<>)).As(typeof(ILogger<>));
         var container = containerBuilder.Build();
 
         return container.Resolve<StorageDbContext>();

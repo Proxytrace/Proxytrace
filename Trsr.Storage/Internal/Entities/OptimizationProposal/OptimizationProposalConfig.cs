@@ -35,7 +35,7 @@ internal class OptimizationProposalConfig :
             .HasOne<AgentEntity>()
             .WithMany()
             .HasForeignKey(e => e.Agent)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => e.Agent);
         builder.HasIndex(e => e.Status);

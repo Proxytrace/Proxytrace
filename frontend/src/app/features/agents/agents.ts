@@ -30,6 +30,9 @@ export class Agents implements OnInit {
   readonly activeTab = signal<'prompt' | 'tools'>('prompt');
   readonly openTools = signal<Set<string>>(new Set());
   readonly copied = signal(false);
+  readonly deleteDialogOpen = signal(false);
+  readonly deleteConfirmName = signal('');
+  readonly deleting = signal(false);
 
   readonly selectedAgent = computed(() => {
     const id = this.selectedAgentId();
@@ -55,6 +58,32 @@ export class Agents implements OnInit {
     this.selectedAgentId.set(id);
     this.activeTab.set('prompt');
     this.openTools.set(new Set());
+  }
+
+  openDeleteDialog() {
+    this.deleteConfirmName.set('');
+    this.deleteDialogOpen.set(true);
+  }
+
+  closeDeleteDialog() {
+    this.deleteDialogOpen.set(false);
+    this.deleteConfirmName.set('');
+  }
+
+  confirmDelete() {
+    const agent = this.selectedAgent();
+    if (!agent || this.deleteConfirmName() !== agent.name || this.deleting()) return;
+    this.deleting.set(true);
+    this.agentsService.delete(agent.id).subscribe({
+      next: () => {
+        this.agents.update(list => list.filter(a => a.id !== agent.id));
+        const remaining = this.agents();
+        this.selectedAgentId.set(remaining[0]?.id ?? null);
+        this.closeDeleteDialog();
+        this.deleting.set(false);
+      },
+      error: () => this.deleting.set(false),
+    });
   }
 
   toggleTool(name: string) {

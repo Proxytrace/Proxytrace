@@ -40,7 +40,7 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             .HasOne<AgentEntity>()
             .WithMany()
             .HasForeignKey(e => e.Agent)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .HasOne<EvaluatorEntity>()
