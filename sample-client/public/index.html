@@ -9,11 +9,16 @@
 <body>
 
 <header>
-  <h1>Trsr Sample Chatbot</h1>
-  <span class="badge">
-    <span class="badge-dot"></span>
-    Routed through Trsr proxy &mdash; every message is captured in your traces
-  </span>
+  <div class="header-top">
+    <h1>Trsr Sample Chatbot</h1>
+    <span class="badge">
+      <span class="badge-dot"></span>
+      Routed through Trsr proxy &mdash; every message is captured in your traces
+    </span>
+  </div>
+  <nav id="agent-tabs" aria-label="Select agent">
+    <!-- Agent tabs are injected here by script.js -->
+  </nav>
 </header>
 
 <div id="messages">
@@ -21,7 +26,7 @@
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
-    <p>Start chatting. All interactions will appear as traces in your Trsr dashboard.</p>
+    <p id="empty-text">Select an agent above and start chatting. All interactions will appear as traces in your Trsr dashboard.</p>
   </div>
 </div>
 
@@ -39,11 +44,11 @@
       </svg>
     </button>
   </div>
-  <div id="demo-row">
-    <span class="demo-label">Try a demo</span>
-    <button id="demo-chip" class="demo-chip">
-      Weather &amp; attractions in Vienna
-    </button>
+  <div id="shortcuts-row">
+    <span class="demo-label">Try a shortcut</span>
+    <div id="shortcuts-list">
+      <!-- Shortcut chips are injected here by script.js -->
+    </div>
   </div>
   <p class="hint">
     Traces visible at <a href="http://localhost:4201" target="_blank">localhost:4201</a>
