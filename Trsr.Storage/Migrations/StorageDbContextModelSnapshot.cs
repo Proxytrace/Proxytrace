@@ -121,6 +121,47 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("AgentCallEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.AgentToolCall.AgentToolCallEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AgentCallId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Request")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Response")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ToolCallId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentCallId");
+
+                    b.HasIndex("ToolCallId");
+
+                    b.ToTable("AgentToolCallEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.ApiKey.ApiKeyEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -590,6 +631,15 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
                         .WithMany()
                         .HasForeignKey("EndpointId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.AgentToolCall.AgentToolCallEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.AgentCall.AgentCallEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AgentCallId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

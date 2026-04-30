@@ -1,6 +1,3 @@
-using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
-
 namespace Trsr.Domain.AgentCall;
 
 /// <summary>
@@ -22,16 +19,5 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
     /// Agents with no calls are omitted.
     /// </summary>
     Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Finds an existing agent call that the given new <paramref name="request"/> is a tool-call
-    /// continuation of. A continuation is detected when the request contains tool messages whose
-    /// ids match tool requests in a prior call's assistant response, for the same <paramref name="agent"/>.
-    /// Returns <see langword="null"/> if no such call is found.
-    /// </summary>
-    Task<IAgentCall?> FindToolCallContinuationAsync(
-        IAgent agent,
-        Conversation request,
         CancellationToken cancellationToken = default);
 }

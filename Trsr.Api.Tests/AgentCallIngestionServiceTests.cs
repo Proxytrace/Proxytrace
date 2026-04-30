@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Services;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.AgentToolCall;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Testing;
@@ -145,11 +146,12 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task IngestAsync_WhenSingleCall_CreatesOneAgentCall()
+    public async Task IngestAsync_WhenSingleCallWithToolRequests_CreatesPendingToolCalls()
     {
         var services = GetServices();
         var ingestion = services.GetRequiredService<IAgentCallIngestionService>();
-        var repository = services.GetRequiredService<IAgentCallRepository>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var toolCallRepo = services.GetRequiredService<IAgentToolCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 
         await ingestion.IngestAsync(
@@ -161,16 +163,23 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
             httpStatus: HttpStatusCode.OK,
             cancellationToken: CancellationToken);
 
-        var count = await repository.CountAsync(CancellationToken);
-        count.Should().Be(1);
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
+
+        var call = await callRepo.FindFirstAsync(CancellationToken);
+        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call!.Id, CancellationToken);
+        toolCalls.Should().ContainSingle();
+        toolCalls[0].ToolCallId.Should().Be(ToolCallId);
+        toolCalls[0].Response.Should().BeNull();
+        toolCalls[0].Duration.Should().BeNull();
     }
 
     [TestMethod]
-    public async Task IngestAsync_WhenToolCallContinuation_UpdatesExistingAgentCall()
+    public async Task IngestAsync_WhenToolCallContinuation_UpdatesExistingAgentCallAndFillsToolResponse()
     {
         var services = GetServices();
         var ingestion = services.GetRequiredService<IAgentCallIngestionService>();
-        var repository = services.GetRequiredService<IAgentCallRepository>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var toolCallRepo = services.GetRequiredService<IAgentToolCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 
         await ingestion.IngestAsync(
@@ -191,10 +200,9 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
             httpStatus: HttpStatusCode.OK,
             cancellationToken: CancellationToken);
 
-        var count = await repository.CountAsync(CancellationToken);
-        count.Should().Be(1);
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
 
-        var call = await repository.FindFirstAsync(CancellationToken);
+        var call = await callRepo.FindFirstAsync(CancellationToken);
         call.Should().NotBeNull();
         call!.Usage.InputTokenCount.Should().Be(30);
         call.Usage.OutputTokenCount.Should().Be(13);
@@ -203,6 +211,14 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
         call.Response.Contents.Should().ContainSingle()
             .Which.Text.Should().Be(FinalReply);
         call.Request.Messages.Should().HaveCount(4);
+
+        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call.Id, CancellationToken);
+        toolCalls.Should().ContainSingle();
+        toolCalls[0].ToolCallId.Should().Be(ToolCallId);
+        toolCalls[0].Response.Should().NotBeNull();
+        toolCalls[0].Response!.Results.Should().ContainSingle()
+            .Which.Text.Should().Be(ToolResult);
+        toolCalls[0].Duration.Should().NotBeNull();
     }
 
     [TestMethod]
