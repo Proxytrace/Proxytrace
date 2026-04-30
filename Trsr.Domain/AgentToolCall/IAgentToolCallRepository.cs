@@ -1,4 +1,4 @@
-using Trsr.Domain.Agent;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.AgentToolCall;
 
@@ -17,11 +17,12 @@ public interface IAgentToolCallRepository : IRepository<IAgentToolCall>
 
     /// <summary>
     /// Looks up the agent call id whose tool requests match any of the given <paramref name="toolCallIds"/>
-    /// for the given <paramref name="agent"/>. Returns the most recent match, or <see langword="null"/>
-    /// if none. Used to detect tool-call continuations during ingestion.
+    /// within the given <paramref name="project"/>. Returns the most recent match, or <see langword="null"/>
+    /// if none. Used to detect tool-call continuations during ingestion, scoped to project so that
+    /// continuation works even when the second call resolves to a different agent fingerprint.
     /// </summary>
     Task<Guid?> FindAgentCallIdByToolCallIdsAsync(
         IReadOnlyCollection<string> toolCallIds,
-        IAgent agent,
+        IProject project,
         CancellationToken cancellationToken = default);
 }

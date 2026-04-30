@@ -104,6 +104,28 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
         }
         """;
 
+    // Same conversation but second call has a different system message (tool info stripped), simulating
+    // agents that inject tool descriptions into the system message on the first call only.
+    private const string ContinuationRequestBodyDifferentSystemMessage = $$"""
+        {
+            "model": "{{Model}}",
+            "messages": [
+                {"role": "system", "content": "Different system message without tool info"},
+                {"role": "user", "content": "{{UserPrompt}}"},
+                {
+                    "role": "assistant",
+                    "content": null,
+                    "tool_calls": [{
+                        "id": "{{ToolCallId}}",
+                        "type": "function",
+                        "function": {"name": "{{ToolName}}", "arguments": "{}"}
+                    }]
+                },
+                {"role": "tool", "tool_call_id": "{{ToolCallId}}", "content": "{{ToolResult}}"}
+            ]
+        }
+        """;
+
     private const string UnrelatedRequestBody = $$"""
         {
             "model": "{{Model}}",
@@ -219,6 +241,36 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
         toolCalls[0].Response!.Results.Should().ContainSingle()
             .Which.Text.Should().Be(ToolResult);
         toolCalls[0].Duration.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenContinuationHasDifferentSystemMessage_StillMergesIntoExistingAgentCall()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<IAgentCallIngestionService>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            provider: provider,
+            project: project,
+            requestBody: FirstRequestBody,
+            responseBody: FirstResponseBody,
+            duration: TimeSpan.FromMilliseconds(100),
+            httpStatus: HttpStatusCode.OK,
+            cancellationToken: CancellationToken);
+
+        await ingestion.IngestAsync(
+            provider: provider,
+            project: project,
+            requestBody: ContinuationRequestBodyDifferentSystemMessage,
+            responseBody: ContinuationResponseBody,
+            duration: TimeSpan.FromMilliseconds(200),
+            httpStatus: HttpStatusCode.OK,
+            cancellationToken: CancellationToken);
+
+        // Should merge into the same agent call despite the different system message
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
     }
 
     [TestMethod]

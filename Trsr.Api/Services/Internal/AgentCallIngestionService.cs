@@ -77,7 +77,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
             var toolMessageIds = toolMessages.Select(m => m.Id).ToList();
 
             var continuationOfId = await toolCallRepository
-                .FindAgentCallIdByToolCallIdsAsync(toolMessageIds, agent, cancellationToken);
+                .FindAgentCallIdByToolCallIdsAsync(toolMessageIds, project, cancellationToken);
 
             IAgentCall persistedCall;
 

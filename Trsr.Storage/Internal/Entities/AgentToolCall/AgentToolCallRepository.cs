@@ -1,8 +1,9 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
-using Trsr.Domain.Agent;
 using Trsr.Domain.AgentToolCall;
+using Trsr.Domain.Project;
+using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.AgentCall;
 
 namespace Trsr.Storage.Internal.Entities.AgentToolCall;
@@ -32,7 +33,7 @@ internal class AgentToolCallRepository : AbstractRepository<IAgentToolCall, Agen
 
     public async Task<Guid?> FindAgentCallIdByToolCallIdsAsync(
         IReadOnlyCollection<string> toolCallIds,
-        IAgent agent,
+        IProject project,
         CancellationToken cancellationToken = default)
     {
         if (toolCallIds.Count == 0)
@@ -41,13 +42,17 @@ internal class AgentToolCallRepository : AbstractRepository<IAgentToolCall, Agen
         }
 
         var context = contextFactory();
+        var agentCallIdsInProject = context.Set<AgentCallEntity>()
+            .Where(ac => context.Set<AgentEntity>()
+                .Where(a => a.Project == project.Id)
+                .Select(a => a.Id)
+                .Contains(ac.AgentId))
+            .Select(ac => ac.Id);
+
         var match = await context.Set<AgentToolCallEntity>()
             .AsNoTracking()
             .Where(e => toolCallIds.Contains(e.ToolCallId))
-            .Where(e => context.Set<AgentCallEntity>()
-                .Where(ac => ac.AgentId == agent.Id)
-                .Select(ac => ac.Id)
-                .Contains(e.AgentCallId))
+            .Where(e => agentCallIdsInProject.Contains(e.AgentCallId))
             .OrderByDescending(e => e.CreatedAt)
             .Select(e => (Guid?)e.AgentCallId)
             .FirstOrDefaultAsync(cancellationToken);
