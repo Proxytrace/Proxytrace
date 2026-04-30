@@ -23,6 +23,15 @@ public sealed class Module : Autofac.Module
             .As<IOpenAiCallParser>()
             .SingleInstance();
 
+        builder.RegisterType<AgentCallIngestionService>()
+            .As<IAgentCallIngestionService>()
+            .InstancePerDependency();
+
+        builder
+            .Register(_ => NullLogger<AgentCallIngestionService>.Instance)
+            .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionService>>()
+            .SingleInstance();
+
         builder.RegisterType<TestRunnerService>()
             .As<ITestRunnerService>()
             .InstancePerDependency();

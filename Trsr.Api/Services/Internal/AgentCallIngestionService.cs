@@ -1,32 +1,35 @@
 using System.Net;
-using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Api.Services.Internal;
 
 internal class AgentCallIngestionService : IAgentCallIngestionService
 {
-    private readonly IRepository<IAgentCall> repository;
-    private readonly IAgentCall.CreateNew factory;
+    private readonly IAgentCallRepository repository;
+    private readonly IAgentCall.CreateNew createNew;
+    private readonly IAgentCall.CreateExisting createExisting;
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly IModelEndpointRepository endpointRepository;
     private readonly ILogger<AgentCallIngestionService> logger;
 
     public AgentCallIngestionService(
-        IRepository<IAgentCall> repository,
-        IAgentCall.CreateNew factory,
+        IAgentCallRepository repository,
+        IAgentCall.CreateNew createNew,
+        IAgentCall.CreateExisting createExisting,
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         IModelEndpointRepository endpointRepository,
         ILogger<AgentCallIngestionService> logger)
     {
         this.repository = repository;
-        this.factory = factory;
+        this.createNew = createNew;
+        this.createExisting = createExisting;
         this.parser = parser;
         this.agentRepository = agentRepository;
         this.endpointRepository = endpointRepository;
@@ -48,18 +51,43 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
             {
                 return;
             }
-            
+
             var endpoint = await endpointRepository
                 .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
 
             var agent = await agentRepository.GetOrCreateAsync(
-                    parsed.SystemMessage,
-                    parsed.Tools,
-                    project,
-                    endpoint,
-                    cancellationToken);
+                parsed.SystemMessage,
+                parsed.Tools,
+                project,
+                endpoint,
+                cancellationToken);
 
-            var call = factory(
+            var continuationOf = await repository
+                .FindToolCallContinuationAsync(agent, parsed.Request, cancellationToken);
+
+            if (continuationOf is not null)
+            {
+                var mergedUsage = new TokenUsage(
+                    continuationOf.Usage.InputTokenCount + parsed.Usage.InputTokenCount,
+                    continuationOf.Usage.OutputTokenCount + parsed.Usage.OutputTokenCount);
+
+                var updated = createExisting(
+                    agent: agent,
+                    endpoint: endpoint,
+                    request: parsed.Request,
+                    response: parsed.Response,
+                    usage: mergedUsage,
+                    duration: continuationOf.Duration + parsed.Duration,
+                    httpStatus: parsed.HttpStatus,
+                    finishReason: parsed.FinishReason,
+                    errorMessage: parsed.ErrorMessage,
+                    existing: continuationOf);
+
+                await repository.UpdateAsync(updated, cancellationToken);
+                return;
+            }
+
+            var call = createNew(
                 agent: agent,
                 endpoint: endpoint,
                 request: parsed.Request,

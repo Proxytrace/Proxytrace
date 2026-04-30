@@ -1,7 +1,9 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
+using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Message;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
@@ -94,5 +96,42 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             .Select(g => new { AgentId = g.Key, LastUsedAt = g.Max(e => e.CreatedAt) })
             .ToDictionaryAsync(x => x.AgentId, x => x.LastUsedAt, cancellationToken);
         return result;
+    }
+
+    public async Task<IAgentCall?> FindToolCallContinuationAsync(
+        IAgent agent,
+        Conversation request,
+        CancellationToken cancellationToken = default)
+    {
+        var toolMessageIds = request.Messages
+            .OfType<ToolMessage>()
+            .Select(m => m.Id)
+            .ToHashSet();
+
+        if (toolMessageIds.Count == 0)
+        {
+            return null;
+        }
+
+        var context = contextFactory();
+        var candidates = await context.Set<AgentCallEntity>()
+            .AsNoTracking()
+            .Where(e => e.AgentId == agent.Id && e.FinishReason == "tool_calls")
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+
+        foreach (var candidate in candidates)
+        {
+            var hasMatchingToolRequest = candidate.Response.ToolRequests
+                .Any(tr => toolMessageIds.Contains(tr.Id));
+
+            if (hasMatchingToolRequest)
+            {
+                return await mapper.Map(candidate, cancellationToken);
+            }
+        }
+
+        return null;
     }
 }
