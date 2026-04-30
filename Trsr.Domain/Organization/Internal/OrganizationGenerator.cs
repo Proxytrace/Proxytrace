@@ -23,7 +23,7 @@ internal class OrganizationGenerator : DomainEntityGenerator<IOrganization>
     public override async Task<IOrganization> GenerateAsync(CancellationToken cancellationToken = default)
     {
         var users = await Enumerable.Range(0, random.Int(max: 5))
-            .Select(_ => userGenerator.GetOrCreateAsync(cancellationToken))
+            .Select(_ => userGenerator.CreateAsync(cancellationToken))
             .Await();
         return factory(name: random.String(), users: users.ToList());
     }

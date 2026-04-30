@@ -35,7 +35,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         if (filter.ProjectId.HasValue)
         {
             var projectId = filter.ProjectId.Value;
-            query = query.Where(e => 
+            query = query.Where(e =>
                 context.Set<AgentEntity>()
                     .Where(a => a.Project == projectId)
                     .Select(a => a.Id)

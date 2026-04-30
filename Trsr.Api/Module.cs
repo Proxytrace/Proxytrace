@@ -42,6 +42,16 @@ internal sealed class Module : Autofac.Module
             .As<IAgentCallIngestionService>()
             .InstancePerDependency();
 
+        builder.RegisterType<AgentCallIngestionQueue>()
+            .AsSelf()
+            .As<IAgentCallIngestionQueue>()
+            .SingleInstance();
+
+        builder.RegisterServiceCollection(services =>
+        {
+            services.AddHostedService<AgentCallIngestionWorker>();
+        });
+
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
 
