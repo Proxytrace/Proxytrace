@@ -35,7 +35,7 @@ public sealed class AgentCallIngestionQueueTests : BaseTest<Module>
                 "function": {
                     "name": "{{ToolName}}",
                     "description": "Get current weather",
-                    "parameters": {"type": "object", "properties": {}}
+                    "parameters": {"type": "object", "properties": {}
                 }
             }]
         }
@@ -85,7 +85,7 @@ public sealed class AgentCallIngestionQueueTests : BaseTest<Module>
                 "function": {
                     "name": "{{ToolName}}",
                     "description": "Get current weather",
-                    "parameters": {"type": "object", "properties": {}}
+                    "parameters": {"type": "object", "properties": {}
                 }
             }]
         }
