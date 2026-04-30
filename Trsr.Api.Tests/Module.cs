@@ -32,6 +32,20 @@ public sealed class Module : Autofac.Module
             .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionService>>()
             .SingleInstance();
 
+        builder.RegisterType<AgentCallIngestionQueue>()
+            .AsSelf()
+            .As<IAgentCallIngestionQueue>()
+            .SingleInstance();
+
+        builder.RegisterType<AgentCallIngestionWorker>()
+            .AsSelf()
+            .SingleInstance();
+
+        builder
+            .Register(_ => NullLogger<AgentCallIngestionWorker>.Instance)
+            .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionWorker>>()
+            .SingleInstance();
+
         builder.RegisterType<TestRunnerService>()
             .As<ITestRunnerService>()
             .InstancePerDependency();

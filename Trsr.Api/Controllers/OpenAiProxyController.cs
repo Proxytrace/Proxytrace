@@ -33,18 +33,18 @@ public class OpenAiProxyController : ControllerBase
     ]);
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IServiceScopeFactory scopeFactory;
+    private readonly IAgentCallIngestionQueue ingestionQueue;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
-        IServiceScopeFactory scopeFactory,
+        IAgentCallIngestionQueue ingestionQueue,
         IApiKeyRepository apiKeyRepository,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
-        this.scopeFactory = scopeFactory;
+        this.ingestionQueue = ingestionQueue;
         this.apiKeyRepository = apiKeyRepository;
         this.logger = logger;
     }
@@ -144,7 +144,7 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        _ = IngestSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode);
+        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -179,35 +179,34 @@ public class OpenAiProxyController : ControllerBase
 
         sw.Stop();
 
-        _ = IngestSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode);
+        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private async Task IngestSafeAsync(
+    private async Task EnqueueSafeAsync(
         IModelProvider provider,
         IProject project,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
-        HttpStatusCode httpStatus)
+        HttpStatusCode httpStatus,
+        CancellationToken cancellationToken)
     {
         try
         {
-            using var scope = scopeFactory.CreateScope();
-            var svc = scope.ServiceProvider.GetRequiredService<IAgentCallIngestionService>();
-            await svc.IngestAsync(
+            await ingestionQueue.EnqueueAsync(
                 provider: provider,
                 project: project,
                 requestBody: requestBody,
                 responseBody: responseBody,
                 duration: duration,
                 httpStatus: httpStatus,
-                cancellationToken: CancellationToken.None);
+                cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Ingestion failed after proxy call");
+            logger.LogWarning(ex, "Failed to enqueue ingestion job after proxy call");
         }
     }
 
