@@ -192,14 +192,157 @@ public sealed class RandomTests : BaseTest<Module>
     [TestMethod]
     public void Any_WithGenericType_ReturnsCorrectType()
     {
-        var options = new List<DateTimeOffset> 
-        { 
-            DateTimeOffset.Now, 
-            DateTimeOffset.UtcNow.AddDays(1) 
+        var options = new List<DateTimeOffset>
+        {
+            DateTimeOffset.Now,
+            DateTimeOffset.UtcNow.AddDays(1)
         };
-        
+
         var result = Random.Any(options);
-        
+
         options.Should().Contain(result);
+    }
+
+    [TestMethod]
+    public void Long_WithNoParameters_ReturnsNonNegativeLong()
+    {
+        var result = Random.Long();
+
+        result.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [TestMethod]
+    public void Long_WithMinAndMax_ReturnsValueInRange()
+    {
+        var results = new List<long>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Long(min: 100, max: 200));
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(100));
+        results.Should().AllSatisfy(r => r.Should().BeLessThan(200));
+    }
+
+    [TestMethod]
+    public void Double_WithNoParameters_ReturnsBetweenZeroAndOne()
+    {
+        var results = new List<double>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Double());
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(0.0));
+        results.Should().AllSatisfy(r => r.Should().BeLessThan(1.0));
+    }
+
+    [TestMethod]
+    public void Double_WithMinAndMax_ReturnsValueInRange()
+    {
+        var results = new List<double>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Double(min: 5.0, max: 10.0));
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(5.0));
+        results.Should().AllSatisfy(r => r.Should().BeLessThan(10.0));
+    }
+
+    [TestMethod]
+    public void Enum_ReturnsValidEnumValue()
+    {
+        var result = Random.Enum<DayOfWeek>();
+
+        System.Enum.IsDefined(result).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void Enum_CanReturnDifferentValues()
+    {
+        var results = new HashSet<DayOfWeek>();
+        var random = Random;
+        for (int i = 0; i < 100; i++)
+        {
+            results.Add(random.Enum<DayOfWeek>());
+        }
+
+        results.Count.Should().BeGreaterThan(1);
+    }
+
+    [TestMethod]
+    public void DateTimeOffset_WithNoParameters_ReturnsRecentDate()
+    {
+        var result = Random.DateTimeOffset();
+
+        result.Should().BeBefore(DateTimeOffset.UtcNow.AddSeconds(1));
+        result.Should().BeAfter(DateTimeOffset.UtcNow.AddYears(-1).AddSeconds(-1));
+    }
+
+    [TestMethod]
+    public void DateTimeOffset_WithMinAndMax_ReturnsValueInRange()
+    {
+        var min = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var max = new DateTimeOffset(2021, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var results = new List<DateTimeOffset>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.DateTimeOffset(min: min, max: max));
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeOnOrAfter(min));
+        results.Should().AllSatisfy(r => r.Should().BeOnOrBefore(max));
+    }
+
+    [TestMethod]
+    public void Uri_ReturnsValidUri()
+    {
+        var result = Random.Uri();
+
+        result.Should().NotBeNull();
+        result.IsAbsoluteUri.Should().BeTrue();
+        result.Scheme.Should().Be("https");
+    }
+
+    [TestMethod]
+    public void Uri_GeneratesDifferentUrisOnSuccessiveCalls()
+    {
+        var uris = new HashSet<string>();
+        var random = Random;
+        for (int i = 0; i < 20; i++)
+        {
+            uris.Add(random.Uri().ToString());
+        }
+
+        uris.Count.Should().BeGreaterThan(1);
+    }
+
+    [TestMethod]
+    public void Email_ReturnsValidEmailFormat()
+    {
+        var result = Random.Email();
+
+        result.Should().NotBeNullOrWhiteSpace();
+        result.Should().Contain("@");
+        result.Split('@').Length.Should().Be(2);
+        result.Split('@')[1].Should().Contain(".");
+    }
+
+    [TestMethod]
+    public void Email_GeneratesDifferentEmailsOnSuccessiveCalls()
+    {
+        var emails = new HashSet<string>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            emails.Add(random.Email());
+        }
+
+        emails.Count.Should().BeGreaterThan(1);
     }
 }
