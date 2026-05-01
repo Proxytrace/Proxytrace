@@ -1,7 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.Message.Internal;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 
@@ -9,36 +13,58 @@ namespace Trsr.Domain.Agent.Internal;
 
 internal record Agent : DomainEntity, IAgent
 {
+    private readonly ILogger<Agent> logger;
+    
     public string Name { get; }
     public IProject Project { get; }
     public SystemMessage SystemMessage { get; }
-    public IReadOnlyCollection<ToolSpecification> Tools { get; }
+    public IReadOnlyList<ToolSpecification> Tools { get; }
 
     public Agent(
         string name,
         SystemMessage systemMessage,
-        IReadOnlyCollection<ToolSpecification> tools,
-        IProject project)
+        IReadOnlyList<ToolSpecification> tools,
+        IProject project,
+        ILogger<Agent> logger)
     {
         Name = name;
         SystemMessage = systemMessage;
         Project = project;
         Tools = tools;
+        this.logger = logger;
     }
 
     public Agent(
         string name,
         IProject project,
         SystemMessage systemMessage,
-        IReadOnlyCollection<ToolSpecification> tools,
-        IDomainEntityData existing) : base(existing)
+        IReadOnlyList<ToolSpecification> tools,
+        IDomainEntityData existing,
+        ILogger<Agent> logger) : base(existing)
     {
         Name = name;
         Project = project;
         SystemMessage = systemMessage;
         Tools = tools;
+        this.logger = logger;
     }
 
+    public async Task<AssistantMessage> CompleteAsync(
+        Conversation conversation, 
+        IModelEndpoint endpoint,
+        CancellationToken cancellationToken = default)
+    {
+        conversation = Conversation.ReplaceSystemMessage(conversation, SystemMessage);
+
+        AssistantMessage response = await endpoint.CreateClient().CompleteAsync(
+            conversation,
+            ModelOptions.FromAgent(this, endpoint.Model),
+            cancellationToken);
+
+        return response;
+    }
+
+    /// <inheritdoc />
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))

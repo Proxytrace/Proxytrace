@@ -1,130 +1,85 @@
-using System.Text;
-using System.Text.Json;
-using Trsr.Domain;
+using System.Diagnostics;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
 namespace Trsr.Api.Services.Internal;
 
-internal class TestRunnerService : ITestRunnerService
+internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly IOpenAiCallParser parser;
     private readonly ITestResult.CreateNew createTestResult;
     private readonly ITestRun.CreateNew createTestRun;
-    private readonly IRepository<ITestResult> testResultRepository;
-    private readonly IRepository<ITestRun> testRunRepository;
+    private readonly ITestRunRepository testRunRepository;
+    private readonly ITestRunQueue testRunQueue;
     private readonly ILogger<TestRunnerService> logger;
 
     public TestRunnerService(
-        IHttpClientFactory httpClientFactory,
-        IOpenAiCallParser parser,
         ITestResult.CreateNew createTestResult,
         ITestRun.CreateNew createTestRun,
-        IRepository<ITestResult> testResultRepository,
-        IRepository<ITestRun> testRunRepository,
+        ITestRunRepository testRunRepository,
+        ITestRunQueue testRunQueue,
         ILogger<TestRunnerService> logger)
     {
-        this.httpClientFactory = httpClientFactory;
-        this.parser = parser;
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
-        this.testResultRepository = testResultRepository;
         this.testRunRepository = testRunRepository;
+        this.testRunQueue = testRunQueue;
         this.logger = logger;
     }
 
     public async Task<ITestRun> RunAsync(
+        ITestSuite suite, 
+        IModelEndpoint endpoint, 
+        CancellationToken cancellationToken = default)
+    {
+        ITestRun newRun = createTestRun(suite, endpoint);
+        newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
+        await ExecuteRunAsync(newRun, cancellationToken);
+        return newRun;
+    }
+
+    public async Task<ITestRun> StartAsync(
         ITestSuite suite,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
-        var agent = suite.Agent;
-        var org = agent.Project.Organization;
-        var project = agent.Project;
+        ITestRun newRun = createTestRun(suite, endpoint);
+        newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
+        testRunQueue.Enqueue(newRun.Id);
+        return newRun;
+    }
 
-        var orgName = Uri.EscapeDataString(org.Name);
-        var projectName = Uri.EscapeDataString(project.Name);
-        var proxyPath = $"{orgName}/{projectName}/openai/v1/chat/completions";
-
-        var results = new List<ITestResult>();
-
-        foreach (var testCase in suite.TestCases)
+    public async Task<ITestRun> ExecuteRunAsync(
+        ITestRun testRun, 
+        CancellationToken cancellationToken = default)
+    {
+        if(testRun.Status != TestRunStatus.Pending)
         {
-            var requestBody = BuildRequestBody(testCase.Input, agent.SystemMessage);
-            var requestBytes = Encoding.UTF8.GetBytes(requestBody);
+            throw new InvalidOperationException($"Cannot execute test run {testRun.Id} because it is not in pending status.");
+        }
+        
+        await testRun.SetRunning(cancellationToken);
+        var suite = testRun.Suite;
+        foreach (ITestCase testCase in suite.TestCases)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            AssistantMessage response = await suite.Agent.CompleteAsync(
+                testCase.Input,
+                testRun.Endpoint,
+                cancellationToken);
+            TimeSpan elapsed = stopwatch.Elapsed;
+            
+            Evaluation evaluation = await suite
+                .Evaluator
+                .EvaluateAsync(testCase.ExpectedOutput, response, cancellationToken);
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, proxyPath)
-            {
-                Content = new ByteArrayContent(requestBytes)
-            };
-            httpRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-
-            string? responseBody;
-            System.Net.HttpStatusCode httpStatus;
-
-            try
-            {
-                var client = httpClientFactory.CreateClient("self");
-                var response = await client.SendAsync(httpRequest, cancellationToken);
-                httpStatus = response.StatusCode;
-                responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Self-call failed for test case {TestCaseId}", testCase.Id);
-                continue;
-            }
-
-            if (!parser.TryParse(endpoint.Provider, requestBody, responseBody, TimeSpan.Zero, httpStatus, out var parsed))
-            {
-                logger.LogWarning("Could not parse response for test case {TestCaseId}", testCase.Id);
-                continue;
-            }
-
-            var evaluation = suite.Evaluator.Evaluate(testCase.ExpectedOutput, parsed.Response)
-                ? Evaluation.Pass
-                : Evaluation.Fail;
-
-            var testResult = createTestResult(testCase, parsed.Response, evaluation);
-            await testResultRepository.AddAsync(testResult, cancellationToken);
-            results.Add(testResult);
+            var testResult = createTestResult(testCase, response, evaluation, elapsed);
+            testRun = await testRun.SetTestResult(testResult, cancellationToken);
         }
 
-        var testRun = createTestRun(DateTimeOffset.UtcNow, agent, results);
-        await testRunRepository.AddAsync(testRun, cancellationToken);
         return testRun;
     }
-
-    private static string BuildRequestBody(Conversation input, SystemMessage systemMessage)
-    {
-        var messages = new List<object> { new { role = "system", content = GetText(systemMessage.Contents) } };
-
-        foreach (var message in input.Messages)
-        {
-            switch (message)
-            {
-                case UserMessage user:
-                    messages.Add(new { role = "user", content = GetText(user.Contents) });
-                    break;
-                case AssistantMessage assistant:
-                    messages.Add(new { role = "assistant", content = GetText(assistant.Contents) });
-                    break;
-            }
-        }
-
-        var body = new Dictionary<string, object>
-        {
-            ["model"] = "gpt-4o",
-            ["messages"] = messages
-        };
-
-        return JsonSerializer.Serialize(body);
-    }
-
-    private static string GetText(IReadOnlyList<Content> contents)
-        => string.Concat(contents.Select(c => c.Text ?? ""));
 }

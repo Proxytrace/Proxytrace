@@ -57,7 +57,7 @@ public record LatencyStat(
     int SampleCount);
 
 public record PassRateStat(
-    Guid AgentId,
+    Guid SuiteId,
     DateTimeOffset RunTimestamp,
     int PassCount,
     int FailCount,

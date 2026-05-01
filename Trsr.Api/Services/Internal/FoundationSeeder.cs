@@ -1,4 +1,5 @@
 using Trsr.Domain;
+using Trsr.Domain.ApiKey;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
@@ -30,6 +31,9 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         var endpointGpt4o = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000020"), gpt4o, openAi, 0.0000025m, 0.000010m, cancellationToken);
         var endpointClaude = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000021"), claudeSonnet, anthropic, 0.000003m, 0.000015m, cancellationToken);
         var endpointGpt4oMini = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000022"), gpt4oMini, openAi, 0.00000015m, 0.0000006m, cancellationToken);
+
+        await UpsertApiKeyAsync(new Guid("a0000000-0000-0000-0000-000000000001"), "Demo OpenAI Key", "trsr-demo-openai", project, openAi, cancellationToken);
+        await UpsertApiKeyAsync(new Guid("a0000000-0000-0000-0000-000000000002"), "Demo Anthropic Key", "trsr-demo-anthropic", project, anthropic, cancellationToken);
 
         return new FoundationData(project, evaluator, new Dictionary<Guid, IModelEndpoint>
         {
@@ -66,7 +70,7 @@ internal sealed class FoundationSeeder(IServiceProvider services)
     {
         var factory = services.GetRequiredService<IEvaluator.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IEvaluator>>();
-        return await repo.UpsertAsync(factory(EvaluatorKind.ExactMatch, At(id)), ct);
+        return await repo.UpsertAsync(factory(At(id)), ct);
     }
 
     private async Task<IModelProvider> UpsertModelProviderAsync(Guid id, string name, Uri endpoint, ModelProviderKind kind, IOrganization org, CancellationToken ct)
@@ -88,6 +92,13 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         var factory = services.GetRequiredService<IModelEndpoint.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IModelEndpoint>>();
         return await repo.UpsertAsync(factory(model, provider, inputCost, outputCost, At(id)), ct);
+    }
+
+    private async Task UpsertApiKeyAsync(Guid id, string name, string key, IProject project, IModelProvider provider, CancellationToken ct)
+    {
+        var factory = services.GetRequiredService<IApiKey.CreateExisting>();
+        var repo = services.GetRequiredService<IRepository<IApiKey>>();
+        await repo.UpsertAsync(factory(name, key, project, provider, At(id)), ct);
     }
 }
 

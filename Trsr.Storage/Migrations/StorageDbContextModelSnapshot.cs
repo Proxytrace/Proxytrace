@@ -503,6 +503,9 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("DurationMs")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Evaluation")
                         .HasColumnType("INTEGER");
 
@@ -526,18 +529,23 @@ namespace Trsr.Storage.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("Agent")
+                    b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("CreatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TestResults")
-                        .IsRequired()
+                    b.Property<Guid>("Endpoint")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Timestamp")
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("Suite")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TestResults")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -547,7 +555,9 @@ namespace Trsr.Storage.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Agent");
+                    b.HasIndex("Endpoint");
+
+                    b.HasIndex("Suite");
 
                     b.ToTable("TestRunEntity");
                 });
@@ -735,9 +745,15 @@ namespace Trsr.Storage.Migrations
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestRun.TestRunEntity", b =>
                 {
-                    b.HasOne("Trsr.Storage.Internal.Entities.Agent.AgentEntity", null)
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
                         .WithMany()
-                        .HasForeignKey("Agent")
+                        .HasForeignKey("Endpoint")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Suite")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

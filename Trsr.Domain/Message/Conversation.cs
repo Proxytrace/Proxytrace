@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using JetBrains.Annotations;
 using Trsr.Common.Validation;
 
 namespace Trsr.Domain.Message;
@@ -57,8 +58,6 @@ public sealed record Conversation : IDomainObject
     /// <summary>
     /// Adds a system message to the start of the conversation
     /// </summary>
-    /// <param name="systemMessage"></param>
-    /// <returns></returns>
     public void AddSystemMessage(SystemMessage systemMessage)
     {
         if (Messages.Any(x => x.Role == Role.System))
@@ -85,4 +84,16 @@ public sealed record Conversation : IDomainObject
     public override int GetHashCode() 
         => HashCode.Combine(Id, Messages);
 
+    /// <summary>
+    /// Replaces any existing system Prompt with this system prompt
+    /// </summary>
+    [Pure]
+    public static Conversation ReplaceSystemMessage(Conversation conversation, SystemMessage systemMessage)
+    {
+        var upstreamMessages = conversation.Messages.Where(x => x.Role != Role.System).ToList();
+        
+        var newConversation = new Conversation(conversation.Id, upstreamMessages);
+        newConversation.AddSystemMessage(systemMessage);
+        return newConversation;
+    }
 }

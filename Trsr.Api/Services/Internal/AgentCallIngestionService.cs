@@ -1,4 +1,5 @@
 using System.Net;
+using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.AgentToolCall;

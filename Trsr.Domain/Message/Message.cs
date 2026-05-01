@@ -45,6 +45,12 @@ public abstract record Message : IDomainObject
         => CreateUserMessage([Content.FromText(content)]);
     
     /// <summary>
+    /// Creates a new <see cref="Domain.Message.Role.System"/> message with the <paramref name="content"/>
+    /// </summary>
+    public static SystemMessage CreateSystemMessage(string systemPrompt)
+        => new(systemPrompt);
+    
+    /// <summary>
     /// Creates a new <see cref="Internal.Role.User"/> message with the <paramref name="content"/>
     /// </summary>
     public static UserMessage CreateUserMessage(IReadOnlyList<Content> content)

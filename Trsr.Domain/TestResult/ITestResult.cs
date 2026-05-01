@@ -17,9 +17,21 @@ public interface ITestResult : IDomainEntity
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     Evaluation Evaluation { get; }
 
+    /// <summary>How long the LLM call took for this test case, in milliseconds.</summary>
+    TimeSpan Duration { get; }
+
     /// <summary>Factory delegate for creating a new test result.</summary>
-    public delegate ITestResult CreateNew(ITestCase testCase, AssistantMessage actualResponse, Evaluation evaluation);
+    public delegate ITestResult CreateNew(
+        ITestCase testCase,
+        AssistantMessage actualResponse,
+        Evaluation evaluation, 
+        TimeSpan duration);
 
     /// <summary>Factory delegate for reconstituting an existing test result from persistence.</summary>
-    public delegate ITestResult CreateExisting(ITestCase testCase, AssistantMessage actualResponse, Evaluation evaluation, IDomainEntityData existing);
+    public delegate ITestResult CreateExisting(
+        ITestCase testCase,
+        AssistantMessage actualResponse,
+        Evaluation evaluation,
+        TimeSpan duration,
+        IDomainEntityData existing);
 }

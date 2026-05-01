@@ -27,5 +27,6 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>
         => factory(
             testCase: await testCaseGenerator.CreateAsync(cancellationToken),
             actualResponse: await assistantMessageGenerator.CreateAsync(cancellationToken),
-            evaluation: random.Any<Evaluation>([Evaluation.Pass, Evaluation.Fail, Evaluation.Undecided]));
+            evaluation: random.Any([Evaluation.Pass, Evaluation.Fail, Evaluation.Undecided]),
+            duration: random.TimeSpan(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(5000)));
 }

@@ -63,6 +63,9 @@ internal class SeededRandom : IRandom
     public T Any<T>(IReadOnlyCollection<T> options) 
         => options.ElementAt(Int(min: 0, max: options.Count));
 
+    public TEnum Any<TEnum>() where TEnum : struct, Enum
+        => Any(Enum.GetValues<TEnum>());
+
     public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null)
         => System.TimeSpan.FromMilliseconds(Int(min: 500, max: 5000));
 }

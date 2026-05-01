@@ -8,7 +8,7 @@ namespace Trsr.Domain.Agent;
 /// </summary>
 public interface IAgentNameGenerator
 {
-    Task<string?> GenerateNameAsync(
+    Task<string> GenerateNameAsync(
         SystemMessage systemMessage,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);

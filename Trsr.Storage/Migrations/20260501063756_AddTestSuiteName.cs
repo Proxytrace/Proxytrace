@@ -14,7 +14,8 @@ namespace Trsr.Storage.Migrations
                 name: "Name",
                 table: "TestSuiteEntity",
                 type: "TEXT",
-                nullable: false);
+                nullable: false,
+                defaultValue: "Unnamed Test Suite");
         }
 
         /// <inheritdoc />

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Projects;
+using Trsr.Domain;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 

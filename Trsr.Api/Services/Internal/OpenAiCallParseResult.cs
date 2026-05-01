@@ -17,4 +17,4 @@ internal sealed record OpenAiCallParseResult(
     string? FinishReason,
     string? ErrorMessage,
     SystemMessage SystemMessage,
-    IReadOnlyCollection<ToolSpecification> Tools);
+    IReadOnlyList<ToolSpecification> Tools);

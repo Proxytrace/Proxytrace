@@ -21,13 +21,13 @@ public interface IAgent : IDomainEntity
     SystemMessage SystemMessage { get; }
 
     /// <summary>The tools available to this agent.</summary>
-    IReadOnlyCollection<ToolSpecification> Tools { get; }
+    IReadOnlyList<ToolSpecification> Tools { get; }
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
         string name,
         SystemMessage systemMessage,
-        IReadOnlyCollection<ToolSpecification> tools,
+        IReadOnlyList<ToolSpecification> tools,
         IProject project);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
@@ -35,6 +35,14 @@ public interface IAgent : IDomainEntity
         string name,
         IProject project,
         SystemMessage systemMessage,
-        IReadOnlyCollection<ToolSpecification> tools,
+        IReadOnlyList<ToolSpecification> tools,
         IDomainEntityData existing);
+    
+    /// <summary>
+    /// Given a conversation history, complete the next message by calling the language model defined in the provided model endpoint.
+    /// </summary>
+    Task<AssistantMessage> CompleteAsync(
+        Conversation conversation, 
+        IModelEndpoint endpoint,
+        CancellationToken cancellationToken = default); 
 }

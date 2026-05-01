@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace Trsr.Domain.Message;
 
@@ -37,6 +38,21 @@ public sealed record AssistantMessage : Message
         {
             yield return result;
         }
+    }
+
+    public string GetTextResponse()
+    {
+        if (ToolRequests.Any())
+        {
+            throw new InvalidOperationException("Cannot get text response from an AssistantMessage that contains tool requests.");
+        }
+        
+        if(Contents.Any(x => x.Kind != ContentKind.Text))
+        {
+            throw new InvalidOperationException("Cannot get text response from an AssistantMessage that contains non-text content.");
+        }
+        
+        return string.Join(string.Empty, Contents.Select(x => x.Text));
     }
 
     /// <inheritdoc />

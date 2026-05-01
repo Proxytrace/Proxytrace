@@ -59,6 +59,11 @@ public static class Validation
     
     public static ValidationResult NotEmpty(string? value, [CallerMemberName] string memberName = "")
         => MinLength(value, 1, memberName);
+    
+    public static ValidationResult NotEmpty<T>(IReadOnlyCollection<T> value, [CallerMemberName] string memberName = "")
+        => value.Count == 0
+            ? new ValidationResult($"{memberName} cannot be empty", [memberName]) 
+            : ValidationResult.Success!;
 
     public static ValidationResult Positive(decimal value, [CallerMemberName] string memberName = "")
         => value <= 0

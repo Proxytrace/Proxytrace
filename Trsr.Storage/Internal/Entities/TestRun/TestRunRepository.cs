@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.TestRun;
+using Trsr.Storage.Internal.Entities.TestSuite;
 
 namespace Trsr.Storage.Internal.Entities.TestRun;
 
@@ -17,10 +18,16 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
 
     public async Task<IReadOnlyList<ITestRun>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
-        var stored = await contextFactory()
+        var context = contextFactory();
+        var stored = await context
             .Set<TestRunEntity>()
             .AsNoTracking()
-            .Where(e => e.Agent == agentId)
+            .Join(context.Set<TestSuiteEntity>(),
+                r => r.Suite,
+                s => s.Id, 
+                (r, s) => new { Run = r, Suite = s })
+            .Where(x => x.Suite.Agent == agentId)
+            .Select(x => x.Run)
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);

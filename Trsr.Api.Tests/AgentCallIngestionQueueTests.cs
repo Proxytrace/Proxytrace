@@ -1,7 +1,6 @@
 using System.Net;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Trsr.Api.Services;
 using Trsr.Api.Services.Internal;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
@@ -135,7 +134,8 @@ public sealed class AgentCallIngestionQueueTests : BaseTest<Module>
         (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
 
         var call = await callRepo.FindFirstAsync(CancellationToken);
-        call!.FinishReason.Should().Be("stop");
+        call.Should().NotBeNull();
+        call.FinishReason.Should().Be("stop");
         call.Usage.InputTokenCount.Should().Be(30);
         call.Usage.OutputTokenCount.Should().Be(13);
 
