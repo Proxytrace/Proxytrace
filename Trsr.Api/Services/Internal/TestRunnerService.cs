@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
@@ -13,6 +14,7 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
     private readonly ITestResult.CreateNew createTestResult;
     private readonly ITestRun.CreateNew createTestRun;
     private readonly ITestRunRepository testRunRepository;
+    private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestRunQueue testRunQueue;
     private readonly ILogger<TestRunnerService> logger;
 
@@ -20,12 +22,14 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
         ITestResult.CreateNew createTestResult,
         ITestRun.CreateNew createTestRun,
         ITestRunRepository testRunRepository,
+        IRepository<ITestResult> testResultRepository,
         ITestRunQueue testRunQueue,
         ILogger<TestRunnerService> logger)
     {
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
         this.testRunRepository = testRunRepository;
+        this.testResultRepository = testResultRepository;
         this.testRunQueue = testRunQueue;
         this.logger = logger;
     }
@@ -37,7 +41,7 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
     {
         ITestRun newRun = createTestRun(suite, endpoint);
         newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
-        await ExecuteRunAsync(newRun, cancellationToken);
+        newRun = await ExecuteRunAsync(newRun, cancellationToken);
         return newRun;
     }
 
@@ -77,6 +81,7 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
                 .EvaluateAsync(testCase.ExpectedOutput, response, cancellationToken);
 
             var testResult = createTestResult(testCase, response, evaluation, elapsed);
+            await testResultRepository.AddAsync(testResult, cancellationToken);
             testRun = await testRun.SetTestResult(testResult, cancellationToken);
         }
 
