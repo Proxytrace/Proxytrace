@@ -6,6 +6,11 @@ namespace Trsr.Storage.Internal.Entities.TestSuite;
 internal record TestSuiteEntity : Entity
 {
     /// <summary>
+    /// <see cref="ITestSuite.Name"/>
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
     /// <see cref="ITestSuite.Agent"/>
     /// </summary>
     public required Guid Agent { get; init; }

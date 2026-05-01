@@ -9,23 +9,27 @@ namespace Trsr.Domain.TestSuite.Internal;
 
 internal record TestSuite : DomainEntity, ITestSuite
 {
+    public string Name { get; }
     public IAgent Agent { get; }
     public IEvaluator Evaluator { get; }
     public IReadOnlyCollection<ITestCase> TestCases { get; }
 
-    public TestSuite(IAgent agent, IEvaluator evaluator, IReadOnlyCollection<ITestCase> testCases)
+    public TestSuite(string name, IAgent agent, IEvaluator evaluator, IReadOnlyCollection<ITestCase> testCases)
     {
+        Name = name;
         Agent = agent;
         Evaluator = evaluator;
         TestCases = testCases.ToArray();
     }
 
     public TestSuite(
+        string name,
         IAgent agent,
-        IEvaluator evaluator, 
+        IEvaluator evaluator,
         IReadOnlyCollection<ITestCase> testCases,
         IDomainEntityData existing) : base(existing)
     {
+        Name = name;
         Agent = agent;
         Evaluator = evaluator;
         TestCases = testCases.ToArray();
@@ -34,10 +38,11 @@ internal record TestSuite : DomainEntity, ITestSuite
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
-        {
             yield return result;
-        }
-        
+
+        if (string.IsNullOrWhiteSpace(Name))
+            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
+
         if (Agent is null)
         {
             yield return Validation.NotNull(Agent, nameof(Agent));
@@ -45,9 +50,7 @@ internal record TestSuite : DomainEntity, ITestSuite
         else
         {
             foreach (var result in Agent.Validate(validationContext))
-            {
                 yield return result;
-            }
         }
 
         if (Evaluator is null)
@@ -57,9 +60,7 @@ internal record TestSuite : DomainEntity, ITestSuite
         else
         {
             foreach (var result in Evaluator.Validate(validationContext))
-            {
                 yield return result;
-            }
         }
 
         if (TestCases is null)
@@ -69,9 +70,7 @@ internal record TestSuite : DomainEntity, ITestSuite
         else
         {
             foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
-            {
                 yield return result;
-            }
         }
     }
 }

@@ -13,6 +13,12 @@ internal class TestSuiteGenerator : DomainEntityGenerator<ITestSuite>
     private readonly IDomainEntityGenerator<IEvaluator> evaluatorGenerator;
     private readonly IDomainEntityGenerator<ITestCase> testCaseGenerator;
 
+    private static readonly string[] Names =
+    [
+        "Core Flows", "Edge Cases", "Regression", "Smoke Tests", "Happy Path",
+        "Error Handling", "Integration", "Boundary Tests", "Sanity Check", "Full Coverage"
+    ];
+
     public TestSuiteGenerator(
         ITestSuite.CreateNew factory,
         IRepository<ITestSuite> repository,
@@ -32,6 +38,7 @@ internal class TestSuiteGenerator : DomainEntityGenerator<ITestSuite>
         var agent = await agentGenerator.GetOrCreateAsync(cancellationToken);
         var evaluator = await evaluatorGenerator.GetOrCreateAsync(cancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(cancellationToken);
-        return factory(agent: agent, evaluator: evaluator, testCases: [testCase]);
+        var name = random.Any(Names);
+        return factory(name: name, agent: agent, evaluator: evaluator, testCases: [testCase]);
     }
 }

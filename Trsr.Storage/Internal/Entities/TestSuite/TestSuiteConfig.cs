@@ -56,8 +56,9 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             );
     }
 
-    public async Task<ITestSuite> Map(TestSuiteEntity storedEntity, CancellationToken cancellationToken = default) 
+    public async Task<ITestSuite> Map(TestSuiteEntity storedEntity, CancellationToken cancellationToken = default)
         => factory(
+            name: storedEntity.Name,
             agent: await agents.GetAsync(storedEntity.Agent, cancellationToken),
             evaluator: await evaluators.GetAsync(storedEntity.Evaluator, cancellationToken),
             testCases: await testCases.GetManyAsync(storedEntity.TestCases, cancellationToken),
@@ -67,6 +68,7 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
         => new TestSuiteEntity
         {
             Id = domainEntity.Id,
+            Name = domainEntity.Name,
             Agent = domainEntity.Agent.Id,
             Evaluator = domainEntity.Evaluator.Id,
             TestCases = domainEntity.TestCases.Select(x => x.Id).ToArray(),

@@ -54,7 +54,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var testCase = createTestCase(input, expectedOutput);
         await testCaseRepo.AddAsync(testCase, ct);
 
-        var suite = createTestSuite(agent, evaluator, [testCase]);
+        var suite = createTestSuite("Test Suite", agent, evaluator, [testCase]);
         await testSuiteRepo.AddAsync(suite, ct);
         return suite;
     }
@@ -222,7 +222,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         await testCaseRepo.AddAsync(case1, CancellationToken);
         await testCaseRepo.AddAsync(case2, CancellationToken);
 
-        var suite = createTestSuite(agent, evaluator, [case1, case2]);
+        var suite = createTestSuite("Test Suite", agent, evaluator, [case1, case2]);
         await testSuiteRepo.AddAsync(suite, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();

@@ -157,7 +157,7 @@ internal sealed class DemoDataSeeder : IHostedService
         var factory = services.GetRequiredService<ITestSuite.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<ITestSuite>>();
         var data = new DemoEntityData(suite.Id, suite.CreatedAt, suite.CreatedAt);
-        await repo.UpsertAsync(factory(agent, foundation.Evaluator, testCases.Values.ToList(), data), ct);
+        await repo.UpsertAsync(factory(suite.Name, agent, foundation.Evaluator, testCases.Values.ToList(), data), ct);
     }
 
     private static async Task<IReadOnlyDictionary<Guid, ITestRun>> SeedTestRunsAsync(

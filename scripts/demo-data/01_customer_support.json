@@ -444,6 +444,7 @@
   ],
   "TestSuite": {
     "Id": "12000000-0000-0000-0000-000000000000",
+    "Name": "Core Test Suite",
     "CreatedAt": "2026-03-05T08:00:00+00:00"
   },
   "TestRuns": [
