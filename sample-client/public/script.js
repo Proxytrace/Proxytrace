@@ -1,10 +1,103 @@
 const messagesEl = document.getElementById("messages");
 const emptyEl = document.getElementById("empty");
+const emptyTextEl = document.getElementById("empty-text");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send-btn");
+const agentTabsEl = document.getElementById("agent-tabs");
+const shortcutsListEl = document.getElementById("shortcuts-list");
 
-const history = [];   // { role: "user"|"assistant", content: string }[]
+// Per-agent conversation history: agentId → message[]
+const histories = {};
+let agents = [];
+let activeAgentId = null;
 let streaming = false;
+
+// ─── Agent management ──────────────────────────────────────────────────────
+
+async function loadAgents() {
+  try {
+    const res = await fetch("/agents");
+    agents = await res.json();
+    agents.forEach((a) => { histories[a.id] = []; });
+    renderAgentTabs();
+    selectAgent(agents[0].id);
+  } catch {
+    agentTabsEl.innerHTML = `<span style="color:var(--text-muted);font-size:.8rem">Could not load agents</span>`;
+  }
+}
+
+function renderAgentTabs() {
+  agentTabsEl.innerHTML = "";
+  for (const agent of agents) {
+    const btn = document.createElement("button");
+    btn.className = "agent-tab";
+    btn.dataset.agentId = agent.id;
+    btn.title = agent.description;
+    btn.innerHTML = `<span class="agent-icon">${agent.icon}</span><span class="agent-name">${agent.name}</span>`;
+    btn.addEventListener("click", () => selectAgent(agent.id));
+    agentTabsEl.appendChild(btn);
+  }
+}
+
+function selectAgent(id) {
+  if (activeAgentId === id) return;
+  activeAgentId = id;
+
+  // Update tab active state
+  agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.agentId === id);
+  });
+
+  // Restore this agent's conversation
+  renderHistory();
+  renderShortcuts();
+
+  const agent = agents.find((a) => a.id === id);
+  if (agent) {
+    emptyTextEl.textContent = `${agent.icon} ${agent.name} — ${agent.description}. Start chatting; all interactions will appear as traces in your Trsr dashboard.`;
+    inputEl.placeholder = `Ask the ${agent.name}… (Enter to send, Shift+Enter for new line)`;
+  }
+  inputEl.focus();
+}
+
+// ─── Shortcut chips ────────────────────────────────────────────────────────
+
+function renderShortcuts() {
+  shortcutsListEl.innerHTML = "";
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent) return;
+  for (const shortcut of agent.shortcuts) {
+    const chip = document.createElement("button");
+    chip.className = "demo-chip";
+    chip.textContent = shortcut.label;
+    chip.addEventListener("click", () => {
+      inputEl.value = shortcut.prompt;
+      autoResize();
+      inputEl.focus();
+    });
+    shortcutsListEl.appendChild(chip);
+  }
+}
+
+// ─── Message rendering ─────────────────────────────────────────────────────
+
+function renderHistory() {
+  // Clear existing messages except the empty state
+  const existing = messagesEl.querySelectorAll(".message, .tool-card");
+  existing.forEach((el) => el.remove());
+
+  const history = histories[activeAgentId] ?? [];
+  emptyEl.style.display = history.length === 0 ? "" : "none";
+
+  for (const msg of history) {
+    if (msg.role === "user") {
+      addMessage("user", msg.content);
+    } else if (msg.role === "assistant") {
+      addMessage("assistant", msg.content);
+    }
+    // Tool cards are not re-rendered from history (they're ephemeral UI)
+  }
+}
 
 function autoResize() {
   inputEl.style.height = "auto";
@@ -103,15 +196,18 @@ function resolveToolCard(card, resultJson) {
   header.addEventListener("click", () => { resultEl.hidden = !resultEl.hidden; });
 }
 
+// ─── Send message ──────────────────────────────────────────────────────────
+
 async function send() {
   const text = inputEl.value.trim();
-  if (!text || streaming) return;
+  if (!text || streaming || !activeAgentId) return;
 
   inputEl.value = "";
   autoResize();
   streaming = true;
   sendBtn.disabled = true;
 
+  const history = histories[activeAgentId];
   history.push({ role: "user", content: text });
   addMessage("user", text);
 
@@ -119,14 +215,13 @@ async function send() {
   assistantBubble.classList.add("cursor");
   let assistantText = "";
 
-  // Track pending tool cards keyed by tool name (one at a time per name)
   const pendingCards = new Map();
 
   try {
     const res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({ messages: history, agentId: activeAgentId }),
     });
 
     if (!res.ok) {
@@ -156,9 +251,7 @@ async function send() {
         if (json.error) throw new Error(json.error);
 
         if (json.toolCall) {
-          // Insert card before the assistant bubble's parent
           const card = addToolCard(json.toolCall.name, json.toolCall.arguments);
-          // Move the card above the assistant message
           assistantBubble.closest(".message").before(card);
           pendingCards.set(json.toolCall.name, card);
           continue;
@@ -188,6 +281,8 @@ async function send() {
   }
 }
 
+// ─── Event listeners ───────────────────────────────────────────────────────
+
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -198,11 +293,6 @@ inputEl.addEventListener("keydown", (e) => {
 inputEl.addEventListener("input", autoResize);
 sendBtn.addEventListener("click", send);
 
-// Demo chip — fills the input with a question that triggers both demo tools
-document.getElementById("demo-chip")?.addEventListener("click", () => {
-  inputEl.value = "What's the weather in Vienna right now, and what are the top 3 tourist attractions there?";
-  autoResize();
-  inputEl.focus();
-});
+// ─── Boot ──────────────────────────────────────────────────────────────────
 
-inputEl.focus();
+loadAgents();

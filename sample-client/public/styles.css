@@ -28,11 +28,17 @@ body {
 header {
   width: 100%;
   max-width: 760px;
-  padding: 20px 24px 16px;
+  padding: 16px 24px 0;
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+}
+
+.header-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 header h1 {
@@ -56,6 +62,52 @@ header h1 {
   background: #4caf50;
   flex-shrink: 0;
 }
+
+/* ─── Agent tabs ────────────────────────────────────────────────────────────── */
+
+#agent-tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0;
+}
+
+#agent-tabs::-webkit-scrollbar { display: none; }
+
+.agent-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  border-radius: 6px 6px 0 0;
+}
+
+.agent-tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.agent-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.agent-icon { font-size: 1rem; line-height: 1; }
+.agent-name { letter-spacing: 0.01em; }
+
+/* ─── Messages ─────────────────────────────────────────────────────────────── */
 
 #messages {
   flex: 1;
@@ -130,7 +182,9 @@ header h1 {
 }
 
 .empty-state svg { opacity: 0.35; }
-.empty-state p { font-size: 0.9rem; max-width: 300px; line-height: 1.5; }
+.empty-state p { font-size: 0.9rem; max-width: 360px; line-height: 1.5; }
+
+/* ─── Footer / input ───────────────────────────────────────────────────────── */
 
 footer {
   width: 100%;
@@ -198,6 +252,7 @@ footer {
 .error .bubble { background: #3a1a1a; border-color: #7a2020; color: #f88; }
 
 /* ─── Tool call cards ──────────────────────────────────────────────────────── */
+
 .tool-card {
   align-self: flex-start;
   max-width: 88%;
@@ -256,18 +311,28 @@ footer {
   max-height: 160px;
 }
 
-/* ─── Demo chip ────────────────────────────────────────────────────────────── */
-#demo-row {
+/* ─── Shortcut chips ───────────────────────────────────────────────────────── */
+
+#shortcuts-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
 .demo-label {
   font-size: 0.7rem;
   color: var(--text-muted);
   flex-shrink: 0;
+  padding-top: 5px;
+}
+
+#shortcuts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .demo-chip {
