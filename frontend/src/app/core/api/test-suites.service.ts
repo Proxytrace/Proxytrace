@@ -1,7 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PagedResult, TestSuiteDto } from './models';
+import { PagedResult, TestRunDto, TestSuiteDto } from './models';
+
+export interface CreateTestSuitePayload {
+  name: string;
+  agentId: string;
+  evaluatorKind: number;
+  testCases: { fromAgentCallId: string }[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class TestSuitesService {
@@ -13,12 +20,25 @@ export class TestSuitesService {
     return this.http.get<PagedResult<TestSuiteDto>>('/api/test-suites', { params });
   }
 
+  create(payload: CreateTestSuitePayload): Observable<TestSuiteDto> {
+    return this.http.post<TestSuiteDto>('/api/test-suites', payload);
+  }
+
+  delete(suiteId: string): Observable<void> {
+    return this.http.delete<void>(`/api/test-suites/${suiteId}`);
+  }
+
+  run(suiteId: string): Observable<TestRunDto> {
+    return this.http.post<TestRunDto>(`/api/test-suites/${suiteId}/run`, {});
+  }
+
   addTestCase(suiteId: string, fromAgentCallId: string): Observable<TestSuiteDto> {
     return this.http.post<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases`, { fromAgentCallId });
   }
 
   createFromTrace(agentId: string, fromAgentCallId: string): Observable<TestSuiteDto> {
     return this.http.post<TestSuiteDto>('/api/test-suites', {
+      name: 'Suite from trace',
       agentId,
       evaluatorKind: 0,
       testCases: [{ fromAgentCallId }],

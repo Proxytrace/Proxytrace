@@ -1,86 +1,332 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { DatePipe, SlicePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TestSuitesService } from '../../core/api/test-suites.service';
+import { AgentsService } from '../../core/api/agents.service';
+import { AgentCallsService } from '../../core/api/agent-calls.service';
+import { AgentCallDto, AgentDto, TestRunDto, TestSuiteDto } from '../../core/api/models';
 
-interface Suite {
-  id: string; agent: string; name: string; description: string;
-  cases: number; lastRun: string; lastRunId: string | null;
-  passRate: number | null; prevPassRate: number | null;
-  runs: number; trend: number[];
-  evaluators: string[]; tags: string[]; createdAt: string;
-}
-interface SparklineData { path: string; endX: number; endY: number; }
+interface RunState { passRate: number; runCount: number; lastRunId: string; }
 
-const AGENT_COLORS: Record<string, string> = {
-  'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
-  'Ticket Triage': '#10b981', 'Classifier': '#f59e0b',
-};
-const EVALUATOR_META: Record<string, { label: string; color: string }> = {
-  tool_call_match: { label: 'Tool match', color: '#10b981' },
-  semantic:        { label: 'Semantic',   color: '#8b5cf6' },
-  exact:           { label: 'Exact',      color: '#06b6d4' },
-  llm_judge:       { label: 'LLM judge',  color: '#f59e0b' },
+// ─── Evaluators ──────────────────────────────────────────────────────────────
+
+const EVALUATOR_LABELS: Record<number, { label: string; color: string }> = {
+  0: { label: 'Exact match', color: '#06b6d4' },
 };
 
-const SUITES_DATA: Suite[] = [
-  { id: 'suite-cs-001', agent: 'Customer Support', name: 'Order & Shipping', description: 'Covers order lookup, delay handling, refund initiation, and escalation scenarios.', cases: 14, lastRun: '2h ago', lastRunId: 'run-008', passRate: 82, prevPassRate: 75, runs: 8, trend: [42,55,61,68,72,75,80,82], evaluators: ['tool_call_match','semantic'], tags: ['order','refund','escalation'], createdAt: 'Apr 18' },
-  { id: 'suite-cs-002', agent: 'Customer Support', name: 'Account & Billing', description: 'Tests account lookup, invoice questions, VAT correction, and payment failure flows.', cases: 9, lastRun: '1d ago', lastRunId: 'run-003', passRate: 67, prevPassRate: 71, runs: 3, trend: [55,60,67], evaluators: ['semantic','llm_judge'], tags: ['billing','account','vat'], createdAt: 'Apr 20' },
-  { id: 'suite-code-001', agent: 'Code Helper', name: 'Bug Localisation', description: 'Validates the agent correctly uses search_code + read_file before proposing a fix.', cases: 11, lastRun: '4h ago', lastRunId: 'run-005', passRate: 73, prevPassRate: 65, runs: 5, trend: [40,50,58,65,73], evaluators: ['tool_call_match'], tags: ['tool-use','search','csharp'], createdAt: 'Apr 19' },
-  { id: 'suite-code-002', agent: 'Code Helper', name: 'Refactor Suggestions', description: 'Checks that refactor advice is semantically correct and does not break function signatures.', cases: 6, lastRun: 'Never', lastRunId: null, passRate: null, prevPassRate: null, runs: 0, trend: [], evaluators: ['semantic','llm_judge'], tags: ['refactor','quality'], createdAt: 'Apr 23' },
-  { id: 'suite-triage-001', agent: 'Ticket Triage', name: 'Priority Routing', description: 'Verifies correct P0–P3 assignment and team routing for enterprise vs. free-tier tickets.', cases: 18, lastRun: '6h ago', lastRunId: 'run-004', passRate: 78, prevPassRate: 70, runs: 4, trend: [50,62,70,78], evaluators: ['tool_call_match','exact'], tags: ['routing','priority','sla'], createdAt: 'Apr 17' },
-  { id: 'suite-cls-001', agent: 'Classifier', name: 'Category Labels', description: 'Checks JSON output has correct category + confidence for billing, bug, feature, and other classes.', cases: 22, lastRun: '3d ago', lastRunId: 'run-001', passRate: 45, prevPassRate: 52, runs: 1, trend: [45], evaluators: ['exact'], tags: ['json','classification','confidence'], createdAt: 'Apr 14' },
-];
+// ─── Colors ──────────────────────────────────────────────────────────────────
+
+const AGENT_PALETTE = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#f97316'];
+
+// ─── Create wizard steps ─────────────────────────────────────────────────────
+
+type CreateStep = 1 | 2 | 3 | 4;
 
 @Component({
   selector: 'app-suites',
+  imports: [DatePipe, SlicePipe, FormsModule],
   templateUrl: './suites.html',
   styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
 })
-export class Suites {
+export class Suites implements OnInit {
   readonly Math = Math;
-  readonly agentFilter = signal('All');
-  readonly runTargetId = signal<string | null>(null);
-  readonly runModalState = signal<'idle' | 'running' | 'done'>('idle');
+  private readonly suitesService = inject(TestSuitesService);
+  private readonly agentsService = inject(AgentsService);
+  private readonly agentCallsService = inject(AgentCallsService);
 
-  readonly agentList = ['All', ...Object.keys(AGENT_COLORS)];
-  readonly agentColors = AGENT_COLORS;
-  readonly evaluatorMeta = EVALUATOR_META;
-  readonly suitesData = SUITES_DATA;
+  // ── list state ─────────────────────────────────────────────────────────────
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
+  readonly suites = signal<TestSuiteDto[]>([]);
+  readonly agentFilter = signal('All');
+
+  // ── run modal ──────────────────────────────────────────────────────────────
+  readonly runTargetId = signal<string | null>(null);
+  readonly runModalState = signal<'idle' | 'running' | 'done' | 'error'>('idle');
+  readonly runResult = signal<TestRunDto | null>(null);
+  readonly runError = signal<string | null>(null);
+  private readonly runStateMap = signal<Record<string, RunState>>({});
+
+  // ── delete modal ───────────────────────────────────────────────────────────
+  readonly deleteTargetId = signal<string | null>(null);
+  readonly deleteConfirmText = signal('');
+  readonly deleteInProgress = signal(false);
+  readonly deleteError = signal<string | null>(null);
+
+  // ── create wizard ──────────────────────────────────────────────────────────
+  readonly createOpen = signal(false);
+  readonly createStep = signal<CreateStep>(1);
+  readonly createAgents = signal<AgentDto[]>([]);
+  readonly createAgentsLoading = signal(false);
+  readonly createSelectedAgentId = signal<string | null>(null);
+  readonly createName = signal('');
+  readonly createTraces = signal<AgentCallDto[]>([]);
+  readonly createTracesLoading = signal(false);
+  readonly createSelectedTraceIds = signal<Set<string>>(new Set());
+  readonly createEvaluatorKind = signal(0);
+  readonly createInProgress = signal(false);
+  readonly createError = signal<string | null>(null);
+
+  // ── color cache ───────────────────────────────────────────────────────────
+  private agentColorCache: Record<string, string> = {};
+
+  // ── derived ───────────────────────────────────────────────────────────────
+
+  readonly agentList = computed(() => ['All', ...new Set(this.suites().map(s => s.agentName))]);
 
   readonly visible = computed(() => {
     const af = this.agentFilter();
-    return af === 'All' ? SUITES_DATA : SUITES_DATA.filter(s => s.agent === af);
+    const ss = this.suites();
+    return af === 'All' ? ss : ss.filter(s => s.agentName === af);
   });
 
-  readonly runTarget = computed(() => SUITES_DATA.find(s => s.id === this.runTargetId()) ?? null);
+  readonly runTarget = computed(() => this.suites().find(s => s.id === this.runTargetId()) ?? null);
 
-  readonly totalCases = SUITES_DATA.reduce((n, s) => n + s.cases, 0);
-  readonly totalRuns  = SUITES_DATA.reduce((n, s) => n + s.runs, 0);
-  readonly avgPass = Math.round(SUITES_DATA.filter(s => s.passRate !== null).reduce((n, s, _, a) => n + (s.passRate ?? 0) / a.length, 0));
+  readonly deleteTarget = computed(() => this.suites().find(s => s.id === this.deleteTargetId()) ?? null);
 
-  agentCount(agent: string) { return agent === 'All' ? SUITES_DATA.length : SUITES_DATA.filter(s => s.agent === agent).length; }
-  agentColor(agent: string) { return AGENT_COLORS[agent] ?? '#8b5cf6'; }
+  readonly totalCases = computed(() => this.suites().reduce((n, s) => n + s.testCases.length, 0));
+
+  readonly totalRuns = computed(() =>
+    Object.values(this.runStateMap()).reduce((n, s) => n + s.runCount, 0));
+
+  readonly avgPass = computed(() => {
+    const rates = Object.values(this.runStateMap()).filter(s => s.runCount > 0).map(s => s.passRate);
+    if (!rates.length) return null;
+    return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+  });
+
+  readonly createSelectedAgent = computed(() =>
+    this.createAgents().find(a => a.id === this.createSelectedAgentId()) ?? null);
+
+  readonly createCanAdvanceStep1 = computed(() => !!this.createSelectedAgentId());
+  readonly createCanAdvanceStep2 = computed(() => this.createName().trim().length > 0);
+  readonly createCanAdvanceStep3 = computed(() => this.createSelectedTraceIds().size > 0);
+  readonly createCanSubmit = computed(() => this.createCanAdvanceStep3());
+
+  ngOnInit() {
+    this.loadSuites();
+  }
+
+  // ── load ──────────────────────────────────────────────────────────────────
+
+  private loadSuites() {
+    this.suitesService.getAll().subscribe({
+      next: result => { this.suites.set(result.items); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load test suites.'); this.loading.set(false); },
+    });
+  }
+
+  // ── helpers ───────────────────────────────────────────────────────────────
+
+  agentCount(agent: string): number {
+    const ss = this.suites();
+    return agent === 'All' ? ss.length : ss.filter(s => s.agentName === agent).length;
+  }
+
+  agentColor(agent: string): string {
+    if (agent === 'All' || !agent) return AGENT_PALETTE[0];
+    if (!this.agentColorCache[agent]) {
+      let h = 0;
+      for (const c of agent) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+      this.agentColorCache[agent] = AGENT_PALETTE[h % AGENT_PALETTE.length];
+    }
+    return this.agentColorCache[agent];
+  }
+
+  evaluatorMeta(kind: number): { label: string; color: string } {
+    return EVALUATOR_LABELS[kind] ?? { label: `Kind ${kind}`, color: '#8b5cf6' };
+  }
+
+  passRate(suite: TestSuiteDto): number | null {
+    return this.runStateMap()[suite.id]?.passRate ?? null;
+  }
+
+  runCount(suite: TestSuiteDto): number {
+    return this.runStateMap()[suite.id]?.runCount ?? 0;
+  }
+
+  lastRunId(suite: TestSuiteDto): string | null {
+    return this.runStateMap()[suite.id]?.lastRunId ?? null;
+  }
+
   passColor(rate: number | null): string {
     if (rate === null) return 'var(--text-muted)';
     return rate >= 75 ? 'var(--success)' : rate >= 55 ? 'var(--warn)' : 'var(--danger)';
   }
-  delta(suite: Suite): number | null {
-    if (suite.passRate === null || suite.prevPassRate === null) return null;
-    return suite.passRate - suite.prevPassRate;
-  }
-  sparklinePath(data: number[]): SparklineData {
-    if (!data.length) return { path: '', endX: 0, endY: 0 };
-    const W = 80, H = 20;
-    const max = Math.max(...data), min = Math.min(...data);
-    const range = max - min || 1;
-    const stepX = W / (data.length - 1);
-    const pts = data.map((v, i) => [i * stepX, H - ((v - min) / range) * H]);
-    const path = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-    return { path, endX: pts[pts.length-1][0], endY: pts[pts.length-1][1] };
+
+  shortId(id: string): string { return id.substring(0, 8); }
+
+  // ── run modal ─────────────────────────────────────────────────────────────
+
+  openRunModal(suiteId: string) {
+    this.runTargetId.set(suiteId);
+    this.runModalState.set('idle');
+    this.runResult.set(null);
+    this.runError.set(null);
   }
 
-  openRunModal(suiteId: string) { this.runTargetId.set(suiteId); this.runModalState.set('idle'); }
-  closeModal() { this.runTargetId.set(null); this.runModalState.set('idle'); }
+  closeRunModal() {
+    this.runTargetId.set(null);
+    this.runModalState.set('idle');
+  }
+
   startRun() {
+    const target = this.runTarget();
+    if (!target) return;
     this.runModalState.set('running');
-    setTimeout(() => this.runModalState.set('done'), 1800);
+    this.suitesService.run(target.id).subscribe({
+      next: result => {
+        this.runResult.set(result);
+        this.runStateMap.update(state => ({
+          ...state,
+          [target.id]: {
+            passRate: result.passRate,
+            runCount: (state[target.id]?.runCount ?? 0) + 1,
+            lastRunId: result.id.substring(0, 8),
+          },
+        }));
+        this.runModalState.set('done');
+      },
+      error: err => {
+        this.runError.set(err?.error ?? 'Run failed. Ensure a model endpoint is configured.');
+        this.runModalState.set('error');
+      },
+    });
+  }
+
+  // ── delete modal ──────────────────────────────────────────────────────────
+
+  openDeleteModal(suiteId: string) {
+    this.deleteTargetId.set(suiteId);
+    this.deleteConfirmText.set('');
+    this.deleteInProgress.set(false);
+    this.deleteError.set(null);
+  }
+
+  closeDeleteModal() {
+    this.deleteTargetId.set(null);
+  }
+
+  readonly deleteNameMatches = computed(() => {
+    const target = this.deleteTarget();
+    return target ? this.deleteConfirmText().trim() === target.name : false;
+  });
+
+  confirmDelete() {
+    const target = this.deleteTarget();
+    if (!target || !this.deleteNameMatches()) return;
+    this.deleteInProgress.set(true);
+    this.suitesService.delete(target.id).subscribe({
+      next: () => {
+        this.suites.update(ss => ss.filter(s => s.id !== target.id));
+        this.closeDeleteModal();
+      },
+      error: () => {
+        this.deleteError.set('Delete failed. Please try again.');
+        this.deleteInProgress.set(false);
+      },
+    });
+  }
+
+  // ── create wizard ─────────────────────────────────────────────────────────
+
+  openCreateWizard() {
+    this.createOpen.set(true);
+    this.createStep.set(1);
+    this.createSelectedAgentId.set(null);
+    this.createName.set('');
+    this.createSelectedTraceIds.set(new Set());
+    this.createEvaluatorKind.set(0);
+    this.createInProgress.set(false);
+    this.createError.set(null);
+
+    this.createAgentsLoading.set(true);
+    this.agentsService.getAll().subscribe({
+      next: result => { this.createAgents.set(result.items); this.createAgentsLoading.set(false); },
+      error: () => { this.createAgentsLoading.set(false); },
+    });
+  }
+
+  closeCreateWizard() {
+    this.createOpen.set(false);
+  }
+
+  selectCreateAgent(agentId: string) {
+    this.createSelectedAgentId.set(agentId);
+  }
+
+  advanceCreate() {
+    const step = this.createStep();
+    if (step === 1 && this.createCanAdvanceStep1()) {
+      this.createStep.set(2);
+    } else if (step === 2 && this.createCanAdvanceStep2()) {
+      this.createStep.set(3);
+      this.loadTracesForCreate();
+    } else if (step === 3 && this.createCanAdvanceStep3()) {
+      this.createStep.set(4);
+    }
+  }
+
+  backCreate() {
+    const step = this.createStep();
+    if (step > 1) this.createStep.set((step - 1) as CreateStep);
+  }
+
+  private loadTracesForCreate() {
+    const agentId = this.createSelectedAgentId();
+    if (!agentId) return;
+    this.createTracesLoading.set(true);
+    this.createSelectedTraceIds.set(new Set());
+    this.agentCallsService.getAll({ agentId, pageSize: 50 }).subscribe({
+      next: result => { this.createTraces.set(result.items); this.createTracesLoading.set(false); },
+      error: () => { this.createTracesLoading.set(false); },
+    });
+  }
+
+  toggleTrace(traceId: string) {
+    this.createSelectedTraceIds.update(set => {
+      const next = new Set(set);
+      if (next.has(traceId)) next.delete(traceId); else next.add(traceId);
+      return next;
+    });
+  }
+
+  isTraceSelected(traceId: string): boolean {
+    return this.createSelectedTraceIds().has(traceId);
+  }
+
+  readonly evaluatorOptions: { kind: number; label: string; description: string; color: string }[] = [
+    { kind: 0, label: 'Exact match', description: 'The actual response must match the expected output character-for-character.', color: '#06b6d4' },
+  ];
+
+  submitCreate() {
+    const agentId = this.createSelectedAgentId();
+    const name = this.createName().trim();
+    const traceIds = [...this.createSelectedTraceIds()];
+    if (!agentId || !name || !traceIds.length) return;
+
+    this.createInProgress.set(true);
+    this.createError.set(null);
+
+    this.suitesService.create({
+      name,
+      agentId,
+      evaluatorKind: this.createEvaluatorKind(),
+      testCases: traceIds.map(id => ({ fromAgentCallId: id })),
+    }).subscribe({
+      next: suite => {
+        this.suites.update(ss => [suite, ...ss]);
+        this.closeCreateWizard();
+      },
+      error: err => {
+        this.createError.set(err?.error ?? 'Failed to create suite.');
+        this.createInProgress.set(false);
+      },
+    });
+  }
+
+  tracePreview(trace: AgentCallDto): string {
+    const last = [...trace.request].reverse().find(m => m.role === 'user');
+    return last?.content?.substring(0, 80) ?? `(${trace.model})`;
   }
 }

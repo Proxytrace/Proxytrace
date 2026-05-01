@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestSuites;
+using Trsr.Api.Services;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
+using Trsr.Domain.TestResult;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
 namespace Trsr.Api.Controllers;
@@ -20,6 +24,8 @@ public class TestSuitesController : ControllerBase
     private readonly IAgentCallRepository agentCallRepository;
     private readonly ITestCaseRepository testCaseRepository;
     private readonly IEvaluatorRepository evaluatorRepository;
+    private readonly IModelEndpointRepository modelEndpointRepository;
+    private readonly ITestRunnerService testRunnerService;
     private readonly ITestCase.CreateNew createTestCase;
     private readonly IEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
@@ -31,6 +37,8 @@ public class TestSuitesController : ControllerBase
         IAgentCallRepository agentCallRepository,
         ITestCaseRepository testCaseRepository,
         IEvaluatorRepository evaluatorRepository,
+        IModelEndpointRepository modelEndpointRepository,
+        ITestRunnerService testRunnerService,
         ITestCase.CreateNew createTestCase,
         IEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
@@ -41,6 +49,8 @@ public class TestSuitesController : ControllerBase
         this.agentCallRepository = agentCallRepository;
         this.testCaseRepository = testCaseRepository;
         this.evaluatorRepository = evaluatorRepository;
+        this.modelEndpointRepository = modelEndpointRepository;
+        this.testRunnerService = testRunnerService;
         this.createTestCase = createTestCase;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
@@ -91,7 +101,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(agent, savedEvaluator, testCases);
+        var suite = createSuite(request.Name, agent, savedEvaluator, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
@@ -121,7 +131,7 @@ public class TestSuitesController : ControllerBase
         if (request.TestCaseIds is not null)
             testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds, cancellationToken);
 
-        var updated = createSuiteExisting(agent, evaluator, testCases, existing);
+        var updated = createSuiteExisting(existing.Name, agent, evaluator, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -169,7 +179,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(agent, savedEvaluator, testCases);
+        var suite = createSuite(request.Name, agent, savedEvaluator, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
@@ -190,9 +200,28 @@ public class TestSuitesController : ControllerBase
 
         var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
         var updatedCases = existing.TestCases.Append(saved).ToArray();
-        var updated = createSuiteExisting(existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(savedSuite);
+    }
+
+    [HttpPost("{id:guid}/run")]
+    public async Task<ActionResult<TestRunDto>> Run(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+        var suite = await suiteRepository.GetAsync(id, cancellationToken);
+
+        if (suite.TestCases.Count == 0)
+            return BadRequest("Cannot run a suite with no test cases.");
+
+        var endpoints = await modelEndpointRepository.GetAllAsync(cancellationToken);
+        var endpoint = endpoints.FirstOrDefault();
+        if (endpoint is null)
+            return BadRequest("No model endpoints are configured. Send at least one proxied LLM call first.");
+
+        var run = await testRunnerService.RunAsync(suite, endpoint, cancellationToken);
+        return ToRunDto(run);
     }
 
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
@@ -205,7 +234,7 @@ public class TestSuitesController : ControllerBase
             return NotFound();
         var existing = await suiteRepository.GetAsync(id, cancellationToken);
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
-        var updated = createSuiteExisting(existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -258,7 +287,9 @@ public class TestSuitesController : ControllerBase
 
     private static TestSuiteDto ToDto(ITestSuite s) => new(
         s.Id,
+        s.Name,
         s.Agent.Id,
+        s.Agent.Name,
         s.Evaluator.Kind,
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
@@ -267,6 +298,14 @@ public class TestSuitesController : ControllerBase
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);
+
+    private static TestRunDto ToRunDto(ITestRun run)
+    {
+        var passed = run.TestResults.Count(r => r.Evaluation == Evaluation.Pass);
+        var total = run.TestResults.Count;
+        var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
+        return new TestRunDto(run.Id, run.Agent.Id, run.Timestamp, total, passed, total - passed, passRate);
+    }
 
     private static string GetText(Message m) => m switch
     {

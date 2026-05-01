@@ -6,183 +6,218 @@
       <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px;">Test Suites</h1>
       <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Agent-specific benchmark collections built from curated traces.</p>
     </div>
-    <button style="padding:9px 16px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:7px; white-space:nowrap; flex-shrink:0;">
+    <button (click)="openCreateWizard()" style="padding:9px 16px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:7px; white-space:nowrap; flex-shrink:0;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New suite
     </button>
   </div>
 
-  <!-- KPIs -->
-  <div class="fade-up" style="animation-delay:30ms; display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
-    @for (k of [
-      {label:'Total suites', value:suitesData.length, sub:'across 4 agents', color:'#8b5cf6'},
-      {label:'Total cases',  value:totalCases,        sub:'test case inputs',  color:'#06b6d4'},
-      {label:'Total runs',   value:totalRuns,          sub:'evaluations run',  color:'#10b981'},
-      {label:'Avg pass rate',value:avgPass + '%',      sub:'across all suites',color:'#f59e0b'}
-    ]; track k.label) {
-      <div style="background:var(--bg-card); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow-card); display:flex; align-items:center; gap:14px;">
-        <div style="width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0;" [style.background]="k.color + '18'">
-          <span style="font-size:16px; font-weight:800; font-family:'JetBrains Mono',monospace; letter-spacing:-0.04em;" [style.color]="k.color">{{k.value}}</span>
-        </div>
-        <div>
-          <div style="font-size:13px; font-weight:600;">{{k.label}}</div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px;">{{k.sub}}</div>
-        </div>
-      </div>
-    }
-  </div>
+  <!-- Loading / Error -->
+  @if (loading()) {
+    <div style="display:flex; align-items:center; gap:10px; padding:24px; color:var(--text-muted); font-size:13.5px;">
+      <span style="width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+      Loading test suites…
+    </div>
+  } @else if (error()) {
+    <div style="padding:16px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); border-radius:12px; color:var(--danger); font-size:13px;">{{error()}}</div>
+  } @else {
 
-  <!-- Agent filter tabs -->
-  <div class="fade-up" style="animation-delay:60ms; display:flex; align-items:center; gap:6px;">
-    <div style="display:flex; gap:4px; padding:4px; background:var(--bg-card); border-radius:11px; box-shadow:var(--shadow-pill);">
-      @for (a of agentList; track a) {
-        <button (click)="agentFilter.set(a)" style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; display:inline-flex; align-items:center; gap:7px; transition:background 0.1s;"
-                [style.background]="agentFilter() === a ? 'var(--bg-card-2)' : 'transparent'"
-                [style.color]="agentFilter() === a ? 'var(--text-primary)' : 'var(--text-secondary)'"
-                [style.box-shadow]="agentFilter() === a ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none'">
-          @if (agentColors[a]) {
-            <span style="width:7px; height:7px; border-radius:2px; display:inline-block;" [style.background]="agentColors[a]" [style.opacity]="agentFilter() === a ? '1' : '0.5'"></span>
-          }
-          {{a}}
-          <span style="padding:1px 6px; border-radius:100px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;"
-                [style.background]="agentFilter() === a ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)'"
-                [style.color]="agentFilter() === a ? '#c4b5fd' : 'var(--text-muted)'">{{agentCount(a)}}</span>
-        </button>
+    <!-- KPIs -->
+    <div class="fade-up" style="animation-delay:30ms; display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
+      @for (k of [
+        {label:'Total suites', value:''+suites().length, sub:'across ' + (agentList().length - 1) + ' agent' + (agentList().length - 1 !== 1 ? 's' : ''), color:'#8b5cf6'},
+        {label:'Total cases',  value:''+totalCases(),    sub:'test case inputs',  color:'#06b6d4'},
+        {label:'Total runs',   value:''+totalRuns(),     sub:'evaluations run',   color:'#10b981'},
+        {label:'Avg pass rate',value:avgPass() !== null ? avgPass() + '%' : '—',  sub:'across ran suites', color:'#f59e0b'}
+      ]; track k.label) {
+        <div style="background:var(--bg-card); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow-card); display:flex; align-items:center; gap:14px;">
+          <div style="width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0;" [style.background]="k.color + '18'">
+            <span style="font-size:16px; font-weight:800; font-family:'JetBrains Mono',monospace; letter-spacing:-0.04em;" [style.color]="k.color">{{k.value}}</span>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:600;">{{k.label}}</div>
+            <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px;">{{k.sub}}</div>
+          </div>
+        </div>
       }
     </div>
-    <span style="margin-left:8px; font-size:12px; color:var(--text-muted);">{{visible().length}} suite{{visible().length !== 1 ? 's' : ''}}</span>
-  </div>
 
-  <!-- Suite grid -->
-  <div class="fade-up" style="animation-delay:100ms; display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px;">
-    @for (suite of visible(); track suite.id) {
-      <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; overflow:hidden; position:relative; transition:box-shadow 0.18s;"
-           onmouseenter="this.style.boxShadow='0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 12px rgba(0,0,0,0.35), 0 16px 40px -16px rgba(0,0,0,0.5)'"
-           onmouseleave="this.style.boxShadow='var(--shadow-card)'">
-        <!-- Agent accent bar -->
-        <div style="height:3px;" [style.background]="'linear-gradient(90deg, ' + agentColor(suite.agent) + ', ' + agentColor(suite.agent) + '44)'"></div>
-        <div style="padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:12px;">
-          <!-- Top row -->
-          <div style="display:flex; align-items:flex-start; gap:10px;">
-            <div style="flex:1; min-width:0;">
-              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <span style="font-size:14px; font-weight:700; letter-spacing:-0.01em;">{{suite.name}}</span>
-                @if (!suite.runs) {
-                  <span style="padding:2px 7px; background:var(--warn-subtle); color:var(--warn); border-radius:100px; font-size:10px; font-weight:600;">No runs yet</span>
-                }
-              </div>
-              <div style="margin-top:4px;">
-                <span class="agent-pill" [style.background]="agentColor(suite.agent) + '1f'" [style.color]="agentColor(suite.agent)" [style.border]="'1px solid ' + agentColor(suite.agent) + '2e'">
-                  <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="agentColor(suite.agent)"></span>
-                  {{suite.agent}}
-                </span>
-              </div>
-            </div>
-            <button (click)="openRunModal(suite.id)" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:9px; font-size:12.5px; font-weight:600; background:linear-gradient(135deg,#8b5cf6,#6d28d9); color:#fff; box-shadow:0 4px 14px -6px rgba(139,92,246,0.6),inset 0 1px 0 rgba(255,255,255,0.15); white-space:nowrap; flex-shrink:0;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              {{suite.runs > 0 ? 'Run again' : 'Run now'}}
-            </button>
-          </div>
+    <!-- Agent filter tabs -->
+    <div class="fade-up" style="animation-delay:60ms; display:flex; align-items:center; gap:6px;">
+      <div style="display:flex; gap:4px; padding:4px; background:var(--bg-card); border-radius:11px; box-shadow:var(--shadow-pill);">
+        @for (a of agentList(); track a) {
+          <button (click)="agentFilter.set(a)" style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; display:inline-flex; align-items:center; gap:7px; transition:background 0.1s;"
+                  [style.background]="agentFilter() === a ? 'var(--bg-card-2)' : 'transparent'"
+                  [style.color]="agentFilter() === a ? 'var(--text-primary)' : 'var(--text-secondary)'"
+                  [style.box-shadow]="agentFilter() === a ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none'">
+            @if (a !== 'All') {
+              <span style="width:7px; height:7px; border-radius:2px; display:inline-block;" [style.background]="agentColor(a)" [style.opacity]="agentFilter() === a ? '1' : '0.5'"></span>
+            }
+            {{a}}
+            <span style="padding:1px 6px; border-radius:100px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;"
+                  [style.background]="agentFilter() === a ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)'"
+                  [style.color]="agentFilter() === a ? '#c4b5fd' : 'var(--text-muted)'">{{agentCount(a)}}</span>
+          </button>
+        }
+      </div>
+      <span style="margin-left:8px; font-size:12px; color:var(--text-muted);">{{visible().length}} suite{{visible().length !== 1 ? 's' : ''}}</span>
+    </div>
 
-          <!-- Description -->
-          <p style="font-size:12.5px; color:var(--text-muted); line-height:1.55; margin:0;">{{suite.description}}</p>
-
-          <!-- Stats grid -->
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
-            <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px; box-shadow:0 1px 0 rgba(255,255,255,0.03) inset;">
-              <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Pass rate</div>
-              <div style="display:flex; align-items:baseline; gap:6px;">
-                <span style="font-size:22px; font-weight:700; letter-spacing:-0.02em;" [style.color]="passColor(suite.passRate)">{{suite.passRate !== null ? suite.passRate + '%' : '—'}}</span>
-                @if (delta(suite) !== null) {
-                  <span style="font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:2px;" [style.color]="(delta(suite) ?? 0) >= 0 ? 'var(--success)' : 'var(--danger)'">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      @if ((delta(suite) ?? 0) >= 0) { <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/> }
-                      @else { <line x1="7" y1="7" x2="17" y2="17"/><polyline points="17 7 17 17 7 17"/> }
-                    </svg>
-                    {{Math.abs(delta(suite) ?? 0)}}pt
-                  </span>
-                }
-              </div>
-              @if (suite.runs > 0) {
-                <svg viewBox="0 0 80 20" width="80" height="20" style="display:block; margin-top:4px;">
-                  <path [attr.d]="sparklinePath(suite.trend).path" fill="none" [attr.stroke]="passColor(suite.passRate)" stroke-width="1.5" stroke-linecap="round"/>
-                  <circle [attr.cx]="sparklinePath(suite.trend).endX" [attr.cy]="sparklinePath(suite.trend).endY" r="2" [attr.fill]="passColor(suite.passRate)"/>
-                </svg>
-              }
-            </div>
-            <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px; box-shadow:0 1px 0 rgba(255,255,255,0.03) inset;">
-              <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Test cases</div>
-              <div style="font-size:22px; font-weight:700; letter-spacing:-0.02em;">{{suite.cases}}</div>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">{{suite.runs}} run{{suite.runs !== 1 ? 's' : ''}} total</div>
-            </div>
-            <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px; box-shadow:0 1px 0 rgba(255,255,255,0.03) inset;">
-              <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Last run</div>
-              <div style="font-size:14px; font-weight:600; margin-top:2px;" [style.color]="suite.runs > 0 ? 'var(--text-primary)' : 'var(--text-muted)'">{{suite.lastRun}}</div>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">{{suite.lastRunId ?? 'Not yet run'}}</div>
-            </div>
-          </div>
-
-          <!-- Evaluators + tags -->
-          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; gap:5px; flex-wrap:wrap;">
-              @for (ev of suite.evaluators; track ev) {
-                <span style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:600;"
-                      [style.background]="evaluatorMeta[ev].color + '1a'"
-                      [style.color]="evaluatorMeta[ev].color"
-                      [style.border]="'1px solid ' + evaluatorMeta[ev].color + '30'">{{evaluatorMeta[ev].label}}</span>
-              }
-            </div>
-            <div style="display:flex; gap:5px; flex-wrap:wrap;">
-              @for (tag of suite.tags; track tag) {
-                <span style="padding:2px 8px; background:var(--bg-card-2); color:var(--text-muted); border-radius:5px; font-size:10.5px; font-family:'JetBrains Mono',monospace;">#{{tag}}</span>
-              }
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div style="display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:1px solid var(--hairline); font-size:11px; color:var(--text-muted);">
-            <span>Created {{suite.createdAt}}</span>
-            <button style="font-size:11.5px; color:var(--accent-hover); font-weight:500; display:inline-flex; align-items:center; gap:4px;">
-              View cases
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
+    <!-- Empty state -->
+    @if (!visible().length) {
+      <div style="padding:48px; text-align:center; color:var(--text-muted); font-size:13.5px;">
+        No test suites yet. Click <strong style="color:var(--text-primary);">New suite</strong> to create one from curated traces.
       </div>
     }
-  </div>
+
+    <!-- Suite grid -->
+    <div class="fade-up" style="animation-delay:100ms; display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:14px;">
+      @for (suite of visible(); track suite.id) {
+        <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; overflow:hidden; position:relative; transition:box-shadow 0.18s;"
+             onmouseenter="this.style.boxShadow='0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 12px rgba(0,0,0,0.35), 0 16px 40px -16px rgba(0,0,0,0.5)'"
+             onmouseleave="this.style.boxShadow='var(--shadow-card)'">
+          <div style="height:3px;" [style.background]="'linear-gradient(90deg, ' + agentColor(suite.agentName) + ', ' + agentColor(suite.agentName) + '44)'"></div>
+          <div style="padding:16px 18px; flex:1; display:flex; flex-direction:column; gap:12px;">
+
+            <!-- Top row -->
+            <div style="display:flex; align-items:flex-start; gap:10px;">
+              <div style="flex:1; min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="font-size:14px; font-weight:700; letter-spacing:-0.01em; word-break:break-word;">{{suite.name}}</span>
+                  @if (!runCount(suite)) {
+                    <span style="padding:2px 7px; background:var(--warn-subtle); color:var(--warn); border-radius:100px; font-size:10px; font-weight:600; white-space:nowrap;">No runs yet</span>
+                  }
+                </div>
+                <div style="margin-top:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span style="padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:5px;"
+                        [style.background]="agentColor(suite.agentName) + '1f'"
+                        [style.color]="agentColor(suite.agentName)"
+                        [style.border]="'1px solid ' + agentColor(suite.agentName) + '2e'">
+                    <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="agentColor(suite.agentName)"></span>
+                    {{suite.agentName}}
+                  </span>
+                  <span style="padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:600;"
+                        [style.background]="evaluatorMeta(suite.evaluatorKind).color + '1a'"
+                        [style.color]="evaluatorMeta(suite.evaluatorKind).color"
+                        [style.border]="'1px solid ' + evaluatorMeta(suite.evaluatorKind).color + '30'">
+                    {{evaluatorMeta(suite.evaluatorKind).label}}
+                  </span>
+                </div>
+              </div>
+              <!-- Actions -->
+              <div style="display:flex; gap:6px; flex-shrink:0;">
+                <button (click)="openRunModal(suite.id)"
+                        [disabled]="!suite.testCases.length"
+                        [title]="!suite.testCases.length ? 'Add test cases first' : 'Run suite'"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:9px; font-size:12px; font-weight:600; background:linear-gradient(135deg,#8b5cf6,#6d28d9); color:#fff; box-shadow:0 4px 14px -6px rgba(139,92,246,0.6),inset 0 1px 0 rgba(255,255,255,0.15); white-space:nowrap;"
+                        [style.opacity]="!suite.testCases.length ? '0.5' : '1'">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  {{runCount(suite) > 0 ? 'Re-run' : 'Run'}}
+                </button>
+                <button (click)="openDeleteModal(suite.id)" title="Delete suite"
+                        style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:var(--bg-card-2); color:var(--text-muted); box-shadow:var(--shadow-pill); transition:color 0.15s, background 0.15s;"
+                        onmouseenter="this.style.color='var(--danger)'; this.style.background='var(--danger-subtle)'"
+                        onmouseleave="this.style.color='var(--text-muted)'; this.style.background='var(--bg-card-2)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats grid -->
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
+              <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px;">
+                <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Pass rate</div>
+                <div style="font-size:22px; font-weight:700; letter-spacing:-0.02em;" [style.color]="passColor(passRate(suite))">
+                  {{passRate(suite) !== null ? passRate(suite) + '%' : '—'}}
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">{{runCount(suite)}} run{{runCount(suite) !== 1 ? 's' : ''}}</div>
+              </div>
+              <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px;">
+                <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Test cases</div>
+                <div style="font-size:22px; font-weight:700; letter-spacing:-0.02em;">{{suite.testCases.length}}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">inputs configured</div>
+              </div>
+              <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px;">
+                <div style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.07em; text-transform:uppercase; margin-bottom:4px;">Last run</div>
+                <div style="font-size:14px; font-weight:600; margin-top:2px; font-family:'JetBrains Mono',monospace;" [style.color]="runCount(suite) > 0 ? 'var(--text-primary)' : 'var(--text-muted)'">
+                  {{lastRunId(suite) ?? '—'}}
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">{{runCount(suite) > 0 ? 'this session' : 'not yet run'}}</div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="display:flex; align-items:center; justify-content:space-between; padding-top:8px; border-top:1px solid var(--hairline); font-size:11px; color:var(--text-muted);">
+              <span>Created {{suite.createdAt | date:'MMM d, y'}}</span>
+              <span style="font-family:'JetBrains Mono',monospace;">{{suite.id | slice:0:8}}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+  }
 </div>
 
-<!-- Run modal -->
+<!-- ═══════════════════════════════════════════ Run modal ══════════════════════════════════════════════ -->
 @if (runTarget()) {
-  <div (click)="closeModal()" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center; animation:fade-up 0.18s ease-out;">
+  <div (click)="closeRunModal()" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center;">
     <div (click)="$event.stopPropagation()" style="width:480px; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
-      <div style="height:3px;" [style.background]="'linear-gradient(90deg, ' + agentColor(runTarget()!.agent) + ', ' + agentColor(runTarget()!.agent) + '55)'"></div>
+      <div style="height:3px;" [style.background]="'linear-gradient(90deg, ' + agentColor(runTarget()!.agentName) + ', ' + agentColor(runTarget()!.agentName) + '55)'"></div>
 
-      @if (runModalState() === 'done') {
+      @if (runModalState() === 'done' && runResult()) {
         <div style="padding:40px 32px; text-align:center;">
           <div style="width:52px; height:52px; border-radius:15px; background:var(--success-subtle); border:1px solid rgba(16,185,129,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--success);">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           </div>
-          <h3 style="font-size:17px; font-weight:700; letter-spacing:-0.01em; margin:0 0 8px;">Evaluation started</h3>
-          <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin:0 0 24px;">Running <strong style="color:var(--text-primary);">{{runTarget()!.cases}} test cases</strong> against the current agent. Results will appear in Test Runs shortly.</p>
-          <button (click)="closeModal()" style="padding:10px 28px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15);">View Test Runs →</button>
+          <h3 style="font-size:17px; font-weight:700; letter-spacing:-0.01em; margin:0 0 8px;">Run complete</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin:0 0 20px;">
+            Ran <strong style="color:var(--text-primary);">{{runResult()!.totalCases}} test cases</strong> against <strong style="color:var(--text-primary);">{{runTarget()!.agentName}}</strong>.
+          </p>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:24px;">
+            @for (row of [
+              {label:'Pass rate', value: runResult()!.passRate + '%', color: runResult()!.passRate >= 75 ? 'var(--success)' : runResult()!.passRate >= 55 ? 'var(--warn)' : 'var(--danger)'},
+              {label:'Passed',    value: ''+runResult()!.passedCases, color: 'var(--success)'},
+              {label:'Failed',    value: ''+runResult()!.failedCases, color: runResult()!.failedCases > 0 ? 'var(--danger)' : 'var(--text-muted)'}
+            ]; track row.label) {
+              <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px; text-align:center;">
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px;">{{row.label}}</div>
+                <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em;" [style.color]="row.color">{{row.value}}</div>
+              </div>
+            }
+          </div>
+          <button (click)="closeRunModal()" style="padding:10px 28px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff;">Close</button>
+        </div>
+      } @else if (runModalState() === 'error') {
+        <div style="padding:32px; text-align:center;">
+          <div style="width:52px; height:52px; border-radius:15px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--danger);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <h3 style="font-size:16px; font-weight:700; margin:0 0 8px;">Run failed</h3>
+          <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.6;">{{runError()}}</p>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button (click)="closeRunModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary);">Close</button>
+            <button (click)="startRun()" style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff;">Retry</button>
+          </div>
         </div>
       } @else {
         <div style="padding:24px 28px;">
-          <h3 style="font-size:16px; font-weight:700; margin:0 0 4px;">Start new test run</h3>
-          <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.55;">Run <strong style="color:var(--text-primary);">{{runTarget()!.cases}} test cases</strong> from <strong style="color:var(--text-primary);">{{runTarget()!.name}}</strong>.</p>
+          <h3 style="font-size:16px; font-weight:700; margin:0 0 4px;">Start test run</h3>
+          <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.55;">
+            Run <strong style="color:var(--text-primary);">{{runTarget()!.testCases.length}} test cases</strong> from <strong style="color:var(--text-primary);">{{runTarget()!.name}}</strong> through the live proxy.
+          </p>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:20px;">
-            @for (row of [['Suite',runTarget()!.name],['Agent',runTarget()!.agent],['Cases',''+runTarget()!.cases]]; track row[0]) {
+            @for (row of [['Suite', runTarget()!.name], ['Agent', runTarget()!.agentName], ['Cases', ''+runTarget()!.testCases.length]]; track row[0]) {
               <div style="padding:9px 12px; background:var(--bg-card-2); border-radius:8px;">
                 <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px;">{{row[0]}}</div>
-                <div style="font-size:12.5px; font-weight:600;">{{row[1]}}</div>
+                <div style="font-size:12.5px; font-weight:600; word-break:break-word;">{{row[1]}}</div>
               </div>
             }
           </div>
           <div style="display:flex; gap:8px; justify-content:flex-end;">
-            <button (click)="closeModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary); box-shadow:var(--shadow-pill);">Cancel</button>
-            <button (click)="startRun()" style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:7px;" [style.opacity]="runModalState() === 'running' ? '0.7' : '1'">
+            <button (click)="closeRunModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary);">Cancel</button>
+            <button (click)="startRun()" [style.opacity]="runModalState() === 'running' ? '0.7' : '1'"
+                    style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:7px;">
               @if (runModalState() === 'running') {
                 <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
                 Running…
@@ -194,6 +229,235 @@
           </div>
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════ Delete modal ═══════════════════════════════════════════ -->
+@if (deleteTarget()) {
+  <div (click)="closeDeleteModal()" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center;">
+    <div (click)="$event.stopPropagation()" style="width:440px; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
+      <div style="height:3px; background:linear-gradient(90deg,#ef4444,#dc2626);"></div>
+      <div style="padding:28px 32px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div style="width:40px; height:40px; border-radius:12px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.25); display:flex; align-items:center; justify-content:center; color:var(--danger); flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size:16px; font-weight:700; margin:0 0 2px;">Delete test suite</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin:0;">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin:0 0 20px;">
+          You are about to permanently delete <strong style="color:var(--text-primary);">{{deleteTarget()!.name}}</strong>
+          and its <strong style="color:var(--text-primary);">{{deleteTarget()!.testCases.length}} test case{{deleteTarget()!.testCases.length !== 1 ? 's' : ''}}</strong>.
+          To confirm, type the suite name below.
+        </p>
+
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:6px; font-family:'JetBrains Mono',monospace; padding:6px 10px; background:var(--bg-card-2); border-radius:7px; letter-spacing:0.02em;">
+            {{deleteTarget()!.name}}
+          </div>
+          <input [(ngModel)]="deleteConfirmText"
+                 [value]="deleteConfirmText()"
+                 (ngModelChange)="deleteConfirmText.set($event)"
+                 type="text"
+                 placeholder="Type the suite name to confirm"
+                 style="width:100%; box-sizing:border-box; padding:9px 12px; background:var(--bg-card-2); border:1px solid var(--hairline); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; font-family:inherit;"
+                 [style.border-color]="deleteConfirmText().length && deleteNameMatches() ? 'rgba(239,68,68,0.6)' : 'var(--hairline)'">
+        </div>
+
+        @if (deleteError()) {
+          <div style="margin-bottom:16px; padding:10px 12px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:12.5px; color:var(--danger);">{{deleteError()}}</div>
+        }
+
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button (click)="closeDeleteModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary);">Cancel</button>
+          <button (click)="confirmDelete()"
+                  [disabled]="!deleteNameMatches() || deleteInProgress()"
+                  style="padding:9px 20px; background:linear-gradient(135deg,#ef4444,#dc2626); border-radius:10px; font-size:13px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:7px; transition:opacity 0.15s;"
+                  [style.opacity]="!deleteNameMatches() || deleteInProgress() ? '0.45' : '1'">
+            @if (deleteInProgress()) {
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
+              Deleting…
+            } @else {
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              Delete suite
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════ Create wizard ══════════════════════════════════════════ -->
+@if (createOpen()) {
+  <div (click)="closeCreateWizard()" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center;">
+    <div (click)="$event.stopPropagation()" style="width:560px; max-height:85vh; display:flex; flex-direction:column; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
+      <!-- Progress bar -->
+      <div style="height:3px; background:var(--hairline);">
+        <div style="height:100%; background:linear-gradient(90deg,#8b5cf6,#6d28d9); transition:width 0.3s;"
+             [style.width]="(createStep() / 4 * 100) + '%'"></div>
+      </div>
+
+      <!-- Header -->
+      <div style="padding:20px 24px 0; flex-shrink:0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <h3 style="font-size:15px; font-weight:700; margin:0;">New test suite</h3>
+          <span style="font-size:11.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Step {{createStep()}} / 4</span>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin:0;">
+          {{createStep() === 1 ? 'Choose the agent this suite will benchmark.' :
+            createStep() === 2 ? 'Give your suite a name.' :
+            createStep() === 3 ? 'Select traces to use as test cases.' :
+            'Choose the evaluation strategy.'}}
+        </p>
+      </div>
+
+      <!-- ── Step 1: Select agent ── -->
+      @if (createStep() === 1) {
+        <div style="flex:1; overflow-y:auto; padding:16px 24px;">
+          @if (createAgentsLoading()) {
+            <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:20px 0;">
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block;"></span>
+              Loading agents…
+            </div>
+          } @else if (!createAgents().length) {
+            <p style="color:var(--text-muted); font-size:13px; padding:16px 0;">No agents found. Send at least one proxied call first.</p>
+          } @else {
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              @for (agent of createAgents(); track agent.id) {
+                <button (click)="selectCreateAgent(agent.id)"
+                        style="padding:12px 14px; border-radius:10px; text-align:left; font-size:13px; font-weight:500; transition:background 0.1s, box-shadow 0.1s; display:flex; align-items:center; gap:10px;"
+                        [style.background]="createSelectedAgentId() === agent.id ? agentColor(agent.name) + '1f' : 'var(--bg-card-2)'"
+                        [style.border]="createSelectedAgentId() === agent.id ? '1px solid ' + agentColor(agent.name) + '50' : '1px solid transparent'"
+                        [style.color]="createSelectedAgentId() === agent.id ? 'var(--text-primary)' : 'var(--text-secondary)'">
+                  <span style="width:9px; height:9px; border-radius:3px; display:inline-block; flex-shrink:0;" [style.background]="agentColor(agent.name)"></span>
+                  <span style="flex:1; font-weight:600;">{{agent.name}}</span>
+                  @if (createSelectedAgentId() === agent.id) {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Step 2: Name ── -->
+      @if (createStep() === 2) {
+        <div style="padding:20px 24px; flex:1;">
+          <input [(ngModel)]="createName"
+                 [value]="createName()"
+                 (ngModelChange)="createName.set($event)"
+                 type="text"
+                 placeholder="e.g. Core Flows, Edge Cases, Regression…"
+                 autofocus
+                 style="width:100%; box-sizing:border-box; padding:11px 14px; background:var(--bg-card-2); border:1px solid var(--hairline); border-radius:10px; font-size:14px; font-weight:500; color:var(--text-primary); outline:none; font-family:inherit;">
+          <p style="font-size:11.5px; color:var(--text-muted); margin:8px 0 0; line-height:1.5;">
+            For agent <strong style="color:var(--text-primary);">{{createSelectedAgent()?.name}}</strong>. Pick a descriptive name that reflects the scenarios covered.
+          </p>
+        </div>
+      }
+
+      <!-- ── Step 3: Select traces ── -->
+      @if (createStep() === 3) {
+        <div style="flex:1; overflow-y:auto; padding:12px 24px;">
+          @if (createTracesLoading()) {
+            <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:20px 0;">
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block;"></span>
+              Loading traces…
+            </div>
+          } @else if (!createTraces().length) {
+            <p style="color:var(--text-muted); font-size:13px; padding:16px 0;">No traces found for this agent.</p>
+          } @else {
+            <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:8px;">{{createSelectedTraceIds().size}} of {{createTraces().length}} selected</div>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              @for (trace of createTraces(); track trace.id) {
+                <button (click)="toggleTrace(trace.id)"
+                        style="padding:10px 12px; border-radius:9px; text-align:left; display:flex; align-items:flex-start; gap:10px; transition:background 0.1s;"
+                        [style.background]="isTraceSelected(trace.id) ? 'rgba(139,92,246,0.1)' : 'var(--bg-card-2)'"
+                        [style.border]="isTraceSelected(trace.id) ? '1px solid rgba(139,92,246,0.35)' : '1px solid transparent'">
+                  <div style="width:16px; height:16px; border-radius:4px; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:background 0.1s, border 0.1s;"
+                       [style.background]="isTraceSelected(trace.id) ? '#8b5cf6' : 'var(--bg-card)'"
+                       [style.border]="isTraceSelected(trace.id) ? '1px solid #8b5cf6' : '1px solid var(--hairline)'">
+                    @if (isTraceSelected(trace.id)) {
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:12.5px; font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tracePreview(trace)}}</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px; display:flex; gap:10px;">
+                      <span>{{trace.model}}</span>
+                      <span>{{trace.createdAt | date:'MMM d, HH:mm'}}</span>
+                      <span>{{trace.httpStatus}}</span>
+                    </div>
+                  </div>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Step 4: Select evaluator ── -->
+      @if (createStep() === 4) {
+        <div style="padding:16px 24px; flex:1;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            @for (ev of evaluatorOptions; track ev.kind) {
+              <button (click)="createEvaluatorKind.set(ev.kind)"
+                      style="padding:14px 16px; border-radius:10px; text-align:left; transition:background 0.1s; display:flex; align-items:flex-start; gap:12px;"
+                      [style.background]="createEvaluatorKind() === ev.kind ? ev.color + '14' : 'var(--bg-card-2)'"
+                      [style.border]="createEvaluatorKind() === ev.kind ? '1px solid ' + ev.color + '45' : '1px solid transparent'">
+                <div style="width:18px; height:18px; border-radius:50%; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center;"
+                     [style.background]="createEvaluatorKind() === ev.kind ? ev.color : 'var(--bg-card)'"
+                     [style.border]="createEvaluatorKind() === ev.kind ? 'none' : '2px solid var(--hairline)'">
+                  @if (createEvaluatorKind() === ev.kind) {
+                    <div style="width:7px; height:7px; border-radius:50%; background:white;"></div>
+                  }
+                </div>
+                <div>
+                  <div style="font-size:13px; font-weight:600; margin-bottom:3px;" [style.color]="createEvaluatorKind() === ev.kind ? ev.color : 'var(--text-primary)'">{{ev.label}}</div>
+                  <div style="font-size:12px; color:var(--text-muted); line-height:1.5;">{{ev.description}}</div>
+                </div>
+              </button>
+            }
+          </div>
+          @if (createError()) {
+            <div style="margin-top:16px; padding:10px 12px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:12.5px; color:var(--danger);">{{createError()}}</div>
+          }
+        </div>
+      }
+
+      <!-- Footer nav -->
+      <div style="padding:16px 24px; border-top:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <button (click)="createStep() === 1 ? closeCreateWizard() : backCreate()"
+                style="padding:8px 16px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-weight:500; color:var(--text-secondary);">
+          {{createStep() === 1 ? 'Cancel' : '← Back'}}
+        </button>
+        @if (createStep() < 4) {
+          <button (click)="advanceCreate()"
+                  [disabled]="(createStep() === 1 && !createCanAdvanceStep1()) || (createStep() === 2 && !createCanAdvanceStep2()) || (createStep() === 3 && !createCanAdvanceStep3())"
+                  style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:13px; font-weight:600; color:#fff; transition:opacity 0.15s;"
+                  [style.opacity]="(createStep() === 1 && !createCanAdvanceStep1()) || (createStep() === 2 && !createCanAdvanceStep2()) || (createStep() === 3 && !createCanAdvanceStep3()) ? '0.4' : '1'">
+            Next →
+          </button>
+        } @else {
+          <button (click)="submitCreate()"
+                  [disabled]="!createCanSubmit() || createInProgress()"
+                  style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:13px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:7px; transition:opacity 0.15s;"
+                  [style.opacity]="!createCanSubmit() || createInProgress() ? '0.4' : '1'">
+            @if (createInProgress()) {
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
+              Creating…
+            } @else {
+              Create suite
+            }
+          </button>
+        }
+      </div>
     </div>
   </div>
 }

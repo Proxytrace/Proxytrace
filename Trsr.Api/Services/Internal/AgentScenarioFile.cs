@@ -49,7 +49,7 @@ internal sealed record TestCaseSeedData(
 );
 
 [UsedImplicitly]
-internal sealed record TestSuiteSeedData(Guid Id, DateTimeOffset CreatedAt);
+internal sealed record TestSuiteSeedData(Guid Id, string Name, DateTimeOffset CreatedAt);
 
 [UsedImplicitly]
 internal sealed record TestResultSeedData(

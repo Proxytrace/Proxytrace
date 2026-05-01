@@ -11,16 +11,21 @@ public interface ITestSuite : IDomainEntity
 {
     /// <summary>Factory delegate for creating a new test suite.</summary>
     public delegate ITestSuite CreateNew(
+        string name,
         IAgent agent,
         IEvaluator evaluator,
         IReadOnlyCollection<ITestCase> testCases);
 
     /// <summary>Factory delegate for reconstituting an existing test suite from persistence.</summary>
     public delegate ITestSuite CreateExisting(
+        string name,
         IAgent agent,
         IEvaluator evaluator,
         IReadOnlyCollection<ITestCase> testCases,
         IDomainEntityData existing);
+
+    /// <summary>A human-readable label for this test suite.</summary>
+    public string Name { get; }
 
     /// <summary>The agent this test suite evaluates.</summary>
     public IAgent Agent { get; }

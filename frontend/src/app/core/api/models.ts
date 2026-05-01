@@ -91,13 +91,36 @@ export interface LatencyStatDto {
   sampleCount: number;
 }
 
+export interface TestSuiteMessageDto {
+  role: string;
+  content: string;
+}
+
+export interface TestCaseDto {
+  id: string;
+  input: TestSuiteMessageDto[];
+  expectedOutput: TestSuiteMessageDto;
+}
+
 export interface TestSuiteDto {
   id: string;
+  name: string;
   agentId: string;
+  agentName: string;
   evaluatorKind: number;
-  testCases: { id: string }[];
+  testCases: TestCaseDto[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TestRunDto {
+  id: string;
+  agentId: string;
+  timestamp: string;
+  totalCases: number;
+  passedCases: number;
+  failedCases: number;
+  passRate: number;
 }
 
 export interface AgentCallFilter {

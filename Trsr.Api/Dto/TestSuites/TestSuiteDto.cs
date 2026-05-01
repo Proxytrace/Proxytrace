@@ -4,11 +4,22 @@ namespace Trsr.Api.Dto.TestSuites;
 
 public record TestSuiteDto(
     Guid Id,
+    string Name,
     Guid AgentId,
+    string AgentName,
     EvaluatorKind EvaluatorKind,
     IReadOnlyList<TestCaseDto> TestCases,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+public record TestRunDto(
+    Guid Id,
+    Guid AgentId,
+    DateTimeOffset Timestamp,
+    int TotalCases,
+    int PassedCases,
+    int FailedCases,
+    double PassRate);
 
 public record TestCaseDto(
     Guid Id,
@@ -18,6 +29,7 @@ public record TestCaseDto(
 public record TestSuiteMessageDto(string Role, string Content);
 
 public record CreateTestSuiteRequest(
+    string Name,
     Guid AgentId,
     EvaluatorKind EvaluatorKind,
     IReadOnlyList<CreateTestCaseRequest> TestCases);
@@ -37,6 +49,8 @@ public record AddTestCaseRequest(
 /// Callers select which traces to include, enabling curation over blind bulk import.
 /// </summary>
 public record PromoteTracesRequest(
+    /// <summary>Human-readable label for the new suite.</summary>
+    string Name,
     /// <summary>The agent whose traces are being promoted. Must match the agent that produced the traces.</summary>
     Guid AgentId,
     /// <summary>IDs of the <c>AgentCall</c> traces to promote into test cases.</summary>

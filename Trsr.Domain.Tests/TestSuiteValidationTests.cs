@@ -22,7 +22,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var testCase = await CreateTestCaseAsync(services);
 
         // Act
-        var testSuite = factory(agent, evaluator, [testCase]);
+        var testSuite = factory("Test Suite", agent, evaluator, [testCase]);
 
         // Assert
         testSuite.Should().NotBeNull();
@@ -45,7 +45,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, evaluator, [testCase]);
+        var action = () => factory("Test Suite", null!, evaluator, [testCase]);
         action.Should().Throw<Exception>();
     }
 
@@ -60,7 +60,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(agent, null!, [testCase]);
+        var action = () => factory("Test Suite", agent, null!, [testCase]);
         action.Should().Throw<Exception>();
     }
 
@@ -75,7 +75,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(agent, evaluator, null!);
+        var action = () => factory("Test Suite", agent, evaluator, null!);
         action.Should().Throw<Exception>();
     }
 
@@ -89,7 +89,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var evaluator = await CreateTestEvaluatorAsync(services);
 
         // Act
-        var testSuite = factory(agent, evaluator, []);
+        var testSuite = factory("Test Suite", agent, evaluator, []);
 
         // Assert
         testSuite.Should().NotBeNull();
@@ -109,7 +109,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var testCase3 = await CreateTestCaseAsync(services);
 
         // Act
-        var testSuite = factory(agent, evaluator, [testCase1, testCase2, testCase3]);
+        var testSuite = factory("Test Suite", agent, evaluator, [testCase1, testCase2, testCase3]);
 
         // Assert
         testSuite.TestCases.Should().HaveCount(3);
@@ -125,7 +125,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var existing = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var testSuite = createExisting(existing.Agent, existing.Evaluator, existing.TestCases, existing);
+        var testSuite = createExisting(existing.Name, existing.Agent, existing.Evaluator, existing.TestCases, existing);
 
         // Assert
         testSuite.Should().NotBeNull();
@@ -146,8 +146,8 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var evaluator = await CreateTestEvaluatorAsync(services);
 
         // Act
-        var testSuite1 = factory(agent, evaluator, []);
-        var testSuite2 = factory(agent, evaluator, []);
+        var testSuite1 = factory("Test Suite", agent, evaluator, []);
+        var testSuite2 = factory("Test Suite", agent, evaluator, []);
 
         // Assert
         testSuite1.Id.Should().NotBe(testSuite2.Id);
