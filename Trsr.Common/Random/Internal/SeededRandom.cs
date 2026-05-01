@@ -3,10 +3,12 @@ namespace Trsr.Common.Random.Internal;
 internal class SeededRandom : IRandom
 {
     public delegate SeededRandom Factory(int seed);
-    
+
+    private static readonly IReadOnlyCollection<string> words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
+    private static readonly IReadOnlyCollection<string> emailDomains = ["example.com", "test.io", "mail.dev", "sample.net"];
+
     private readonly System.Random random;
     private readonly Lock lockObject = new();
-    private readonly IReadOnlyCollection<string> words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
     
     public SeededRandom(int seed)
     {
@@ -36,8 +38,14 @@ internal class SeededRandom : IRandom
             .Select(_ => Any(words))
             .Aggregate((a, b) => $"{a} {b}");
 
-    public string UniqueString() 
+    public string UniqueString()
         => Guid().ToString();
+
+    public string Email()
+        => $"{Any(words).Replace(" ", "")}{Int(1, 999)}@{Any(emailDomains)}";
+
+    public Uri Uri()
+        => new($"https://{UniqueString()[..8]}.example.com");
 
     public int Int(int? min = null, int? max = null)
     {
@@ -46,6 +54,26 @@ internal class SeededRandom : IRandom
             min ??= 0;
             max ??= int.MaxValue;
             return random.Next(min.Value, max.Value);
+        }
+    }
+
+    public long Long(long? min = null, long? max = null)
+    {
+        lock (lockObject)
+        {
+            min ??= 0;
+            max ??= long.MaxValue;
+            return random.NextInt64(min.Value, max.Value);
+        }
+    }
+
+    public double Double(double? min = null, double? max = null)
+    {
+        lock (lockObject)
+        {
+            min ??= 0;
+            max ??= 1;
+            return min.Value + (random.NextDouble() * (max.Value - min.Value));
         }
     }
 
@@ -60,9 +88,31 @@ internal class SeededRandom : IRandom
         }
     }
 
-    public T Any<T>(IReadOnlyCollection<T> options) 
+    public T Any<T>(IReadOnlyCollection<T> options)
         => options.ElementAt(Int(min: 0, max: options.Count));
 
+    public T Enum<T>() where T : struct, System.Enum
+    {
+        var values = System.Enum.GetValues<T>();
+        return values[Int(min: 0, max: values.Length)];
+    }
+
     public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null)
-        => System.TimeSpan.FromMilliseconds(Int(min: 500, max: 5000));
+    {
+        min ??= System.TimeSpan.FromMilliseconds(500);
+        max ??= System.TimeSpan.FromMilliseconds(5000);
+        return System.TimeSpan.FromTicks(Long(min: min.Value.Ticks, max: max.Value.Ticks));
+    }
+
+    public DateTimeOffset DateTimeOffset(DateTimeOffset? min = null, DateTimeOffset? max = null)
+    {
+        var now = System.DateTimeOffset.UtcNow;
+        min ??= now.AddYears(-1);
+        max ??= now;
+        lock (lockObject)
+        {
+            var ticks = min.Value.Ticks + (long)(random.NextDouble() * (max.Value.Ticks - min.Value.Ticks));
+            return new System.DateTimeOffset(ticks, System.TimeSpan.Zero);
+        }
+    }
 }
