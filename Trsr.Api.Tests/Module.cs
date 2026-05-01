@@ -6,6 +6,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Storage;
+using Trsr.Testing;
 
 namespace Trsr.Api.Tests;
 
@@ -30,6 +31,7 @@ public sealed class Module : Autofac.Module
         base.Load(builder);
 
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterStub<IModelClient>();
 
         builder.RegisterInstance<IAgentNameGenerator>(new StubAgentNameGenerator())
             .SingleInstance();

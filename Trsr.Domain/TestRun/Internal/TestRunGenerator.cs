@@ -31,8 +31,8 @@ internal class TestRunGenerator : DomainEntityGenerator<ITestRun>
     public override async Task<ITestRun> GenerateAsync(CancellationToken cancellationToken = default)
     {
         ITestRun run = factory(
-            suite: await suiteGenerator.GenerateAsync(cancellationToken),
-            endpoint: await endpointGenerator.GenerateAsync(cancellationToken));
+            suite: await suiteGenerator.GetOrCreateAsync(cancellationToken),
+            endpoint: await endpointGenerator.GetOrCreateAsync(cancellationToken));
         
         int resultCount = random.Int(0, run.Suite.TestCases.Count);
         IReadOnlyCollection<ITestResult> results = await Enumerable.Range(0, resultCount)
