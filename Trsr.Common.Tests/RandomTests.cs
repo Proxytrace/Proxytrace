@@ -65,9 +65,22 @@ public sealed class RandomTests : BaseTest<Module>
     public void String_ReturnsStringComposedOfWords()
     {
         var result = Random.String();
-        
+
         result.Should().NotBeNullOrWhiteSpace();
         result.Split(' ').Length.Should().BeGreaterThan(0);
+    }
+
+    [TestMethod]
+    public void String_GeneratesDifferentStringsOnSuccessiveCalls()
+    {
+        var results = new HashSet<string>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.String());
+        }
+
+        results.Count.Should().BeGreaterThan(1);
     }
     
     [TestMethod]
@@ -226,6 +239,88 @@ public sealed class RandomTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public void Long_WithMin_ReturnsValueGreaterThanOrEqualToMin()
+    {
+        var result = Random.Long(min: 1_000_000_000L);
+
+        result.Should().BeGreaterThanOrEqualTo(1_000_000_000L);
+    }
+
+    [TestMethod]
+    public void Long_WithMax_ReturnsValueLessThanMax()
+    {
+        var result = Random.Long(max: 50);
+
+        result.Should().BeLessThan(50);
+        result.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [TestMethod]
+    public void Long_CanGenerateMultipleValues()
+    {
+        var results = new HashSet<long>();
+        var random = Random;
+        for (int i = 0; i < 100; i++)
+        {
+            results.Add(random.Long(min: 1, max: 1000));
+        }
+
+        results.Count.Should().BeGreaterThan(1);
+    }
+
+    [TestMethod]
+    public void Decimal_WithNoParameters_ReturnsNonNegativeValue()
+    {
+        var result = Random.Decimal();
+
+        result.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [TestMethod]
+    public void Decimal_WithMinAndMax_ReturnsValueInRange()
+    {
+        var results = new List<decimal>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Decimal(min: 1.5m, max: 9.5m));
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(1.5m));
+        results.Should().AllSatisfy(r => r.Should().BeLessThan(9.5m));
+    }
+
+    [TestMethod]
+    public void Decimal_WithMin_ReturnsValueGreaterThanOrEqualToMin()
+    {
+        var result = Random.Decimal(min: 100m);
+
+        result.Should().BeGreaterThanOrEqualTo(100m);
+    }
+
+    [TestMethod]
+    public void Decimal_WithMax_ReturnsValueLessThanMax()
+    {
+        var result = Random.Decimal(max: 1m);
+
+        result.Should().BeLessThan(1m);
+        result.Should().BeGreaterThanOrEqualTo(0m);
+    }
+
+    [TestMethod]
+    public void Decimal_CanGenerateMultipleValues()
+    {
+        var results = new HashSet<decimal>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Decimal(min: 0m, max: 100m));
+        }
+
+        results.Count.Should().BeGreaterThan(1);
+    }
+
+    [TestMethod]
     public void Double_WithNoParameters_ReturnsBetweenZeroAndOne()
     {
         var results = new List<double>();
@@ -251,6 +346,83 @@ public sealed class RandomTests : BaseTest<Module>
 
         results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(5.0));
         results.Should().AllSatisfy(r => r.Should().BeLessThan(10.0));
+    }
+
+    [TestMethod]
+    public void Double_WithMin_ReturnsValueGreaterThanOrEqualToMin()
+    {
+        var result = Random.Double(min: 0.5);
+
+        result.Should().BeGreaterThanOrEqualTo(0.5);
+    }
+
+    [TestMethod]
+    public void Double_WithMax_ReturnsValueLessThanMax()
+    {
+        var result = Random.Double(max: 0.5);
+
+        result.Should().BeLessThan(0.5);
+        result.Should().BeGreaterThanOrEqualTo(0.0);
+    }
+
+    [TestMethod]
+    public void Double_CanGenerateMultipleValues()
+    {
+        var results = new HashSet<double>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.Double(min: 0.0, max: 1.0));
+        }
+
+        results.Count.Should().BeGreaterThan(1);
+    }
+
+    [TestMethod]
+    public void TimeSpan_WithNoParameters_ReturnsPositiveSpan()
+    {
+        var result = Random.TimeSpan();
+
+        result.Should().BeGreaterThan(System.TimeSpan.Zero);
+    }
+
+    [TestMethod]
+    public void TimeSpan_WithMinAndMax_ReturnsValueInRange()
+    {
+        var min = System.TimeSpan.FromSeconds(1);
+        var max = System.TimeSpan.FromSeconds(10);
+        var results = new List<TimeSpan>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.TimeSpan(min: min, max: max));
+        }
+
+        results.Should().AllSatisfy(r => r.Should().BeGreaterThanOrEqualTo(min));
+        results.Should().AllSatisfy(r => r.Should().BeLessThan(max));
+    }
+
+    [TestMethod]
+    public void TimeSpan_WithMin_ReturnsValueGreaterThanOrEqualToMin()
+    {
+        var min = System.TimeSpan.FromMinutes(1);
+
+        var result = Random.TimeSpan(min: min, max: System.TimeSpan.FromMinutes(5));
+
+        result.Should().BeGreaterThanOrEqualTo(min);
+    }
+
+    [TestMethod]
+    public void TimeSpan_CanGenerateMultipleValues()
+    {
+        var results = new HashSet<TimeSpan>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.TimeSpan(min: System.TimeSpan.Zero, max: System.TimeSpan.FromHours(1)));
+        }
+
+        results.Count.Should().BeGreaterThan(1);
     }
 
     [TestMethod]
@@ -297,6 +469,19 @@ public sealed class RandomTests : BaseTest<Module>
 
         results.Should().AllSatisfy(r => r.Should().BeOnOrAfter(min));
         results.Should().AllSatisfy(r => r.Should().BeOnOrBefore(max));
+    }
+
+    [TestMethod]
+    public void DateTimeOffset_CanGenerateMultipleValues()
+    {
+        var results = new HashSet<DateTimeOffset>();
+        var random = Random;
+        for (int i = 0; i < 50; i++)
+        {
+            results.Add(random.DateTimeOffset());
+        }
+
+        results.Count.Should().BeGreaterThan(1);
     }
 
     [TestMethod]

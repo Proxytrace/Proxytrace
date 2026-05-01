@@ -4,10 +4,11 @@ internal class SeededRandom : IRandom
 {
     public delegate SeededRandom Factory(int seed);
 
+    private static readonly IReadOnlyCollection<string> words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
+    private static readonly IReadOnlyCollection<string> emailDomains = ["example.com", "test.io", "mail.dev", "sample.net"];
+
     private readonly System.Random random;
     private readonly Lock lockObject = new();
-    private readonly IReadOnlyCollection<string> words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
-    private readonly IReadOnlyCollection<string> emailDomains = ["example.com", "test.io", "mail.dev", "sample.net"];
     
     public SeededRandom(int seed)
     {
@@ -97,7 +98,11 @@ internal class SeededRandom : IRandom
     }
 
     public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null)
-        => System.TimeSpan.FromMilliseconds(Int(min: 500, max: 5000));
+    {
+        min ??= System.TimeSpan.FromMilliseconds(500);
+        max ??= System.TimeSpan.FromMilliseconds(5000);
+        return System.TimeSpan.FromTicks(Long(min: min.Value.Ticks, max: max.Value.Ticks));
+    }
 
     public DateTimeOffset DateTimeOffset(DateTimeOffset? min = null, DateTimeOffset? max = null)
     {
