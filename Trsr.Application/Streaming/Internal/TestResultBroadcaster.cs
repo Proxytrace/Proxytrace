@@ -3,9 +3,10 @@ using System.Threading.Channels;
 
 namespace Trsr.Application.Streaming.Internal;
 
-internal class TestResultBroadcaster : ITestResultBroadcaster
+internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
 {
-    private readonly ConcurrentDictionary<Guid, (Guid RunId, ChannelWriter<TestRunEvent> Writer)> runSubscribers = new();
+    private readonly ConcurrentDictionary<Guid, (Guid RunId, ChannelWriter<TestRunEvent> Writer)>
+        runSubscribers = new();
 
     public ChannelReader<TestRunEvent> Subscribe(Guid runId, CancellationToken cancellationToken)
     {
@@ -47,6 +48,16 @@ internal class TestResultBroadcaster : ITestResultBroadcaster
             writer.TryWrite(evt);
             writer.TryComplete();
             runSubscribers.TryRemove(kvp.Key, out _);
+        }
+    }
+
+    public void Dispose()
+    {
+        var subscribers = runSubscribers.Values.ToList();
+        runSubscribers.Clear();
+        foreach (var kvp in subscribers)
+        {
+            kvp.Writer.TryComplete();
         }
     }
 }

@@ -30,6 +30,9 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()
+            .SingleInstance();
+        
+        builder.RegisterType<TestResultBroadcaster>()
             .As<ITestResultBroadcaster>()
             .SingleInstance();
 

@@ -3,7 +3,7 @@ using System.Threading.Channels;
 
 namespace Trsr.Application.Streaming.Internal;
 
-internal class TraceBroadcaster : ITraceBroadcaster
+internal class TraceBroadcaster : ITraceBroadcaster, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, ChannelWriter<TraceCreatedEvent>> traceSubscribers = new();
 
@@ -31,6 +31,16 @@ internal class TraceBroadcaster : ITraceBroadcaster
         {
             if (!kvp.Value.TryWrite(evt))
                 traceSubscribers.TryRemove(kvp.Key, out _);
+        }
+    }
+
+    public void Dispose()
+    {
+        var subscribers = traceSubscribers.Values.ToList();
+        traceSubscribers.Clear();
+        foreach (var writer in subscribers)
+        {
+            writer.TryComplete();
         }
     }
 }
