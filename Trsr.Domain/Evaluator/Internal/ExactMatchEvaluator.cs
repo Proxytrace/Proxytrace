@@ -28,7 +28,7 @@ internal record ExactMatchEvaluator : DomainEntity, IExactMatchEvaluator
     /// <summary>
     /// Evaluates the actual output against the expected output, given the input conversation.
     /// </summary>
-    public Task<IEvaluation> EvaluateAsync(
+    public Task<IEvaluation?> EvaluateAsync(
         ITestResult testResult,
         CancellationToken cancellationToken = default)
     {
@@ -55,6 +55,6 @@ internal record ExactMatchEvaluator : DomainEntity, IExactMatchEvaluator
             this,
             score,
             reasoning: reasoning);
-        return Task.FromResult(evaluation);
+        return Task.FromResult<IEvaluation?>(evaluation);
     }
 }

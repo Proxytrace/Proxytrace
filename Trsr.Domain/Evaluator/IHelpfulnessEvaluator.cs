@@ -4,10 +4,10 @@ namespace Trsr.Domain.Evaluator;
 
 public interface IHelpfulnessEvaluator : IAgenticEvaluator
 {
-    public delegate ICustomEvaluator CreateNew(
+    public delegate IHelpfulnessEvaluator CreateNew(
         IModelEndpoint endpoint);
     
-    public delegate ICustomEvaluator CreateExisting(
+    public delegate IHelpfulnessEvaluator CreateExisting(
         IModelEndpoint endpoint,
         IDomainEntityData existing);
 }

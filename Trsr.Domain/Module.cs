@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Message.Internal;
 using Trsr.Domain.Tools.Internal;
 
@@ -59,46 +60,10 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<ToolArgumentsJsonConverter>()
             .As<JsonConverter>()
             .SingleInstance();
-    }
 
-    // private static void RegisterEvaluators(ContainerBuilder builder)
-    // {
-    //     builder.RegisterType<ExactMatchEvaluator>()
-    //         .As<IEvaluator>()
-    //         .As<IExactMatchEvaluator>()
-    //         .OnActivated(context =>
-    //         {
-    //             if (context.Instance is IValidatableObject validatable)
-    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
-    //         });
-    //
-    //     builder.RegisterType<JsonSchemaMatchEvaluator>()
-    //         .As<IEvaluator>()
-    //         .As<IJsonSchemaMatchEvaluator>()
-    //         .OnActivated(context =>
-    //         {
-    //             if (context.Instance is IValidatableObject validatable)
-    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
-    //         });
-    //
-    //     builder.RegisterType<NumericMatchEvaluator>()
-    //         .As<IEvaluator>()
-    //         .As<INumericMatchEvaluator>()
-    //         .OnActivated(context =>
-    //         {
-    //             if (context.Instance is IValidatableObject validatable)
-    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
-    //         });
-    //
-    //     builder.RegisterType<CustomEvaluator>().As<ICustomEvaluator>();
-    //     builder.RegisterType<HelpfulnessEvaluator>().As<IHelpfulnessEvaluator>();
-    //     builder.RegisterType<PolitenessEvaluator>().As<IPolitenessEvaluator>();
-    //     builder.RegisterType<SafetyClassifier>().As<ISafetyClassifier>();
-    //     builder.RegisterType<ToolUsageEvaluator>().As<IToolUsageEvaluator>();
-    //
-    //     builder.RegisterType<EvaluatorGenerator>().As<IDomainEntityGenerator<IEvaluator>>();
-    //     builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<ICustomEvaluator>>();
-    // }
+        builder.RegisterType<EvaluatorGenerator>()
+            .As<IDomainEntityGenerator<IEvaluator>>();
+    }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
     {
