@@ -28,7 +28,7 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
-        builder.RegisterType<EventBroadcaster>()
+        builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()
             .As<ITestResultBroadcaster>()
             .SingleInstance();

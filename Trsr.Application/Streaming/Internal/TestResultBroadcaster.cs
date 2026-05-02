@@ -3,37 +3,9 @@ using System.Threading.Channels;
 
 namespace Trsr.Application.Streaming.Internal;
 
-internal class EventBroadcaster : ITraceBroadcaster, ITestResultBroadcaster
+internal class TestResultBroadcaster : ITestResultBroadcaster
 {
-    private readonly ConcurrentDictionary<Guid, ChannelWriter<TraceCreatedEvent>> traceSubscribers = new();
     private readonly ConcurrentDictionary<Guid, (Guid RunId, ChannelWriter<TestRunEvent> Writer)> runSubscribers = new();
-
-    public ChannelReader<TraceCreatedEvent> Subscribe(CancellationToken cancellationToken)
-    {
-        var channel = Channel.CreateBounded<TraceCreatedEvent>(new BoundedChannelOptions(100)
-        {
-            FullMode = BoundedChannelFullMode.DropOldest,
-            SingleReader = true,
-            SingleWriter = false,
-        });
-        var id = Guid.NewGuid();
-        traceSubscribers[id] = channel.Writer;
-        cancellationToken.Register(() =>
-        {
-            traceSubscribers.TryRemove(id, out _);
-            channel.Writer.TryComplete();
-        });
-        return channel.Reader;
-    }
-
-    public void Publish(TraceCreatedEvent evt)
-    {
-        foreach (var kvp in traceSubscribers)
-        {
-            if (!kvp.Value.TryWrite(evt))
-                traceSubscribers.TryRemove(kvp.Key, out _);
-        }
-    }
 
     public ChannelReader<TestRunEvent> Subscribe(Guid runId, CancellationToken cancellationToken)
     {
@@ -58,7 +30,8 @@ internal class EventBroadcaster : ITraceBroadcaster, ITestResultBroadcaster
         foreach (var kvp in runSubscribers)
         {
             var (runId, writer) = kvp.Value;
-            if (runId != evt.RunId) continue;
+            if (runId != evt.RunId)
+                continue;
             if (!writer.TryWrite(evt))
                 runSubscribers.TryRemove(kvp.Key, out _);
         }
@@ -69,7 +42,8 @@ internal class EventBroadcaster : ITraceBroadcaster, ITestResultBroadcaster
         foreach (var kvp in runSubscribers)
         {
             var (runId, writer) = kvp.Value;
-            if (runId != evt.RunId) continue;
+            if (runId != evt.RunId)
+                continue;
             writer.TryWrite(evt);
             writer.TryComplete();
             runSubscribers.TryRemove(kvp.Key, out _);

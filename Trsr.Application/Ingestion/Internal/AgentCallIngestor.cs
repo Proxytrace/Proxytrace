@@ -228,14 +228,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     errorMessage: parsed.ErrorMessage);
 
                 persistedCall = await agentCallRepository.AddAsync(call, cancellationToken);
-
-                traceBroadcaster.Publish(new TraceCreatedEvent(
-                    persistedCall.Id,
-                    persistedCall.Agent.Id,
-                    persistedCall.Agent.Name,
-                    persistedCall.Endpoint.Model.Name,
-                    persistedCall.Endpoint.Provider.Name,
-                    persistedCall.CreatedAt));
+                traceBroadcaster.Publish(TraceCreatedEvent.Create(persistedCall));
             }
 
             await CreatePendingToolCallsAsync(persistedCall, parsed.Response, cancellationToken);

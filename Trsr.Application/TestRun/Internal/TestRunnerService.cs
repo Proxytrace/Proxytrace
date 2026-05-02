@@ -100,19 +100,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             var testResult = createTestResult(testCase, response, evaluation, elapsed);
             await testResultRepository.AddAsync(testResult, cancellationToken);
             testRun = await testRun.SetTestResult(testResult, cancellationToken);
-
-            broadcaster.Publish(new TestResultArrivedEvent(
-                testRun.Id,
-                testResult.TestCase.Id,
-                testResult.Evaluation,
-                (long)testResult.Duration.TotalMilliseconds));
+            broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
         }
 
-        broadcaster.PublishComplete(new RunCompleteEvent(
-            testRun.Id,
-            testRun.Status,
-            testRun.CompletedAt));
-
+        broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
         return testRun;
     }
     
