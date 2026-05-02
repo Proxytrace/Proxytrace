@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Dto.TestSuites;
-using Trsr.Api.Services;
+using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -10,8 +10,6 @@ using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
-using Trsr.Domain.TestResult;
-using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
 namespace Trsr.Api.Controllers;
@@ -221,7 +219,7 @@ public class TestSuitesController : ControllerBase
         if (endpoint is null)
             return BadRequest("No model endpoints are configured. Send at least one proxied LLM call first.");
 
-        var run = await testRunnerService.StartAsync(suite, endpoint, cancellationToken);
+        var run = await testRunnerService.RunInBackgroundAsync(suite, endpoint, cancellationToken);
         return TestRunsController.ToDto(run);
     }
 

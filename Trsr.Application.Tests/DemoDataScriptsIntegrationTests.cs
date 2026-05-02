@@ -3,7 +3,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Trsr.Api.Services.Internal;
+using Trsr.Application.Demo.Internal;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -13,7 +13,7 @@ using Trsr.Domain.ModelProvider;
 using Trsr.Storage;
 using Trsr.Testing;
 
-namespace Trsr.Api.Tests;
+namespace Trsr.Application.Tests;
 
 /// <summary>
 /// Integration tests that execute the real demo-data JSON scenario files against a SQLite database

@@ -1,4 +1,7 @@
 using System.Net;
+using System.Threading.Channels;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -9,9 +12,9 @@ using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Usage;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Ingestion.Internal;
 
-internal class AgentCallIngestionService : IAgentCallIngestionService
+internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
 {
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IAgentToolCallRepository toolCallRepository;
@@ -22,9 +25,16 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly IModelEndpointRepository endpointRepository;
-    private readonly ILogger<AgentCallIngestionService> logger;
+    private readonly ILogger<AgentCallIngestor> logger;
+    
+    private readonly Channel<IngestJob> channel = Channel.CreateUnbounded<IngestJob>(
+        new UnboundedChannelOptions
+        {
+            SingleReader = true,
+            SingleWriter = false,
+        });
 
-    public AgentCallIngestionService(
+    public AgentCallIngestor(
         IAgentCallRepository agentCallRepository,
         IAgentToolCallRepository toolCallRepository,
         IAgentCall.CreateNew createNewCall,
@@ -34,7 +44,7 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         IModelEndpointRepository endpointRepository,
-        ILogger<AgentCallIngestionService> logger)
+        ILogger<AgentCallIngestor> logger)
     {
         this.agentCallRepository = agentCallRepository;
         this.toolCallRepository = toolCallRepository;
@@ -47,88 +57,18 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
         this.endpointRepository = endpointRepository;
         this.logger = logger;
     }
-
-    public async Task IngestAsync(
-        IModelProvider provider,
+    
+    public async Task IngestInBackgroundAsync(
+        IModelProvider provider, 
         IProject project,
-        string requestBody,
-        string? responseBody,
+        string requestBody, 
+        string? responseBody, 
         TimeSpan duration,
-        HttpStatusCode httpStatus,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (!parser.TryParse(provider, requestBody, responseBody, duration, httpStatus, out OpenAiCallParseResult? parsed))
-            {
-                return;
-            }
-
-            var endpoint = await endpointRepository
-                .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
-
-            var agent = await agentRepository.GetOrCreateAsync(
-                parsed.SystemMessage,
-                parsed.Tools,
-                project,
-                endpoint,
-                cancellationToken);
-
-            var toolMessages = parsed.Request.Messages.OfType<ToolMessage>().ToList();
-            var toolMessageIds = toolMessages.Select(m => m.Id).ToList();
-
-            var continuationOfId = await toolCallRepository
-                .FindAgentCallIdByToolCallIdsAsync(toolMessageIds, project, cancellationToken);
-
-            IAgentCall persistedCall;
-
-            if (continuationOfId is { } existingId)
-            {
-                var existing = await agentCallRepository.GetAsync(existingId, cancellationToken);
-                var mergedUsage = new TokenUsage(
-                    existing.Usage.InputTokenCount + parsed.Usage.InputTokenCount,
-                    existing.Usage.OutputTokenCount + parsed.Usage.OutputTokenCount);
-
-                var updated = createExistingCall(
-                    agent: agent,
-                    endpoint: endpoint,
-                    request: parsed.Request,
-                    response: parsed.Response,
-                    usage: mergedUsage,
-                    duration: existing.Duration + parsed.Duration,
-                    httpStatus: parsed.HttpStatus,
-                    finishReason: parsed.FinishReason,
-                    errorMessage: parsed.ErrorMessage,
-                    existing: existing);
-
-                persistedCall = await agentCallRepository.UpdateAsync(updated, cancellationToken);
-
-                await UpdateToolCallResponsesAsync(persistedCall, toolMessages, cancellationToken);
-            }
-            else
-            {
-                var call = createNewCall(
-                    agent: agent,
-                    endpoint: endpoint,
-                    request: parsed.Request,
-                    response: parsed.Response,
-                    usage: parsed.Usage,
-                    duration: parsed.Duration,
-                    httpStatus: parsed.HttpStatus,
-                    finishReason: parsed.FinishReason,
-                    errorMessage: parsed.ErrorMessage);
-
-                persistedCall = await agentCallRepository.AddAsync(call, cancellationToken);
-            }
-
-            await CreatePendingToolCallsAsync(persistedCall, parsed.Response, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to ingest agent call (provider={Provider}, status={HttpStatus})",
-                provider, httpStatus);
-        }
-    }
+        HttpStatusCode httpStatus, 
+        CancellationToken cancellationToken = default) 
+        => await channel.Writer.WriteAsync(
+            new IngestJob(provider, project, requestBody, responseBody, duration, httpStatus),
+            cancellationToken);
 
     private async Task CreatePendingToolCallsAsync(
         IAgentCall agentCall,
@@ -187,6 +127,112 @@ internal class AgentCallIngestionService : IAgentCallIngestionService
                 existing: pending);
 
             await toolCallRepository.UpdateAsync(updated, cancellationToken);
+        }
+    }
+    
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await foreach (IngestJob job in channel.Reader.ReadAllAsync(cancellationToken))
+            {
+                try
+                {
+                    await IngestAsync(job, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to process ingestion job (status={HttpStatus})", job.HttpStatus);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // graceful shutdown
+        }
+    }
+    
+    internal async Task IngestAsync(
+        IngestJob job,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!parser.TryParse(
+                    job.Provider, 
+                    job.RequestBody, 
+                    job.ResponseBody, 
+                    job.Duration, 
+                    job.HttpStatus,
+                    out OpenAiCallParseResult? parsed))
+            {
+                return;
+            }
+
+            var endpoint = await endpointRepository
+                .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
+
+            var agent = await agentRepository.GetOrCreateAsync(
+                parsed.SystemMessage,
+                parsed.Tools,
+                job.Project,
+                endpoint,
+                cancellationToken);
+
+            var toolMessages = parsed.Request.Messages.OfType<ToolMessage>().ToList();
+            var toolMessageIds = toolMessages.Select(m => m.Id).ToList();
+
+            var continuationOfId = await toolCallRepository
+                .FindAgentCallIdByToolCallIdsAsync(toolMessageIds, job.Project, cancellationToken);
+
+            IAgentCall persistedCall;
+
+            if (continuationOfId is { } existingId)
+            {
+                var existing = await agentCallRepository.GetAsync(existingId, cancellationToken);
+                var mergedUsage = new TokenUsage(
+                    existing.Usage.InputTokenCount + parsed.Usage.InputTokenCount,
+                    existing.Usage.OutputTokenCount + parsed.Usage.OutputTokenCount);
+
+                var updated = createExistingCall(
+                    agent: agent,
+                    endpoint: endpoint,
+                    request: parsed.Request,
+                    response: parsed.Response,
+                    usage: mergedUsage,
+                    duration: existing.Duration + parsed.Duration,
+                    httpStatus: parsed.HttpStatus,
+                    finishReason: parsed.FinishReason,
+                    errorMessage: parsed.ErrorMessage,
+                    existing: existing);
+
+                persistedCall = await agentCallRepository.UpdateAsync(updated, cancellationToken);
+
+                await UpdateToolCallResponsesAsync(persistedCall, toolMessages, cancellationToken);
+            }
+            else
+            {
+                var call = createNewCall(
+                    agent: agent,
+                    endpoint: endpoint,
+                    request: parsed.Request,
+                    response: parsed.Response,
+                    usage: parsed.Usage,
+                    duration: parsed.Duration,
+                    httpStatus: parsed.HttpStatus,
+                    finishReason: parsed.FinishReason,
+                    errorMessage: parsed.ErrorMessage);
+
+                persistedCall = await agentCallRepository.AddAsync(call, cancellationToken);
+            }
+
+            await CreatePendingToolCallsAsync(persistedCall, parsed.Response, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to ingest agent call (provider={Provider}, status={HttpStatus})",
+                job.Provider.Name, 
+                job.HttpStatus);
         }
     }
 }

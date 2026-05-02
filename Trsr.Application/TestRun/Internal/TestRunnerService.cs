@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Threading.Channels;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -7,34 +10,44 @@ using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.TestRun.Internal;
 
-internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
+internal class TestRunnerService : BackgroundService, ITestRunnerService
 {
     private readonly ITestResult.CreateNew createTestResult;
     private readonly ITestRun.CreateNew createTestRun;
     private readonly ITestRunRepository testRunRepository;
     private readonly IRepository<ITestResult> testResultRepository;
-    private readonly ITestRunQueue testRunQueue;
     private readonly ILogger<TestRunnerService> logger;
+    
+    private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
+        new UnboundedChannelOptions
+        {
+            SingleReader = true,
+            SingleWriter = false,
+        });
 
     public TestRunnerService(
         ITestResult.CreateNew createTestResult,
         ITestRun.CreateNew createTestRun,
         ITestRunRepository testRunRepository,
         IRepository<ITestResult> testResultRepository,
-        ITestRunQueue testRunQueue,
         ILogger<TestRunnerService> logger)
     {
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
         this.testRunRepository = testRunRepository;
         this.testResultRepository = testResultRepository;
-        this.testRunQueue = testRunQueue;
         this.logger = logger;
     }
+    
+    public ChannelReader<Guid> Reader 
+        => channel.Reader;
 
-    public async Task<ITestRun> RunAsync(
+    public void Enqueue(Guid runId)
+        => channel.Writer.TryWrite(runId);
+
+    public async Task<ITestRun> RunInForegroundAsync(
         ITestSuite suite, 
         IModelEndpoint endpoint, 
         CancellationToken cancellationToken = default)
@@ -45,18 +58,18 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
         return newRun;
     }
 
-    public async Task<ITestRun> StartAsync(
+    public async Task<ITestRun> RunInBackgroundAsync(
         ITestSuite suite,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
         ITestRun newRun = createTestRun(suite, endpoint);
         newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
-        testRunQueue.Enqueue(newRun.Id);
+        await channel.Writer.WriteAsync(newRun.Id, cancellationToken);
         return newRun;
     }
 
-    public async Task<ITestRun> ExecuteRunAsync(
+    private async Task<ITestRun> ExecuteRunAsync(
         ITestRun testRun, 
         CancellationToken cancellationToken = default)
     {
@@ -86,5 +99,35 @@ internal class TestRunnerService : ITestRunnerService, ITestRunExecutor
         }
 
         return testRun;
+    }
+    
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await foreach (Guid runId in channel.Reader.ReadAllAsync(cancellationToken))
+            {
+                try
+                {
+                    ITestRun? testRun = await testRunRepository.FindAsync(runId, cancellationToken);
+                    if (testRun != null)
+                    {
+                        await ExecuteRunAsync(testRun, cancellationToken);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Test run with ID {RunId} not found in repository", runId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to execute test run {RunId}", runId);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // graceful shutdown
+        }
     }
 }

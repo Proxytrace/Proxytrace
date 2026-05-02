@@ -1,8 +1,4 @@
 using Autofac;
-using Microsoft.Extensions.DependencyInjection;
-using Trsr.Api.Services;
-using Trsr.Api.Services.Internal;
-using Trsr.Application;
 using Trsr.Common.DependencyInjection;
 using Trsr.Storage;
 
@@ -36,41 +32,10 @@ internal sealed class Module : Autofac.Module
         var upstreamBaseUrl = configuration.GetSection("ModelProvider").GetValue<string>("UpstreamBaseUrl")
                               ?? throw new InvalidOperationException("Configuration 'ModelProvider:UpstreamBaseUrl' is required. ");
         
-        builder.RegisterType<OpenAiCallParser>()
-            .As<IOpenAiCallParser>()
-            .SingleInstance();
-
-        builder.RegisterType<AgentCallIngestionService>()
-            .As<IAgentCallIngestionService>()
-            .InstancePerDependency();
-
-        builder.RegisterType<AgentCallIngestionQueue>()
-            .AsSelf()
-            .As<IAgentCallIngestionQueue>()
-            .SingleInstance();
-
-        builder.RegisterServiceCollection(services =>
-        {
-            services.AddHostedService<AgentCallIngestionWorker>();
-        });
+        
 
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
-
-        builder.RegisterType<TestRunnerService>()
-            .As<ITestRunnerService>()
-            .As<ITestRunExecutor>()
-            .InstancePerDependency();
-
-        builder.RegisterType<TestRunQueue>()
-            .AsSelf()
-            .As<ITestRunQueue>()
-            .SingleInstance();
-
-        builder.RegisterServiceCollection(services =>
-        {
-            services.AddHostedService<TestRunBackgroundService>();
-        });
 
         builder.RegisterServiceCollection(services =>
         {
@@ -88,20 +53,12 @@ internal sealed class Module : Autofac.Module
         });
 
         builder.RegisterModule<Domain.Module>();
-        builder.RegisterModule<Application.Module>();
+        builder.RegisterModule(new Application.Module(isDevelopment: isDevelopment));
 
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
         var storageConfig = DetermineStorageConfiguration(connectionString);
         builder.RegisterModule(new Storage.Module(storageConfig));
-
-        if (isDevelopment)
-        {
-            builder.RegisterServiceCollection(services =>
-            {
-                services.AddHostedService<DemoDataSeeder>();
-            });
-        }
     }
 
     private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
@@ -111,13 +68,9 @@ internal sealed class Module : Autofac.Module
             return StorageConfiguration.Postgres(connectionString);
         }
         
-        if (IsSqliteConnectionString(connectionString))
-        {
-            return StorageConfiguration.Sqlite(connectionString);
-        }
-        
-        // Default to SQL Server
-        return StorageConfiguration.SqlServer(connectionString);
+        return IsSqliteConnectionString(connectionString) 
+            ? StorageConfiguration.Sqlite(connectionString) 
+            : StorageConfiguration.SqlServer(connectionString);
     }
 
     // Npgsql connection strings use "Host=" whereas SQL Server uses "Server=" / "Data Source="

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Demo;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;

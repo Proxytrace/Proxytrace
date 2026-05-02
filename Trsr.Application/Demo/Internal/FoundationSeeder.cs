@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
 using Trsr.Domain.Evaluator;
@@ -7,8 +8,9 @@ using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Domain.User;
+// ReSharper disable InconsistentNaming
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Demo.Internal;
 
 internal sealed class FoundationSeeder(IServiceProvider services)
 {

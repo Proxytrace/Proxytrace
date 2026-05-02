@@ -1,4 +1,4 @@
-namespace Trsr.Storage;
+namespace Trsr.Application.Demo;
 
 /// <summary>
 /// Service to ensure database is created and migrations are applied

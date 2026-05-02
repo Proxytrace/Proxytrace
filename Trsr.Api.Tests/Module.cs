@@ -1,7 +1,4 @@
 using Autofac;
-using Microsoft.Extensions.Logging.Abstractions;
-using Trsr.Api.Services;
-using Trsr.Api.Services.Internal;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -34,48 +31,6 @@ public sealed class Module : Autofac.Module
         builder.RegisterStub<IModelClient>();
 
         builder.RegisterInstance<IAgentNameGenerator>(new StubAgentNameGenerator())
-            .SingleInstance();
-
-        builder.RegisterType<OpenAiCallParser>()
-            .As<IOpenAiCallParser>()
-            .SingleInstance();
-
-        builder.RegisterType<AgentCallIngestionService>()
-            .As<IAgentCallIngestionService>()
-            .InstancePerDependency();
-
-        builder
-            .Register(_ => NullLogger<AgentCallIngestionService>.Instance)
-            .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionService>>()
-            .SingleInstance();
-
-        builder.RegisterType<AgentCallIngestionQueue>()
-            .AsSelf()
-            .As<IAgentCallIngestionQueue>()
-            .SingleInstance();
-
-        builder.RegisterType<AgentCallIngestionWorker>()
-            .AsSelf()
-            .SingleInstance();
-
-        builder
-            .Register(_ => NullLogger<AgentCallIngestionWorker>.Instance)
-            .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionWorker>>()
-            .SingleInstance();
-
-        builder.RegisterType<TestRunnerService>()
-            .As<ITestRunnerService>()
-            .As<ITestRunExecutor>()
-            .InstancePerDependency();
-
-        builder
-            .Register(_ => NullLogger<TestRunnerService>.Instance)
-            .As<Microsoft.Extensions.Logging.ILogger<TestRunnerService>>()
-            .SingleInstance();
-
-        builder.RegisterType<TestRunQueue>()
-            .AsSelf()
-            .As<ITestRunQueue>()
             .SingleInstance();
 
         // Register a default stub factory — tests override this via GetServices(action).

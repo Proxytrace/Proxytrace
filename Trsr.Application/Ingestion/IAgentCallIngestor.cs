@@ -2,20 +2,20 @@ using System.Net;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 
-namespace Trsr.Api.Services;
+namespace Trsr.Application.Ingestion;
 
-public interface IAgentCallIngestionService
+public interface IAgentCallIngestor
 {
     /// <summary>
     /// Parses model/tokens/finish_reason from the raw JSON bodies and persists an <c>IAgentCall</c>.
     /// Never throws — failures are logged and swallowed so the proxy never breaks the client.
     /// </summary>
-    Task IngestAsync(
+    Task IngestInBackgroundAsync(
         IModelProvider provider,
         IProject project,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
         HttpStatusCode httpStatus,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken = default);
 }

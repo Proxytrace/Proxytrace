@@ -2,7 +2,7 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
-namespace Trsr.Api.Services;
+namespace Trsr.Application.TestRun;
 
 public interface ITestRunnerService
 {
@@ -10,7 +10,7 @@ public interface ITestRunnerService
     /// Executes a test suite synchronously and returns the completed run.
     /// Used for direct invocations and tests.
     /// </summary>
-    Task<ITestRun> RunAsync(
+    internal Task<ITestRun> RunInForegroundAsync(
         ITestSuite suite,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);
@@ -18,7 +18,7 @@ public interface ITestRunnerService
     /// <summary>
     /// Creates a pending run, queues background execution, and returns immediately.
     /// </summary>
-    Task<ITestRun> StartAsync(
+    Task<ITestRun> RunInBackgroundAsync(
         ITestSuite suite,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);
