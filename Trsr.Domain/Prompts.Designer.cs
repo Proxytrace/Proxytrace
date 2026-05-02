@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Trsr.Application {
+namespace Trsr.Domain {
     using System;
     
     
@@ -28,7 +28,7 @@ namespace Trsr.Application {
         internal static System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.Equals(null, resourceMan)) {
-                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("Trsr.Application.Prompts", typeof(Prompts).Assembly);
+                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("Trsr.Domain.Prompts", typeof(Prompts).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

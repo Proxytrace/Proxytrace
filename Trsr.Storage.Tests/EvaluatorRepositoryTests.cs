@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
@@ -10,6 +11,66 @@ using Trsr.Domain.TestSuite;
 using Trsr.Testing;
 
 namespace Trsr.Storage.Tests;
+
+/// <summary>
+/// Exhaustive round-trip test for every <see cref="EvaluatorKind"/>.
+/// Adding a new kind without implementing storage will cause <see cref="AllKinds_CanBePersisted"/> to fail.
+/// </summary>
+[TestClass]
+public sealed class EvaluatorPersistenceTests : BaseTest<Module>
+{
+    public static IEnumerable<object[]> AllEvaluatorKinds
+        => Enum.GetValues<EvaluatorKind>().Select(k => new object[] { k });
+
+    [TestMethod]
+    [DynamicData(nameof(AllEvaluatorKinds))]
+    public async Task AllKinds_CanBePersisted(EvaluatorKind kind)
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IRepository<IEvaluator>>();
+
+        var evaluator = await CreateForKind(kind, services);
+        var added = await repository.AddAsync(evaluator, CancellationToken);
+        var retrieved = await repository.GetAsync(added.Id, CancellationToken);
+
+        retrieved.Id.Should().Be(added.Id);
+        retrieved.Kind.Should().Be(kind);
+    }
+
+    private async Task<IEvaluator> CreateForKind(EvaluatorKind kind, IServiceProvider services)
+    {
+        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        IModelEndpoint? endpoint = null;
+
+        return kind switch
+        {
+            EvaluatorKind.ExactMatch =>
+                services.GetRequiredService<IExactMatchEvaluator.CreateNew>()(),
+            EvaluatorKind.NumericMatch =>
+                services.GetRequiredService<INumericMatchEvaluator.CreateNew>()(new Regex(@"\d+(?:\.\d+)?"), 0.01m),
+            EvaluatorKind.JsonSchemaMatch =>
+                services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateNew>()("""{"type": "object"}"""),
+            EvaluatorKind.Custom =>
+                services.GetRequiredService<ICustomEvaluator.CreateNew>()(
+                    new SystemMessage([Content.FromText("Evaluate.")]),
+                    endpoint = await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+            EvaluatorKind.Helpfulness =>
+                services.GetRequiredService<IHelpfulnessEvaluator.CreateNew>()(
+                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+            EvaluatorKind.Politeness =>
+                services.GetRequiredService<IPolitenessEvaluator.CreateNew>()(
+                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+            EvaluatorKind.Safety =>
+                services.GetRequiredService<ISafetyClassifier.CreateNew>()(
+                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+            EvaluatorKind.ToolUsage =>
+                services.GetRequiredService<IToolUsageEvaluator.CreateNew>()(
+                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+            _ => throw new NotSupportedException(
+                $"{kind} has no test data — add a case to {nameof(CreateForKind)}.")
+        };
+    }
+}
 
 [TestClass]
 public sealed class EvaluatorRepositoryTests : BaseTest<Module>

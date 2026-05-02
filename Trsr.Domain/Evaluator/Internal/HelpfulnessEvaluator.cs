@@ -1,9 +1,5 @@
-using Trsr.Application;
-using Trsr.Domain.Evaluation;
-using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
@@ -18,6 +14,14 @@ internal record HelpfulnessEvaluator : AbstractAgenticEvaluator, IHelpfulnessEva
         IModelEndpoint endpoint)
     {
         Endpoint = endpoint;
-        SystemMessage  = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);
+        SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);
+    }
+
+    public HelpfulnessEvaluator(
+        IModelEndpoint endpoint,
+        IDomainEntityData existing) : base(existing)
+    {
+        Endpoint = endpoint;
+        SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);
     }
 }
