@@ -1,7 +1,4 @@
 using Autofac;
-using Microsoft.Extensions.Logging.Abstractions;
-using Trsr.Api.Services;
-using Trsr.Api.Services.Internal;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;

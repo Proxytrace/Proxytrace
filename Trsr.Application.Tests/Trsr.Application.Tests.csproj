@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Trsr.Application\Trsr.Application.csproj" />
+      <ProjectReference Include="..\Trsr.Storage\Trsr.Storage.csproj" />
       <ProjectReference Include="..\Trsr.Testing\Trsr.Testing.csproj" />
     </ItemGroup>
 

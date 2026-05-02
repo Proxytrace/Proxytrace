@@ -1,5 +1,4 @@
 using Autofac;
-using Trsr.Api.Services.Internal;
 using Trsr.Common.DependencyInjection;
 using Trsr.Storage;
 
@@ -54,20 +53,12 @@ internal sealed class Module : Autofac.Module
         });
 
         builder.RegisterModule<Domain.Module>();
-        builder.RegisterModule<Application.Module>();
+        builder.RegisterModule(new Application.Module(isDevelopment: isDevelopment));
 
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
         var storageConfig = DetermineStorageConfiguration(connectionString);
         builder.RegisterModule(new Storage.Module(storageConfig));
-
-        if (isDevelopment)
-        {
-            builder.RegisterServiceCollection(services =>
-            {
-                services.AddHostedService<DemoDataSeeder>();
-            });
-        }
     }
 
     private static StorageConfiguration DetermineStorageConfiguration(string connectionString)

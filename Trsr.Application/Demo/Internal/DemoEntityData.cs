@@ -1,6 +1,6 @@
 using Trsr.Domain;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Demo.Internal;
 
 internal record DemoEntityData(
     Guid Id,

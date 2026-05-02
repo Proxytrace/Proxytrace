@@ -25,4 +25,19 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\scripts\demo-data\01_customer_support.json">
+      <Link>Demo/DemoData/01_customer_support.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\scripts\demo-data\02_code_review.json">
+      <Link>Demo/DemoData/02_code_review.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\scripts\demo-data\03_data_analytics.json">
+      <Link>Demo/DemoData/03_data_analytics.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

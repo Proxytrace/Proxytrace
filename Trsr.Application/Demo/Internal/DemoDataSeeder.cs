@@ -1,4 +1,7 @@
 using System.Net;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
@@ -8,9 +11,8 @@ using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Usage;
-using Trsr.Storage;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Demo.Internal;
 
 internal sealed class DemoDataSeeder : IHostedService
 {

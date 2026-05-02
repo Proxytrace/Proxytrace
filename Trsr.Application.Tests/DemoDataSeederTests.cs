@@ -2,13 +2,13 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Trsr.Api.Services.Internal;
+using Trsr.Application.Demo;
+using Trsr.Application.Demo.Internal;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
-using Trsr.Storage;
 using Trsr.Testing;
 
-namespace Trsr.Api.Tests;
+namespace Trsr.Application.Tests;
 
 [TestClass]
 public sealed class DemoDataSeederTests : BaseTest<Module>

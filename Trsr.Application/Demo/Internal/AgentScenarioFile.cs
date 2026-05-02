@@ -4,7 +4,7 @@ using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.Tools;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Demo.Internal;
 
 [UsedImplicitly]
 internal sealed record AgentScenarioFile(
