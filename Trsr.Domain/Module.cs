@@ -1,6 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
+using Trsr.Domain.Evaluator;
+using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Message.Internal;
 using Trsr.Domain.Tools.Internal;
 
@@ -17,19 +19,35 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterModule<Common.Module>();
 
-        // discover domain entity types
-        // they all live in assembly Cloud.Domain and implement IDomainEntity 
+        // discover top-level domain entity/object interfaces — those that directly extend
+        // IDomainEntity or IDomainObject, with no intermediate domain interface in between.
+        var directBases = new HashSet<Type> { typeof(IDomainEntity), typeof(IDomainObject) };
+        // IEvaluator has multiple concrete implementations, so skip it from auto-discovery
+        // and register its variants explicitly below.
+        var skipInterfaces = new HashSet<Type> { typeof(IEvaluator) };
         var domainInterfaceTypes = typeof(Module).Assembly
             .GetTypes()
             .Where(t => t is { IsInterface: true } && t != typeof(IDomainEntity) && t != typeof(IDomainObject))
-            .Where(t => t.GetInterfaces().Any(i => i == typeof(IDomainEntity) || i == typeof(IDomainObject)))
+            .Where(t =>
+            {
+                // compute the "direct" interfaces (not reachable through another interface)
+                var all = t.GetInterfaces();
+                var transitive = all.SelectMany(i => i.GetInterfaces()).ToHashSet();
+                var direct = all.Where(i => !transitive.Contains(i));
+                return direct.Any(i => directBases.Contains(i));
+            })
+            .Where(t => !skipInterfaces.Contains(t))
             .ToList();
 
         foreach (Type domainInterfaceType in domainInterfaceTypes)
         {
             ConfigureEntity(builder, domainInterfaceType);
         }
-        
+
+        // Register evaluators explicitly — IEvaluator has multiple concrete variants so
+        // auto-discovery can't pick the right default. ExactMatchEvaluator is the default IEvaluator.
+        RegisterEvaluators(builder);
+
         // Register generators for concrete domain object types (value objects without a repository)
         builder.RegisterAssemblyTypes(ThisAssembly)
             .Where(t => t is { IsAbstract: false, IsInterface: false })
@@ -48,6 +66,23 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
     }
 
+    private static void RegisterEvaluators(ContainerBuilder builder)
+    {
+        builder.RegisterType<ExactMatchEvaluator>()
+            .As<IEvaluator>()
+            .As<IExactMatchEvaluator>()
+            .OnActivated(context =>
+            {
+                if (context.Instance is IValidatableObject validatable)
+                    Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
+            });
+
+        builder.RegisterType<AgenticEvaluator>().As<IAgenticEvaluator>();
+
+        builder.RegisterType<EvaluatorGenerator>().As<IDomainEntityGenerator<IEvaluator>>();
+        builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<IAgenticEvaluator>>();
+    }
+
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
     {
         // find implementation of domainInterfaceType
@@ -58,7 +93,7 @@ public sealed class Module : Autofac.Module
         {
             throw new InvalidOperationException($"No implementation of {domainInterfaceType.FullName} found");
         }
-        
+
         builder.RegisterType(domainObjectType)
             .As(domainInterfaceType)
             .OnActivated(context =>
@@ -68,7 +103,7 @@ public sealed class Module : Autofac.Module
                     Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
                 }
             });
-        
+
         // register generator
         var generatorInterfaceType = typeof(IDomainObjectGenerator<>).MakeGenericType(domainInterfaceType);
         var generatorImplementationType = typeof(Module).Assembly
