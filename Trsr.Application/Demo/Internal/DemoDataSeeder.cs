@@ -16,7 +16,7 @@ namespace Trsr.Application.Demo.Internal;
 
 internal sealed class DemoDataSeeder : IHostedService
 {
-    private const string ResourcePrefix = "Trsr.Api.DemoData.";
+    private const string ResourcePrefix = "Trsr.Application.Demo.DemoData.";
 
     private readonly IServiceProvider serviceProvider;
     private readonly ILogger<DemoDataSeeder> logger;

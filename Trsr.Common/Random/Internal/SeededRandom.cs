@@ -4,8 +4,8 @@ internal class SeededRandom : IRandom
 {
     public delegate SeededRandom Factory(int seed);
 
-    private static readonly IReadOnlyCollection<string> words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
-    private static readonly IReadOnlyCollection<string> emailDomains = ["example.com", "test.io", "mail.dev", "sample.net"];
+    private static readonly IReadOnlyCollection<string> Words = ["apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "ugli fruit", "watermelon", "xigua", "yellow passion fruit", "zucchini"];
+    private static readonly IReadOnlyCollection<string> EmailDomains = ["example.com", "test.io", "mail.dev", "sample.net"];
 
     private readonly System.Random random;
     private readonly Lock lockObject = new();
@@ -35,14 +35,14 @@ internal class SeededRandom : IRandom
 
     public string String() 
         => Enumerable.Range(0, Int(min: 1, max: 5))
-            .Select(_ => Any(words))
+            .Select(_ => Any(Words))
             .Aggregate((a, b) => $"{a} {b}");
 
     public string UniqueString()
         => Guid().ToString();
 
     public string Email()
-        => $"{Any(words).Replace(" ", "")}{Int(1, 999)}@{Any(emailDomains)}";
+        => $"{Any(Words).Replace(" ", "")}{Int(1, 999)}@{Any(EmailDomains)}";
 
     public Uri Uri()
         => new($"https://{UniqueString()[..8]}.example.com");
@@ -91,14 +91,14 @@ internal class SeededRandom : IRandom
     public T Any<T>(IReadOnlyCollection<T> options)
         => options.ElementAt(Int(min: 0, max: options.Count));
 
-    public T Enum<T>() where T : struct, System.Enum
+    public T Enum<T>() where T : struct, Enum
         => Any(System.Enum.GetValues<T>());
 
     public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null)
     {
         min ??= System.TimeSpan.FromMilliseconds(500);
         max ??= System.TimeSpan.FromMilliseconds(5000);
-        return System.TimeSpan.FromTicks(Long(min: min.Value.Ticks, max: max.Value.Ticks));
+        return System.TimeSpan.FromMilliseconds(Long(min: (long)min.Value.TotalMilliseconds, max: (long)max.Value.TotalMilliseconds));
     }
 
     public DateTimeOffset DateTimeOffset(DateTimeOffset? min = null, DateTimeOffset? max = null)
@@ -109,7 +109,7 @@ internal class SeededRandom : IRandom
         lock (lockObject)
         {
             var ticks = min.Value.Ticks + (long)(random.NextDouble() * (max.Value.Ticks - min.Value.Ticks));
-            return new System.DateTimeOffset(ticks, System.TimeSpan.Zero);
+            return new DateTimeOffset(ticks, System.TimeSpan.Zero);
         }
     }
 }
