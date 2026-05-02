@@ -1,13 +1,12 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
+using Trsr.Domain.ModelEndpoint;
 
 namespace Trsr.Infrastructure.Internal;
 
-/// <summary>
-/// Extension methods for Microsoft.Extensions.AI
-/// </summary>
 internal static class ChatClientExtensions
 {
     public static IEnumerable<ChatMessage> ToChatMessages(this Conversation conversation)
@@ -24,25 +23,56 @@ internal static class ChatClientExtensions
             _ => throw new InvalidOperationException($"Unknown role: {message.Role}")
         };
 
-        var contentText = new StringBuilder();
-        foreach (var content in message.Contents)
+        if (message is AssistantMessage { ToolRequests.Count: > 0 } assistantMessage)
         {
-            if (content is { Kind: ContentKind.Text, Text: not null })
+            var aiContents = new List<AIContent>();
+            var text = BuildText(message.Contents);
+            if (!string.IsNullOrEmpty(text))
+                aiContents.Add(new TextContent(text));
+            foreach (var req in assistantMessage.ToolRequests)
             {
-                contentText.AppendLine(content.Text);
+                var args = JsonSerializer.Deserialize<IDictionary<string, object?>>(req.Arguments);
+                aiContents.Add(new FunctionCallContent(req.Id, req.Name, args));
             }
-            else if (content.Kind == ContentKind.Image)
-            {
-                throw new NotSupportedException("Image content is not supported in chat messages yet");
-            }
+            return new ChatMessage(role, aiContents);
         }
 
-        return new ChatMessage(role, contentText.ToString().Trim());
+        if (message is ToolMessage toolMessage)
+        {
+            var (id, contents) = toolMessage.Deconstruct();
+            return new ChatMessage(role, [new FunctionResultContent(id, BuildText(contents))]);
+        }
+
+        return new ChatMessage(role, BuildText(message.Contents));
     }
 
-    public static ChatOptions ToOptions(this IModel model)
-        => new ChatOptions()
+    private static string BuildText(IReadOnlyList<Content> contents)
+    {
+        var sb = new StringBuilder();
+        foreach (var content in contents)
         {
-            ModelId = model.Name
-        };
+            if (content is { Kind: ContentKind.Text, Text: not null })
+                sb.AppendLine(content.Text);
+            else if (content.Kind == ContentKind.Image)
+                throw new NotSupportedException("Image content is not supported in chat messages yet");
+        }
+        return sb.ToString().Trim();
+    }
+
+    public static ChatOptions ToChatOptions(this ModelOptions options)
+    {
+        var chatOptions = new ChatOptions { ModelId = options.ModelName };
+
+        if (options.Tools.Any())
+        {
+            chatOptions.Tools = options.Tools
+                .Select(t => (AITool)AIFunctionFactory.CreateDeclaration(
+                    t.Name,
+                    t.Description,
+                    JsonDocument.Parse(t.Arguments.JsonSchema).RootElement.Clone()))
+                .ToList();
+        }
+
+        return chatOptions;
+    }
 }

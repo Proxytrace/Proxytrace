@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using Trsr.Domain.Message;
@@ -25,39 +26,29 @@ internal class ModelClient : IModelClient
         CancellationToken cancellationToken = default)
     {
         options ??= ModelOptions.FromModel(endpoint.Model);
-        
-        if (options.Tools.Any())
-        {
-            throw new NotSupportedException("Tool support is not implemented yet");
-        }
-        
-        // 1. Build ChatMessage list from SystemMessage and Conversation
-        var chatMessages = conversation.ToChatMessages();
-            
-        // 2. Set chat options with model name
-        var chatOptions = new ChatOptions()
-        {
-            ModelId = options.ModelName
-        };
-        
-        // 3. Call the chat client
+
         ChatResponse response = await chatClient.GetResponseAsync(
-            chatMessages,
-            chatOptions,
+            conversation.ToChatMessages(),
+            options.ToChatOptions(),
             cancellationToken);
-        
-        // 4. Parse response into AssistantMessage
-        var responseContents = new List<Content>
-        {
-            // Extract text content from response
-            !string.IsNullOrWhiteSpace(response.Text)
-                ? Content.FromText(response.Text)
-                : Content.FromText("No response from model")
-        };
+
+        var toolRequests = response
+            .Messages
+            .SelectMany(m => m.Contents)
+            .OfType<FunctionCallContent>()
+            .Select(fc => new ToolRequest(
+                fc.CallId,
+                fc.Name,
+                fc.Arguments is not null ? JsonSerializer.Serialize(fc.Arguments) : "{}"))
+            .ToList();
+
+        var responseContents = new List<Content>();
+        if (!string.IsNullOrWhiteSpace(response.Text))
+            responseContents.Add(Content.FromText(response.Text));
 
         return Message.CreateAssistantMessage(
             contents: responseContents,
-            toolRequests: []);
+            toolRequests: toolRequests);
     }
     
     private IChatClient CreateChatClient()
