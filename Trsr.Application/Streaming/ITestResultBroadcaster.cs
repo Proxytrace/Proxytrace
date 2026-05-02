@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 
@@ -9,14 +10,16 @@ public abstract record TestRunEvent(Guid RunId);
 public record TestResultArrivedEvent(
     Guid RunId,
     Guid TestCaseId,
-    Evaluation Evaluation,
+    EvaluationScore? OverallScore,
+    IReadOnlyList<EvaluationScore> Evaluations,
     long DurationMs) : TestRunEvent(RunId)
 {
     public static TestResultArrivedEvent Create(ITestRun run, ITestResult result)
         => new(
             run.Id,
             result.TestCase.Id,
-            result.Evaluation,
+            result.OverallScore,
+            result.Evaluations.Select(e => e.Score).ToArray(),
             (long)result.Duration.TotalMilliseconds);
 }
 

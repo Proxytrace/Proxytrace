@@ -214,6 +214,10 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
@@ -506,8 +510,9 @@ namespace Trsr.Storage.Migrations
                     b.Property<long>("DurationMs")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Evaluation")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Evaluations")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("TestCase")
                         .HasColumnType("TEXT");
@@ -575,9 +580,6 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("Evaluator")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -594,9 +596,27 @@ namespace Trsr.Storage.Migrations
 
                     b.HasIndex("Agent");
 
-                    b.HasIndex("Evaluator");
-
                     b.ToTable("TestSuiteEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEvaluatorEntity", b =>
+                {
+                    b.Property<Guid>("TestSuiteId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EvaluatorId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("TestSuiteEntityId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TestSuiteId", "EvaluatorId");
+
+                    b.HasIndex("EvaluatorId");
+
+                    b.HasIndex("TestSuiteEntityId");
+
+                    b.ToTable("TestSuiteEvaluatorEntity");
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.User.UserEntity", b =>
@@ -765,17 +785,35 @@ namespace Trsr.Storage.Migrations
                         .HasForeignKey("Agent")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEvaluatorEntity", b =>
+                {
                     b.HasOne("Trsr.Storage.Internal.Entities.Evaluator.EvaluatorEntity", null)
                         .WithMany()
-                        .HasForeignKey("Evaluator")
+                        .HasForeignKey("EvaluatorId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
+                        .WithMany("TestSuiteEvaluators")
+                        .HasForeignKey("TestSuiteEntityId");
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
+                        .WithMany()
+                        .HasForeignKey("TestSuiteId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Organization.OrganizationEntity", b =>
                 {
                     b.Navigation("OrganizationUsers");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>
+                {
+                    b.Navigation("TestSuiteEvaluators");
                 });
 #pragma warning restore 612, 618
         }

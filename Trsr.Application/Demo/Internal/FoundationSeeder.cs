@@ -70,7 +70,7 @@ internal sealed class FoundationSeeder(IServiceProvider services)
 
     private async Task<IEvaluator> UpsertEvaluatorAsync(Guid id, CancellationToken ct)
     {
-        var factory = services.GetRequiredService<IEvaluator.CreateExisting>();
+        var factory = services.GetRequiredService<IExactMatchEvaluator.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IEvaluator>>();
         return await repo.UpsertAsync(factory(At(id)), ct);
     }

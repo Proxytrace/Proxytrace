@@ -5,10 +5,10 @@ namespace Trsr.Domain.Evaluator.Internal;
 
 internal class EvaluatorGenerator : DomainEntityGenerator<IEvaluator>
 {
-    private readonly IEvaluator.CreateNew factory;
+    private readonly IExactMatchEvaluator.CreateNew factory;
 
     public EvaluatorGenerator(
-        IEvaluator.CreateNew factory,
+        IExactMatchEvaluator.CreateNew factory,
         IRepository<IEvaluator> repository,
         IRandom random) : base(repository, random)
     {
@@ -16,5 +16,5 @@ internal class EvaluatorGenerator : DomainEntityGenerator<IEvaluator>
     }
 
     public override Task<IEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(factory());
+        => Task.FromResult<IEvaluator>(factory());
 }

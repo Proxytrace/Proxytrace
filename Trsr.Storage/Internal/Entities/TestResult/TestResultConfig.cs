@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
+using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
@@ -13,16 +15,22 @@ namespace Trsr.Storage.Internal.Entities.TestResult;
 internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>, IMapper<ITestResult, TestResultEntity>
 {
     private readonly IRepository<ITestCase> testCases;
+    private readonly IRepository<IEvaluator> evaluators;
     private readonly ITestResult.CreateExisting factory;
+    private readonly IEvaluation.Create createEvaluation;
     private readonly ISerializer serializer;
 
     public TestResultConfig(
         IRepository<ITestCase> testCases,
+        IRepository<IEvaluator> evaluators,
         ITestResult.CreateExisting factory,
+        IEvaluation.Create createEvaluation,
         ISerializer serializer)
     {
         this.testCases = testCases;
+        this.evaluators = evaluators;
         this.factory = factory;
+        this.createEvaluation = createEvaluation;
         this.serializer = serializer;
     }
 
@@ -40,15 +48,31 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
                 v => serializer.Serialize(v),
                 v => serializer.DeserializeRequired<AssistantMessage>(v)
             );
+
+        builder
+            .Property(e => e.Evaluations)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<IReadOnlyCollection<StoredEvaluation>>(v) ?? Array.Empty<StoredEvaluation>()
+            );
     }
 
     public async Task<ITestResult> Map(TestResultEntity stored, CancellationToken cancellationToken = default)
-        => factory(
+    {
+        var evaluations = new List<IEvaluation>();
+        foreach (var e in stored.Evaluations)
+        {
+            var evaluator = await evaluators.GetAsync(e.EvaluatorId, cancellationToken);
+            evaluations.Add(createEvaluation(evaluator, e.Score, e.Reasoning));
+        }
+
+        return factory(
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
-            evaluation: stored.Evaluation,
+            evaluations: evaluations,
             duration: TimeSpan.FromMilliseconds(stored.DurationMs),
             existing: stored);
+    }
 
     public Task<TestResultEntity> Map(ITestResult domain, CancellationToken cancellationToken = default)
         => new TestResultEntity
@@ -56,7 +80,9 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             Id = domain.Id,
             TestCase = domain.TestCase.Id,
             ActualResponse = domain.ActualResponse,
-            Evaluation = domain.Evaluation,
+            Evaluations = domain.Evaluations
+                .Select(e => new StoredEvaluation { EvaluatorId = e.Evaluator.Id, Score = e.Score, Reasoning = e.Reasoning })
+                .ToArray(),
             DurationMs = (long)domain.Duration.TotalMilliseconds,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

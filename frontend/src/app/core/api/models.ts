@@ -1,6 +1,41 @@
 export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed' }
 export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
 
+export enum EvaluatorKind {
+  Custom = 'Custom',
+  ExactMatch = 'ExactMatch',
+  NumericMatch = 'NumericMatch',
+  Helpfulness = 'Helpfulness',
+  Politeness = 'Politeness',
+  JsonSchemaMatch = 'JsonSchemaMatch',
+  Safety = 'Safety',
+  ToolUsage = 'ToolUsage',
+}
+
+export interface EvaluatorDetailDto {
+  id: string;
+  kind: EvaluatorKind;
+  name: string;
+  systemMessage: string | null;
+  endpointId: string | null;
+  endpointName: string | null;
+  jsonSchema: string | null;
+  extractionPattern: string | null;
+  tolerance: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEvaluatorPayload {
+  kind: EvaluatorKind;
+  name?: string | null;
+  systemMessage?: string | null;
+  endpointId?: string | null;
+  jsonSchema?: string | null;
+  extractionPattern?: string | null;
+  tolerance?: number | null;
+}
+
 export interface PagedResult<T> {
   items: T[];
   total: number;

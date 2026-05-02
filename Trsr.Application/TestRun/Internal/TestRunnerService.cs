@@ -4,6 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Streaming;
 using Trsr.Domain;
+using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
@@ -93,12 +95,17 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 cancellationToken);
             TimeSpan elapsed = stopwatch.Elapsed;
             
-            Evaluation evaluation = await suite
-                .Evaluator
-                .EvaluateAsync(testCase.ExpectedOutput, response, cancellationToken);
-
-            var testResult = createTestResult(testCase, response, evaluation, elapsed);
+            var testResult = createTestResult(testCase, response, [], elapsed);
             await testResultRepository.AddAsync(testResult, cancellationToken);
+
+            foreach (IEvaluator evaluator in testRun.Suite.Evaluators)
+            {
+                IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+                if(evaluation is null) 
+                    continue;
+                testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
+            }
+
             testRun = await testRun.SetTestResult(testResult, cancellationToken);
             broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
         }

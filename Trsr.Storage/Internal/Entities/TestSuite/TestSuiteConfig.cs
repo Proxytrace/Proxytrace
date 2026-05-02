@@ -8,7 +8,6 @@ using Trsr.Domain.Evaluator;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Storage.Internal.Entities.Agent;
-using Trsr.Storage.Internal.Entities.Evaluator;
 
 namespace Trsr.Storage.Internal.Entities.TestSuite;
 
@@ -19,19 +18,22 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
     private readonly IRepository<ITestCase> testCases;
     private readonly ITestSuite.CreateExisting factory;
     private readonly ISerializer serializer;
+    private readonly Func<StorageDbContext> contextFactory;
 
     public TestSuiteConfig(
         IRepository<IAgent> agents,
         IRepository<IEvaluator> evaluators,
         IRepository<ITestCase> testCases,
-        ITestSuite.CreateExisting factory, 
-        ISerializer serializer)
+        ITestSuite.CreateExisting factory,
+        ISerializer serializer,
+        Func<StorageDbContext> contextFactory)
     {
         this.agents = agents;
         this.evaluators = evaluators;
         this.testCases = testCases;
         this.factory = factory;
         this.serializer = serializer;
+        this.contextFactory = contextFactory;
     }
 
     public override void Configure(EntityTypeBuilder<TestSuiteEntity> builder)
@@ -43,12 +45,6 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
-            .HasOne<EvaluatorEntity>()
-            .WithMany()
-            .HasForeignKey(e => e.Evaluator)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder
             .Property(e => e.TestCases)
             .HasConversion(
                 v => serializer.Serialize(v),
@@ -57,12 +53,25 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
     }
 
     public async Task<ITestSuite> Map(TestSuiteEntity storedEntity, CancellationToken cancellationToken = default)
-        => factory(
+    {
+        var context = contextFactory();
+        var evaluatorIds = await context.Set<TestSuiteEvaluatorEntity>()
+            .AsNoTracking()
+            .Where(e => e.TestSuiteId == storedEntity.Id)
+            .Select(e => e.EvaluatorId)
+            .ToListAsync(cancellationToken);
+
+        var loadedEvaluators = evaluatorIds.Count > 0
+            ? await evaluators.GetManyAsync(evaluatorIds, cancellationToken)
+            : [];
+
+        return factory(
             name: storedEntity.Name,
             agent: await agents.GetAsync(storedEntity.Agent, cancellationToken),
-            evaluator: await evaluators.GetAsync(storedEntity.Evaluator, cancellationToken),
+            evaluators: loadedEvaluators,
             testCases: await testCases.GetManyAsync(storedEntity.TestCases, cancellationToken),
             existing: storedEntity);
+    }
 
     public Task<TestSuiteEntity> Map(ITestSuite domainEntity, CancellationToken cancellationToken = default)
         => new TestSuiteEntity
@@ -70,9 +79,11 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             Id = domainEntity.Id,
             Name = domainEntity.Name,
             Agent = domainEntity.Agent.Id,
-            Evaluator = domainEntity.Evaluator.Id,
             TestCases = domainEntity.TestCases.Select(x => x.Id).ToArray(),
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,
+            TestSuiteEvaluators = domainEntity.Evaluators
+                .Select(e => new TestSuiteEvaluatorEntity { TestSuiteId = domainEntity.Id, EvaluatorId = e.Id })
+                .ToList()
         }.ToTaskResult();
 }

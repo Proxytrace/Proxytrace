@@ -13,14 +13,14 @@ public interface ITestSuite : IDomainEntity
     public delegate ITestSuite CreateNew(
         string name,
         IAgent agent,
-        IEvaluator evaluator,
+        IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases);
 
     /// <summary>Factory delegate for reconstituting an existing test suite from persistence.</summary>
     public delegate ITestSuite CreateExisting(
         string name,
         IAgent agent,
-        IEvaluator evaluator,
+        IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases,
         IDomainEntityData existing);
 
@@ -31,7 +31,7 @@ public interface ITestSuite : IDomainEntity
     public IAgent Agent { get; }
 
     /// <summary>The evaluator used to score each test case result.</summary>
-    public IEvaluator Evaluator { get; }
+    public IReadOnlyCollection<IEvaluator> Evaluators { get; }
 
     /// <summary>The test cases included in this suite.</summary>
     public IReadOnlyCollection<ITestCase> TestCases { get; }

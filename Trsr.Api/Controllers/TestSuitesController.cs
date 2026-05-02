@@ -26,7 +26,7 @@ public class TestSuitesController : ControllerBase
     private readonly IModelEndpointRepository modelEndpointRepository;
     private readonly ITestRunnerService testRunnerService;
     private readonly ITestCase.CreateNew createTestCase;
-    private readonly IEvaluator.CreateNew createEvaluator;
+    private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
 
@@ -39,7 +39,7 @@ public class TestSuitesController : ControllerBase
         IModelEndpointRepository modelEndpointRepository,
         ITestRunnerService testRunnerService,
         ITestCase.CreateNew createTestCase,
-        IEvaluator.CreateNew createEvaluator,
+        IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting)
     {
@@ -100,7 +100,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(request.Name, agent, savedEvaluator, testCases);
+        var suite = createSuite(request.Name, agent, [savedEvaluator], testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
@@ -119,18 +119,15 @@ public class TestSuitesController : ControllerBase
             ? await agentRepository.GetAsync(request.AgentId.Value, cancellationToken)
             : existing.Agent;
 
-        IEvaluator evaluator = existing.Evaluator;
-        if (request.EvaluatorKind.HasValue && request.EvaluatorKind.Value != existing.Evaluator.Kind)
-        {
-            var newEvaluator = createEvaluator();
-            evaluator = await evaluatorRepository.AddAsync(newEvaluator, cancellationToken);
-        }
+        IReadOnlyCollection<IEvaluator> evaluators = existing.Evaluators;
+        if (request.EvaluatorIds is not null)
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
 
         IReadOnlyCollection<ITestCase> testCases = existing.TestCases;
         if (request.TestCaseIds is not null)
             testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds, cancellationToken);
 
-        var updated = createSuiteExisting(existing.Name, agent, evaluator, testCases, existing);
+        var updated = createSuiteExisting(existing.Name, agent, evaluators, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -178,7 +175,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(request.Name, agent, savedEvaluator, testCases);
+        var suite = createSuite(request.Name, agent, [savedEvaluator], testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
@@ -199,7 +196,7 @@ public class TestSuitesController : ControllerBase
 
         var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
         var updatedCases = existing.TestCases.Append(saved).ToArray();
-        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(savedSuite);
     }
@@ -233,7 +230,7 @@ public class TestSuitesController : ControllerBase
             return NotFound();
         var existing = await suiteRepository.GetAsync(id, cancellationToken);
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
-        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -289,7 +286,7 @@ public class TestSuitesController : ControllerBase
         s.Name,
         s.Agent.Id,
         s.Agent.Name,
-        s.Evaluator.Kind,
+        s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
             tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
@@ -309,5 +306,5 @@ public class TestSuitesController : ControllerBase
 
 public record UpdateTestSuiteRequest(
     Guid? AgentId,
-    EvaluatorKind? EvaluatorKind,
+    IReadOnlyList<Guid>? EvaluatorIds,
     IReadOnlyList<Guid>? TestCaseIds);

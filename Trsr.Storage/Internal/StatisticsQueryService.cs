@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.TestResult;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
@@ -46,7 +46,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
         var results = await context.Set<TestResultEntity>().AsNoTracking().ToListAsync(cancellationToken);
         if (results.Count > 0)
         {
-            passRate = (double)results.Count(r => r.Evaluation == Evaluation.Pass) / results.Count;
+            passRate = (double)results.Count(r => r.Evaluations.Count > 0 && r.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable)) / results.Count;
         }
 
         return new StatisticsSummary(
@@ -140,9 +140,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
             return new PassRateStat(
                 SuiteId: run.Suite,
                 RunTimestamp: run.CreatedAt,
-                PassCount: runResults.Count(r => r.Evaluation == Evaluation.Pass),
-                FailCount: runResults.Count(r => r.Evaluation == Evaluation.Fail),
-                UndecidedCount: runResults.Count(r => r.Evaluation == Evaluation.Undecided));
+                PassCount: runResults.Count(r => r.Evaluations.Count > 0 && r.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable)),
+                FailCount: runResults.Count(r => r.Evaluations.Count > 0 && r.Evaluations.Any(e => e.Score < EvaluationScore.Acceptable)),
+                UndecidedCount: runResults.Count(r => r.Evaluations.Count == 0));
         })
         .OrderBy(s => s.RunTimestamp)
         .ToArray();

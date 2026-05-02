@@ -11,27 +11,27 @@ internal record TestSuite : DomainEntity, ITestSuite
 {
     public string Name { get; }
     public IAgent Agent { get; }
-    public IEvaluator Evaluator { get; }
+    public IReadOnlyCollection<IEvaluator> Evaluators { get; }
     public IReadOnlyCollection<ITestCase> TestCases { get; }
 
-    public TestSuite(string name, IAgent agent, IEvaluator evaluator, IReadOnlyCollection<ITestCase> testCases)
+    public TestSuite(string name, IAgent agent, IReadOnlyCollection<IEvaluator> evaluators, IReadOnlyCollection<ITestCase> testCases)
     {
         Name = name;
         Agent = agent;
-        Evaluator = evaluator;
+        Evaluators = evaluators.ToArray();
         TestCases = testCases.ToArray();
     }
 
     public TestSuite(
         string name,
         IAgent agent,
-        IEvaluator evaluator,
+        IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases,
         IDomainEntityData existing) : base(existing)
     {
         Name = name;
         Agent = agent;
-        Evaluator = evaluator;
+        Evaluators = evaluators.ToArray();
         TestCases = testCases.ToArray();
     }
 
@@ -43,34 +43,13 @@ internal record TestSuite : DomainEntity, ITestSuite
         if (string.IsNullOrWhiteSpace(Name))
             yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
 
-        if (Agent is null)
-        {
-            yield return Validation.NotNull(Agent, nameof(Agent));
-        }
-        else
-        {
-            foreach (var result in Agent.Validate(validationContext))
-                yield return result;
-        }
+        foreach (var result in Agent.Validate(validationContext))
+            yield return result;
 
-        if (Evaluator is null)
-        {
-            yield return Validation.NotNull(Evaluator, nameof(Evaluator));
-        }
-        else
-        {
-            foreach (var result in Evaluator.Validate(validationContext))
-                yield return result;
-        }
+        foreach (var result in Evaluators.SelectMany(e => e.Validate(validationContext)))
+            yield return result;
 
-        if (TestCases is null)
-        {
-            yield return Validation.NotNull(TestCases, nameof(TestCases));
-        }
-        else
-        {
-            foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
-                yield return result;
-        }
+        foreach (var result in TestCases.SelectMany(x => x.Validate(validationContext)))
+            yield return result;
     }
 }

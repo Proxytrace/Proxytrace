@@ -1,0 +1,82 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using JetBrains.Annotations;
+using Json.Schema;
+using Trsr.Common.Validation;
+using Trsr.Domain.Evaluation;
+using Trsr.Domain.Internal;
+using Trsr.Domain.TestResult;
+
+namespace Trsr.Domain.Evaluator.Internal;
+
+[UsedImplicitly]
+internal record JsonSchemaMatchEvaluator : DomainEntity, IJsonSchemaMatchEvaluator
+{
+    private readonly IEvaluation.Create evaluationFactory;
+
+    public EvaluatorKind Kind
+        => EvaluatorKind.JsonSchemaMatch;
+
+    public string JsonSchema { get; }
+
+    public JsonSchemaMatchEvaluator(string jsonSchema, IEvaluation.Create evaluationFactory)
+    {
+        JsonSchema = jsonSchema;
+        this.evaluationFactory = evaluationFactory;
+    }
+
+    public JsonSchemaMatchEvaluator(
+        string jsonSchema,
+        IDomainEntityData existing,
+        IEvaluation.Create evaluationFactory) : base(existing)
+    {
+        JsonSchema = jsonSchema;
+        this.evaluationFactory = evaluationFactory;
+    }
+
+    public Task<IEvaluation?> EvaluateAsync(
+        ITestResult testResult,
+        CancellationToken cancellationToken = default)
+    {
+        var actualText = testResult.ActualResponse.GetTextResponse();
+
+        EvaluationScore score;
+        string? reasoning = null;
+
+        try
+        {
+            var schema = Json.Schema.JsonSchema.FromText(JsonSchema);
+            using var document = JsonDocument.Parse(actualText);
+            var result = schema.Evaluate(document.RootElement, new EvaluationOptions { OutputFormat = OutputFormat.List });
+
+            if (result.IsValid)
+            {
+                score = EvaluationScore.Excellent;
+            }
+            else
+            {
+                score = EvaluationScore.Terrible;
+                var errors = (result.Details ?? [])
+                    .Where(d => d.Errors is { Count: > 0 })
+                    .SelectMany(d => (d.Errors ?? new Dictionary<string, string>())
+                        .Select(e => $"{d.InstanceLocation}: {e.Key} — {e.Value}"));
+                reasoning = string.Join(Environment.NewLine, errors);
+            }
+        }
+        catch (JsonException ex)
+        {
+            score = EvaluationScore.Terrible;
+            reasoning = $"Response is not valid JSON: {ex.Message}";
+        }
+
+        return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, reasoning));
+    }
+
+    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (var result in base.Validate(validationContext))
+            yield return result;
+
+        yield return Validation.NotNullOrWhiteSpace(JsonSchema, nameof(JsonSchema));
+    }
+}

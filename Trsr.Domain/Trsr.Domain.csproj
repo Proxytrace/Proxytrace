@@ -7,26 +7,42 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Autofac" Version="9.1.0"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+        <PackageReference Include="Autofac" Version="9.1.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+        <PackageReference Include="JsonSchema.Net" Version="9.2.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <InternalsVisibleTo Include="Trsr.Storage.Tests"/>
+        <InternalsVisibleTo Include="Trsr.Storage.Tests" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Trsr.Common\Trsr.Common.csproj"/>
+        <ProjectReference Include="..\Trsr.Common\Trsr.Common.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="ApiKey\Internal\"/>
+        <Folder Include="ApiKey\Internal\" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.5.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7"/>
-        <PackageReference Include="System.Memory.Data" Version="10.0.7"/>
+        <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.5.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+        <PackageReference Include="System.Memory.Data" Version="10.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Prompts.resx">
+        <Generator>ResXFileCodeGenerator</Generator>
+        <LastGenOutput>Prompts.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Prompts.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Prompts.resx</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

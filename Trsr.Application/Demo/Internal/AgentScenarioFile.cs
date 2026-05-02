@@ -1,7 +1,6 @@
 using JetBrains.Annotations;
 using Trsr.Domain.Message;
 using Trsr.Domain.OptimizationProposal;
-using Trsr.Domain.TestResult;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Application.Demo.Internal;
@@ -12,7 +11,6 @@ internal sealed record AgentScenarioFile(
     IReadOnlyList<AgentCallSeedData> Calls,
     IReadOnlyList<TestCaseSeedData> TestCases,
     TestSuiteSeedData TestSuite,
-    IReadOnlyList<TestRunSeedData> TestRuns,
     IReadOnlyList<OptimizationProposalSeedData> OptimizationProposals
 );
 
@@ -50,22 +48,6 @@ internal sealed record TestCaseSeedData(
 
 [UsedImplicitly]
 internal sealed record TestSuiteSeedData(Guid Id, string Name, DateTimeOffset CreatedAt);
-
-[UsedImplicitly]
-internal sealed record TestResultSeedData(
-    Guid Id,
-    Guid TestCaseId,
-    AssistantMessage ActualResponse,
-    Evaluation Evaluation,
-    DateTimeOffset CreatedAt
-);
-
-[UsedImplicitly]
-internal sealed record TestRunSeedData(
-    Guid Id,
-    DateTimeOffset Timestamp,
-    IReadOnlyList<TestResultSeedData> Results
-);
 
 [UsedImplicitly]
 internal sealed record OptimizationProposalSeedData(
