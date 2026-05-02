@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
 using Trsr.Api.Dto.Agents;
+using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Domain.Tools;

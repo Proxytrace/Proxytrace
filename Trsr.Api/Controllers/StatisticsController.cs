@@ -68,7 +68,7 @@ public class StatisticsController : ControllerBase
     {
         var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetPassRatesAsync(filter, cancellationToken);
-        return results.Select(r => new PassRateDto(r.AgentId, r.RunTimestamp, r.PassCount, r.FailCount, r.UndecidedCount)).ToArray();
+        return results.Select(r => new PassRateDto(r.SuiteId, r.RunTimestamp, r.PassCount, r.FailCount, r.UndecidedCount)).ToArray();
     }
 
     [HttpGet("error-rates")]

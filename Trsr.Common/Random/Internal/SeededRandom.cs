@@ -92,10 +92,7 @@ internal class SeededRandom : IRandom
         => options.ElementAt(Int(min: 0, max: options.Count));
 
     public T Enum<T>() where T : struct, System.Enum
-    {
-        var values = System.Enum.GetValues<T>();
-        return values[Int(min: 0, max: values.Length)];
-    }
+        => Any(System.Enum.GetValues<T>());
 
     public TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null)
     {

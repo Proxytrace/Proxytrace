@@ -21,6 +21,8 @@ internal sealed class Module : Autofac.Module
     {
         base.Load(builder);
         
+        builder.RegisterModule<Infrastructure.Module>();
+        
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         var configuration = configurationBuilder
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -57,7 +59,18 @@ internal sealed class Module : Autofac.Module
 
         builder.RegisterType<TestRunnerService>()
             .As<ITestRunnerService>()
+            .As<ITestRunExecutor>()
             .InstancePerDependency();
+
+        builder.RegisterType<TestRunQueue>()
+            .AsSelf()
+            .As<ITestRunQueue>()
+            .SingleInstance();
+
+        builder.RegisterServiceCollection(services =>
+        {
+            services.AddHostedService<TestRunBackgroundService>();
+        });
 
         builder.RegisterServiceCollection(services =>
         {

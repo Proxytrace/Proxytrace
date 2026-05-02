@@ -47,6 +47,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
             evaluation: stored.Evaluation,
+            duration: TimeSpan.FromMilliseconds(stored.DurationMs),
             existing: stored);
 
     public Task<TestResultEntity> Map(ITestResult domain, CancellationToken cancellationToken = default)
@@ -56,6 +57,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             TestCase = domain.TestCase.Id,
             ActualResponse = domain.ActualResponse,
             Evaluation = domain.Evaluation,
+            DurationMs = (long)domain.Duration.TotalMilliseconds,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

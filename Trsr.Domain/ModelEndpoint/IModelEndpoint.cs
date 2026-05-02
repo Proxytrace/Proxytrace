@@ -1,3 +1,4 @@
+using Microsoft.Extensions.AI;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelProvider;
 
@@ -29,8 +30,22 @@ public interface IModelEndpoint : IDomainEntity
     decimal? OutputTokenCost { get; }
 
     /// <summary>Factory delegate for creating a new model endpoint.</summary>
-    public delegate IModelEndpoint CreateNew(IModel model, IModelProvider provider, decimal? inputTokenCost, decimal? outputTokenCost);
+    public delegate IModelEndpoint CreateNew(
+        IModel model,
+        IModelProvider provider,
+        decimal? inputTokenCost,
+        decimal? outputTokenCost);
 
     /// <summary>Factory delegate for reconstituting an existing model endpoint from persistence.</summary>
-    public delegate IModelEndpoint CreateExisting(IModel model, IModelProvider provider, decimal? inputTokenCost, decimal? outputTokenCost, IDomainEntityData existing);
+    public delegate IModelEndpoint CreateExisting(
+        IModel model, 
+        IModelProvider provider, 
+        decimal? inputTokenCost,
+        decimal? outputTokenCost, 
+        IDomainEntityData existing);
+    
+    /// <summary>
+    /// Gets an chat client instance 
+    /// </summary>
+    IModelClient CreateClient();
 }

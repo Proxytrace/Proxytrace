@@ -1,3 +1,6 @@
+export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed' }
+export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
+
 export interface PagedResult<T> {
   items: T[];
   total: number;
@@ -113,14 +116,38 @@ export interface TestSuiteDto {
   updatedAt: string;
 }
 
+export interface TestResultDto {
+  id: string;
+  testCaseId: string;
+  testCaseSummary: string;
+  actualResponse: string;
+  evaluation: Evaluation;
+  durationMs: number;
+}
+
+export interface TestCaseRowDto {
+  id: string;
+  summary: string;
+}
+
 export interface TestRunDto {
   id: string;
+  suiteId: string | null;
+  suiteName: string | null;
   agentId: string;
-  timestamp: string;
+  agentName: string;
+  status: TestRunStatus;
   totalCases: number;
   passedCases: number;
   failedCases: number;
   passRate: number;
+  startedAt: string;
+  completedAt: string | null;
+  durationMs: number | null;
+  testCases: TestCaseRowDto[];
+  results: TestResultDto[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AgentCallFilter {

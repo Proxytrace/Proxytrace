@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Trsr.Storage.Internal.Entities;
 using Trsr.Testing;
 
@@ -16,8 +17,12 @@ public class TestDomainEntities : BaseTest<Module>
         
         foreach (var storedEntityType in GetStoredEntities())
         {
-            var domainEntity = storedEntityType.GetDomainEntityType();
-            var testType = typeof(EntityTestCases<,>).MakeGenericType(storedEntityType, domainEntity);
+            Type? domainEntityType = storedEntityType.GetDomainEntityType();
+            if (domainEntityType is null)
+            {
+                continue;
+            }
+            var testType = typeof(EntityTestCases<,>).MakeGenericType(storedEntityType, domainEntityType);
             builder.RegisterType(testType);
         }
     }
@@ -37,6 +42,10 @@ public class TestDomainEntities : BaseTest<Module>
     {
         var services = GetServices();
         var domainEntityType = storedEntityType.GetDomainEntityType();
+        if (domainEntityType is null)
+        {
+            return Substitute.For<IEntityTestCases>();
+        }
         var testType = typeof(EntityTestCases<,>).MakeGenericType(storedEntityType, domainEntityType);
         var testCases = (IEntityTestCases)services.GetRequiredService(testType);
         return testCases;

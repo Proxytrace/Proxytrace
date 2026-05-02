@@ -1,4 +1,6 @@
 ﻿using Autofac;
+using Trsr.Domain.ModelEndpoint;
+using Trsr.Testing;
 
 namespace Trsr.Storage.Tests;
 
@@ -13,5 +15,6 @@ public class Module : Autofac.Module
     protected override void Load(ContainerBuilder builder)
     {
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterStub<IModelClient>();
     }
 }

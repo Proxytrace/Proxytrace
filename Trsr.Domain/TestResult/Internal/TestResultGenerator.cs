@@ -5,7 +5,7 @@ using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestResult.Internal;
 
-internal class TestResultGenerator : DomainEntityGenerator<ITestResult>
+internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestResultGenerator
 {
     private readonly ITestResult.CreateNew factory;
     private readonly IDomainEntityGenerator<ITestCase> testCaseGenerator;
@@ -27,5 +27,16 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>
         => factory(
             testCase: await testCaseGenerator.CreateAsync(cancellationToken),
             actualResponse: await assistantMessageGenerator.CreateAsync(cancellationToken),
-            evaluation: random.Any<Evaluation>([Evaluation.Pass, Evaluation.Fail, Evaluation.Undecided]));
+            evaluation: random.Any([Evaluation.Pass, Evaluation.Fail, Evaluation.Undecided]),
+            duration: random.TimeSpan(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(5000)));
+
+    public async Task<ITestResult> CreateAsync(ITestCase testCase, CancellationToken cancellationToken = default)
+    {
+        var result = factory(
+            testCase: testCase,
+            actualResponse: await assistantMessageGenerator.CreateAsync(cancellationToken),
+            evaluation: random.Any([Evaluation.Pass, Evaluation.Fail, Evaluation.Undecided]),
+            duration: random.TimeSpan(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(5000)));
+        return await repository.AddAsync(result, cancellationToken);
+    }
 }

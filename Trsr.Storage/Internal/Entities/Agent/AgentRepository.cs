@@ -30,7 +30,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
     public async Task<IAgent> GetOrCreateAsync(
         SystemMessage systemMessage,
-        IReadOnlyCollection<ToolSpecification> tools,
+        IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)

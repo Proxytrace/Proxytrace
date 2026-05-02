@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.AI;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Model;
@@ -8,6 +9,7 @@ namespace Trsr.Domain.ModelEndpoint.Internal;
 
 internal record ModelEndpoint : DomainEntity, IModelEndpoint
 {
+    private readonly IModelClient.Factory modelClientFactory;
     public IModel Model { get; }
     public IModelProvider Provider { get; }
     public decimal? InputTokenCost { get; }
@@ -17,8 +19,10 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
         IModel model,
         IModelProvider provider,
         decimal? inputTokenCost,
-        decimal? outputTokenCost)
+        decimal? outputTokenCost,
+        IModelClient.Factory modelClientFactory)
     {
+        this.modelClientFactory = modelClientFactory;
         Model = model;
         Provider = provider;
         InputTokenCost = inputTokenCost;
@@ -30,14 +34,19 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
         IModelProvider provider,
         decimal? inputTokenCost,
         decimal? outputTokenCost,
-        IDomainEntityData existing)
+        IDomainEntityData existing,
+        IModelClient.Factory modelClientFactory)
         : base(existing)
     {
+        this.modelClientFactory = modelClientFactory;
         Model = model;
         Provider = provider;
         InputTokenCost = inputTokenCost;
         OutputTokenCost = outputTokenCost;
     }
+    
+    public IModelClient CreateClient() 
+        => modelClientFactory(this);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

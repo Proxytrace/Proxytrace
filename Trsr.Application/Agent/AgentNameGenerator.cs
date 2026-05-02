@@ -1,7 +1,5 @@
 using JetBrains.Annotations;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
-using Trsr.Application.Ai;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -11,12 +9,10 @@ namespace Trsr.Application.Agent;
 [UsedImplicitly]
 internal sealed class AgentNameGenerator : IAgentNameGenerator
 {
-    private readonly IAiClientFactory clientFactory;
     private readonly ILogger<AgentNameGenerator> logger;
 
-    public AgentNameGenerator(IAiClientFactory clientFactory, ILogger<AgentNameGenerator> logger)
+    public AgentNameGenerator(ILogger<AgentNameGenerator> logger)
     {
-        this.clientFactory = clientFactory;
         this.logger = logger;
     }
 
@@ -26,29 +22,21 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
         (2-4 words, title case) that captures the agent's main purpose. Reply with the name only — no explanation, no punctuation, no quotes.
         """; 
 
-    public async Task<string?> GenerateNameAsync(
+    public async Task<string> GenerateNameAsync(
         SystemMessage systemMessage,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var client = clientFactory.CreateClient(endpoint);
-            ChatMessage[] messages =
-            [
-                new(ChatRole.System, Prompt),
-                new(ChatRole.User, systemMessage.ToString())
-            ];
+            var client = endpoint.CreateClient();
 
-            var response = await client.GetResponseAsync(messages, cancellationToken: cancellationToken);
-            var name = response.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                logger.LogWarning("Agent name generation returned empty response for endpoint {EndpointId}", endpoint.Id);
-                return null;
-            }
-            return name;
+            var conversation = Conversation.Create();
+            conversation.AddSystemMessage(Message.CreateSystemMessage(Prompt));
+            conversation.Add(Message.CreateUserMessage(systemMessage.ToString()));
+            
+            var response = await client.CompleteAsync(conversation, cancellationToken: cancellationToken);
+            return response.GetTextResponse();
         }
         catch (Exception ex)
         {

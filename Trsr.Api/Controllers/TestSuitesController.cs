@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
+using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Dto.TestSuites;
 using Trsr.Api.Services;
 using Trsr.Domain;
@@ -220,8 +221,8 @@ public class TestSuitesController : ControllerBase
         if (endpoint is null)
             return BadRequest("No model endpoints are configured. Send at least one proxied LLM call first.");
 
-        var run = await testRunnerService.RunAsync(suite, endpoint, cancellationToken);
-        return ToRunDto(run);
+        var run = await testRunnerService.StartAsync(suite, endpoint, cancellationToken);
+        return TestRunsController.ToDto(run);
     }
 
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
@@ -298,14 +299,6 @@ public class TestSuitesController : ControllerBase
         )).ToArray(),
         s.CreatedAt,
         s.UpdatedAt);
-
-    private static TestRunDto ToRunDto(ITestRun run)
-    {
-        var passed = run.TestResults.Count(r => r.Evaluation == Evaluation.Pass);
-        var total = run.TestResults.Count;
-        var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
-        return new TestRunDto(run.Id, run.Agent.Id, run.Timestamp, total, passed, total - passed, passRate);
-    }
 
     private static string GetText(Message m) => m switch
     {

@@ -212,7 +212,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
         return null;
     }
 
-    private static IReadOnlyCollection<ToolSpecification> ParseTools(string requestBody)
+    private static IReadOnlyList<ToolSpecification> ParseTools(string requestBody)
     {
         try
         {

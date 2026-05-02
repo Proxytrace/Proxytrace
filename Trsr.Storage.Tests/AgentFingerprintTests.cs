@@ -29,8 +29,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
 
     private sealed class StubNameGenerator : IAgentNameGenerator
     {
-        public Task<string?> GenerateNameAsync(SystemMessage systemMessage, IModelEndpoint endpoint, CancellationToken cancellationToken = default)
-            => Task.FromResult<string?>("Test Agent");
+        public Task<string> GenerateNameAsync(SystemMessage systemMessage, IModelEndpoint endpoint, CancellationToken cancellationToken = default)
+            => Task.FromResult<string>("Test Agent");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

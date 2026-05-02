@@ -29,5 +29,5 @@ internal record AgentEntity : Entity
     /// <summary>
     /// <see cref="Trsr.Domain.Agent.IAgent.Tools"/> - stored as JSON in the database
     /// </summary>
-    public required IReadOnlyCollection<ToolSpecification> Tools { get; init; }
+    public required IReadOnlyList<ToolSpecification> Tools { get; init; }
 }

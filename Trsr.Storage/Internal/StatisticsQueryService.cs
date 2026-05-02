@@ -9,6 +9,7 @@ using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
+using Trsr.Storage.Internal.Entities.TestSuite;
 
 namespace Trsr.Storage.Internal;
 
@@ -111,9 +112,14 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
         var runs = await context.Set<TestRunEntity>()
             .AsNoTracking()
-            .Where(r => agentIds.Contains(r.Agent))
-            .Where(r => filter.From == null || r.Timestamp >= filter.From)
-            .Where(r => filter.To == null || r.Timestamp <= filter.To)
+            .Join(context.Set<TestSuiteEntity>(),
+                r => r.Suite,
+                s => s.Id, 
+                (r, s) => new { Run = r, Suite = s })
+            .Where(r => agentIds.Contains(r.Suite.Agent))
+            .Select(x => x.Run)
+            .Where(r => filter.From == null || r.CreatedAt >= filter.From)
+            .Where(r => filter.To == null || r.CreatedAt <= filter.To)
             .ToListAsync(cancellationToken);
 
         var resultIds = runs.SelectMany(r => r.TestResults).Distinct().ToList();
@@ -132,8 +138,8 @@ internal class StatisticsQueryService : IStatisticsQueryService
                 .ToArray();
 
             return new PassRateStat(
-                AgentId: run.Agent,
-                RunTimestamp: run.Timestamp,
+                SuiteId: run.Suite,
+                RunTimestamp: run.CreatedAt,
                 PassCount: runResults.Count(r => r.Evaluation == Evaluation.Pass),
                 FailCount: runResults.Count(r => r.Evaluation == Evaluation.Fail),
                 UndecidedCount: runResults.Count(r => r.Evaluation == Evaluation.Undecided));

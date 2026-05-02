@@ -6,8 +6,6 @@ using Trsr.Domain.AgentCall;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.TestCase;
-using Trsr.Domain.TestResult;
-using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Usage;
 using Trsr.Storage;
@@ -98,7 +96,6 @@ internal sealed class DemoDataSeeder : IHostedService
         await SeedCallsAsync(services, agent, endpoint, scenario.Calls, ct);
         var testCases = await SeedTestCasesAsync(services, scenario.TestCases, ct);
         await SeedTestSuiteAsync(services, foundation, agent, testCases, scenario.TestSuite, ct);
-        var testRuns = await SeedTestRunsAsync(services, agent, testCases, scenario.TestRuns, ct);
         await SeedOptimizationProposalsAsync(services, agent, scenario.OptimizationProposals, ct);
     }
 
@@ -158,37 +155,6 @@ internal sealed class DemoDataSeeder : IHostedService
         var repo = services.GetRequiredService<IRepository<ITestSuite>>();
         var data = new DemoEntityData(suite.Id, suite.CreatedAt, suite.CreatedAt);
         await repo.UpsertAsync(factory(suite.Name, agent, foundation.Evaluator, testCases.Values.ToList(), data), ct);
-    }
-
-    private static async Task<IReadOnlyDictionary<Guid, ITestRun>> SeedTestRunsAsync(
-        IServiceProvider services,
-        IAgent agent,
-        IReadOnlyDictionary<Guid, ITestCase> testCases,
-        IReadOnlyList<TestRunSeedData> testRuns,
-        CancellationToken ct)
-    {
-        var resultFactory = services.GetRequiredService<ITestResult.CreateExisting>();
-        var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
-        var runFactory = services.GetRequiredService<ITestRun.CreateExisting>();
-        var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
-
-        var runs = new Dictionary<Guid, ITestRun>();
-        foreach (var run in testRuns)
-        {
-            var seededResults = new List<ITestResult>();
-            foreach (var result in run.Results)
-            {
-                var resultData = new DemoEntityData(result.Id, result.CreatedAt, result.CreatedAt);
-                var testCase = testCases[result.TestCaseId];
-                var entity = await resultRepo.UpsertAsync(
-                    resultFactory(testCase, result.ActualResponse, result.Evaluation, resultData), ct);
-                seededResults.Add(entity);
-            }
-            var runData = new DemoEntityData(run.Id, run.Timestamp, run.Timestamp);
-            var seededRun = await runRepo.UpsertAsync(runFactory(run.Timestamp, agent, seededResults, runData), ct);
-            runs[run.Id] = seededRun;
-        }
-        return runs;
     }
 
     private static async Task SeedOptimizationProposalsAsync(

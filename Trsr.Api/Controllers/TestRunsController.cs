@@ -3,7 +3,9 @@ using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Services;
 using Trsr.Domain;
+using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
@@ -40,7 +42,12 @@ public class TestRunsController : ControllerBase
         var all = agentId.HasValue
             ? await repository.GetByAgentAsync(agentId.Value, cancellationToken)
             : await repository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
+        var items = all
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(ToDto)
+            .ToArray();
         return new PagedResult<TestRunDto>(items, all.Count, page, pageSize);
     }
 
@@ -62,8 +69,8 @@ public class TestRunsController : ControllerBase
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
         var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
         var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
-        var run = await runner.RunAsync(suite, endpoint, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
+        var run = await runner.StartAsync(suite, endpoint, cancellationToken);
+        return AcceptedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
     }
 
     [HttpDelete("{id:guid}")]
@@ -73,16 +80,49 @@ public class TestRunsController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
-    private static TestRunDto ToDto(ITestRun r) => new(
-        r.Id,
-        r.Agent.Id,
-        r.Timestamp,
-        r.TestResults.Select(result => new TestResultDto(
-            result.Id,
-            result.TestCase.Id,
-            new TestRunMessageDto("assistant", string.Concat(result.ActualResponse.Contents.Select(c => c.Text ?? ""))),
-            result.Evaluation
-        )).ToArray(),
-        r.CreatedAt,
-        r.UpdatedAt);
+    internal static TestRunDto ToDto(ITestRun r)
+    {
+        var passed = r.TestResults.Count(x => x.Evaluation == Evaluation.Pass);
+        var total = r.TestResults.Count;
+        var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
+        long? durationMs = r.CompletedAt.HasValue
+            ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
+            : null;
+
+        return new TestRunDto(
+            Id: r.Id,
+            SuiteId: r.Suite.Id,
+            SuiteName: r.Suite.Name,
+            AgentId: r.Suite.Agent.Id,
+            AgentName: r.Suite.Agent.Name,
+            Status: r.Status,
+            TotalCases: total,
+            PassedCases: passed,
+            FailedCases: total - passed,
+            PassRate: passRate,
+            StartedAt: r.CreatedAt,
+            CompletedAt: r.CompletedAt,
+            DurationMs: durationMs,
+            TestCases: r.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
+            Results: r.TestResults.Select(res => new TestResultDto(
+                res.Id,
+                res.TestCase.Id,
+                SummarizeTestCase(res.TestCase),
+                string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
+                res.Evaluation,
+                (long)res.Duration.TotalMilliseconds
+            )).ToArray(),
+            CreatedAt: r.CreatedAt,
+            UpdatedAt: r.UpdatedAt);
+    }
+
+    private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
+    {
+        var firstUserMessage = tc.Input.Messages
+            .OfType<UserMessage>()
+            .FirstOrDefault();
+        if (firstUserMessage is null) return "Test case";
+        var text = string.Concat(firstUserMessage.Contents.Select(c => c.Text ?? ""));
+        return text.Length > 80 ? text[..77] + "…" : text;
+    }
 }

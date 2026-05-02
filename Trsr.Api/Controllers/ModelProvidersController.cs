@@ -110,6 +110,15 @@ public class ModelProvidersController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
+    // ── Model Endpoints ───────────────────────────────────────────────────────
+
+    [HttpGet("/api/model-endpoints")]
+    public async Task<IReadOnlyList<ModelEndpointDto>> GetAllModelEndpoints(CancellationToken cancellationToken)
+    {
+        var all = await endpointRepository.GetAllAsync(cancellationToken);
+        return all.Select(ToEndpointDto).ToArray();
+    }
+
     // ── Models ────────────────────────────────────────────────────────────────
 
     [HttpGet("{providerId:guid}/models")]

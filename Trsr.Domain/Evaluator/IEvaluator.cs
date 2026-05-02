@@ -1,4 +1,5 @@
 using Trsr.Domain.Message;
+using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator;
 
@@ -14,8 +15,8 @@ public interface IEvaluator : IDomainEntity
     /// Returns true if <paramref name="actual"/> is considered a successful result
     /// for the given <paramref name="expected"/> output.
     /// </summary>
-    bool Evaluate(AssistantMessage expected, AssistantMessage actual);
+    Task<Evaluation> EvaluateAsync(AssistantMessage expected, AssistantMessage actual, CancellationToken cancellationToken = default);
 
     public delegate IEvaluator CreateNew();
-    public delegate IEvaluator CreateExisting(EvaluatorKind kind, IDomainEntityData existing);
+    public delegate IEvaluator CreateExisting(IDomainEntityData existing);
 }

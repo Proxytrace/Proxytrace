@@ -1,6 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
@@ -8,13 +8,21 @@ internal record ExactMatchEvaluator : DomainEntity, IEvaluator
 {
     public EvaluatorKind Kind => EvaluatorKind.ExactMatch;
 
-    public ExactMatchEvaluator() { }
+    public ExactMatchEvaluator()
+    {
+    }
 
-    public ExactMatchEvaluator(EvaluatorKind kind, IDomainEntityData existing) : base(existing) { }
-
-    public bool Evaluate(AssistantMessage expected, AssistantMessage actual)
-        => expected.Equals(actual);
-
-    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        => base.Validate(validationContext);
+    public ExactMatchEvaluator(IDomainEntityData existing) : base(existing)
+    {
+    }
+    
+    public Task<Evaluation> EvaluateAsync(AssistantMessage expected, AssistantMessage actual, CancellationToken cancellationToken = default)
+    {
+        var pairs = expected.Contents.Zip(actual.Contents, (e, a) => (Expected: e, Actual: a));
+        var allMatch = pairs.All(p => p.Expected.Equals(p.Actual));
+        var evaluation = allMatch 
+            ? Evaluation.Pass
+            : Evaluation.Fail;
+        return Task.FromResult(evaluation);
+    }
 }

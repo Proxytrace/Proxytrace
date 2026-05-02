@@ -12,7 +12,7 @@ public interface IRepository<TDomainEntity>
     /// Gets a <typeparamref name="TDomainEntity"/> by its <paramref name="id"/>
     /// <exception cref="EntityNotFoundException">Thrown when the entity is not found</exception>
     /// </summary>
-    Task<TDomainEntity> GetAsync(    
+    Task<TDomainEntity?> FindAsync(    
         Guid id,
         CancellationToken cancellationToken = default);
     

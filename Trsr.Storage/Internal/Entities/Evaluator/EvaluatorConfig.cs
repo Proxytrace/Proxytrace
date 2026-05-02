@@ -19,7 +19,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     }
 
     public Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)
-        => factory(stored.Kind, stored).ToTaskResult();
+        => factory(stored).ToTaskResult();
 
     public Task<EvaluatorEntity> Map(IEvaluator domain, CancellationToken cancellationToken = default)
         => new EvaluatorEntity

@@ -1,28 +1,49 @@
 using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
-using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
+using Trsr.Domain.TestSuite;
 
 namespace Trsr.Domain.TestRun.Internal;
 
 internal record TestRun : DomainEntity, ITestRun
 {
-    public DateTimeOffset Timestamp { get; }
-    public IAgent Agent { get; }
+    private readonly Lazy<IRepository<ITestRun>> repository;
+    
+    public ITestSuite Suite { get; }
+    public IModelEndpoint Endpoint { get; }
+    public TestRunStatus Status { get; }
+    public DateTimeOffset? CompletedAt { get; }
     public IReadOnlyList<ITestResult> TestResults { get; }
 
-    public TestRun(DateTimeOffset timestamp, IAgent agent, IReadOnlyList<ITestResult> testResults)
+    public TestRun(
+        ITestSuite suite,
+        IModelEndpoint endpoint,
+        Lazy<IRepository<ITestRun>> repository)
     {
-        Timestamp = timestamp;
-        Agent = agent;
-        TestResults = testResults.ToArray();
+        this.repository = repository;
+        Suite = suite;
+        Endpoint = endpoint;
+        Status = TestRunStatus.Pending;
+        CompletedAt = null;
+        TestResults = [];
     }
 
-    public TestRun(DateTimeOffset timestamp, IAgent agent, IReadOnlyList<ITestResult> testResults, IDomainEntityData existing) : base(existing)
+    public TestRun(
+        ITestSuite suite,
+        IModelEndpoint endpoint,
+        TestRunStatus status,
+        DateTimeOffset? completedAt,
+        IReadOnlyList<ITestResult> testResults,
+        IDomainEntityData existing,
+        Lazy<IRepository<ITestRun>> repository) : base(existing)
     {
-        Timestamp = timestamp;
-        Agent = agent;
+        this.repository = repository;
+        Suite = suite;
+        Endpoint = endpoint;
+        Status = status;
+        CompletedAt = completedAt;
         TestResults = testResults.ToArray();
     }
 
@@ -33,30 +54,56 @@ internal record TestRun : DomainEntity, ITestRun
             yield return result;
         }
 
-        if (Agent is null)
+        foreach (var result in Endpoint.Validate(validationContext))
         {
-            yield return Validation.NotNull(Agent, nameof(Agent));
-        }
-        else
-        {
-            foreach (var result in Agent.Validate(validationContext))
-            {
-                yield return result;
-            }
+            yield return result;
         }
 
-        if (TestResults is null)
+        foreach (var result in TestResults.SelectMany(x => x.Validate(validationContext)))
         {
-            yield return Validation.NotNull(TestResults, nameof(TestResults));
-        }
-        else
-        {
-            foreach (var result in TestResults.SelectMany(x => x.Validate(validationContext)))
-            {
-                yield return result;
-            }
+            yield return result;
         }
 
-        yield return Validation.InPast(Timestamp, nameof(Timestamp));
+        if (Status == TestRunStatus.Completed)
+        {
+            yield return Validation.NotNull(CompletedAt);
+            yield return Validation.HasCount(TestResults, Suite.TestCases.Count);
+        }
+    }
+    
+    public async Task<ITestRun> SetTestResult(ITestResult testResult, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<ITestResult> updatedResults =
+        [
+            ..TestResults.Where(x => x.TestCase.Id != testResult.TestCase.Id),
+            testResult
+        ];
+        
+        bool isCompleted = updatedResults.Count == Suite.TestCases.Count;
+        DateTimeOffset? completedAt = isCompleted ? DateTimeOffset.UtcNow : null;
+        TestRunStatus status = isCompleted ? TestRunStatus.Completed : TestRunStatus.Running;
+        
+        var updatedRun = new TestRun(
+            Suite,
+            Endpoint,
+            status,
+            completedAt,
+            updatedResults,
+            this,
+            repository);
+        return await repository.Value.UpdateAsync(updatedRun, cancellationToken);
+    }
+
+    public Task<ITestRun> SetRunning(CancellationToken cancellationToken = default)
+    {
+        var updatedRun = new TestRun(
+            Suite,
+            Endpoint,
+            TestRunStatus.Running,
+            CompletedAt,
+            TestResults,
+            this,
+            repository);
+        return repository.Value.UpdateAsync(updatedRun, cancellationToken);
     }
 }

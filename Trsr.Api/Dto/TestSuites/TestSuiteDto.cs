@@ -12,15 +12,6 @@ public record TestSuiteDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record TestRunDto(
-    Guid Id,
-    Guid AgentId,
-    DateTimeOffset Timestamp,
-    int TotalCases,
-    int PassedCases,
-    int FailedCases,
-    double PassRate);
-
 public record TestCaseDto(
     Guid Id,
     IReadOnlyList<TestSuiteMessageDto> Input,

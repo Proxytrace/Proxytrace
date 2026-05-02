@@ -53,7 +53,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             .Property(e => e.Tools)
             .HasConversion(
                 v => serializer.Serialize(v),
-                v => serializer.Deserialize<IReadOnlyCollection<ToolSpecification>>(v) ?? Array.Empty<ToolSpecification>()
+                v => serializer.Deserialize<IReadOnlyList<ToolSpecification>>(v) ?? Array.Empty<ToolSpecification>()
             );
     }
 

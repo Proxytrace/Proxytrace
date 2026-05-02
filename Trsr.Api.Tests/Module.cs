@@ -6,6 +6,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Storage;
+using Trsr.Testing;
 
 namespace Trsr.Api.Tests;
 
@@ -18,11 +19,11 @@ public sealed class Module : Autofac.Module
 {
     private sealed class StubAgentNameGenerator : IAgentNameGenerator
     {
-        public Task<string?> GenerateNameAsync(
+        public Task<string> GenerateNameAsync(
             SystemMessage systemMessage,
             IModelEndpoint endpoint,
             CancellationToken cancellationToken = default)
-            => Task.FromResult<string?>("Test Agent");
+            => Task.FromResult<string>("Test Agent");
     }
 
     protected override void Load(ContainerBuilder builder)
@@ -30,6 +31,7 @@ public sealed class Module : Autofac.Module
         base.Load(builder);
 
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterStub<IModelClient>();
 
         builder.RegisterInstance<IAgentNameGenerator>(new StubAgentNameGenerator())
             .SingleInstance();
@@ -63,11 +65,17 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<TestRunnerService>()
             .As<ITestRunnerService>()
+            .As<ITestRunExecutor>()
             .InstancePerDependency();
 
         builder
             .Register(_ => NullLogger<TestRunnerService>.Instance)
             .As<Microsoft.Extensions.Logging.ILogger<TestRunnerService>>()
+            .SingleInstance();
+
+        builder.RegisterType<TestRunQueue>()
+            .AsSelf()
+            .As<ITestRunQueue>()
             .SingleInstance();
 
         // Register a default stub factory — tests override this via GetServices(action).

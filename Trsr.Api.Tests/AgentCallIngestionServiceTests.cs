@@ -188,7 +188,9 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
         (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
 
         var call = await callRepo.FindFirstAsync(CancellationToken);
-        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call!.Id, CancellationToken);
+        call.Should().NotBeNull();
+        
+        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call.Id, CancellationToken);
         toolCalls.Should().ContainSingle();
         toolCalls[0].ToolCallId.Should().Be(ToolCallId);
         toolCalls[0].Response.Should().BeNull();
@@ -226,7 +228,7 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
 
         var call = await callRepo.FindFirstAsync(CancellationToken);
         call.Should().NotBeNull();
-        call!.Usage.InputTokenCount.Should().Be(30);
+        call.Usage.InputTokenCount.Should().Be(30);
         call.Usage.OutputTokenCount.Should().Be(13);
         call.Duration.Should().Be(TimeSpan.FromMilliseconds(300));
         call.FinishReason.Should().Be("stop");
@@ -237,8 +239,9 @@ public sealed class AgentCallIngestionServiceTests : BaseTest<Module>
         var toolCalls = await toolCallRepo.GetByAgentCallAsync(call.Id, CancellationToken);
         toolCalls.Should().ContainSingle();
         toolCalls[0].ToolCallId.Should().Be(ToolCallId);
-        toolCalls[0].Response.Should().NotBeNull();
-        toolCalls[0].Response!.Results.Should().ContainSingle()
+        var response = toolCalls[0].Response;
+        response.Should().NotBeNull();
+        response.Results.Should().ContainSingle()
             .Which.Text.Should().Be(ToolResult);
         toolCalls[0].Duration.Should().NotBeNull();
     }

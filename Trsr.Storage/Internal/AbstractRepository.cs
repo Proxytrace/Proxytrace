@@ -28,11 +28,11 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public async Task<TDomainEntity> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<TDomainEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
     {
         TStoredEntity? stored = await FindAsync(contextFactory(), id, cancellationToken);
         return stored is null
-            ? throw new EntityNotFoundException(id, typeof(TDomainEntity)) 
+            ? default 
             : await mapper.Map(stored, cancellationToken);
     }
     
@@ -72,11 +72,22 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
     public async Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default)
     {
+        primaryKeys = primaryKeys.Distinct().ToArray();
+        
         List<TStoredEntity> stored = await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
             .Where(e => primaryKeys.Contains(e.Id))
             .ToListAsync(cancellationToken);
+
+        if (stored.Count != primaryKeys.Count)
+        {
+            throw new EntitiesNotFoundException(
+                ids: primaryKeys.Except(stored.Select(e => e.Id)).ToArray(),
+                entityType: typeof(TDomainEntity));
+        }
+        
+        
         return await Map(stored, cancellationToken);
     }
 
