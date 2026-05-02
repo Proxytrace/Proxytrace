@@ -77,10 +77,10 @@ public sealed class Module : Autofac.Module
                     Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
             });
 
-        builder.RegisterType<AgenticEvaluator>().As<IAgenticEvaluator>();
+        builder.RegisterType<CustomEvaluator>().As<ICustomEvaluator>();
 
         builder.RegisterType<EvaluatorGenerator>().As<IDomainEntityGenerator<IEvaluator>>();
-        builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<IAgenticEvaluator>>();
+        builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<ICustomEvaluator>>();
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)

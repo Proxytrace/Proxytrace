@@ -3,14 +3,14 @@ using Trsr.Domain.ModelEndpoint;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
-internal class AgenticEvaluatorGenerator : IDomainEntityGenerator<IAgenticEvaluator>
+internal class AgenticEvaluatorGenerator : IDomainEntityGenerator<ICustomEvaluator>
 {
-    private readonly IAgenticEvaluator.CreateNew factory;
+    private readonly ICustomEvaluator.CreateNew factory;
     private readonly IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator;
     private readonly IRepository<IEvaluator> repository;
 
     public AgenticEvaluatorGenerator(
-        IAgenticEvaluator.CreateNew factory,
+        ICustomEvaluator.CreateNew factory,
         IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator,
         IRepository<IEvaluator> repository)
     {
@@ -19,21 +19,21 @@ internal class AgenticEvaluatorGenerator : IDomainEntityGenerator<IAgenticEvalua
         this.repository = repository;
     }
 
-    public async Task<IAgenticEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
+    public async Task<ICustomEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
         => factory(
             new SystemMessage([Content.FromText("Evaluate the response.")]),
             await modelEndpointGenerator.GetOrCreateAsync(cancellationToken));
 
-    public async Task<IAgenticEvaluator> CreateAsync(CancellationToken cancellationToken = default)
+    public async Task<ICustomEvaluator> CreateAsync(CancellationToken cancellationToken = default)
     {
         var instance = await GenerateAsync(cancellationToken);
-        return (IAgenticEvaluator)await repository.AddAsync(instance, cancellationToken);
+        return (ICustomEvaluator)await repository.AddAsync(instance, cancellationToken);
     }
 
-    public async Task<IAgenticEvaluator> GetOrCreateAsync(CancellationToken cancellationToken = default)
+    public async Task<ICustomEvaluator> GetOrCreateAsync(CancellationToken cancellationToken = default)
     {
         var existing = await repository.FindFirstAsync(cancellationToken);
-        if (existing is IAgenticEvaluator agenticEvaluator)
+        if (existing is ICustomEvaluator agenticEvaluator)
             return agenticEvaluator;
         return await CreateAsync(cancellationToken);
     }

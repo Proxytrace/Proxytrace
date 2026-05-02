@@ -35,7 +35,7 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
     {
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IRepository<IEvaluator>>();
-        var factory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var factory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
         var systemMessage = new SystemMessage([Content.FromText("Judge whether the response is correct.")]);
 
@@ -46,8 +46,8 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
         var retrieved = await repository.GetAsync(added.Id, CancellationToken);
 
         retrieved.Id.Should().Be(added.Id);
-        retrieved.Kind.Should().Be(EvaluatorKind.Agentic);
-        var agentic = retrieved.Should().BeAssignableTo<IAgenticEvaluator>().Subject;
+        retrieved.Kind.Should().Be(EvaluatorKind.Custom);
+        var agentic = retrieved.Should().BeAssignableTo<ICustomEvaluator>().Subject;
         agentic.SystemMessage.Contents.Should().HaveCount(1);
         agentic.SystemMessage.Contents[0].Should().BeEquivalentTo(Content.FromText("Judge whether the response is correct."));
     }
@@ -58,7 +58,7 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IRepository<IEvaluator>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
-        var agenticFactory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
 
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
@@ -71,7 +71,7 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
 
         all.Should().HaveCountGreaterThanOrEqualTo(2);
         all.Should().Contain(e => e.Id == exact.Id && e.Kind == EvaluatorKind.ExactMatch);
-        all.Should().Contain(e => e.Id == agentic.Id && e.Kind == EvaluatorKind.Agentic);
+        all.Should().Contain(e => e.Id == agentic.Id && e.Kind == EvaluatorKind.Custom);
     }
 }
 
@@ -88,7 +88,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
-        var agenticFactory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
@@ -116,7 +116,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
-        var agenticFactory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
@@ -135,8 +135,8 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         retrieved.Evaluators.Should().HaveCount(2);
         retrieved.Evaluators.Should().Contain(e => e.Id == exact.Id && e.Kind == EvaluatorKind.ExactMatch);
         var agenticRetrieved = retrieved.Evaluators.First(e => e.Id == agentic.Id);
-        agenticRetrieved.Kind.Should().Be(EvaluatorKind.Agentic);
-        agenticRetrieved.Should().BeAssignableTo<IAgenticEvaluator>();
+        agenticRetrieved.Kind.Should().Be(EvaluatorKind.Custom);
+        agenticRetrieved.Should().BeAssignableTo<ICustomEvaluator>();
     }
 
     [TestMethod]
@@ -149,7 +149,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
-        var agenticFactory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
         var suiteExistingFactory = services.GetRequiredService<ITestSuite.CreateExisting>();
 
@@ -184,7 +184,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
         var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
-        var agenticFactory = services.GetRequiredService<IAgenticEvaluator.CreateNew>();
+        var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
         var suiteExistingFactory = services.GetRequiredService<ITestSuite.CreateExisting>();
 

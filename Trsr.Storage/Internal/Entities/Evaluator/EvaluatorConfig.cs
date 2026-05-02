@@ -10,18 +10,21 @@ namespace Trsr.Storage.Internal.Entities.Evaluator;
 internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, IMapper<IEvaluator, EvaluatorEntity>
 {
     private readonly IExactMatchEvaluator.CreateExisting createExactMatch;
-    private readonly IAgenticEvaluator.CreateExisting createAgentic;
+    private readonly ICustomEvaluator.CreateExisting createCustom;
+    private readonly IHelpfulnessEvaluator.CreateExisting createHelpfulness;
     private readonly IRepository<IModelEndpoint> modelEndpoints;
     private readonly ISerializer serializer;
 
     public EvaluatorConfig(
         IExactMatchEvaluator.CreateExisting createExactMatch,
-        IAgenticEvaluator.CreateExisting createAgentic,
+        ICustomEvaluator.CreateExisting createCustom,
+        IHelpfulnessEvaluator.CreateExisting createHelpfulness,
         IRepository<IModelEndpoint> modelEndpoints,
         ISerializer serializer)
     {
         this.createExactMatch = createExactMatch;
-        this.createAgentic = createAgentic;
+        this.createCustom = createCustom;
+        this.createHelpfulness = createHelpfulness;
         this.modelEndpoints = modelEndpoints;
         this.serializer = serializer;
     }
@@ -35,27 +38,33 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         => stored.Kind switch
         {
             EvaluatorKind.ExactMatch => createExactMatch(stored),
-            EvaluatorKind.Agentic => await MapAgentic(stored, cancellationToken),
+            EvaluatorKind.Custom => await MapCustom(stored, cancellationToken),
+            EvaluatorKind.Helpfulness => await MapHelpfulness(stored, cancellationToken),
             _ => throw new InvalidOperationException($"Unknown evaluator kind: {stored.Kind}")
         };
 
-    private async Task<IAgenticEvaluator> MapAgentic(EvaluatorEntity stored, CancellationToken cancellationToken)
+    private async Task<IEvaluator> MapHelpfulness(EvaluatorEntity stored, CancellationToken cancellationToken)
     {
-        var data = serializer.DeserializeRequired<AgenticEvaluatorData>(stored.Data);
+        var data = serializer.DeserializeRequired<CustomEvaluatorData>(stored.Data);
         var endpoint = await modelEndpoints.GetAsync(data.EndpointId, cancellationToken);
-        return createAgentic(data.SystemMessage, endpoint, stored);
+        return createHelpfulness(endpoint, stored);
+    }
+
+    private async Task<ICustomEvaluator> MapCustom(EvaluatorEntity stored, CancellationToken cancellationToken)
+    {
+        var data = serializer.DeserializeRequired<CustomEvaluatorData>(stored.Data);
+        var endpoint = await modelEndpoints.GetAsync(data.EndpointId, cancellationToken);
+        return createCustom(data.SystemMessage, endpoint, stored);
     }
 
     public Task<EvaluatorEntity> Map(IEvaluator domain, CancellationToken cancellationToken = default)
     {
         string data = domain switch
         {
-            IAgenticEvaluator agentic => serializer.Serialize(new AgenticEvaluatorData
-            {
-                SystemMessage = agentic.SystemMessage,
-                EndpointId = agentic.Endpoint.Id
-            }),
-            _ => serializer.Serialize(new ExactMatchEvaluatorData())
+            ICustomEvaluator agentic => serializer.Serialize(new CustomEvaluatorData(agentic.SystemMessage, agentic.Endpoint.Id)),
+            IHelpfulnessEvaluator helpfulness => serializer.Serialize(new CustomEvaluatorData(helpfulness.SystemMessage, helpfulness.Endpoint.Id)),
+            IExactMatchEvaluator => serializer.Serialize(new ExactMatchEvaluatorData()),
+            _ => throw new NotSupportedException($"Unsupported evaluator type: {domain.GetType()}")
         };
 
         return new EvaluatorEntity
