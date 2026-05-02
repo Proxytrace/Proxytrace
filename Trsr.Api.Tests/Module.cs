@@ -2,6 +2,7 @@ using Autofac;
 using Microsoft.Extensions.Logging.Abstractions;
 using Trsr.Api.Services;
 using Trsr.Api.Services.Internal;
+using Trsr.Application.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -61,21 +62,6 @@ public sealed class Module : Autofac.Module
         builder
             .Register(_ => NullLogger<AgentCallIngestionWorker>.Instance)
             .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestionWorker>>()
-            .SingleInstance();
-
-        builder.RegisterType<TestRunnerService>()
-            .As<ITestRunnerService>()
-            .As<ITestRunExecutor>()
-            .InstancePerDependency();
-
-        builder
-            .Register(_ => NullLogger<TestRunnerService>.Instance)
-            .As<Microsoft.Extensions.Logging.ILogger<TestRunnerService>>()
-            .SingleInstance();
-
-        builder.RegisterType<TestRunQueue>()
-            .AsSelf()
-            .As<ITestRunQueue>()
             .SingleInstance();
 
         // Register a default stub factory — tests override this via GetServices(action).

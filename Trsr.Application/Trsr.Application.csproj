@@ -13,10 +13,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Trsr.Application.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Trsr.Domain\Trsr.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7"/>
   </ItemGroup>
 

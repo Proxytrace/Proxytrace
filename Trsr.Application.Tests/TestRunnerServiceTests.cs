@@ -2,7 +2,7 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Trsr.Api.Services;
+using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
@@ -14,7 +14,7 @@ using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 using Trsr.Testing;
 
-namespace Trsr.Api.Tests;
+namespace Trsr.Application.Tests;
 
 [TestClass]
 public sealed class TestRunnerServiceTests : BaseTest<Module>
@@ -75,7 +75,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
+        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
@@ -99,7 +99,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
+        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
@@ -122,7 +122,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
+        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
         // Assert – the result is retrievable from the repository with correct evaluation
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
@@ -147,7 +147,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
+        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
         // Assert
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
@@ -170,7 +170,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
         // Act
-        var testRun = await runner.RunAsync(suite, endpoint, CancellationToken);
+        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
         // Assert
         var storedRun = await runRepo.GetAsync(testRun.Id, CancellationToken);

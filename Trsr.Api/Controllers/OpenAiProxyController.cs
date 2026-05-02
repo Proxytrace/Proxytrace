@@ -22,13 +22,21 @@ public class OpenAiProxyController : ControllerBase
 {
     private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
     [
-        "authorization", "content-type", "openai-organization", "openai-project"
+        "authorization", 
+        "content-type", 
+        "openai-organization",
+        "openai-project"
     ]);
 
     private static readonly IReadOnlyCollection<string> ForwardedResponseHeaders = new HashSet<string>(
     [
-        "content-type", "openai-model", "openai-processing-ms", "openai-version",
-        "x-request-id", "x-ratelimit-limit-requests", "x-ratelimit-remaining-requests",
+        "content-type",
+        "openai-model", 
+        "openai-processing-ms", 
+        "openai-version",
+        "x-request-id", 
+        "x-ratelimit-limit-requests", 
+        "x-ratelimit-remaining-requests",
         "x-ratelimit-reset-requests"
     ]);
 

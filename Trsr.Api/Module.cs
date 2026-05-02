@@ -57,21 +57,6 @@ internal sealed class Module : Autofac.Module
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
 
-        builder.RegisterType<TestRunnerService>()
-            .As<ITestRunnerService>()
-            .As<ITestRunExecutor>()
-            .InstancePerDependency();
-
-        builder.RegisterType<TestRunQueue>()
-            .AsSelf()
-            .As<ITestRunQueue>()
-            .SingleInstance();
-
-        builder.RegisterServiceCollection(services =>
-        {
-            services.AddHostedService<TestRunBackgroundService>();
-        });
-
         builder.RegisterServiceCollection(services =>
         {
             services.AddHttpClient("openai", client =>

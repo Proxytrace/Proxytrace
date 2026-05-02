@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
-using Trsr.Api.Services;
+using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -69,7 +69,7 @@ public class TestRunsController : ControllerBase
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
         var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
         var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
-        var run = await runner.StartAsync(suite, endpoint, cancellationToken);
+        var run = await runner.RunInBackgroundAsync(suite, endpoint, cancellationToken);
         return AcceptedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
     }
 
