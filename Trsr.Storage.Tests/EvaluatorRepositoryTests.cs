@@ -52,6 +52,7 @@ public sealed class EvaluatorPersistenceTests : BaseTest<Module>
                 services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateNew>()("""{"type": "object"}"""),
             EvaluatorKind.Custom =>
                 services.GetRequiredService<ICustomEvaluator.CreateNew>()(
+                    "Test Evaluator",
                     new SystemMessage([Content.FromText("Evaluate.")]),
                     endpoint = await endpointGenerator.GetOrCreateAsync(CancellationToken)),
             EvaluatorKind.Helpfulness =>
@@ -101,7 +102,7 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
         var systemMessage = new SystemMessage([Content.FromText("Judge whether the response is correct.")]);
 
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var evaluator = factory(systemMessage, endpoint);
+        var evaluator = factory("Test Evaluator", systemMessage, endpoint);
         var added = await repository.AddAsync(evaluator, CancellationToken);
 
         var retrieved = await repository.GetAsync(added.Id, CancellationToken);
@@ -124,7 +125,7 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
 
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
         var exact = exactFactory();
-        var agentic = agenticFactory(new SystemMessage([Content.FromText("Evaluate.")]), endpoint);
+        var agentic = agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Evaluate.")]), endpoint);
         await repository.AddAsync(exact, CancellationToken);
         await repository.AddAsync(agentic, CancellationToken);
 
@@ -157,7 +158,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
         var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory(new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
 
         var suite = suiteFactory("Multi-eval suite", agent, [exact, agentic], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
@@ -185,7 +186,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
         var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory(new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
 
         var suite = suiteFactory("Get suite", agent, [exact, agentic], [testCase]);
         await suiteRepository.AddAsync(suite, CancellationToken);
@@ -219,7 +220,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
         var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory(new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
 
         var suite = suiteFactory("Update suite", agent, [exact], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
@@ -254,7 +255,7 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
         var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory(new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
 
         var suite = suiteFactory("Remove eval suite", agent, [exact, agentic], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);

@@ -36,6 +36,7 @@ export class Shell {
     { label: 'Traces', icon: 'activity', route: '/traces', badge: '60' },
     { label: 'Agents', icon: 'users', route: '/agents' },
     { label: 'Test Suites', icon: 'checkbox', route: '/suites' },
+    { label: 'Evaluators', icon: 'scale', route: '/evaluators' },
     { label: 'Test Runs', icon: 'play', route: '/runs' },
     { label: 'Proposals', icon: 'sparkles', route: '/proposals', badge: '2', badgeAccent: true },
     { label: 'Providers', icon: 'server', route: '/providers' },

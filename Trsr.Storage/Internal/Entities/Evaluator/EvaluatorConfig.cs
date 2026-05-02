@@ -78,7 +78,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     {
         var data = serializer.DeserializeRequired<CustomEvaluatorData>(stored.Data);
         var endpoint = await modelEndpoints.GetAsync(data.EndpointId, cancellationToken);
-        return createCustom(data.SystemMessage, endpoint, stored);
+        return createCustom(data.Name, data.SystemMessage, endpoint, stored);
     }
 
     private IJsonSchemaMatchEvaluator MapJsonSchemaMatch(EvaluatorEntity stored)
@@ -98,7 +98,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         string data = domain switch
         {
             ICustomEvaluator agentic =>
-                serializer.Serialize(new CustomEvaluatorData(agentic.SystemMessage, agentic.Endpoint.Id)),
+                serializer.Serialize(new CustomEvaluatorData(agentic.Name, agentic.SystemMessage, agentic.Endpoint.Id)),
             IAgenticEvaluator agentic =>
                 serializer.Serialize(new AgenticEvaluatorData(agentic.Endpoint.Id)),
             IExactMatchEvaluator =>
