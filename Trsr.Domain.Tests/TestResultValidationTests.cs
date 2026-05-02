@@ -26,7 +26,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         testResult.Should().NotBeNull();
         testResult.TestCase.Should().Be(testCase);
         testResult.ActualResponse.Should().Be(actualResponse);
-        testResult.Evaluation.Should().Be(Evaluation.Pass);
+        testResult.Evaluations.Should().Be(Evaluation.Pass);
         testResult.Duration.Should().Be(TimeSpan.FromMilliseconds(1500L));
         testResult.Id.Should().NotBe(Guid.Empty);
         testResult.CreatedAt.Should().NotBe(default);
@@ -82,7 +82,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var testResult = factory(testCase, actualResponse, Evaluation.Fail, TimeSpan.FromMilliseconds(2000L));
 
         // Assert
-        testResult.Evaluation.Should().Be(Evaluation.Fail);
+        testResult.Evaluations.Should().Be(Evaluation.Fail);
     }
 
     [TestMethod]
@@ -98,7 +98,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var testResult = factory(testCase, actualResponse, Evaluation.Undecided, TimeSpan.FromMilliseconds(3000L));
 
         // Assert
-        testResult.Evaluation.Should().Be(Evaluation.Undecided);
+        testResult.Evaluations.Should().Be(Evaluation.Undecided);
     }
 
     [TestMethod]
@@ -111,14 +111,14 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var existing = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluation, existing.Duration, existing);
+        var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluations, existing.Duration, existing);
 
         // Assert
         testResult.Should().NotBeNull();
         testResult.Id.Should().Be(existing.Id);
         testResult.TestCase.Should().Be(existing.TestCase);
         testResult.ActualResponse.Should().Be(existing.ActualResponse);
-        testResult.Evaluation.Should().Be(existing.Evaluation);
+        testResult.Evaluations.Should().Be(existing.Evaluations);
         testResult.Duration.Should().Be(existing.Duration);
         testResult.CreatedAt.Should().Be(existing.CreatedAt);
         testResult.UpdatedAt.Should().Be(existing.UpdatedAt);

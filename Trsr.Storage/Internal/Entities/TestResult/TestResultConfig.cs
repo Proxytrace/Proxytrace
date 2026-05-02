@@ -46,7 +46,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
         => factory(
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
-            evaluation: stored.Evaluation,
+            evaluations: stored.Evaluation,
             duration: TimeSpan.FromMilliseconds(stored.DurationMs),
             existing: stored);
 
@@ -56,7 +56,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             Id = domain.Id,
             TestCase = domain.TestCase.Id,
             ActualResponse = domain.ActualResponse,
-            Evaluation = domain.Evaluation,
+            Evaluation = domain.Evaluations,
             DurationMs = (long)domain.Duration.TotalMilliseconds,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

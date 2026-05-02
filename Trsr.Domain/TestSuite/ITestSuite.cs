@@ -31,7 +31,7 @@ public interface ITestSuite : IDomainEntity
     public IAgent Agent { get; }
 
     /// <summary>The evaluator used to score each test case result.</summary>
-    public IEvaluator Evaluator { get; }
+    public IReadOnlyCollection<IEvaluator> Evaluators { get; }
 
     /// <summary>The test cases included in this suite.</summary>
     public IReadOnlyCollection<ITestCase> TestCases { get; }

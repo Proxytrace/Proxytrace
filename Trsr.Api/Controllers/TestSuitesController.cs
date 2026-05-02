@@ -119,8 +119,8 @@ public class TestSuitesController : ControllerBase
             ? await agentRepository.GetAsync(request.AgentId.Value, cancellationToken)
             : existing.Agent;
 
-        IEvaluator evaluator = existing.Evaluator;
-        if (request.EvaluatorKind.HasValue && request.EvaluatorKind.Value != existing.Evaluator.Kind)
+        IEvaluator evaluator = existing.Evaluators;
+        if (request.EvaluatorKind.HasValue && request.EvaluatorKind.Value != existing.Evaluators.Kind)
         {
             var newEvaluator = createEvaluator();
             evaluator = await evaluatorRepository.AddAsync(newEvaluator, cancellationToken);
@@ -199,7 +199,7 @@ public class TestSuitesController : ControllerBase
 
         var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
         var updatedCases = existing.TestCases.Append(saved).ToArray();
-        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(savedSuite);
     }
@@ -233,7 +233,7 @@ public class TestSuitesController : ControllerBase
             return NotFound();
         var existing = await suiteRepository.GetAsync(id, cancellationToken);
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
-        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluator, updatedCases, existing);
+        var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -289,7 +289,7 @@ public class TestSuitesController : ControllerBase
         s.Name,
         s.Agent.Id,
         s.Agent.Name,
-        s.Evaluator.Kind,
+        s.Evaluators.Kind,
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
             tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),

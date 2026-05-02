@@ -27,7 +27,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         // Assert
         testSuite.Should().NotBeNull();
         testSuite.Agent.Should().Be(agent);
-        testSuite.Evaluator.Should().Be(evaluator);
+        testSuite.Evaluators.Should().Be(evaluator);
         testSuite.TestCases.Should().ContainSingle();
         testSuite.Id.Should().NotBe(Guid.Empty);
         testSuite.CreatedAt.Should().NotBe(default);
@@ -125,13 +125,13 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var existing = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var testSuite = createExisting(existing.Name, existing.Agent, existing.Evaluator, existing.TestCases, existing);
+        var testSuite = createExisting(existing.Name, existing.Agent, existing.Evaluators, existing.TestCases, existing);
 
         // Assert
         testSuite.Should().NotBeNull();
         testSuite.Id.Should().Be(existing.Id);
         testSuite.Agent.Should().Be(existing.Agent);
-        testSuite.Evaluator.Should().Be(existing.Evaluator);
+        testSuite.Evaluators.Should().Be(existing.Evaluators);
         testSuite.CreatedAt.Should().Be(existing.CreatedAt);
         testSuite.UpdatedAt.Should().Be(existing.UpdatedAt);
     }

@@ -134,7 +134,7 @@ public class TestRunsController : ControllerBase
 
     internal static TestRunDto ToDto(ITestRun r)
     {
-        var passed = r.TestResults.Count(x => x.Evaluation == Evaluation.Pass);
+        var passed = r.TestResults.Count(x => x.Evaluations == Evaluation.Pass);
         var total = r.TestResults.Count;
         var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
         long? durationMs = r.CompletedAt.HasValue
@@ -161,7 +161,7 @@ public class TestRunsController : ControllerBase
                 res.TestCase.Id,
                 SummarizeTestCase(res.TestCase),
                 string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
-                res.Evaluation,
+                res.Evaluations,
                 (long)res.Duration.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,

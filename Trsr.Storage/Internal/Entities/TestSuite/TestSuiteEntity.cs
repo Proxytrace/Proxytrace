@@ -16,7 +16,7 @@ internal record TestSuiteEntity : Entity
     public required Guid Agent { get; init; }
 
     /// <summary>
-    /// <see cref="ITestSuite.Evaluator"/>
+    /// <see cref="ITestSuite.Evaluators"/>
     /// </summary>
     public required Guid Evaluator { get; init; }
 

@@ -1,3 +1,4 @@
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
 
@@ -15,7 +16,7 @@ public interface ITestResult : IDomainEntity
     AssistantMessage ActualResponse { get; }
 
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
-    Evaluation Evaluation { get; }
+    IReadOnlyCollection<IEvaluation> Evaluations { get; }
 
     /// <summary>How long the LLM call took for this test case, in milliseconds.</summary>
     TimeSpan Duration { get; }
@@ -24,14 +25,21 @@ public interface ITestResult : IDomainEntity
     public delegate ITestResult CreateNew(
         ITestCase testCase,
         AssistantMessage actualResponse,
-        Evaluation evaluation, 
+        IReadOnlyCollection<IEvaluation> evaluations, 
         TimeSpan duration);
 
     /// <summary>Factory delegate for reconstituting an existing test result from persistence.</summary>
     public delegate ITestResult CreateExisting(
         ITestCase testCase,
         AssistantMessage actualResponse,
-        Evaluation evaluation,
+        IReadOnlyCollection<IEvaluation> evaluations,
         TimeSpan duration,
         IDomainEntityData existing);
+
+    /// <summary>
+    /// Adds the evaluation to the test result
+    /// </summary>
+    Task<ITestResult> AddEvaluationAsync(
+        IEvaluation evaluation,
+        CancellationToken cancellationToken = default);
 }

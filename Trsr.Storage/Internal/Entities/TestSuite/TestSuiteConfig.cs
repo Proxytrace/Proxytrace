@@ -70,7 +70,7 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             Id = domainEntity.Id,
             Name = domainEntity.Name,
             Agent = domainEntity.Agent.Id,
-            Evaluator = domainEntity.Evaluator.Id,
+            Evaluator = domainEntity.Evaluators.Id,
             TestCases = domainEntity.TestCases.Select(x => x.Id).ToArray(),
             CreatedAt = domainEntity.CreatedAt,
             UpdatedAt = domainEntity.UpdatedAt,

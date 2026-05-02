@@ -16,7 +16,7 @@ public record TestResultArrivedEvent(
         => new(
             run.Id,
             result.TestCase.Id,
-            result.Evaluation,
+            result.Evaluations,
             (long)result.Duration.TotalMilliseconds);
 }
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -7,34 +8,57 @@ namespace Trsr.Domain.TestResult.Internal;
 
 internal record TestResult : DomainEntity, ITestResult
 {
+    private readonly IRepository<ITestResult> repository;
     public ITestCase TestCase { get; }
     public AssistantMessage ActualResponse { get; }
-    public Evaluation Evaluation { get; }
+    public IReadOnlyCollection<IEvaluation> Evaluations { get; }
     public TimeSpan Duration { get; }
 
     public TestResult(
         ITestCase testCase, 
         AssistantMessage actualResponse,
-        Evaluation evaluation,
-        TimeSpan duration)
+        IReadOnlyCollection<IEvaluation> evaluations,
+        TimeSpan duration,
+        IRepository<ITestResult> repository) 
     {
+        this.repository = repository;
         TestCase = testCase;
         ActualResponse = actualResponse;
-        Evaluation = evaluation;
+        Evaluations = evaluations;
         Duration = duration;
     }
 
     public TestResult(
         ITestCase testCase,
         AssistantMessage actualResponse,
-        Evaluation evaluation, 
+        IReadOnlyCollection<IEvaluation> evaluations, 
         TimeSpan duration,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<ITestResult> repository) : base(existing)
     {
+        this.repository = repository;
         TestCase = testCase;
         ActualResponse = actualResponse;
-        Evaluation = evaluation;
+        Evaluations = evaluations;
         Duration = duration;
+    }
+    
+    public async Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<IEvaluation> updatedEvaluations =
+        [
+            ..Evaluations.Where(x => x.Evaluator.Id != evaluation.Evaluator.Id),
+            evaluation
+        ];
+
+        var updatedResults = new TestResult(
+            TestCase,
+            ActualResponse,
+            updatedEvaluations,
+            Duration,
+            this,
+            repository);
+        return await repository.UpdateAsync(updatedResults, cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -52,6 +76,14 @@ internal record TestResult : DomainEntity, ITestResult
         foreach (var result in ActualResponse.Validate(validationContext))
         {
             yield return result;
+        }
+
+        foreach (IEvaluation evaluation in Evaluations)
+        {
+            foreach (var result in evaluation.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
     }
 }

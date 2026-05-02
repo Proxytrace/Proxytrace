@@ -79,4 +79,10 @@ public static class Validation
         => value > maxValue
             ? new ValidationResult($"{memberName} must be less than or equal to {maxValue}")
             : ValidationResult.Success!;
+    
+    public static ValidationResult Defined<TEnum>(TEnum value, [CallerMemberName] string memberName = "")
+        where TEnum : struct, Enum
+        => !Enum.IsDefined(typeof(TEnum), value)
+            ? new ValidationResult($"{memberName} has an undefined value {value}")
+            : ValidationResult.Success!;
 }

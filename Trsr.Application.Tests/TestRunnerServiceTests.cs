@@ -79,7 +79,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
-        testRun.TestResults[0].Evaluation.Should().Be(Evaluation.Pass);
+        testRun.TestResults[0].Evaluations.Should().Be(Evaluation.Pass);
     }
 
     [TestMethod]
@@ -103,7 +103,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         // Assert
         testRun.TestResults.Should().HaveCount(1);
-        testRun.TestResults[0].Evaluation.Should().Be(Evaluation.Fail);
+        testRun.TestResults[0].Evaluations.Should().Be(Evaluation.Fail);
     }
 
     [TestMethod]
@@ -126,7 +126,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         // Assert – the result is retrievable from the repository with correct evaluation
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
-        storedResult.Evaluation.Should().Be(Evaluation.Pass);
+        storedResult.Evaluations.Should().Be(Evaluation.Pass);
         storedResult.ActualResponse.Should().Be(testRun.TestResults[0].ActualResponse);
     }
 
@@ -151,7 +151,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
         // Assert
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
-        storedResult.Evaluation.Should().Be(Evaluation.Fail);
+        storedResult.Evaluations.Should().Be(Evaluation.Fail);
     }
 
     [TestMethod]
