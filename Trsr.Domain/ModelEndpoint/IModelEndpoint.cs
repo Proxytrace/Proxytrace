@@ -1,4 +1,3 @@
-using Microsoft.Extensions.AI;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelProvider;
 

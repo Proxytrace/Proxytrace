@@ -1,10 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
-using Trsr.Domain.Message.Internal;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
@@ -13,8 +11,6 @@ namespace Trsr.Domain.Agent.Internal;
 
 internal record Agent : DomainEntity, IAgent
 {
-    private readonly ILogger<Agent> logger;
-    
     public string Name { get; }
     public IProject Project { get; }
     public SystemMessage SystemMessage { get; }
@@ -24,14 +20,12 @@ internal record Agent : DomainEntity, IAgent
         string name,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
-        IProject project,
-        ILogger<Agent> logger)
+        IProject project)
     {
         Name = name;
         SystemMessage = systemMessage;
         Project = project;
         Tools = tools;
-        this.logger = logger;
     }
 
     public Agent(
@@ -46,7 +40,6 @@ internal record Agent : DomainEntity, IAgent
         Project = project;
         SystemMessage = systemMessage;
         Tools = tools;
-        this.logger = logger;
     }
 
     public async Task<AssistantMessage> CompleteAsync(
