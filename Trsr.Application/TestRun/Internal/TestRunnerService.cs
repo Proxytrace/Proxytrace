@@ -100,7 +100,9 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
 
             foreach (IEvaluator evaluator in testRun.Suite.Evaluators)
             {
-                IEvaluation evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+                IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+                if(evaluation is null) 
+                    continue;
                 testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
             }
 

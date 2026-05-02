@@ -14,7 +14,7 @@ public interface IEvaluator : IDomainEntity
     /// <summary>
     /// Evaluates the actual output against the expected output, given the input conversation.
     /// </summary>
-    Task<IEvaluation> EvaluateAsync(
+    Task<IEvaluation?> EvaluateAsync(
         ITestResult testResult,
         CancellationToken cancellationToken = default);
 }

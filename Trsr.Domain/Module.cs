@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Message.Internal;
 using Trsr.Domain.Tools.Internal;
 
@@ -22,9 +21,6 @@ public sealed class Module : Autofac.Module
         // discover top-level domain entity/object interfaces — those that directly extend
         // IDomainEntity or IDomainObject, with no intermediate domain interface in between.
         var directBases = new HashSet<Type> { typeof(IDomainEntity), typeof(IDomainObject) };
-        // IEvaluator has multiple concrete implementations, so skip it from auto-discovery
-        // and register its variants explicitly below.
-        var skipInterfaces = new HashSet<Type> { typeof(IEvaluator) };
         var domainInterfaceTypes = typeof(Module).Assembly
             .GetTypes()
             .Where(t => t is { IsInterface: true } && t != typeof(IDomainEntity) && t != typeof(IDomainObject))
@@ -36,7 +32,6 @@ public sealed class Module : Autofac.Module
                 var direct = all.Where(i => !transitive.Contains(i));
                 return direct.Any(i => directBases.Contains(i));
             })
-            .Where(t => !skipInterfaces.Contains(t))
             .ToList();
 
         foreach (Type domainInterfaceType in domainInterfaceTypes)
@@ -46,8 +41,8 @@ public sealed class Module : Autofac.Module
 
         // Register evaluators explicitly — IEvaluator has multiple concrete variants so
         // auto-discovery can't pick the right default. ExactMatchEvaluator is the default IEvaluator.
-        RegisterEvaluators(builder);
-
+        // RegisterEvaluators(builder);
+        
         // Register generators for concrete domain object types (value objects without a repository)
         builder.RegisterAssemblyTypes(ThisAssembly)
             .Where(t => t is { IsAbstract: false, IsInterface: false })
@@ -66,34 +61,68 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
     }
 
-    private static void RegisterEvaluators(ContainerBuilder builder)
-    {
-        builder.RegisterType<ExactMatchEvaluator>()
-            .As<IEvaluator>()
-            .As<IExactMatchEvaluator>()
-            .OnActivated(context =>
-            {
-                if (context.Instance is IValidatableObject validatable)
-                    Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
-            });
-
-        builder.RegisterType<CustomEvaluator>().As<ICustomEvaluator>();
-
-        builder.RegisterType<EvaluatorGenerator>().As<IDomainEntityGenerator<IEvaluator>>();
-        builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<ICustomEvaluator>>();
-    }
+    // private static void RegisterEvaluators(ContainerBuilder builder)
+    // {
+    //     builder.RegisterType<ExactMatchEvaluator>()
+    //         .As<IEvaluator>()
+    //         .As<IExactMatchEvaluator>()
+    //         .OnActivated(context =>
+    //         {
+    //             if (context.Instance is IValidatableObject validatable)
+    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
+    //         });
+    //
+    //     builder.RegisterType<JsonSchemaMatchEvaluator>()
+    //         .As<IEvaluator>()
+    //         .As<IJsonSchemaMatchEvaluator>()
+    //         .OnActivated(context =>
+    //         {
+    //             if (context.Instance is IValidatableObject validatable)
+    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
+    //         });
+    //
+    //     builder.RegisterType<NumericMatchEvaluator>()
+    //         .As<IEvaluator>()
+    //         .As<INumericMatchEvaluator>()
+    //         .OnActivated(context =>
+    //         {
+    //             if (context.Instance is IValidatableObject validatable)
+    //                 Validator.ValidateObject(validatable, new ValidationContext(context.Instance), true);
+    //         });
+    //
+    //     builder.RegisterType<CustomEvaluator>().As<ICustomEvaluator>();
+    //     builder.RegisterType<HelpfulnessEvaluator>().As<IHelpfulnessEvaluator>();
+    //     builder.RegisterType<PolitenessEvaluator>().As<IPolitenessEvaluator>();
+    //     builder.RegisterType<SafetyClassifier>().As<ISafetyClassifier>();
+    //     builder.RegisterType<ToolUsageEvaluator>().As<IToolUsageEvaluator>();
+    //
+    //     builder.RegisterType<EvaluatorGenerator>().As<IDomainEntityGenerator<IEvaluator>>();
+    //     builder.RegisterType<AgenticEvaluatorGenerator>().As<IDomainEntityGenerator<ICustomEvaluator>>();
+    // }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
     {
         // find implementation of domainInterfaceType
-        var domainObjectType = typeof(Module).Assembly
+        var domainObjectTypes = typeof(Module).Assembly
             .GetTypes()
-            .FirstOrDefault(t => domainInterfaceType.IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
-        if (domainObjectType is null)
-        {
-            throw new InvalidOperationException($"No implementation of {domainInterfaceType.FullName} found");
-        }
+            .Where(t => domainInterfaceType.IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
+            .ToArray();
 
+        foreach (var domainObjectType in domainObjectTypes)
+        {
+            // find closes domainInterfaceType
+            // e.g. IEvaluator -> IAgenticEvaluator -> IPolitenessEvaluator should pick IPolitenessEvaluator
+            var correctDomainInterfaceType = domainObjectType.GetInterfaces()
+                .Where(domainInterfaceType.IsAssignableFrom)
+                .OrderByDescending(i => i.GetInterfaces().Length) // pick the most derived interface
+                .First();
+            
+            ConfigureEntity(builder, correctDomainInterfaceType, domainObjectType);
+        }
+    }
+
+    private static void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType, Type domainObjectType)
+    {
         builder.RegisterType(domainObjectType)
             .As(domainInterfaceType)
             .OnActivated(context =>

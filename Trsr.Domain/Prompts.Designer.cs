@@ -50,5 +50,23 @@ namespace Trsr.Application {
                 return ResourceManager.GetString("HelpfulnessEvaluator", resourceCulture);
             }
         }
+
+        internal static string PolitenessEvaluator {
+            get {
+                return ResourceManager.GetString("PolitenessEvaluator", resourceCulture);
+            }
+        }
+
+        internal static string SafetyClassifier {
+            get {
+                return ResourceManager.GetString("SafetyClassifier", resourceCulture);
+            }
+        }
+
+        internal static string ToolUsageEvaluator {
+            get {
+                return ResourceManager.GetString("ToolUsageEvaluator", resourceCulture);
+            }
+        }
     }
 }
