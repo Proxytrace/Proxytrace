@@ -1,5 +1,5 @@
-export enum TestRunStatus { Pending = 0, Running = 1, Completed = 2, Failed = 3 }
-export enum Evaluation { Pass = 0, Fail = 1, Undecided = 2 }
+export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed' }
+export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
 
 export interface PagedResult<T> {
   items: T[];
@@ -121,8 +121,13 @@ export interface TestResultDto {
   testCaseId: string;
   testCaseSummary: string;
   actualResponse: string;
-  evaluation: number; // 0=Pass, 1=Fail, 2=Undecided
+  evaluation: Evaluation;
   durationMs: number;
+}
+
+export interface TestCaseRowDto {
+  id: string;
+  summary: string;
 }
 
 export interface TestRunDto {
@@ -131,7 +136,7 @@ export interface TestRunDto {
   suiteName: string | null;
   agentId: string;
   agentName: string;
-  status: number; // 0=Pending, 1=Running, 2=Completed, 3=Failed
+  status: TestRunStatus;
   totalCases: number;
   passedCases: number;
   failedCases: number;
@@ -139,6 +144,7 @@ export interface TestRunDto {
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
+  testCases: TestCaseRowDto[];
   results: TestResultDto[];
   createdAt: string;
   updatedAt: string;

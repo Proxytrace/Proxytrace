@@ -17,9 +17,12 @@ public record TestRunDto(
     DateTimeOffset StartedAt,
     DateTimeOffset? CompletedAt,
     long? DurationMs,
+    IReadOnlyList<TestCaseRowDto> TestCases,
     IReadOnlyList<TestResultDto> Results,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+public record TestCaseRowDto(Guid Id, string Summary);
 
 public record TestResultDto(
     Guid Id,

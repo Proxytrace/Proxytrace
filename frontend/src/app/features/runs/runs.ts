@@ -1,6 +1,6 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { TestRunsService } from '../../core/api/test-runs.service';
-import { TestRunDto, TestRunStatus, Evaluation } from '../../core/api/models';
+import { TestRunDto, TestResultDto, TestRunStatus, Evaluation } from '../../core/api/models';
 import { firstValueFrom } from 'rxjs';
 
 const AGENT_COLORS: Record<string, string> = {
@@ -179,6 +179,10 @@ export class Runs implements OnInit, OnDestroy {
 
   evalColor(evaluation: Evaluation): string {
     return evaluation === Evaluation.Pass ? 'var(--success)' : evaluation === Evaluation.Fail ? 'var(--danger)' : 'var(--warn)';
+  }
+
+  resultByCase(run: TestRunDto, testCaseId: string): TestResultDto | null {
+    return run.results.find(r => r.testCaseId === testCaseId) ?? null;
   }
 
   progressPercent(run: TestRunDto): number {

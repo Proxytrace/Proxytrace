@@ -103,6 +103,7 @@ public class TestRunsController : ControllerBase
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
+            TestCases: r.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
             Results: r.TestResults.Select(res => new TestResultDto(
                 res.Id,
                 res.TestCase.Id,
