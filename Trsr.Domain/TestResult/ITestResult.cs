@@ -14,6 +14,11 @@ public interface ITestResult : IDomainEntity
 
     /// <summary>The actual assistant response produced during the test run.</summary>
     AssistantMessage ActualResponse { get; }
+    
+    /// <summary>
+    /// The overall score from combining all evaluations
+    /// </summary>
+    EvaluationScore? OverallScore { get; }
 
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     IReadOnlyCollection<IEvaluation> Evaluations { get; }

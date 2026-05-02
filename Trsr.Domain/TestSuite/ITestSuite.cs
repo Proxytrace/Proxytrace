@@ -13,14 +13,14 @@ public interface ITestSuite : IDomainEntity
     public delegate ITestSuite CreateNew(
         string name,
         IAgent agent,
-        IEvaluator evaluator,
+        IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases);
 
     /// <summary>Factory delegate for reconstituting an existing test suite from persistence.</summary>
     public delegate ITestSuite CreateExisting(
         string name,
         IAgent agent,
-        IEvaluator evaluator,
+        IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases,
         IDomainEntityData existing);
 

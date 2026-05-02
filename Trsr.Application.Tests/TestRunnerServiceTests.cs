@@ -5,6 +5,7 @@ using NSubstitute;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -21,7 +22,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 {
     private const string MatchingText = "Paris";
     private const string DifferentText = "London";
-    
+
 
     private static async Task<ITestSuite> BuildSuiteAsync(
         IServiceProvider services,
@@ -44,7 +45,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var testCase = createTestCase(input, expectedOutput);
         await testCaseRepo.AddAsync(testCase, ct);
 
-        var suite = createTestSuite("Test Suite", agent, evaluator, [testCase]);
+        var suite = createTestSuite("Test Suite", agent, [evaluator], [testCase]);
         await testSuiteRepo.AddAsync(suite, ct);
         return suite;
     }
@@ -58,11 +59,10 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
             .Returns(Task.FromResult(response));
         builder.RegisterInstance(handler);
     }
-    
+
     [TestMethod]
     public async Task RunAsync_WhenResponseMatchesExpected_ProducesPassResult()
     {
-        // Arrange – fake agent returns the matching text
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
         var services = GetServices(config =>
         {
@@ -74,42 +74,38 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var runner = services.GetRequiredService<ITestRunnerService>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        // Act
         var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
-        // Assert
         testRun.TestResults.Should().HaveCount(1);
-        testRun.TestResults[0].Evaluations.Should().Be(Evaluation.Pass);
+        testRun.TestResults[0].Evaluations.Should().ContainSingle()
+            .Which.Score.Should().Be(EvaluationScore.Acceptable);
     }
 
     [TestMethod]
     public async Task RunAsync_WhenResponseDiffersFromExpected_ProducesFailResult()
     {
-        // Arrange – fake agent returns text that does NOT match the expected output
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
         var actualOutput = new AssistantMessage([Content.FromText(DifferentText)], []);
         var services = GetServices(config =>
         {
             RegisterFakeModelClient(config, actualOutput);
         });
-        
+
         var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
 
         var runner = services.GetRequiredService<ITestRunnerService>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        // Act
         var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
-        // Assert
         testRun.TestResults.Should().HaveCount(1);
-        testRun.TestResults[0].Evaluations.Should().Be(Evaluation.Fail);
+        testRun.TestResults[0].Evaluations.Should().ContainSingle()
+            .Which.Score.Should().Be(EvaluationScore.Terrible);
     }
 
     [TestMethod]
     public async Task RunAsync_PassResult_IsPersistedToRepository()
     {
-        // Arrange
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
         var services = GetServices(config =>
         {
@@ -121,19 +117,17 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        // Act
         var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
-        // Assert – the result is retrievable from the repository with correct evaluation
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
-        storedResult.Evaluations.Should().Be(Evaluation.Pass);
+        storedResult.Evaluations.Should().ContainSingle()
+            .Which.Score.Should().Be(EvaluationScore.Acceptable);
         storedResult.ActualResponse.Should().Be(testRun.TestResults[0].ActualResponse);
     }
 
     [TestMethod]
     public async Task RunAsync_FailResult_IsPersistedToRepository()
     {
-        // Arrange
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
         var actualOutput = new AssistantMessage([Content.FromText(DifferentText)], []);
         var services = GetServices(config =>
@@ -146,18 +140,16 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        // Act
         var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
-        // Assert
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
-        storedResult.Evaluations.Should().Be(Evaluation.Fail);
+        storedResult.Evaluations.Should().ContainSingle()
+            .Which.Score.Should().Be(EvaluationScore.Terrible);
     }
 
     [TestMethod]
     public async Task RunAsync_TestRun_IsPersistedToRepository()
     {
-        // Arrange
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
         var services = GetServices(config =>
         {
@@ -169,10 +161,8 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        // Act
         var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
 
-        // Assert
         var storedRun = await runRepo.GetAsync(testRun.Id, CancellationToken);
         storedRun.Should().NotBeNull();
         storedRun.TestResults.Should().HaveCount(1);

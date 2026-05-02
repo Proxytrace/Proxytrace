@@ -6,9 +6,9 @@ using Trsr.Api.Dto.TestRuns;
 using Trsr.Application.Streaming;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
 
@@ -134,7 +134,7 @@ public class TestRunsController : ControllerBase
 
     internal static TestRunDto ToDto(ITestRun r)
     {
-        var passed = r.TestResults.Count(x => x.Evaluations == Evaluation.Pass);
+        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
         var total = r.TestResults.Count;
         var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
         long? durationMs = r.CompletedAt.HasValue
@@ -161,7 +161,7 @@ public class TestRunsController : ControllerBase
                 res.TestCase.Id,
                 SummarizeTestCase(res.TestCase),
                 string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
-                res.Evaluations,
+                res.Evaluations.Select(e => e.Score).ToArray(),
                 (long)res.Duration.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,

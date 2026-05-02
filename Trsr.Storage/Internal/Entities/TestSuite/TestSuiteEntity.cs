@@ -16,12 +16,12 @@ internal record TestSuiteEntity : Entity
     public required Guid Agent { get; init; }
 
     /// <summary>
-    /// <see cref="ITestSuite.Evaluators"/>
-    /// </summary>
-    public required Guid Evaluator { get; init; }
-
-    /// <summary>
     /// <see cref="ITestSuite.TestCases"/> - stored as JSON in the database
     /// </summary>
     public required IReadOnlyCollection<Guid> TestCases { get; init; }
+
+    /// <summary>
+    /// Navigation property for the many-to-many relationship with evaluators.
+    /// </summary>
+    public required ICollection<TestSuiteEvaluatorEntity> TestSuiteEvaluators { get; init; }
 }

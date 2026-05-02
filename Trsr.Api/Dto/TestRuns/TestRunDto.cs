@@ -1,4 +1,4 @@
-using Trsr.Domain.TestResult;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.TestRun;
 
 namespace Trsr.Api.Dto.TestRuns;
@@ -29,7 +29,7 @@ public record TestResultDto(
     Guid TestCaseId,
     string TestCaseSummary,
     string ActualResponse,
-    Evaluation Evaluation,
+    IReadOnlyList<EvaluationScore> Evaluations,
     long DurationMs);
 
 public record TestRunMessageDto(string Role, string Content);

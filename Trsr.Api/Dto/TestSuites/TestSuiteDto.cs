@@ -7,10 +7,12 @@ public record TestSuiteDto(
     string Name,
     Guid AgentId,
     string AgentName,
-    EvaluatorKind EvaluatorKind,
+    IReadOnlyList<EvaluatorDto> Evaluators,
     IReadOnlyList<TestCaseDto> TestCases,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
+
+public record EvaluatorDto(Guid Id, EvaluatorKind Kind);
 
 public record TestCaseDto(
     Guid Id,
@@ -22,7 +24,6 @@ public record TestSuiteMessageDto(string Role, string Content);
 public record CreateTestSuiteRequest(
     string Name,
     Guid AgentId,
-    EvaluatorKind EvaluatorKind,
     IReadOnlyList<CreateTestCaseRequest> TestCases);
 
 public record CreateTestCaseRequest(

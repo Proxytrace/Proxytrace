@@ -13,6 +13,7 @@ internal record TestResult : DomainEntity, ITestResult
     public AssistantMessage ActualResponse { get; }
     public IReadOnlyCollection<IEvaluation> Evaluations { get; }
     public TimeSpan Duration { get; }
+    public EvaluationScore? OverallScore { get; }
 
     public TestResult(
         ITestCase testCase, 
@@ -26,6 +27,7 @@ internal record TestResult : DomainEntity, ITestResult
         ActualResponse = actualResponse;
         Evaluations = evaluations;
         Duration = duration;
+        OverallScore = evaluations.CombineScores();
     }
 
     public TestResult(
@@ -41,6 +43,7 @@ internal record TestResult : DomainEntity, ITestResult
         ActualResponse = actualResponse;
         Evaluations = evaluations;
         Duration = duration;
+        OverallScore = evaluations.CombineScores();
     }
     
     public async Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)

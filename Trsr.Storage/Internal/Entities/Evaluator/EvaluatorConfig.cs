@@ -1,32 +1,36 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Async;
+using Trsr.Common.Serialization;
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Message;
 
 namespace Trsr.Storage.Internal.Entities.Evaluator;
 
 internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, IMapper<IEvaluator, EvaluatorEntity>
 {
-    private readonly IEvaluator.CreateExisting factory;
+    private readonly IExactMatchEvaluator.CreateExisting createExactMatch;
+    private readonly IAgenticEvaluator.CreateExisting createAgentic;
+    private readonly ISerializer serializer;
 
-    public EvaluatorConfig(IEvaluator.CreateExisting factory)
+    public EvaluatorConfig(
+        IExactMatchEvaluator.CreateExisting createExactMatch,
+        IAgenticEvaluator.CreateExisting createAgentic,
+        ISerializer serializer)
     {
-        this.factory = factory;
+        this.createExactMatch = createExactMatch;
+        this.createAgentic = createAgentic;
+        this.serializer = serializer;
     }
 
     public override void Configure(EntityTypeBuilder<EvaluatorEntity> builder)
     {
         builder.HasIndex(e => e.Kind);
     }
-
+    
     public Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)
-        => factory(stored).ToTaskResult();
+        => throw new NotImplementedException();
+
 
     public Task<EvaluatorEntity> Map(IEvaluator domain, CancellationToken cancellationToken = default)
-        => new EvaluatorEntity
-        {
-            Id = domain.Id,
-            Kind = domain.Kind,
-            CreatedAt = domain.CreatedAt,
-            UpdatedAt = domain.UpdatedAt,
-        }.ToTaskResult();
+        => throw new NotImplementedException();
 }

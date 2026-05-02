@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
@@ -13,20 +14,17 @@ public sealed class TestResultValidationTests : BaseTest<Module>
     [TestMethod]
     public async Task CreateNew_WithValidInputs_CreatesTestResult()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
         var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
-        // Act
-        var testResult = factory(testCase, actualResponse, Evaluation.Pass, TimeSpan.FromMilliseconds(1500L));
+        var testResult = factory(testCase, actualResponse, [], TimeSpan.FromMilliseconds(1500L));
 
-        // Assert
         testResult.Should().NotBeNull();
         testResult.TestCase.Should().Be(testCase);
         testResult.ActualResponse.Should().Be(actualResponse);
-        testResult.Evaluations.Should().Be(Evaluation.Pass);
+        testResult.Evaluations.Should().BeEmpty();
         testResult.Duration.Should().Be(TimeSpan.FromMilliseconds(1500L));
         testResult.Id.Should().NotBe(Guid.Empty);
         testResult.CreatedAt.Should().NotBe(default);
@@ -38,14 +36,12 @@ public sealed class TestResultValidationTests : BaseTest<Module>
     {
         try
         {
-            // Arrange
             IServiceProvider services = GetServices();
             var factory = services.GetRequiredService<ITestResult.CreateNew>();
             var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
-            // Act & Assert
             // ReSharper disable once NullableWarningSuppressionIsUsed
-            var action = () => factory(null!, actualResponse, Evaluation.Pass, TimeSpan.Zero);
+            var action = () => factory(null!, actualResponse, [], TimeSpan.Zero);
             action.Should().Throw<Exception>();
             return Task.CompletedTask;
         }
@@ -58,67 +54,47 @@ public sealed class TestResultValidationTests : BaseTest<Module>
     [TestMethod]
     public async Task CreateNew_WithNullActualResponse_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
 
-        // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(testCase, null!, Evaluation.Pass, TimeSpan.Zero);
+        var action = () => factory(testCase, null!, [], TimeSpan.Zero);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public async Task CreateNew_WithFailEvaluation_CreatesTestResult()
+    public async Task CreateNew_WithEvaluations_StoresEvaluations()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
+        var createEvaluation = services.GetRequiredService<IEvaluation.Create>();
+        var evaluatorGenerator = services.GetRequiredService<IDomainEntityGenerator<Trsr.Domain.Evaluator.IEvaluator>>();
         var testCase = await CreateTestCaseAsync(services);
-        var actualResponse = new AssistantMessage([Content.FromText("Wrong answer")], []);
+        var actualResponse = new AssistantMessage([Content.FromText("Answer")], []);
+        var evaluator = await evaluatorGenerator.GetOrCreateAsync(default);
+        var evaluation = createEvaluation(evaluator, EvaluationScore.Good, "Correct");
 
-        // Act
-        var testResult = factory(testCase, actualResponse, Evaluation.Fail, TimeSpan.FromMilliseconds(2000L));
+        var testResult = factory(testCase, actualResponse, [evaluation], TimeSpan.FromMilliseconds(2000L));
 
-        // Assert
-        testResult.Evaluations.Should().Be(Evaluation.Fail);
-    }
-
-    [TestMethod]
-    public async Task CreateNew_WithUndecidedEvaluation_CreatesTestResult()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<ITestResult.CreateNew>();
-        var testCase = await CreateTestCaseAsync(services);
-        var actualResponse = new AssistantMessage([Content.FromText("Unclear answer")], []);
-
-        // Act
-        var testResult = factory(testCase, actualResponse, Evaluation.Undecided, TimeSpan.FromMilliseconds(3000L));
-
-        // Assert
-        testResult.Evaluations.Should().Be(Evaluation.Undecided);
+        testResult.Evaluations.Should().ContainSingle().Which.Score.Should().Be(EvaluationScore.Good);
     }
 
     [TestMethod]
     public async Task CreateExisting_WithValidData_CreatesTestResult()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var createExisting = services.GetRequiredService<ITestResult.CreateExisting>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<ITestResult>>();
         var existing = await generator.CreateAsync(CancellationToken);
 
-        // Act
         var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluations, existing.Duration, existing);
 
-        // Assert
         testResult.Should().NotBeNull();
         testResult.Id.Should().Be(existing.Id);
         testResult.TestCase.Should().Be(existing.TestCase);
         testResult.ActualResponse.Should().Be(existing.ActualResponse);
-        testResult.Evaluations.Should().Be(existing.Evaluations);
+        testResult.Evaluations.Should().BeEquivalentTo(existing.Evaluations);
         testResult.Duration.Should().Be(existing.Duration);
         testResult.CreatedAt.Should().Be(existing.CreatedAt);
         testResult.UpdatedAt.Should().Be(existing.UpdatedAt);
@@ -127,17 +103,14 @@ public sealed class TestResultValidationTests : BaseTest<Module>
     [TestMethod]
     public async Task Id_IsUniqueForEachNewTestResult()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
         var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
-        // Act
-        var testResult1 = factory(testCase, actualResponse, Evaluation.Pass, TimeSpan.Zero);
-        var testResult2 = factory(testCase, actualResponse, Evaluation.Pass, TimeSpan.Zero);
+        var testResult1 = factory(testCase, actualResponse, [], TimeSpan.Zero);
+        var testResult2 = factory(testCase, actualResponse, [], TimeSpan.Zero);
 
-        // Assert
         testResult1.Id.Should().NotBe(testResult2.Id);
     }
 

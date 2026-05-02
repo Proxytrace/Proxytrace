@@ -2,8 +2,6 @@
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Domain.Message.Internal;
-using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.ModelEndpoint.Internal;
 using Trsr.Domain.Tools.Internal;
 
 namespace Trsr.Domain;
