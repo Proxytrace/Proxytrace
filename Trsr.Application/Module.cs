@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
 using Trsr.Application.Demo.Internal;
 using Trsr.Application.Ingestion.Internal;
+using Trsr.Application.Streaming;
+using Trsr.Application.Streaming.Internal;
 using Trsr.Application.TestRun.Internal;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain.Agent;
@@ -25,6 +27,14 @@ public sealed class Module : Autofac.Module
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
+
+        builder.RegisterType<TraceBroadcaster>()
+            .As<ITraceBroadcaster>()
+            .SingleInstance();
+        
+        builder.RegisterType<TestResultBroadcaster>()
+            .As<ITestResultBroadcaster>()
+            .SingleInstance();
 
         builder.RegisterType<AgentNameGenerator>()
             .As<IAgentNameGenerator>()

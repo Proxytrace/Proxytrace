@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -18,6 +19,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestRun.CreateNew createTestRun;
     private readonly ITestRunRepository testRunRepository;
     private readonly IRepository<ITestResult> testResultRepository;
+    private readonly ITestResultBroadcaster broadcaster;
     private readonly ILogger<TestRunnerService> logger;
     
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
@@ -32,12 +34,14 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestRun.CreateNew createTestRun,
         ITestRunRepository testRunRepository,
         IRepository<ITestResult> testResultRepository,
+        ITestResultBroadcaster broadcaster,
         ILogger<TestRunnerService> logger)
     {
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
         this.testRunRepository = testRunRepository;
         this.testResultRepository = testResultRepository;
+        this.broadcaster = broadcaster;
         this.logger = logger;
     }
     
@@ -96,8 +100,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             var testResult = createTestResult(testCase, response, evaluation, elapsed);
             await testResultRepository.AddAsync(testResult, cancellationToken);
             testRun = await testRun.SetTestResult(testResult, cancellationToken);
+            broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
         }
 
+        broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
         return testRun;
     }
     

@@ -1,7 +1,8 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { TestRunsService } from '../../core/api/test-runs.service';
-import { TestRunDto, TestResultDto, TestRunStatus, Evaluation } from '../../core/api/models';
-import { firstValueFrom } from 'rxjs';
+import { EventStreamService } from '../../core/api/event-stream.service';
+import { TestRunDto, TestResultDto, TestRunStatus, Evaluation, TestResultArrivedEvent, RunCompleteEvent } from '../../core/api/models';
 
 const AGENT_COLORS: Record<string, string> = {
   'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
@@ -19,6 +20,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly Evaluation = Evaluation;
 
   private readonly runsService = inject(TestRunsService);
+  private readonly eventStreamService = inject(EventStreamService);
 
   readonly runs = signal<TestRunDto[]>([]);
   readonly loading = signal(true);
@@ -29,6 +31,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
 
+  private runStreams = new Map<string, Subscription>();
   private pollInterval: ReturnType<typeof setInterval> | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -69,6 +72,8 @@ export class Runs implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopPolling();
+    for (const sub of this.runStreams.values()) sub.unsubscribe();
+    this.runStreams.clear();
     if (this.timerInterval) clearInterval(this.timerInterval);
   }
 
@@ -84,12 +89,47 @@ export class Runs implements OnInit, OnDestroy {
     } finally {
       this.loading.set(false);
     }
+    this.subscribeToActiveRuns();
     this.managePollState();
+  }
+
+  private subscribeToActiveRuns() {
+    for (const run of this.runs()) {
+      if (this.isActive(run) && !this.runStreams.has(run.id)) {
+        const sub = this.eventStreamService.testRunStream(run.id).subscribe({
+          next: (evt) => {
+            if (evt.type === 'test-result-arrived') this.handleTestResult(evt);
+            else if (evt.type === 'run-complete') this.handleRunComplete(evt);
+          },
+          error: () => this.runStreams.delete(run.id),
+        });
+        this.runStreams.set(run.id, sub);
+      }
+    }
+  }
+
+  private handleTestResult(evt: TestResultArrivedEvent) {
+    this.runs.update(runs => runs.map(r => {
+      if (r.id !== evt.runId) return r;
+      const passed = r.passedCases + (evt.evaluation === Evaluation.Pass ? 1 : 0);
+      const failed = r.failedCases + (evt.evaluation === Evaluation.Fail ? 1 : 0);
+      const total = r.totalCases;
+      return { ...r, passedCases: passed, failedCases: failed, passRate: total > 0 ? Math.round(passed / total * 100) : 0 };
+    }));
+  }
+
+  private handleRunComplete(evt: RunCompleteEvent) {
+    this.runStreams.get(evt.runId)?.unsubscribe();
+    this.runStreams.delete(evt.runId);
+    this.runsService.get(evt.runId).subscribe({
+      next: (updated) => this.runs.update(runs => runs.map(r => r.id === evt.runId ? updated : r)),
+    });
+    if (!this.hasPending()) this.stopPolling();
   }
 
   private managePollState() {
     if (this.hasPending() && !this.pollInterval) {
-      this.pollInterval = setInterval(() => this.loadRuns(), 2000);
+      this.pollInterval = setInterval(() => this.loadRuns(), 5000);
     } else if (!this.hasPending() && this.pollInterval) {
       this.stopPolling();
     }

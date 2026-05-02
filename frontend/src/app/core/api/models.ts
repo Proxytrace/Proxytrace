@@ -161,3 +161,29 @@ export interface AgentCallFilter {
   page?: number;
   pageSize?: number;
 }
+
+export interface TraceCreatedEvent {
+  id: string;
+  agentId: string;
+  agentName: string;
+  model: string;
+  provider: string;
+  createdAt: string;
+}
+
+export interface TestResultArrivedEvent {
+  type: 'test-result-arrived';
+  runId: string;
+  testCaseId: string;
+  evaluation: Evaluation;
+  durationMs: number;
+}
+
+export interface RunCompleteEvent {
+  type: 'run-complete';
+  runId: string;
+  status: TestRunStatus;
+  completedAt: string | null;
+}
+
+export type TestRunEvent = TestResultArrivedEvent | RunCompleteEvent;

@@ -1,6 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
+using Trsr.Application.Streaming;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Message;
@@ -15,21 +18,30 @@ namespace Trsr.Api.Controllers;
 [Route("api/test-runs")]
 public class TestRunsController : ControllerBase
 {
+    private static readonly JsonSerializerOptions SseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() },
+    };
+
     private readonly ITestRunRepository repository;
     private readonly ITestSuiteRepository suiteRepository;
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly ITestRunnerService runner;
+    private readonly ITestResultBroadcaster broadcaster;
 
     public TestRunsController(
         ITestRunRepository repository,
         ITestSuiteRepository suiteRepository,
         IRepository<IModelEndpoint> endpoints,
-        ITestRunnerService runner)
+        ITestRunnerService runner,
+        ITestResultBroadcaster broadcaster)
     {
         this.repository = repository;
         this.suiteRepository = suiteRepository;
         this.endpoints = endpoints;
         this.runner = runner;
+        this.broadcaster = broadcaster;
     }
 
     [HttpGet]
@@ -71,6 +83,46 @@ public class TestRunsController : ControllerBase
         var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
         var run = await runner.RunInBackgroundAsync(suite, endpoint, cancellationToken);
         return AcceptedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
+    }
+
+    [HttpGet("{id:guid}/stream")]
+    public async Task Stream(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+        {
+            Response.StatusCode = 404;
+            return;
+        }
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var reader = broadcaster.Subscribe(id, cancellationToken);
+
+        // Handle the case where the run already completed before we subscribed.
+        var run = await repository.GetAsync(id, cancellationToken);
+        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed)
+        {
+            var completeEvt = new RunCompleteEvent(run.Id, run.Status, run.CompletedAt);
+            var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
+            await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+            return;
+        }
+
+        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        {
+            var eventName = evt switch
+            {
+                TestResultArrivedEvent => "test-result-arrived",
+                RunCompleteEvent => "run-complete",
+                _ => "unknown",
+            };
+            var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
+            await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
     }
 
     [HttpDelete("{id:guid}")]
