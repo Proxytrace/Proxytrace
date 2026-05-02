@@ -75,7 +75,7 @@ internal record TestRun : DomainEntity, ITestRun
     {
         IReadOnlyList<ITestResult> updatedResults =
         [
-            ..TestResults.Where(x => x.TestCase.Id == testResult.TestCase.Id),
+            ..TestResults.Where(x => x.TestCase.Id != testResult.TestCase.Id),
             testResult
         ];
         

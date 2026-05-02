@@ -17,6 +17,10 @@ export class TestRunsService {
     return this.http.get<TestRunDto>(`/api/test-runs/${id}`);
   }
 
+  create(request: { testSuiteId: string; modelEndpointId: string }): Observable<TestRunDto> {
+    return this.http.post<TestRunDto>('/api/test-runs', request);
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`/api/test-runs/${id}`);
   }

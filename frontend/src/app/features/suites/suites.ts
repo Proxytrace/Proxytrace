@@ -1,12 +1,16 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TestSuitesService } from '../../core/api/test-suites.service';
+import { TestRunsService } from '../../core/api/test-runs.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
-import { AgentCallDto, AgentDto, TestRunDto, TestSuiteDto } from '../../core/api/models';
+import { ProvidersService, ModelEndpointDto } from '../../core/api/providers.service';
+import { AgentCallDto, AgentDto, TestSuiteDto } from '../../core/api/models';
 
 interface RunState { passRate: number; runCount: number; lastRunId: string; }
+
 
 // ─── Evaluators ──────────────────────────────────────────────────────────────
 
@@ -31,8 +35,11 @@ type CreateStep = 1 | 2 | 3 | 4;
 export class Suites implements OnInit {
   readonly Math = Math;
   private readonly suitesService = inject(TestSuitesService);
+  private readonly testRunsService = inject(TestRunsService);
   private readonly agentsService = inject(AgentsService);
   private readonly agentCallsService = inject(AgentCallsService);
+  private readonly providersService = inject(ProvidersService);
+  private readonly router = inject(Router);
 
   // ── list state ─────────────────────────────────────────────────────────────
   readonly loading = signal(true);
@@ -42,9 +49,11 @@ export class Suites implements OnInit {
 
   // ── run modal ──────────────────────────────────────────────────────────────
   readonly runTargetId = signal<string | null>(null);
-  readonly runModalState = signal<'idle' | 'running' | 'done' | 'error'>('idle');
-  readonly runResult = signal<TestRunDto | null>(null);
+  readonly runModalState = signal<'idle' | 'running' | 'error'>('idle');
   readonly runError = signal<string | null>(null);
+  readonly runEndpoints = signal<ModelEndpointDto[]>([]);
+  readonly runEndpointsLoading = signal(false);
+  readonly runSelectedEndpointId = signal<string | null>(null);
   private readonly runStateMap = signal<Record<string, RunState>>({});
 
   // ── delete modal ───────────────────────────────────────────────────────────
@@ -102,6 +111,9 @@ export class Suites implements OnInit {
   readonly createCanAdvanceStep2 = computed(() => this.createName().trim().length > 0);
   readonly createCanAdvanceStep3 = computed(() => this.createSelectedTraceIds().size > 0);
   readonly createCanSubmit = computed(() => this.createCanAdvanceStep3());
+
+  readonly runCanStart = computed(() =>
+    !!this.runSelectedEndpointId() && !this.runEndpointsLoading());
 
   ngOnInit() {
     this.loadSuites();
@@ -161,8 +173,18 @@ export class Suites implements OnInit {
   openRunModal(suiteId: string) {
     this.runTargetId.set(suiteId);
     this.runModalState.set('idle');
-    this.runResult.set(null);
     this.runError.set(null);
+    this.runSelectedEndpointId.set(null);
+    this.runEndpoints.set([]);
+    this.runEndpointsLoading.set(true);
+    this.providersService.getAllModels().subscribe({
+      next: endpoints => {
+        this.runEndpoints.set(endpoints);
+        if (endpoints.length === 1) this.runSelectedEndpointId.set(endpoints[0].id);
+        this.runEndpointsLoading.set(false);
+      },
+      error: () => { this.runEndpointsLoading.set(false); },
+    });
   }
 
   closeRunModal() {
@@ -172,23 +194,16 @@ export class Suites implements OnInit {
 
   startRun() {
     const target = this.runTarget();
-    if (!target) return;
+    const endpointId = this.runSelectedEndpointId();
+    if (!target || !endpointId) return;
     this.runModalState.set('running');
-    this.suitesService.run(target.id).subscribe({
-      next: result => {
-        this.runResult.set(result);
-        this.runStateMap.update(state => ({
-          ...state,
-          [target.id]: {
-            passRate: result.passRate,
-            runCount: (state[target.id]?.runCount ?? 0) + 1,
-            lastRunId: result.id.substring(0, 8),
-          },
-        }));
-        this.runModalState.set('done');
+    this.testRunsService.create({ testSuiteId: target.id, modelEndpointId: endpointId }).subscribe({
+      next: () => {
+        this.closeRunModal();
+        this.router.navigate(['/runs']);
       },
       error: err => {
-        this.runError.set(err?.error ?? 'Run failed. Ensure a model endpoint is configured.');
+        this.runError.set(err?.error ?? 'Run failed.');
         this.runModalState.set('error');
       },
     });

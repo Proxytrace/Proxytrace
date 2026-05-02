@@ -162,38 +162,15 @@
 <!-- ═══════════════════════════════════════════ Run modal ══════════════════════════════════════════════ -->
 @if (runTarget()) {
   <div (click)="closeRunModal()" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center;">
-    <div (click)="$event.stopPropagation()" style="width:480px; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
+    <div (click)="$event.stopPropagation()" style="width:500px; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
       <div style="height:3px;" [style.background]="'linear-gradient(90deg, ' + agentColor(runTarget()!.agentName) + ', ' + agentColor(runTarget()!.agentName) + '55)'"></div>
 
-      @if (runModalState() === 'done' && runResult()) {
-        <div style="padding:40px 32px; text-align:center;">
-          <div style="width:52px; height:52px; border-radius:15px; background:var(--success-subtle); border:1px solid rgba(16,185,129,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--success);">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <h3 style="font-size:17px; font-weight:700; letter-spacing:-0.01em; margin:0 0 8px;">Run complete</h3>
-          <p style="font-size:13px; color:var(--text-muted); margin:0 0 20px;">
-            Ran <strong style="color:var(--text-primary);">{{runResult()!.totalCases}} test cases</strong> against <strong style="color:var(--text-primary);">{{runTarget()!.agentName}}</strong>.
-          </p>
-          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:24px;">
-            @for (row of [
-              {label:'Pass rate', value: runResult()!.passRate + '%', color: runResult()!.passRate >= 75 ? 'var(--success)' : runResult()!.passRate >= 55 ? 'var(--warn)' : 'var(--danger)'},
-              {label:'Passed',    value: ''+runResult()!.passedCases, color: 'var(--success)'},
-              {label:'Failed',    value: ''+runResult()!.failedCases, color: runResult()!.failedCases > 0 ? 'var(--danger)' : 'var(--text-muted)'}
-            ]; track row.label) {
-              <div style="padding:10px 12px; background:var(--bg-card-2); border-radius:10px; text-align:center;">
-                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px;">{{row.label}}</div>
-                <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em;" [style.color]="row.color">{{row.value}}</div>
-              </div>
-            }
-          </div>
-          <button (click)="closeRunModal()" style="padding:10px 28px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff;">Close</button>
-        </div>
-      } @else if (runModalState() === 'error') {
+      @if (runModalState() === 'error') {
         <div style="padding:32px; text-align:center;">
           <div style="width:52px; height:52px; border-radius:15px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--danger);">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
-          <h3 style="font-size:16px; font-weight:700; margin:0 0 8px;">Run failed</h3>
+          <h3 style="font-size:16px; font-weight:700; margin:0 0 8px;">Failed to start run</h3>
           <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.6;">{{runError()}}</p>
           <div style="display:flex; gap:8px; justify-content:center;">
             <button (click)="closeRunModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary);">Close</button>
@@ -204,8 +181,10 @@
         <div style="padding:24px 28px;">
           <h3 style="font-size:16px; font-weight:700; margin:0 0 4px;">Start test run</h3>
           <p style="font-size:12.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.55;">
-            Run <strong style="color:var(--text-primary);">{{runTarget()!.testCases.length}} test cases</strong> from <strong style="color:var(--text-primary);">{{runTarget()!.name}}</strong> through the live proxy.
+            Run <strong style="color:var(--text-primary);">{{runTarget()!.testCases.length}} test cases</strong> from <strong style="color:var(--text-primary);">{{runTarget()!.name}}</strong> asynchronously. You'll be taken to the Runs page to track progress.
           </p>
+
+          <!-- Suite/Agent/Cases info -->
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:20px;">
             @for (row of [['Suite', runTarget()!.name], ['Agent', runTarget()!.agentName], ['Cases', ''+runTarget()!.testCases.length]]; track row[0]) {
               <div style="padding:9px 12px; background:var(--bg-card-2); border-radius:8px;">
@@ -214,13 +193,41 @@
               </div>
             }
           </div>
+
+          <!-- Model endpoint selector -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px;">Model Endpoint</div>
+            @if (runEndpointsLoading()) {
+              <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:10px 12px; background:var(--bg-card-2); border-radius:9px;">
+                <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+                Loading endpoints…
+              </div>
+            } @else if (!runEndpoints().length) {
+              <div style="padding:10px 12px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.25); border-radius:9px; font-size:12.5px; color:var(--danger);">
+                No model endpoints configured. Send at least one proxied LLM call first.
+              </div>
+            } @else {
+              <select [(ngModel)]="runSelectedEndpointId"
+                      [value]="runSelectedEndpointId()"
+                      (ngModelChange)="runSelectedEndpointId.set($event)"
+                      style="width:100%; box-sizing:border-box; padding:9px 12px; background:var(--bg-card-2); border:1px solid var(--hairline); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; font-family:inherit; cursor:pointer;">
+                <option [value]="null">Select an endpoint…</option>
+                @for (ep of runEndpoints(); track ep.id) {
+                  <option [value]="ep.id">{{ep.modelName}} — {{ep.providerName}}</option>
+                }
+              </select>
+            }
+          </div>
+
           <div style="display:flex; gap:8px; justify-content:flex-end;">
             <button (click)="closeRunModal()" style="padding:9px 18px; background:var(--bg-card-2); border-radius:10px; font-size:13px; font-weight:500; color:var(--text-secondary);">Cancel</button>
-            <button (click)="startRun()" [style.opacity]="runModalState() === 'running' ? '0.7' : '1'"
+            <button (click)="startRun()"
+                    [disabled]="!runCanStart() || runModalState() === 'running'"
+                    [style.opacity]="!runCanStart() || runModalState() === 'running' ? '0.5' : '1'"
                     style="padding:9px 20px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:10px; font-size:13px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:7px;">
               @if (runModalState() === 'running') {
                 <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
-                Running…
+                Starting…
               } @else {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 Start run

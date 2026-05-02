@@ -102,6 +102,10 @@ export class ProvidersService {
     return this.http.delete<void>(`/api/providers/${id}`);
   }
 
+  getAllModels(): Observable<ModelEndpointDto[]> {
+    return this.http.get<ModelEndpointDto[]>('/api/model-endpoints');
+  }
+
   getModels(providerId: string): Observable<ModelEndpointDto[]> {
     return this.http.get<ModelEndpointDto[]>(`/api/providers/${providerId}/models`);
   }
