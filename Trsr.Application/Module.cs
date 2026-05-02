@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
+using Trsr.Application.Ingestion.Internal;
 using Trsr.Application.TestRun;
 using Trsr.Application.TestRun.Internal;
 using Trsr.Common.DependencyInjection;
@@ -26,5 +27,19 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterServiceCollection(services 
             => services.AddHostedService(sc => sc.GetRequiredService<TestRunnerService>()));
+        
+        builder.RegisterType<OpenAiCallParser>()
+            .As<IOpenAiCallParser>()
+            .SingleInstance();
+
+        builder.RegisterType<AgentCallIngestor>()
+            .AsImplementedInterfaces()
+            .AsSelf()
+            .SingleInstance();
+
+        builder.RegisterServiceCollection(services =>
+        {
+            services.AddHostedService(sc => sc.GetRequiredService<AgentCallIngestor>());
+        });
     }
 }

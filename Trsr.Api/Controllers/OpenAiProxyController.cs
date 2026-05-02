@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Trsr.Api.Services;
+using Trsr.Application.Ingestion;
 using Trsr.Domain.ApiKey;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
@@ -41,18 +41,18 @@ public class OpenAiProxyController : ControllerBase
     ]);
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IAgentCallIngestionQueue ingestionQueue;
+    private readonly IAgentCallIngestor ingestor;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
-        IAgentCallIngestionQueue ingestionQueue,
+        IAgentCallIngestor ingestor,
         IApiKeyRepository apiKeyRepository,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
-        this.ingestionQueue = ingestionQueue;
+        this.ingestor = ingestor;
         this.apiKeyRepository = apiKeyRepository;
         this.logger = logger;
     }
@@ -203,7 +203,7 @@ public class OpenAiProxyController : ControllerBase
     {
         try
         {
-            await ingestionQueue.EnqueueAsync(
+            await ingestor.IngestInBackgroundAsync(
                 provider: provider,
                 project: project,
                 requestBody: requestBody,

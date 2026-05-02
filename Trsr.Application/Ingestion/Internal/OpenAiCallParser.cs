@@ -6,7 +6,7 @@ using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Ingestion.Internal;
 
 internal class OpenAiCallParser : IOpenAiCallParser
 {

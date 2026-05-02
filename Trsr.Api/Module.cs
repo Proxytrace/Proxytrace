@@ -1,8 +1,5 @@
 using Autofac;
-using Microsoft.Extensions.DependencyInjection;
-using Trsr.Api.Services;
 using Trsr.Api.Services.Internal;
-using Trsr.Application;
 using Trsr.Common.DependencyInjection;
 using Trsr.Storage;
 
@@ -36,23 +33,7 @@ internal sealed class Module : Autofac.Module
         var upstreamBaseUrl = configuration.GetSection("ModelProvider").GetValue<string>("UpstreamBaseUrl")
                               ?? throw new InvalidOperationException("Configuration 'ModelProvider:UpstreamBaseUrl' is required. ");
         
-        builder.RegisterType<OpenAiCallParser>()
-            .As<IOpenAiCallParser>()
-            .SingleInstance();
-
-        builder.RegisterType<AgentCallIngestionService>()
-            .As<IAgentCallIngestionService>()
-            .InstancePerDependency();
-
-        builder.RegisterType<AgentCallIngestionQueue>()
-            .AsSelf()
-            .As<IAgentCallIngestionQueue>()
-            .SingleInstance();
-
-        builder.RegisterServiceCollection(services =>
-        {
-            services.AddHostedService<AgentCallIngestionWorker>();
-        });
+        
 
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
@@ -96,13 +77,9 @@ internal sealed class Module : Autofac.Module
             return StorageConfiguration.Postgres(connectionString);
         }
         
-        if (IsSqliteConnectionString(connectionString))
-        {
-            return StorageConfiguration.Sqlite(connectionString);
-        }
-        
-        // Default to SQL Server
-        return StorageConfiguration.SqlServer(connectionString);
+        return IsSqliteConnectionString(connectionString) 
+            ? StorageConfiguration.Sqlite(connectionString) 
+            : StorageConfiguration.SqlServer(connectionString);
     }
 
     // Npgsql connection strings use "Host=" whereas SQL Server uses "Server=" / "Data Source="

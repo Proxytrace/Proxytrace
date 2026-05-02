@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Trsr.Domain.ModelProvider;
 
-namespace Trsr.Api.Services.Internal;
+namespace Trsr.Application.Ingestion.Internal;
 
 internal interface IOpenAiCallParser
 {
