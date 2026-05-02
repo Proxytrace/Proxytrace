@@ -2,6 +2,7 @@ using System.Net;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -25,6 +26,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly IModelEndpointRepository endpointRepository;
+    private readonly ITraceBroadcaster traceBroadcaster;
     private readonly ILogger<AgentCallIngestor> logger;
     
     private readonly Channel<IngestJob> channel = Channel.CreateUnbounded<IngestJob>(
@@ -44,6 +46,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         IModelEndpointRepository endpointRepository,
+        ITraceBroadcaster traceBroadcaster,
         ILogger<AgentCallIngestor> logger)
     {
         this.agentCallRepository = agentCallRepository;
@@ -55,6 +58,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         this.parser = parser;
         this.agentRepository = agentRepository;
         this.endpointRepository = endpointRepository;
+        this.traceBroadcaster = traceBroadcaster;
         this.logger = logger;
     }
     
@@ -224,6 +228,14 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     errorMessage: parsed.ErrorMessage);
 
                 persistedCall = await agentCallRepository.AddAsync(call, cancellationToken);
+
+                traceBroadcaster.Publish(new TraceCreatedEvent(
+                    persistedCall.Id,
+                    persistedCall.Agent.Id,
+                    persistedCall.Agent.Name,
+                    persistedCall.Endpoint.Model.Name,
+                    persistedCall.Endpoint.Provider.Name,
+                    persistedCall.CreatedAt));
             }
 
             await CreatePendingToolCallsAsync(persistedCall, parsed.Response, cancellationToken);

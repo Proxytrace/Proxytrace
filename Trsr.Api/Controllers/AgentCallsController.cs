@@ -1,8 +1,10 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
 using Trsr.Api.Dto.Agents;
+using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
@@ -14,11 +16,19 @@ namespace Trsr.Api.Controllers;
 [Route("api/agent-calls")]
 public class AgentCallsController : ControllerBase
 {
-    private readonly IAgentCallRepository repository;
+    private static readonly JsonSerializerOptions SseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
-    public AgentCallsController(IAgentCallRepository repository)
+    private readonly IAgentCallRepository repository;
+    private readonly ITraceBroadcaster traceBroadcaster;
+
+    public AgentCallsController(IAgentCallRepository repository, ITraceBroadcaster traceBroadcaster)
     {
         this.repository = repository;
+        this.traceBroadcaster = traceBroadcaster;
     }
 
     [HttpGet]
@@ -46,6 +56,23 @@ public class AgentCallsController : ControllerBase
             return NotFound();
         var call = await repository.GetAsync(id, cancellationToken);
         return ToDto(call);
+    }
+
+    [HttpGet("stream")]
+    public async Task Stream(CancellationToken cancellationToken)
+    {
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var reader = traceBroadcaster.Subscribe(cancellationToken);
+
+        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        {
+            var data = JsonSerializer.Serialize(evt, SseOptions);
+            await Response.WriteAsync($"event: trace-created\ndata: {data}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
     }
 
     [HttpDelete("{id:guid}")]

@@ -1,15 +1,16 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { StatisticsService } from '../../core/api/statistics.service';
 import { HealthService } from '../../core/api/health.service';
+import { EventStreamService } from '../../core/api/event-stream.service';
 import { AgentCallDto, AgentDto, LatencyStatDto } from '../../core/api/models';
 import { TraceDetail } from './trace-detail/trace-detail';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
 const PAGE_SIZE = 20;
-const POLL_INTERVAL_MS = 5000;
 const HIST_W = 280, HIST_H = 56, HIST_BUCKETS = 10;
 
 interface HistBar { x: number; y: number; w: number; h: number; label: string; pct: number; count: number; }
@@ -24,6 +25,7 @@ export class Traces implements OnInit, OnDestroy {
   private readonly agentCallsService = inject(AgentCallsService);
   private readonly agentsService = inject(AgentsService);
   private readonly statisticsService = inject(StatisticsService);
+  private readonly eventStreamService = inject(EventStreamService);
   readonly health = inject(HealthService);
 
   readonly searchQuery = signal('');
@@ -49,7 +51,7 @@ export class Traces implements OnInit, OnDestroy {
   readonly latencyStats = signal<LatencyStatDto | null>(null);
   readonly hoveredBar = signal<HistBar | null>(null);
 
-  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private traceStreamSub: Subscription | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalPages = computed(() => Math.ceil(this.total() / PAGE_SIZE));
@@ -77,11 +79,14 @@ export class Traces implements OnInit, OnDestroy {
     this.agentsService.getAll().subscribe({ next: (r) => this.agents.set(r.items) });
     this.loadStats();
     this.load();
-    this.pollTimer = setInterval(() => this.refresh(), POLL_INTERVAL_MS);
+    this.traceStreamSub = this.eventStreamService.traceStream().subscribe({
+      next: () => this.refresh(),
+      error: () => {},
+    });
   }
 
   ngOnDestroy() {
-    if (this.pollTimer) clearInterval(this.pollTimer);
+    this.traceStreamSub?.unsubscribe();
   }
 
   onSearch(event: Event) {
