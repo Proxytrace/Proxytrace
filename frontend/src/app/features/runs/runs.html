@@ -326,10 +326,10 @@
 
                     <!-- Latency -->
                     <span style="font-family:'JetBrains Mono',monospace; font-size:11px;"
-                          [style.color]="(!res && hasStarted) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
+                          [style.color]="(!res && hasStarted && isActive(run)) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
                       @if (res) {
                         {{formatLatency(res.durationMs)}}
-                      } @else if (!res && hasStarted) {
+                      } @else if (!res && hasStarted && isActive(run)) {
                         {{caseElapsed(tc.id)}}
                       } @else {
                         —
