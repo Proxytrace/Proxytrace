@@ -4,6 +4,8 @@ using Trsr.Domain.TestRun;
 
 namespace Trsr.Api.Dto.TestRuns;
 
+public record RunEvaluatorDto(Guid Id, EvaluatorKind Kind, string Name);
+
 public record EvaluationResultDto(
     Guid EvaluatorId,
     EvaluatorKind EvaluatorKind,
@@ -22,7 +24,7 @@ public record TestRunDto(
     int PassedCases,
     int FailedCases,
     double PassRate,
-    int EvaluatorCount,
+    IReadOnlyList<RunEvaluatorDto> Evaluators,
     DateTimeOffset StartedAt,
     DateTimeOffset? CompletedAt,
     long? DurationMs,

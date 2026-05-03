@@ -116,6 +116,9 @@ public class TestRunsController : ControllerBase
         {
             var eventName = evt switch
             {
+                TestCaseStartedEvent => "test-case-started",
+                InferenceDoneEvent => "inference-done",
+                EvaluationArrivedEvent => "evaluation-arrived",
                 TestResultArrivedEvent => "test-result-arrived",
                 RunCompleteEvent => "run-complete",
                 _ => "unknown",
@@ -153,7 +156,7 @@ public class TestRunsController : ControllerBase
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
-            EvaluatorCount: r.Suite.Evaluators.Count,
+            Evaluators: r.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,

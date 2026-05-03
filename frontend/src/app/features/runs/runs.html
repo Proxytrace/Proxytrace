@@ -162,8 +162,8 @@
                         [style.background]="statusColor(run.status) + '18'">
                     {{statusLabel(run.status)}}
                   </span>
-                  @if (run.evaluatorCount > 0) {
-                    <span style="font-size:11px; color:var(--text-muted);">{{run.evaluatorCount}} evaluator{{run.evaluatorCount !== 1 ? 's' : ''}}</span>
+                  @if (run.evaluators.length > 0) {
+                    <span style="font-size:11px; color:var(--text-muted);">{{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}}</span>
                   }
                 </div>
               </div>
@@ -196,7 +196,7 @@
                 </div>
                 @if (run.totalCases > 0) {
                   <div style="font-size:12px; color:var(--text-secondary);">
-                    {{run.passedCases + run.failedCases}} of {{run.totalCases}} cases evaluated · {{run.evaluatorCount}} evaluator{{run.evaluatorCount !== 1 ? 's' : ''}} per case
+                    {{run.passedCases + run.failedCases}} of {{run.totalCases}} cases evaluated · {{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}} per case
                   </div>
                 } @else {
                   <div style="font-size:12px; color:var(--text-secondary);">Initialising…</div>
@@ -253,23 +253,41 @@
                        [style.cursor]="res ? 'pointer' : 'default'"
                        (click)="res && toggleCase(tc.id)">
 
-                    <!-- Test case name + icon -->
-                    <div style="display:flex; align-items:center; gap:7px; min-width:0;">
-                      @if (res) {
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                             style="flex-shrink:0; transition:transform 0.2s;"
-                             [style.transform]="isCaseExpanded(tc.id) ? 'rotate(90deg)' : 'none'">
-                          <polyline points="9 18 15 12 9 6"/>
-                        </svg>
-                      } @else if (isActive(run)) {
-                        <span style="width:10px; height:10px; border-radius:50%; border:2px solid rgba(139,92,246,0.25); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; flex-shrink:0; display:inline-block;"></span>
-                      } @else {
-                        <span style="width:6px; height:6px; border-radius:50%; background:var(--text-muted); flex-shrink:0; display:inline-block;"></span>
+                    <!-- Test case name + progress (for active) or chevron (for done) -->
+                    <div style="display:flex; flex-direction:column; gap:5px; min-width:0; padding-right:8px;">
+                      <div style="display:flex; align-items:center; gap:7px; min-width:0;">
+                        @if (res) {
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                               style="flex-shrink:0; transition:transform 0.2s;"
+                               [style.transform]="isCaseExpanded(tc.id) ? 'rotate(90deg)' : 'none'">
+                            <polyline points="9 18 15 12 9 6"/>
+                          </svg>
+                        } @else {
+                          <span style="width:10px; height:10px; flex-shrink:0; display:inline-block;"></span>
+                        }
+                        <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
+                      </div>
+
+                      @if (!res && isActive(run)) {
+                        @let steps = caseProgressSteps(run, tc.id);
+                        @let action = caseProgressAction(run, tc.id);
+                        <!-- Segmented step bar -->
+                        <div style="display:flex; gap:3px; align-items:center; padding-left:17px;">
+                          @for (step of steps; track $index) {
+                            <div style="flex:1; height:3px; border-radius:100px; transition:background 0.3s;"
+                                 [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
+                                 [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'">
+                            </div>
+                          }
+                        </div>
+                        <!-- Current action label -->
+                        <span style="font-size:10.5px; color:var(--accent-hover); font-weight:500; padding-left:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                          {{action}}
+                        </span>
                       }
-                      <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
                     </div>
 
-                    <!-- Result badge / progress -->
+                    <!-- Result badge -->
                     <span>
                       @if (res) {
                         @let eval = resultEvaluation(res);
@@ -283,12 +301,7 @@
                           }
                           {{evalLabel(eval)}}
                         </span>
-                      } @else if (isActive(run)) {
-                        <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--accent-hover); font-weight:500;">
-                          <span style="width:10px; height:10px; border-radius:50%; border:2px solid rgba(139,92,246,0.25); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; flex-shrink:0; display:inline-block;"></span>
-                          {{run.evaluatorCount}} evaluator{{run.evaluatorCount !== 1 ? 's' : ''}}
-                        </span>
-                      } @else {
+                      } @else if (!isActive(run)) {
                         <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">
                           Not run
                         </span>
@@ -394,6 +407,10 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+@keyframes stepPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }

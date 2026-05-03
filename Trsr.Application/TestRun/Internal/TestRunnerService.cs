@@ -88,22 +88,35 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         var suite = testRun.Suite;
         foreach (ITestCase testCase in suite.TestCases)
         {
+            broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testCase.Id));
+
             var stopwatch = Stopwatch.StartNew();
             AssistantMessage response = await suite.Agent.CompleteAsync(
                 testCase.Input,
                 testRun.Endpoint,
                 cancellationToken);
             TimeSpan elapsed = stopwatch.Elapsed;
-            
+
+            broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testCase.Id));
+
             var testResult = createTestResult(testCase, response, [], elapsed);
             await testResultRepository.AddAsync(testResult, cancellationToken);
 
             foreach (IEvaluator evaluator in testRun.Suite.Evaluators)
             {
                 IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
-                if(evaluation is null) 
+                if (evaluation is null)
                     continue;
                 testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
+                broadcaster.Publish(new EvaluationArrivedEvent(
+                    testRun.Id,
+                    testCase.Id,
+                    new EvaluationEventData(
+                        evaluator.Id,
+                        evaluator.Kind,
+                        TestResultArrivedEvent.GetEvaluatorName(evaluator),
+                        evaluation.Score,
+                        evaluation.Reasoning)));
             }
 
             testRun = await testRun.SetTestResult(testResult, cancellationToken);

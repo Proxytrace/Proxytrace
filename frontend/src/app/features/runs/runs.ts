@@ -2,7 +2,11 @@ import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular
 import { Subscription, firstValueFrom } from 'rxjs';
 import { TestRunsService } from '../../core/api/test-runs.service';
 import { EventStreamService } from '../../core/api/event-stream.service';
-import { TestRunDto, TestResultDto, TestRunStatus, Evaluation, TestResultArrivedEvent, RunCompleteEvent } from '../../core/api/models';
+import {
+  TestRunDto, TestResultDto, TestRunStatus, Evaluation,
+  TestCaseStartedEvent, InferenceDoneEvent, EvaluationArrivedEvent,
+  TestResultArrivedEvent, RunCompleteEvent, EvaluationResultDto,
+} from '../../core/api/models';
 
 const AGENT_COLORS: Record<string, string> = {
   'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
@@ -10,15 +14,17 @@ const AGENT_COLORS: Record<string, string> = {
 };
 
 const EVALUATOR_KIND_COLORS: Record<string, string> = {
-  Custom: '#8b5cf6',
-  ExactMatch: '#06b6d4',
-  NumericMatch: '#67e8f9',
-  Helpfulness: '#8b5cf6',
-  Politeness: '#8b5cf6',
-  JsonSchemaMatch: '#06b6d4',
-  Safety: '#ef4444',
-  ToolUsage: '#10b981',
+  Custom: '#8b5cf6', ExactMatch: '#06b6d4', NumericMatch: '#67e8f9',
+  Helpfulness: '#8b5cf6', Politeness: '#8b5cf6', JsonSchemaMatch: '#06b6d4',
+  Safety: '#ef4444', ToolUsage: '#10b981',
 };
+
+interface CaseProgress {
+  phase: 'inference' | 'evaluating';
+  completedSteps: number;
+}
+
+export type StepStatus = 'done' | 'active' | 'pending';
 
 @Component({
   selector: 'app-runs',
@@ -42,6 +48,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
   readonly expandedCaseIds = signal<Set<string>>(new Set());
+  readonly caseProgress = signal<Map<string, CaseProgress>>(new Map());
 
   private runStreams = new Map<string, Subscription>();
   private pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -110,7 +117,10 @@ export class Runs implements OnInit, OnDestroy {
       if (this.isActive(run) && !this.runStreams.has(run.id)) {
         const sub = this.eventStreamService.testRunStream(run.id).subscribe({
           next: (evt) => {
-            if (evt.type === 'test-result-arrived') this.handleTestResult(evt);
+            if (evt.type === 'test-case-started') this.handleTestCaseStarted(evt);
+            else if (evt.type === 'inference-done') this.handleInferenceDone(evt);
+            else if (evt.type === 'evaluation-arrived') this.handleEvaluationArrived(evt);
+            else if (evt.type === 'test-result-arrived') this.handleTestResult(evt);
             else if (evt.type === 'run-complete') this.handleRunComplete(evt);
           },
           error: () => this.runStreams.delete(run.id),
@@ -118,6 +128,27 @@ export class Runs implements OnInit, OnDestroy {
         this.runStreams.set(run.id, sub);
       }
     }
+  }
+
+  private handleTestCaseStarted(evt: TestCaseStartedEvent) {
+    this.caseProgress.update(m => new Map(m).set(evt.testCaseId, { phase: 'inference', completedSteps: 0 }));
+  }
+
+  private handleInferenceDone(evt: InferenceDoneEvent) {
+    this.caseProgress.update(m => {
+      const next = new Map(m);
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: 1 });
+      return next;
+    });
+  }
+
+  private handleEvaluationArrived(evt: EvaluationArrivedEvent) {
+    this.caseProgress.update(m => {
+      const next = new Map(m);
+      const p = next.get(evt.testCaseId);
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: (p?.completedSteps ?? 1) + 1 });
+      return next;
+    });
   }
 
   private handleTestResult(evt: TestResultArrivedEvent) {
@@ -134,12 +165,6 @@ export class Runs implements OnInit, OnDestroy {
   private scoreToEvaluation(overallScore: string | null, evaluationCount: number): Evaluation {
     if (!overallScore || !evaluationCount) return Evaluation.Undecided;
     return ['Acceptable', 'Good', 'Excellent'].includes(overallScore) ? Evaluation.Pass : Evaluation.Fail;
-  }
-
-  resultEvaluation(result: TestResultDto): Evaluation {
-    if (!result.evaluations.length) return Evaluation.Undecided;
-    const passing = ['Acceptable', 'Good', 'Excellent'];
-    return result.evaluations.every(e => passing.includes(e.score)) ? Evaluation.Pass : Evaluation.Fail;
   }
 
   private handleRunComplete(evt: RunCompleteEvent) {
@@ -172,6 +197,34 @@ export class Runs implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  // Progress bar: returns one entry per step (inference + each evaluator)
+  caseProgressSteps(run: TestRunDto, testCaseId: string): StepStatus[] {
+    const total = run.evaluators.length + 1;
+    const steps = new Array<StepStatus>(total).fill('pending');
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return steps;
+
+    if (p.phase === 'inference') {
+      steps[0] = 'active';
+      return steps;
+    }
+
+    const done = p.completedSteps; // 1 after inference, +1 per evaluator
+    for (let i = 0; i < Math.min(done, total); i++) steps[i] = 'done';
+    if (done < total) steps[done] = 'active';
+    return steps;
+  }
+
+  // Label for the step currently in progress
+  caseProgressAction(run: TestRunDto, testCaseId: string): string {
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return 'Waiting';
+    if (p.phase === 'inference') return 'Inference';
+    // completedSteps=1 → evaluators[0] is running
+    const idx = p.completedSteps - 1;
+    return idx < run.evaluators.length ? run.evaluators[idx].name : 'Done';
+  }
+
   toggleCase(id: string) {
     this.expandedCaseIds.update(set => {
       const next = new Set(set);
@@ -185,13 +238,17 @@ export class Runs implements OnInit, OnDestroy {
     return this.expandedCaseIds().has(id);
   }
 
+  resultEvaluation(result: TestResultDto): Evaluation {
+    if (!result.evaluations.length) return Evaluation.Undecided;
+    const passing = ['Acceptable', 'Good', 'Excellent'];
+    return result.evaluations.every(e => passing.includes(e.score)) ? Evaluation.Pass : Evaluation.Fail;
+  }
+
   scoreColor(score: string): string {
     switch (score) {
-      case 'Excellent':
-      case 'Good': return 'var(--success)';
+      case 'Excellent': case 'Good': return 'var(--success)';
       case 'Acceptable': return 'var(--warn)';
-      case 'Bad':
-      case 'Terrible': return 'var(--danger)';
+      case 'Bad': case 'Terrible': return 'var(--danger)';
       default: return 'var(--text-muted)';
     }
   }

@@ -15,6 +15,19 @@ public record EvaluationEventData(
 
 public abstract record TestRunEvent(Guid RunId);
 
+public record TestCaseStartedEvent(
+    Guid RunId,
+    Guid TestCaseId) : TestRunEvent(RunId);
+
+public record InferenceDoneEvent(
+    Guid RunId,
+    Guid TestCaseId) : TestRunEvent(RunId);
+
+public record EvaluationArrivedEvent(
+    Guid RunId,
+    Guid TestCaseId,
+    EvaluationEventData Evaluation) : TestRunEvent(RunId);
+
 public record TestResultArrivedEvent(
     Guid RunId,
     Guid TestCaseId,
@@ -35,7 +48,7 @@ public record TestResultArrivedEvent(
                 e.Reasoning)).ToArray(),
             (long)result.Duration.TotalMilliseconds);
 
-    private static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
+    internal static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
     {
         ICustomEvaluator custom => custom.Name,
         _ => evaluator.Kind switch
@@ -68,6 +81,6 @@ public interface ITestResultBroadcaster
 {
     ChannelReader<TestRunEvent> Subscribe(Guid runId, CancellationToken cancellationToken);
 
-    void Publish(TestResultArrivedEvent evt);
+    void Publish(TestRunEvent evt);
     void PublishComplete(RunCompleteEvent evt);
 }

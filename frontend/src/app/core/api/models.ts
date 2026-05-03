@@ -178,6 +178,12 @@ export interface TestCaseRowDto {
   summary: string;
 }
 
+export interface RunEvaluatorDto {
+  id: string;
+  kind: EvaluatorKind;
+  name: string;
+}
+
 export interface TestRunDto {
   id: string;
   suiteId: string | null;
@@ -189,7 +195,7 @@ export interface TestRunDto {
   passedCases: number;
   failedCases: number;
   passRate: number;
-  evaluatorCount: number;
+  evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
@@ -220,6 +226,25 @@ export interface TraceCreatedEvent {
   createdAt: string;
 }
 
+export interface TestCaseStartedEvent {
+  type: 'test-case-started';
+  runId: string;
+  testCaseId: string;
+}
+
+export interface InferenceDoneEvent {
+  type: 'inference-done';
+  runId: string;
+  testCaseId: string;
+}
+
+export interface EvaluationArrivedEvent {
+  type: 'evaluation-arrived';
+  runId: string;
+  testCaseId: string;
+  evaluation: EvaluationResultDto;
+}
+
 export interface TestResultArrivedEvent {
   type: 'test-result-arrived';
   runId: string;
@@ -236,4 +261,9 @@ export interface RunCompleteEvent {
   completedAt: string | null;
 }
 
-export type TestRunEvent = TestResultArrivedEvent | RunCompleteEvent;
+export type TestRunEvent =
+  | TestCaseStartedEvent
+  | InferenceDoneEvent
+  | EvaluationArrivedEvent
+  | TestResultArrivedEvent
+  | RunCompleteEvent;
