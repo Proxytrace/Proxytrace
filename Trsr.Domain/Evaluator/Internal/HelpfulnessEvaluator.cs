@@ -1,3 +1,4 @@
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 
@@ -11,7 +12,8 @@ internal record HelpfulnessEvaluator : AbstractAgenticEvaluator, IHelpfulnessEva
     public override IModelEndpoint Endpoint { get; }
     
     public HelpfulnessEvaluator(
-        IModelEndpoint endpoint)
+        IModelEndpoint endpoint,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);
@@ -19,7 +21,8 @@ internal record HelpfulnessEvaluator : AbstractAgenticEvaluator, IHelpfulnessEva
 
     public HelpfulnessEvaluator(
         IModelEndpoint endpoint,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);

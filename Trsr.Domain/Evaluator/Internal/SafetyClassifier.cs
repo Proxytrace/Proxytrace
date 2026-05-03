@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 
@@ -12,13 +13,18 @@ internal record SafetyClassifier : AbstractAgenticEvaluator, ISafetyClassifier
     public override SystemMessage SystemMessage { get; }
     public override IModelEndpoint Endpoint { get; }
 
-    public SafetyClassifier(IModelEndpoint endpoint)
+    public SafetyClassifier(
+        IModelEndpoint endpoint,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.SafetyClassifier);
     }
 
-    public SafetyClassifier(IModelEndpoint endpoint, IDomainEntityData existing) : base(existing)
+    public SafetyClassifier(
+        IModelEndpoint endpoint,
+        IDomainEntityData existing,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.SafetyClassifier);
