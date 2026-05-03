@@ -19,7 +19,8 @@ internal record CustomEvaluator : AbstractAgenticEvaluator, ICustomEvaluator
         string name,
         SystemMessage systemMessage,
         IModelEndpoint endpoint,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, repository)
     {
         Name = name;
         SystemMessage = systemMessage;
@@ -31,7 +32,8 @@ internal record CustomEvaluator : AbstractAgenticEvaluator, ICustomEvaluator
         SystemMessage systemMessage,
         IModelEndpoint endpoint,
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, existing, repository)
     {
         Name = name;
         SystemMessage = systemMessage;

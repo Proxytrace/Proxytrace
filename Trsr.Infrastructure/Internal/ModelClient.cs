@@ -18,10 +18,18 @@ internal class ModelClient : IModelClient
     public ModelClient(
         IModelEndpoint endpoint,
         IOutputFormat.Create outputFormatFactory)
+        : this(endpoint, outputFormatFactory, CreateChatClient(endpoint))
+    {
+    }
+
+    internal ModelClient(
+        IModelEndpoint endpoint,
+        IOutputFormat.Create outputFormatFactory,
+        IChatClient chatClient)
     {
         this.endpoint = endpoint;
         this.outputFormatFactory = outputFormatFactory;
-        chatClient = CreateChatClient(endpoint);
+        this.chatClient = chatClient;
     }
     
     public async Task<AssistantMessage> CompleteAsync(

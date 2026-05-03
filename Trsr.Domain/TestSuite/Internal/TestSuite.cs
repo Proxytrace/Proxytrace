@@ -7,14 +7,19 @@ using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestSuite.Internal;
 
-internal record TestSuite : DomainEntity, ITestSuite
+internal record TestSuite : DomainEntity<ITestSuite>, ITestSuite
 {
     public string Name { get; }
     public IAgent Agent { get; }
     public IReadOnlyCollection<IEvaluator> Evaluators { get; }
     public IReadOnlyCollection<ITestCase> TestCases { get; }
 
-    public TestSuite(string name, IAgent agent, IReadOnlyCollection<IEvaluator> evaluators, IReadOnlyCollection<ITestCase> testCases)
+    public TestSuite(
+        string name,
+        IAgent agent,
+        IReadOnlyCollection<IEvaluator> evaluators,
+        IReadOnlyCollection<ITestCase> testCases,
+        IRepository<ITestSuite> repository) : base(repository)
     {
         Name = name;
         Agent = agent;
@@ -27,7 +32,8 @@ internal record TestSuite : DomainEntity, ITestSuite
         IAgent agent,
         IReadOnlyCollection<IEvaluator> evaluators,
         IReadOnlyCollection<ITestCase> testCases,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<ITestSuite> repository) : base(existing, repository)
     {
         Name = name;
         Agent = agent;

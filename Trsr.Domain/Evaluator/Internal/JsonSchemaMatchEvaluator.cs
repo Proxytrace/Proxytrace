@@ -10,7 +10,7 @@ using Trsr.Domain.TestResult;
 namespace Trsr.Domain.Evaluator.Internal;
 
 [UsedImplicitly]
-internal record JsonSchemaMatchEvaluator : DomainEntity, IJsonSchemaMatchEvaluator
+internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchemaMatchEvaluator
 {
     private readonly IEvaluation.Create evaluationFactory;
 
@@ -19,7 +19,10 @@ internal record JsonSchemaMatchEvaluator : DomainEntity, IJsonSchemaMatchEvaluat
 
     public string JsonSchema { get; }
 
-    public JsonSchemaMatchEvaluator(string jsonSchema, IEvaluation.Create evaluationFactory)
+    public JsonSchemaMatchEvaluator(
+        string jsonSchema,
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(repository)
     {
         JsonSchema = jsonSchema;
         this.evaluationFactory = evaluationFactory;
@@ -28,7 +31,8 @@ internal record JsonSchemaMatchEvaluator : DomainEntity, IJsonSchemaMatchEvaluat
     public JsonSchemaMatchEvaluator(
         string jsonSchema,
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(existing, repository)
     {
         JsonSchema = jsonSchema;
         this.evaluationFactory = evaluationFactory;

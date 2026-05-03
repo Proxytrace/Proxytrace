@@ -9,7 +9,7 @@ using Trsr.Domain.TestResult;
 namespace Trsr.Domain.Evaluator.Internal;
 
 [UsedImplicitly]
-internal record NumericMatchEvaluator : DomainEntity, INumericMatchEvaluator
+internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchEvaluator
 {
     private readonly IEvaluation.Create evaluationFactory;
 
@@ -22,7 +22,8 @@ internal record NumericMatchEvaluator : DomainEntity, INumericMatchEvaluator
     public NumericMatchEvaluator(
         Regex extractionPattern,
         decimal tolerance,
-        IEvaluation.Create evaluationFactory)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(repository)
     {
         ExtractionPattern = extractionPattern;
         Tolerance = tolerance;
@@ -33,7 +34,8 @@ internal record NumericMatchEvaluator : DomainEntity, INumericMatchEvaluator
         Regex extractionPattern,
         decimal tolerance,
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(existing, repository)
     {
         ExtractionPattern = extractionPattern;
         Tolerance = tolerance;

@@ -4,16 +4,16 @@ using Trsr.Domain.Internal;
 
 namespace Trsr.Domain.Model.Internal;
 
-internal record Model : DomainEntity, IModel
+internal record Model : DomainEntity<IModel>, IModel
 {
     public string Name { get; }
 
-    public Model(string name)
+    public Model(string name, IRepository<IModel> repository) : base(repository)
     {
         Name = name;
     }
 
-    public Model(string name, IDomainEntityData existing) : base(existing)
+    public Model(string name, IDomainEntityData existing, IRepository<IModel> repository) : base(existing, repository)
     {
         Name = name;
     }

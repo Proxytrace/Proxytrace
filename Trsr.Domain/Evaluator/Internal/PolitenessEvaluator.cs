@@ -15,7 +15,8 @@ internal record PolitenessEvaluator : AbstractAgenticEvaluator, IPolitenessEvalu
 
     public PolitenessEvaluator(
         IModelEndpoint endpoint,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, repository)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.PolitenessEvaluator);
@@ -24,7 +25,8 @@ internal record PolitenessEvaluator : AbstractAgenticEvaluator, IPolitenessEvalu
     public PolitenessEvaluator(
         IModelEndpoint endpoint,
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, existing, repository)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.PolitenessEvaluator);

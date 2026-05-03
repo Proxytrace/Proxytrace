@@ -5,18 +5,25 @@ using Trsr.Domain.User;
 
 namespace Trsr.Domain.Organization.Internal;
 
-internal record Organization : DomainEntity, IOrganization
+internal record Organization : DomainEntity<IOrganization>, IOrganization
 {
     public string Name { get; }
     public IReadOnlyCollection<IUser> Users { get; }
 
-    public Organization(string name, IReadOnlyCollection<IUser>? users = null)
+    public Organization(
+        string name,
+        IReadOnlyCollection<IUser>? users,
+        IRepository<IOrganization> repository) : base(repository)
     {
         Name = name;
         Users = users ?? [];
     }
 
-    public Organization(string name, IReadOnlyCollection<IUser> users, IDomainEntityData existing) : base(existing)
+    public Organization(
+        string name,
+        IReadOnlyCollection<IUser> users,
+        IDomainEntityData existing,
+        IRepository<IOrganization> repository) : base(existing, repository)
     {
         Name = name;
         Users = users;

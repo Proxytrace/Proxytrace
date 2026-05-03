@@ -8,7 +8,7 @@ using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall.Internal;
 
-internal record AgentCall : DomainEntity, IAgentCall
+internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
 {
     public IAgent Agent { get; }
     public IModelEndpoint Endpoint { get; }
@@ -29,7 +29,8 @@ internal record AgentCall : DomainEntity, IAgentCall
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage)
+        string? errorMessage,
+        IRepository<IAgentCall> repository) : base(repository)
     {
         Agent = agent;
         Endpoint = endpoint;
@@ -52,7 +53,8 @@ internal record AgentCall : DomainEntity, IAgentCall
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<IAgentCall> repository) : base(existing, repository)
     {
         Agent = agent;
         Endpoint = endpoint;

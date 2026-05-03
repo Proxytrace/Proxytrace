@@ -7,7 +7,7 @@ using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
-internal record OptimizationProposal : DomainEntity, IOptimizationProposal
+internal record OptimizationProposal : DomainEntity<IOptimizationProposal>, IOptimizationProposal
 {
     public IAgent Agent { get; }
     public ProposalKind Kind { get; }
@@ -23,7 +23,8 @@ internal record OptimizationProposal : DomainEntity, IOptimizationProposal
         string rationale,
         SystemMessage? proposedSystemMessage,
         IReadOnlyCollection<ToolSpecification> proposedTools,
-        IReadOnlyCollection<Guid> evidenceTestRunIds)
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
         Kind = kind;
@@ -42,7 +43,8 @@ internal record OptimizationProposal : DomainEntity, IOptimizationProposal
         SystemMessage? proposedSystemMessage,
         IReadOnlyCollection<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
         Agent = agent;
         Kind = kind;

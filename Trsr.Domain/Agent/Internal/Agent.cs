@@ -9,7 +9,7 @@ using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent.Internal;
 
-internal record Agent : DomainEntity, IAgent
+internal record Agent : DomainEntity<IAgent>, IAgent
 {
     public string Name { get; }
     public IProject Project { get; }
@@ -20,7 +20,8 @@ internal record Agent : DomainEntity, IAgent
         string name,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
-        IProject project)
+        IProject project,
+        IRepository<IAgent> repository) : base(repository)
     {
         Name = name;
         SystemMessage = systemMessage;
@@ -34,7 +35,8 @@ internal record Agent : DomainEntity, IAgent
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
         IDomainEntityData existing,
-        ILogger<Agent> logger) : base(existing)
+        ILogger<Agent> logger,
+        IRepository<IAgent> repository) : base(existing, repository)
     {
         Name = name;
         Project = project;

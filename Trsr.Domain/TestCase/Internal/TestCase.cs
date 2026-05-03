@@ -5,18 +5,25 @@ using Trsr.Domain.Message;
 
 namespace Trsr.Domain.TestCase.Internal;
 
-internal record TestCase : DomainEntity, ITestCase
+internal record TestCase : DomainEntity<ITestCase>, ITestCase
 {
     public Conversation Input { get; }
     public AssistantMessage ExpectedOutput { get; }
 
-    public TestCase(Conversation input, AssistantMessage expectedOutput)
+    public TestCase(
+        Conversation input,
+        AssistantMessage expectedOutput, 
+        IRepository<ITestCase> repository) : base(repository)
     {
         Input = input;
         ExpectedOutput = expectedOutput;
     }
 
-    public TestCase(Conversation input, AssistantMessage expectedOutput, IDomainEntityData existing) : base(existing)
+    public TestCase(
+        Conversation input, 
+        AssistantMessage expectedOutput, 
+        IDomainEntityData existing,
+        IRepository<ITestCase> repository) : base(existing, repository)
     {
         Input = input;
         ExpectedOutput = expectedOutput;

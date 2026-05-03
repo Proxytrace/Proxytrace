@@ -6,27 +6,38 @@ using Trsr.Domain.Project;
 
 namespace Trsr.Domain.ApiKey.Internal;
 
-internal record ApiKey : DomainEntity, IApiKey
+internal record ApiKey : DomainEntity<IApiKey>, IApiKey
 {
-    private readonly string _apiKey;
+    private readonly string apiKey;
 
     public string Name { get; }
-    string IApiKey.ApiKey => _apiKey;
+    string IApiKey.ApiKey => apiKey;
     public IProject Project { get; }
     public IModelProvider Provider { get; }
 
-    public ApiKey(string name, string apiKey, IProject project, IModelProvider provider)
+    public ApiKey(
+        string name,
+        string apiKey,
+        IProject project,
+        IModelProvider provider,
+        IRepository<IApiKey> repository) : base(repository)
     {
         Name = name;
-        _apiKey = apiKey;
+        this.apiKey = apiKey;
         Project = project;
         Provider = provider;
     }
 
-    public ApiKey(string name, string apiKey, IProject project, IModelProvider provider, IDomainEntityData existing) : base(existing)
+    public ApiKey(
+        string name,
+        string apiKey,
+        IProject project,
+        IModelProvider provider,
+        IDomainEntityData existing,
+        IRepository<IApiKey> repository) : base(existing, repository)
     {
         Name = name;
-        _apiKey = apiKey;
+        this.apiKey = apiKey;
         Project = project;
         Provider = provider;
     }
@@ -43,19 +54,9 @@ internal record ApiKey : DomainEntity, IApiKey
             yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
         }
 
-        if (string.IsNullOrWhiteSpace(_apiKey))
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
-            yield return Validation.NotNullOrWhiteSpace(_apiKey, nameof(IApiKey.ApiKey));
-        }
-
-        if (Project is null)
-        {
-            yield return Validation.NotNull(Project, nameof(Project));
-        }
-
-        if (Provider is null)
-        {
-            yield return Validation.NotNull(Provider, nameof(Provider));
+            yield return Validation.NotNullOrWhiteSpace(apiKey, nameof(IApiKey.ApiKey));
         }
     }
 }
