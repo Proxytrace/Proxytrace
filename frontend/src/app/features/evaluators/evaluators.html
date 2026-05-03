@@ -4,13 +4,13 @@
   <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
     <div>
       <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin-bottom:6px;">Evaluators</h1>
-      <p style="font-size:13.5px; color:var(--text-muted);">Score agent responses with LLM judges, rules, and numeric checks.</p>
+      <p style="font-size:14px; color:var(--text-muted);">Score agent responses with LLM judges, rules, and numeric checks.</p>
     </div>
     <button (click)="openCreate()" style="
       padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600;
       color:#fff; white-space:nowrap; display:inline-flex; align-items:center; gap:7px;
-      background:linear-gradient(135deg,#8b5cf6,#6d28d9);
-      box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15);
+      background:linear-gradient(135deg,#c9944a,#b8832d);
+      box-shadow:0 4px 14px -4px rgba(201,148,74,0.4),inset 0 1px 0 rgba(255,255,255,0.15);
     ">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
       New evaluator
@@ -20,10 +20,10 @@
   <!-- KPIs -->
   <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px;">
     @for (kpi of [
-      { label: 'Total evaluators', value: evaluators().length, sub: 'across all kinds', color: '#10b981' },
-      { label: 'LLM judges', value: llmCount(), sub: 'agentic evaluators', color: '#8b5cf6' },
-      { label: 'Rule-based', value: ruleCount(), sub: 'deterministic', color: '#06b6d4' },
-      { label: 'Attached to suites', value: 0, sub: 'associations', color: '#f59e0b' }
+      { label: 'Total evaluators', value: evaluators().length, sub: 'across all kinds', color: '#3daa6f' },
+      { label: 'LLM judges', value: llmCount(), sub: 'agentic evaluators', color: '#c9944a' },
+      { label: 'Rule-based', value: ruleCount(), sub: 'deterministic', color: '#6b9eaa' },
+      { label: 'Attached to suites', value: 0, sub: 'associations', color: '#d4915c' }
     ]; track kpi.label) {
       <div style="background:var(--bg-card); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow-card); display:flex; align-items:center; gap:14px;">
         <div style="width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"
@@ -33,7 +33,7 @@
         </div>
         <div>
           <div style="font-size:13px; font-weight:600;">{{ kpi.label }}</div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px;">{{ kpi.sub }}</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:1px;">{{ kpi.sub }}</div>
         </div>
       </div>
     }
@@ -51,8 +51,8 @@
            [style.box-shadow]="typeFilter() === tab.key ? '0 1px 0 rgba(255,255,255,0.06) inset,0 1px 2px rgba(0,0,0,0.25)' : 'none'">
           {{ tab.label }}
           <span style="padding:1px 6px; border-radius:100px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;"
-                [style.background]="typeFilter() === tab.key ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)'"
-                [style.color]="typeFilter() === tab.key ? '#c4b5fd' : 'var(--text-muted)'">
+                [style.background]="typeFilter() === tab.key ? 'rgba(201,148,74,0.15)' : 'var(--bg-card)'"
+                [style.color]="typeFilter() === tab.key ? '#deb073' : 'var(--text-muted)'">
             {{ typeFilterCount(tab.key) }}
           </span>
         </button>
@@ -72,7 +72,7 @@
       Loading evaluators…
     </div>
   } @else if (error()) {
-    <div style="padding:16px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:10px; color:#f87171; font-size:13px;">
+    <div style="padding:16px; background:rgba(217,85,85,0.08); border:1px solid rgba(217,85,85,0.2); border-radius:10px; color:var(--danger); font-size:13px;">
       {{ error() }}
     </div>
   } @else if (visible().length === 0) {
@@ -82,7 +82,7 @@
       </svg>
       <p style="font-size:14px; font-weight:500;">No evaluators yet</p>
       <p style="font-size:13px;">Create one to start scoring agent responses.</p>
-      <button (click)="openCreate()" style="margin-top:4px; padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 14px -4px rgba(139,92,246,0.5);">
+      <button (click)="openCreate()" style="margin-top:4px; padding:9px 16px; border-radius:10px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); box-shadow:0 4px 14px -4px rgba(201,148,74,0.4);">
         New evaluator
       </button>
     </div>
@@ -123,8 +123,8 @@
               }
             </span>
             <div style="flex:1; min-width:0;">
-              <div style="font-size:13.5px; font-weight:600; letter-spacing:-0.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ ev.name }}</div>
-              <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px; display:flex; align-items:center; gap:6px;">
+              <div style="font-size:14px; font-weight:600; letter-spacing:-0.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ ev.name }}</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px; display:flex; align-items:center; gap:6px;">
                 <span style="font-weight:600;" [style.color]="kindColor(ev.kind)">{{ kindShort(ev.kind) }}</span>
                 <span>·</span>
                 <span style="font-family:'JetBrains Mono',monospace; font-size:10px; overflow:hidden; text-overflow:ellipsis;">{{ ev.id.slice(0,8) }}…</span>
@@ -134,14 +134,14 @@
               <button (click)="openEdit(ev.id, $event)"
                 style="padding:4px 6px; border-radius:6px; color:var(--text-muted); opacity:0; transition:opacity 0.15s;"
                 class="card-action-btn"
-                onmouseenter="this.style.background='rgba(139,92,246,0.1)'; this.style.color='#c4b5fd';"
+                onmouseenter="this.style.background='rgba(201,148,74,0.1)'; this.style.color='#deb073';"
                 onmouseleave="this.style.background='transparent'; this.style.color='var(--text-muted)';">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
               <button (click)="openDelete(ev.id, $event)"
                 style="padding:4px 6px; border-radius:6px; color:var(--text-muted); opacity:0; transition:opacity 0.15s;"
                 class="card-action-btn"
-                onmouseenter="this.style.background='rgba(239,68,68,0.1)'; this.style.color='#f87171';"
+                onmouseenter="this.style.background='rgba(217,85,85,0.1)'; this.style.color='var(--danger)';"
                 onmouseleave="this.style.background='transparent'; this.style.color='var(--text-muted)';">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
@@ -154,19 +154,19 @@
           } @else if (ev.extractionPattern) {
             <div style="padding:8px 12px; background:var(--bg-card-2); border-radius:8px; display:flex; align-items:center; gap:8px;">
               <span style="font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.06em;">PATTERN</span>
-              <code style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#67e8f9;">{{ ev.extractionPattern }}</code>
+              <code style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#67e8f9;">{{ ev.extractionPattern }}</code>
               <span style="margin-left:auto; font-size:10px; color:var(--text-muted);">± {{ ev.tolerance }}</span>
             </div>
           } @else if (ev.jsonSchema) {
             <div style="padding:8px 12px; background:var(--bg-card-2); border-radius:8px;">
-              <code style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#67e8f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">{{ ev.jsonSchema | slice:0:80 }}{{ ev.jsonSchema.length > 80 ? '…' : '' }}</code>
+              <code style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#67e8f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block;">{{ ev.jsonSchema | slice:0:80 }}{{ ev.jsonSchema.length > 80 ? '…' : '' }}</code>
             </div>
           } @else {
-            <div style="padding:8px 12px; background:var(--bg-card-2); border-radius:8px; font-size:11.5px; color:var(--text-muted); text-align:center;">Preset evaluator · no configuration</div>
+            <div style="padding:8px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12px; color:var(--text-muted); text-align:center;">Preset evaluator · no configuration</div>
           }
 
           <!-- Footer -->
-          <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--hairline); padding-top:10px; font-size:10.5px; color:var(--text-muted);">
+          <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--hairline); padding-top:10px; font-size:11px; color:var(--text-muted);">
             @if (ev.endpointName) {
               <span style="display:inline-flex; align-items:center; gap:4px;">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
@@ -228,8 +228,8 @@
               </button>
               <button (click)="openDelete(ev.id, $event)" style="
                 padding:8px 14px; border-radius:8px; font-size:12px; font-weight:600;
-                color:#f87171; background:rgba(239,68,68,0.08); display:inline-flex; align-items:center; gap:6px;
-              " onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='rgba(239,68,68,0.08)'">
+                color:var(--danger); background:rgba(217,85,85,0.08); display:inline-flex; align-items:center; gap:6px;
+              " onmouseenter="this.style.background='rgba(217,85,85,0.12)'" onmouseleave="this.style.background='rgba(217,85,85,0.08)'">
                 Delete
               </button>
             </div>
@@ -245,7 +245,7 @@
             @if (ev.systemMessage) {
               <div style="background:var(--bg-card-2); border-radius:10px; overflow:hidden;">
                 <div style="padding:10px 14px; border-bottom:1px solid var(--hairline); font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">System prompt</div>
-                <pre style="padding:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.65; color:var(--text-secondary); white-space:pre-wrap; margin:0; max-height:300px; overflow:auto;">{{ ev.systemMessage }}</pre>
+                <pre style="padding:14px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.65; color:var(--text-secondary); white-space:pre-wrap; margin:0; max-height:300px; overflow:auto;">{{ ev.systemMessage }}</pre>
               </div>
             } @else if (ev.extractionPattern) {
               <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">
@@ -261,7 +261,7 @@
             } @else if (ev.jsonSchema) {
               <div style="background:var(--bg-card-2); border-radius:10px; overflow:hidden;">
                 <div style="padding:10px 14px; border-bottom:1px solid var(--hairline); font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">JSON Schema</div>
-                <pre style="padding:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.65; color:#67e8f9; white-space:pre-wrap; margin:0; max-height:280px; overflow:auto;">{{ ev.jsonSchema }}</pre>
+                <pre style="padding:14px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.65; color:#67e8f9; white-space:pre-wrap; margin:0; max-height:280px; overflow:auto;">{{ ev.jsonSchema }}</pre>
               </div>
             } @else {
               <div style="padding:20px; background:var(--bg-card-2); border-radius:10px; text-align:center; color:var(--text-muted); font-size:13px;">
@@ -307,7 +307,7 @@
 @if (createOpen()) {
   <div (click)="closeCreate()" style="
     position:fixed; inset:0; z-index:50;
-    background:rgba(8,8,11,0.7); backdrop-filter:blur(8px);
+    background:var(--modal-backdrop); backdrop-filter:var(--modal-blur);
     display:flex; align-items:center; justify-content:center; padding:20px;
   ">
     <div (click)="$event.stopPropagation()" style="
@@ -355,7 +355,7 @@
             </div>
             <div style="flex:1; min-width:0;">
               <div style="font-size:13px; font-weight:600; margin-bottom:3px;">{{ kindLabel(k) }}</div>
-              <div style="font-size:11.5px; color:var(--text-muted); line-height:1.45;">{{ EVALUATOR_TYPE_META[k]?.desc }}</div>
+              <div style="font-size:12px; color:var(--text-muted); line-height:1.45;">{{ EVALUATOR_TYPE_META[k]?.desc }}</div>
             </div>
           </button>
         }
@@ -370,24 +370,24 @@
           @if (createPickedKind() === EvaluatorKind.Custom) {
             <div style="display:flex; flex-direction:column; gap:12px;">
               <div>
-                <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Name</label>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Name</label>
                 <input [ngModel]="createName()" (ngModelChange)="createName.set($event)"
                   placeholder="e.g. Helpfulness judge"
                   style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);" />
               </div>
               <div>
-                <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">System prompt</label>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">System prompt</label>
                 <textarea [ngModel]="createSystemMessage()" (ngModelChange)="createSystemMessage.set($event)"
                   rows="7"
                   placeholder="You are evaluating an AI agent response.&#10;&#10;INPUT:&#10;{{'{{'}}input{{'}}'}}&#10;&#10;RESPONSE:&#10;{{'{{'}}output{{'}}'}}&#10;&#10;Score 1–5 for quality. Output JSON: { &quot;score&quot;: number, &quot;reason&quot;: string }"
                   style="width:100%; padding:10px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-secondary); line-height:1.6; resize:vertical;"></textarea>
               </div>
               <div>
-                <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
                 @if (endpointsLoading()) {
                   <div style="font-size:12px; color:var(--text-muted);">Loading endpoints…</div>
                 } @else if (endpoints().length === 0) {
-                  <div style="font-size:12px; color:#fbbf24;">No model endpoints available. Add one via Providers first.</div>
+                  <div style="font-size:12px; color:var(--warn);">No model endpoints available. Add one via Providers first.</div>
                 } @else {
                   <select [ngModel]="createEndpointId()" (ngModelChange)="createEndpointId.set($event)"
                     style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);">
@@ -404,13 +404,13 @@
           @if (createPickedKind() === EvaluatorKind.NumericMatch) {
             <div style="display:grid; grid-template-columns:1fr 180px; gap:12px;">
               <div>
-                <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Extraction pattern (regex)</label>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Extraction pattern (regex)</label>
                 <input [ngModel]="createExtractionPattern()" (ngModelChange)="createExtractionPattern.set($event)"
                   placeholder="\$([0-9]+\.?[0-9]*)"
                   style="width:100%; padding:9px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; background:var(--bg-card-2); border:1px solid var(--border-color); color:#67e8f9;" />
               </div>
               <div>
-                <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Tolerance</label>
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Tolerance</label>
                 <input [ngModel]="createTolerance()" (ngModelChange)="createTolerance.set($event)"
                   type="number" step="0.01" min="0"
                   style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);" />
@@ -421,7 +421,7 @@
           <!-- JSON Schema match -->
           @if (createPickedKind() === EvaluatorKind.JsonSchemaMatch) {
             <div>
-              <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">JSON Schema</label>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">JSON Schema</label>
               <textarea [ngModel]="createJsonSchema()" (ngModelChange)="createJsonSchema.set($event)"
                 rows="6"
                 placeholder='{"type":"object","required":["category"],"properties":{"category":{"type":"string"}}}'
@@ -432,11 +432,11 @@
           <!-- Preset LLM evaluators: just endpoint selection -->
           @if (EVALUATOR_TYPE_META[createPickedKind()!]?.requiresEndpoint && createPickedKind() !== EvaluatorKind.Custom) {
             <div>
-              <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
               @if (endpointsLoading()) {
                 <div style="font-size:12px; color:var(--text-muted);">Loading endpoints…</div>
               } @else if (endpoints().length === 0) {
-                <div style="font-size:12px; color:#fbbf24;">No model endpoints available. Add one via Providers first.</div>
+                <div style="font-size:12px; color:var(--warn);">No model endpoints available. Add one via Providers first.</div>
               } @else {
                 <select [ngModel]="createEndpointId()" (ngModelChange)="createEndpointId.set($event)"
                   style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);">
@@ -449,7 +449,7 @@
           }
 
           @if (createError()) {
-            <div style="padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; color:#f87171; font-size:12px;">
+            <div style="padding:10px 14px; background:rgba(217,85,85,0.08); border:1px solid rgba(217,85,85,0.2); border-radius:8px; color:var(--danger); font-size:12px;">
               {{ createError() }}
             </div>
           }
@@ -458,15 +458,15 @@
 
       <!-- Modal footer -->
       <div style="padding:14px 20px; border-top:1px solid var(--hairline); display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:11.5px; color:var(--text-muted);">Select a type to configure.</span>
+        <span style="font-size:12px; color:var(--text-muted);">Select a type to configure.</span>
         <div style="display:flex; gap:8px;">
           <button (click)="closeCreate()" style="padding:8px 14px; border-radius:8px; font-size:12px; color:var(--text-secondary);">Cancel</button>
           <button (click)="submitCreate()" [disabled]="!createValid() || createInProgress()" style="
             padding:8px 16px; border-radius:8px; font-size:12px; font-weight:600; transition:all 0.15s;
           "
           [style.color]="createValid() ? '#fff' : 'var(--text-muted)'"
-          [style.background]="createValid() ? 'linear-gradient(135deg,#8b5cf6,#6d28d9)' : 'var(--bg-card-2)'"
-          [style.box-shadow]="createValid() ? '0 4px 14px -4px rgba(139,92,246,0.5)' : 'none'"
+          [style.background]="createValid() ? 'linear-gradient(135deg,#c9944a,#b8832d)' : 'var(--bg-card-2)'"
+          [style.box-shadow]="createValid() ? '0 4px 14px -4px rgba(201,148,74,0.4)' : 'none'"
           [style.cursor]="createValid() && !createInProgress() ? 'pointer' : 'not-allowed'">
             {{ createInProgress() ? 'Creating…' : 'Create evaluator' }}
           </button>
@@ -478,7 +478,7 @@
 
 <!-- Delete confirm modal -->
 @if (deleteTargetId()) {
-  <div (click)="closeDelete()" style="position:fixed; inset:0; z-index:50; background:rgba(8,8,11,0.7); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div (click)="closeDelete()" style="position:fixed; inset:0; z-index:50; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur); display:flex; align-items:center; justify-content:center; padding:20px;">
     <div (click)="$event.stopPropagation()" style="background:var(--bg-card); border-radius:14px; width:min(420px,100%); box-shadow:var(--shadow-float); border:1px solid var(--border-subtle);">
       <div style="padding:20px 24px;">
         <div style="font-size:16px; font-weight:700; margin-bottom:6px;">Delete evaluator</div>
@@ -487,15 +487,15 @@
           This cannot be undone and will remove it from any test suites it's attached to.
         </p>
         @if (deleteError()) {
-          <div style="margin-top:10px; padding:10px; background:rgba(239,68,68,0.08); border-radius:8px; color:#f87171; font-size:12px;">{{ deleteError() }}</div>
+          <div style="margin-top:10px; padding:10px; background:rgba(217,85,85,0.08); border-radius:8px; color:var(--danger); font-size:12px;">{{ deleteError() }}</div>
         }
       </div>
       <div style="padding:14px 20px; border-top:1px solid var(--hairline); display:flex; justify-content:flex-end; gap:8px;">
         <button (click)="closeDelete()" style="padding:8px 14px; border-radius:8px; font-size:12px; color:var(--text-secondary);">Cancel</button>
         <button (click)="confirmDelete()" [disabled]="deleteInProgress()" style="
           padding:8px 16px; border-radius:8px; font-size:12px; font-weight:600;
-          color:#fff; background:#ef4444;
-          box-shadow:0 4px 14px -4px rgba(239,68,68,0.4);
+          color:#fff; background:#d95555;
+          box-shadow:0 4px 14px -4px rgba(217,85,85,0.4);
         ">{{ deleteInProgress() ? 'Deleting…' : 'Delete' }}</button>
       </div>
     </div>
@@ -504,7 +504,7 @@
 
 <!-- Edit Modal -->
 @if (editOpen() && editTarget(); as ev) {
-  <div (click)="closeEdit()" style="position:fixed; inset:0; z-index:50; background:rgba(8,8,11,0.7); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div (click)="closeEdit()" style="position:fixed; inset:0; z-index:50; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur); display:flex; align-items:center; justify-content:center; padding:20px;">
     <div (click)="$event.stopPropagation()" style="background:var(--bg-card); border-radius:16px; width:min(640px,100%); max-height:88vh; overflow:auto; box-shadow:var(--shadow-float); border:1px solid var(--border-subtle);">
 
       <!-- Header -->
@@ -526,23 +526,23 @@
         <!-- Custom LLM: name + system message + endpoint -->
         @if (ev.kind === EvaluatorKind.Custom) {
           <div>
-            <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Name</label>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Name</label>
             <input [ngModel]="editName()" (ngModelChange)="editName.set($event)"
               placeholder="e.g. Helpfulness judge"
               style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);" />
           </div>
           <div>
-            <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">System prompt</label>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">System prompt</label>
             <textarea [ngModel]="editSystemMessage()" (ngModelChange)="editSystemMessage.set($event)"
               rows="9"
               style="width:100%; padding:10px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-secondary); line-height:1.6; resize:vertical;"></textarea>
           </div>
           <div>
-            <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
             @if (endpointsLoading()) {
               <div style="font-size:12px; color:var(--text-muted);">Loading endpoints…</div>
             } @else if (endpoints().length === 0) {
-              <div style="font-size:12px; color:#fbbf24;">No model endpoints available.</div>
+              <div style="font-size:12px; color:var(--warn);">No model endpoints available.</div>
             } @else {
               <select [ngModel]="editEndpointId()" (ngModelChange)="editEndpointId.set($event)"
                 style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);">
@@ -558,12 +558,12 @@
         @if (ev.kind === EvaluatorKind.NumericMatch) {
           <div style="display:grid; grid-template-columns:1fr 180px; gap:12px;">
             <div>
-              <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Extraction pattern (regex)</label>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Extraction pattern (regex)</label>
               <input [ngModel]="editExtractionPattern()" (ngModelChange)="editExtractionPattern.set($event)"
                 style="width:100%; padding:9px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; background:var(--bg-card-2); border:1px solid var(--border-color); color:#67e8f9;" />
             </div>
             <div>
-              <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Tolerance</label>
+              <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Tolerance</label>
               <input [ngModel]="editTolerance()" (ngModelChange)="editTolerance.set($event)"
                 type="number" step="0.01" min="0"
                 style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);" />
@@ -574,7 +574,7 @@
         <!-- JSON Schema match -->
         @if (ev.kind === EvaluatorKind.JsonSchemaMatch) {
           <div>
-            <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">JSON Schema</label>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">JSON Schema</label>
             <textarea [ngModel]="editJsonSchema()" (ngModelChange)="editJsonSchema.set($event)"
               rows="8"
               style="width:100%; padding:10px 12px; border-radius:8px; font-size:12px; font-family:'JetBrains Mono',monospace; background:var(--bg-card-2); border:1px solid var(--border-color); color:#67e8f9; line-height:1.6; resize:vertical;"></textarea>
@@ -584,11 +584,11 @@
         <!-- Preset agentic: endpoint only -->
         @if (EVALUATOR_TYPE_META[ev.kind]?.requiresEndpoint && ev.kind !== EvaluatorKind.Custom) {
           <div>
-            <label style="display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
+            <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">Grader model</label>
             @if (endpointsLoading()) {
               <div style="font-size:12px; color:var(--text-muted);">Loading endpoints…</div>
             } @else if (endpoints().length === 0) {
-              <div style="font-size:12px; color:#fbbf24;">No model endpoints available.</div>
+              <div style="font-size:12px; color:var(--warn);">No model endpoints available.</div>
             } @else {
               <select [ngModel]="editEndpointId()" (ngModelChange)="editEndpointId.set($event)"
                 style="width:100%; padding:9px 12px; border-radius:8px; font-size:13px; background:var(--bg-card-2); border:1px solid var(--border-color); color:var(--text-primary);">
@@ -608,7 +608,7 @@
         }
 
         @if (editError()) {
-          <div style="padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; color:#f87171; font-size:12px;">
+          <div style="padding:10px 14px; background:rgba(217,85,85,0.08); border:1px solid rgba(217,85,85,0.2); border-radius:8px; color:var(--danger); font-size:12px;">
             {{ editError() }}
           </div>
         }
@@ -621,8 +621,8 @@
           padding:8px 16px; border-radius:8px; font-size:12px; font-weight:600; transition:all 0.15s;
         "
         [style.color]="editValid() ? '#fff' : 'var(--text-muted)'"
-        [style.background]="editValid() ? 'linear-gradient(135deg,#8b5cf6,#6d28d9)' : 'var(--bg-card-2)'"
-        [style.box-shadow]="editValid() ? '0 4px 14px -4px rgba(139,92,246,0.5)' : 'none'"
+        [style.background]="editValid() ? 'linear-gradient(135deg,#c9944a,#b8832d)' : 'var(--bg-card-2)'"
+        [style.box-shadow]="editValid() ? '0 4px 14px -4px rgba(201,148,74,0.4)' : 'none'"
         [style.cursor]="editValid() && !editInProgress() ? 'pointer' : 'not-allowed'">
           {{ editInProgress() ? 'Saving…' : 'Save changes' }}
         </button>

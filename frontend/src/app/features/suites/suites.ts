@@ -16,7 +16,7 @@ interface RunState { passRate: number; runCount: number; lastRunId: string; }
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
-const AGENT_PALETTE = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#f97316'];
+const AGENT_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#d95555', '#a87ab5', '#5b82b0', '#d4915c'];
 
 // ─── Create wizard steps ─────────────────────────────────────────────────────
 
@@ -175,7 +175,7 @@ export class Suites implements OnInit {
   }
 
   evaluatorMeta(kind: EvaluatorKind): { label: string; color: string; desc: string } {
-    return EVALUATOR_TYPE_META[kind] ?? { label: kind, color: '#8b5cf6', desc: '' };
+    return EVALUATOR_TYPE_META[kind] ?? { label: kind, color: '#c9944a', desc: '' };
   }
 
   passRate(suite: TestSuiteDto): number | null {

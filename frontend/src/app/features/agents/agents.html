@@ -4,7 +4,7 @@
   <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-shrink:0;">
     <div>
       <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0 0 4px;">Agents</h1>
-      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Named agent definitions extracted from traces — system prompts, tool definitions, and usage stats.</p>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Named agent definitions extracted from traces — system prompts, tool definitions, and usage stats.</p>
     </div>
   </div>
 
@@ -52,7 +52,7 @@
               {{agent.name[0]}}
             </div>
             <div style="flex:1; min-width:0;">
-              <div style="font-size:13.5px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{agent.name}}</div>
+              <div style="font-size:14px; font-weight:700; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{agent.name}}</div>
               <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">{{agent.projectName}}</div>
             </div>
           </div>
@@ -60,7 +60,7 @@
           <!-- Stats row -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
             <div>
-              <div style="font-size:17px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary);">{{agent.tools.length || '—'}}</div>
+              <div style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary);">{{agent.tools.length || '—'}}</div>
               <div style="font-size:10px; color:var(--text-muted);">tools</div>
             </div>
             <div style="text-align:right;">
@@ -114,17 +114,17 @@
             <div style="display:flex; gap:10px; flex-shrink:0; align-items:flex-start;">
               <div style="padding:10px 14px; background:var(--bg-card-2); border-radius:10px; text-align:center; min-width:72px;">
                 <div style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary);">{{agent.tools.length}}</div>
-                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">tools</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">tools</div>
               </div>
               <div style="padding:10px 14px; background:var(--bg-card-2); border-radius:10px; text-align:center; min-width:80px;">
                 <div style="font-size:13px; font-weight:700; color:var(--text-primary); font-family:'JetBrains Mono',monospace;">{{agent.systemMessage.length}}</div>
-                <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">prompt chars</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">prompt chars</div>
               </div>
               <button (click)="openDeleteDialog()"
                       title="Delete agent"
-                      style="width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:rgba(239,68,68,0.08); color:var(--danger); border:1px solid rgba(239,68,68,0.2); transition:background 0.15s, border-color 0.15s; flex-shrink:0; margin-top:2px;"
-                      onmouseenter="this.style.background='rgba(239,68,68,0.16)'; this.style.borderColor='rgba(239,68,68,0.4)'"
-                      onmouseleave="this.style.background='rgba(239,68,68,0.08)'; this.style.borderColor='rgba(239,68,68,0.2)'">
+                      style="width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:rgba(217,85,85,0.08); color:var(--danger); border:1px solid rgba(217,85,85,0.2); transition:background 0.15s, border-color 0.15s; flex-shrink:0; margin-top:2px;"
+                      onmouseenter="this.style.background='rgba(217,85,85,0.15)'; this.style.borderColor='rgba(217,85,85,0.4)'"
+                      onmouseleave="this.style.background='rgba(217,85,85,0.08)'; this.style.borderColor='rgba(217,85,85,0.2)'">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
             </div>
@@ -137,20 +137,20 @@
           <!-- Tab bar -->
           <div style="display:flex; gap:2px; padding:10px 20px 0; border-bottom:1px solid var(--hairline); flex-shrink:0;">
             <button (click)="activeTab.set('prompt')"
-                    style="padding:7px 14px; font-size:12.5px; font-weight:500; border-radius:8px 8px 0 0; transition:color 0.15s, background 0.15s; border-bottom:2px solid transparent; margin-bottom:-1px;"
+                    style="padding:7px 14px; font-size:12px; font-weight:500; border-radius:8px 8px 0 0; transition:color 0.15s, background 0.15s; border-bottom:2px solid transparent; margin-bottom:-1px;"
                     [style.color]="activeTab() === 'prompt' ? 'var(--accent-hover)' : 'var(--text-muted)'"
                     [style.border-bottom-color]="activeTab() === 'prompt' ? 'var(--accent-primary)' : 'transparent'"
-                    [style.background]="activeTab() === 'prompt' ? 'rgba(139,92,246,0.06)' : 'transparent'">
+                    [style.background]="activeTab() === 'prompt' ? 'rgba(201,148,74,0.06)' : 'transparent'">
               System Prompt
             </button>
             <button (click)="activeTab.set('tools')"
-                    style="padding:7px 14px; font-size:12.5px; font-weight:500; border-radius:8px 8px 0 0; transition:color 0.15s, background 0.15s; border-bottom:2px solid transparent; margin-bottom:-1px;"
+                    style="padding:7px 14px; font-size:12px; font-weight:500; border-radius:8px 8px 0 0; transition:color 0.15s, background 0.15s; border-bottom:2px solid transparent; margin-bottom:-1px;"
                     [style.color]="activeTab() === 'tools' ? 'var(--accent-hover)' : 'var(--text-muted)'"
                     [style.border-bottom-color]="activeTab() === 'tools' ? 'var(--accent-primary)' : 'transparent'"
-                    [style.background]="activeTab() === 'tools' ? 'rgba(139,92,246,0.06)' : 'transparent'">
+                    [style.background]="activeTab() === 'tools' ? 'rgba(201,148,74,0.06)' : 'transparent'">
               Tools
               @if (agent.tools.length > 0) {
-                <span style="margin-left:5px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#10b981;">({{agent.tools.length}})</span>
+                <span style="margin-left:5px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#3daa6f;">({{agent.tools.length}})</span>
               }
             </button>
           </div>
@@ -174,7 +174,7 @@
                     }
                   </button>
                 </div>
-                <pre style="background:var(--bg-card-2); border-radius:12px; padding:16px; font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; word-break:break-word; margin:0; min-height:120px;">{{agent.systemMessage}}</pre>
+                <pre style="background:var(--bg-card-2); border-radius:12px; padding:16px; font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; word-break:break-word; margin:0; min-height:120px;">{{agent.systemMessage}}</pre>
               </div>
             }
 
@@ -197,7 +197,7 @@
                       <button
                         (click)="toggleTool(tool.name)"
                         style="width:100%; text-align:left; display:flex; align-items:center; gap:10px; padding:11px 16px; background:transparent; transition:background 0.1s;"
-                        onmouseenter="this.style.background='rgba(16,185,129,0.04)'"
+                        onmouseenter="this.style.background='rgba(201,148,74,0.07)'"
                         onmouseleave="this.style.background='transparent'">
 
                         <!-- Chevron -->
@@ -208,7 +208,7 @@
                         </svg>
 
                         <!-- Function name -->
-                        <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#6ee7b7; flex-shrink:0;">{{tool.name}}</span>
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--teal); flex-shrink:0;">{{tool.name}}</span>
 
                         <!-- Required param signature -->
                         <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); flex-shrink:0;">{{requiredParams(tool)}}</span>
@@ -222,7 +222,7 @@
                         <div style="padding:0 16px 16px 38px;">
 
                           <!-- Description block -->
-                          <div style="font-size:12.5px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; padding:8px 12px; background:rgba(16,185,129,0.05); border-radius:8px; border-left:2px solid rgba(16,185,129,0.3);">
+                          <div style="font-size:12px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px; padding:8px 12px; background:rgba(201,148,74,0.05); border-radius:8px; border-left:2px solid rgba(201,148,74,0.25);">
                             {{tool.description}}
                           </div>
 
@@ -234,7 +234,7 @@
                             <div style="background:rgba(0,0,0,0.22); border-radius:8px; overflow:hidden;">
 
                               <!-- Column headers -->
-                              <div style="display:grid; grid-template-columns:1.2fr 0.8fr 0.4fr 2.5fr; padding:7px 12px; font-size:9.5px; font-weight:700; color:var(--text-muted); letter-spacing:0.07em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                              <div style="display:grid; grid-template-columns:1.2fr 0.8fr 0.4fr 2.5fr; padding:7px 12px; font-size:10px; font-weight:700; color:var(--text-muted); letter-spacing:0.07em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
                                 <span>Name</span><span>Type</span><span>Req</span><span>Description</span>
                               </div>
 
@@ -243,11 +243,11 @@
                                      [style.border-bottom]="lastParam ? 'none' : '1px solid var(--hairline)'">
 
                                   <!-- Param name -->
-                                  <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#93c5fd;">{{param.name}}</span>
+                                  <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--text-secondary);">{{param.name}}</span>
 
                                   <!-- Type badge + enum values -->
                                   <div>
-                                    <span style="padding:2px 7px; border-radius:4px; font-size:10.5px; font-family:'JetBrains Mono',monospace; font-weight:600;"
+                                    <span style="padding:2px 7px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono',monospace; font-weight:600;"
                                           [style.background]="typeBg(param.enumValues?.length ? 'enum' : param.type)"
                                           [style.color]="typeColor(param.enumValues?.length ? 'enum' : param.type)">
                                       {{param.enumValues?.length ? 'enum' : param.type}}
@@ -255,7 +255,7 @@
                                     @if (param.enumValues && param.enumValues.length > 0) {
                                       <div style="margin-top:4px; display:flex; gap:3px; flex-wrap:wrap;">
                                         @for (val of param.enumValues; track val) {
-                                          <span style="padding:1px 5px; background:rgba(110,231,183,0.1); color:#6ee7b7; border-radius:3px; font-size:9.5px; font-family:'JetBrains Mono',monospace;">{{val}}</span>
+                                          <span style="padding:1px 5px; background:rgba(107,158,170,0.1); color:var(--teal); border-radius:3px; font-size:10px; font-family:'JetBrains Mono',monospace;">{{val}}</span>
                                         }
                                       </div>
                                     }
@@ -305,16 +305,16 @@
       <div style="position:absolute; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"></div>
 
       <!-- Dialog -->
-      <div style="position:relative; background:var(--bg-card); border-radius:20px; box-shadow:0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(239,68,68,0.2); padding:28px; width:100%; max-width:440px; margin:0 16px;"
+      <div style="position:relative; background:var(--bg-card); border-radius:20px; box-shadow:0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(217,85,85,0.2); padding:28px; width:100%; max-width:440px; margin:0 16px;"
            (click)="$event.stopPropagation()">
 
         <!-- Warning icon -->
-        <div style="width:48px; height:48px; border-radius:14px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; margin-bottom:16px; border:1px solid rgba(239,68,68,0.25);">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        <div style="width:48px; height:48px; border-radius:14px; background:rgba(217,85,85,0.12); display:flex; align-items:center; justify-content:center; margin-bottom:16px; border:1px solid rgba(217,85,85,0.25);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d95555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </div>
 
         <h2 style="font-size:18px; font-weight:700; margin:0 0 6px; letter-spacing:-0.02em;">Delete agent</h2>
-        <p style="font-size:13.5px; color:var(--text-muted); margin:0 0 20px; line-height:1.6;">
+        <p style="font-size:14px; color:var(--text-muted); margin:0 0 20px; line-height:1.6;">
           This will permanently delete <strong style="color:var(--text-primary);">{{agent.name}}</strong> and all associated traces, test cases, and test suites. This action cannot be undone.
         </p>
 
@@ -327,8 +327,8 @@
             [value]="deleteConfirmName()"
             (input)="deleteConfirmName.set($any($event.target).value)"
             placeholder="{{agent.name}}"
-            style="width:100%; box-sizing:border-box; padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13.5px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); border:1px solid var(--hairline); outline:none; transition:border-color 0.15s;"
-            [style.border-color]="deleteConfirmName() === agent.name ? 'rgba(239,68,68,0.5)' : 'var(--hairline)'"
+            style="width:100%; box-sizing:border-box; padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:14px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); border:1px solid var(--hairline); outline:none; transition:border-color 0.15s;"
+            [style.border-color]="deleteConfirmName() === agent.name ? 'rgba(217,85,85,0.5)' : 'var(--hairline)'"
             (keydown.enter)="confirmDelete()"
             (keydown.escape)="closeDeleteDialog()"
             autofocus>
@@ -341,7 +341,7 @@
           </button>
           <button (click)="confirmDelete()"
                   [disabled]="deleteConfirmName() !== agent.name || deleting()"
-                  style="padding:8px 18px; border-radius:9px; font-size:13px; font-weight:600; background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); transition:opacity 0.15s, background 0.15s; display:inline-flex; align-items:center; gap:6px;"
+                  style="padding:8px 18px; border-radius:9px; font-size:13px; font-weight:600; background:rgba(217,85,85,0.12); color:#d95555; border:1px solid rgba(217,85,85,0.25); transition:opacity 0.15s, background 0.15s; display:inline-flex; align-items:center; gap:6px;"
                   [style.opacity]="deleteConfirmName() !== agent.name || deleting() ? '0.45' : '1'">
             @if (deleting()) {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>

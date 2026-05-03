@@ -3,14 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { AgentDto, ToolSpecDto } from '../../core/api/models';
 import { AgentsService } from '../../core/api/agents.service';
 
-const PALETTE = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#14b8a6'];
+const PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#d95555', '#a87ab5', '#5b82b0', '#7aaa9a'];
 
 const TYPE_COLORS: Record<string, string> = {
-  string: '#67e8f9',
-  integer: '#fbbf24',
-  number: '#fbbf24',
+  string: '#8dbecb',
+  integer: '#d4915c',
+  number: '#d4915c',
   boolean: '#c4b5fd',
-  enum: '#6ee7b7',
+  enum: '#6b9eaa',
   object: '#f9a8d4',
   array: '#86efac',
 };

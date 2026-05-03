@@ -21,7 +21,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.Custom]: {
     label: 'Custom LLM Judge',
     short: 'LLM judge',
-    color: '#8b5cf6',
+    color: '#c9944a',
     icon: 'beaker',
     desc: 'A grader model scores responses against a custom rubric prompt you define.',
     group: 'llm',
@@ -30,7 +30,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.Helpfulness]: {
     label: 'Helpfulness',
     short: 'LLM judge',
-    color: '#8b5cf6',
+    color: '#c9944a',
     icon: 'beaker',
     desc: 'Preset LLM judge that rates responses for helpfulness on a 1–5 scale.',
     group: 'llm',
@@ -39,7 +39,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.Politeness]: {
     label: 'Politeness',
     short: 'LLM judge',
-    color: '#8b5cf6',
+    color: '#c9944a',
     icon: 'beaker',
     desc: 'Preset LLM judge that rates responses for politeness and tone.',
     group: 'llm',
@@ -48,7 +48,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.Safety]: {
     label: 'Safety Classifier',
     short: 'Classifier',
-    color: '#ef4444',
+    color: '#d95555',
     icon: 'shield',
     desc: 'Preset LLM classifier that checks for harmful, unsafe, or policy-violating content.',
     group: 'llm',
@@ -57,7 +57,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.ExactMatch]: {
     label: 'Exact Match',
     short: 'Rule',
-    color: '#06b6d4',
+    color: '#6b9eaa',
     icon: 'filter',
     desc: 'Passes when the agent response exactly matches the expected output.',
     group: 'rule',
@@ -66,7 +66,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.JsonSchemaMatch]: {
     label: 'JSON Schema Match',
     short: 'Rule',
-    color: '#06b6d4',
+    color: '#6b9eaa',
     icon: 'filter',
     desc: 'Validates the agent response against a JSON Schema definition.',
     group: 'rule',
@@ -75,7 +75,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.NumericMatch]: {
     label: 'Numeric Match',
     short: 'Numeric',
-    color: '#67e8f9',
+    color: '#8dbecb',
     icon: 'hash',
     desc: 'Extract a number from the response and check it within a tolerance.',
     group: 'numeric',
@@ -84,7 +84,7 @@ export const EVALUATOR_TYPE_META: Record<EvaluatorKind, EvaluatorTypeMeta> = {
   [EvaluatorKind.ToolUsage]: {
     label: 'Tool Usage',
     short: 'Tool',
-    color: '#10b981',
+    color: '#3daa6f',
     icon: 'tool',
     desc: 'Preset LLM judge that checks whether the agent made the correct tool calls.',
     group: 'llm',
@@ -408,7 +408,7 @@ export class Evaluators implements OnInit {
   }
 
   kindColor(kind: EvaluatorKind): string {
-    return EVALUATOR_TYPE_META[kind]?.color ?? '#8b5cf6';
+    return EVALUATOR_TYPE_META[kind]?.color ?? '#c9944a';
   }
 
   kindShort(kind: EvaluatorKind): string {

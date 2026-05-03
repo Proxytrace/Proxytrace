@@ -8,17 +8,17 @@
         <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:100px; white-space:nowrap;"
               [style.color]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"
               [style.background]="health.isOnline() ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
-              [style.border]="health.isOnline() ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)'">
+              [style.border]="health.isOnline() ? '1px solid rgba(61,170,111,0.25)' : '1px solid rgba(217,85,85,0.2)'">
           <span style="width:6px; height:6px; border-radius:50%;"
                 [class.pulse-dot]="health.isOnline()"
                 [style.background]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"></span>
           {{ health.isOnline() ? 'Live' : 'Offline' }}
         </span>
       </div>
-      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Every LLM call captured by the proxy, grouped by model.</p>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Every LLM call captured by the proxy, grouped by model.</p>
     </div>
     <div style="display:flex; gap:8px; flex-shrink:0;">
-      <button style="padding:8px 12px; background:var(--bg-card); border-radius:9px; font-size:12.5px; font-weight:500; color:var(--text-secondary); box-shadow:var(--shadow-pill); display:inline-flex; align-items:center; gap:6px;">
+      <button style="padding:8px 12px; background:var(--bg-card); border-radius:9px; font-size:12px; font-weight:500; color:var(--text-secondary); box-shadow:var(--shadow-pill); display:inline-flex; align-items:center; gap:6px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
         Export CSV
       </button>
@@ -47,7 +47,7 @@
     <div style="background:var(--bg-card); border-radius:14px; padding:14px; box-shadow:var(--shadow-card); display:flex; flex-direction:column;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
         <span style="font-size:12px; font-weight:600;">Latency</span>
-        <span style="font-size:10.5px; color:var(--text-muted);" class="mono">p95 · {{ p95Label() }}</span>
+        <span style="font-size:11px; color:var(--text-muted);" class="mono">p95 · {{ p95Label() }}</span>
       </div>
       <!-- Wrapper provides relative positioning for the tooltip -->
       <div style="position:relative;">
@@ -73,7 +73,7 @@
               [attr.x]="b.x.toFixed(1)" [attr.y]="b.y.toFixed(1)"
               [attr.width]="b.w.toFixed(1)" [attr.height]="b.h.toFixed(1)"
               rx="2"
-              [attr.fill]="hoveredBar() === b ? '#22d3ee' : '#06b6d4'"
+              [attr.fill]="hoveredBar() === b ? '#8dbecb' : '#6b9eaa'"
               [attr.opacity]="hoveredBar() !== null && hoveredBar() !== b ? '0.4' : '0.85'"
               (mouseenter)="hoveredBar.set(b)"
               (mouseleave)="hoveredBar.set(null)"
@@ -190,7 +190,7 @@
   <!-- Table -->
   <div class="fade-up" style="animation-delay:160ms; background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow:hidden; flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column;">
     <!-- Header -->
-    <div style="display:grid; grid-template-columns:1.4fr 1.2fr 1.2fr 0.6fr 1fr 1fr 0.8fr; padding:12px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); position:sticky; top:0; background:var(--bg-card); z-index:1; flex-shrink:0;">
+    <div style="display:grid; grid-template-columns:1.4fr 1.2fr 1.2fr 0.6fr 1fr 1fr 0.8fr; padding:12px 18px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); position:sticky; top:0; background:var(--bg-card); z-index:1; flex-shrink:0;">
       <span>Trace ID</span>
       <span>Agent</span>
       <span>Model</span>
@@ -205,23 +205,23 @@
     } @else if (loadState() === 'error') {
       <div style="padding:48px 18px; text-align:center;">
         <p style="font-size:13px; color:var(--text-secondary); margin:0 0 4px;">Failed to load traces</p>
-        <p style="font-size:11.5px; color:var(--text-muted); margin:0;">Check that the backend is running.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin:0;">Check that the backend is running.</p>
       </div>
     } @else if (traces().length === 0) {
       <div style="padding:48px 18px; text-align:center;">
         <p style="font-size:13px; color:var(--text-secondary); margin:0 0 4px;">No traces captured yet</p>
-        <p style="font-size:11.5px; color:var(--text-muted); margin:0;">Route your agent through the Trsr proxy to start capturing traces.</p>
+        <p style="font-size:12px; color:var(--text-muted); margin:0;">Route your agent through the Trsr proxy to start capturing traces.</p>
       </div>
     } @else {
       @for (t of traces(); track t.id) {
         <div (click)="openTrace(t)"
              style="display:grid; grid-template-columns:1.4fr 1.2fr 1.2fr 0.6fr 1fr 1fr 0.8fr; padding:12px 18px; align-items:center; font-size:12px; border-top:1px solid var(--hairline); transition:background 0.1s; cursor:pointer;"
-             onmouseenter="this.style.background='rgba(139,92,246,0.04)'" onmouseleave="this.style.background='transparent'">
+             onmouseenter="this.style.background='rgba(201,148,74,0.07)'" onmouseleave="this.style.background='transparent'">
           <span style="display:flex; align-items:center; gap:8px;">
             <span style="width:3px; height:20px; border-radius:2px; flex-shrink:0; display:inline-block;" [style.background]="modelColor(t.model)"></span>
-            <span class="mono" style="color:var(--text-primary); font-size:11.5px;">{{truncateId(t.id)}}</span>
+            <span class="mono" style="color:var(--text-primary); font-size:12px;">{{truncateId(t.id)}}</span>
           </span>
-          <span style="font-size:11.5px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="t.agentName ?? ''">
+          <span style="font-size:12px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="t.agentName ?? ''">
             {{ t.agentName ?? '—' }}
           </span>
           <span>
@@ -253,11 +253,11 @@
   <!-- Pagination -->
   @if (loadState() === 'loaded') {
     <div class="fade-up" style="animation-delay:200ms; display:flex; justify-content:space-between; align-items:center; padding:0 4px;">
-      <span style="font-size:11.5px; color:var(--text-muted);">
+      <span style="font-size:12px; color:var(--text-muted);">
         @if (total() === 0) { 0 traces } @else { Showing {{rangeStart()}}–{{rangeEnd()}} of {{total()}} }
       </span>
       <div style="display:flex; gap:6px;">
-        <button (click)="prevPage()" [disabled]="!hasPrev()" style="padding:7px 10px; background:var(--bg-card); border-radius:8px; box-shadow:var(--shadow-pill); color:var(--text-muted); font-size:11.5px; transition:opacity 0.15s;" [style.opacity]="hasPrev() ? '1' : '0.4'">
+        <button (click)="prevPage()" [disabled]="!hasPrev()" style="padding:7px 10px; background:var(--bg-card); border-radius:8px; box-shadow:var(--shadow-pill); color:var(--text-muted); font-size:12px; transition:opacity 0.15s;" [style.opacity]="hasPrev() ? '1' : '0.4'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         @for (p of pageNums(); track $index) {
@@ -270,7 +270,7 @@
                     [style.color]="p === page() ? 'var(--text-primary)' : 'var(--text-secondary)'">{{p}}</button>
           }
         }
-        <button (click)="nextPage()" [disabled]="!hasNext()" style="padding:7px 10px; background:var(--bg-card); border-radius:8px; box-shadow:var(--shadow-pill); color:var(--text-secondary); font-size:11.5px; transition:opacity 0.15s;" [style.opacity]="hasNext() ? '1' : '0.4'">
+        <button (click)="nextPage()" [disabled]="!hasNext()" style="padding:7px 10px; background:var(--bg-card); border-radius:8px; box-shadow:var(--shadow-pill); color:var(--text-secondary); font-size:12px; transition:opacity 0.15s;" [style.opacity]="hasNext() ? '1' : '0.4'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>

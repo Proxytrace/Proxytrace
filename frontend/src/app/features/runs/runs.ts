@@ -9,14 +9,14 @@ import {
 } from '../../core/api/models';
 
 const AGENT_COLORS: Record<string, string> = {
-  'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
-  'Ticket Triage': '#10b981', 'Classifier': '#f59e0b',
+  'Customer Support': '#c9944a', 'Code Helper': '#6b9eaa',
+  'Ticket Triage': '#3daa6f', 'Classifier': '#d4915c',
 };
 
 const EVALUATOR_KIND_COLORS: Record<string, string> = {
-  Custom: '#8b5cf6', ExactMatch: '#06b6d4', NumericMatch: '#67e8f9',
-  Helpfulness: '#8b5cf6', Politeness: '#8b5cf6', JsonSchemaMatch: '#06b6d4',
-  Safety: '#ef4444', ToolUsage: '#10b981',
+  Custom: '#c9944a', ExactMatch: '#6b9eaa', NumericMatch: '#8dbecb',
+  Helpfulness: '#c9944a', Politeness: '#c9944a', JsonSchemaMatch: '#6b9eaa',
+  Safety: '#d95555', ToolUsage: '#3daa6f',
 };
 
 interface CaseProgress {
@@ -251,11 +251,20 @@ export class Runs implements OnInit, OnDestroy {
     }
   }
 
-  evaluatorKindColor(kind: string): string {
-    return EVALUATOR_KIND_COLORS[kind] ?? '#8b5cf6';
+  scoreBg(score: string): string {
+    switch (score) {
+      case 'Excellent': case 'Good': return 'var(--success-subtle)';
+      case 'Acceptable': return 'var(--warn-subtle)';
+      case 'Bad': case 'Terrible': return 'var(--danger-subtle)';
+      default: return 'var(--bg-card-2)';
+    }
   }
 
-  agentColor(agentName: string) { return AGENT_COLORS[agentName] ?? '#8b5cf6'; }
+  evaluatorKindColor(kind: string): string {
+    return EVALUATOR_KIND_COLORS[kind] ?? '#c9944a';
+  }
+
+  agentColor(agentName: string) { return AGENT_COLORS[agentName] ?? '#c9944a'; }
 
   passColor(rate: number | undefined) {
     if (rate === undefined) return 'var(--accent-primary)';
@@ -279,6 +288,16 @@ export class Runs implements OnInit, OnDestroy {
       case TestRunStatus.Completed: return 'var(--success)';
       case TestRunStatus.Failed: return 'var(--danger)';
       case TestRunStatus.Cancelled: return 'var(--warn)';
+    }
+  }
+
+  statusBg(status: TestRunStatus): string {
+    switch (status) {
+      case TestRunStatus.Pending:   return 'var(--bg-card-2)';
+      case TestRunStatus.Running:   return 'var(--accent-subtle)';
+      case TestRunStatus.Completed: return 'var(--success-subtle)';
+      case TestRunStatus.Failed:    return 'var(--danger-subtle)';
+      case TestRunStatus.Cancelled: return 'var(--warn-subtle)';
     }
   }
 
@@ -352,6 +371,10 @@ export class Runs implements OnInit, OnDestroy {
 
   evalColor(evaluation: Evaluation): string {
     return evaluation === Evaluation.Pass ? 'var(--success)' : evaluation === Evaluation.Fail ? 'var(--danger)' : 'var(--warn)';
+  }
+
+  evalBg(evaluation: Evaluation): string {
+    return evaluation === Evaluation.Pass ? 'var(--success-subtle)' : evaluation === Evaluation.Fail ? 'var(--danger-subtle)' : 'var(--warn-subtle)';
   }
 
   resultByCase(run: TestRunDto, testCaseId: string): TestResultDto | null {

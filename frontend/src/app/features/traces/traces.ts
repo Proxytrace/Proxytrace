@@ -261,8 +261,8 @@ export class Traces implements OnInit, OnDestroy {
   }
   modelColor(model: string): string {
     const c: Record<string, string> = {
-      'gpt-4o': '#8b5cf6', 'gpt-4o-mini': '#06b6d4',
-      'gpt-3.5-turbo': '#f59e0b', 'claude-3.5-sonnet': '#10b981',
+      'gpt-4o': '#c9944a', 'gpt-4o-mini': '#6b9eaa',
+      'gpt-3.5-turbo': '#d4915c', 'claude-3.5-sonnet': '#3daa6f',
     };
     return c[model] ?? '#888888';
   }
