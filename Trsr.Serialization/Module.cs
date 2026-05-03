@@ -22,14 +22,12 @@ public sealed class Module : Autofac.Module
 
         builder.Register<IOutputFormat.Create>(c =>
         {
+            var ctx = c.Resolve<IComponentContext>();
             return type =>
             {
-                return type switch
-                {
-                    not null when type == typeof(string) => c.Resolve<StringOutputFormat>(),
-                    not null when type == typeof(JsonOutputFormat) => c.Resolve<JsonOutputFormat.Create>()(type),
-                    _ => throw new NotSupportedException($"Output format for type {type} is not supported")
-                };
+                if (type == typeof(string))
+                    return ctx.Resolve<StringOutputFormat>();
+                return ctx.Resolve<JsonOutputFormat>(new TypedParameter(typeof(Type), type));
             };
         }).AsSelf();
     }

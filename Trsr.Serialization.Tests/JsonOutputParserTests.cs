@@ -16,7 +16,7 @@ using Trsr.Serialization.Internal;
 namespace Trsr.Serialization.Tests;
 
 [TestClass]
-public class IOutputParserTests : BaseTest<Module>
+public class JsonOutputParserTests : BaseTest<Module>
 {
     public class SimpleModel
     {
@@ -79,22 +79,22 @@ public class IOutputParserTests : BaseTest<Module>
     {
         [System.ComponentModel.Description("The action that was requested to be performed")]
         public string RequestedAction { get; set; } = string.Empty;
-        
+
         [System.ComponentModel.Description("The unique identifier for the actor")]
         public Guid ActorId { get; set; }
-        
+
         [System.ComponentModel.Description("The status of the operation")]
         public TestEnum Status { get; set; }
     }
 
+    private IOutputFormat Format<T>() =>
+        GetServices().GetRequiredService<IOutputFormat.Create>()(typeof(T));
+
     [TestMethod]
     public void SchemaDefinition_SimpleModel_ReturnsValidJsonSchema()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
-
-        // Act
-        string schema = parser.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema = Format<SimpleModel>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema.Should().NotBeNullOrWhiteSpace();
@@ -111,11 +111,8 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public void SchemaDefinition_ModelWithEnum_ContainsEnumValues()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithEnum>>();
-
-        // Act
-        string schema = parser.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema = Format<ModelWithEnum>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema.Should().NotBeNullOrWhiteSpace();
@@ -129,11 +126,8 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public void SchemaDefinition_ComplexModel_ContainsNestedStructures()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ComplexModel>>();
-
-        // Act
-        string schema = parser.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema = Format<ComplexModel>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema.Should().NotBeNullOrWhiteSpace();
@@ -148,11 +142,8 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public void SchemaDefinition_NullableModel_HandlesNullableProperties()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<NullableModel>>();
-
-        // Act
-        string schema = parser.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema = Format<NullableModel>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema.Should().NotBeNullOrWhiteSpace();
@@ -164,16 +155,11 @@ public class IOutputParserTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void SchemaDefinition_SameTypeMultipleParsers_ReturnsSameSchema()
+    public void SchemaDefinition_SameTypeMultipleCalls_ReturnsSameSchema()
     {
-        // Arrange
-        var serviceProvider = GetServices();
-        var parser1 = serviceProvider.GetRequiredService<IOutputParser<SimpleModel>>();
-        var parser2 = serviceProvider.GetRequiredService<IOutputParser<SimpleModel>>();
-
-        // Act
-        string schema1 = parser1.Format.As<JsonOutputFormat>().Schema;
-        string schema2 = parser2.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema1 = Format<SimpleModel>().As<JsonOutputFormat>().Schema;
+        string schema2 = Format<SimpleModel>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema1.Should().Be(schema2);
@@ -183,11 +169,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ValidSimpleJson_ReturnsDeserializedObject()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """{"name":"John","age":30,"isActive":true}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -200,7 +185,6 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ValidJsonWithWhitespace_ReturnsDeserializedObject()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """
                       {
                           "name": "Jane",
@@ -210,7 +194,7 @@ public class IOutputParserTests : BaseTest<Module>
                       """;
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -223,11 +207,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_EnumAsString_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithEnum>>();
         string json = """{"status":"firstValue","description":"Test"}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ModelWithEnum>().ParseAsync<ModelWithEnum>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -239,11 +222,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_EnumAsInteger_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithEnum>>();
         string json = """{"status":1,"description":"Test"}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ModelWithEnum>().ParseAsync<ModelWithEnum>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -255,7 +237,6 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ComplexModel_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ComplexModel>>();
         string json = """
                       {
                           "nestedModel": {"name":"Nested","age":20,"isActive":true},
@@ -266,12 +247,12 @@ public class IOutputParserTests : BaseTest<Module>
                       """;
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ComplexModel>().ParseAsync<ComplexModel>(json);
 
         // Assert
         result.Should().NotBeNull();
         result.NestedModel.Should().NotBeNull();
-        result.NestedModel!.Name.Should().Be("Nested");
+        result.NestedModel.Name.Should().Be("Nested");
         result.NestedModel.Age.Should().Be(20);
         result.NestedModel.IsActive.Should().BeTrue();
         result.Items.Should().BeEquivalentTo("item1", "item2", "item3");
@@ -284,11 +265,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_NullableProperties_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<NullableModel>>();
         string json = """{"optionalString":"test","optionalInt":42,"optionalDate":"2023-01-01T00:00:00Z"}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<NullableModel>().ParseAsync<NullableModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -306,10 +286,7 @@ public class IOutputParserTests : BaseTest<Module>
     [DataRow("\"null\"\r\n")]
     public async Task ParseAsync_NullableListWithNull_ReturnNull(string? data)
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<IReadOnlyList<string>>>();
-
-        var result = await parser.ParseAsync(data);
+        var result = await Format<IReadOnlyList<string>>().ParseAsync<IReadOnlyList<string>>(data);
         result.Should().BeNull();
     }
 
@@ -317,11 +294,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_NullablePropertiesWithNulls_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<NullableModel>>();
         string json = """{"optionalString":null,"optionalInt":null,"optionalDate":null}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<NullableModel>().ParseAsync<NullableModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -334,11 +310,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ValidModelWithValidation_PassesValidation()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithValidation>>();
         string json = """{"requiredField":"Valid Value","age":25}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ModelWithValidation>().ParseAsync<ModelWithValidation>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -350,7 +325,6 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_JsonWithCodeBlockMarkdown_TrimsArtifacts()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string jsonWithArtifacts = """
                                    ```json
                                    {"name":"John","age":30,"isActive":true}
@@ -358,7 +332,7 @@ public class IOutputParserTests : BaseTest<Module>
                                    """;
 
         // Act
-        var result = await parser.ParseAsync(jsonWithArtifacts);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(jsonWithArtifacts);
 
         // Assert
         result.Should().NotBeNull();
@@ -371,7 +345,6 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_JsonWithLanguageSpecifier_TrimsArtifacts()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string jsonWithArtifacts = """
                                    ```csharp
                                    {"name":"John","age":30,"isActive":true}
@@ -379,7 +352,7 @@ public class IOutputParserTests : BaseTest<Module>
                                    """;
 
         // Act
-        var result = await parser.ParseAsync(jsonWithArtifacts);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(jsonWithArtifacts);
 
         // Assert
         result.Should().NotBeNull();
@@ -389,9 +362,6 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public async Task ParseAsync_JsonWithCommonPrefixes_TrimsArtifacts()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
-
         var testCases = new[]
         {
             """json: {"name":"John","age":30,"isActive":true}""",
@@ -403,7 +373,7 @@ public class IOutputParserTests : BaseTest<Module>
         foreach (string testCase in testCases)
         {
             // Act
-            var result = await parser.ParseAsync(testCase);
+            var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(testCase);
 
             // Assert
             result.Should().NotBeNull();
@@ -417,11 +387,8 @@ public class IOutputParserTests : BaseTest<Module>
     [DataRow("28c50307-b609-4c23-ae7d-c5e51f636a82")]
     public async Task ParseAsync_Guid_works(string input)
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<Guid>>();
-
         // Act
-        Guid? result = await parser.ParseAsync(input);
+        Guid? result = await Format<Guid>().ParseAsync<Guid>(input);
 
         // Assert
         result.Should().NotBeNull();
@@ -432,11 +399,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_JsonWithOnlyOpeningBackticks_TrimsArtifacts()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string jsonWithArtifacts = """```{"name":"John","age":30,"isActive":true}""";
 
         // Act
-        var result = await parser.ParseAsync(jsonWithArtifacts);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(jsonWithArtifacts);
 
         // Assert
         result.Should().NotBeNull();
@@ -447,11 +413,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_JsonWithOnlyClosingBackticks_TrimsArtifacts()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string jsonWithArtifacts = """{"name":"John","age":30,"isActive":true}```""";
 
         // Act
-        var result = await parser.ParseAsync(jsonWithArtifacts);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(jsonWithArtifacts);
 
         // Assert
         result.Should().NotBeNull();
@@ -461,18 +426,14 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public async Task ParseAsync_EmptyString_ReturnsNull()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
-
-        var result = await parser.ParseAsync(string.Empty);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(string.Empty);
         result.Should().BeNull();
     }
 
     [TestMethod]
     public async Task ParseAsync_WhitespaceOnly_ReturnsEmptyAfterTrimming()
     {
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
-        var result = await parser.ParseAsync("   \n\t   ");
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>("   \n\t   ");
         result.Should().BeNull();
     }
 
@@ -480,11 +441,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_InvalidJson_ThrowsSerializationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string invalidJson = """{"name":"John","age":30,"isActive":""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(invalidJson))
+        await Format<SimpleModel>().Invoking(f => f.ParseAsync<SimpleModel>(invalidJson))
             .Should()
             .ThrowAsync<SerializationException>();
     }
@@ -492,11 +452,7 @@ public class IOutputParserTests : BaseTest<Module>
     [TestMethod]
     public async Task ParseAsync_JsonReturningNull_ReturnNull()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
-        string nullJson = "null";
-
-        var result = await parser.ParseAsync(nullJson);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>("null");
         result.Should().BeNull();
     }
 
@@ -504,11 +460,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ModelWithValidationErrors_ThrowsValidationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithValidation>>();
         string invalidJson = """{"requiredField":"","age":150}""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(invalidJson))
+        await Format<ModelWithValidation>().Invoking(f => f.ParseAsync<ModelWithValidation>(invalidJson))
             .Should()
             .ThrowAsync<SerializationException>();
     }
@@ -517,11 +472,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ModelWithValidationEmptyRequiredField_ThrowsValidationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithValidation>>();
         string invalidJson = """{"requiredField":"","age":25}""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(invalidJson))
+        await Format<ModelWithValidation>().Invoking(f => f.ParseAsync<ModelWithValidation>(invalidJson))
             .Should().ThrowAsync<SerializationException>();
     }
 
@@ -529,11 +483,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ModelWithValidationInvalidAge_ThrowsValidationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithValidation>>();
         string invalidJson = """{"requiredField":"Valid","age":0}""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(invalidJson))
+        await Format<ModelWithValidation>().Invoking(f => f.ParseAsync<ModelWithValidation>(invalidJson))
             .Should().ThrowAsync<SerializationException>();
     }
 
@@ -541,11 +494,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_IncorrectJsonStructure_ThrowsSerializationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string wrongStructure = """["array","instead","of","object"]""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(wrongStructure))
+        await Format<SimpleModel>().Invoking(f => f.ParseAsync<SimpleModel>(wrongStructure))
             .Should().ThrowAsync<SerializationException>();
     }
 
@@ -553,22 +505,18 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_InvalidEnumValue_ThrowsSerializationException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithEnum>>();
         string invalidEnum = """{"status":"invalidValue","description":"Test"}""";
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(invalidEnum))
+        await Format<ModelWithEnum>().Invoking(f => f.ParseAsync<ModelWithEnum>(invalidEnum))
             .Should().ThrowAsync<SerializationException>();
     }
 
     [TestMethod]
     public void SchemaDefinition_ModelWithDescription_ContainsDescriptions()
     {
-        // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithDescription>>();
-
-        // Act
-        string schema = parser.Format.As<JsonOutputFormat>().Schema;
+        // Arrange & Act
+        string schema = Format<ModelWithDescription>().As<JsonOutputFormat>().Schema;
 
         // Assert
         schema.Should().NotBeNullOrWhiteSpace();
@@ -580,7 +528,7 @@ public class IOutputParserTests : BaseTest<Module>
         schema.Should().Contain("The action that was requested to be performed");
         schema.Should().Contain("The unique identifier for the actor");
         schema.Should().Contain("The status of the operation");
-        
+
         // Verify the properties exist
         schema.Should().Contain("RequestedAction");
         schema.Should().Contain("ActorId");
@@ -591,12 +539,11 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_ModelWithDescription_SuccessfullyParsed()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ModelWithDescription>>();
         Guid testGuid = Guid.NewGuid();
         string json = $$"""{"requestedAction":"TestAction","actorId":"{{testGuid}}","status":"secondValue"}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ModelWithDescription>().ParseAsync<ModelWithDescription>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -609,12 +556,11 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_WithCancellationToken_RespectsToken()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """{"name":"John","age":30,"isActive":true}""";
         using var cts = new CancellationTokenSource();
 
         // Act
-        var result = await parser.ParseAsync(json, cts.Token);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(json, cts.Token);
 
         // Assert
         result.Should().NotBeNull();
@@ -625,13 +571,12 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_WithCancelledToken_ThrowsOperationCancelledException()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """{"name":"John","age":30,"isActive":true}""";
         var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
         // Act & Assert
-        await parser.Invoking(p => p.ParseAsync(json, cts.Token))
+        await Format<SimpleModel>().Invoking(f => f.ParseAsync<SimpleModel>(json, cts.Token))
             .Should()
             .ThrowAsync<OperationCanceledException>();
     }
@@ -640,7 +585,6 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_LargeJson_ParsesSuccessfully()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<ComplexModel>>();
         var items = Enumerable.Range(1, 1000).Select(i => $"item{i}").ToList();
         var scores = Enumerable.Range(1, 100).ToDictionary(i => $"subject{i}", i => i * 10);
 
@@ -655,7 +599,7 @@ public class IOutputParserTests : BaseTest<Module>
         string json = JsonSerializer.Serialize(model);
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<ComplexModel>().ParseAsync<ComplexModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -669,11 +613,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_UnicodeCharacters_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """{"name":"João 你好 🌟","age":30,"isActive":true}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -686,11 +629,10 @@ public class IOutputParserTests : BaseTest<Module>
     public async Task ParseAsync_EscapedCharacters_ParsesCorrectly()
     {
         // Arrange
-        var parser = GetServices().GetRequiredService<IOutputParser<SimpleModel>>();
         string json = """{"name":"Line1\nLine2\tTabbed\"Quoted\"","age":30,"isActive":true}""";
 
         // Act
-        var result = await parser.ParseAsync(json);
+        var result = await Format<SimpleModel>().ParseAsync<SimpleModel>(json);
 
         // Assert
         result.Should().NotBeNull();
@@ -698,21 +640,11 @@ public class IOutputParserTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void Constructor_MultipleInstances_DoesNotThrow()
+    public void GetFormat_MultipleTypesAndCalls_ReturnsCorrectSchemas()
     {
-        // Arrange & Act
-        var serviceProvider = GetServices();
-        var parser1 = serviceProvider.GetRequiredService<IOutputParser<SimpleModel>>();
-        var parser2 = serviceProvider.GetRequiredService<IOutputParser<SimpleModel>>();
-        var parser3 = serviceProvider.GetRequiredService<IOutputParser<ModelWithEnum>>();
-
-        // Assert
-        parser1.Should().NotBeNull();
-        parser2.Should().NotBeNull();
-        parser3.Should().NotBeNull();
-        string schema1 = parser1.Format.As<JsonOutputFormat>().Schema;
-        string schema2 = parser2.Format.As<JsonOutputFormat>().Schema;
-        string schema3 = parser3.Format.As<JsonOutputFormat>().Schema;
+        string schema1 = Format<SimpleModel>().As<JsonOutputFormat>().Schema;
+        string schema2 = Format<SimpleModel>().As<JsonOutputFormat>().Schema;
+        string schema3 = Format<ModelWithEnum>().As<JsonOutputFormat>().Schema;
         schema1.Should().Be(schema2);
         schema1.Should().NotBe(schema3);
     }
