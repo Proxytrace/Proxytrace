@@ -190,6 +190,7 @@ export interface TestRunDto {
   suiteName: string | null;
   agentId: string;
   agentName: string;
+  endpointId: string;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;

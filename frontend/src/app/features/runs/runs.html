@@ -102,7 +102,7 @@
             @if (isActive(run)) {
               <div style="margin-bottom:8px;">
                 <div style="height:4px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:4px;">
-                  @if (run.status === TestRunStatus.Running && run.totalCases > 0) {
+                  @if (run.status === TestRunStatus.Running && run.testCases.length > 0) {
                     <div style="height:100%; border-radius:100px; background:var(--accent-primary); transition:width 0.5s;"
                          [style.width]="progressPercent(run) + '%'"></div>
                   } @else {
@@ -110,7 +110,7 @@
                   }
                 </div>
                 <div style="font-size:11px; color:var(--accent-hover); font-weight:500;">
-                  {{run.status === TestRunStatus.Pending ? 'Queued…' : run.totalCases > 0 ? progressPercent(run) + '% — ' + (run.passedCases + run.failedCases) + '/' + run.totalCases + ' cases' : 'Starting…'}}
+                  {{run.status === TestRunStatus.Pending ? 'Queued…' : run.testCases.length > 0 ? progressPercent(run) + '% — ' + run.results.length + '/' + run.testCases.length + ' cases' : 'Starting…'}}
                 </div>
               </div>
             }
@@ -167,10 +167,26 @@
                   }
                 </div>
               </div>
-              <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; flex-shrink:0; text-align:right;">
-                <div>{{formatDate(run.startedAt)}}</div>
-                @if (run.completedAt) {
-                  <div style="margin-top:2px;">{{formatDuration(run.durationMs)}}</div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;">
+                <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; text-align:right;">
+                  <div>{{formatDate(run.startedAt)}}</div>
+                  @if (run.completedAt) {
+                    <div style="margin-top:2px;">{{formatDuration(run.durationMs)}}</div>
+                  }
+                </div>
+                @if (!isActive(run) && run.suiteId) {
+                  <button (click)="rerunRun(run)"
+                          [disabled]="rerunInProgress()"
+                          style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:var(--accent-subtle); color:var(--accent-hover); transition:opacity 0.15s;"
+                          [style.opacity]="rerunInProgress() ? '0.5' : '1'">
+                    @if (rerunInProgress()) {
+                      <span style="width:11px; height:11px; border-radius:50%; border:2px solid rgba(139,92,246,0.3); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+                      Starting…
+                    } @else {
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      Run again
+                    }
+                  </button>
                 }
               </div>
             </div>
@@ -187,16 +203,16 @@
                   </div>
                 </div>
                 <div style="height:6px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:10px;">
-                  @if (run.status === TestRunStatus.Running && run.totalCases > 0) {
+                  @if (run.status === TestRunStatus.Running && run.testCases.length > 0) {
                     <div style="height:100%; border-radius:100px; background:var(--accent-primary); transition:width 0.5s;"
                          [style.width]="progressPercent(run) + '%'"></div>
                   } @else {
                     <div style="height:100%; width:30%; border-radius:100px; background:var(--accent-primary); animation:indeterminate 1.4s ease-in-out infinite;"></div>
                   }
                 </div>
-                @if (run.totalCases > 0) {
+                @if (run.testCases.length > 0) {
                   <div style="font-size:12px; color:var(--text-secondary);">
-                    {{run.passedCases + run.failedCases}} of {{run.totalCases}} cases evaluated · {{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}} per case
+                    {{run.results.length}} of {{run.testCases.length}} cases evaluated · {{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}} per case
                   </div>
                 } @else {
                   <div style="font-size:12px; color:var(--text-secondary);">Initialising…</div>

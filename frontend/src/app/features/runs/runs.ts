@@ -48,6 +48,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteTargetId = signal<string | null>(null);
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
+  readonly rerunInProgress = signal(false);
   readonly expandedCaseIds = signal<Set<string>>(new Set());
   readonly caseProgress = signal<Map<string, CaseProgress>>(new Map());
 
@@ -154,28 +155,13 @@ export class Runs implements OnInit, OnDestroy {
   }
 
   private handleTestResult(evt: TestResultArrivedEvent) {
-    const evaluation = this.scoreToEvaluation(evt.overallScore, evt.evaluations.length);
-    this.runs.update(runs => runs.map(r => {
-      if (r.id !== evt.runId) return r;
-      const passed = r.passedCases + (evaluation === Evaluation.Pass ? 1 : 0);
-      const failed = r.failedCases + (evaluation === Evaluation.Fail ? 1 : 0);
-      const total = r.totalCases;
-      const newResult: TestResultDto = {
-        id: '', testCaseId: evt.testCaseId, testCaseSummary: '', actualResponse: '',
-        evaluations: evt.evaluations, durationMs: evt.durationMs,
-      };
-      return {
-        ...r,
-        passedCases: passed, failedCases: failed,
-        passRate: total > 0 ? Math.round(passed / total * 100) : 0,
-        results: [...r.results, newResult],
-      };
-    }));
-  }
-
-  private scoreToEvaluation(overallScore: string | null, evaluationCount: number): Evaluation {
-    if (!overallScore || !evaluationCount) return Evaluation.Undecided;
-    return ['Acceptable', 'Good', 'Excellent'].includes(overallScore) ? Evaluation.Pass : Evaluation.Fail;
+    const newResult: TestResultDto = {
+      id: '', testCaseId: evt.testCaseId, testCaseSummary: '', actualResponse: '',
+      evaluations: evt.evaluations, durationMs: evt.durationMs,
+    };
+    this.runs.update(runs => runs.map(r =>
+      r.id !== evt.runId ? r : { ...r, results: [...r.results, newResult] }
+    ));
   }
 
   private handleRunComplete(evt: RunCompleteEvent) {
@@ -352,10 +338,28 @@ export class Runs implements OnInit, OnDestroy {
   }
 
   progressPercent(run: TestRunDto): number {
-    const total = run.totalCases;
+    const total = run.testCases.length;
     if (!total) return 0;
-    const done = run.passedCases + run.failedCases;
-    return Math.round((done / total) * 100);
+    return Math.round((run.results.length / total) * 100);
+  }
+
+  async rerunRun(run: TestRunDto) {
+    if (!run.suiteId || this.rerunInProgress()) return;
+    this.rerunInProgress.set(true);
+    try {
+      const newRun = await firstValueFrom(this.runsService.create({
+        testSuiteId: run.suiteId,
+        modelEndpointId: run.endpointId,
+      }));
+      this.runs.update(runs => [newRun, ...runs]);
+      this.selectedRunId.set(newRun.id);
+      this.subscribeToActiveRuns();
+      this.managePollState();
+    } catch {
+      // no-op: button returns to ready state
+    } finally {
+      this.rerunInProgress.set(false);
+    }
   }
 
   openDeleteModal(id: string, event: Event) {

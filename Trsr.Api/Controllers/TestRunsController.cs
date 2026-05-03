@@ -151,6 +151,7 @@ public class TestRunsController : ControllerBase
             SuiteName: r.Suite.Name,
             AgentId: r.Suite.Agent.Id,
             AgentName: r.Suite.Agent.Name,
+            EndpointId: r.Endpoint.Id,
             Status: r.Status,
             TotalCases: total,
             PassedCases: passed,
