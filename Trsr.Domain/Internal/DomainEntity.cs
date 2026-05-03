@@ -67,4 +67,14 @@ internal abstract record DomainEntity<TSelf> :
 
     public Task RemoveAsync(CancellationToken cancellationToken = default)
         => repository.RemoveAsync(Id, cancellationToken);
+
+    public virtual bool Equals(DomainEntity<TSelf>? other)
+        => other is not null
+           && EqualityContract == other.EqualityContract
+           && Id == other.Id
+           && CreatedAt == other.CreatedAt
+           && UpdatedAt == other.UpdatedAt;
+
+    public override int GetHashCode()
+        => HashCode.Combine(EqualityContract, Id, CreatedAt, UpdatedAt);
 }
