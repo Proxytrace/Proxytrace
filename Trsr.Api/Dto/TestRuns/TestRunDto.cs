@@ -1,7 +1,17 @@
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.TestRun;
 
 namespace Trsr.Api.Dto.TestRuns;
+
+public record RunEvaluatorDto(Guid Id, EvaluatorKind Kind, string Name);
+
+public record EvaluationResultDto(
+    Guid EvaluatorId,
+    EvaluatorKind EvaluatorKind,
+    string EvaluatorName,
+    EvaluationScore Score,
+    string? Reasoning);
 
 public record TestRunDto(
     Guid Id,
@@ -9,11 +19,13 @@ public record TestRunDto(
     string? SuiteName,
     Guid AgentId,
     string AgentName,
+    Guid EndpointId,
     TestRunStatus Status,
     int TotalCases,
     int PassedCases,
     int FailedCases,
     double PassRate,
+    IReadOnlyList<RunEvaluatorDto> Evaluators,
     DateTimeOffset StartedAt,
     DateTimeOffset? CompletedAt,
     long? DurationMs,
@@ -29,7 +41,7 @@ public record TestResultDto(
     Guid TestCaseId,
     string TestCaseSummary,
     string ActualResponse,
-    IReadOnlyList<EvaluationScore> Evaluations,
+    IReadOnlyList<EvaluationResultDto> Evaluations,
     long DurationMs);
 
 public record TestRunMessageDto(string Role, string Content);

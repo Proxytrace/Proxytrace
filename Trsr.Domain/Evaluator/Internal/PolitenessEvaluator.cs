@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 
@@ -12,13 +13,18 @@ internal record PolitenessEvaluator : AbstractAgenticEvaluator, IPolitenessEvalu
     public override SystemMessage SystemMessage { get; }
     public override IModelEndpoint Endpoint { get; }
 
-    public PolitenessEvaluator(IModelEndpoint endpoint)
+    public PolitenessEvaluator(
+        IModelEndpoint endpoint,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.PolitenessEvaluator);
     }
 
-    public PolitenessEvaluator(IModelEndpoint endpoint, IDomainEntityData existing) : base(existing)
+    public PolitenessEvaluator(
+        IModelEndpoint endpoint,
+        IDomainEntityData existing,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.PolitenessEvaluator);

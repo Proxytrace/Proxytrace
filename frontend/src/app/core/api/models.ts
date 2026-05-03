@@ -1,4 +1,4 @@
-export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed' }
+export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed', Cancelled = 'Cancelled' }
 export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
 
 export enum EvaluatorKind {
@@ -140,15 +140,28 @@ export interface TestCaseDto {
   expectedOutput: TestSuiteMessageDto;
 }
 
+export interface SuiteEvaluatorDto {
+  id: string;
+  kind: EvaluatorKind;
+}
+
 export interface TestSuiteDto {
   id: string;
   name: string;
   agentId: string;
   agentName: string;
-  evaluatorKind: number;
+  evaluators: SuiteEvaluatorDto[];
   testCases: TestCaseDto[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EvaluationResultDto {
+  evaluatorId: string;
+  evaluatorKind: EvaluatorKind;
+  evaluatorName: string;
+  score: string;
+  reasoning: string | null;
 }
 
 export interface TestResultDto {
@@ -156,7 +169,7 @@ export interface TestResultDto {
   testCaseId: string;
   testCaseSummary: string;
   actualResponse: string;
-  evaluation: Evaluation;
+  evaluations: EvaluationResultDto[];
   durationMs: number;
 }
 
@@ -165,17 +178,25 @@ export interface TestCaseRowDto {
   summary: string;
 }
 
+export interface RunEvaluatorDto {
+  id: string;
+  kind: EvaluatorKind;
+  name: string;
+}
+
 export interface TestRunDto {
   id: string;
   suiteId: string | null;
   suiteName: string | null;
   agentId: string;
   agentName: string;
+  endpointId: string;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;
   failedCases: number;
   passRate: number;
+  evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
@@ -206,11 +227,31 @@ export interface TraceCreatedEvent {
   createdAt: string;
 }
 
+export interface TestCaseStartedEvent {
+  type: 'test-case-started';
+  runId: string;
+  testCaseId: string;
+}
+
+export interface InferenceDoneEvent {
+  type: 'inference-done';
+  runId: string;
+  testCaseId: string;
+}
+
+export interface EvaluationArrivedEvent {
+  type: 'evaluation-arrived';
+  runId: string;
+  testCaseId: string;
+  evaluation: EvaluationResultDto;
+}
+
 export interface TestResultArrivedEvent {
   type: 'test-result-arrived';
   runId: string;
   testCaseId: string;
-  evaluation: Evaluation;
+  overallScore: string | null;
+  evaluations: EvaluationResultDto[];
   durationMs: number;
 }
 
@@ -221,4 +262,9 @@ export interface RunCompleteEvent {
   completedAt: string | null;
 }
 
-export type TestRunEvent = TestResultArrivedEvent | RunCompleteEvent;
+export type TestRunEvent =
+  | TestCaseStartedEvent
+  | InferenceDoneEvent
+  | EvaluationArrivedEvent
+  | TestResultArrivedEvent
+  | RunCompleteEvent;

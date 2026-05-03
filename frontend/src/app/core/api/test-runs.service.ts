@@ -21,6 +21,10 @@ export class TestRunsService {
     return this.http.post<TestRunDto>('/api/test-runs', request);
   }
 
+  cancel(id: string): Observable<void> {
+    return this.http.post<void>(`/api/test-runs/${id}/cancel`, null);
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`/api/test-runs/${id}`);
   }

@@ -9,21 +9,57 @@ namespace Trsr.Domain.Evaluator.Internal;
 
 internal abstract record AbstractAgenticEvaluator : DomainEntity, IAgenticEvaluator
 {
+    private readonly IEvaluation.Create evaluationFactory;
+
+    private record AgenticEvaluatorResult(EvaluationScore Score, string? Reasoning);
+    
     public abstract EvaluatorKind Kind { get; }
     public abstract SystemMessage SystemMessage { get; }
     public abstract IModelEndpoint Endpoint { get; }
     
-    protected AbstractAgenticEvaluator()
+    protected AbstractAgenticEvaluator(IEvaluation.Create evaluationFactory)
     {
+        this.evaluationFactory = evaluationFactory;
     }
 
-    protected AbstractAgenticEvaluator(IDomainEntityData existing) : base(existing)
+    protected AbstractAgenticEvaluator(
+        IEvaluation.Create evaluationFactory,
+        IDomainEntityData existing) : base(existing)
     {
+        this.evaluationFactory = evaluationFactory;
     }
     
-    public Task<IEvaluation?> EvaluateAsync(ITestResult testResult, CancellationToken cancellationToken = default)
+    public async Task<IEvaluation?> EvaluateAsync(ITestResult testResult, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        IModelClient client = Endpoint.CreateClient();
+
+        var conversation = Conversation.Create();
+        conversation.AddSystemMessage(SystemMessage);
+        conversation.Add(BuildEvaluationMessage(testResult));
+
+        AgenticEvaluatorResult? result = await client.CompleteAsync<AgenticEvaluatorResult>(
+            conversation,
+            cancellationToken: cancellationToken);
+
+        return result is null
+            ? null 
+            : evaluationFactory(this, result.Score, result.Reasoning);
+    }
+
+    private UserMessage BuildEvaluationMessage(ITestResult testResult)
+    {
+        string content = $"""
+                         # INPUT
+                         "{testResult.TestCase.Input}"
+                         
+                         # EXPECTED OUTPUT
+                         "{testResult.TestCase.ExpectedOutput}"
+                         
+                         # ACTUAL OUTPUT
+                         "{testResult.ActualResponse}"
+                         """;
+        
+        return Message.Message.CreateUserMessage(content);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

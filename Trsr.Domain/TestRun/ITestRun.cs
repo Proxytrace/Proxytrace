@@ -50,4 +50,6 @@ public interface ITestRun : IDomainEntity
         CancellationToken cancellationToken = default);
     
     Task<ITestRun> SetRunning(CancellationToken cancellationToken = default);
+    
+    Task<ITestRun> SetCancelled(CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+
 using System.Text.RegularExpressions;
 // ReSharper disable NullableWarningSuppressionIsUsed
 
@@ -124,5 +126,28 @@ public static class Validation
         where TEnum : struct, Enum
         => !Enum.IsDefined(typeof(TEnum), value)
             ? new ValidationResult($"{memberName} has an undefined value {value}", [memberName])
+            : ValidationResult.Success!;
+
+    public static ValidationResult Json(string value, [CallerMemberName] string memberName = "")
+    {
+        try
+        {
+            JsonDocument.Parse(value);
+            return ValidationResult.Success!;
+        }
+        catch
+        {
+            return new ValidationResult($"{memberName} is not valid JSON", [memberName]);
+        }
+    }
+
+    public static ValidationResult InRange(int value, int greateOrEqual, int lessOrEqual, [CallerMemberName] string memberName = "")
+        => value < greateOrEqual || value > lessOrEqual
+            ? new ValidationResult($"{memberName} must be between {greateOrEqual} and {lessOrEqual}")
+            : ValidationResult.Success!;
+
+    public static ValidationResult GreaterThan(int variable, int greaterThan, [CallerMemberName] string memberName = "")
+        => variable <= greaterThan
+            ? new ValidationResult($"{memberName} must be greater than {greaterThan}")
             : ValidationResult.Success!;
 }

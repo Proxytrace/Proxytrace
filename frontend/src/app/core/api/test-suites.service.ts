@@ -6,7 +6,7 @@ import { PagedResult, TestRunDto, TestSuiteDto } from './models';
 export interface CreateTestSuitePayload {
   name: string;
   agentId: string;
-  evaluatorKind: number;
+  evaluatorIds: string[];
   testCases: { fromAgentCallId: string }[];
 }
 
@@ -32,15 +32,23 @@ export class TestSuitesService {
     return this.http.post<TestRunDto>(`/api/test-suites/${suiteId}/run`, {});
   }
 
+  updateEvaluators(suiteId: string, evaluatorIds: string[]): Observable<TestSuiteDto> {
+    return this.http.put<TestSuiteDto>(`/api/test-suites/${suiteId}`, { evaluatorIds });
+  }
+
   addTestCase(suiteId: string, fromAgentCallId: string): Observable<TestSuiteDto> {
     return this.http.post<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases`, { fromAgentCallId });
+  }
+
+  removeTestCase(suiteId: string, caseId: string): Observable<TestSuiteDto> {
+    return this.http.delete<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases/${caseId}`);
   }
 
   createFromTrace(agentId: string, fromAgentCallId: string): Observable<TestSuiteDto> {
     return this.http.post<TestSuiteDto>('/api/test-suites', {
       name: 'Suite from trace',
       agentId,
-      evaluatorKind: 0,
+      evaluatorIds: [],
       testCases: [{ fromAgentCallId }],
     });
   }

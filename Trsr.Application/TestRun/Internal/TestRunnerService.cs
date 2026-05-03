@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
@@ -23,6 +24,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly ILogger<TestRunnerService> logger;
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> cancellationTokens = new();
     
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
         new UnboundedChannelOptions
@@ -75,6 +77,27 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         return newRun;
     }
 
+    public async Task<ITestRun> CancelAsync(ITestRun testRun, CancellationToken cancellationToken = default)
+    {
+        if(!cancellationTokens.TryGetValue(testRun.Id, out CancellationTokenSource? cts))
+        {
+            logger.LogWarning("No cancellation token found for test run {RunId}. It may have already completed or not started yet.", testRun.Id);
+            return testRun;
+        }
+
+        await cts.CancelAsync();
+        // reload testrun
+        testRun = await testRunRepository.GetAsync(testRun.Id, cancellationToken);
+
+        if (testRun.CompletedAt.HasValue)
+        {
+            // already completed
+            return testRun;
+        }
+        
+        return await testRun.SetCancelled(cancellationToken);
+    }
+
     private async Task<ITestRun> ExecuteRunAsync(
         ITestRun testRun, 
         CancellationToken cancellationToken = default)
@@ -84,34 +107,58 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             throw new InvalidOperationException($"Cannot execute test run {testRun.Id} because it is not in pending status.");
         }
         
-        await testRun.SetRunning(cancellationToken);
-        var suite = testRun.Suite;
-        foreach (ITestCase testCase in suite.TestCases)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            AssistantMessage response = await suite.Agent.CompleteAsync(
-                testCase.Input,
-                testRun.Endpoint,
-                cancellationToken);
-            TimeSpan elapsed = stopwatch.Elapsed;
-            
-            var testResult = createTestResult(testCase, response, [], elapsed);
-            await testResultRepository.AddAsync(testResult, cancellationToken);
+        CancellationTokenSource cts = new CancellationTokenSource();
+        cancellationTokens.TryAdd(testRun.Id, cts);
+        cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token;
 
-            foreach (IEvaluator evaluator in testRun.Suite.Evaluators)
+        try
+        {
+            await testRun.SetRunning(cancellationToken);
+            var suite = testRun.Suite;
+            foreach (ITestCase testCase in suite.TestCases)
             {
-                IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
-                if(evaluation is null) 
-                    continue;
-                testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
+                broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testCase.Id));
+
+                var stopwatch = Stopwatch.StartNew();
+                AssistantMessage response = await suite.Agent.CompleteAsync(
+                    testCase.Input,
+                    testRun.Endpoint,
+                    cancellationToken);
+                TimeSpan elapsed = stopwatch.Elapsed;
+
+                broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testCase.Id));
+
+                var testResult = createTestResult(testCase, response, [], elapsed);
+                await testResultRepository.AddAsync(testResult, cancellationToken);
+
+                foreach (IEvaluator evaluator in testRun.Suite.Evaluators)
+                {
+                    IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+                    if (evaluation is null)
+                        continue;
+                    testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
+                    broadcaster.Publish(new EvaluationArrivedEvent(
+                        testRun.Id,
+                        testCase.Id,
+                        new EvaluationEventData(
+                            evaluator.Id,
+                            evaluator.Kind,
+                            TestResultArrivedEvent.GetEvaluatorName(evaluator),
+                            evaluation.Score,
+                            evaluation.Reasoning)));
+                }
+
+                testRun = await testRun.SetTestResult(testResult, cancellationToken);
+                broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
             }
 
-            testRun = await testRun.SetTestResult(testResult, cancellationToken);
-            broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
+            broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
+            return testRun;
         }
-
-        broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
-        return testRun;
+        finally
+        {
+            cancellationTokens.TryRemove(testRun.Id, out _);
+        }
     }
     
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -131,6 +178,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                     {
                         logger.LogWarning("Test run with ID {RunId} not found in repository", runId);
                     }
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // user-initiated cancellation — not an error
                 }
                 catch (Exception ex)
                 {
