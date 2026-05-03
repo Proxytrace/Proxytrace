@@ -19,6 +19,16 @@ internal record Prompt : IPrompt
         string name,
         string promptString)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentNullException(nameof(name), "Prompt name cannot be null or whitespace.");
+        }
+
+        if (string.IsNullOrWhiteSpace(promptString))
+        {
+            throw  new ArgumentNullException(nameof(promptString), "Prompt string cannot be null or whitespace.");
+        }
+        
         Name = name;
         this.promptString = promptString;
     }

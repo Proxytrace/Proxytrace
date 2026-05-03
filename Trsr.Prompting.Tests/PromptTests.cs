@@ -122,7 +122,7 @@ public class PromptTests
         // Act & Assert
         FluentActions.Invoking(() => new Prompt(null!, "Content"))
             .Should()
-            .Throw<ValidationException>();
+            .Throw<ArgumentNullException>();
     }
 
     [TestMethod]
@@ -131,7 +131,7 @@ public class PromptTests
         // Act & Assert
         FluentActions.Invoking(() => new Prompt(string.Empty, "Content"))
             .Should()
-            .Throw<ValidationException>();
+            .Throw<ArgumentNullException>();
     }
 
     [TestMethod]
@@ -140,7 +140,7 @@ public class PromptTests
         // Act & Assert
         FluentActions.Invoking(() => new Prompt("   ", "Content"))
             .Should()
-            .Throw<ValidationException>();
+            .Throw<ArgumentNullException>();
     }
 
     [TestMethod]
@@ -149,7 +149,7 @@ public class PromptTests
         // Act & Assert
         FluentActions.Invoking(() => new Prompt("Name", null!))
             .Should()
-            .Throw<ValidationException>();
+            .Throw<ArgumentNullException>();
     }
 
     [TestMethod]
@@ -158,7 +158,7 @@ public class PromptTests
         // Act & Assert
         FluentActions.Invoking(() => new Prompt("Name", string.Empty))
             .Should()
-            .Throw<ValidationException>();
+            .Throw<ArgumentNullException>();
     }
 
     [TestMethod]

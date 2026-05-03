@@ -23,7 +23,33 @@ internal abstract record AbstractAgenticEvaluator : DomainEntity, IAgenticEvalua
     
     public Task<IEvaluation?> EvaluateAsync(ITestResult testResult, CancellationToken cancellationToken = default)
     {
+        IModelClient client = Endpoint.CreateClient();
+
+        var conversation = Conversation.Create();
+        conversation.AddSystemMessage(SystemMessage);
+        conversation.Add(BuildEvaluationMessage(testResult));
+
+        client.CompleteAsync(
+            conversation,
+            cancellationToken: cancellationToken);
+
+        throw new Exception();
+    }
+
+    private UserMessage BuildEvaluationMessage(ITestResult testResult)
+    {
+        string content = $"""
+                         # INPUT
+                         "{testResult.TestCase.Input}"
+                         
+                         # EXPECTED OUTPUT
+                         "{testResult.TestCase.ExpectedOutput}"
+                         
+                         # ACTUAL OUTPUT
+                         "{testResult.ActualResponse}"
+                         """;
         
+        return Message.Message.CreateUserMessage(content);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -20,6 +20,7 @@ public sealed class Module : Autofac.Module
         builder.RegisterGeneric(typeof(JsonOutputParser<>)).As(typeof(IOutputParser<>));
         builder.RegisterType<StringOutputParser>().As<IOutputParser<string>>();
 
-        builder.RegisterType<JsonOutputFormat>().As<IOutputFormat>();
+        builder.Register<IOutputFormat.FromJsonSchema>(c => schema => new JsonOutputFormat(schema))
+            .AsSelf();
     }
 }

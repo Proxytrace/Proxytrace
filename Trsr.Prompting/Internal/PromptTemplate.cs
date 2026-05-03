@@ -22,6 +22,16 @@ internal record PromptTemplate : IPromptTemplate
         string name, 
         string template)
     {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentNullException(nameof(name), "Prompt template name cannot be null or whitespace.");
+        }
+
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            throw new ArgumentNullException(nameof(template), "Prompt template cannot be null or whitespace.");
+        }
+        
         Name = name;
         Template = template;
         Variables = ExtractVariables(template);

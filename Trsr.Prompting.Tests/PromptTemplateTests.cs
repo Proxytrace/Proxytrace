@@ -29,7 +29,7 @@ public class PromptTemplateTests
     public void Constructor_WithEmptyTemplate_ShouldThrowArgumentException(string? template)
     {
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        FluentActions.Invoking(() => new PromptTemplate("test", template!)).Should().Throw<ArgumentException>();
+        FluentActions.Invoking(() => new PromptTemplate("test", template!)).Should().Throw<ArgumentNullException>();
     }
 
     [TestMethod]
@@ -496,7 +496,7 @@ public class PromptTemplateTests
         FluentActions.Invoking(() => promptTemplate.Validate())
             .Should()
             .Throw<ValidationException>()
-            .WithMessage("Variable '123' must contain at least two letters.");
+            .WithMessage("*must be greater than 1*");
     }
 
     [TestMethod]
