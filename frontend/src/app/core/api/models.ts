@@ -1,4 +1,4 @@
-export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed' }
+export enum TestRunStatus { Pending = 'Pending', Running = 'Running', Completed = 'Completed', Failed = 'Failed', Cancelled = 'Cancelled' }
 export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
 
 export enum EvaluatorKind {

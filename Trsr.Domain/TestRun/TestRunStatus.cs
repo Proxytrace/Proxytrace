@@ -6,4 +6,5 @@ public enum TestRunStatus
     Running = 1,
     Completed = 2,
     Failed = 3,
+    Cancelled = 4,
 }

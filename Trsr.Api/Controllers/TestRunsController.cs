@@ -103,7 +103,7 @@ public class TestRunsController : ControllerBase
 
         // Handle the case where the run already completed before we subscribed.
         var run = await repository.GetAsync(id, cancellationToken);
-        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed)
+        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = new RunCompleteEvent(run.Id, run.Status, run.CompletedAt);
             var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
@@ -127,6 +127,14 @@ public class TestRunsController : ControllerBase
             await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<ActionResult<TestRunDto>> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        ITestRun testRun = await repository.GetAsync(id, cancellationToken);
+        testRun = await runner.CancelAsync(testRun, cancellationToken);
+        return  AcceptedAtAction(nameof(Get), new { id = testRun.Id }, ToDto(testRun));
     }
 
     [HttpDelete("{id:guid}")]

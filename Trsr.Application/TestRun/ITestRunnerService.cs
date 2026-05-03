@@ -22,5 +22,11 @@ public interface ITestRunnerService
         ITestSuite suite,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);
-
+    
+    /// <summary>
+    /// Cancel a test run
+    /// </summary>
+    Task<ITestRun> CancelAsync(
+        ITestRun testRun,
+        CancellationToken cancellationToken = default);
 }

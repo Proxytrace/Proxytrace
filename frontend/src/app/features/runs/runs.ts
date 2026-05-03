@@ -49,6 +49,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
   readonly rerunInProgress = signal(false);
+  readonly cancelInProgress = signal(false);
   readonly expandedCaseIds = signal<Set<string>>(new Set());
   readonly caseProgress = signal<Map<string, CaseProgress>>(new Map());
 
@@ -267,6 +268,7 @@ export class Runs implements OnInit, OnDestroy {
       case TestRunStatus.Running: return 'Running';
       case TestRunStatus.Completed: return 'Completed';
       case TestRunStatus.Failed: return 'Failed';
+      case TestRunStatus.Cancelled: return 'Cancelled';
     }
   }
 
@@ -276,11 +278,30 @@ export class Runs implements OnInit, OnDestroy {
       case TestRunStatus.Running: return 'var(--accent-primary)';
       case TestRunStatus.Completed: return 'var(--success)';
       case TestRunStatus.Failed: return 'var(--danger)';
+      case TestRunStatus.Cancelled: return 'var(--warn)';
     }
   }
 
   isActive(run: TestRunDto) {
     return run.status === TestRunStatus.Pending || run.status === TestRunStatus.Running;
+  }
+
+  async cancelRun(run: TestRunDto) {
+    if (!this.isActive(run) || this.cancelInProgress()) return;
+    this.cancelInProgress.set(true);
+    try {
+      await firstValueFrom(this.runsService.cancel(run.id));
+      this.runStreams.get(run.id)?.unsubscribe();
+      this.runStreams.delete(run.id);
+      this.runs.update(runs => runs.map(r =>
+        r.id === run.id ? { ...r, status: TestRunStatus.Cancelled } : r
+      ));
+      if (!this.hasPending()) this.stopPolling();
+    } catch {
+      // no-op
+    } finally {
+      this.cancelInProgress.set(false);
+    }
   }
 
   formatDuration(ms: number | null | undefined): string {
