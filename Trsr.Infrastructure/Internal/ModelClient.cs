@@ -14,15 +14,14 @@ internal class ModelClient : IModelClient
     private readonly IModelEndpoint endpoint;
     private readonly IOutputFormat.Create outputFormatFactory;
     private readonly IChatClient chatClient;
-    
+
     public ModelClient(
         IModelEndpoint endpoint,
         IOutputFormat.Create outputFormatFactory)
     {
         this.endpoint = endpoint;
         this.outputFormatFactory = outputFormatFactory;
-
-        chatClient = CreateChatClient();
+        chatClient = CreateChatClient(endpoint);
     }
     
     public async Task<AssistantMessage> CompleteAsync(
@@ -66,13 +65,13 @@ internal class ModelClient : IModelClient
         return await outputFormat.ParseAsync<TOutput>(completion.GetTextResponse(), cancellationToken);
     }
 
-    private IChatClient CreateChatClient()
+    private static IChatClient CreateChatClient(IModelEndpoint endpoint)
     {
         if (endpoint.Provider.Kind is not ModelProviderKind.OpenAi and not ModelProviderKind.OpenAiCompatible)
         {
             throw new NotSupportedException($"Model provider kind {endpoint.Provider.Kind} is not supported");
         }
-        
+
         var credential = new ApiKeyCredential(endpoint.Provider.ApiKey);
         var options = new OpenAIClientOptions { Endpoint = endpoint.Provider.Endpoint };
         return new OpenAIClient(credential, options)
