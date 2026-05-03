@@ -5,18 +5,25 @@ using Trsr.Domain.Organization;
 
 namespace Trsr.Domain.Project.Internal;
 
-internal record Project : DomainEntity, IProject
+internal record Project : DomainEntity<IProject>, IProject
 {
     public string Name { get; }
     public IOrganization Organization { get; }
 
-    public Project(string name, IOrganization organization)
+    public Project(
+        string name,
+        IOrganization organization,
+        IRepository<IProject> repository) : base(repository)
     {
         Name = name;
         Organization = organization;
     }
 
-    public Project(string name, IOrganization organization, IDomainEntityData existing) : base(existing)
+    public Project(
+        string name,
+        IOrganization organization,
+        IDomainEntityData existing,
+        IRepository<IProject> repository) : base(existing, repository)
     {
         Name = name;
         Organization = organization;

@@ -6,21 +6,24 @@ using Trsr.Domain.TestResult;
 namespace Trsr.Domain.Evaluator.Internal;
 
 [UsedImplicitly]
-internal record ExactMatchEvaluator : DomainEntity, IExactMatchEvaluator
+internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvaluator
 {
     private readonly IEvaluation.Create evaluationFactory;
 
     public EvaluatorKind Kind
         => EvaluatorKind.ExactMatch;
 
-    public ExactMatchEvaluator(IEvaluation.Create evaluationFactory)
+    public ExactMatchEvaluator(
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(repository)
     {
         this.evaluationFactory = evaluationFactory;
     }
 
     public ExactMatchEvaluator(
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(existing, repository)
     {
         this.evaluationFactory = evaluationFactory;
     }

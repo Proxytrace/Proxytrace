@@ -7,10 +7,8 @@ using Trsr.Domain.TestSuite;
 
 namespace Trsr.Domain.TestRun.Internal;
 
-internal record TestRun : DomainEntity, ITestRun
+internal record TestRun : DomainEntity<ITestRun>, ITestRun
 {
-    private readonly Lazy<IRepository<ITestRun>> repository;
-    
     public ITestSuite Suite { get; }
     public IModelEndpoint Endpoint { get; }
     public TestRunStatus Status { get; }
@@ -20,9 +18,8 @@ internal record TestRun : DomainEntity, ITestRun
     public TestRun(
         ITestSuite suite,
         IModelEndpoint endpoint,
-        Lazy<IRepository<ITestRun>> repository)
+        IRepository<ITestRun> repository) : base(repository)
     {
-        this.repository = repository;
         Suite = suite;
         Endpoint = endpoint;
         Status = TestRunStatus.Pending;
@@ -37,9 +34,8 @@ internal record TestRun : DomainEntity, ITestRun
         DateTimeOffset? completedAt,
         IReadOnlyList<ITestResult> testResults,
         IDomainEntityData existing,
-        Lazy<IRepository<ITestRun>> repository) : base(existing)
+        IRepository<ITestRun> repository) : base(existing, repository)
     {
-        this.repository = repository;
         Suite = suite;
         Endpoint = endpoint;
         Status = status;
@@ -91,7 +87,7 @@ internal record TestRun : DomainEntity, ITestRun
             updatedResults,
             this,
             repository);
-        return await repository.Value.UpdateAsync(updatedRun, cancellationToken);
+        return await repository.UpdateAsync(updatedRun, cancellationToken);
     }
 
     public Task<ITestRun> SetRunning(CancellationToken cancellationToken = default)
@@ -135,7 +131,7 @@ internal record TestRun : DomainEntity, ITestRun
             TestResults,
             this,
             repository);
-        return repository.Value.UpdateAsync(updatedRun, cancellationToken);
+        return repository.UpdateAsync(updatedRun, cancellationToken);
     }
 
     private bool IsTerminalState(TestRunStatus status)

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using JetBrains.Annotations;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
@@ -7,24 +8,28 @@ using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
-internal abstract record AbstractAgenticEvaluator : DomainEntity, IAgenticEvaluator
+internal abstract record AbstractAgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEvaluator
 {
     private readonly IEvaluation.Create evaluationFactory;
 
+    [UsedImplicitly]
     private record AgenticEvaluatorResult(EvaluationScore Score, string? Reasoning);
     
     public abstract EvaluatorKind Kind { get; }
     public abstract SystemMessage SystemMessage { get; }
     public abstract IModelEndpoint Endpoint { get; }
     
-    protected AbstractAgenticEvaluator(IEvaluation.Create evaluationFactory)
+    protected AbstractAgenticEvaluator(
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(repository)
     {
         this.evaluationFactory = evaluationFactory;
     }
 
     protected AbstractAgenticEvaluator(
         IEvaluation.Create evaluationFactory,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<IEvaluator> repository) : base(existing, repository)
     {
         this.evaluationFactory = evaluationFactory;
     }

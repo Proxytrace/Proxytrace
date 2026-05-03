@@ -6,7 +6,7 @@ using Trsr.Domain.Message;
 
 namespace Trsr.Domain.AgentToolCall.Internal;
 
-internal record AgentToolCall : DomainEntity, IAgentToolCall
+internal record AgentToolCall : DomainEntity<IAgentToolCall>, IAgentToolCall
 {
     public IAgentCall AgentCall { get; }
     public string ToolCallId { get; }
@@ -19,7 +19,8 @@ internal record AgentToolCall : DomainEntity, IAgentToolCall
         string toolCallId,
         ToolRequest request,
         ToolResponse? response,
-        TimeSpan? duration)
+        TimeSpan? duration,
+        IRepository<IAgentToolCall> repository) : base(repository)
     {
         AgentCall = agentCall;
         ToolCallId = toolCallId;
@@ -34,7 +35,8 @@ internal record AgentToolCall : DomainEntity, IAgentToolCall
         ToolRequest request,
         ToolResponse? response,
         TimeSpan? duration,
-        IDomainEntityData existing) : base(existing)
+        IDomainEntityData existing,
+        IRepository<IAgentToolCall> repository) : base(existing, repository)
     {
         AgentCall = agentCall;
         ToolCallId = toolCallId;

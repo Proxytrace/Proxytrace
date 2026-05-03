@@ -6,9 +6,8 @@ using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestResult.Internal;
 
-internal record TestResult : DomainEntity, ITestResult
+internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
-    private readonly IRepository<ITestResult> repository;
     public ITestCase TestCase { get; }
     public AssistantMessage ActualResponse { get; }
     public IReadOnlyCollection<IEvaluation> Evaluations { get; }
@@ -20,9 +19,8 @@ internal record TestResult : DomainEntity, ITestResult
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
         TimeSpan duration,
-        IRepository<ITestResult> repository) 
+        IRepository<ITestResult> repository) : base(repository)
     {
-        this.repository = repository;
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;
@@ -36,9 +34,8 @@ internal record TestResult : DomainEntity, ITestResult
         IReadOnlyCollection<IEvaluation> evaluations, 
         TimeSpan duration,
         IDomainEntityData existing,
-        IRepository<ITestResult> repository) : base(existing)
+        IRepository<ITestResult> repository) : base(existing, repository)
     {
-        this.repository = repository;
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;

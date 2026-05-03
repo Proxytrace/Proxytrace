@@ -4,16 +4,16 @@ using Trsr.Domain.Internal;
 
 namespace Trsr.Domain.User.Internal;
 
-internal record User : DomainEntity, IUser
+internal record User : DomainEntity<IUser>, IUser
 {
     public string Name { get; }
 
-    public User(string name)
+    public User(string name, IRepository<IUser> repository) : base(repository)
     {
         Name = name;
     }
 
-    public User(string name, IDomainEntityData existing) : base(existing)
+    public User(string name, IDomainEntityData existing, IRepository<IUser> repository) : base(existing, repository)
     {
         Name = name;
     }

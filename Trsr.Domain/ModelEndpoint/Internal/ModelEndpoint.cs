@@ -7,7 +7,7 @@ using Trsr.Domain.ModelProvider;
 
 namespace Trsr.Domain.ModelEndpoint.Internal;
 
-internal record ModelEndpoint : DomainEntity, IModelEndpoint
+internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
 {
     private readonly IModelClient.Factory modelClientFactory;
     public IModel Model { get; }
@@ -20,7 +20,8 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
         IModelProvider provider,
         decimal? inputTokenCost,
         decimal? outputTokenCost,
-        IModelClient.Factory modelClientFactory)
+        IModelClient.Factory modelClientFactory,
+        IRepository<IModelEndpoint> repository) : base(repository)
     {
         this.modelClientFactory = modelClientFactory;
         Model = model;
@@ -35,8 +36,9 @@ internal record ModelEndpoint : DomainEntity, IModelEndpoint
         decimal? inputTokenCost,
         decimal? outputTokenCost,
         IDomainEntityData existing,
-        IModelClient.Factory modelClientFactory)
-        : base(existing)
+        IModelClient.Factory modelClientFactory,
+        IRepository<IModelEndpoint> repository)
+        : base(existing, repository)
     {
         this.modelClientFactory = modelClientFactory;
         Model = model;

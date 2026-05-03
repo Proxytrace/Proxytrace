@@ -13,7 +13,8 @@ internal record HelpfulnessEvaluator : AbstractAgenticEvaluator, IHelpfulnessEva
     
     public HelpfulnessEvaluator(
         IModelEndpoint endpoint,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, repository)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);
@@ -22,7 +23,8 @@ internal record HelpfulnessEvaluator : AbstractAgenticEvaluator, IHelpfulnessEva
     public HelpfulnessEvaluator(
         IModelEndpoint endpoint,
         IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
+        IEvaluation.Create evaluationFactory,
+        IRepository<IEvaluator> repository) : base(evaluationFactory, existing, repository)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.HelpfulnessEvaluator);

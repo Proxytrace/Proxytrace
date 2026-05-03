@@ -5,7 +5,7 @@ using Trsr.Domain.Organization;
 
 namespace Trsr.Domain.ModelProvider.Internal;
 
-internal record ModelProvider : DomainEntity, IModelProvider
+internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
 {
     public string Name { get; }
     public Uri Endpoint { get; }
@@ -13,7 +13,13 @@ internal record ModelProvider : DomainEntity, IModelProvider
     public ModelProviderKind Kind { get; }
     public IOrganization Organization { get; }
 
-    public ModelProvider(string name, Uri endpoint, string apiKey, ModelProviderKind kind, IOrganization organization)
+    public ModelProvider(
+        string name,
+        Uri endpoint,
+        string apiKey,
+        ModelProviderKind kind,
+        IOrganization organization,
+        IRepository<IModelProvider> repository) : base(repository)
     {
         Name = name;
         Endpoint = endpoint;
@@ -22,7 +28,14 @@ internal record ModelProvider : DomainEntity, IModelProvider
         Organization = organization;
     }
 
-    public ModelProvider(string name, Uri endpoint, string apiKey, ModelProviderKind kind, IOrganization organization, IDomainEntityData existing) : base(existing)
+    public ModelProvider(
+        string name, 
+        Uri endpoint,
+        string apiKey,
+        ModelProviderKind kind,
+        IOrganization organization, 
+        IDomainEntityData existing,
+        IRepository<IModelProvider> repository) : base(existing, repository)
     {
         Name = name;
         Endpoint = endpoint;

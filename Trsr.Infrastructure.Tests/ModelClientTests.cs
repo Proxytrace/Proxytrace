@@ -64,6 +64,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         IModelEndpoint ep = Substitute.For<IModelEndpoint>();
         ep.Model.Returns(model);
         ep.Provider.Returns(provider);
+
         return ep;
     }
 
