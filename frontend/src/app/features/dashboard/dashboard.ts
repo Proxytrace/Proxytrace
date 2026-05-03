@@ -64,10 +64,10 @@ export class Dashboard implements OnInit {
     { d: 'Sun', support: 6700, code: 3100, triage: 1700, classify: 700 },
   ];
   readonly agentColorEntries = [
-    { name: 'Customer Support', color: '#8b5cf6' },
-    { name: 'Code Helper', color: '#06b6d4' },
-    { name: 'Ticket Triage', color: '#10b981' },
-    { name: 'Classifier', color: '#f59e0b' },
+    { name: 'Customer Support', color: '#c9944a' },
+    { name: 'Code Helper', color: '#6b9eaa' },
+    { name: 'Ticket Triage', color: '#3daa6f' },
+    { name: 'Classifier', color: '#d4915c' },
   ];
 
   // ── Precomputed chart data ─────────────────────────────────────────────────
@@ -186,10 +186,10 @@ export class Dashboard implements OnInit {
       isDashed: i !== yTicks - 1,
     }));
     const segsSpec = [
-      { key: 'support' as const, color: '#8b5cf6' },
-      { key: 'code' as const, color: '#06b6d4' },
-      { key: 'triage' as const, color: '#10b981' },
-      { key: 'classify' as const, color: '#f59e0b' },
+      { key: 'support' as const, color: '#c9944a' },
+      { key: 'code' as const, color: '#6b9eaa' },
+      { key: 'triage' as const, color: '#3daa6f' },
+      { key: 'classify' as const, color: '#d4915c' },
     ];
     // Collect path segments per color
     const pathsByColor: Record<string, string[]> = {};
@@ -285,8 +285,8 @@ export class Dashboard implements OnInit {
 
   modelPillColor(model: string): string {
     const m: Record<string, string> = {
-      'gpt-4o': '#8b5cf6', 'gpt-4o-mini': '#06b6d4',
-      'gpt-3.5-turbo': '#f59e0b', 'claude-3.5-sonnet': '#10b981',
+      'gpt-4o': '#c9944a', 'gpt-4o-mini': '#6b9eaa',
+      'gpt-3.5-turbo': '#d4915c', 'claude-3.5-sonnet': '#3daa6f',
     };
     return m[model] ?? '#888888';
   }

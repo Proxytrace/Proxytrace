@@ -12,14 +12,14 @@
           white-space:nowrap; flex-shrink:0;
         " [style.color]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"
            [style.background]="health.isOnline() ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
-           [style.border]="health.isOnline() ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)'">
+           [style.border]="health.isOnline() ? '1px solid rgba(61,170,111,0.25)' : '1px solid rgba(217,85,85,0.2)'">
           <span style="width:6px; height:6px; border-radius:50%;"
                 [class.pulse-dot]="health.isOnline()"
                 [style.background]="health.isOnline() ? 'var(--success)' : 'var(--danger)'"></span>
           {{ health.isOnline() ? 'Proxy online' : 'Proxy offline' }}
         </span>
       </div>
-      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Overview of your agent tracing and evaluation activity.</p>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Overview of your agent tracing and evaluation activity.</p>
     </div>
     <div style="display:flex; gap:4px; padding:4px; background:var(--bg-card); border-radius:10px; box-shadow:var(--shadow-pill); flex-shrink:0;">
       @for (r of ['1h', '24h', '7d', '30d']; track r) {
@@ -41,7 +41,7 @@
 
     <!-- Total Traces (accent) -->
     <div class="kpi-card accent">
-      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(139,92,246,0.18), transparent 70%);"></div>
+      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(201,148,74,0.15), transparent 70%);"></div>
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; position:relative;">
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="width:28px; height:28px; border-radius:7px; background:var(--accent-subtle); color:var(--accent-hover); display:flex; align-items:center; justify-content:center;">
@@ -57,14 +57,14 @@
       <div style="display:flex; align-items:flex-end; justify-content:space-between; position:relative;">
         <div>
           <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
-            @if (summaryState() === 'loading') { <span style="color:var(--text-muted); animation:pulse 1.5s infinite;">—</span> }
+            @if (summaryState() === 'loading') { <span class="skeleton skeleton-num" style="margin-bottom:4px;"></span> }
             @else { {{ summary()?.totalCalls ?? 0 }} }
           </div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">LLM calls captured</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">LLM calls captured</div>
         </div>
         <svg viewBox="0 0 72 24" width="72" height="24" style="display:block; overflow:visible;">
-          <path [attr.d]="kpiSparklines['traces'].path" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/>
-          <circle [attr.cx]="kpiSparklines['traces'].endX" [attr.cy]="kpiSparklines['traces'].endY" r="2" fill="#8b5cf6"/>
+          <path [attr.d]="kpiSparklines['traces'].path" fill="none" stroke="#c9944a" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['traces'].endX" [attr.cy]="kpiSparklines['traces'].endY" r="2" fill="#c9944a"/>
         </svg>
       </div>
     </div>
@@ -86,18 +86,18 @@
       <div style="display:flex; align-items:flex-end; justify-content:space-between;">
         <div>
           <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
-            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @if (summaryState() === 'loading') { <span class="skeleton skeleton-num" style="margin-bottom:4px;"></span> }
             @else { {{ formatTokensK((summary()?.totalInputTokens ?? 0) + (summary()?.totalOutputTokens ?? 0)) }} }
           </div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">
+          <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">
             @if (summaryState() === 'loaded') {
               {{ (summary()?.totalInputTokens ?? 0).toLocaleString() }} in · {{ (summary()?.totalOutputTokens ?? 0).toLocaleString() }} out
             } @else { &nbsp; }
           </div>
         </div>
         <svg viewBox="0 0 72 24" width="72" height="24" style="display:block;">
-          <path [attr.d]="kpiSparklines['tokens'].path" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
-          <circle [attr.cx]="kpiSparklines['tokens'].endX" [attr.cy]="kpiSparklines['tokens'].endY" r="2" fill="#06b6d4"/>
+          <path [attr.d]="kpiSparklines['tokens'].path" fill="none" stroke="#6b9eaa" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['tokens'].endX" [attr.cy]="kpiSparklines['tokens'].endY" r="2" fill="#6b9eaa"/>
         </svg>
       </div>
     </div>
@@ -119,14 +119,14 @@
       <div style="display:flex; align-items:flex-end; justify-content:space-between;">
         <div>
           <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
-            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @if (summaryState() === 'loading') { <span class="skeleton skeleton-num" style="margin-bottom:4px;"></span> }
             @else { {{ formatLatency(summary()?.avgLatencyMs ?? 0) }} }
           </div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">p95 4.1s · p99 6.2s</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">p95 4.1s · p99 6.2s</div>
         </div>
         <svg viewBox="0 0 72 24" width="72" height="24" style="display:block;">
-          <path [attr.d]="kpiSparklines['latency'].path" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
-          <circle [attr.cx]="kpiSparklines['latency'].endX" [attr.cy]="kpiSparklines['latency'].endY" r="2" fill="#f59e0b"/>
+          <path [attr.d]="kpiSparklines['latency'].path" fill="none" stroke="#d4915c" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['latency'].endX" [attr.cy]="kpiSparklines['latency'].endY" r="2" fill="#d4915c"/>
         </svg>
       </div>
     </div>
@@ -148,14 +148,14 @@
       <div style="display:flex; align-items:flex-end; justify-content:space-between;">
         <div>
           <div style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1;">
-            @if (summaryState() === 'loading') { <span style="color:var(--text-muted);">—</span> }
+            @if (summaryState() === 'loading') { <span class="skeleton skeleton-num" style="margin-bottom:4px;"></span> }
             @else { {{ Math.round((summary()?.overallPassRate ?? 0) * 100) }}<span style="font-size:18px; color:var(--text-muted);">%</span> }
           </div>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">8 runs · Support suite v2</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">8 runs · Support suite v2</div>
         </div>
         <svg viewBox="0 0 72 24" width="72" height="24" style="display:block;">
-          <path [attr.d]="kpiSparklines['passRate'].path" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round"/>
-          <circle [attr.cx]="kpiSparklines['passRate'].endX" [attr.cy]="kpiSparklines['passRate'].endY" r="2" fill="#10b981"/>
+          <path [attr.d]="kpiSparklines['passRate'].path" fill="none" stroke="#3daa6f" stroke-width="1.5" stroke-linecap="round"/>
+          <circle [attr.cx]="kpiSparklines['passRate'].endX" [attr.cy]="kpiSparklines['passRate'].endY" r="2" fill="#3daa6f"/>
         </svg>
       </div>
     </div>
@@ -173,7 +173,7 @@
         </div>
         <div style="display:flex; align-items:center; gap:14px; flex-shrink:0;">
           <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted);">
-            <span style="width:8px; height:8px; border-radius:2px; background:#8b5cf6; display:inline-block;"></span>
+            <span style="width:8px; height:8px; border-radius:2px; background:#c9944a; display:inline-block;"></span>
             Traces
           </div>
           <button style="color:var(--text-muted); padding:4px;">
@@ -185,30 +185,30 @@
         <svg viewBox="0 0 820 240" width="100%" height="240" style="display:block; overflow:visible;" preserveAspectRatio="none">
           <defs>
             <linearGradient id="volGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35"/>
-              <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#c9944a" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#c9944a" stop-opacity="0"/>
             </linearGradient>
           </defs>
           <!-- Grid lines as precomputed paths — no @for inside SVG -->
-          <path [attr.d]="volumeArea.solidGridPath" stroke="#23232e" stroke-width="1" fill="none"/>
-          <path [attr.d]="volumeArea.dashedGridPath" stroke="#23232e" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
+          <path [attr.d]="volumeArea.solidGridPath" stroke="rgba(255,255,255,0.07)" stroke-width="1" fill="none"/>
+          <path [attr.d]="volumeArea.dashedGridPath" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="3 4" fill="none"/>
           <!-- Y-axis labels (always 4 ticks) -->
-          <text x="30" [attr.y]="volumeArea.grid[0].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[0].val}}</text>
-          <text x="30" [attr.y]="volumeArea.grid[1].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[1].val}}</text>
-          <text x="30" [attr.y]="volumeArea.grid[2].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[2].val}}</text>
-          <text x="30" [attr.y]="volumeArea.grid[3].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[3].val}}</text>
+          <text x="30" [attr.y]="volumeArea.grid[0].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[0].val}}</text>
+          <text x="30" [attr.y]="volumeArea.grid[1].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[1].val}}</text>
+          <text x="30" [attr.y]="volumeArea.grid[2].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[2].val}}</text>
+          <text x="30" [attr.y]="volumeArea.grid[3].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.grid[3].val}}</text>
           <!-- Chart paths -->
           <path [attr.d]="volumeArea.areaPath" fill="url(#volGrad)"/>
-          <path [attr.d]="volumeArea.linePath" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="8" fill="#8b5cf6" opacity="0.15"/>
-          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="4" fill="#8b5cf6"/>
-          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="2" fill="#08080b"/>
+          <path [attr.d]="volumeArea.linePath" fill="none" stroke="#c9944a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="8" fill="#c9944a" opacity="0.15"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="4" fill="#c9944a"/>
+          <circle [attr.cx]="volumeArea.endX.toFixed(1)" [attr.cy]="volumeArea.endY.toFixed(1)" r="2" fill="#27272c"/>
           <!-- X-axis labels (always 5 ticks) -->
-          <text [attr.x]="volumeArea.xLabels[0].x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[0].label}}</text>
-          <text [attr.x]="volumeArea.xLabels[1].x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[1].label}}</text>
-          <text [attr.x]="volumeArea.xLabels[2].x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[2].label}}</text>
-          <text [attr.x]="volumeArea.xLabels[3].x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[3].label}}</text>
-          <text [attr.x]="volumeArea.xLabels[4].x.toFixed(1)" y="234" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[4].label}}</text>
+          <text [attr.x]="volumeArea.xLabels[0].x.toFixed(1)" y="234" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[0].label}}</text>
+          <text [attr.x]="volumeArea.xLabels[1].x.toFixed(1)" y="234" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[1].label}}</text>
+          <text [attr.x]="volumeArea.xLabels[2].x.toFixed(1)" y="234" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[2].label}}</text>
+          <text [attr.x]="volumeArea.xLabels[3].x.toFixed(1)" y="234" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[3].label}}</text>
+          <text [attr.x]="volumeArea.xLabels[4].x.toFixed(1)" y="234" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{volumeArea.xLabels[4].label}}</text>
         </svg>
       </div>
     </div>
@@ -223,25 +223,25 @@
       </div>
       <div class="card-body">
         <svg viewBox="0 0 360 200" width="100%" height="200" style="display:block;" preserveAspectRatio="none">
-          <line x1="38" x2="350" [attr.y1]="histData.baselineY" [attr.y2]="histData.baselineY" stroke="#23232e"/>
+          <line x1="38" x2="350" [attr.y1]="histData.baselineY" [attr.y2]="histData.baselineY" stroke="rgba(255,255,255,0.07)"/>
           <!-- All bars as one precomputed path — no @for inside SVG -->
-          <path [attr.d]="histData.barsPath" fill="#06b6d4" opacity="0.85"/>
+          <path [attr.d]="histData.barsPath" fill="#6b9eaa" opacity="0.85"/>
           <!-- X labels (always 10 buckets) -->
-          <text [attr.x]="histData.rects[0].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[0].label}}</text>
-          <text [attr.x]="histData.rects[1].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[1].label}}</text>
-          <text [attr.x]="histData.rects[2].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[2].label}}</text>
-          <text [attr.x]="histData.rects[3].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[3].label}}</text>
-          <text [attr.x]="histData.rects[4].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[4].label}}</text>
-          <text [attr.x]="histData.rects[5].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[5].label}}</text>
-          <text [attr.x]="histData.rects[6].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[6].label}}</text>
-          <text [attr.x]="histData.rects[7].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[7].label}}</text>
-          <text [attr.x]="histData.rects[8].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[8].label}}</text>
-          <text [attr.x]="histData.rects[9].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#6b6b75" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[9].label}}</text>
+          <text [attr.x]="histData.rects[0].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[0].label}}</text>
+          <text [attr.x]="histData.rects[1].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[1].label}}</text>
+          <text [attr.x]="histData.rects[2].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[2].label}}</text>
+          <text [attr.x]="histData.rects[3].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[3].label}}</text>
+          <text [attr.x]="histData.rects[4].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[4].label}}</text>
+          <text [attr.x]="histData.rects[5].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[5].label}}</text>
+          <text [attr.x]="histData.rects[6].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[6].label}}</text>
+          <text [attr.x]="histData.rects[7].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[7].label}}</text>
+          <text [attr.x]="histData.rects[8].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[8].label}}</text>
+          <text [attr.x]="histData.rects[9].labelX.toFixed(1)" y="192" text-anchor="middle" fill="#636369" font-size="9" font-family="JetBrains Mono, monospace">{{histData.rects[9].label}}</text>
         </svg>
         <div style="display:flex; gap:16px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-subtle);">
           @for (stat of [['p50','2.4s'],['p90','3.8s'],['p95','4.1s'],['p99','6.2s']]; track stat[0]) {
             <div>
-              <div style="font-size:10.5px; color:var(--text-muted); font-weight:500; letter-spacing:0.05em; text-transform:uppercase;">{{stat[0]}}</div>
+              <div style="font-size:11px; color:var(--text-muted); font-weight:500; letter-spacing:0.05em; text-transform:uppercase;">{{stat[0]}}</div>
               <div style="font-size:14px; font-weight:600; font-family:'JetBrains Mono',monospace; margin-top:2px;">{{stat[1]}}</div>
             </div>
           }
@@ -260,7 +260,7 @@
           <h3>Token Usage by Agent</h3>
           <p>Last 7 days · stacked</p>
         </div>
-        <div style="display:flex; gap:10px; font-size:10.5px; color:var(--text-secondary); flex-wrap:wrap; justify-content:flex-end; max-width:300px; flex-shrink:0;">
+        <div style="display:flex; gap:10px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap; justify-content:flex-end; max-width:300px; flex-shrink:0;">
           @for (entry of agentColorEntries; track entry.name) {
             <div style="display:flex; align-items:center; gap:5px;">
               <span style="width:8px; height:8px; border-radius:2px; display:inline-block;" [style.background]="entry.color"></span>
@@ -272,26 +272,26 @@
       <div class="card-body" style="padding:0 18px 18px;">
         <svg viewBox="0 0 820 220" width="100%" height="220" style="display:block;" preserveAspectRatio="none">
           <!-- Grid lines as precomputed paths — no @for inside SVG -->
-          <path [attr.d]="stackedBarData.solidGridPath" stroke="#23232e" fill="none"/>
-          <path [attr.d]="stackedBarData.dashedGridPath" stroke="#23232e" fill="none" stroke-dasharray="3 4"/>
+          <path [attr.d]="stackedBarData.solidGridPath" stroke="rgba(255,255,255,0.07)" fill="none"/>
+          <path [attr.d]="stackedBarData.dashedGridPath" stroke="rgba(255,255,255,0.07)" fill="none" stroke-dasharray="3 4"/>
           <!-- Y-axis labels (always 4 ticks) -->
-          <text x="30" [attr.y]="stackedBarData.grid[0].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[0].val}}</text>
-          <text x="30" [attr.y]="stackedBarData.grid[1].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[1].val}}</text>
-          <text x="30" [attr.y]="stackedBarData.grid[2].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[2].val}}</text>
-          <text x="30" [attr.y]="stackedBarData.grid[3].y + 4" text-anchor="end" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[3].val}}</text>
+          <text x="30" [attr.y]="stackedBarData.grid[0].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[0].val}}</text>
+          <text x="30" [attr.y]="stackedBarData.grid[1].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[1].val}}</text>
+          <text x="30" [attr.y]="stackedBarData.grid[2].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[2].val}}</text>
+          <text x="30" [attr.y]="stackedBarData.grid[3].y + 4" text-anchor="end" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.grid[3].val}}</text>
           <!-- Colored bar paths (one per color) — no nested @for inside SVG -->
-          <path [attr.d]="stackedBarData.colorPaths[0].path" fill="#8b5cf6"/>
-          <path [attr.d]="stackedBarData.colorPaths[1].path" fill="#06b6d4"/>
-          <path [attr.d]="stackedBarData.colorPaths[2].path" fill="#10b981"/>
-          <path [attr.d]="stackedBarData.colorPaths[3].path" fill="#f59e0b"/>
+          <path [attr.d]="stackedBarData.colorPaths[0].path" fill="#c9944a"/>
+          <path [attr.d]="stackedBarData.colorPaths[1].path" fill="#6b9eaa"/>
+          <path [attr.d]="stackedBarData.colorPaths[2].path" fill="#3daa6f"/>
+          <path [attr.d]="stackedBarData.colorPaths[3].path" fill="#d4915c"/>
           <!-- Day labels (always 7 days) -->
-          <text [attr.x]="stackedBarData.bars[0].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[0].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[0].label}}</text>
-          <text [attr.x]="stackedBarData.bars[1].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[1].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[1].label}}</text>
-          <text [attr.x]="stackedBarData.bars[2].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[2].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[2].label}}</text>
-          <text [attr.x]="stackedBarData.bars[3].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[3].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[3].label}}</text>
-          <text [attr.x]="stackedBarData.bars[4].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[4].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[4].label}}</text>
-          <text [attr.x]="stackedBarData.bars[5].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[5].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[5].label}}</text>
-          <text [attr.x]="stackedBarData.bars[6].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[6].labelY" text-anchor="middle" fill="#6b6b75" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[6].label}}</text>
+          <text [attr.x]="stackedBarData.bars[0].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[0].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[0].label}}</text>
+          <text [attr.x]="stackedBarData.bars[1].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[1].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[1].label}}</text>
+          <text [attr.x]="stackedBarData.bars[2].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[2].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[2].label}}</text>
+          <text [attr.x]="stackedBarData.bars[3].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[3].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[3].label}}</text>
+          <text [attr.x]="stackedBarData.bars[4].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[4].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[4].label}}</text>
+          <text [attr.x]="stackedBarData.bars[5].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[5].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[5].label}}</text>
+          <text [attr.x]="stackedBarData.bars[6].labelX.toFixed(1)" [attr.y]="stackedBarData.bars[6].labelY" text-anchor="middle" fill="#636369" font-size="10" font-family="JetBrains Mono, monospace">{{stackedBarData.bars[6].label}}</text>
         </svg>
       </div>
     </div>
@@ -307,8 +307,8 @@
       <div class="card-body">
         <div style="display:flex; align-items:center; gap:18px; padding:4px 0 16px;">
           <svg width="80" height="80" style="display:block; transform:rotate(-90deg); flex-shrink:0;">
-            <circle cx="40" cy="40" r="37" fill="none" stroke="#23232e" stroke-width="6"/>
-            <circle cx="40" cy="40" r="37" fill="none" stroke="#10b981" stroke-width="6"
+            <circle cx="40" cy="40" r="37" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="6"/>
+            <circle cx="40" cy="40" r="37" fill="none" stroke="#3daa6f" stroke-width="6"
                     stroke-linecap="round"
                     [attr.stroke-dasharray]="radialCircumference"
                     [attr.stroke-dashoffset]="radialDashoffset"
@@ -316,20 +316,20 @@
           </svg>
           <div>
             <div style="font-size:30px; font-weight:700; letter-spacing:-0.02em; color:var(--success);">82<span style="font-size:18px; color:var(--text-muted);">%</span></div>
-            <div style="font-size:11.5px; color:var(--text-muted);">last run · +7pt vs prev</div>
+            <div style="font-size:12px; color:var(--text-muted);">last run · +7pt vs prev</div>
           </div>
         </div>
         <svg viewBox="0 0 360 120" width="100%" height="120" style="display:block;" preserveAspectRatio="none">
           <defs>
             <linearGradient id="passGrad" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
-              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#3daa6f" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#3daa6f" stop-opacity="0"/>
             </linearGradient>
           </defs>
           <path [attr.d]="passRateArea.areaPath" fill="url(#passGrad)"/>
-          <path [attr.d]="passRateArea.linePath" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="4" fill="#10b981"/>
-          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="2" fill="#08080b"/>
+          <path [attr.d]="passRateArea.linePath" fill="none" stroke="#3daa6f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="4" fill="#3daa6f"/>
+          <circle [attr.cx]="passRateArea.endX.toFixed(1)" [attr.cy]="passRateArea.endY.toFixed(1)" r="2" fill="#27272c"/>
         </svg>
         <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top:4px; font-family:'JetBrains Mono',monospace;">
           <span>Run 1</span><span>Run 4</span><span>Run 8</span>
@@ -351,7 +351,7 @@
       </div>
       <div class="card-body-flush">
         <!-- Header row -->
-        <div style="display:grid; grid-template-columns:1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr; padding:10px 18px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; border-bottom:1px solid var(--border-subtle);">
+        <div style="display:grid; grid-template-columns:1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr; padding:10px 18px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; border-bottom:1px solid var(--border-subtle);">
           <span>Trace ID</span><span>Model</span><span>Status</span><span>Tokens</span><span>Latency</span><span></span>
         </div>
 
@@ -362,12 +362,12 @@
         } @else if (recentTraces().length === 0) {
           <div style="padding:40px 18px; text-align:center;">
             <p style="font-size:13px; color:var(--text-secondary); margin:0 0 4px;">No traces yet</p>
-            <p style="font-size:11.5px; color:var(--text-muted); margin:0;">Route your agent through the Trsr proxy to start capturing traces.</p>
+            <p style="font-size:12px; color:var(--text-muted); margin:0;">Route your agent through the Trsr proxy to start capturing traces.</p>
           </div>
         } @else {
           @for (trace of recentTraces(); track trace.id) {
             <div class="trace-row">
-              <span class="mono" style="color:var(--text-primary); font-size:11.5px;">{{truncateId(trace.id)}}</span>
+              <span class="mono" style="color:var(--text-primary); font-size:12px;">{{truncateId(trace.id)}}</span>
               <span>
                 <span class="model-pill" [style.background]="modelPillColor(trace.model) + '1f'" [style.color]="modelPillColor(trace.model)" [style.border]="'1px solid ' + modelPillColor(trace.model) + '33'">
                   <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="modelPillColor(trace.model)"></span>
@@ -380,7 +380,7 @@
               </span>
               <span class="mono" style="color:var(--text-secondary); font-size:11px;">{{(trace.inputTokens + trace.outputTokens).toLocaleString()}}</span>
               <span class="mono" style="color:var(--text-secondary); font-size:11px;">{{formatLatency(trace.durationMs)}}</span>
-              <span style="color:var(--text-muted); font-size:10.5px; text-align:right;">{{formatDate(trace.createdAt)}}</span>
+              <span style="color:var(--text-muted); font-size:11px; text-align:right;">{{formatDate(trace.createdAt)}}</span>
             </div>
           }
         }
@@ -406,7 +406,7 @@
             <div style="min-width:0;">
               <div style="display:flex; align-items:center; gap:6px;">
                 <span style="font-size:13px; font-weight:600;">{{agent.name}}</span>
-                <span style="font-size:9.5px; padding:1px 5px; background:var(--bg-card); border-radius:4px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{agent.version}}</span>
+                <span style="font-size:10px; padding:1px 5px; background:var(--bg-card); border-radius:4px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{agent.version}}</span>
               </div>
               <div style="margin-top:5px; display:flex; gap:6px; align-items:center;">
                 <span class="model-pill" [style.background]="modelPillColor(agent.model) + '1f'" [style.color]="modelPillColor(agent.model)" [style.border]="'1px solid ' + modelPillColor(agent.model) + '33'">
@@ -424,7 +424,7 @@
             <!-- Pass rate -->
             <div style="text-align:right;">
               <div style="font-size:14px; font-weight:700;" [style.color]="agent.passColor">{{agent.pass}}%</div>
-              <div style="font-size:9.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">pass</div>
+              <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">pass</div>
             </div>
           </div>
         }
@@ -432,13 +432,13 @@
         <!-- Proposal teaser -->
         <div style="
           margin-top:4px; padding:12px; border-radius:12px;
-          background:linear-gradient(135deg, rgba(139,92,246,0.14), rgba(6,182,212,0.08));
+          background:linear-gradient(135deg, rgba(201,148,74,0.12), rgba(6,182,212,0.08));
           display:flex; gap:10px; align-items:flex-start;
-          box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 4px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(139,92,246,0.3);
+          box-shadow:0 1px 0 rgba(255,255,255,0.06) inset, 0 2px 4px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(201,148,74,0.25);
         ">
           <div style="
             width:28px; height:28px; border-radius:7px; flex-shrink:0;
-            background:linear-gradient(135deg, #8b5cf6, #06b6d4);
+            background:linear-gradient(135deg, #c9944a, #6b9eaa);
             display:flex; align-items:center; justify-content:center; color:#fff;
           ">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -449,7 +449,7 @@
             <div style="font-size:12px; font-weight:600;">2 optimization proposals ready</div>
             <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">Est. +14% pass rate for Customer Support</div>
           </div>
-          <button style="font-size:11px; font-weight:600; color:var(--accent-hover); padding:5px 10px; border-radius:6px; background:rgba(139,92,246,0.15); white-space:nowrap; flex-shrink:0;">Review</button>
+          <button style="font-size:11px; font-weight:600; color:var(--accent-hover); padding:5px 10px; border-radius:6px; background:rgba(201,148,74,0.12); white-space:nowrap; flex-shrink:0;">Review</button>
         </div>
       </div>
     </div>

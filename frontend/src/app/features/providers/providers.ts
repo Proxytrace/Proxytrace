@@ -14,11 +14,11 @@ import {
 type LoadState = 'loading' | 'loaded' | 'error';
 
 const PROVIDER_COLORS: Record<string, string> = {
-  Anthropic: '#10b981',
-  OpenAI: '#8b5cf6',
-  Google: '#06b6d4',
-  Azure: '#3b82f6',
-  Mistral: '#f59e0b',
+  Anthropic: '#3daa6f',
+  OpenAI: '#c9944a',
+  Google: '#6b9eaa',
+  Azure: '#5b82b0',
+  Mistral: '#d4915c',
 };
 
 @Component({
@@ -360,7 +360,7 @@ export class Providers implements OnInit {
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   providerColor(name: string): string {
-    return PROVIDER_COLORS[name] ?? '#8b5cf6';
+    return PROVIDER_COLORS[name] ?? '#c9944a';
   }
 
   providerKindLabel(kind: ModelProviderKind): string {
@@ -374,9 +374,9 @@ export class Providers implements OnInit {
 
   providerKindColor(kind: ModelProviderKind): string {
     switch (kind) {
-      case ModelProviderKind.Anthropic: return '#f59e0b';
-      case ModelProviderKind.OpenAi: return '#10b981';
-      case ModelProviderKind.OpenAiCompatible: return '#06b6d4';
+      case ModelProviderKind.Anthropic: return '#d4915c';
+      case ModelProviderKind.OpenAi: return '#3daa6f';
+      case ModelProviderKind.OpenAiCompatible: return '#6b9eaa';
       default: return '#6b7280';
     }
   }

@@ -53,17 +53,17 @@ type ConversationItem =
     }
     .tab-btn:hover { color: var(--text-primary); }
 
-    .tool-block button:hover { background: rgba(16,185,129,0.08) !important; }
+    .tool-block button:hover { background: rgba(107,158,170,0.1) !important; }
     .result-block button:hover { background: rgba(6,182,212,0.08) !important; }
 
     .msg-bubble { transition: none; }
 
     :host ::ng-deep .json-null   { color: #a1a1aa; }
     :host ::ng-deep .json-bool   { color: #f472b6; }
-    :host ::ng-deep .json-num    { color: #fbbf24; }
+    :host ::ng-deep .json-num    { color: var(--warn); }
     :host ::ng-deep .json-str    { color: #86efac; }
     :host ::ng-deep .json-key    { color: #93c5fd; }
-    :host ::ng-deep .json-punct  { color: #71717a; }
+    :host ::ng-deep .json-punct  { color: #636369; }
   `,
 })
 export class TraceDetail {
@@ -248,7 +248,7 @@ export class TraceDetail {
 
   roleColor(role: string): string {
     const c: Record<string, string> = {
-      system: '#71717a', user: '#06b6d4', assistant: '#8b5cf6', tool: '#10b981',
+      system: '#636369', user: '#6b9eaa', assistant: '#c9944a', tool: '#3daa6f',
     };
     return c[role] ?? '#a1a1aa';
   }
@@ -257,8 +257,8 @@ export class TraceDetail {
     const c: Record<string, string> = {
       system:    'rgba(113,113,122,0.12)',
       user:      'rgba(6,182,212,0.14)',
-      assistant: 'rgba(139,92,246,0.14)',
-      tool:      'rgba(16,185,129,0.12)',
+      assistant: 'rgba(201,148,74,0.12)',
+      tool:      'rgba(107,158,170,0.1)',
     };
     return c[role] ?? 'rgba(161,161,170,0.12)';
   }
@@ -284,8 +284,8 @@ export class TraceDetail {
 
   modelColor(model: string): string {
     const c: Record<string, string> = {
-      'gpt-4o': '#8b5cf6', 'gpt-4o-mini': '#06b6d4',
-      'gpt-3.5-turbo': '#f59e0b', 'claude-3.5-sonnet': '#10b981',
+      'gpt-4o': '#c9944a', 'gpt-4o-mini': '#6b9eaa',
+      'gpt-3.5-turbo': '#d4915c', 'claude-3.5-sonnet': '#3daa6f',
     };
     return c[model] ?? '#a1a1aa';
   }

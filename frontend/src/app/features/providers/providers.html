@@ -4,10 +4,10 @@
   <div class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-shrink:0;">
     <div>
       <h1 style="font-size:24px; font-weight:700; letter-spacing:-0.02em; margin:0 0 4px;">Providers</h1>
-      <p style="font-size:13.5px; color:var(--text-muted); margin:0;">Configure upstream model providers and manage Trsr API keys.</p>
+      <p style="font-size:14px; color:var(--text-muted); margin:0;">Configure upstream model providers and manage Trsr API keys.</p>
     </div>
     <button (click)="openNewProvider()"
-            style="padding:8px 14px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:12.5px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+            style="padding:8px 14px; background:linear-gradient(135deg,#c9944a,#b8832d); border-radius:9px; font-size:12px; font-weight:600; color:#fff; box-shadow:0 4px 14px -4px rgba(201,148,74,0.4),inset 0 1px 0 rgba(255,255,255,0.15); display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Provider
     </button>
@@ -34,7 +34,7 @@
         @for (p of providers(); track p.id) {
           <button (click)="selectProvider(p.id)"
                   style="width:100%; text-align:left; padding:12px 14px; border-radius:10px; transition:background 0.1s; position:relative;"
-                  [style.background]="selectedId() === p.id ? 'rgba(139,92,246,0.08)' : 'transparent'">
+                  [style.background]="selectedId() === p.id ? 'rgba(201,148,74,0.08)' : 'transparent'">
             <div style="display:flex; align-items:center; gap:10px;">
               <div style="width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:13px; font-weight:700; color:#fff;"
                    [style.background]="'linear-gradient(135deg,' + providerColor(p.name) + 'cc,' + providerColor(p.name) + '88)'">
@@ -65,7 +65,7 @@
         <!-- Provider header -->
         <div style="padding:18px 20px; border-bottom:1px solid var(--hairline); flex-shrink:0;">
           <div style="display:flex; align-items:flex-start; gap:14px;">
-            <div style="width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:17px; font-weight:700; color:#fff;"
+            <div style="width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px; font-weight:700; color:#fff;"
                  [style.background]="'linear-gradient(135deg,' + providerColor(provider.name) + 'cc,' + providerColor(provider.name) + '88)'">
               {{ provider.name[0] }}
             </div>
@@ -74,14 +74,14 @@
                 <h2 style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin:0;">{{ provider.name }}</h2>
                 @if (!editingKind()) {
                   <button (click)="openEditKind()" title="Change provider kind"
-                          style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:600; letter-spacing:0.02em; cursor:pointer; transition:filter 0.15s;"
+                          style="padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; letter-spacing:0.02em; cursor:pointer; transition:filter 0.15s;"
                           onmouseenter="this.style.filter='brightness(1.2)'" onmouseleave="this.style.filter='brightness(1)'"
                           [style.background]="providerKindColor(provider.kind) + '22'"
                           [style.color]="providerKindColor(provider.kind)">{{ providerKindLabel(provider.kind) }}</button>
                 } @else {
                   <div style="display:flex; align-items:center; gap:6px;">
                     <select [ngModel]="editKindValue()" (ngModelChange)="editKindValue.set($event)"
-                            style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:600; outline:none; cursor:pointer;"
+                            style="padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; outline:none; cursor:pointer;"
                             [style.background]="providerKindColor(editKindValue()) + '22'"
                             [style.color]="providerKindColor(editKindValue())"
                             [style.box-shadow]="'inset 0 0 0 1px ' + providerKindColor(editKindValue()) + '44'">
@@ -90,19 +90,19 @@
                       }
                     </select>
                     <button (click)="submitEditKind()" [disabled]="savingKind()"
-                            style="padding:2px 10px; border-radius:100px; font-size:10.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); transition:opacity 0.15s;"
+                            style="padding:2px 10px; border-radius:100px; font-size:11px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); transition:opacity 0.15s;"
                             [style.opacity]="savingKind() ? '0.5' : '1'">{{ savingKind() ? '…' : 'Save' }}</button>
                     <button (click)="cancelEditKind()"
-                            style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
+                            style="padding:2px 8px; border-radius:100px; font-size:11px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
                   </div>
                 }
-                <span style="padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:500; background:var(--bg-card-2); color:var(--text-muted);">{{ provider.organizationName }}</span>
+                <span style="padding:2px 8px; border-radius:100px; font-size:11px; font-weight:500; background:var(--bg-card-2); color:var(--text-muted);">{{ provider.organizationName }}</span>
               </div>
               <div style="font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{ provider.endpoint }}</div>
             </div>
             <button (click)="openDeleteProviderDialog()"
-                    style="padding:6px 10px; border-radius:8px; font-size:12px; font-weight:500; color:var(--danger); background:rgba(239,68,68,0.08); display:inline-flex; align-items:center; gap:5px; transition:background 0.15s; flex-shrink:0;"
-                    onmouseenter="this.style.background='rgba(239,68,68,0.15)'" onmouseleave="this.style.background='rgba(239,68,68,0.08)'">
+                    style="padding:6px 10px; border-radius:8px; font-size:12px; font-weight:500; color:var(--danger); background:rgba(217,85,85,0.08); display:inline-flex; align-items:center; gap:5px; transition:background 0.15s; flex-shrink:0;"
+                    onmouseenter="this.style.background='rgba(217,85,85,0.12)'" onmouseleave="this.style.background='rgba(217,85,85,0.08)'">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               Delete provider
             </button>
@@ -111,7 +111,7 @@
           <!-- Upstream key row -->
           <div style="margin-top:14px; padding:10px 14px; background:var(--bg-card-2); border-radius:10px; display:flex; align-items:center; gap:10px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted); flex-shrink:0;"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
-            <span style="font-size:11.5px; color:var(--text-muted); white-space:nowrap;">Upstream API key</span>
+            <span style="font-size:12px; color:var(--text-muted); white-space:nowrap;">Upstream API key</span>
             <code style="flex:1; font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
               {{ upstreamKeyRevealed() ? provider.upstreamApiKey : maskKey(provider.upstreamApiKey) }}
             </code>
@@ -135,7 +135,7 @@
               <div style="font-size:12px; color:var(--text-muted);">Models served by this provider. Set pricing to compute trace costs.</div>
             </div>
             <button (click)="openNewModel()"
-                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12.5px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
+                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Add Model
             </button>
@@ -169,10 +169,10 @@
               </div>
               <div style="display:flex; gap:8px; justify-content:flex-end;">
                 <button (click)="cancelNewModel()"
-                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
+                        style="padding:7px 14px; border-radius:8px; font-size:12px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
                 <button (click)="submitNewModel()"
                         [disabled]="savingModel() || !newModelName()"
-                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                        style="padding:7px 14px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); box-shadow:0 4px 12px -4px rgba(201,148,74,0.4); transition:opacity 0.15s;"
                         [style.opacity]="(savingModel() || !newModelName()) ? '0.5' : '1'">
                   {{ savingModel() ? 'Adding…' : 'Add Model' }}
                 </button>
@@ -188,20 +188,20 @@
             @if (models().length === 0 && !showNewModel()) {
               <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:24px; text-align:center; color:var(--text-muted); border:1px dashed var(--hairline); border-radius:12px;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                <p style="font-size:12.5px; margin:0;">No models yet. Add one or let Trsr auto-discover them from traces.</p>
+                <p style="font-size:12px; margin:0;">No models yet. Add one or let Trsr auto-discover them from traces.</p>
               </div>
             }
             @if (models().length > 0) {
               <div style="background:var(--bg-card-2); border-radius:12px; overflow:hidden;">
-                <div style="display:grid; grid-template-columns:2fr 1fr 1fr auto; padding:10px 16px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                <div style="display:grid; grid-template-columns:2fr 1fr 1fr auto; padding:10px 16px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
                   <span>Model</span><span>Input / 1M €</span><span>Output / 1M €</span><span></span>
                 </div>
                 @for (m of models(); track m.id) {
                   <div [style.border-bottom]="$last ? 'none' : '1px solid var(--hairline)'">
                     <div style="display:grid; grid-template-columns:2fr 1fr 1fr auto; padding:11px 16px; align-items:center;">
-                      <span class="mono" style="font-size:12.5px; color:var(--text-primary);">{{ m.modelName }}</span>
-                      <span style="font-size:12.5px; color:var(--text-secondary);">{{ m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—' }}</span>
-                      <span style="font-size:12.5px; color:var(--text-secondary);">{{ m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—' }}</span>
+                      <span class="mono" style="font-size:12px; color:var(--text-primary);">{{ m.modelName }}</span>
+                      <span style="font-size:12px; color:var(--text-secondary);">{{ m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—' }}</span>
+                      <span style="font-size:12px; color:var(--text-secondary);">{{ m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—' }}</span>
                       <button (click)="openEditPricing(m)"
                               style="padding:5px 8px; border-radius:7px; color:var(--text-muted); background:transparent; transition:background 0.15s; display:inline-flex; align-items:center;"
                               onmouseenter="this.style.background='var(--bg-card)'" onmouseleave="this.style.background='transparent'"
@@ -234,7 +234,7 @@
                                   style="padding:6px 12px; border-radius:8px; font-size:12px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
                           <button (click)="submitEditPricing()"
                                   [disabled]="savingModelPricing()"
-                                  style="padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); transition:opacity 0.15s;"
+                                  style="padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); transition:opacity 0.15s;"
                                   [style.opacity]="savingModelPricing() ? '0.5' : '1'">
                             {{ savingModelPricing() ? 'Saving…' : 'Save' }}
                           </button>
@@ -258,7 +258,7 @@
               <div style="font-size:12px; color:var(--text-muted);">Keys that authenticate clients at the Trsr proxy for this provider.</div>
             </div>
             <button (click)="openNewKey()"
-                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12.5px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
+                    style="padding:7px 12px; background:var(--bg-card-2); border-radius:8px; font-size:12px; font-weight:600; color:var(--text-primary); display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-pill);">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Generate Key
             </button>
@@ -266,14 +266,14 @@
 
           <!-- Newly created key banner -->
           @if (newlyCreatedKey(); as created) {
-            <div style="padding:12px 16px; border-radius:11px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); display:flex; align-items:center; gap:12px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+            <div style="padding:12px 16px; border-radius:11px; background:rgba(61,170,111,0.08); border:1px solid rgba(61,170,111,0.2); display:flex; align-items:center; gap:12px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3daa6f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
               <div style="flex:1; min-width:0;">
-                <div style="font-size:12px; font-weight:600; color:#10b981; margin-bottom:4px;">Key "{{ created.name }}" created — copy it now</div>
+                <div style="font-size:12px; font-weight:600; color:#3daa6f; margin-bottom:4px;">Key "{{ created.name }}" created — copy it now</div>
                 <code style="font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); word-break:break-all;">{{ created.keyValue }}</code>
               </div>
               <button (click)="copyToClipboard(created.keyValue, 'API key copied')"
-                      style="padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; background:#10b981; color:#fff; white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center; gap:5px;">
+                      style="padding:6px 12px; border-radius:7px; font-size:12px; font-weight:600; background:#3daa6f; color:#fff; white-space:nowrap; flex-shrink:0; display:inline-flex; align-items:center; gap:5px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 Copy
               </button>
@@ -306,10 +306,10 @@
               </div>
               <div style="display:flex; gap:8px; justify-content:flex-end;">
                 <button (click)="cancelNewKey()"
-                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
+                        style="padding:7px 14px; border-radius:8px; font-size:12px; font-weight:500; color:var(--text-muted); background:var(--bg-card);">Cancel</button>
                 <button (click)="submitNewKey()"
                         [disabled]="savingKey() || !newKeyName() || !newKeyProjectId()"
-                        style="padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                        style="padding:7px 14px; border-radius:8px; font-size:12px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); box-shadow:0 4px 12px -4px rgba(201,148,74,0.4); transition:opacity 0.15s;"
                         [style.opacity]="(savingKey() || !newKeyName() || !newKeyProjectId()) ? '0.5' : '1'">
                   {{ savingKey() ? 'Generating…' : 'Generate' }}
                 </button>
@@ -332,7 +332,7 @@
 
             @if (keys().length > 0) {
               <div style="background:var(--bg-card-2); border-radius:12px; overflow:hidden;">
-                <div style="display:grid; grid-template-columns:1.5fr 1.2fr 2fr 1fr auto; padding:10px 16px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                <div style="display:grid; grid-template-columns:1.5fr 1.2fr 2fr 1fr auto; padding:10px 16px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
                   <span>Name</span><span>Project</span><span>Key</span><span>Created</span><span></span>
                 </div>
                 @for (key of keys(); track key.id) {
@@ -341,7 +341,7 @@
                     <span style="font-size:13px; font-weight:600; color:var(--text-primary);">{{ key.name }}</span>
                     <span style="font-size:12px; color:var(--text-secondary);">{{ key.projectName }}</span>
                     <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-                      <code style="font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">{{ maskKey(key.keyValue) }}</code>
+                      <code style="font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">{{ maskKey(key.keyValue) }}</code>
                       <button (click)="copyToClipboard(key.keyValue, 'API key copied')"
                               style="flex-shrink:0; color:var(--text-muted); padding:3px 6px; border-radius:5px; background:var(--bg-card); display:inline-flex; align-items:center;" title="Copy key">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -350,7 +350,7 @@
                     <span style="font-size:12px; color:var(--text-muted);">{{ formatDate(key.createdAt) }}</span>
                     <button (click)="openDeleteKeyDialog(key)"
                             style="padding:5px 8px; border-radius:7px; color:var(--danger); background:transparent; transition:background 0.15s; display:inline-flex; align-items:center;"
-                            onmouseenter="this.style.background='rgba(239,68,68,0.08)'" onmouseleave="this.style.background='transparent'"
+                            onmouseenter="this.style.background='rgba(217,85,85,0.08)'" onmouseleave="this.style.background='transparent'"
                             title="Delete key">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
@@ -374,7 +374,7 @@
 
 <!-- ═══════════════════ Add Provider modal ═══════════════════ -->
 @if (showNewProvider()) {
-  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);"
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur);"
        (click)="cancelNewProvider()">
     <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:460px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid var(--hairline);"
          (click)="$event.stopPropagation()">
@@ -386,25 +386,25 @@
       </div>
       <div style="display:flex; flex-direction:column; gap:14px;">
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider name</label>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider name</label>
           <input [ngModel]="newProvider().name" (ngModelChange)="newProvider.update(v => ({...v, name: $event}))"
                  placeholder="e.g. Anthropic"
                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Endpoint URL</label>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Endpoint URL</label>
           <input [ngModel]="newProvider().endpoint" (ngModelChange)="newProvider.update(v => ({...v, endpoint: $event}))"
                  placeholder="https://api.anthropic.com/v1"
                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Upstream API key</label>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Upstream API key</label>
           <input [ngModel]="newProvider().upstreamApiKey" (ngModelChange)="newProvider.update(v => ({...v, upstreamApiKey: $event}))"
                  type="password" placeholder="sk-ant-…"
                  style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;" />
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider Kind <span style="color:var(--danger);">*</span></label>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Provider Kind <span style="color:var(--danger);">*</span></label>
           <select [ngModel]="newProvider().kind" (ngModelChange)="newProvider.update(v => ({...v, kind: $event}))"
                   style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;">
             @for (opt of providerKindOptions; track opt.value) {
@@ -413,7 +413,7 @@
           </select>
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
-          <label style="font-size:11.5px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Organization</label>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Organization</label>
           <select [ngModel]="newProvider().organizationId" (ngModelChange)="newProvider.update(v => ({...v, organizationId: $event}))"
                   style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; box-shadow:inset 0 0 0 1px var(--hairline); width:100%; box-sizing:border-box;">
             @for (org of organizations(); track org.id) {
@@ -427,7 +427,7 @@
                 style="padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500; color:var(--text-muted); background:var(--bg-card-2);">Cancel</button>
         <button (click)="submitNewProvider()"
                 [disabled]="savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId || newProvider().kind === ModelProviderKind.Unknown"
-                style="padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 4px 12px -4px rgba(139,92,246,0.5); transition:opacity 0.15s;"
+                style="padding:8px 20px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; background:linear-gradient(135deg,#c9944a,#b8832d); box-shadow:0 4px 12px -4px rgba(201,148,74,0.4); transition:opacity 0.15s;"
                 [style.opacity]="(savingProvider() || !newProvider().name || !newProvider().endpoint || !newProvider().upstreamApiKey || !newProvider().organizationId || newProvider().kind === ModelProviderKind.Unknown) ? '0.5' : '1'">
           {{ savingProvider() ? 'Saving…' : 'Add Provider' }}
         </button>
@@ -438,13 +438,13 @@
 
 <!-- ═══════════════════ Delete Provider dialog ═══════════════════ -->
 @if (showDeleteProviderDialog() && selected(); as provider) {
-  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur);"
        (click)="cancelDeleteProvider()">
-    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:420px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(239,68,68,0.2);"
+    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:420px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(217,85,85,0.2);"
          (click)="$event.stopPropagation()">
       <!-- Icon + title -->
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-        <div style="width:38px; height:38px; border-radius:10px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(217,85,85,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </div>
         <div>
@@ -453,7 +453,7 @@
         </div>
       </div>
       <!-- Warning -->
-      <div style="padding:12px 14px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:10px; margin-bottom:18px;">
+      <div style="padding:12px 14px; background:rgba(217,85,85,0.06); border:1px solid rgba(217,85,85,0.12); border-radius:10px; margin-bottom:18px;">
         <p style="font-size:13px; color:var(--text-secondary); margin:0; line-height:1.6;">
           Deleting <strong style="color:var(--text-primary);">{{ provider.name }}</strong> will permanently remove all its
           API keys, model endpoints, and captured traces. This cannot be recovered.
@@ -467,7 +467,7 @@
         <input [ngModel]="deleteProviderNameInput()" (ngModelChange)="deleteProviderNameInput.set($event)"
                [placeholder]="provider.name"
                style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); outline:none; width:100%; box-sizing:border-box;"
-               [style.box-shadow]="deleteProviderNameMatches() ? 'inset 0 0 0 1.5px rgba(239,68,68,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
+               [style.box-shadow]="deleteProviderNameMatches() ? 'inset 0 0 0 1.5px rgba(217,85,85,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
       </div>
       <div style="display:flex; gap:8px; justify-content:flex-end;">
         <button (click)="cancelDeleteProvider()"
@@ -485,12 +485,12 @@
 
 <!-- ═══════════════════ Delete Key dialog ═══════════════════ -->
 @if (deleteKeyTarget(); as key) {
-  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"
+  <div style="position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur);"
        (click)="cancelDeleteKey()">
-    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:400px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(239,68,68,0.2);"
+    <div style="background:var(--bg-card); border-radius:18px; padding:24px; width:400px; max-width:calc(100vw - 32px); box-shadow:0 24px 60px rgba(0,0,0,0.5); border:1px solid rgba(217,85,85,0.2);"
          (click)="$event.stopPropagation()">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-        <div style="width:38px; height:38px; border-radius:10px; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(217,85,85,0.12); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
         </div>
         <div>
@@ -498,7 +498,7 @@
           <div style="font-size:12px; color:var(--text-muted); margin-top:1px;">Clients using this key will lose access immediately</div>
         </div>
       </div>
-      <div style="padding:12px 14px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:10px; margin-bottom:18px;">
+      <div style="padding:12px 14px; background:rgba(217,85,85,0.06); border:1px solid rgba(217,85,85,0.12); border-radius:10px; margin-bottom:18px;">
         <p style="font-size:13px; color:var(--text-secondary); margin:0; line-height:1.6;">
           Deleting key <strong style="color:var(--text-primary);">{{ key.name }}</strong> (project: {{ key.projectName }}) is permanent.
           Any agent using it will receive 401 errors.
@@ -511,7 +511,7 @@
         <input [ngModel]="deleteKeyNameInput()" (ngModelChange)="deleteKeyNameInput.set($event)"
                [placeholder]="key.name"
                style="padding:9px 12px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-family:'JetBrains Mono',monospace; color:var(--text-primary); outline:none; width:100%; box-sizing:border-box;"
-               [style.box-shadow]="deleteKeyNameMatches() ? 'inset 0 0 0 1.5px rgba(239,68,68,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
+               [style.box-shadow]="deleteKeyNameMatches() ? 'inset 0 0 0 1.5px rgba(217,85,85,0.5)' : 'inset 0 0 0 1px var(--hairline)'" />
       </div>
       <div style="display:flex; gap:8px; justify-content:flex-end;">
         <button (click)="cancelDeleteKey()"
@@ -541,7 +541,7 @@
     font-size:13px; font-weight:500; color:var(--text-primary);
     animation: snack-in 0.18s ease;
   ">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3daa6f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
     {{ msg }}
   </div>
 }

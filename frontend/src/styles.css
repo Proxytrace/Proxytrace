@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0f0f0f;
-  --bg-secondary: #1a1a1a;
-  --bg-sidebar: #111111;
-  --bg-card: #1e1e1e;
-  --border-color: #2a2a2a;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-  --accent-primary: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-subtle: rgba(124, 58, 237, 0.15);
+  --bg-primary: #1b1b1f;
+  --bg-secondary: #212125;
+  --bg-sidebar: #1e1e22;
+  --bg-card: #27272c;
+  --border-color: rgba(255, 255, 255, 0.07);
+  --text-primary: #e8e8ea;
+  --text-secondary: #9a9aa2;
+  --text-muted: #636369;
+  --accent-primary: #c9944a;
+  --accent-hover: #deb073;
+  --accent-subtle: rgba(201, 148, 74, 0.12);
 }
 
 .nav-item:hover {
@@ -30,4 +30,5 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
