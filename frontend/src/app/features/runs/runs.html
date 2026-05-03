@@ -236,56 +236,75 @@
             <div style="flex:1; overflow-y:auto;">
 
               <!-- Column headers -->
-              <div style="display:grid; grid-template-columns:2fr 0.9fr 0.8fr 1fr; padding:10px 20px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+              <div style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:10px 20px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
                 <span>Test case</span>
-                <span>Result</span>
+                <span>Progress</span>
                 <span>Latency</span>
-                <span>Response</span>
+                <span>Result</span>
               </div>
 
               @for (tc of run.testCases; track tc.id) {
                 @let res = resultByCase(run, tc.id);
+                @let hasStarted = !!caseProgress().get(tc.id);
                 <div style="border-bottom:1px solid var(--hairline);">
 
                   <!-- Main row -->
                   <div class="tc-row"
-                       style="display:grid; grid-template-columns:2fr 0.9fr 0.8fr 1fr; padding:11px 20px; align-items:center; font-size:12px; transition:background 0.1s;"
+                       style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:11px 20px; align-items:center; font-size:12px; transition:background 0.1s;"
                        [style.cursor]="res ? 'pointer' : 'default'"
                        (click)="res && toggleCase(tc.id)">
 
-                    <!-- Test case name + progress (for active) or chevron (for done) -->
-                    <div style="display:flex; flex-direction:column; gap:5px; min-width:0; padding-right:8px;">
-                      <div style="display:flex; align-items:center; gap:7px; min-width:0;">
-                        @if (res) {
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                               style="flex-shrink:0; transition:transform 0.2s;"
-                               [style.transform]="isCaseExpanded(tc.id) ? 'rotate(90deg)' : 'none'">
-                            <polyline points="9 18 15 12 9 6"/>
-                          </svg>
-                        } @else {
-                          <span style="width:10px; height:10px; flex-shrink:0; display:inline-block;"></span>
-                        }
-                        <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
-                      </div>
+                    <!-- Test case name -->
+                    <div style="display:flex; align-items:center; gap:7px; min-width:0; padding-right:8px;">
+                      @if (res) {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                             style="flex-shrink:0; transition:transform 0.2s;"
+                             [style.transform]="isCaseExpanded(tc.id) ? 'rotate(90deg)' : 'none'">
+                          <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                      } @else {
+                        <span style="width:10px; height:10px; flex-shrink:0; display:inline-block;"></span>
+                      }
+                      <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
+                    </div>
 
+                    <!-- Progress column -->
+                    <div style="min-width:0; padding-right:8px;">
                       @if (!res && isActive(run)) {
-                        @let steps = caseProgressSteps(run, tc.id);
-                        @let action = caseProgressAction(run, tc.id);
-                        <!-- Segmented step bar -->
-                        <div style="display:flex; gap:3px; align-items:center; padding-left:17px;">
-                          @for (step of steps; track $index) {
-                            <div style="flex:1; height:3px; border-radius:100px; transition:background 0.3s;"
-                                 [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
-                                 [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'">
+                        @if (hasStarted) {
+                          @let steps = caseProgressSteps(run, tc.id);
+                          @let action = caseProgressAction(run, tc.id);
+                          <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                            <div style="display:flex; gap:2px; flex-shrink:0;">
+                              @for (step of steps; track $index) {
+                                <div style="width:10px; height:3px; border-radius:100px; transition:background 0.3s;"
+                                     [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
+                                     [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'">
+                                </div>
+                              }
                             </div>
-                          }
-                        </div>
-                        <!-- Current action label -->
-                        <span style="font-size:10.5px; color:var(--accent-hover); font-weight:500; padding-left:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                          {{action}}
-                        </span>
+                            <span style="font-size:10.5px; color:var(--accent-hover); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{action}}</span>
+                          </div>
+                        } @else {
+                          <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--text-muted);">
+                            <span style="width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.15); display:inline-block; flex-shrink:0;"></span>
+                            Waiting
+                          </span>
+                        }
                       }
                     </div>
+
+                    <!-- Latency -->
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px;"
+                          [style.color]="(!res && hasStarted) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
+                      @if (res) {
+                        {{formatLatency(res.durationMs)}}
+                      } @else if (!res && hasStarted) {
+                        {{caseElapsed(tc.id)}}
+                      } @else {
+                        —
+                      }
+                    </span>
 
                     <!-- Result badge -->
                     <span>
@@ -306,16 +325,6 @@
                           Not run
                         </span>
                       }
-                    </span>
-
-                    <!-- Latency -->
-                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary);">
-                      {{res ? formatLatency(res.durationMs) : '—'}}
-                    </span>
-
-                    <!-- Response snippet -->
-                    <span style="font-size:11px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px;">
-                      {{res ? res.actualResponse : '—'}}
                     </span>
                   </div>
 

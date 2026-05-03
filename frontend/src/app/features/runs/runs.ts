@@ -22,6 +22,7 @@ const EVALUATOR_KIND_COLORS: Record<string, string> = {
 interface CaseProgress {
   phase: 'inference' | 'evaluating';
   completedSteps: number;
+  startedAt: number;
 }
 
 export type StepStatus = 'done' | 'active' | 'pending';
@@ -131,13 +132,14 @@ export class Runs implements OnInit, OnDestroy {
   }
 
   private handleTestCaseStarted(evt: TestCaseStartedEvent) {
-    this.caseProgress.update(m => new Map(m).set(evt.testCaseId, { phase: 'inference', completedSteps: 0 }));
+    this.caseProgress.update(m => new Map(m).set(evt.testCaseId, { phase: 'inference', completedSteps: 0, startedAt: Date.now() }));
   }
 
   private handleInferenceDone(evt: InferenceDoneEvent) {
     this.caseProgress.update(m => {
       const next = new Map(m);
-      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: 1 });
+      const p = next.get(evt.testCaseId);
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: 1, startedAt: p?.startedAt ?? Date.now() });
       return next;
     });
   }
@@ -146,7 +148,7 @@ export class Runs implements OnInit, OnDestroy {
     this.caseProgress.update(m => {
       const next = new Map(m);
       const p = next.get(evt.testCaseId);
-      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: (p?.completedSteps ?? 1) + 1 });
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: (p?.completedSteps ?? 1) + 1, startedAt: p?.startedAt ?? Date.now() });
       return next;
     });
   }
@@ -158,7 +160,16 @@ export class Runs implements OnInit, OnDestroy {
       const passed = r.passedCases + (evaluation === Evaluation.Pass ? 1 : 0);
       const failed = r.failedCases + (evaluation === Evaluation.Fail ? 1 : 0);
       const total = r.totalCases;
-      return { ...r, passedCases: passed, failedCases: failed, passRate: total > 0 ? Math.round(passed / total * 100) : 0 };
+      const newResult: TestResultDto = {
+        id: '', testCaseId: evt.testCaseId, testCaseSummary: '', actualResponse: '',
+        evaluations: evt.evaluations, durationMs: evt.durationMs,
+      };
+      return {
+        ...r,
+        passedCases: passed, failedCases: failed,
+        passRate: total > 0 ? Math.round(passed / total * 100) : 0,
+        results: [...r.results, newResult],
+      };
     }));
   }
 
@@ -320,6 +331,12 @@ export class Runs implements OnInit, OnDestroy {
 
   formatLatency(ms: number) {
     return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
+  }
+
+  caseElapsed(testCaseId: string): string {
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return '—';
+    return this.formatLatency(this.now() - p.startedAt);
   }
 
   evalLabel(evaluation: Evaluation): string {
