@@ -9,6 +9,17 @@ const AGENT_COLORS: Record<string, string> = {
   'Ticket Triage': '#10b981', 'Classifier': '#f59e0b',
 };
 
+const EVALUATOR_KIND_COLORS: Record<string, string> = {
+  Custom: '#8b5cf6',
+  ExactMatch: '#06b6d4',
+  NumericMatch: '#67e8f9',
+  Helpfulness: '#8b5cf6',
+  Politeness: '#8b5cf6',
+  JsonSchemaMatch: '#06b6d4',
+  Safety: '#ef4444',
+  ToolUsage: '#10b981',
+};
+
 @Component({
   selector: 'app-runs',
   templateUrl: './runs.html',
@@ -30,6 +41,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteTargetId = signal<string | null>(null);
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
+  readonly expandedCaseIds = signal<Set<string>>(new Set());
 
   private runStreams = new Map<string, Subscription>();
   private pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -127,7 +139,7 @@ export class Runs implements OnInit, OnDestroy {
   resultEvaluation(result: TestResultDto): Evaluation {
     if (!result.evaluations.length) return Evaluation.Undecided;
     const passing = ['Acceptable', 'Good', 'Excellent'];
-    return result.evaluations.every(s => passing.includes(s)) ? Evaluation.Pass : Evaluation.Fail;
+    return result.evaluations.every(e => passing.includes(e.score)) ? Evaluation.Pass : Evaluation.Fail;
   }
 
   private handleRunComplete(evt: RunCompleteEvent) {
@@ -158,6 +170,34 @@ export class Runs implements OnInit, OnDestroy {
     this.timerInterval = setInterval(() => {
       if (this.hasPending()) this.now.set(Date.now());
     }, 1000);
+  }
+
+  toggleCase(id: string) {
+    this.expandedCaseIds.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isCaseExpanded(id: string): boolean {
+    return this.expandedCaseIds().has(id);
+  }
+
+  scoreColor(score: string): string {
+    switch (score) {
+      case 'Excellent':
+      case 'Good': return 'var(--success)';
+      case 'Acceptable': return 'var(--warn)';
+      case 'Bad':
+      case 'Terrible': return 'var(--danger)';
+      default: return 'var(--text-muted)';
+    }
+  }
+
+  evaluatorKindColor(kind: string): string {
+    return EVALUATOR_KIND_COLORS[kind] ?? '#8b5cf6';
   }
 
   agentColor(agentName: string) { return AGENT_COLORS[agentName] ?? '#8b5cf6'; }

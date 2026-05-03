@@ -156,12 +156,20 @@ export interface TestSuiteDto {
   updatedAt: string;
 }
 
+export interface EvaluationResultDto {
+  evaluatorId: string;
+  evaluatorKind: EvaluatorKind;
+  evaluatorName: string;
+  score: string;
+  reasoning: string | null;
+}
+
 export interface TestResultDto {
   id: string;
   testCaseId: string;
   testCaseSummary: string;
   actualResponse: string;
-  evaluations: string[];
+  evaluations: EvaluationResultDto[];
   durationMs: number;
 }
 
@@ -181,6 +189,7 @@ export interface TestRunDto {
   passedCases: number;
   failedCases: number;
   passRate: number;
+  evaluatorCount: number;
   startedAt: string;
   completedAt: string | null;
   durationMs: number | null;
@@ -216,7 +225,7 @@ export interface TestResultArrivedEvent {
   runId: string;
   testCaseId: string;
   overallScore: string | null;
-  evaluations: string[];
+  evaluations: EvaluationResultDto[];
   durationMs: number;
 }
 

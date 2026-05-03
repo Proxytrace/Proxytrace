@@ -7,6 +7,7 @@ using Trsr.Application.Streaming;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
@@ -152,6 +153,7 @@ public class TestRunsController : ControllerBase
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
+            EvaluatorCount: r.Suite.Evaluators.Count,
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
@@ -161,12 +163,33 @@ public class TestRunsController : ControllerBase
                 res.TestCase.Id,
                 SummarizeTestCase(res.TestCase),
                 string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
-                res.Evaluations.Select(e => e.Score).ToArray(),
+                res.Evaluations.Select(e => new EvaluationResultDto(
+                    e.Evaluator.Id,
+                    e.Evaluator.Kind,
+                    GetEvaluatorName(e.Evaluator),
+                    e.Score,
+                    e.Reasoning)).ToArray(),
                 (long)res.Duration.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
     }
+
+    private static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
+    {
+        ICustomEvaluator custom => custom.Name,
+        _ => evaluator.Kind switch
+        {
+            EvaluatorKind.ExactMatch => "Exact Match",
+            EvaluatorKind.NumericMatch => "Numeric Match",
+            EvaluatorKind.Helpfulness => "Helpfulness",
+            EvaluatorKind.Politeness => "Politeness",
+            EvaluatorKind.JsonSchemaMatch => "JSON Schema Match",
+            EvaluatorKind.Safety => "Safety Classifier",
+            EvaluatorKind.ToolUsage => "Tool Usage",
+            _ => evaluator.Kind.ToString()
+        }
+    };
 
     private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
     {
