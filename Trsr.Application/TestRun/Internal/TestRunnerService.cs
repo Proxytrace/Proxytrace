@@ -179,6 +179,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                         logger.LogWarning("Test run with ID {RunId} not found in repository", runId);
                     }
                 }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    // user-initiated cancellation — not an error
+                }
                 catch (Exception ex)
                 {
                     logger.LogWarning(ex, "Failed to execute test run {RunId}", runId);
