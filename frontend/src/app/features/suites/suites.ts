@@ -7,16 +7,12 @@ import { TestRunsService } from '../../core/api/test-runs.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { ProvidersService, ModelEndpointDto } from '../../core/api/providers.service';
-import { AgentCallDto, AgentDto, TestSuiteDto } from '../../core/api/models';
+import { EvaluatorsService } from '../../core/api/evaluators.service';
+import { AgentCallDto, AgentDto, EvaluatorDetailDto, EvaluatorKind, TestSuiteDto } from '../../core/api/models';
+import { EVALUATOR_TYPE_META } from '../evaluators/evaluators';
 
 interface RunState { passRate: number; runCount: number; lastRunId: string; }
 
-
-// ─── Evaluators ──────────────────────────────────────────────────────────────
-
-const EVALUATOR_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: 'Exact match', color: '#06b6d4' },
-};
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +35,7 @@ export class Suites implements OnInit {
   private readonly agentsService = inject(AgentsService);
   private readonly agentCallsService = inject(AgentCallsService);
   private readonly providersService = inject(ProvidersService);
+  private readonly evaluatorsService = inject(EvaluatorsService);
   private readonly router = inject(Router);
 
   // ── list state ─────────────────────────────────────────────────────────────
@@ -72,7 +69,9 @@ export class Suites implements OnInit {
   readonly createTraces = signal<AgentCallDto[]>([]);
   readonly createTracesLoading = signal(false);
   readonly createSelectedTraceIds = signal<Set<string>>(new Set());
-  readonly createEvaluatorKind = signal(0);
+  readonly createEvaluators = signal<EvaluatorDetailDto[]>([]);
+  readonly createEvaluatorsLoading = signal(false);
+  readonly createSelectedEvaluatorIds = signal<Set<string>>(new Set());
   readonly createInProgress = signal(false);
   readonly createError = signal<string | null>(null);
 
@@ -145,8 +144,8 @@ export class Suites implements OnInit {
     return this.agentColorCache[agent];
   }
 
-  evaluatorMeta(kind: number): { label: string; color: string } {
-    return EVALUATOR_LABELS[kind] ?? { label: `Kind ${kind}`, color: '#8b5cf6' };
+  evaluatorMeta(kind: EvaluatorKind): { label: string; color: string; desc: string } {
+    return EVALUATOR_TYPE_META[kind] ?? { label: kind, color: '#8b5cf6', desc: '' };
   }
 
   passRate(suite: TestSuiteDto): number | null {
@@ -251,7 +250,8 @@ export class Suites implements OnInit {
     this.createSelectedAgentId.set(null);
     this.createName.set('');
     this.createSelectedTraceIds.set(new Set());
-    this.createEvaluatorKind.set(0);
+    this.createEvaluators.set([]);
+    this.createSelectedEvaluatorIds.set(new Set());
     this.createInProgress.set(false);
     this.createError.set(null);
 
@@ -279,6 +279,7 @@ export class Suites implements OnInit {
       this.loadTracesForCreate();
     } else if (step === 3 && this.createCanAdvanceStep3()) {
       this.createStep.set(4);
+      this.loadEvaluatorsForCreate();
     }
   }
 
@@ -298,6 +299,14 @@ export class Suites implements OnInit {
     });
   }
 
+  private loadEvaluatorsForCreate() {
+    this.createEvaluatorsLoading.set(true);
+    this.evaluatorsService.getAll().subscribe({
+      next: evs => { this.createEvaluators.set(evs); this.createEvaluatorsLoading.set(false); },
+      error: () => { this.createEvaluatorsLoading.set(false); },
+    });
+  }
+
   toggleTrace(traceId: string) {
     this.createSelectedTraceIds.update(set => {
       const next = new Set(set);
@@ -310,9 +319,17 @@ export class Suites implements OnInit {
     return this.createSelectedTraceIds().has(traceId);
   }
 
-  readonly evaluatorOptions: { kind: number; label: string; description: string; color: string }[] = [
-    { kind: 0, label: 'Exact match', description: 'The actual response must match the expected output character-for-character.', color: '#06b6d4' },
-  ];
+  toggleEvaluator(evaluatorId: string) {
+    this.createSelectedEvaluatorIds.update(set => {
+      const next = new Set(set);
+      if (next.has(evaluatorId)) next.delete(evaluatorId); else next.add(evaluatorId);
+      return next;
+    });
+  }
+
+  isEvaluatorSelected(evaluatorId: string): boolean {
+    return this.createSelectedEvaluatorIds().has(evaluatorId);
+  }
 
   submitCreate() {
     const agentId = this.createSelectedAgentId();
@@ -326,7 +343,7 @@ export class Suites implements OnInit {
     this.suitesService.create({
       name,
       agentId,
-      evaluatorKind: this.createEvaluatorKind(),
+      evaluatorIds: [...this.createSelectedEvaluatorIds()],
       testCases: traceIds.map(id => ({ fromAgentCallId: id })),
     }).subscribe({
       next: suite => {

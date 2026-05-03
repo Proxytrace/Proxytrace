@@ -6,7 +6,7 @@ import { PagedResult, TestRunDto, TestSuiteDto } from './models';
 export interface CreateTestSuitePayload {
   name: string;
   agentId: string;
-  evaluatorKind: number;
+  evaluatorIds: string[];
   testCases: { fromAgentCallId: string }[];
 }
 
@@ -40,7 +40,7 @@ export class TestSuitesService {
     return this.http.post<TestSuiteDto>('/api/test-suites', {
       name: 'Suite from trace',
       agentId,
-      evaluatorKind: 0,
+      evaluatorIds: [],
       testCases: [{ fromAgentCallId }],
     });
   }

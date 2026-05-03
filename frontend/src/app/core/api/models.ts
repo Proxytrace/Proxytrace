@@ -140,12 +140,17 @@ export interface TestCaseDto {
   expectedOutput: TestSuiteMessageDto;
 }
 
+export interface SuiteEvaluatorDto {
+  id: string;
+  kind: EvaluatorKind;
+}
+
 export interface TestSuiteDto {
   id: string;
   name: string;
   agentId: string;
   agentName: string;
-  evaluatorKind: number;
+  evaluators: SuiteEvaluatorDto[];
   testCases: TestCaseDto[];
   createdAt: string;
   updatedAt: string;

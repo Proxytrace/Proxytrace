@@ -24,7 +24,8 @@ public record TestSuiteMessageDto(string Role, string Content);
 public record CreateTestSuiteRequest(
     string Name,
     Guid AgentId,
-    IReadOnlyList<CreateTestCaseRequest> TestCases);
+    IReadOnlyList<CreateTestCaseRequest> TestCases,
+    IReadOnlyList<Guid>? EvaluatorIds = null);
 
 public record CreateTestCaseRequest(
     Guid? FromAgentCallId,
