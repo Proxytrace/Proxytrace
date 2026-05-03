@@ -109,13 +109,25 @@ export class Runs implements OnInit, OnDestroy {
   }
 
   private handleTestResult(evt: TestResultArrivedEvent) {
+    const evaluation = this.scoreToEvaluation(evt.overallScore, evt.evaluations.length);
     this.runs.update(runs => runs.map(r => {
       if (r.id !== evt.runId) return r;
-      const passed = r.passedCases + (evt.evaluation === Evaluation.Pass ? 1 : 0);
-      const failed = r.failedCases + (evt.evaluation === Evaluation.Fail ? 1 : 0);
+      const passed = r.passedCases + (evaluation === Evaluation.Pass ? 1 : 0);
+      const failed = r.failedCases + (evaluation === Evaluation.Fail ? 1 : 0);
       const total = r.totalCases;
       return { ...r, passedCases: passed, failedCases: failed, passRate: total > 0 ? Math.round(passed / total * 100) : 0 };
     }));
+  }
+
+  private scoreToEvaluation(overallScore: string | null, evaluationCount: number): Evaluation {
+    if (!overallScore || !evaluationCount) return Evaluation.Undecided;
+    return ['Acceptable', 'Good', 'Excellent'].includes(overallScore) ? Evaluation.Pass : Evaluation.Fail;
+  }
+
+  resultEvaluation(result: TestResultDto): Evaluation {
+    if (!result.evaluations.length) return Evaluation.Undecided;
+    const passing = ['Acceptable', 'Good', 'Excellent'];
+    return result.evaluations.every(s => passing.includes(s)) ? Evaluation.Pass : Evaluation.Fail;
   }
 
   private handleRunComplete(evt: RunCompleteEvent) {

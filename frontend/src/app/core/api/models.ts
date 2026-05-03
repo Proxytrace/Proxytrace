@@ -161,7 +161,7 @@ export interface TestResultDto {
   testCaseId: string;
   testCaseSummary: string;
   actualResponse: string;
-  evaluation: Evaluation;
+  evaluations: string[];
   durationMs: number;
 }
 
@@ -215,7 +215,8 @@ export interface TestResultArrivedEvent {
   type: 'test-result-arrived';
   runId: string;
   testCaseId: string;
-  evaluation: Evaluation;
+  overallScore: string | null;
+  evaluations: string[];
   durationMs: number;
 }
 

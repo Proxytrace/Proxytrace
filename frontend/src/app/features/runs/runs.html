@@ -244,21 +244,22 @@
                   <div>
                     <div style="display:flex; align-items:center; gap:7px; margin-bottom:2px;">
                       <span style="width:6px; height:6px; border-radius:50%; flex-shrink:0;"
-                            [style.background]="res ? evalColor(res.evaluation) : 'var(--text-muted)'"></span>
+                            [style.background]="res ? evalColor(resultEvaluation(res)) : 'var(--text-muted)'"></span>
                       <span style="font-weight:500; color:var(--text-primary);">{{tc.summary}}</span>
                     </div>
                   </div>
                   <span>
                     @if (res) {
+                      @let eval = resultEvaluation(res);
                       <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600;"
-                            [style.background]="evalColor(res.evaluation) + '1a'"
-                            [style.color]="evalColor(res.evaluation)">
-                        @if (res.evaluation === Evaluation.Pass) {
+                            [style.background]="evalColor(eval) + '1a'"
+                            [style.color]="evalColor(eval)">
+                        @if (eval === Evaluation.Pass) {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        } @else if (res.evaluation === Evaluation.Fail) {
+                        } @else if (eval === Evaluation.Fail) {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         }
-                        {{evalLabel(res.evaluation)}}
+                        {{evalLabel(eval)}}
                       </span>
                     } @else {
                       <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">
