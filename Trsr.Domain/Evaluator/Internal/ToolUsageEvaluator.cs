@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 
@@ -12,13 +13,18 @@ internal record ToolUsageEvaluator : AbstractAgenticEvaluator, IToolUsageEvaluat
     public override SystemMessage SystemMessage { get; }
     public override IModelEndpoint Endpoint { get; }
 
-    public ToolUsageEvaluator(IModelEndpoint endpoint)
+    public ToolUsageEvaluator(
+        IModelEndpoint endpoint,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.ToolUsageEvaluator);
     }
 
-    public ToolUsageEvaluator(IModelEndpoint endpoint, IDomainEntityData existing) : base(existing)
+    public ToolUsageEvaluator(
+        IModelEndpoint endpoint,
+        IDomainEntityData existing,
+        IEvaluation.Create evaluationFactory) : base(evaluationFactory, existing)
     {
         Endpoint = endpoint;
         SystemMessage = Message.Message.CreateSystemMessage(Prompts.ToolUsageEvaluator);

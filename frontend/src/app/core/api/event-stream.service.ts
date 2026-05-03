@@ -18,9 +18,12 @@ export class EventStreamService {
   testRunStream(runId: string): Observable<TestRunEvent> {
     return new Observable(observer => {
       const es = new EventSource(`/api/test-runs/${runId}/stream`);
-      es.addEventListener('test-result-arrived', (e: MessageEvent) => {
-        observer.next({ type: 'test-result-arrived', ...JSON.parse(e.data) } as TestRunEvent);
-      });
+      const on = (name: string) => es.addEventListener(name, (e: MessageEvent) =>
+        observer.next({ type: name, ...JSON.parse(e.data) } as TestRunEvent));
+      on('test-case-started');
+      on('inference-done');
+      on('evaluation-arrived');
+      on('test-result-arrived');
       es.addEventListener('run-complete', (e: MessageEvent) => {
         observer.next({ type: 'run-complete', ...JSON.parse(e.data) } as TestRunEvent);
         observer.complete();

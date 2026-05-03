@@ -26,7 +26,7 @@ internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
         return channel.Reader;
     }
 
-    public void Publish(TestResultArrivedEvent evt)
+    public void Publish(TestRunEvent evt)
     {
         foreach (var kvp in runSubscribers)
         {

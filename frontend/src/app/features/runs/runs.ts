@@ -2,12 +2,30 @@ import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular
 import { Subscription, firstValueFrom } from 'rxjs';
 import { TestRunsService } from '../../core/api/test-runs.service';
 import { EventStreamService } from '../../core/api/event-stream.service';
-import { TestRunDto, TestResultDto, TestRunStatus, Evaluation, TestResultArrivedEvent, RunCompleteEvent } from '../../core/api/models';
+import {
+  TestRunDto, TestResultDto, TestRunStatus, Evaluation,
+  TestCaseStartedEvent, InferenceDoneEvent, EvaluationArrivedEvent,
+  TestResultArrivedEvent, RunCompleteEvent, EvaluationResultDto,
+} from '../../core/api/models';
 
 const AGENT_COLORS: Record<string, string> = {
   'Customer Support': '#8b5cf6', 'Code Helper': '#06b6d4',
   'Ticket Triage': '#10b981', 'Classifier': '#f59e0b',
 };
+
+const EVALUATOR_KIND_COLORS: Record<string, string> = {
+  Custom: '#8b5cf6', ExactMatch: '#06b6d4', NumericMatch: '#67e8f9',
+  Helpfulness: '#8b5cf6', Politeness: '#8b5cf6', JsonSchemaMatch: '#06b6d4',
+  Safety: '#ef4444', ToolUsage: '#10b981',
+};
+
+interface CaseProgress {
+  phase: 'inference' | 'evaluating';
+  completedSteps: number;
+  startedAt: number;
+}
+
+export type StepStatus = 'done' | 'active' | 'pending';
 
 @Component({
   selector: 'app-runs',
@@ -30,6 +48,10 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteTargetId = signal<string | null>(null);
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
+  readonly rerunInProgress = signal(false);
+  readonly cancelInProgress = signal(false);
+  readonly expandedCaseIds = signal<Set<string>>(new Set());
+  readonly caseProgress = signal<Map<string, CaseProgress>>(new Map());
 
   private runStreams = new Map<string, Subscription>();
   private pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -98,7 +120,10 @@ export class Runs implements OnInit, OnDestroy {
       if (this.isActive(run) && !this.runStreams.has(run.id)) {
         const sub = this.eventStreamService.testRunStream(run.id).subscribe({
           next: (evt) => {
-            if (evt.type === 'test-result-arrived') this.handleTestResult(evt);
+            if (evt.type === 'test-case-started') this.handleTestCaseStarted(evt);
+            else if (evt.type === 'inference-done') this.handleInferenceDone(evt);
+            else if (evt.type === 'evaluation-arrived') this.handleEvaluationArrived(evt);
+            else if (evt.type === 'test-result-arrived') this.handleTestResult(evt);
             else if (evt.type === 'run-complete') this.handleRunComplete(evt);
           },
           error: () => this.runStreams.delete(run.id),
@@ -108,14 +133,36 @@ export class Runs implements OnInit, OnDestroy {
     }
   }
 
+  private handleTestCaseStarted(evt: TestCaseStartedEvent) {
+    this.caseProgress.update(m => new Map(m).set(evt.testCaseId, { phase: 'inference', completedSteps: 0, startedAt: Date.now() }));
+  }
+
+  private handleInferenceDone(evt: InferenceDoneEvent) {
+    this.caseProgress.update(m => {
+      const next = new Map(m);
+      const p = next.get(evt.testCaseId);
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: 1, startedAt: p?.startedAt ?? Date.now() });
+      return next;
+    });
+  }
+
+  private handleEvaluationArrived(evt: EvaluationArrivedEvent) {
+    this.caseProgress.update(m => {
+      const next = new Map(m);
+      const p = next.get(evt.testCaseId);
+      next.set(evt.testCaseId, { phase: 'evaluating', completedSteps: (p?.completedSteps ?? 1) + 1, startedAt: p?.startedAt ?? Date.now() });
+      return next;
+    });
+  }
+
   private handleTestResult(evt: TestResultArrivedEvent) {
-    this.runs.update(runs => runs.map(r => {
-      if (r.id !== evt.runId) return r;
-      const passed = r.passedCases + (evt.evaluation === Evaluation.Pass ? 1 : 0);
-      const failed = r.failedCases + (evt.evaluation === Evaluation.Fail ? 1 : 0);
-      const total = r.totalCases;
-      return { ...r, passedCases: passed, failedCases: failed, passRate: total > 0 ? Math.round(passed / total * 100) : 0 };
-    }));
+    const newResult: TestResultDto = {
+      id: '', testCaseId: evt.testCaseId, testCaseSummary: '', actualResponse: '',
+      evaluations: evt.evaluations, durationMs: evt.durationMs,
+    };
+    this.runs.update(runs => runs.map(r =>
+      r.id !== evt.runId ? r : { ...r, results: [...r.results, newResult] }
+    ));
   }
 
   private handleRunComplete(evt: RunCompleteEvent) {
@@ -148,6 +195,66 @@ export class Runs implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  // Progress bar: returns one entry per step (inference + each evaluator)
+  caseProgressSteps(run: TestRunDto, testCaseId: string): StepStatus[] {
+    const total = run.evaluators.length + 1;
+    const steps = new Array<StepStatus>(total).fill('pending');
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return steps;
+
+    if (p.phase === 'inference') {
+      steps[0] = 'active';
+      return steps;
+    }
+
+    const done = p.completedSteps; // 1 after inference, +1 per evaluator
+    for (let i = 0; i < Math.min(done, total); i++) steps[i] = 'done';
+    if (done < total) steps[done] = 'active';
+    return steps;
+  }
+
+  // Label for the step currently in progress
+  caseProgressAction(run: TestRunDto, testCaseId: string): string {
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return 'Waiting';
+    if (p.phase === 'inference') return 'Inference';
+    // completedSteps=1 → evaluators[0] is running
+    const idx = p.completedSteps - 1;
+    return idx < run.evaluators.length ? run.evaluators[idx].name : 'Done';
+  }
+
+  toggleCase(id: string) {
+    this.expandedCaseIds.update(set => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  isCaseExpanded(id: string): boolean {
+    return this.expandedCaseIds().has(id);
+  }
+
+  resultEvaluation(result: TestResultDto): Evaluation {
+    if (!result.evaluations.length) return Evaluation.Undecided;
+    const passing = ['Acceptable', 'Good', 'Excellent'];
+    return result.evaluations.every(e => passing.includes(e.score)) ? Evaluation.Pass : Evaluation.Fail;
+  }
+
+  scoreColor(score: string): string {
+    switch (score) {
+      case 'Excellent': case 'Good': return 'var(--success)';
+      case 'Acceptable': return 'var(--warn)';
+      case 'Bad': case 'Terrible': return 'var(--danger)';
+      default: return 'var(--text-muted)';
+    }
+  }
+
+  evaluatorKindColor(kind: string): string {
+    return EVALUATOR_KIND_COLORS[kind] ?? '#8b5cf6';
+  }
+
   agentColor(agentName: string) { return AGENT_COLORS[agentName] ?? '#8b5cf6'; }
 
   passColor(rate: number | undefined) {
@@ -161,6 +268,7 @@ export class Runs implements OnInit, OnDestroy {
       case TestRunStatus.Running: return 'Running';
       case TestRunStatus.Completed: return 'Completed';
       case TestRunStatus.Failed: return 'Failed';
+      case TestRunStatus.Cancelled: return 'Cancelled';
     }
   }
 
@@ -170,11 +278,30 @@ export class Runs implements OnInit, OnDestroy {
       case TestRunStatus.Running: return 'var(--accent-primary)';
       case TestRunStatus.Completed: return 'var(--success)';
       case TestRunStatus.Failed: return 'var(--danger)';
+      case TestRunStatus.Cancelled: return 'var(--warn)';
     }
   }
 
   isActive(run: TestRunDto) {
     return run.status === TestRunStatus.Pending || run.status === TestRunStatus.Running;
+  }
+
+  async cancelRun(run: TestRunDto) {
+    if (!this.isActive(run) || this.cancelInProgress()) return;
+    this.cancelInProgress.set(true);
+    try {
+      await firstValueFrom(this.runsService.cancel(run.id));
+      this.runStreams.get(run.id)?.unsubscribe();
+      this.runStreams.delete(run.id);
+      this.runs.update(runs => runs.map(r =>
+        r.id === run.id ? { ...r, status: TestRunStatus.Cancelled } : r
+      ));
+      if (!this.hasPending()) this.stopPolling();
+    } catch {
+      // no-op
+    } finally {
+      this.cancelInProgress.set(false);
+    }
   }
 
   formatDuration(ms: number | null | undefined): string {
@@ -213,6 +340,12 @@ export class Runs implements OnInit, OnDestroy {
     return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
   }
 
+  caseElapsed(testCaseId: string): string {
+    const p = this.caseProgress().get(testCaseId);
+    if (!p) return '—';
+    return this.formatLatency(this.now() - p.startedAt);
+  }
+
   evalLabel(evaluation: Evaluation): string {
     return evaluation === Evaluation.Pass ? 'Pass' : evaluation === Evaluation.Fail ? 'Fail' : 'Undecided';
   }
@@ -226,10 +359,28 @@ export class Runs implements OnInit, OnDestroy {
   }
 
   progressPercent(run: TestRunDto): number {
-    const total = run.totalCases;
+    const total = run.testCases.length;
     if (!total) return 0;
-    const done = run.passedCases + run.failedCases;
-    return Math.round((done / total) * 100);
+    return Math.round((run.results.length / total) * 100);
+  }
+
+  async rerunRun(run: TestRunDto) {
+    if (!run.suiteId || this.rerunInProgress()) return;
+    this.rerunInProgress.set(true);
+    try {
+      const newRun = await firstValueFrom(this.runsService.create({
+        testSuiteId: run.suiteId,
+        modelEndpointId: run.endpointId,
+      }));
+      this.runs.update(runs => [newRun, ...runs]);
+      this.selectedRunId.set(newRun.id);
+      this.subscribeToActiveRuns();
+      this.managePollState();
+    } catch {
+      // no-op: button returns to ready state
+    } finally {
+      this.rerunInProgress.set(false);
+    }
   }
 
   openDeleteModal(id: string, event: Event) {

@@ -102,7 +102,7 @@
             @if (isActive(run)) {
               <div style="margin-bottom:8px;">
                 <div style="height:4px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:4px;">
-                  @if (run.status === TestRunStatus.Running && run.totalCases > 0) {
+                  @if (run.status === TestRunStatus.Running && run.testCases.length > 0) {
                     <div style="height:100%; border-radius:100px; background:var(--accent-primary); transition:width 0.5s;"
                          [style.width]="progressPercent(run) + '%'"></div>
                   } @else {
@@ -110,7 +110,7 @@
                   }
                 </div>
                 <div style="font-size:11px; color:var(--accent-hover); font-weight:500;">
-                  {{run.status === TestRunStatus.Pending ? 'Queued…' : run.totalCases > 0 ? progressPercent(run) + '% — ' + (run.passedCases + run.failedCases) + '/' + run.totalCases + ' cases' : 'Starting…'}}
+                  {{run.status === TestRunStatus.Pending ? 'Queued…' : run.testCases.length > 0 ? progressPercent(run) + '% — ' + run.results.length + '/' + run.testCases.length + ' cases' : 'Starting…'}}
                 </div>
               </div>
             }
@@ -162,12 +162,45 @@
                         [style.background]="statusColor(run.status) + '18'">
                     {{statusLabel(run.status)}}
                   </span>
+                  @if (run.evaluators.length > 0) {
+                    <span style="font-size:11px; color:var(--text-muted);">{{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}}</span>
+                  }
                 </div>
               </div>
-              <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; flex-shrink:0; text-align:right;">
-                <div>{{formatDate(run.startedAt)}}</div>
-                @if (run.completedAt) {
-                  <div style="margin-top:2px;">{{formatDuration(run.durationMs)}}</div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex-shrink:0;">
+                <div style="font-size:11px; color:var(--text-muted); white-space:nowrap; text-align:right;">
+                  <div>{{formatDate(run.startedAt)}}</div>
+                  @if (run.completedAt) {
+                    <div style="margin-top:2px;">{{formatDuration(run.durationMs)}}</div>
+                  }
+                </div>
+                @if (isActive(run)) {
+                  <button (click)="cancelRun(run)"
+                          [disabled]="cancelInProgress()"
+                          style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:var(--danger-subtle); color:var(--danger); transition:opacity 0.15s;"
+                          [style.opacity]="cancelInProgress() ? '0.5' : '1'">
+                    @if (cancelInProgress()) {
+                      <span style="width:11px; height:11px; border-radius:50%; border:2px solid rgba(239,68,68,0.3); border-top-color:var(--danger); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+                      Cancelling…
+                    } @else {
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                      Cancel run
+                    }
+                  </button>
+                }
+                @if (!isActive(run) && run.suiteId) {
+                  <button (click)="rerunRun(run)"
+                          [disabled]="rerunInProgress()"
+                          style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:var(--accent-subtle); color:var(--accent-hover); transition:opacity 0.15s;"
+                          [style.opacity]="rerunInProgress() ? '0.5' : '1'">
+                    @if (rerunInProgress()) {
+                      <span style="width:11px; height:11px; border-radius:50%; border:2px solid rgba(139,92,246,0.3); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+                      Starting…
+                    } @else {
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      Run again
+                    }
+                  </button>
                 }
               </div>
             </div>
@@ -184,16 +217,16 @@
                   </div>
                 </div>
                 <div style="height:6px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:10px;">
-                  @if (run.status === TestRunStatus.Running && run.totalCases > 0) {
+                  @if (run.status === TestRunStatus.Running && run.testCases.length > 0) {
                     <div style="height:100%; border-radius:100px; background:var(--accent-primary); transition:width 0.5s;"
                          [style.width]="progressPercent(run) + '%'"></div>
                   } @else {
                     <div style="height:100%; width:30%; border-radius:100px; background:var(--accent-primary); animation:indeterminate 1.4s ease-in-out infinite;"></div>
                   }
                 </div>
-                @if (run.totalCases > 0) {
+                @if (run.testCases.length > 0) {
                   <div style="font-size:12px; color:var(--text-secondary);">
-                    {{run.passedCases + run.failedCases}} of {{run.totalCases}} cases evaluated
+                    {{run.results.length}} of {{run.testCases.length}} cases evaluated · {{run.evaluators.length}} evaluator{{run.evaluators.length !== 1 ? 's' : ''}} per case
                   </div>
                 } @else {
                   <div style="font-size:12px; color:var(--text-secondary);">Initialising…</div>
@@ -231,47 +264,123 @@
           <!-- Case results table -->
           @if (run.testCases && run.testCases.length > 0) {
             <div style="flex:1; overflow-y:auto;">
-              <div style="display:grid; grid-template-columns:2fr 0.9fr 0.8fr 1fr; padding:10px 20px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+
+              <!-- Column headers -->
+              <div style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:10px 20px; font-size:10.5px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
                 <span>Test case</span>
-                <span>Result</span>
+                <span>Progress</span>
                 <span>Latency</span>
-                <span>Response</span>
+                <span>Result</span>
               </div>
+
               @for (tc of run.testCases; track tc.id) {
                 @let res = resultByCase(run, tc.id);
-                <div style="display:grid; grid-template-columns:2fr 0.9fr 0.8fr 1fr; padding:11px 20px; align-items:center; font-size:12px; border-bottom:1px solid var(--hairline); transition:background 0.1s; cursor:default;"
-                     onmouseenter="this.style.background='rgba(139,92,246,0.04)'" onmouseleave="this.style.background='transparent'">
-                  <div>
-                    <div style="display:flex; align-items:center; gap:7px; margin-bottom:2px;">
-                      <span style="width:6px; height:6px; border-radius:50%; flex-shrink:0;"
-                            [style.background]="res ? evalColor(res.evaluation) : 'var(--text-muted)'"></span>
-                      <span style="font-weight:500; color:var(--text-primary);">{{tc.summary}}</span>
+                @let hasStarted = !!caseProgress().get(tc.id);
+                <div style="border-bottom:1px solid var(--hairline);">
+
+                  <!-- Main row -->
+                  <div class="tc-row"
+                       style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:11px 20px; align-items:center; font-size:12px; transition:background 0.1s;"
+                       [style.cursor]="res ? 'pointer' : 'default'"
+                       (click)="res && toggleCase(tc.id)">
+
+                    <!-- Test case name -->
+                    <div style="display:flex; align-items:center; gap:7px; min-width:0; padding-right:8px;">
+                      @if (res) {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                             style="flex-shrink:0; transition:transform 0.2s;"
+                             [style.transform]="isCaseExpanded(tc.id) ? 'rotate(90deg)' : 'none'">
+                          <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                      } @else {
+                        <span style="width:10px; height:10px; flex-shrink:0; display:inline-block;"></span>
+                      }
+                      <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
                     </div>
-                  </div>
-                  <span>
-                    @if (res) {
-                      <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600;"
-                            [style.background]="evalColor(res.evaluation) + '1a'"
-                            [style.color]="evalColor(res.evaluation)">
-                        @if (res.evaluation === Evaluation.Pass) {
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        } @else if (res.evaluation === Evaluation.Fail) {
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+
+                    <!-- Progress column -->
+                    <div style="min-width:0; padding-right:8px;">
+                      @if (!res && isActive(run)) {
+                        @if (hasStarted) {
+                          @let steps = caseProgressSteps(run, tc.id);
+                          @let action = caseProgressAction(run, tc.id);
+                          <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                            <div style="display:flex; gap:2px; flex-shrink:0;">
+                              @for (step of steps; track $index) {
+                                <div style="width:10px; height:3px; border-radius:100px; transition:background 0.3s;"
+                                     [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
+                                     [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'">
+                                </div>
+                              }
+                            </div>
+                            <span style="font-size:10.5px; color:var(--accent-hover); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{action}}</span>
+                          </div>
+                        } @else {
+                          <span style="display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--text-muted);">
+                            <span style="width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.15); display:inline-block; flex-shrink:0;"></span>
+                            Waiting
+                          </span>
                         }
-                        {{evalLabel(res.evaluation)}}
-                      </span>
-                    } @else {
-                      <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">
-                        Not run
-                      </span>
-                    }
-                  </span>
-                  <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary);">
-                    {{res ? formatLatency(res.durationMs) : '—'}}
-                  </span>
-                  <span style="font-size:11px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px;">
-                    {{res ? res.actualResponse : '—'}}
-                  </span>
+                      }
+                    </div>
+
+                    <!-- Latency -->
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px;"
+                          [style.color]="(!res && hasStarted && isActive(run)) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
+                      @if (res) {
+                        {{formatLatency(res.durationMs)}}
+                      } @else if (!res && hasStarted && isActive(run)) {
+                        {{caseElapsed(tc.id)}}
+                      } @else {
+                        —
+                      }
+                    </span>
+
+                    <!-- Result badge -->
+                    <span>
+                      @if (res) {
+                        @let eval = resultEvaluation(res);
+                        <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600;"
+                              [style.background]="evalColor(eval) + '1a'"
+                              [style.color]="evalColor(eval)">
+                          @if (eval === Evaluation.Pass) {
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          } @else if (eval === Evaluation.Fail) {
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          }
+                          {{evalLabel(eval)}}
+                        </span>
+                      } @else if (!isActive(run)) {
+                        <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">
+                          Not run
+                        </span>
+                      }
+                    </span>
+                  </div>
+
+                  <!-- Accordion: per-evaluator breakdown -->
+                  @if (res && isCaseExpanded(tc.id)) {
+                    <div style="padding:0 20px 12px 37px; display:flex; flex-direction:column; gap:5px;">
+                      @for (ev of res.evaluations; track ev.evaluatorId) {
+                        <div style="display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:var(--bg-card-2); border-radius:8px; border:1px solid var(--hairline);">
+                          <span style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; flex-shrink:0; white-space:nowrap;"
+                                [style.background]="evaluatorKindColor(ev.evaluatorKind) + '1a'"
+                                [style.color]="evaluatorKindColor(ev.evaluatorKind)">
+                            {{ev.evaluatorName}}
+                          </span>
+                          <span style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; flex-shrink:0;"
+                                [style.background]="scoreColor(ev.score) + '1a'"
+                                [style.color]="scoreColor(ev.score)">
+                            {{ev.score}}
+                          </span>
+                          @if (ev.reasoning) {
+                            <span style="font-size:11px; color:var(--text-secondary); line-height:1.55; flex:1; min-width:0;">{{ev.reasoning}}</span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+
                 </div>
               }
             </div>
@@ -338,10 +447,17 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
+@keyframes stepPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 .run-item:hover .run-delete-btn:not([disabled]) {
   opacity: 1 !important;
+}
+.tc-row:hover {
+  background: rgba(139,92,246,0.04);
 }
 </style>

@@ -7,6 +7,7 @@ using Trsr.Application.Streaming;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
@@ -102,7 +103,7 @@ public class TestRunsController : ControllerBase
 
         // Handle the case where the run already completed before we subscribed.
         var run = await repository.GetAsync(id, cancellationToken);
-        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed)
+        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = new RunCompleteEvent(run.Id, run.Status, run.CompletedAt);
             var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
@@ -115,6 +116,9 @@ public class TestRunsController : ControllerBase
         {
             var eventName = evt switch
             {
+                TestCaseStartedEvent => "test-case-started",
+                InferenceDoneEvent => "inference-done",
+                EvaluationArrivedEvent => "evaluation-arrived",
                 TestResultArrivedEvent => "test-result-arrived",
                 RunCompleteEvent => "run-complete",
                 _ => "unknown",
@@ -123,6 +127,14 @@ public class TestRunsController : ControllerBase
             await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
+    }
+
+    [HttpPost("{id:guid}/cancel")]
+    public async Task<ActionResult<TestRunDto>> Cancel(Guid id, CancellationToken cancellationToken)
+    {
+        ITestRun testRun = await repository.GetAsync(id, cancellationToken);
+        testRun = await runner.CancelAsync(testRun, cancellationToken);
+        return  AcceptedAtAction(nameof(Get), new { id = testRun.Id }, ToDto(testRun));
     }
 
     [HttpDelete("{id:guid}")]
@@ -147,11 +159,13 @@ public class TestRunsController : ControllerBase
             SuiteName: r.Suite.Name,
             AgentId: r.Suite.Agent.Id,
             AgentName: r.Suite.Agent.Name,
+            EndpointId: r.Endpoint.Id,
             Status: r.Status,
             TotalCases: total,
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
+            Evaluators: r.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
@@ -161,12 +175,33 @@ public class TestRunsController : ControllerBase
                 res.TestCase.Id,
                 SummarizeTestCase(res.TestCase),
                 string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
-                res.Evaluations.Select(e => e.Score).ToArray(),
+                res.Evaluations.Select(e => new EvaluationResultDto(
+                    e.Evaluator.Id,
+                    e.Evaluator.Kind,
+                    GetEvaluatorName(e.Evaluator),
+                    e.Score,
+                    e.Reasoning)).ToArray(),
                 (long)res.Duration.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
     }
+
+    private static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
+    {
+        ICustomEvaluator custom => custom.Name,
+        _ => evaluator.Kind switch
+        {
+            EvaluatorKind.ExactMatch => "Exact Match",
+            EvaluatorKind.NumericMatch => "Numeric Match",
+            EvaluatorKind.Helpfulness => "Helpfulness",
+            EvaluatorKind.Politeness => "Politeness",
+            EvaluatorKind.JsonSchemaMatch => "JSON Schema Match",
+            EvaluatorKind.Safety => "Safety Classifier",
+            EvaluatorKind.ToolUsage => "Tool Usage",
+            _ => evaluator.Kind.ToString()
+        }
+    };
 
     private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
     {

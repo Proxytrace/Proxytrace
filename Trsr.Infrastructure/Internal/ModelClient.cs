@@ -5,19 +5,23 @@ using OpenAI;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
+using Trsr.Serialization;
 
 namespace Trsr.Infrastructure.Internal;
 
 internal class ModelClient : IModelClient
 {
     private readonly IModelEndpoint endpoint;
+    private readonly IOutputFormat.Create outputFormatFactory;
     private readonly IChatClient chatClient;
-    
-    public ModelClient(IModelEndpoint endpoint)
+
+    public ModelClient(
+        IModelEndpoint endpoint,
+        IOutputFormat.Create outputFormatFactory)
     {
         this.endpoint = endpoint;
-        
-        chatClient = CreateChatClient();
+        this.outputFormatFactory = outputFormatFactory;
+        chatClient = CreateChatClient(endpoint);
     }
     
     public async Task<AssistantMessage> CompleteAsync(
@@ -50,14 +54,24 @@ internal class ModelClient : IModelClient
             contents: responseContents,
             toolRequests: toolRequests);
     }
-    
-    private IChatClient CreateChatClient()
+
+    public async Task<TOutput?> CompleteAsync<TOutput>(
+        Conversation conversation, 
+        ModelOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        IOutputFormat outputFormat = outputFormatFactory(typeof(TOutput));
+        AssistantMessage completion = await CompleteAsync(conversation, options, cancellationToken);
+        return await outputFormat.ParseAsync<TOutput>(completion.GetTextResponse(), cancellationToken);
+    }
+
+    private static IChatClient CreateChatClient(IModelEndpoint endpoint)
     {
         if (endpoint.Provider.Kind is not ModelProviderKind.OpenAi and not ModelProviderKind.OpenAiCompatible)
         {
             throw new NotSupportedException($"Model provider kind {endpoint.Provider.Kind} is not supported");
         }
-        
+
         var credential = new ApiKeyCredential(endpoint.Provider.ApiKey);
         var options = new OpenAIClientOptions { Endpoint = endpoint.Provider.Endpoint };
         return new OpenAIClient(credential, options)

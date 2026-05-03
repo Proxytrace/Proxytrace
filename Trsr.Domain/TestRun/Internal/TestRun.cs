@@ -70,7 +70,7 @@ internal record TestRun : DomainEntity, ITestRun
             yield return Validation.HasCount(TestResults, Suite.TestCases.Count);
         }
     }
-    
+
     public async Task<ITestRun> SetTestResult(ITestResult testResult, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ITestResult> updatedResults =
@@ -78,11 +78,11 @@ internal record TestRun : DomainEntity, ITestRun
             ..TestResults.Where(x => x.TestCase.Id != testResult.TestCase.Id),
             testResult
         ];
-        
+
         bool isCompleted = updatedResults.Count == Suite.TestCases.Count;
         DateTimeOffset? completedAt = isCompleted ? DateTimeOffset.UtcNow : null;
         TestRunStatus status = isCompleted ? TestRunStatus.Completed : TestRunStatus.Running;
-        
+
         var updatedRun = new TestRun(
             Suite,
             Endpoint,
@@ -95,15 +95,49 @@ internal record TestRun : DomainEntity, ITestRun
     }
 
     public Task<ITestRun> SetRunning(CancellationToken cancellationToken = default)
+        => SetState(TestRunStatus.Running, cancellationToken);
+
+    public Task<ITestRun> SetCancelled(CancellationToken cancellationToken = default)
+        => SetState(TestRunStatus.Cancelled, cancellationToken);
+
+    private Task<ITestRun> SetState(TestRunStatus state, CancellationToken cancellationToken = default)
     {
+        if (state == TestRunStatus.Running && Status != TestRunStatus.Pending)
+        {
+            throw new InvalidOperationException(
+                $"Cannot set test run {Id} to running because it is not in pending status.");
+        }
+
+        DateTimeOffset? completedAt = null;
+        if (IsTerminalState(state))
+        {
+            if (IsTerminalState(Status))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot change test run {Id} status from {Status} to {state} because it is already in a terminal state.");
+            }
+
+            if (CompletedAt.HasValue)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot set test run {Id} to {state} because it already has a completion time.");
+            }
+            
+            completedAt = DateTimeOffset.UtcNow;
+        }
+
+
         var updatedRun = new TestRun(
             Suite,
             Endpoint,
-            TestRunStatus.Running,
-            CompletedAt,
+            state,
+            completedAt,
             TestResults,
             this,
             repository);
         return repository.Value.UpdateAsync(updatedRun, cancellationToken);
     }
+
+    private bool IsTerminalState(TestRunStatus status)
+        => status is TestRunStatus.Completed or TestRunStatus.Cancelled or TestRunStatus.Failed;
 }

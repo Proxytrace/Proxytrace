@@ -87,8 +87,18 @@ public class TestSuitesController : ControllerBase
         if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
             return BadRequest($"Agent {request.AgentId} not found.");
         var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
-        var evaluator = createEvaluator();
-        var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
+
+        IReadOnlyCollection<IEvaluator> evaluators;
+        if (request.EvaluatorIds is { Count: > 0 })
+        {
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+        }
+        else
+        {
+            var defaultEvaluator = createEvaluator();
+            var savedDefault = await evaluatorRepository.AddAsync(defaultEvaluator, cancellationToken);
+            evaluators = [savedDefault];
+        }
 
         var testCases = new List<ITestCase>();
         foreach (var tc in request.TestCases)
@@ -100,7 +110,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(request.Name, agent, [savedEvaluator], testCases);
+        var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
