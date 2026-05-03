@@ -2,17 +2,17 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { from, concatMap, finalize } from 'rxjs';
 import { TestSuitesService } from '../../core/api/test-suites.service';
 import { TestRunsService } from '../../core/api/test-runs.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { ProvidersService, ModelEndpointDto } from '../../core/api/providers.service';
 import { EvaluatorsService } from '../../core/api/evaluators.service';
-import { AgentCallDto, AgentDto, EvaluatorDetailDto, EvaluatorKind, TestSuiteDto } from '../../core/api/models';
+import { AgentCallDto, AgentDto, EvaluatorDetailDto, EvaluatorKind, TestCaseDto, TestSuiteDto } from '../../core/api/models';
 import { EVALUATOR_TYPE_META } from '../evaluators/evaluators';
 
 interface RunState { passRate: number; runCount: number; lastRunId: string; }
-
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
@@ -59,6 +59,24 @@ export class Suites implements OnInit {
   readonly deleteInProgress = signal(false);
   readonly deleteError = signal<string | null>(null);
 
+  // ── edit modal ─────────────────────────────────────────────────────────────
+  readonly editSuiteId = signal<string | null>(null);
+  readonly editTab = signal<'traces' | 'evaluators'>('traces');
+  // traces tab
+  readonly editAllTraces = signal<AgentCallDto[]>([]);
+  readonly editTracesLoading = signal(false);
+  readonly editShowAddTraces = signal(false);
+  readonly editAddTraceIds = signal<Set<string>>(new Set());
+  readonly editAddInProgress = signal(false);
+  readonly editAddError = signal<string | null>(null);
+  readonly editRemovingIds = signal<Set<string>>(new Set());
+  // evaluators tab
+  readonly editAllEvaluators = signal<EvaluatorDetailDto[]>([]);
+  readonly editEvaluatorsLoading = signal(false);
+  readonly editSelectedEvaluatorIds = signal<Set<string>>(new Set());
+  readonly editEvaluatorsSaving = signal(false);
+  readonly editEvaluatorsError = signal<string | null>(null);
+
   // ── create wizard ──────────────────────────────────────────────────────────
   readonly createOpen = signal(false);
   readonly createStep = signal<CreateStep>(1);
@@ -91,6 +109,18 @@ export class Suites implements OnInit {
   readonly runTarget = computed(() => this.suites().find(s => s.id === this.runTargetId()) ?? null);
 
   readonly deleteTarget = computed(() => this.suites().find(s => s.id === this.deleteTargetId()) ?? null);
+
+  readonly editTarget = computed(() => this.suites().find(s => s.id === this.editSuiteId()) ?? null);
+
+  readonly editEvaluatorsDirty = computed(() => {
+    const target = this.editTarget();
+    if (!target) return false;
+    const current = new Set(target.evaluators.map(e => e.id));
+    const selected = this.editSelectedEvaluatorIds();
+    if (current.size !== selected.size) return true;
+    for (const id of selected) if (!current.has(id)) return true;
+    return false;
+  });
 
   readonly totalCases = computed(() => this.suites().reduce((n, s) => n + s.testCases.length, 0));
 
@@ -167,6 +197,11 @@ export class Suites implements OnInit {
 
   shortId(id: string): string { return id.substring(0, 8); }
 
+  testCasePreview(tc: TestCaseDto): string {
+    const last = [...tc.input].reverse().find(m => m.role === 'user');
+    return last?.content?.substring(0, 65) ?? '(no input)';
+  }
+
   // ── run modal ─────────────────────────────────────────────────────────────
 
   openRunModal(suiteId: string) {
@@ -238,6 +273,123 @@ export class Suites implements OnInit {
       error: () => {
         this.deleteError.set('Delete failed. Please try again.');
         this.deleteInProgress.set(false);
+      },
+    });
+  }
+
+  // ── edit modal ────────────────────────────────────────────────────────────
+
+  openEditModal(suiteId: string) {
+    this.editSuiteId.set(suiteId);
+    this.editTab.set('traces');
+    this.editShowAddTraces.set(false);
+    this.editAddTraceIds.set(new Set());
+    this.editAddError.set(null);
+    this.editAllTraces.set([]);
+    this.editRemovingIds.set(new Set());
+    this.editEvaluatorsError.set(null);
+    this.editEvaluatorsSaving.set(false);
+
+    this.editEvaluatorsLoading.set(true);
+    this.evaluatorsService.getAll().subscribe({
+      next: evs => {
+        this.editAllEvaluators.set(evs);
+        this.editEvaluatorsLoading.set(false);
+        const suite = this.suites().find(s => s.id === suiteId);
+        if (suite) this.editSelectedEvaluatorIds.set(new Set(suite.evaluators.map(e => e.id)));
+      },
+      error: () => this.editEvaluatorsLoading.set(false),
+    });
+  }
+
+  closeEditModal() {
+    this.editSuiteId.set(null);
+  }
+
+  openAddTraces() {
+    this.editShowAddTraces.set(true);
+    const suite = this.editTarget();
+    if (!suite || this.editAllTraces().length) return;
+    this.editTracesLoading.set(true);
+    this.agentCallsService.getAll({ agentId: suite.agentId, pageSize: 50 }).subscribe({
+      next: result => { this.editAllTraces.set(result.items); this.editTracesLoading.set(false); },
+      error: () => this.editTracesLoading.set(false),
+    });
+  }
+
+  toggleEditAddTrace(traceId: string) {
+    this.editAddTraceIds.update(set => {
+      const next = new Set(set);
+      if (next.has(traceId)) next.delete(traceId); else next.add(traceId);
+      return next;
+    });
+  }
+
+  isEditAddTraceSelected(traceId: string): boolean {
+    return this.editAddTraceIds().has(traceId);
+  }
+
+  addSelectedTraces() {
+    const suiteId = this.editSuiteId();
+    if (!suiteId) return;
+    const ids = [...this.editAddTraceIds()];
+    if (!ids.length) return;
+    this.editAddInProgress.set(true);
+    this.editAddError.set(null);
+
+    from(ids).pipe(
+      concatMap(traceId => this.suitesService.addTestCase(suiteId, traceId)),
+      finalize(() => this.editAddInProgress.set(false)),
+    ).subscribe({
+      next: suite => this.suites.update(ss => ss.map(s => s.id === suiteId ? suite : s)),
+      error: () => this.editAddError.set('Failed to add some traces. Please try again.'),
+      complete: () => {
+        this.editAddTraceIds.set(new Set());
+        this.editShowAddTraces.set(false);
+      },
+    });
+  }
+
+  removeTestCase(suiteId: string, caseId: string) {
+    this.editRemovingIds.update(s => new Set([...s, caseId]));
+    this.suitesService.removeTestCase(suiteId, caseId).subscribe({
+      next: suite => {
+        this.suites.update(ss => ss.map(s => s.id === suiteId ? suite : s));
+        this.editRemovingIds.update(s => { const n = new Set(s); n.delete(caseId); return n; });
+      },
+      error: () => this.editRemovingIds.update(s => { const n = new Set(s); n.delete(caseId); return n; }),
+    });
+  }
+
+  isTestCaseRemoving(caseId: string): boolean {
+    return this.editRemovingIds().has(caseId);
+  }
+
+  toggleEditEvaluator(evaluatorId: string) {
+    this.editSelectedEvaluatorIds.update(set => {
+      const next = new Set(set);
+      if (next.has(evaluatorId)) next.delete(evaluatorId); else next.add(evaluatorId);
+      return next;
+    });
+  }
+
+  isEditEvaluatorSelected(evaluatorId: string): boolean {
+    return this.editSelectedEvaluatorIds().has(evaluatorId);
+  }
+
+  saveEvaluators() {
+    const suiteId = this.editSuiteId();
+    if (!suiteId) return;
+    this.editEvaluatorsSaving.set(true);
+    this.editEvaluatorsError.set(null);
+    this.suitesService.updateEvaluators(suiteId, [...this.editSelectedEvaluatorIds()]).subscribe({
+      next: suite => {
+        this.suites.update(ss => ss.map(s => s.id === suiteId ? suite : s));
+        this.editEvaluatorsSaving.set(false);
+      },
+      error: () => {
+        this.editEvaluatorsError.set('Failed to save evaluators. Please try again.');
+        this.editEvaluatorsSaving.set(false);
       },
     });
   }

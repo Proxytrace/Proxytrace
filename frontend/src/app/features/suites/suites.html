@@ -119,6 +119,12 @@
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   {{runCount(suite) > 0 ? 'Re-run' : 'Run'}}
                 </button>
+                <button (click)="openEditModal(suite.id)" title="Edit suite"
+                        style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:var(--bg-card-2); color:var(--text-muted); box-shadow:var(--shadow-pill); transition:color 0.15s, background 0.15s;"
+                        onmouseenter="this.style.color='#8b5cf6'; this.style.background='rgba(139,92,246,0.12)'"
+                        onmouseleave="this.style.color='var(--text-muted)'; this.style.background='var(--bg-card-2)'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
                 <button (click)="openDeleteModal(suite.id)" title="Delete suite"
                         style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; background:var(--bg-card-2); color:var(--text-muted); box-shadow:var(--shadow-pill); transition:color 0.15s, background 0.15s;"
                         onmouseenter="this.style.color='var(--danger)'; this.style.background='var(--danger-subtle)'"
@@ -299,6 +305,235 @@
             }
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════ Edit modal ════════════════════════════════════════════ -->
+@if (editTarget()) {
+  <div (click)="closeEditModal()" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); z-index:100; display:flex; align-items:center; justify-content:center;">
+    <div (click)="$event.stopPropagation()" style="width:640px; max-height:88vh; display:flex; flex-direction:column; background:var(--bg-card); border-radius:20px; box-shadow:var(--shadow-float); overflow:hidden;">
+
+      <!-- Color stripe -->
+      <div style="height:3px; flex-shrink:0;" [style.background]="'linear-gradient(90deg, ' + agentColor(editTarget()!.agentName) + ', ' + agentColor(editTarget()!.agentName) + '55)'"></div>
+
+      <!-- Header + tabs -->
+      <div style="padding:20px 24px 0; flex-shrink:0;">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;">
+          <div>
+            <h3 style="font-size:15px; font-weight:700; margin:0 0 4px; word-break:break-word;">{{editTarget()!.name}}</h3>
+            <span style="padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:5px;"
+                  [style.background]="agentColor(editTarget()!.agentName) + '1f'"
+                  [style.color]="agentColor(editTarget()!.agentName)"
+                  [style.border]="'1px solid ' + agentColor(editTarget()!.agentName) + '2e'">
+              <span style="width:5px; height:5px; border-radius:50%; display:inline-block;" [style.background]="agentColor(editTarget()!.agentName)"></span>
+              {{editTarget()!.agentName}}
+            </span>
+          </div>
+          <button (click)="closeEditModal()" style="width:28px; height:28px; border-radius:8px; background:var(--bg-card-2); color:var(--text-muted); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Tab bar -->
+        <div style="display:flex; gap:2px; padding:3px; background:var(--bg-card-2); border-radius:10px; width:fit-content;">
+          <button (click)="editTab.set('traces')"
+                  style="padding:6px 14px; border-radius:7px; font-size:12.5px; font-weight:500; display:inline-flex; align-items:center; gap:6px; transition:background 0.1s;"
+                  [style.background]="editTab() === 'traces' ? 'var(--bg-card)' : 'transparent'"
+                  [style.color]="editTab() === 'traces' ? 'var(--text-primary)' : 'var(--text-secondary)'"
+                  [style.box-shadow]="editTab() === 'traces' ? 'var(--shadow-pill)' : 'none'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Test cases
+            <span style="padding:1px 6px; border-radius:100px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;"
+                  [style.background]="editTab() === 'traces' ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)'"
+                  [style.color]="editTab() === 'traces' ? '#c4b5fd' : 'var(--text-muted)'">{{editTarget()!.testCases.length}}</span>
+          </button>
+          <button (click)="editTab.set('evaluators')"
+                  style="padding:6px 14px; border-radius:7px; font-size:12.5px; font-weight:500; display:inline-flex; align-items:center; gap:6px; transition:background 0.1s;"
+                  [style.background]="editTab() === 'evaluators' ? 'var(--bg-card)' : 'transparent'"
+                  [style.color]="editTab() === 'evaluators' ? 'var(--text-primary)' : 'var(--text-secondary)'"
+                  [style.box-shadow]="editTab() === 'evaluators' ? 'var(--shadow-pill)' : 'none'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M20.19 6.34C20.07 6.13 19.94 5.91 19.8 5.7l-1.56.78a6.9 6.9 0 0 0-.51-.51l.78-1.56C18.3 4.22 18.08 4.05 17.84 3.92s-.46-.27-.71-.38l-1 1.35a7.16 7.16 0 0 0-.71-.13V3a9.37 9.37 0 0 0-1.42 0v1.76a7.16 7.16 0 0 0-.71.13l-1-1.35c-.25.11-.47.23-.71.38s-.46.3-.67.49l.78 1.56a6.9 6.9 0 0 0-.51.51l-1.56-.78C9.81 5.91 9.68 6.13 9.56 6.34c-.12.2-.25.42-.35.64l1.35 1a7.25 7.25 0 0 0-.13.71H8.67a9.37 9.37 0 0 0 0 1.42h1.76a7.25 7.25 0 0 0 .13.71l-1.35 1c.1.22.23.44.35.64.12.21.25.43.45.63l1.56-.78a6.9 6.9 0 0 0 .51.51l-.78 1.56c.21.19.43.33.67.49.24.15.46.27.71.38l1-1.35a7.16 7.16 0 0 0 .71.13V21a9.37 9.37 0 0 0 1.42 0v-1.76a7.16 7.16 0 0 0 .71-.13l1 1.35c.25-.11.47-.23.71-.38s.46-.3.67-.49l-.78-1.56a6.9 6.9 0 0 0 .51-.51l1.56.78c.2-.2.33-.42.45-.63.12-.2.25-.42.35-.64l-1.35-1a7.25 7.25 0 0 0 .13-.71H21.33a9.37 9.37 0 0 0 0-1.42h-1.76a7.25 7.25 0 0 0-.13-.71l1.35-1c-.1-.22-.23-.44-.35-.64z"/></svg>
+            Evaluators
+            <span style="padding:1px 6px; border-radius:100px; font-size:10px; font-family:'JetBrains Mono',monospace; font-weight:600;"
+                  [style.background]="editTab() === 'evaluators' ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)'"
+                  [style.color]="editTab() === 'evaluators' ? '#c4b5fd' : 'var(--text-muted)'">{{editTarget()!.evaluators.length}}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Tab: Test cases ── -->
+      @if (editTab() === 'traces') {
+        <div style="flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:12px;">
+
+          <!-- Current test cases -->
+          @if (!editTarget()!.testCases.length) {
+            <div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px; background:var(--bg-card-2); border-radius:10px;">
+              No test cases yet. Add some from the traces below.
+            </div>
+          } @else {
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              @for (tc of editTarget()!.testCases; track tc.id) {
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--bg-card-2); border-radius:9px;"
+                     [style.opacity]="isTestCaseRemoving(tc.id) ? '0.5' : '1'">
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:12.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-primary);">{{testCasePreview(tc)}}</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:1px; font-family:'JetBrains Mono',monospace;">{{tc.id | slice:0:8}}</div>
+                  </div>
+                  <button (click)="removeTestCase(editTarget()!.id, tc.id)"
+                          [disabled]="isTestCaseRemoving(tc.id)"
+                          title="Remove test case"
+                          style="width:26px; height:26px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:color 0.12s, background 0.12s;"
+                          onmouseenter="this.style.color='var(--danger)'; this.style.background='var(--danger-subtle)'"
+                          onmouseleave="this.style.color='var(--text-muted)'; this.style.background='transparent'">
+                    @if (isTestCaseRemoving(tc.id)) {
+                      <span style="width:10px; height:10px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block;"></span>
+                    } @else {
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Add traces section -->
+          @if (!editShowAddTraces()) {
+            <button (click)="openAddTraces()"
+                    style="display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:9px; font-size:12.5px; font-weight:500; background:var(--bg-card-2); color:var(--text-secondary); align-self:flex-start;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add traces
+            </button>
+          } @else {
+            <div style="border:1px solid var(--hairline); border-radius:12px; overflow:hidden;">
+              <div style="padding:10px 14px; background:var(--bg-card-2); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline);">
+                <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select traces to add</span>
+                <button (click)="editShowAddTraces.set(false)" style="color:var(--text-muted); padding:2px 4px; font-size:12px;">✕</button>
+              </div>
+
+              @if (editTracesLoading()) {
+                <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:14px;">
+                  <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block;"></span>
+                  Loading traces…
+                </div>
+              } @else if (!editAllTraces().length) {
+                <p style="padding:14px; color:var(--text-muted); font-size:13px; margin:0;">No traces found for this agent.</p>
+              } @else {
+                <div style="max-height:220px; overflow-y:auto; padding:8px;">
+                  <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px; padding:0 4px;">{{editAddTraceIds().size}} selected</div>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    @for (trace of editAllTraces(); track trace.id) {
+                      <button (click)="toggleEditAddTrace(trace.id)"
+                              style="padding:8px 10px; border-radius:7px; text-align:left; display:flex; align-items:flex-start; gap:9px; transition:background 0.1s;"
+                              [style.background]="isEditAddTraceSelected(trace.id) ? 'rgba(139,92,246,0.1)' : 'transparent'"
+                              [style.border]="isEditAddTraceSelected(trace.id) ? '1px solid rgba(139,92,246,0.35)' : '1px solid transparent'">
+                        <div style="width:14px; height:14px; border-radius:3px; flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:background 0.1s;"
+                             [style.background]="isEditAddTraceSelected(trace.id) ? '#8b5cf6' : 'var(--bg-card)'"
+                             [style.border]="isEditAddTraceSelected(trace.id) ? 'none' : '1px solid var(--hairline)'">
+                          @if (isEditAddTraceSelected(trace.id)) {
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          }
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                          <div style="font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-primary);">{{tracePreview(trace)}}</div>
+                          <div style="font-size:10.5px; color:var(--text-muted); margin-top:1px; display:flex; gap:8px;">
+                            <span>{{trace.model}}</span>
+                            <span>{{trace.createdAt | date:'MMM d, HH:mm'}}</span>
+                          </div>
+                        </div>
+                      </button>
+                    }
+                  </div>
+                </div>
+                <div style="padding:10px 12px; border-top:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                  @if (editAddError()) {
+                    <span style="font-size:11.5px; color:var(--danger);">{{editAddError()}}</span>
+                  } @else {
+                    <span style="font-size:11.5px; color:var(--text-muted);">{{editAddTraceIds().size}} trace{{editAddTraceIds().size !== 1 ? 's' : ''}} selected</span>
+                  }
+                  <button (click)="addSelectedTraces()"
+                          [disabled]="!editAddTraceIds().size || editAddInProgress()"
+                          style="padding:7px 16px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:8px; font-size:12px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:6px; transition:opacity 0.15s;"
+                          [style.opacity]="!editAddTraceIds().size || editAddInProgress() ? '0.4' : '1'">
+                    @if (editAddInProgress()) {
+                      <span style="width:10px; height:10px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
+                      Adding…
+                    } @else {
+                      Add {{editAddTraceIds().size || ''}} trace{{editAddTraceIds().size !== 1 ? 's' : ''}}
+                    }
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Tab: Evaluators ── -->
+      @if (editTab() === 'evaluators') {
+        <div style="flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:10px;">
+          @if (editEvaluatorsLoading()) {
+            <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:8px 0;">
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:#8b5cf6; animation:spin 0.7s linear infinite; display:block;"></span>
+              Loading evaluators…
+            </div>
+          } @else if (!editAllEvaluators().length) {
+            <div style="padding:16px; background:var(--bg-card-2); border-radius:10px; font-size:13px; color:var(--text-muted); line-height:1.6;">
+              No evaluators configured yet. Create some on the <strong style="color:var(--text-primary);">Evaluators</strong> page first.
+            </div>
+          } @else {
+            <div style="font-size:11.5px; color:var(--text-muted);">{{editSelectedEvaluatorIds().size}} selected</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              @for (ev of editAllEvaluators(); track ev.id) {
+                <button (click)="toggleEditEvaluator(ev.id)"
+                        style="padding:12px 14px; border-radius:10px; text-align:left; display:flex; align-items:flex-start; gap:12px; transition:background 0.1s;"
+                        [style.background]="isEditEvaluatorSelected(ev.id) ? evaluatorMeta(ev.kind).color + '14' : 'var(--bg-card-2)'"
+                        [style.border]="isEditEvaluatorSelected(ev.id) ? '1px solid ' + evaluatorMeta(ev.kind).color + '45' : '1px solid transparent'">
+                  <div style="width:16px; height:16px; border-radius:4px; flex-shrink:0; margin-top:2px; display:flex; align-items:center; justify-content:center; transition:background 0.1s, border 0.1s;"
+                       [style.background]="isEditEvaluatorSelected(ev.id) ? evaluatorMeta(ev.kind).color : 'var(--bg-card)'"
+                       [style.border]="isEditEvaluatorSelected(ev.id) ? 'none' : '1px solid var(--hairline)'">
+                    @if (isEditEvaluatorSelected(ev.id)) {
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                  <div style="flex:1; min-width:0;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px; flex-wrap:wrap;">
+                      <span style="font-size:13px; font-weight:600;"
+                            [style.color]="isEditEvaluatorSelected(ev.id) ? evaluatorMeta(ev.kind).color : 'var(--text-primary)'">{{ev.name}}</span>
+                      <span style="padding:1px 7px; border-radius:100px; font-size:10px; font-weight:600;"
+                            [style.background]="evaluatorMeta(ev.kind).color + '1a'"
+                            [style.color]="evaluatorMeta(ev.kind).color">{{evaluatorMeta(ev.kind).label}}</span>
+                    </div>
+                    <div style="font-size:11.5px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{evaluatorMeta(ev.kind).desc}}</div>
+                  </div>
+                </button>
+              }
+            </div>
+
+            @if (editEvaluatorsError()) {
+              <div style="padding:10px 12px; background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:12.5px; color:var(--danger);">{{editEvaluatorsError()}}</div>
+            }
+          }
+        </div>
+      }
+
+      <!-- Footer -->
+      <div style="padding:14px 24px; border-top:1px solid var(--hairline); display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-shrink:0;">
+        <button (click)="closeEditModal()" style="padding:8px 18px; background:var(--bg-card-2); border-radius:9px; font-size:13px; font-weight:500; color:var(--text-secondary);">Close</button>
+        @if (editTab() === 'evaluators' && editEvaluatorsDirty()) {
+          <button (click)="saveEvaluators()"
+                  [disabled]="editEvaluatorsSaving()"
+                  style="padding:8px 18px; background:linear-gradient(135deg,#8b5cf6,#6d28d9); border-radius:9px; font-size:13px; font-weight:600; color:#fff; display:inline-flex; align-items:center; gap:7px; transition:opacity 0.15s;"
+                  [style.opacity]="editEvaluatorsSaving() ? '0.5' : '1'">
+            @if (editEvaluatorsSaving()) {
+              <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block;"></span>
+              Saving…
+            } @else {
+              Save evaluators
+            }
+          </button>
+        }
       </div>
     </div>
   </div>
