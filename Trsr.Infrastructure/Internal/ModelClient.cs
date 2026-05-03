@@ -5,18 +5,23 @@ using OpenAI;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
+using Trsr.Serialization;
 
 namespace Trsr.Infrastructure.Internal;
 
 internal class ModelClient : IModelClient
 {
     private readonly IModelEndpoint endpoint;
+    private readonly IOutputFormat.Create outputFormatFactory;
     private readonly IChatClient chatClient;
     
-    public ModelClient(IModelEndpoint endpoint)
+    public ModelClient(
+        IModelEndpoint endpoint,
+        IOutputFormat.Create outputFormatFactory)
     {
         this.endpoint = endpoint;
-        
+        this.outputFormatFactory = outputFormatFactory;
+
         chatClient = CreateChatClient();
     }
     
@@ -50,7 +55,17 @@ internal class ModelClient : IModelClient
             contents: responseContents,
             toolRequests: toolRequests);
     }
-    
+
+    public async Task<TOutput?> CompleteAsync<TOutput>(
+        Conversation conversation, 
+        ModelOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        IOutputFormat outputFormat = outputFormatFactory(typeof(TOutput));
+        AssistantMessage completion = await CompleteAsync(conversation, options, cancellationToken);
+        return await outputFormat.ParseAsync<TOutput>(completion.GetTextResponse(), cancellationToken);
+    }
+
     private IChatClient CreateChatClient()
     {
         if (endpoint.Provider.Kind is not ModelProviderKind.OpenAi and not ModelProviderKind.OpenAiCompatible)

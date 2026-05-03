@@ -29,4 +29,9 @@ public interface IModelClient
         Conversation conversation,
         ModelOptions? options = null,
         CancellationToken cancellationToken = default);
+    
+    Task<TOutput?> CompleteAsync<TOutput>(
+        Conversation conversation,
+        ModelOptions? options = null,
+        CancellationToken cancellationToken = default);
 }

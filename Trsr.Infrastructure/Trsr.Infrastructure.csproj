@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Trsr.Application\Trsr.Application.csproj" />
+      <ProjectReference Include="..\Trsr.Serialization\Trsr.Serialization.csproj" />
     </ItemGroup>
     
     <ItemGroup>

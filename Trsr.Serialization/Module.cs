@@ -1,4 +1,4 @@
-﻿using Autofac;
+using Autofac;
 using JetBrains.Annotations;
 using Trsr.Serialization.Internal;
 
@@ -17,10 +17,20 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
         builder.RegisterType<JsonSerializer>().As<ISerializer>();
-        builder.RegisterGeneric(typeof(JsonOutputParser<>)).As(typeof(IOutputParser<>));
-        builder.RegisterType<StringOutputParser>().As<IOutputParser<string>>();
+        builder.RegisterType<JsonOutputFormat>().AsSelf();
+        builder.RegisterType<StringOutputFormat>().AsSelf();
 
-        builder.Register<IOutputFormat.FromJsonSchema>(c => schema => new JsonOutputFormat(schema))
-            .AsSelf();
+        builder.Register<IOutputFormat.Create>(c =>
+        {
+            return type =>
+            {
+                return type switch
+                {
+                    not null when type == typeof(string) => c.Resolve<StringOutputFormat>(),
+                    not null when type == typeof(JsonOutputFormat) => c.Resolve<JsonOutputFormat.Create>()(type),
+                    _ => throw new NotSupportedException($"Output format for type {type} is not supported")
+                };
+            };
+        }).AsSelf();
     }
 }
