@@ -23,7 +23,7 @@ internal abstract record AbstractAgenticEvaluator : DomainEntity, IAgenticEvalua
     
     public Task<IEvaluation?> EvaluateAsync(ITestResult testResult, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
