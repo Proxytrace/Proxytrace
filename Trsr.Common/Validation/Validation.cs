@@ -118,7 +118,7 @@ public static class Validation
             : ValidationResult.Success!;
 
     public static ValidationResult ValidUri(string? value, [CallerMemberName] string memberName = "")
-        => !Uri.TryCreate(value, UriKind.Absolute, out _)
+        => !Uri.TryCreate(value, UriKind.Absolute, out var uri) || string.IsNullOrEmpty(uri.Host)
             ? new ValidationResult($"{memberName} must be a valid absolute URI", [memberName])
             : ValidationResult.Success!;
 
