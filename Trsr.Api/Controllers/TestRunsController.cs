@@ -101,11 +101,10 @@ public class TestRunsController : ControllerBase
 
         var reader = broadcaster.Subscribe(id, cancellationToken);
 
-        // Handle the case where the run already completed before we subscribed.
         var run = await repository.GetAsync(id, cancellationToken);
         if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
-            var completeEvt = new RunCompleteEvent(run.Id, run.Status, run.CompletedAt);
+            var completeEvt = RunCompleteEvent.Create(run);
             var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
             await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -114,27 +113,8 @@ public class TestRunsController : ControllerBase
 
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var eventName = evt switch
-            {
-                TestCaseStartedEvent => "test-case-started",
-                InferenceDoneEvent => "inference-done",
-                EvaluationArrivedEvent => "evaluation-arrived",
-                TestResultArrivedEvent => "test-result-arrived",
-                RunCompleteEvent => "run-complete",
-                _ => "unknown",
-            };
-            var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
-            await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await WriteEventAsync(evt, cancellationToken);
         }
-    }
-
-    [HttpPost("{id:guid}/cancel")]
-    public async Task<ActionResult<TestRunDto>> Cancel(Guid id, CancellationToken cancellationToken)
-    {
-        ITestRun testRun = await repository.GetAsync(id, cancellationToken);
-        testRun = await runner.CancelAsync(testRun, cancellationToken);
-        return  AcceptedAtAction(nameof(Get), new { id = testRun.Id }, ToDto(testRun));
     }
 
     [HttpDelete("{id:guid}")]
@@ -142,6 +122,22 @@ public class TestRunsController : ControllerBase
     {
         var removed = await repository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
+    }
+
+    private async Task WriteEventAsync(TestRunEvent evt, CancellationToken cancellationToken)
+    {
+        var eventName = evt switch
+        {
+            TestCaseStartedEvent => "test-case-started",
+            InferenceDoneEvent => "inference-done",
+            EvaluationArrivedEvent => "evaluation-arrived",
+            TestResultArrivedEvent => "test-result-arrived",
+            RunCompleteEvent => "run-complete",
+            _ => "unknown",
+        };
+        var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
+        await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
+        await Response.Body.FlushAsync(cancellationToken);
     }
 
     internal static TestRunDto ToDto(ITestRun r)
@@ -155,21 +151,22 @@ public class TestRunsController : ControllerBase
 
         return new TestRunDto(
             Id: r.Id,
-            SuiteId: r.Suite.Id,
-            SuiteName: r.Suite.Name,
-            AgentId: r.Suite.Agent.Id,
-            AgentName: r.Suite.Agent.Name,
+            GroupId: r.Group.Id,
+            SuiteId: r.Group.Suite.Id,
+            SuiteName: r.Group.Suite.Name,
+            AgentId: r.Group.Suite.Agent.Id,
+            AgentName: r.Group.Suite.Agent.Name,
             EndpointId: r.Endpoint.Id,
             Status: r.Status,
             TotalCases: total,
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
-            Evaluators: r.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
+            Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
-            TestCases: r.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
+            TestCases: r.Group.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
             Results: r.TestResults.Select(res => new TestResultDto(
                 res.Id,
                 res.TestCase.Id,

@@ -1,21 +1,18 @@
-using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
-using Trsr.Domain.TestSuite;
+using Trsr.Domain.TestRunGroup;
 
 namespace Trsr.Domain.TestRun;
 
 /// <summary>
-/// Represents an execution of a test suite against an agent, capturing all individual test results.
+/// Represents an execution of a test suite against a single endpoint, belonging to a test run group.
 /// </summary>
 public interface ITestRun : IDomainEntity
 {
-    /// <summary>The test suite that produced this run, if available.</summary>
-    ITestSuite Suite { get; }
-    
-    /// <summary>
-    /// The endpoint to test against
-    /// </summary>
+    /// <summary>The group this run belongs to, which owns the suite and name.</summary>
+    ITestRunGroup Group { get; }
+
+    /// <summary>The endpoint to test against.</summary>
     IModelEndpoint Endpoint { get; }
 
     /// <summary>The current execution status of this run.</summary>
@@ -29,12 +26,12 @@ public interface ITestRun : IDomainEntity
 
     /// <summary>Factory delegate for creating a new test run.</summary>
     public delegate ITestRun CreateNew(
-        ITestSuite suite,
+        ITestRunGroup group,
         IModelEndpoint endpoint);
 
     /// <summary>Factory delegate for reconstituting an existing test run from persistence.</summary>
     public delegate ITestRun CreateExisting(
-        ITestSuite suite,
+        ITestRunGroup group,
         IModelEndpoint endpoint,
         TestRunStatus status,
         DateTimeOffset? completedAt,

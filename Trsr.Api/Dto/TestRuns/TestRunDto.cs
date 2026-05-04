@@ -15,8 +15,9 @@ public record EvaluationResultDto(
 
 public record TestRunDto(
     Guid Id,
-    Guid? SuiteId,
-    string? SuiteName,
+    Guid GroupId,
+    Guid SuiteId,
+    string SuiteName,
     Guid AgentId,
     string AgentName,
     Guid EndpointId,
@@ -49,3 +50,19 @@ public record TestRunMessageDto(string Role, string Content);
 public record CreateTestRunRequest(
     Guid TestSuiteId,
     Guid ModelEndpointId);
+
+public record TestRunGroupDto(
+    Guid Id,
+    Guid SuiteId,
+    string SuiteName,
+    Guid AgentId,
+    string AgentName,
+    TestRunStatus Status,
+    DateTimeOffset? CompletedAt,
+    IReadOnlyList<TestRunDto> Runs,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
+public record CreateTestRunGroupRequest(
+    Guid TestSuiteId,
+    IReadOnlyList<Guid> ModelEndpointIds);

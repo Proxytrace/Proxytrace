@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.TestRun;
+using Trsr.Storage.Internal.Entities.TestRunGroup;
 using Trsr.Storage.Internal.Entities.TestSuite;
 
 namespace Trsr.Storage.Internal.Entities.TestRun;
@@ -22,12 +23,28 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
         var stored = await context
             .Set<TestRunEntity>()
             .AsNoTracking()
+            .Join(context.Set<TestRunGroupEntity>(),
+                r => r.Group,
+                g => g.Id,
+                (r, g) => new { Run = r, Group = g })
             .Join(context.Set<TestSuiteEntity>(),
-                r => r.Suite,
-                s => s.Id, 
-                (r, s) => new { Run = r, Suite = s })
+                x => x.Group.Suite,
+                s => s.Id,
+                (x, s) => new { x.Run, Suite = s })
             .Where(x => x.Suite.Agent == agentId)
             .Select(x => x.Run)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ITestRun>> GetByGroupAsync(Guid groupId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var stored = await context
+            .Set<TestRunEntity>()
+            .AsNoTracking()
+            .Where(r => r.Group == groupId)
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);

@@ -13,6 +13,7 @@ All work follows an issue-based flow. Adhere to these steps in order:
 1. **Start from a GitHub issue.** If the user names a specific issue, use it. If not, search existing issues with `gh issue list` for a matching one. If none exists, create one with `gh issue create` before doing any work.
 2. **Clarify ambiguities before coding.** Read the issue in full. If anything is unclear — scope, expected behaviour, edge cases, design decisions — ask the user before writing any code. Do not make assumptions and discover them wrong mid-implementation.
 3. **Develop on the feature branch.** Make all commits there; never commit directly to `master`.
+   - **Never commit automatically.** Always present changes for review and wait for the user to explicitly ask for a commit before running `git commit`.
 4. (Backend Only) **Write tests.** For any new feature or bug fix, write a failing test that captures the expected behaviour before implementing the code to make it pass. This ensures correctness and prevents regressions.
 
 ## Working on UI

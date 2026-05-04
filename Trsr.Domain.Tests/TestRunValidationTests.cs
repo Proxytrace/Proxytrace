@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
+using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
 
 namespace Trsr.Domain.Tests;
@@ -14,16 +15,19 @@ public sealed class TestRunValidationTests : DomainTest<Module>
     {
         // Arrange
         IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<ITestRun.CreateNew>();
+        var createGroup = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var createRun = services.GetRequiredService<ITestRun.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
+        var group = createGroup(suite);
+
         // Act
-        var testRun = factory(suite, endpoint);
+        var testRun = createRun(group, endpoint);
 
         // Assert
         testRun.Should().NotBeNull();
-        testRun.Suite.Should().Be(suite);
+        testRun.Group.Should().Be(group);
         testRun.Endpoint.Should().Be(endpoint);
         testRun.TestResults.Should().BeEmpty();
         testRun.Status.Should().Be(TestRunStatus.Pending);

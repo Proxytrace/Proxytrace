@@ -9,6 +9,7 @@ using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
+using Trsr.Storage.Internal.Entities.TestRunGroup;
 using Trsr.Storage.Internal.Entities.TestSuite;
 
 namespace Trsr.Storage.Internal;
@@ -110,19 +111,23 @@ internal class StatisticsQueryService : IStatisticsQueryService
             agentQuery = agentQuery.Where(a => a.Id == filter.AgentId.Value);
         var agentIds = await agentQuery.Select(a => a.Id).ToListAsync(cancellationToken);
 
-        var runs = await context.Set<TestRunEntity>()
+        var runRows = await context.Set<TestRunEntity>()
             .AsNoTracking()
+            .Join(context.Set<TestRunGroupEntity>(),
+                r => r.Group,
+                g => g.Id,
+                (r, g) => new { Run = r, Group = g })
             .Join(context.Set<TestSuiteEntity>(),
-                r => r.Suite,
-                s => s.Id, 
-                (r, s) => new { Run = r, Suite = s })
-            .Where(r => agentIds.Contains(r.Suite.Agent))
-            .Select(x => x.Run)
-            .Where(r => filter.From == null || r.CreatedAt >= filter.From)
-            .Where(r => filter.To == null || r.CreatedAt <= filter.To)
+                x => x.Group.Suite,
+                s => s.Id,
+                (x, s) => new { x.Run, SuiteId = s.Id, SuiteAgent = s.Agent })
+            .Where(x => agentIds.Contains(x.SuiteAgent))
+            .Where(x => filter.From == null || x.Run.CreatedAt >= filter.From)
+            .Where(x => filter.To == null || x.Run.CreatedAt <= filter.To)
+            .Select(x => new { x.Run, x.SuiteId })
             .ToListAsync(cancellationToken);
 
-        var resultIds = runs.SelectMany(r => r.TestResults).Distinct().ToList();
+        var resultIds = runRows.SelectMany(r => r.Run.TestResults).Distinct().ToList();
         var results = await context.Set<TestResultEntity>()
             .AsNoTracking()
             .Where(r => resultIds.Contains(r.Id))
@@ -130,16 +135,16 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
         var resultLookup = results.ToDictionary(r => r.Id);
 
-        return runs.Select(run =>
+        return runRows.Select(row =>
         {
-            var runResults = run.TestResults
+            var runResults = row.Run.TestResults
                 .Where(id => resultLookup.ContainsKey(id))
                 .Select(id => resultLookup[id])
                 .ToArray();
 
             return new PassRateStat(
-                SuiteId: run.Suite,
-                RunTimestamp: run.CreatedAt,
+                SuiteId: row.SuiteId,
+                RunTimestamp: row.Run.CreatedAt,
                 PassCount: runResults.Count(r => r.Evaluations.Count > 0 && r.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable)),
                 FailCount: runResults.Count(r => r.Evaluations.Count > 0 && r.Evaluations.Any(e => e.Score < EvaluationScore.Acceptable)),
                 UndecidedCount: runResults.Count(r => r.Evaluations.Count == 0));
