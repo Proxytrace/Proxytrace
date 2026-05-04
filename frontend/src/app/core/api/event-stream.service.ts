@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { TraceCreatedEvent, TestRunEvent } from './models';
+import { TraceCreatedEvent, TestRunEvent, GroupRunCompleteEvent } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class EventStreamService {
@@ -30,6 +30,26 @@ export class EventStreamService {
         es.close();
       });
       es.onerror = () => observer.error(new Error('Test run SSE connection error'));
+      return () => es.close();
+    });
+  }
+
+  testRunGroupStream(groupId: string): Observable<TestRunEvent> {
+    return new Observable(observer => {
+      const es = new EventSource(`/api/test-run-groups/${groupId}/stream`);
+      const on = (name: string) => es.addEventListener(name, (e: MessageEvent) =>
+        observer.next({ type: name, ...JSON.parse(e.data) } as TestRunEvent));
+      on('test-case-started');
+      on('inference-done');
+      on('evaluation-arrived');
+      on('test-result-arrived');
+      on('run-complete');
+      es.addEventListener('group-run-complete', (e: MessageEvent) => {
+        observer.next({ type: 'group-run-complete', ...JSON.parse(e.data) } as GroupRunCompleteEvent);
+        observer.complete();
+        es.close();
+      });
+      es.onerror = () => observer.error(new Error('Test run group SSE connection error'));
       return () => es.close();
     });
   }

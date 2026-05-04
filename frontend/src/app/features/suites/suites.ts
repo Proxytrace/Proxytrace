@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { from, concatMap, finalize } from 'rxjs';
 import { TestSuitesService } from '../../core/api/test-suites.service';
 import { TestRunsService } from '../../core/api/test-runs.service';
+import { TestRunGroupsService } from '../../core/api/test-run-groups.service';
 import { AgentsService } from '../../core/api/agents.service';
 import { AgentCallsService } from '../../core/api/agent-calls.service';
 import { ProvidersService, ModelEndpointDto } from '../../core/api/providers.service';
@@ -32,6 +33,7 @@ export class Suites implements OnInit {
   readonly Math = Math;
   private readonly suitesService = inject(TestSuitesService);
   private readonly testRunsService = inject(TestRunsService);
+  private readonly testRunGroupsService = inject(TestRunGroupsService);
   private readonly agentsService = inject(AgentsService);
   private readonly agentCallsService = inject(AgentCallsService);
   private readonly providersService = inject(ProvidersService);
@@ -50,7 +52,8 @@ export class Suites implements OnInit {
   readonly runError = signal<string | null>(null);
   readonly runEndpoints = signal<ModelEndpointDto[]>([]);
   readonly runEndpointsLoading = signal(false);
-  readonly runSelectedEndpointId = signal<string | null>(null);
+  readonly runSelectedEndpointIds = signal<Set<string>>(new Set());
+  readonly runEndpointSearch = signal('');
   private readonly runStateMap = signal<Record<string, RunState>>({});
 
   // ── delete modal ───────────────────────────────────────────────────────────
@@ -142,7 +145,7 @@ export class Suites implements OnInit {
   readonly createCanSubmit = computed(() => this.createCanAdvanceStep3());
 
   readonly runCanStart = computed(() =>
-    !!this.runSelectedEndpointId() && !this.runEndpointsLoading());
+    this.runSelectedEndpointIds().size > 0 && !this.runEndpointsLoading());
 
   ngOnInit() {
     this.loadSuites();
@@ -208,17 +211,29 @@ export class Suites implements OnInit {
     this.runTargetId.set(suiteId);
     this.runModalState.set('idle');
     this.runError.set(null);
-    this.runSelectedEndpointId.set(null);
+    this.runSelectedEndpointIds.set(new Set());
     this.runEndpoints.set([]);
     this.runEndpointsLoading.set(true);
     this.providersService.getAllModels().subscribe({
       next: endpoints => {
         this.runEndpoints.set(endpoints);
-        if (endpoints.length === 1) this.runSelectedEndpointId.set(endpoints[0].id);
+        if (endpoints.length === 1) this.runSelectedEndpointIds.set(new Set([endpoints[0].id]));
         this.runEndpointsLoading.set(false);
       },
       error: () => { this.runEndpointsLoading.set(false); },
     });
+  }
+
+  toggleEndpoint(id: string) {
+    this.runSelectedEndpointIds.update(s => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  isEndpointSelected(id: string): boolean {
+    return this.runSelectedEndpointIds().has(id);
   }
 
   closeRunModal() {
@@ -228,10 +243,10 @@ export class Suites implements OnInit {
 
   startRun() {
     const target = this.runTarget();
-    const endpointId = this.runSelectedEndpointId();
-    if (!target || !endpointId) return;
+    const endpointIds = [...this.runSelectedEndpointIds()];
+    if (!target || !endpointIds.length) return;
     this.runModalState.set('running');
-    this.testRunsService.create({ testSuiteId: target.id, modelEndpointId: endpointId }).subscribe({
+    this.testRunGroupsService.create({ testSuiteId: target.id, modelEndpointIds: endpointIds }).subscribe({
       next: () => {
         this.closeRunModal();
         this.router.navigate(['/runs']);

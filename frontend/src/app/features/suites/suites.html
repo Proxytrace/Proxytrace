@@ -207,7 +207,12 @@
 
           <!-- Model endpoint selector -->
           <div style="margin-bottom:20px;">
-            <div style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px;">Model Endpoint</div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px;">
+              Model Endpoints
+              @if (runSelectedEndpointIds().size > 0) {
+                <span style="color:var(--accent-hover); font-weight:500; text-transform:none; letter-spacing:normal; margin-left:6px;">{{runSelectedEndpointIds().size}} selected</span>
+              }
+            </div>
             @if (runEndpointsLoading()) {
               <div style="display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:13px; padding:10px 12px; background:var(--bg-card-2); border-radius:9px;">
                 <span style="width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,255,255,0.2); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
@@ -218,15 +223,26 @@
                 No model endpoints configured. Send at least one proxied LLM call first.
               </div>
             } @else {
-              <select [(ngModel)]="runSelectedEndpointId"
-                      [value]="runSelectedEndpointId()"
-                      (ngModelChange)="runSelectedEndpointId.set($event)"
-                      style="width:100%; box-sizing:border-box; padding:9px 12px; background:var(--bg-card-2); border:1px solid var(--hairline); border-radius:9px; font-size:13px; color:var(--text-primary); outline:none; font-family:inherit; cursor:pointer;">
-                <option [value]="null">Select an endpoint…</option>
+              <div style="display:flex; flex-direction:column; gap:4px; max-height:200px; overflow-y:auto; padding-right:2px;">
                 @for (ep of runEndpoints(); track ep.id) {
-                  <option [value]="ep.id">{{ep.modelName}} — {{ep.providerName}}</option>
+                  <label (click)="toggleEndpoint(ep.id)"
+                         style="display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--bg-card-2); border-radius:9px; cursor:pointer; transition:background 0.12s; border:1px solid transparent;"
+                         [style.background]="isEndpointSelected(ep.id) ? 'var(--accent-subtle)' : 'var(--bg-card-2)'"
+                         [style.borderColor]="isEndpointSelected(ep.id) ? 'rgba(201,148,74,0.35)' : 'transparent'">
+                    <span style="width:16px; height:16px; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.12s, border-color 0.12s;"
+                          [style.background]="isEndpointSelected(ep.id) ? 'var(--accent-primary)' : 'transparent'"
+                          [style.border]="isEndpointSelected(ep.id) ? '2px solid var(--accent-primary)' : '2px solid rgba(255,255,255,0.2)'">
+                      @if (isEndpointSelected(ep.id)) {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </span>
+                    <div style="min-width:0; flex:1;">
+                      <div style="font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ep.modelName}}</div>
+                      <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">{{ep.providerName}}</div>
+                    </div>
+                  </label>
                 }
-              </select>
+              </div>
             }
           </div>
 
@@ -241,7 +257,7 @@
                 Starting…
               } @else {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Start run
+                Start {{runSelectedEndpointIds().size > 1 ? runSelectedEndpointIds().size + ' runs' : 'run'}}
               }
             </button>
           </div>

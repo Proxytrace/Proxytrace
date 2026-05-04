@@ -21,6 +21,7 @@ public record TestRunDto(
     Guid AgentId,
     string AgentName,
     Guid EndpointId,
+    string EndpointName,
     TestRunStatus Status,
     int TotalCases,
     int PassedCases,

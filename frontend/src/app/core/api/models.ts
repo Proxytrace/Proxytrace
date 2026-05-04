@@ -184,13 +184,28 @@ export interface RunEvaluatorDto {
   name: string;
 }
 
+export interface TestRunGroupDto {
+  id: string;
+  suiteId: string;
+  suiteName: string;
+  agentId: string;
+  agentName: string;
+  status: TestRunStatus;
+  completedAt: string | null;
+  runs: TestRunDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TestRunDto {
   id: string;
+  groupId: string;
   suiteId: string | null;
   suiteName: string | null;
   agentId: string;
   agentName: string;
   endpointId: string;
+  endpointName: string;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;
@@ -230,18 +245,21 @@ export interface TraceCreatedEvent {
 export interface TestCaseStartedEvent {
   type: 'test-case-started';
   runId: string;
+  groupId: string;
   testCaseId: string;
 }
 
 export interface InferenceDoneEvent {
   type: 'inference-done';
   runId: string;
+  groupId: string;
   testCaseId: string;
 }
 
 export interface EvaluationArrivedEvent {
   type: 'evaluation-arrived';
   runId: string;
+  groupId: string;
   testCaseId: string;
   evaluation: EvaluationResultDto;
 }
@@ -249,6 +267,7 @@ export interface EvaluationArrivedEvent {
 export interface TestResultArrivedEvent {
   type: 'test-result-arrived';
   runId: string;
+  groupId: string;
   testCaseId: string;
   overallScore: string | null;
   evaluations: EvaluationResultDto[];
@@ -258,8 +277,17 @@ export interface TestResultArrivedEvent {
 export interface RunCompleteEvent {
   type: 'run-complete';
   runId: string;
+  groupId: string;
   status: TestRunStatus;
   completedAt: string | null;
+}
+
+export interface GroupRunCompleteEvent {
+  type: 'group-run-complete';
+  runId: string;
+  groupId: string;
+  groupStatus: TestRunStatus;
+  groupCompletedAt: string | null;
 }
 
 export type TestRunEvent =
@@ -267,4 +295,5 @@ export type TestRunEvent =
   | InferenceDoneEvent
   | EvaluationArrivedEvent
   | TestResultArrivedEvent
-  | RunCompleteEvent;
+  | RunCompleteEvent
+  | GroupRunCompleteEvent;
