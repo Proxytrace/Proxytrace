@@ -147,6 +147,38 @@ export class Suites implements OnInit {
   readonly runCanStart = computed(() =>
     this.runSelectedEndpointIds().size > 0 && !this.runEndpointsLoading());
 
+  readonly runEndpointGroups = computed(() => {
+    const q = this.runEndpointSearch().toLowerCase().trim();
+    const filtered = q
+      ? this.runEndpoints().filter(ep =>
+          ep.modelName.toLowerCase().includes(q) || ep.providerName.toLowerCase().includes(q))
+      : this.runEndpoints();
+    const map = new Map<string, { providerId: string; providerName: string; endpoints: ModelEndpointDto[] }>();
+    for (const ep of filtered) {
+      if (!map.has(ep.providerId)) map.set(ep.providerId, { providerId: ep.providerId, providerName: ep.providerName, endpoints: [] });
+      map.get(ep.providerId)!.endpoints.push(ep);
+    }
+    return [...map.values()];
+  });
+
+  readonly runProviderAllSelected = (providerId: string) => computed(() => {
+    const group = this.runEndpointGroups().find(g => g.providerId === providerId);
+    if (!group?.endpoints.length) return false;
+    return group.endpoints.every(ep => this.runSelectedEndpointIds().has(ep.id));
+  });
+
+  toggleProvider(providerId: string) {
+    const group = this.runEndpointGroups().find(g => g.providerId === providerId);
+    if (!group) return;
+    const allSelected = group.endpoints.every(ep => this.runSelectedEndpointIds().has(ep.id));
+    this.runSelectedEndpointIds.update(s => {
+      const next = new Set(s);
+      if (allSelected) group.endpoints.forEach(ep => next.delete(ep.id));
+      else group.endpoints.forEach(ep => next.add(ep.id));
+      return next;
+    });
+  }
+
   ngOnInit() {
     this.loadSuites();
   }
@@ -212,6 +244,7 @@ export class Suites implements OnInit {
     this.runModalState.set('idle');
     this.runError.set(null);
     this.runSelectedEndpointIds.set(new Set());
+    this.runEndpointSearch.set('');
     this.runEndpoints.set([]);
     this.runEndpointsLoading.set(true);
     this.providersService.getAllModels().subscribe({
