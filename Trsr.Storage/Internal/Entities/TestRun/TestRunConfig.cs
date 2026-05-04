@@ -6,9 +6,9 @@ using Trsr.Domain;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
-using Trsr.Domain.TestSuite;
+using Trsr.Domain.TestRunGroup;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
-using Trsr.Storage.Internal.Entities.TestSuite;
+using Trsr.Storage.Internal.Entities.TestRunGroup;
 
 namespace Trsr.Storage.Internal.Entities.TestRun;
 
@@ -16,20 +16,20 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
 {
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IRepository<ITestResult> testResults;
-    private readonly IRepository<ITestSuite> suites;
+    private readonly IRepository<ITestRunGroup> groups;
     private readonly ITestRun.CreateExisting factory;
     private readonly ISerializer serializer;
 
     public TestRunConfig(
         IRepository<IModelEndpoint> endpoints,
         IRepository<ITestResult> testResults,
-        IRepository<ITestSuite> suites,
+        IRepository<ITestRunGroup> groups,
         ITestRun.CreateExisting factory,
         ISerializer serializer)
     {
         this.endpoints = endpoints;
         this.testResults = testResults;
-        this.suites = suites;
+        this.groups = groups;
         this.factory = factory;
         this.serializer = serializer;
     }
@@ -43,9 +43,9 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
-            .HasOne<TestSuiteEntity>()
+            .HasOne<TestRunGroupEntity>()
             .WithMany()
-            .HasForeignKey(e => e.Suite)
+            .HasForeignKey(e => e.Group)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
@@ -58,14 +58,14 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
 
     public async Task<ITestRun> Map(TestRunEntity stored, CancellationToken cancellationToken = default)
     {
-        var suiteTask = suites.GetAsync(stored.Suite, cancellationToken);
+        var groupTask = groups.GetAsync(stored.Group, cancellationToken);
         var endpointTask = endpoints.GetAsync(stored.Endpoint, cancellationToken);
         var resultsTask = testResults.GetManyAsync(stored.TestResults, cancellationToken);
 
-        await Task.WhenAll(endpointTask, suiteTask, resultsTask);
+        await Task.WhenAll(groupTask, endpointTask, resultsTask);
 
         return factory(
-            suite: suiteTask.Result,
+            group: groupTask.Result,
             endpoint: endpointTask.Result,
             status: stored.Status,
             completedAt: stored.CompletedAt,
@@ -77,7 +77,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
         => new TestRunEntity
         {
             Id = domain.Id,
-            Suite = domain.Suite.Id,
+            Group = domain.Group.Id,
             Endpoint = domain.Endpoint.Id,
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,

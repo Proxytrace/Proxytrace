@@ -3,24 +3,24 @@ using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
-using Trsr.Domain.TestSuite;
+using Trsr.Domain.TestRunGroup;
 
 namespace Trsr.Domain.TestRun.Internal;
 
 internal record TestRun : DomainEntity<ITestRun>, ITestRun
 {
-    public ITestSuite Suite { get; }
+    public ITestRunGroup Group { get; }
     public IModelEndpoint Endpoint { get; }
     public TestRunStatus Status { get; }
     public DateTimeOffset? CompletedAt { get; }
     public IReadOnlyList<ITestResult> TestResults { get; }
 
     public TestRun(
-        ITestSuite suite,
+        ITestRunGroup group,
         IModelEndpoint endpoint,
         IRepository<ITestRun> repository) : base(repository)
     {
-        Suite = suite;
+        Group = group;
         Endpoint = endpoint;
         Status = TestRunStatus.Pending;
         CompletedAt = null;
@@ -28,7 +28,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     }
 
     public TestRun(
-        ITestSuite suite,
+        ITestRunGroup group,
         IModelEndpoint endpoint,
         TestRunStatus status,
         DateTimeOffset? completedAt,
@@ -36,7 +36,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         IDomainEntityData existing,
         IRepository<ITestRun> repository) : base(existing, repository)
     {
-        Suite = suite;
+        Group = group;
         Endpoint = endpoint;
         Status = status;
         CompletedAt = completedAt;
@@ -46,24 +46,18 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
-        {
             yield return result;
-        }
 
         foreach (var result in Endpoint.Validate(validationContext))
-        {
             yield return result;
-        }
 
         foreach (var result in TestResults.SelectMany(x => x.Validate(validationContext)))
-        {
             yield return result;
-        }
 
         if (Status == TestRunStatus.Completed)
         {
             yield return Validation.NotNull(CompletedAt);
-            yield return Validation.HasCount(TestResults, Suite.TestCases.Count);
+            yield return Validation.HasCount(TestResults, Group.Suite.TestCases.Count);
         }
     }
 
@@ -75,12 +69,12 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
             testResult
         ];
 
-        bool isCompleted = updatedResults.Count == Suite.TestCases.Count;
+        bool isCompleted = updatedResults.Count == Group.Suite.TestCases.Count;
         DateTimeOffset? completedAt = isCompleted ? DateTimeOffset.UtcNow : null;
         TestRunStatus status = isCompleted ? TestRunStatus.Completed : TestRunStatus.Running;
 
         var updatedRun = new TestRun(
-            Suite,
+            Group,
             Endpoint,
             status,
             completedAt,
@@ -118,13 +112,12 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
                 throw new InvalidOperationException(
                     $"Cannot set test run {Id} to {state} because it already has a completion time.");
             }
-            
+
             completedAt = DateTimeOffset.UtcNow;
         }
 
-
         var updatedRun = new TestRun(
-            Suite,
+            Group,
             Endpoint,
             state,
             completedAt,
@@ -134,6 +127,6 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         return repository.UpdateAsync(updatedRun, cancellationToken);
     }
 
-    private bool IsTerminalState(TestRunStatus status)
+    private static bool IsTerminalState(TestRunStatus status)
         => status is TestRunStatus.Completed or TestRunStatus.Cancelled or TestRunStatus.Failed;
 }

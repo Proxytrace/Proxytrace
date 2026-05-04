@@ -73,6 +73,19 @@ public class TestRunsController : ControllerBase
         return ToDto(run);
     }
 
+    [HttpGet("{id:guid}/cases/{caseId:guid}/fixture")]
+    public async Task<ActionResult<TestCaseFixtureDto>> GetCaseFixture(
+        Guid id, Guid caseId, CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+        var run = await repository.GetAsync(id, cancellationToken);
+        var result = run.TestResults.FirstOrDefault(r => r.TestCase.Id == caseId);
+        if (result is null)
+            return NotFound();
+        return ToFixtureDto(run, result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<TestRunDto>> Create(
         [FromBody] CreateTestRunRequest request,
@@ -101,11 +114,10 @@ public class TestRunsController : ControllerBase
 
         var reader = broadcaster.Subscribe(id, cancellationToken);
 
-        // Handle the case where the run already completed before we subscribed.
         var run = await repository.GetAsync(id, cancellationToken);
         if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
-            var completeEvt = new RunCompleteEvent(run.Id, run.Status, run.CompletedAt);
+            var completeEvt = RunCompleteEvent.Create(run);
             var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
             await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -114,27 +126,8 @@ public class TestRunsController : ControllerBase
 
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var eventName = evt switch
-            {
-                TestCaseStartedEvent => "test-case-started",
-                InferenceDoneEvent => "inference-done",
-                EvaluationArrivedEvent => "evaluation-arrived",
-                TestResultArrivedEvent => "test-result-arrived",
-                RunCompleteEvent => "run-complete",
-                _ => "unknown",
-            };
-            var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
-            await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await WriteEventAsync(evt, cancellationToken);
         }
-    }
-
-    [HttpPost("{id:guid}/cancel")]
-    public async Task<ActionResult<TestRunDto>> Cancel(Guid id, CancellationToken cancellationToken)
-    {
-        ITestRun testRun = await repository.GetAsync(id, cancellationToken);
-        testRun = await runner.CancelAsync(testRun, cancellationToken);
-        return  AcceptedAtAction(nameof(Get), new { id = testRun.Id }, ToDto(testRun));
     }
 
     [HttpDelete("{id:guid}")]
@@ -142,6 +135,22 @@ public class TestRunsController : ControllerBase
     {
         var removed = await repository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
+    }
+
+    private async Task WriteEventAsync(TestRunEvent evt, CancellationToken cancellationToken)
+    {
+        var eventName = evt switch
+        {
+            TestCaseStartedEvent => "test-case-started",
+            InferenceDoneEvent => "inference-done",
+            EvaluationArrivedEvent => "evaluation-arrived",
+            TestResultArrivedEvent => "test-result-arrived",
+            RunCompleteEvent => "run-complete",
+            _ => "unknown",
+        };
+        var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
+        await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
+        await Response.Body.FlushAsync(cancellationToken);
     }
 
     internal static TestRunDto ToDto(ITestRun r)
@@ -155,21 +164,23 @@ public class TestRunsController : ControllerBase
 
         return new TestRunDto(
             Id: r.Id,
-            SuiteId: r.Suite.Id,
-            SuiteName: r.Suite.Name,
-            AgentId: r.Suite.Agent.Id,
-            AgentName: r.Suite.Agent.Name,
+            GroupId: r.Group.Id,
+            SuiteId: r.Group.Suite.Id,
+            SuiteName: r.Group.Suite.Name,
+            AgentId: r.Group.Suite.Agent.Id,
+            AgentName: r.Group.Suite.Agent.Name,
             EndpointId: r.Endpoint.Id,
+            EndpointName: r.Endpoint.Model.Name,
             Status: r.Status,
             TotalCases: total,
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
-            Evaluators: r.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
+            Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
-            TestCases: r.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
+            TestCases: r.Group.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
             Results: r.TestResults.Select(res => new TestResultDto(
                 res.Id,
                 res.TestCase.Id,
@@ -211,5 +222,114 @@ public class TestRunsController : ControllerBase
         if (firstUserMessage is null) return "Test case";
         var text = string.Concat(firstUserMessage.Contents.Select(c => c.Text ?? ""));
         return text.Length > 80 ? text[..77] + "…" : text;
+    }
+
+    private static TestCaseFixtureDto ToFixtureDto(ITestRun run, Domain.TestResult.ITestResult result)
+        => new(
+            Input: new TestCaseInputDto(MapInputMessages(result.TestCase.Input)),
+            Expected: MapOutput(result.TestCase.ExpectedOutput),
+            Actual: MapOutput(result.ActualResponse),
+            Evaluators: MapEvaluators(result.Evaluations),
+            Runtime: MapRuntime(result),
+            Endpoints: MapEndpoints(run, result)
+        );
+
+    private static TestCaseMessageDto[] MapInputMessages(Conversation input)
+        => input.Messages.Select(msg =>
+        {
+            var role = msg.Role.ToString().ToLowerInvariant();
+            if (msg is ToolMessage toolMsg)
+            {
+                var (id, contents) = toolMsg.Deconstruct();
+                var content = string.Concat(contents.Select(c => c.Text ?? ""));
+                return new TestCaseMessageDto(role, content, id);
+            }
+            var text = string.Concat(msg.Contents.Select(c => c.Text ?? ""));
+            return new TestCaseMessageDto(role, text, null);
+        }).ToArray();
+
+    private static OutputValueDto MapOutput(AssistantMessage msg)
+    {
+        var text = string.Concat(msg.Contents.Select(c => c.Text ?? ""));
+        var firstTool = msg.ToolRequests.FirstOrDefault();
+        if (firstTool is not null && string.IsNullOrWhiteSpace(text))
+        {
+            var args = JsonSerializer.Deserialize<JsonElement>(firstTool.Arguments);
+            return new OutputValueDto("tool_call", null, null, firstTool.Name, args);
+        }
+        ToolCallInfoDto? toolInfo = firstTool is not null
+            ? new ToolCallInfoDto(firstTool.Name, JsonSerializer.Deserialize<JsonElement>(firstTool.Arguments))
+            : null;
+        return new OutputValueDto("message", text.Length > 0 ? text : null, toolInfo, null, null);
+    }
+
+    private static EvaluatorFixtureResultDto[] MapEvaluators(IReadOnlyCollection<Domain.Evaluation.IEvaluation> evaluations)
+        => evaluations.Select(eval => new EvaluatorFixtureResultDto(
+            EvaluatorId: eval.Evaluator.Id.ToString(),
+            EvaluatorKind: eval.Evaluator.Kind.ToString(),
+            EvaluatorName: GetEvaluatorName(eval.Evaluator),
+            Color: EvaluatorColor(eval.Evaluator.Kind),
+            Desc: EvaluatorDesc(eval.Evaluator.Kind),
+            Score: EvaluationScoreToFloat(eval.Score),
+            Pass: eval.Score >= EvaluationScore.Acceptable,
+            Breakdown: [],
+            Note: eval.Reasoning ?? ""
+        )).ToArray();
+
+    private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)
+    {
+        var total = (long)result.Duration.TotalMilliseconds;
+        return new RuntimeBreakdownDto(Total: total, Ttft: 0, Gen: total, Tools: 0, Judge: null);
+    }
+
+    private static EndpointUsageDto[] MapEndpoints(ITestRun run, Domain.TestResult.ITestResult result)
+        =>
+        [
+            new EndpointUsageDto(
+                Id: run.Endpoint.Id.ToString(),
+                Label: $"{run.Endpoint.Provider.Name} · {run.Endpoint.Model.Name}",
+                Color: EndpointColor(run.Endpoint.Provider.Name),
+                Region: "n/a",
+                PricingIn: (double)(run.Endpoint.InputTokenCost ?? 0),
+                PricingOut: (double)(run.Endpoint.OutputTokenCost ?? 0),
+                TokIn: 0,
+                TokOut: 0,
+                Calls: 1,
+                Latency: (long)result.Duration.TotalMilliseconds,
+                CostUsd: 0
+            )
+        ];
+
+    private static double EvaluationScoreToFloat(EvaluationScore score) => (double)(int)score;
+
+    private static string EvaluatorColor(EvaluatorKind kind) => kind switch
+    {
+        EvaluatorKind.ExactMatch      => "#6b9eaa",
+        EvaluatorKind.NumericMatch    => "#8dbecb",
+        EvaluatorKind.JsonSchemaMatch => "#6b9eaa",
+        EvaluatorKind.Safety          => "#d95555",
+        EvaluatorKind.ToolUsage       => "#3daa6f",
+        _                             => "#c9944a",
+    };
+
+    private static string EvaluatorDesc(EvaluatorKind kind) => kind switch
+    {
+        EvaluatorKind.ExactMatch      => "Checks for an exact string match",
+        EvaluatorKind.NumericMatch    => "Compares numeric values within tolerance",
+        EvaluatorKind.JsonSchemaMatch => "Validates against a JSON schema",
+        EvaluatorKind.Helpfulness     => "Rates helpfulness of the response",
+        EvaluatorKind.Politeness      => "Rates politeness and tone",
+        EvaluatorKind.Safety          => "Checks for unsafe or harmful content",
+        EvaluatorKind.ToolUsage       => "Verifies correct tool invocation",
+        _                             => "Custom evaluation logic",
+    };
+
+    private static string EndpointColor(string providerName)
+    {
+        var lower = providerName.ToLowerInvariant();
+        if (lower.Contains("openai")) return "#10a37f";
+        if (lower.Contains("azure")) return "#3b82f6";
+        if (lower.Contains("anthropic")) return "#d97757";
+        return "#8b5cf6";
     }
 }

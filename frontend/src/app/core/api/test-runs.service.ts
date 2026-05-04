@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PagedResult, TestRunDto } from './models';
+import { PagedResult, TestCaseFixtureDto, TestRunDto } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class TestRunsService {
@@ -27,5 +27,9 @@ export class TestRunsService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`/api/test-runs/${id}`);
+  }
+
+  getFixture(runId: string, caseId: string): Observable<TestCaseFixtureDto> {
+    return this.http.get<TestCaseFixtureDto>(`/api/test-runs/${runId}/cases/${caseId}/fixture`);
   }
 }

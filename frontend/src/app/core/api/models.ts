@@ -184,13 +184,28 @@ export interface RunEvaluatorDto {
   name: string;
 }
 
+export interface TestRunGroupDto {
+  id: string;
+  suiteId: string;
+  suiteName: string;
+  agentId: string;
+  agentName: string;
+  status: TestRunStatus;
+  completedAt: string | null;
+  runs: TestRunDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TestRunDto {
   id: string;
+  groupId: string;
   suiteId: string | null;
   suiteName: string | null;
   agentId: string;
   agentName: string;
   endpointId: string;
+  endpointName: string;
   status: TestRunStatus;
   totalCases: number;
   passedCases: number;
@@ -204,6 +219,74 @@ export interface TestRunDto {
   results: TestResultDto[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TestCaseMessageFixtureDto {
+  role: string;
+  content: string;
+  name?: string | null;
+}
+
+export interface ToolCallInfoDto {
+  name: string;
+  arguments: unknown;
+}
+
+export interface OutputValueDto {
+  kind: 'message' | 'tool_call';
+  content?: string | null;
+  tool?: ToolCallInfoDto | null;
+  name?: string | null;
+  arguments?: unknown;
+}
+
+export interface BreakdownItemDto {
+  k: string;
+  v: string;
+  match: boolean;
+}
+
+export interface EvaluatorFixtureResultDto {
+  evaluatorId: string;
+  evaluatorKind: string;
+  evaluatorName: string;
+  color: string;
+  desc: string;
+  score: number;
+  pass: boolean;
+  breakdown: BreakdownItemDto[];
+  note: string;
+}
+
+export interface RuntimeBreakdownDto {
+  total: number;
+  ttft: number;
+  gen: number;
+  tools: number;
+  judge?: number | null;
+}
+
+export interface EndpointUsageDto {
+  id: string;
+  label: string;
+  color: string;
+  region: string;
+  pricingIn: number;
+  pricingOut: number;
+  tokIn: number;
+  tokOut: number;
+  calls: number;
+  latency: number;
+  costUsd: number;
+}
+
+export interface TestCaseFixtureDto {
+  input: { messages: TestCaseMessageFixtureDto[] };
+  expected: OutputValueDto;
+  actual: OutputValueDto;
+  evaluators: EvaluatorFixtureResultDto[];
+  runtime: RuntimeBreakdownDto;
+  endpoints: EndpointUsageDto[];
 }
 
 export interface AgentCallFilter {
@@ -230,18 +313,21 @@ export interface TraceCreatedEvent {
 export interface TestCaseStartedEvent {
   type: 'test-case-started';
   runId: string;
+  groupId: string;
   testCaseId: string;
 }
 
 export interface InferenceDoneEvent {
   type: 'inference-done';
   runId: string;
+  groupId: string;
   testCaseId: string;
 }
 
 export interface EvaluationArrivedEvent {
   type: 'evaluation-arrived';
   runId: string;
+  groupId: string;
   testCaseId: string;
   evaluation: EvaluationResultDto;
 }
@@ -249,6 +335,7 @@ export interface EvaluationArrivedEvent {
 export interface TestResultArrivedEvent {
   type: 'test-result-arrived';
   runId: string;
+  groupId: string;
   testCaseId: string;
   overallScore: string | null;
   evaluations: EvaluationResultDto[];
@@ -258,8 +345,17 @@ export interface TestResultArrivedEvent {
 export interface RunCompleteEvent {
   type: 'run-complete';
   runId: string;
+  groupId: string;
   status: TestRunStatus;
   completedAt: string | null;
+}
+
+export interface GroupRunCompleteEvent {
+  type: 'group-run-complete';
+  runId: string;
+  groupId: string;
+  groupStatus: TestRunStatus;
+  groupCompletedAt: string | null;
 }
 
 export type TestRunEvent =
@@ -267,4 +363,5 @@ export type TestRunEvent =
   | InferenceDoneEvent
   | EvaluationArrivedEvent
   | TestResultArrivedEvent
-  | RunCompleteEvent;
+  | RunCompleteEvent
+  | GroupRunCompleteEvent;

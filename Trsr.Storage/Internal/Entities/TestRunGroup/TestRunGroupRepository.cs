@@ -1,0 +1,35 @@
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Trsr.Domain;
+using Trsr.Domain.TestRunGroup;
+using Trsr.Storage.Internal.Entities.TestSuite;
+
+namespace Trsr.Storage.Internal.Entities.TestRunGroup;
+
+[UsedImplicitly]
+internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRunGroupEntity>, ITestRunGroupRepository
+{
+    public TestRunGroupRepository(
+        IMapper<ITestRunGroup, TestRunGroupEntity> mapper,
+        Func<StorageDbContext> contextFactory,
+        ITransaction transaction) : base(mapper, contextFactory, transaction)
+    {
+    }
+
+    public async Task<IReadOnlyList<ITestRunGroup>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var stored = await context
+            .Set<TestRunGroupEntity>()
+            .AsNoTracking()
+            .Join(context.Set<TestSuiteEntity>(),
+                g => g.Suite,
+                s => s.Id,
+                (g, s) => new { Group = g, Suite = s })
+            .Where(x => x.Suite.Agent == agentId)
+            .Select(x => x.Group)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+}
