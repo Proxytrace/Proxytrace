@@ -57,6 +57,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly selectedCaseKey = signal<string | null>(null);
   readonly fixture = signal<TestCaseFixtureDto | null>(null);
   readonly fixtureLoading = signal(false);
+  readonly expandedTexts = signal<Set<string>>(new Set());
   readonly caseFilter = signal<'all' | 'passed' | 'failed'>('all');
   readonly caseView = signal<'grid' | 'table'>('grid');
   readonly caseFilters = [
@@ -330,6 +331,16 @@ export class Runs implements OnInit, OnDestroy {
   selectCaseDrawer(run: TestRunDto, caseId: string) {
     const key = `${run.id}:${caseId}`;
     this.selectedCaseKey.set(this.selectedCaseKey() === key ? null : key);
+    this.expandedTexts.set(new Set());
+  }
+
+  isTextExpanded(key: string): boolean { return this.expandedTexts().has(key); }
+
+  toggleTextExpand(key: string, event: Event) {
+    event.stopPropagation();
+    const s = new Set(this.expandedTexts());
+    s.has(key) ? s.delete(key) : s.add(key);
+    this.expandedTexts.set(s);
   }
 
   prevCaseDrawer() {

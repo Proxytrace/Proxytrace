@@ -300,15 +300,7 @@ public class TestRunsController : ControllerBase
             )
         ];
 
-    private static double EvaluationScoreToFloat(EvaluationScore score) => score switch
-    {
-        EvaluationScore.Terrible  => 0.00,
-        EvaluationScore.Bad       => 0.35,
-        EvaluationScore.Acceptable => 0.65,
-        EvaluationScore.Good      => 0.85,
-        EvaluationScore.Excellent => 1.00,
-        _                         => 0.00,
-    };
+    private static double EvaluationScoreToFloat(EvaluationScore score) => (double)(int)score;
 
     private static string EvaluatorColor(EvaluatorKind kind) => kind switch
     {

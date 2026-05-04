@@ -703,12 +703,31 @@
               <div style="background:var(--bg-card-2); border-radius:10px; padding:4px 0; box-shadow:0 1px 0 rgba(255,255,255,0.02) inset;">
                 @for (m of fx.input.messages; track $index) {
                   @let roleColor = m.role === 'system' ? '#c2836b' : m.role === 'user' ? '#6b9eaa' : m.role === 'tool' ? '#3daa6f' : '#c9944a';
-                  <div style="padding:8px 12px; display:grid; grid-template-columns:70px 1fr; gap:12px; align-items:flex-start;"
+                  @let msgKey = 'msg-' + $index;
+                  @let msgExpanded = isTextExpanded(msgKey);
+                  @let isLong = m.content.length > 280;
+                  <div style="padding:8px 12px; display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:flex-start;"
                        [style.borderTop]="$index > 0 ? '1px solid var(--hairline)' : 'none'">
-                    <span style="font-size:10px; font-weight:700; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.06em; padding-top:2px;"
-                          [style.color]="roleColor">{{m.role}}{{m.name ? ' · ' + m.name : ''}}</span>
-                    <span style="font-size:12px; line-height:1.55; color:var(--text-secondary);"
-                          [style.fontFamily]="m.role === 'tool' ? 'JetBrains Mono, monospace' : 'inherit'">{{m.content}}</span>
+                    <!-- Role label — fixed width, no overflow -->
+                    <div style="min-width:0; padding-top:2px;">
+                      <span style="font-size:10px; font-weight:700; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.06em; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                            [style.color]="roleColor"
+                            [title]="m.role + (m.name ? ' · ' + m.name : '')">{{m.role}}</span>
+                      @if (m.name) {
+                        <span style="font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="m.name">{{m.name}}</span>
+                      }
+                    </div>
+                    <!-- Content with optional clamp -->
+                    <div>
+                      <span [class.drawer-text-clamped]="!msgExpanded && isLong"
+                            style="font-size:12px; line-height:1.55; color:var(--text-secondary);"
+                            [style.fontFamily]="m.role === 'tool' ? 'JetBrains Mono, monospace' : 'inherit'">{{m.content}}</span>
+                      @if (isLong) {
+                        <button (click)="toggleTextExpand(msgKey, $event)" style="margin-top:4px; font-size:10.5px; color:var(--accent-primary); background:none; padding:0; cursor:pointer;">
+                          {{msgExpanded ? 'Show less' : 'Show more'}}
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
               </div>
@@ -733,16 +752,26 @@
                   <div style="padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-secondary);"
                        [style.fontFamily]="fx.expected.kind === 'tool_call' ? 'JetBrains Mono, monospace' : 'inherit'">
                     @if (fx.expected.kind === 'tool_call') {
-                      <span style="color:#6b9eaa;">{{fx.expected.name}}</span><span style="color:var(--text-muted);">(</span>
+                      <div style="display:flex; align-items:baseline; gap:0; flex-wrap:nowrap; min-width:0;">
+                        <span style="color:#6b9eaa; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="fx.expected.name">{{fx.expected.name}}</span><span style="color:var(--text-muted); flex-shrink:0;">(</span>
+                      </div>
                       <pre style="margin:4px 0 0 12px; font-size:11.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.expected.arguments | json}}</pre>
                       <span style="color:var(--text-muted);">)</span>
                     } @else {
-                      {{fx.expected.content || '—'}}
+                      @let expKey = 'expected-out';
+                      @let expExpanded = isTextExpanded(expKey);
+                      @let expLong = (fx.expected.content?.length ?? 0) > 280;
+                      <span [class.drawer-text-clamped]="!expExpanded && expLong">{{fx.expected.content || '—'}}</span>
+                      @if (expLong) {
+                        <button (click)="toggleTextExpand(expKey, $event)" style="font-size:10.5px; color:var(--accent-primary); background:none; padding:0; cursor:pointer; margin-top:4px;">{{expExpanded ? 'Show less' : 'Show more'}}</button>
+                      }
                       @if (fx.expected.tool) {
                         <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--hairline); font-family:'JetBrains Mono',monospace; font-size:11px;">
-                          <span style="color:var(--text-muted);">+ tool: </span>
-                          <span style="color:#6b9eaa;">{{fx.expected.tool.name}}</span>
-                          <span style="color:var(--text-secondary);">({{fx.expected.tool.arguments | json}})</span>
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <span style="color:var(--text-muted);">+ tool:</span>
+                            <span style="color:#6b9eaa; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="fx.expected.tool.name">{{fx.expected.tool.name}}</span>
+                          </div>
+                          <pre style="margin:0; font-size:10.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.expected.tool.arguments | json}}</pre>
                         </div>
                       }
                     }
@@ -760,16 +789,26 @@
                   <div style="padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-primary);"
                        [style.fontFamily]="fx.actual.kind === 'tool_call' ? 'JetBrains Mono, monospace' : 'inherit'">
                     @if (fx.actual.kind === 'tool_call') {
-                      <span style="color:#6b9eaa;">{{fx.actual.name}}</span><span style="color:var(--text-muted);">(</span>
+                      <div style="display:flex; align-items:baseline; gap:0; flex-wrap:nowrap; min-width:0;">
+                        <span style="color:#6b9eaa; flex-shrink:0; max-width:50%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="fx.actual.name">{{fx.actual.name}}</span><span style="color:var(--text-muted); flex-shrink:0;">(</span>
+                      </div>
                       <pre style="margin:4px 0 0 12px; font-size:11.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.actual.arguments | json}}</pre>
                       <span style="color:var(--text-muted);">)</span>
                     } @else {
-                      {{fx.actual.content || '—'}}
+                      @let actKey = 'actual-out';
+                      @let actExpanded = isTextExpanded(actKey);
+                      @let actLong = (fx.actual.content?.length ?? 0) > 280;
+                      <span [class.drawer-text-clamped]="!actExpanded && actLong">{{fx.actual.content || '—'}}</span>
+                      @if (actLong) {
+                        <button (click)="toggleTextExpand(actKey, $event)" style="font-size:10.5px; color:var(--accent-primary); background:none; padding:0; cursor:pointer; margin-top:4px;">{{actExpanded ? 'Show less' : 'Show more'}}</button>
+                      }
                       @if (fx.actual.tool) {
                         <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--hairline); font-family:'JetBrains Mono',monospace; font-size:11px;">
-                          <span style="color:var(--text-muted);">+ tool: </span>
-                          <span style="color:#6b9eaa;">{{fx.actual.tool.name}}</span>
-                          <span style="color:var(--text-secondary);">({{fx.actual.tool.arguments | json}})</span>
+                          <div style="display:flex; align-items:center; gap:4px; margin-bottom:3px;">
+                            <span style="color:var(--text-muted);">+ tool:</span>
+                            <span style="color:#6b9eaa; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" [title]="fx.actual.tool.name">{{fx.actual.tool.name}}</span>
+                          </div>
+                          <pre style="margin:0; font-size:10.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.actual.tool.arguments | json}}</pre>
                         </div>
                       }
                     }
@@ -787,10 +826,10 @@
               </div>
               <div style="display:flex; flex-direction:column; gap:8px;">
                 @for (ev of fx.evaluators; track ev.evaluatorId) {
-                  @let evScoreC = ev.score >= 0.8 ? 'var(--success)' : ev.score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+                  @let evScoreC = ev.score >= 4 ? 'var(--success)' : ev.score >= 3 ? 'var(--warn)' : 'var(--danger)';
                   <div style="background:var(--bg-card-2); border-radius:10px; padding:12px 14px;"
                        [style.borderLeft]="'3px solid ' + ev.color">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:ev.breakdown.length > 0 || ev.note ? '8px' : '0'; flex-wrap:wrap;">
                       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; flex:1;">
                         <span style="padding:2px 8px; border-radius:5px; font-size:11px; font-weight:700; flex-shrink:0;"
                               [style.background]="ev.color + '20'"
@@ -799,7 +838,7 @@
                         <span style="font-size:11px; color:var(--text-muted);">{{ev.desc}}</span>
                       </div>
                       <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-                        <span style="font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700;" [style.color]="evScoreC">{{ev.score.toFixed(2)}}</span>
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700;" [style.color]="evScoreC">{{ev.score.toFixed(0)}}/5</span>
                         <span style="padding:2px 7px; border-radius:5px; font-size:10px; font-weight:700;"
                               [style.background]="ev.pass ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
                               [style.color]="ev.pass ? 'var(--success)' : 'var(--danger)'">{{ev.pass ? 'PASS' : 'FAIL'}}</span>
@@ -814,8 +853,10 @@
                         }
                       </div>
                     }
-                    <div style="font-size:11.5px; line-height:1.55; padding:7px 10px; background:rgba(0,0,0,0.18); border-radius:7px;"
-                         [style.color]="ev.pass ? 'var(--text-secondary)' : '#e88a8a'">{{ev.note}}</div>
+                    @if (ev.note) {
+                      <div style="font-size:11.5px; line-height:1.55; padding:7px 10px; background:rgba(0,0,0,0.18); border-radius:7px;"
+                           [style.color]="ev.pass ? 'var(--text-secondary)' : '#e88a8a'">{{ev.note}}</div>
+                    }
                   </div>
                 }
               </div>
@@ -1075,5 +1116,11 @@
 }
 .case-card:hover {
   filter: brightness(1.05);
+}
+.drawer-text-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
