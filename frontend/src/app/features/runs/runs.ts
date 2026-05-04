@@ -1,9 +1,12 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, effect, OnInit, OnDestroy } from '@angular/core';
+import { JsonPipe } from '@angular/common';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { TestRunGroupsService } from '../../core/api/test-run-groups.service';
+import { TestRunsService } from '../../core/api/test-runs.service';
 import { EventStreamService } from '../../core/api/event-stream.service';
 import {
-  TestRunGroupDto, TestRunDto, TestResultDto, TestRunStatus, Evaluation,
+  TestRunGroupDto, TestRunDto, TestResultDto, TestCaseRowDto, TestRunStatus, Evaluation,
+  TestCaseFixtureDto,
 } from '../../core/api/models';
 
 const AGENT_COLORS: Record<string, string> = {
@@ -29,6 +32,7 @@ export type StepStatus = 'done' | 'active' | 'pending';
   selector: 'app-runs',
   templateUrl: './runs.html',
   styles: `:host { display: block; flex: 1; min-height: 0; overflow-y: auto; }`,
+  imports: [JsonPipe],
 })
 export class Runs implements OnInit, OnDestroy {
   readonly Math = Math;
@@ -36,6 +40,7 @@ export class Runs implements OnInit, OnDestroy {
   readonly Evaluation = Evaluation;
 
   private readonly groupsService = inject(TestRunGroupsService);
+  private readonly testRunsService = inject(TestRunsService);
   private readonly eventStreamService = inject(EventStreamService);
 
   readonly groups = signal<TestRunGroupDto[]>([]);
@@ -49,13 +54,56 @@ export class Runs implements OnInit, OnDestroy {
   readonly deleteError = signal<string | null>(null);
   readonly rerunInProgress = signal(false);
   readonly cancelInProgress = signal(false);
-  // key: `${runId}:${caseId}`
-  readonly expandedCaseIds = signal<Set<string>>(new Set());
+  readonly selectedCaseKey = signal<string | null>(null);
+  readonly fixture = signal<TestCaseFixtureDto | null>(null);
+  readonly fixtureLoading = signal(false);
+  readonly caseFilter = signal<'all' | 'passed' | 'failed'>('all');
+  readonly caseView = signal<'grid' | 'table'>('grid');
+  readonly caseFilters = [
+    { id: 'all' as const, label: 'All' },
+    { id: 'passed' as const, label: 'Passed' },
+    { id: 'failed' as const, label: 'Failed' },
+  ];
   readonly caseProgress = signal<Map<string, CaseProgress>>(new Map());
+
+  readonly drawerData = computed(() => {
+    const key = this.selectedCaseKey();
+    if (!key) return null;
+    const sep = key.indexOf(':');
+    const runId = key.slice(0, sep);
+    const caseId = key.slice(sep + 1);
+    const group = this.groups().find(g => g.runs.some(r => r.id === runId));
+    if (!group) return null;
+    const run = group.runs.find(r => r.id === runId);
+    if (!run) return null;
+    const tc = run.testCases.find(t => t.id === caseId) ?? null;
+    const res = run.results.find(r => r.testCaseId === caseId) ?? null;
+    const idx = run.testCases.findIndex(t => t.id === caseId);
+    return { run, tc, res, idx, total: run.testCases.length };
+  });
+
+  private readonly fixtureLoader = effect(() => {
+    const key = this.selectedCaseKey();
+    this.fixture.set(null);
+    if (!key) return;
+    const sep = key.indexOf(':');
+    const runId = key.slice(0, sep);
+    const caseId = key.slice(sep + 1);
+    this.fixtureLoading.set(true);
+    firstValueFrom(this.testRunsService.getFixture(runId, caseId))
+      .then(f => this.fixture.set(f))
+      .catch(() => {})
+      .finally(() => this.fixtureLoading.set(false));
+  });
 
   private groupStreams = new Map<string, Subscription>();
   private pollInterval: ReturnType<typeof setInterval> | null = null;
   private timerInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') this.selectedCaseKey.set(null);
+    else if (e.key === 'ArrowLeft') this.prevCaseDrawer();
+    else if (e.key === 'ArrowRight') this.nextCaseDrawer();
+  };
 
   readonly agents = computed(() => {
     const names = [...new Set(this.groups().map(g => g.agentName))].sort();
@@ -101,6 +149,7 @@ export class Runs implements OnInit, OnDestroy {
   async ngOnInit() {
     await this.loadGroups();
     this.startTimer();
+    window.addEventListener('keydown', this.onKeyDown);
   }
 
   ngOnDestroy() {
@@ -108,6 +157,7 @@ export class Runs implements OnInit, OnDestroy {
     for (const sub of this.groupStreams.values()) sub.unsubscribe();
     this.groupStreams.clear();
     if (this.timerInterval) clearInterval(this.timerInterval);
+    window.removeEventListener('keydown', this.onKeyDown);
   }
 
   private async loadGroups() {
@@ -234,6 +284,14 @@ export class Runs implements OnInit, OnDestroy {
     return group.runs.filter(r => !this.isRunActive(r)).length;
   }
 
+  groupTotalPassed(group: TestRunGroupDto): number {
+    return group.runs.reduce((s, r) => s + r.passedCases, 0);
+  }
+
+  groupTotalCases(group: TestRunGroupDto): number {
+    return group.runs.reduce((s, r) => s + r.totalCases, 0);
+  }
+
   groupDurationMs(group: TestRunGroupDto): number | null {
     if (!group.completedAt) return null;
     return new Date(group.completedAt).getTime() - new Date(group.createdAt).getTime();
@@ -269,17 +327,41 @@ export class Runs implements OnInit, OnDestroy {
     return this.caseProgress().has(`${run.id}:${testCaseId}`);
   }
 
-  toggleCase(run: TestRunDto, caseId: string) {
+  selectCaseDrawer(run: TestRunDto, caseId: string) {
     const key = `${run.id}:${caseId}`;
-    this.expandedCaseIds.update(set => {
-      const next = new Set(set);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
+    this.selectedCaseKey.set(this.selectedCaseKey() === key ? null : key);
   }
 
-  isCaseExpanded(run: TestRunDto, caseId: string): boolean {
-    return this.expandedCaseIds().has(`${run.id}:${caseId}`);
+  prevCaseDrawer() {
+    const d = this.drawerData();
+    if (!d) return;
+    const prev = d.run.testCases[(d.idx - 1 + d.total) % d.total];
+    this.selectedCaseKey.set(`${d.run.id}:${prev.id}`);
+  }
+
+  nextCaseDrawer() {
+    const d = this.drawerData();
+    if (!d) return;
+    const next = d.run.testCases[(d.idx + 1) % d.total];
+    this.selectedCaseKey.set(`${d.run.id}:${next.id}`);
+  }
+
+  compositeScore(result: TestResultDto): number {
+    if (!result.evaluations.length) return 0;
+    const passing = ['Acceptable', 'Good', 'Excellent'];
+    return result.evaluations.filter(e => passing.includes(e.score)).length / result.evaluations.length;
+  }
+
+  filteredCases(run: TestRunDto): TestCaseRowDto[] {
+    const filter = this.caseFilter();
+    if (filter === 'all') return run.testCases;
+    const passing = ['Acceptable', 'Good', 'Excellent'];
+    return run.testCases.filter(tc => {
+      const res = this.resultByCase(run, tc.id);
+      if (!res) return false;
+      const passed = res.evaluations.every(e => passing.includes(e.score));
+      return filter === 'passed' ? passed : !passed;
+    });
   }
 
   resultByCase(run: TestRunDto, testCaseId: string): TestResultDto | null {
@@ -381,6 +463,35 @@ export class Runs implements OnInit, OnDestroy {
   evaluatorKindColor(kind: string): string { return EVALUATOR_KIND_COLORS[kind] ?? '#c9944a'; }
   agentColor(agentName: string): string { return AGENT_COLORS[agentName] ?? '#c9944a'; }
 
+  scoreToFloat(score: string): number {
+    switch (score) {
+      case 'Excellent': return 1.00;
+      case 'Good': return 0.85;
+      case 'Acceptable': return 0.65;
+      case 'Bad': return 0.35;
+      case 'Terrible': return 0.00;
+      default: return 0.00;
+    }
+  }
+
+  scoreIsPassing(score: string): boolean {
+    return ['Acceptable', 'Good', 'Excellent'].includes(score);
+  }
+
+  evaluatorKindDesc(kind: string): string {
+    switch (kind) {
+      case 'ExactMatch': return 'Checks for an exact string match';
+      case 'NumericMatch': return 'Compares numeric values within tolerance';
+      case 'JsonSchemaMatch': return 'Validates against a JSON schema';
+      case 'Helpfulness': return 'Rates helpfulness of the response';
+      case 'Politeness': return 'Rates politeness and tone';
+      case 'Safety': return 'Checks for unsafe or harmful content';
+      case 'ToolUsage': return 'Verifies correct tool invocation';
+      case 'Custom': return 'Custom evaluation logic';
+      default: return kind;
+    }
+  }
+
   passColor(rate: number | undefined): string {
     if (rate === undefined) return 'var(--accent-primary)';
     return rate >= 75 ? 'var(--success)' : rate >= 55 ? 'var(--warn)' : 'var(--danger)';
@@ -461,5 +572,11 @@ export class Runs implements OnInit, OnDestroy {
 
   evalBg(evaluation: Evaluation): string {
     return evaluation === Evaluation.Pass ? 'var(--success-subtle)' : evaluation === Evaluation.Fail ? 'var(--danger-subtle)' : 'var(--warn-subtle)';
+  }
+
+  primaryNote(result: TestResultDto): string | null {
+    const failing = result.evaluations.find(e => ['Bad', 'Terrible', 'Acceptable'].includes(e.score));
+    const ev = failing ?? result.evaluations.find(e => e.reasoning);
+    return ev?.reasoning ?? null;
   }
 }

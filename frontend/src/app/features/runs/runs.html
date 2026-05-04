@@ -14,28 +14,31 @@
       </div>
       <p style="font-size:14px; color:var(--text-muted); margin:0;">Execution history across all test suites and agents.</p>
     </div>
-    <div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">
-      <div style="padding:7px 13px; background:var(--bg-card); border-radius:10px; font-size:12px; box-shadow:var(--shadow-pill); display:flex; align-items:center; gap:7px;">
-        <span style="color:var(--text-muted);">Total groups</span>
-        <span style="font-weight:700; color:var(--text-primary);">{{visible().length}}</span>
+    <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
+      <div style="padding:10px 16px; background:var(--bg-card); border-radius:12px; box-shadow:var(--shadow-card); text-align:center; min-width:78px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary);">{{visible().length}}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Total groups</div>
       </div>
-      <div style="padding:7px 13px; background:var(--bg-card); border-radius:10px; font-size:12px; box-shadow:var(--shadow-pill); display:flex; align-items:center; gap:7px;">
-        <span style="color:var(--text-muted);">Avg pass rate</span>
-        <span style="font-weight:700;" [style.color]="passColor(avgPassRate())">{{avgPassRate()}}%</span>
+      <div style="padding:10px 16px; background:var(--bg-card); border-radius:12px; box-shadow:var(--shadow-card); text-align:center; min-width:78px;">
+        <div style="font-size:18px; font-weight:700; letter-spacing:-0.02em;" [style.color]="passColor(avgPassRate())">{{avgPassRate()}}%</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Avg pass rate</div>
       </div>
     </div>
   </div>
 
-  <!-- Agent filter tabs -->
-  <div class="fade-up" style="animation-delay:40ms; display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap;">
-    @for (agent of agents(); track agent) {
-      <button (click)="agentFilter.set(agent)"
-              style="padding:6px 13px; border-radius:8px; font-size:12px; font-weight:500; transition:background 0.15s, color 0.15s; box-shadow:var(--shadow-pill);"
-              [style.background]="agentFilter() === agent ? 'var(--accent-subtle)' : 'var(--bg-card)'"
-              [style.color]="agentFilter() === agent ? 'var(--accent-hover)' : 'var(--text-secondary)'">
-        {{agent}}
-      </button>
-    }
+  <!-- Agent filter — segmented control -->
+  <div class="fade-up" style="animation-delay:40ms; flex-shrink:0; align-self:flex-start;">
+    <div style="display:flex; gap:3px; padding:3px; background:var(--bg-card); border-radius:10px; box-shadow:var(--shadow-pill);">
+      @for (agent of agents(); track agent) {
+        <button (click)="agentFilter.set(agent)"
+                style="padding:5px 12px; border-radius:7px; font-size:11px; font-weight:500; transition:background 0.15s, color 0.15s; white-space:nowrap;"
+                [style.background]="agentFilter() === agent ? 'var(--bg-card-2)' : 'transparent'"
+                [style.color]="agentFilter() === agent ? 'var(--text-primary)' : 'var(--text-muted)'"
+                [style.boxShadow]="agentFilter() === agent ? 'var(--shadow-pill)' : 'none'">
+          {{agent}}
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Loading state -->
@@ -50,58 +53,60 @@
     </div>
   } @else {
     <!-- Master-detail layout -->
-    <div class="fade-up" style="animation-delay:80ms; display:grid; grid-template-columns:340px 1fr; gap:12px; flex:1; min-height:0;">
+    <div class="fade-up" style="animation-delay:80ms; display:grid; grid-template-columns:300px 1fr; gap:12px; flex:1; min-height:0;">
 
-      <!-- Group list -->
-      <div style="background:var(--bg-card); border-radius:16px; box-shadow:var(--shadow-card); overflow-y:auto; display:flex; flex-direction:column;">
-        <div style="padding:12px 16px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
-          {{visible().length}} group{{visible().length === 1 ? '' : 's'}}
-        </div>
+      <!-- Group list — individual cards; padding gives box-shadow room to breathe at edges -->
+      <div style="overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:3px 4px 3px 2px;">
 
         @for (group of visible(); track group.id) {
+          @let ac = agentColor(group.agentName);
+          @let isSelected = selectedGroup()!.id === group.id;
           <button (click)="selectGroup(group)"
                   class="run-item"
-                  style="width:100%; text-align:left; padding:13px 16px; border-bottom:1px solid var(--hairline); transition:background 0.1s; position:relative;"
-                  [style.background]="selectedGroup()!.id === group.id ? 'rgba(201,148,74,0.07)' : 'transparent'">
-            @if (selectedGroup()!.id === group.id) {
-              <span style="position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:60%; background:var(--accent-primary); border-radius:0 2px 2px 0;"></span>
-            }
+                  style="width:100%; text-align:left; padding:12px 14px 12px 17px; border-radius:13px; transition:box-shadow 0.15s; position:relative; overflow:hidden; background:var(--bg-card);"
+                  [style.boxShadow]="isSelected ? '0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ' + ac + '55, 0 8px 24px -8px ' + ac + '44' : 'var(--shadow-card)'">
 
+            <!-- Left accent bar -->
+            <span style="position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:13px 0 0 13px;"
+                  [style.background]="ac"></span>
+
+            <!-- Delete button -->
             <button class="run-delete-btn"
                     (click)="openDeleteModal(group.id, $event)"
                     [disabled]="isGroupActive(group)"
                     title="Delete run group"
-                    style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; background:var(--danger-subtle); color:var(--danger); opacity:0; transition:opacity 0.15s; z-index:1;"
-                    [style.opacity]="isGroupActive(group) ? '0' : undefined">
+                    style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; background:var(--danger-subtle); color:var(--danger); opacity:0; transition:opacity 0.15s; z-index:1;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
             </button>
 
-            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:6px;">
-              <span style="font-size:12px; font-weight:600; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;">
-                {{group.suiteName}}
+            <!-- Row 1: monospace ID + timestamp; right padding clears the hover delete button (26px + 10px inset) -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; padding-right:30px;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600;"
+                    [style.color]="isSelected ? 'var(--accent-hover)' : 'var(--text-muted)'">
+                {{group.id.slice(0,8)}}…
               </span>
-              @if (group.status === TestRunStatus.Completed) {
-                <span style="font-size:13px; font-weight:700; flex-shrink:0;" [style.color]="passColor(groupPassRate(group))">{{groupPassRate(group)}}%</span>
-              } @else {
-                <span style="font-size:11px; font-weight:600; flex-shrink:0; padding:2px 7px; border-radius:100px;" [style.color]="statusColor(group.status)" [style.background]="statusBg(group.status)">
-                  {{statusLabel(group.status)}}
-                </span>
-              }
+              <span style="font-size:10.5px; color:var(--text-muted);">{{formatRelative(group.createdAt)}}</span>
             </div>
 
-            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+            <!-- Row 2: Suite name -->
+            <div style="font-size:13px; font-weight:600; margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:20px;">
+              {{group.suiteName}}
+            </div>
+
+            <!-- Row 3: Agent pill + endpoints count -->
+            <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px; flex-wrap:wrap;">
               <span style="display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:100px; font-size:11px; font-weight:500;"
-                    [style.background]="agentColor(group.agentName) + '1a'"
-                    [style.color]="agentColor(group.agentName)">
-                <span style="width:5px; height:5px; border-radius:50%; display:inline-block; flex-shrink:0;" [style.background]="agentColor(group.agentName)"></span>
+                    [style.background]="ac + '1a'"
+                    [style.color]="ac">
+                <span style="width:5px; height:5px; border-radius:50%; display:inline-block; flex-shrink:0;" [style.background]="ac"></span>
                 {{group.agentName}}
               </span>
-              <span style="font-size:11px; color:var(--text-muted);">{{group.runs.length}} endpoint{{group.runs.length !== 1 ? 's' : ''}}</span>
+              <span style="font-size:10.5px; color:var(--text-muted);">{{group.runs.length}} endpoint{{group.runs.length !== 1 ? 's' : ''}}</span>
             </div>
 
             <!-- Active: progress bar -->
             @if (isGroupActive(group)) {
-              <div style="margin-bottom:8px;">
+              <div style="margin-bottom:6px;">
                 <div style="height:4px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:4px;">
                   @if (groupProgressPercent(group) > 0) {
                     <div style="height:100%; border-radius:100px; background:var(--accent-primary); transition:width 0.5s;"
@@ -116,26 +121,32 @@
               </div>
             }
 
-            <!-- Completed: pass bar -->
-            @if (!isGroupActive(group) && group.runs.length > 0) {
+            <!-- Completed: large pass rate + bar -->
+            @if (group.status === TestRunStatus.Completed) {
               @let rate = groupPassRate(group);
-              <div style="height:4px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-bottom:8px;">
+              @let totalPassed = groupTotalPassed(group);
+              @let totalCases = groupTotalCases(group);
+              <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px;">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:17px; font-weight:700; line-height:1;" [style.color]="passColor(rate)">{{rate}}%</span>
+                <span style="font-size:10.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">
+                  {{totalPassed}}/{{totalCases}}
+                </span>
+              </div>
+              <div style="height:4px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden;">
                 <div style="height:100%; border-radius:100px; transition:width 0.4s;"
                      [style.width]="rate + '%'"
                      [style.background]="passColor(rate)"></div>
               </div>
             }
 
-            <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--text-muted);">
-              <span>{{group.runs[0]?.testCases?.length ?? 0}} cases</span>
-              @if (isGroupActive(group)) {
-                <span style="color:var(--accent-hover); font-weight:600; font-family:'JetBrains Mono',monospace;">
-                  {{formatElapsed(group.createdAt)}}
-                </span>
-              } @else {
-                <span>{{formatRelative(group.createdAt)}}</span>
-              }
-            </div>
+            <!-- Other statuses (Failed, Cancelled) -->
+            @if (group.status === TestRunStatus.Failed || group.status === TestRunStatus.Cancelled) {
+              <span style="font-size:11px; font-weight:600; padding:2px 7px; border-radius:100px;"
+                    [style.color]="statusColor(group.status)"
+                    [style.background]="statusBg(group.status)">
+                {{statusLabel(group.status)}}
+              </span>
+            }
           </button>
         }
       </div>
@@ -191,10 +202,10 @@
                 @if (!isGroupActive(group) && group.suiteId) {
                   <button (click)="rerunGroup(group)"
                           [disabled]="rerunInProgress()"
-                          style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:var(--accent-subtle); color:var(--accent-hover); transition:opacity 0.15s;"
+                          style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600; background:linear-gradient(135deg,#8b5cf6,#6d28d9); color:#fff; box-shadow:0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15); transition:opacity 0.15s;"
                           [style.opacity]="rerunInProgress() ? '0.5' : '1'">
                     @if (rerunInProgress()) {
-                      <span style="width:11px; height:11px; border-radius:50%; border:2px solid rgba(201,148,74,0.25); border-top-color:var(--accent-primary); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+                      <span style="width:11px; height:11px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
                       Starting…
                     } @else {
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -230,25 +241,29 @@
               </div>
             }
 
-            <!-- Completed: aggregate stats -->
+            <!-- Completed: aggregate stats with sub-labels -->
             @if (group.status === TestRunStatus.Completed || group.status === TestRunStatus.Failed) {
               @let rate = groupPassRate(group);
               <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
                 <div style="border-radius:10px; padding:10px 12px;" [style.background]="passColor(rate) === 'var(--success)' ? 'var(--success-subtle)' : passColor(rate) === 'var(--danger)' ? 'var(--danger-subtle)' : 'var(--warn-subtle)'">
                   <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;" [style.color]="passColor(rate)">Avg pass rate</div>
-                  <div style="font-size:20px; font-weight:700;" [style.color]="passColor(rate)">{{rate}}%</div>
+                  <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em;" [style.color]="passColor(rate)">{{rate}}%</div>
+                  <div style="font-size:10px; margin-top:3px;" [style.color]="passColor(rate)" style="opacity:0.7">across endpoints</div>
                 </div>
                 <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
                   <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Endpoints</div>
-                  <div style="font-size:20px; font-weight:700;">{{group.runs.length}}</div>
+                  <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em;">{{group.runs.length}}</div>
+                  <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">run in parallel</div>
                 </div>
                 <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
                   <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Cases / run</div>
-                  <div style="font-size:20px; font-weight:700;">{{group.runs[0]?.totalCases ?? 0}}</div>
+                  <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em;">{{group.runs[0]?.totalCases ?? 0}}</div>
+                  <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">per endpoint</div>
                 </div>
                 <div style="background:var(--bg-card-2); border-radius:10px; padding:10px 12px;">
                   <div style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Duration</div>
-                  <div style="font-size:20px; font-weight:700; font-family:'JetBrains Mono',monospace;">{{formatDuration(groupDurationMs(group))}}</div>
+                  <div style="font-size:20px; font-weight:700; letter-spacing:-0.02em; font-family:'JetBrains Mono',monospace;">{{formatDuration(groupDurationMs(group))}}</div>
+                  <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">wall time</div>
                 </div>
               </div>
             }
@@ -301,149 +316,286 @@
               <div style="padding:12px 20px; border-bottom:1px solid var(--hairline); display:grid; grid-template-columns:repeat(5,1fr); gap:6px; flex-shrink:0;">
                 <div style="border-radius:8px; padding:8px 10px;" [style.background]="passColor(run.passRate) === 'var(--success)' ? 'var(--success-subtle)' : passColor(run.passRate) === 'var(--danger)' ? 'var(--danger-subtle)' : 'var(--warn-subtle)'">
                   <div style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;" [style.color]="passColor(run.passRate)">Pass rate</div>
-                  <div style="font-size:16px; font-weight:700;" [style.color]="passColor(run.passRate)">{{run.passRate}}%</div>
+                  <div style="font-size:16px; font-weight:700; letter-spacing:-0.02em;" [style.color]="passColor(run.passRate)">{{run.passRate}}%</div>
+                  <div style="font-size:9px; margin-top:2px; opacity:0.75;" [style.color]="passColor(run.passRate)">this endpoint</div>
                 </div>
                 <div style="background:var(--bg-card-2); border-radius:8px; padding:8px 10px;">
                   <div style="font-size:9px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;">Cases</div>
-                  <div style="font-size:16px; font-weight:700;">{{run.totalCases}}</div>
+                  <div style="font-size:16px; font-weight:700; letter-spacing:-0.02em;">{{run.totalCases}}</div>
+                  <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">total</div>
                 </div>
-                <div style="background:var(--success-subtle); border:1px solid rgba(61,170,111,0.18); border-radius:8px; padding:8px 10px;">
+                <div style="background:var(--success-subtle); border:1px solid rgba(16,185,129,0.18); border-radius:8px; padding:8px 10px;">
                   <div style="font-size:9px; color:var(--success); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;">Passed</div>
-                  <div style="font-size:16px; font-weight:700; color:var(--success);">{{run.passedCases}}</div>
+                  <div style="font-size:16px; font-weight:700; color:var(--success); letter-spacing:-0.02em;">{{run.passedCases}}</div>
+                  <div style="font-size:9px; color:var(--success); margin-top:2px; opacity:0.7;">cases</div>
                 </div>
-                <div style="background:var(--danger-subtle); border:1px solid rgba(217,85,85,0.18); border-radius:8px; padding:8px 10px;">
+                <div style="background:var(--danger-subtle); border:1px solid rgba(239,68,68,0.18); border-radius:8px; padding:8px 10px;">
                   <div style="font-size:9px; color:var(--danger); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;">Failed</div>
-                  <div style="font-size:16px; font-weight:700; color:var(--danger);">{{run.failedCases}}</div>
+                  <div style="font-size:16px; font-weight:700; color:var(--danger); letter-spacing:-0.02em;">{{run.failedCases}}</div>
+                  <div style="font-size:9px; color:var(--danger); margin-top:2px; opacity:0.7;">need attention</div>
                 </div>
                 <div style="background:var(--bg-card-2); border-radius:8px; padding:8px 10px;">
                   <div style="font-size:9px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px;">Duration</div>
-                  <div style="font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace;">{{formatDuration(run.durationMs)}}</div>
+                  <div style="font-size:16px; font-weight:700; letter-spacing:-0.02em; font-family:'JetBrains Mono',monospace;">{{formatDuration(run.durationMs)}}</div>
+                  <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">wall time</div>
                 </div>
               </div>
             }
 
-            <!-- Case results table -->
-            @if (run.testCases && run.testCases.length > 0) {
-              <div style="flex:1; overflow-y:auto;">
-
-                <!-- Column headers -->
-                <div style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:10px 20px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline); flex-shrink:0;">
-                  <span>Test case</span>
-                  <span>Progress</span>
-                  <span>Latency</span>
-                  <span>Result</span>
+            <!-- Results at a glance (minimap) — completed runs with cases -->
+            @if ((run.status === TestRunStatus.Completed || run.status === TestRunStatus.Failed) && run.testCases.length > 0) {
+              <div style="padding:14px 20px; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:12px; font-weight:600; color:var(--text-primary);">Results at a glance</span>
+                  <span style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">
+                    {{run.passedCases}} passed · {{run.failedCases}} failed
+                  </span>
                 </div>
+                <div style="height:7px; background:rgba(255,255,255,0.06); border-radius:100px; overflow:hidden; margin-bottom:10px;">
+                  <div style="height:100%; border-radius:100px; transition:width 0.5s ease;"
+                       [style.width]="(run.totalCases > 0 ? run.passedCases / run.totalCases * 100 : 0) + '%'"
+                       [style.background]="passColor(run.passRate)"></div>
+                </div>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                  @for (tc of run.testCases; track tc.id) {
+                    @let res = resultByCase(run, tc.id);
+                    @let cPass = res ? resultEvaluation(res) === Evaluation.Pass : null;
+                    @let isOpen = selectedCaseKey() === run.id + ':' + tc.id;
+                    <button (click)="res && selectCaseDrawer(run, tc.id)"
+                            [title]="tc.summary"
+                            class="case-dot-btn"
+                            style="width:20px; height:20px; border-radius:5px; flex-shrink:0; transition:transform 0.1s;"
+                            [style.background]="res ? (cPass ? 'rgba(16,185,129,0.22)' : 'rgba(239,68,68,0.2)') : 'rgba(255,255,255,0.05)'"
+                            [style.border]="res ? (isOpen ? '1.5px solid rgba(255,255,255,0.6)' : (cPass ? '1.5px solid rgba(16,185,129,0.5)' : '1.5px solid rgba(239,68,68,0.4)')) : '1.5px solid rgba(255,255,255,0.1)'"
+                            [style.cursor]="res ? 'pointer' : 'default'">
+                    </button>
+                  }
+                </div>
+              </div>
+            }
 
-                @for (tc of run.testCases; track tc.id) {
-                  @let res = resultByCase(run, tc.id);
-                  @let hasStarted = hasCaseStarted(run, tc.id);
-                  <div style="border-bottom:1px solid var(--hairline);">
+            <!-- Case results explorer -->
+            @if (run.testCases && run.testCases.length > 0) {
+              <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; min-height:0;">
 
-                    <!-- Main row -->
-                    <div class="tc-row"
-                         style="display:grid; grid-template-columns:2fr 1.4fr 0.7fr 0.7fr; padding:11px 20px; align-items:center; font-size:12px; transition:background 0.1s;"
-                         [style.cursor]="res ? 'pointer' : 'default'"
-                         (click)="res && toggleCase(run, tc.id)">
-
-                      <!-- Test case name -->
-                      <div style="display:flex; align-items:center; gap:7px; min-width:0; padding-right:8px;">
-                        @if (res) {
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                               style="flex-shrink:0; transition:transform 0.2s;"
-                               [style.transform]="isCaseExpanded(run, tc.id) ? 'rotate(90deg)' : 'none'">
-                            <polyline points="9 18 15 12 9 6"/>
-                          </svg>
-                        } @else {
-                          <span style="width:10px; height:10px; flex-shrink:0; display:inline-block;"></span>
-                        }
-                        <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
-                      </div>
-
-                      <!-- Progress column -->
-                      <div style="min-width:0; padding-right:8px;">
-                        @if (!res && isRunActive(run)) {
-                          @if (hasStarted) {
-                            @let steps = caseProgressSteps(run, tc.id);
-                            @let action = caseProgressAction(run, tc.id);
-                            <div style="display:flex; align-items:center; gap:6px; min-width:0;">
-                              <div style="display:flex; gap:2px; flex-shrink:0;">
-                                @for (step of steps; track $index) {
-                                  <div style="width:10px; height:3px; border-radius:100px; transition:background 0.3s;"
-                                       [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
-                                       [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'">
-                                  </div>
-                                }
-                              </div>
-                              <span style="font-size:11px; color:var(--accent-hover); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{action}}</span>
-                            </div>
-                          } @else {
-                            <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted);">
-                              <span style="width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.15); display:inline-block; flex-shrink:0;"></span>
-                              Waiting
-                            </span>
-                          }
-                        }
-                      </div>
-
-                      <!-- Latency -->
-                      <span style="font-family:'JetBrains Mono',monospace; font-size:11px;"
-                            [style.color]="(!res && hasStarted && isRunActive(run)) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
-                        @if (res) {
-                          {{formatLatency(res.durationMs)}}
-                        } @else if (!res && hasStarted && isRunActive(run)) {
-                          {{caseElapsed(run, tc.id)}}
-                        } @else {
-                          —
-                        }
+                <!-- Toolbar -->
+                <div style="padding:10px 16px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; flex-wrap:wrap;">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:12.5px; font-weight:700; color:var(--text-primary);">Test cases</span>
+                    @if (!isRunActive(run)) {
+                      <span style="font-size:11px; font-family:'JetBrains Mono',monospace;">
+                        <span style="color:var(--success);">{{run.passedCases}} passed</span>
+                        <span style="color:var(--text-muted);"> · </span>
+                        <span style="color:var(--danger);">{{run.failedCases}} failed</span>
                       </span>
-
-                      <!-- Result badge -->
-                      <span>
-                        @if (res) {
-                          @let eval = resultEvaluation(res);
-                          <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600;"
-                                [style.background]="evalBg(eval)"
-                                [style.color]="evalColor(eval)">
-                            @if (eval === Evaluation.Pass) {
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            } @else if (eval === Evaluation.Fail) {
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            }
-                            {{evalLabel(eval)}}
-                          </span>
-                        } @else if (!isRunActive(run)) {
-                          <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">
-                            Not run
-                          </span>
-                        }
-                      </span>
-                    </div>
-
-                    <!-- Accordion: per-evaluator breakdown -->
-                    @if (res && isCaseExpanded(run, tc.id)) {
-                      <div style="padding:0 20px 12px 37px; display:flex; flex-direction:column; gap:5px;">
-                        @for (ev of res.evaluations; track ev.evaluatorId) {
-                          <div style="display:flex; align-items:flex-start; gap:8px; padding:8px 12px; background:var(--bg-card-2); border-radius:8px; border:1px solid var(--hairline);">
-                            <span style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; flex-shrink:0; white-space:nowrap;"
-                                  [style.background]="evaluatorKindColor(ev.evaluatorKind) + '1a'"
-                                  [style.color]="evaluatorKindColor(ev.evaluatorKind)">
-                              {{ev.evaluatorName}}
-                            </span>
-                            <span style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; flex-shrink:0;"
-                                  [style.background]="scoreBg(ev.score)"
-                                  [style.color]="scoreColor(ev.score)">
-                              {{ev.score}}
-                            </span>
-                            @if (ev.reasoning) {
-                              <span style="font-size:11px; color:var(--text-secondary); line-height:1.55; flex:1; min-width:0;">{{ev.reasoning}}</span>
-                            }
-                          </div>
+                    }
+                  </div>
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    @if (!isRunActive(run)) {
+                      <!-- Filter chips -->
+                      <div style="display:flex; gap:2px; padding:2px; background:var(--bg-card-2); border-radius:7px;">
+                        @for (f of caseFilters; track f.id) {
+                          <button (click)="caseFilter.set(f.id)"
+                                  style="padding:4px 9px; border-radius:5px; font-size:10.5px; font-weight:600; transition:all 0.12s;"
+                                  [style.background]="caseFilter() === f.id ? 'var(--bg-primary)' : 'transparent'"
+                                  [style.color]="caseFilter() === f.id ? (f.id === 'passed' ? 'var(--success)' : f.id === 'failed' ? 'var(--danger)' : 'var(--text-primary)') : 'var(--text-muted)'"
+                                  [style.boxShadow]="caseFilter() === f.id ? 'var(--shadow-pill)' : 'none'">
+                            {{f.label}} {{f.id === 'all' ? run.testCases.length : f.id === 'passed' ? run.passedCases : run.failedCases}}
+                          </button>
                         }
                       </div>
                     }
+                    <!-- View toggle -->
+                    <div style="display:flex; gap:2px; padding:2px; background:var(--bg-card-2); border-radius:7px;">
+                      <button (click)="caseView.set('grid')" title="Grid view"
+                              style="width:26px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; transition:all 0.12s;"
+                              [style.background]="caseView() === 'grid' ? 'var(--bg-primary)' : 'transparent'"
+                              [style.color]="caseView() === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)'"
+                              [style.boxShadow]="caseView() === 'grid' ? 'var(--shadow-pill)' : 'none'">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                      </button>
+                      <button (click)="caseView.set('table')" title="Table view"
+                              style="width:26px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; transition:all 0.12s;"
+                              [style.background]="caseView() === 'table' ? 'var(--bg-primary)' : 'transparent'"
+                              [style.color]="caseView() === 'table' ? 'var(--text-primary)' : 'var(--text-muted)'"
+                              [style.boxShadow]="caseView() === 'table' ? 'var(--shadow-pill)' : 'none'">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
+                <!-- Grid view -->
+                @if (caseView() === 'grid') {
+                  <div style="padding:14px 16px; display:grid; grid-template-columns:repeat(auto-fill, minmax(175px, 1fr)); gap:8px;">
+                    @for (tc of filteredCases(run); track tc.id) {
+                      @let res = resultByCase(run, tc.id);
+                      @let hasStarted = hasCaseStarted(run, tc.id);
+                      @let isOpen = selectedCaseKey() === run.id + ':' + tc.id;
+
+                      @if (res) {
+                        @let ev = resultEvaluation(res);
+                        @let passC = ev === Evaluation.Pass ? 'var(--success)' : 'var(--danger)';
+                        @let score = compositeScore(res);
+                        <button class="case-card"
+                                (click)="selectCaseDrawer(run, tc.id)"
+                                style="position:relative; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:12px 13px; border-radius:12px; text-align:left; width:100%; min-height:110px; transition:all 0.12s;"
+                                [style.background]="isOpen ? 'var(--bg-card-2)' : 'var(--bg-card)'"
+                                [style.boxShadow]="isOpen ? ('0 0 0 1.5px ' + passC + ', 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 18px -8px ' + (ev === Evaluation.Pass ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)')) : 'var(--shadow-card)'">
+                          <span style="position:absolute; top:0; left:0; right:0; height:2px; border-radius:12px 12px 0 0;"
+                                [style.background]="passC"
+                                [style.opacity]="ev === Evaluation.Pass ? '0.55' : '0.85'"></span>
+                          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                              <span style="width:8px; height:8px; border-radius:50%; flex-shrink:0; box-shadow:0 0 5px currentColor;"
+                                    [style.background]="passC" [style.color]="passC"></span>
+                              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); font-weight:600;">{{tc.id.slice(0,8)}}</span>
+                            </span>
+                            <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-muted);">{{formatLatency(res.durationMs)}}</span>
+                          </div>
+                          <div style="font-size:12.5px; font-weight:600; line-height:1.35; color:var(--text-primary); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; flex:1;">
+                            {{tc.summary}}
+                          </div>
+                          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:auto;">
+                            @let pEv = res.evaluations[0];
+                            @if (pEv) {
+                              <span style="padding:2px 7px; border-radius:5px; font-size:10px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:75%;"
+                                    [style.background]="evaluatorKindColor(pEv.evaluatorKind) + '1a'"
+                                    [style.color]="evaluatorKindColor(pEv.evaluatorKind)"
+                                    [style.border]="'1px solid ' + evaluatorKindColor(pEv.evaluatorKind) + '30'">
+                                {{pEv.evaluatorName}}
+                              </span>
+                            }
+                            @if (res.evaluations.length > 1) {
+                              <span style="font-size:10px; color:var(--text-muted); flex-shrink:0;">+{{res.evaluations.length - 1}}</span>
+                            }
+                          </div>
+                          <div style="height:3px; background:rgba(255,255,255,0.05); border-radius:100px; overflow:hidden;">
+                            <div style="height:100%; border-radius:100px; transition:width 0.4s;"
+                                 [style.width]="(score * 100) + '%'"
+                                 [style.background]="passC"></div>
+                          </div>
+                        </button>
+                      } @else if (isRunActive(run) && hasStarted) {
+                        @let steps = caseProgressSteps(run, tc.id);
+                        @let action = caseProgressAction(run, tc.id);
+                        <div style="position:relative; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:12px 13px; border-radius:12px; background:var(--bg-card); box-shadow:var(--shadow-card); min-height:110px;">
+                          <span style="position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent-primary); opacity:0.4; animation:indeterminate-h 1.4s ease-in-out infinite;"></span>
+                          <div style="font-size:12.5px; font-weight:600; line-height:1.35; color:var(--text-primary); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                            {{tc.summary}}
+                          </div>
+                          <div style="margin-top:auto; display:flex; align-items:center; gap:6px; min-width:0;">
+                            <div style="display:flex; gap:2px; flex-shrink:0;">
+                              @for (step of steps; track $index) {
+                                <div style="width:10px; height:3px; border-radius:100px; transition:background 0.3s;"
+                                     [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
+                                     [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'"></div>
+                              }
+                            </div>
+                            <span style="font-size:10.5px; color:var(--accent-hover); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{action}}</span>
+                          </div>
+                        </div>
+                      } @else {
+                        <div style="display:flex; flex-direction:column; justify-content:space-between; padding:12px 13px; border-radius:12px; background:var(--bg-card); box-shadow:var(--shadow-card); min-height:110px; opacity:0.45;">
+                          <div style="font-size:12.5px; font-weight:600; line-height:1.35; color:var(--text-primary); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                            {{tc.summary}}
+                          </div>
+                          <span style="font-size:10.5px; color:var(--text-muted);">{{isRunActive(run) ? 'Waiting…' : 'Not run'}}</span>
+                        </div>
+                      }
+                    }
                   </div>
                 }
+
+                <!-- Table view (default for active runs) -->
+                @if (caseView() === 'table') {
+                  <div>
+                    <div style="display:grid; grid-template-columns:2fr 1.1fr 0.7fr 0.7fr 1.3fr; padding:10px 20px; font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--hairline);">
+                      <span>Test case</span>
+                      <span>{{isRunActive(run) ? 'Progress' : 'Evaluator'}}</span>
+                      <span>Latency</span>
+                      <span>Result</span>
+                      <span>Note</span>
+                    </div>
+                    @for (tc of filteredCases(run); track tc.id) {
+                      @let res = resultByCase(run, tc.id);
+                      @let hasStarted = hasCaseStarted(run, tc.id);
+                      @let isOpen = selectedCaseKey() === run.id + ':' + tc.id;
+                      <div class="tc-row"
+                           style="display:grid; grid-template-columns:2fr 1.1fr 0.7fr 0.7fr 1.3fr; padding:11px 20px; align-items:center; font-size:12px; transition:background 0.1s; border-bottom:1px solid var(--hairline);"
+                           [style.cursor]="res ? 'pointer' : 'default'"
+                           [style.background]="isOpen ? 'rgba(255,255,255,0.03)' : 'transparent'"
+                           (click)="res && selectCaseDrawer(run, tc.id)">
+                        <div style="display:flex; align-items:center; gap:7px; min-width:0; padding-right:8px;">
+                          @if (res) {
+                            <span style="width:8px; height:8px; border-radius:50%; flex-shrink:0;"
+                                  [style.background]="resultEvaluation(res) === Evaluation.Pass ? 'var(--success)' : 'var(--danger)'"></span>
+                          } @else {
+                            <span style="width:8px; height:8px; flex-shrink:0; display:inline-block;"></span>
+                          }
+                          <span style="font-weight:500; color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{tc.summary}}</span>
+                        </div>
+                        <div style="min-width:0; padding-right:8px;">
+                          @if (!res && isRunActive(run)) {
+                            @if (hasStarted) {
+                              @let steps = caseProgressSteps(run, tc.id);
+                              @let action = caseProgressAction(run, tc.id);
+                              <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                                <div style="display:flex; gap:2px; flex-shrink:0;">
+                                  @for (step of steps; track $index) {
+                                    <div style="width:10px; height:3px; border-radius:100px; transition:background 0.3s;"
+                                         [style.background]="step === 'pending' ? 'rgba(255,255,255,0.08)' : 'var(--accent-primary)'"
+                                         [style.animation]="step === 'active' ? 'stepPulse 1.2s ease-in-out infinite' : 'none'"></div>
+                                  }
+                                </div>
+                                <span style="font-size:11px; color:var(--accent-hover); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{action}}</span>
+                              </div>
+                            } @else {
+                              <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted);">
+                                <span style="width:5px; height:5px; border-radius:50%; background:rgba(255,255,255,0.15); display:inline-block; flex-shrink:0;"></span>
+                                Waiting
+                              </span>
+                            }
+                          } @else if (res) {
+                            @let pEv = res.evaluations[0];
+                            @if (pEv) {
+                              <span style="display:inline-flex; align-items:center; padding:2px 8px; border-radius:100px; font-size:10.5px; font-weight:600; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;"
+                                    [style.background]="evaluatorKindColor(pEv.evaluatorKind) + '1a'"
+                                    [style.color]="evaluatorKindColor(pEv.evaluatorKind)">
+                                {{pEv.evaluatorName}}
+                              </span>
+                            }
+                          }
+                        </div>
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:11px;"
+                              [style.color]="(!res && hasStarted && isRunActive(run)) ? 'var(--accent-hover)' : 'var(--text-secondary)'">
+                          {{res ? formatLatency(res.durationMs) : (!res && hasStarted && isRunActive(run)) ? caseElapsed(run, tc.id) : '—'}}
+                        </span>
+                        <span>
+                          @if (res) {
+                            @let eval = resultEvaluation(res);
+                            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600;"
+                                  [style.background]="evalBg(eval)" [style.color]="evalColor(eval)">
+                              @if (eval === Evaluation.Pass) {
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              } @else if (eval === Evaluation.Fail) {
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              }
+                              {{evalLabel(eval)}}
+                            </span>
+                          } @else if (!isRunActive(run)) {
+                            <span style="display:inline-flex; padding:2px 8px; border-radius:100px; font-size:11px; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-muted);">Not run</span>
+                          }
+                        </span>
+                        <span style="font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:4px;"
+                              [style.color]="res ? (resultEvaluation(res) === Evaluation.Pass ? 'var(--text-muted)' : 'rgba(252,165,165,0.85)') : 'var(--text-muted)'">
+                          {{res ? (primaryNote(res) || '—') : '—'}}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+
               </div>
             }
           }
@@ -453,6 +605,388 @@
     </div>
   }
 </div>
+
+<!-- Case detail drawer -->
+@if (drawerData(); as d) {
+  @if (d.tc) {
+    @let eval = d.res ? resultEvaluation(d.res) : null;
+    @let isPass = eval === Evaluation.Pass;
+    @let isFail = eval === Evaluation.Fail;
+    @let passC = isPass ? 'var(--success)' : isFail ? 'var(--danger)' : 'var(--text-muted)';
+    @let fx = fixture();
+    <div (click)="selectedCaseKey.set(null)"
+         style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:50; display:flex; justify-content:flex-end; animation:fadeIn 0.18s ease-out;">
+      <div (click)="$event.stopPropagation()"
+           style="width:min(820px, 94vw); height:calc(100vh - 20px); margin:10px 10px 10px 0; background:var(--bg-card); border-radius:18px; display:flex; flex-direction:column; overflow:hidden; animation:slideInRight 0.25s cubic-bezier(0.2,0.8,0.2,1);"
+           [style.boxShadow]="'var(--shadow-float), 0 0 0 1px ' + (isPass ? 'rgba(61,170,111,0.18)' : isFail ? 'rgba(217,85,85,0.22)' : 'rgba(255,255,255,0.06)')">
+
+        <!-- Sticky header -->
+        <div style="padding:14px 18px; border-bottom:1px solid var(--hairline); display:flex; align-items:center; gap:10px; flex-wrap:nowrap; flex-shrink:0; overflow:hidden;"
+             [style.background]="isPass ? 'linear-gradient(180deg,rgba(61,170,111,0.06),transparent)' : isFail ? 'linear-gradient(180deg,rgba(217,85,85,0.06),transparent)' : 'transparent'">
+          <button (click)="selectedCaseKey.set(null)" title="Close (Esc)"
+                  style="width:28px; height:28px; border-radius:7px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--text-muted); background:var(--bg-card-2);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          @if (eval) {
+            <span style="width:11px; height:11px; border-radius:50%; flex-shrink:0;"
+                  [style.background]="passC"
+                  [style.boxShadow]="'0 0 6px ' + passC"></span>
+          }
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); font-weight:600; flex-shrink:0;">{{d.tc.id.slice(0,8)}}</span>
+          <span style="font-size:14px; font-weight:700; letter-spacing:-0.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 0; min-width:0;">{{d.tc.summary}}</span>
+          @if (eval) {
+            <span style="padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; flex-shrink:0;"
+                  [style.background]="isPass ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
+                  [style.color]="passC">
+              {{isPass ? '✓ PASS' : '✗ FAIL'}}
+            </span>
+          }
+          <span style="display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:8px;">
+            <span style="font-size:10.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; margin-right:6px;">{{d.idx + 1}} / {{d.total}}</span>
+            <button (click)="prevCaseDrawer()" title="Previous (←)"
+                    style="width:26px; height:26px; border-radius:6px; background:var(--bg-card-2); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button (click)="nextCaseDrawer()" title="Next (→)"
+                    style="width:26px; height:26px; border-radius:6px; background:var(--bg-card-2); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </span>
+        </div>
+
+        <!-- Metrics band -->
+        @if (d.res) {
+          @let compScore = compositeScore(d.res);
+          @let scoreC = compScore >= 0.8 ? 'var(--success)' : compScore >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+          @let runtimeMs = fx ? fx.runtime.total : d.res.durationMs;
+          @let runtimeC = runtimeMs > 3000 ? 'var(--warn)' : 'var(--text-primary)';
+          @let totalCost = fx ? fx.endpoints.reduce((s, e) => s + e.costUsd, 0) : null;
+          @let totalTokens = fx ? fx.endpoints.reduce((s, e) => s + e.tokIn + e.tokOut, 0) : null;
+          @let passedEvCount = fx ? fx.evaluators.filter(e => e.pass).length : d.res.evaluations.filter(e => scoreIsPassing(e.score)).length;
+          @let totalEvCount = fx ? fx.evaluators.length : d.res.evaluations.length;
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px 18px; border-bottom:1px solid var(--hairline); flex-shrink:0;">
+            <div>
+              <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px;">Composite score</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:-0.01em;" [style.color]="scoreC">{{compScore.toFixed(2)}}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">{{passedEvCount}}/{{totalEvCount}} evaluators passed</div>
+            </div>
+            <div>
+              <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px;">Runtime</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:-0.01em;" [style.color]="runtimeC">{{formatLatency(runtimeMs)}}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">{{fx ? 'ttft ' + formatLatency(fx.runtime.ttft) : 'total'}}</div>
+            </div>
+            <div>
+              <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px;">Cost</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:-0.01em; color:var(--text-primary);">{{totalCost !== null ? ('$' + totalCost.toFixed(4)) : '—'}}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">{{fx ? (fx.endpoints.length + ' endpoint' + (fx.endpoints.length > 1 ? 's' : '')) : ''}}</div>
+            </div>
+            <div>
+              <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:3px;">Tokens</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:-0.01em; color:var(--text-primary);">{{totalTokens !== null ? totalTokens.toLocaleString() : '—'}}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px;">in + out</div>
+            </div>
+          </div>
+        }
+
+        <!-- Scrollable body -->
+        <div style="padding:14px 18px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1;">
+
+          @if (fx) {
+
+            <!-- 1. Test case input -->
+            <section>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 3h15M6 3v13a5 5 0 0 0 6 5 5 5 0 0 0 6-5V3"/><path d="M6 13h12"/></svg>
+                <span style="font-size:12px; font-weight:700;">Test case input</span>
+                <span style="font-size:10.5px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{fx.input.messages.length}} message{{fx.input.messages.length !== 1 ? 's' : ''}}</span>
+              </div>
+              <div style="background:var(--bg-card-2); border-radius:10px; padding:4px 0; box-shadow:0 1px 0 rgba(255,255,255,0.02) inset;">
+                @for (m of fx.input.messages; track $index) {
+                  @let roleColor = m.role === 'system' ? '#c2836b' : m.role === 'user' ? '#6b9eaa' : m.role === 'tool' ? '#3daa6f' : '#c9944a';
+                  <div style="padding:8px 12px; display:grid; grid-template-columns:70px 1fr; gap:12px; align-items:flex-start;"
+                       [style.borderTop]="$index > 0 ? '1px solid var(--hairline)' : 'none'">
+                    <span style="font-size:10px; font-weight:700; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.06em; padding-top:2px;"
+                          [style.color]="roleColor">{{m.role}}{{m.name ? ' · ' + m.name : ''}}</span>
+                    <span style="font-size:12px; line-height:1.55; color:var(--text-secondary);"
+                          [style.fontFamily]="m.role === 'tool' ? 'JetBrains Mono, monospace' : 'inherit'">{{m.content}}</span>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <!-- 2. Expected vs actual -->
+            <section>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                <span style="font-size:12px; font-weight:700;">Expected vs actual output</span>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <!-- Expected OutputBlock -->
+                <div style="background:var(--bg-card-2); border-radius:10px; overflow:hidden; box-shadow:0 1px 0 rgba(255,255,255,0.02) inset;">
+                  <div style="padding:7px 11px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline);">
+                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="width:6px; height:6px; border-radius:50%; background:#6b9eaa;"></span>
+                      <span style="font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted);">Expected</span>
+                    </span>
+                    <span style="font-size:9.5px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); text-transform:uppercase;">{{fx.expected.kind}}</span>
+                  </div>
+                  <div style="padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-secondary);"
+                       [style.fontFamily]="fx.expected.kind === 'tool_call' ? 'JetBrains Mono, monospace' : 'inherit'">
+                    @if (fx.expected.kind === 'tool_call') {
+                      <span style="color:#6b9eaa;">{{fx.expected.name}}</span><span style="color:var(--text-muted);">(</span>
+                      <pre style="margin:4px 0 0 12px; font-size:11.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.expected.arguments | json}}</pre>
+                      <span style="color:var(--text-muted);">)</span>
+                    } @else {
+                      {{fx.expected.content || '—'}}
+                      @if (fx.expected.tool) {
+                        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--hairline); font-family:'JetBrains Mono',monospace; font-size:11px;">
+                          <span style="color:var(--text-muted);">+ tool: </span>
+                          <span style="color:#6b9eaa;">{{fx.expected.tool.name}}</span>
+                          <span style="color:var(--text-secondary);">({{fx.expected.tool.arguments | json}})</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+                <!-- Actual OutputBlock -->
+                <div style="background:var(--bg-card-2); border-radius:10px; overflow:hidden; box-shadow:0 1px 0 rgba(255,255,255,0.02) inset;">
+                  <div style="padding:7px 11px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline);">
+                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="width:6px; height:6px; border-radius:50%;" [style.background]="passC"></span>
+                      <span style="font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted);">{{isPass ? 'Actual ✓' : 'Actual ✗'}}</span>
+                    </span>
+                    <span style="font-size:9.5px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); text-transform:uppercase;">{{fx.actual.kind}}</span>
+                  </div>
+                  <div style="padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-primary);"
+                       [style.fontFamily]="fx.actual.kind === 'tool_call' ? 'JetBrains Mono, monospace' : 'inherit'">
+                    @if (fx.actual.kind === 'tool_call') {
+                      <span style="color:#6b9eaa;">{{fx.actual.name}}</span><span style="color:var(--text-muted);">(</span>
+                      <pre style="margin:4px 0 0 12px; font-size:11.5px; color:var(--text-secondary); white-space:pre-wrap; word-break:break-word; font-family:inherit;">{{fx.actual.arguments | json}}</pre>
+                      <span style="color:var(--text-muted);">)</span>
+                    } @else {
+                      {{fx.actual.content || '—'}}
+                      @if (fx.actual.tool) {
+                        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--hairline); font-family:'JetBrains Mono',monospace; font-size:11px;">
+                          <span style="color:var(--text-muted);">+ tool: </span>
+                          <span style="color:#6b9eaa;">{{fx.actual.tool.name}}</span>
+                          <span style="color:var(--text-secondary);">({{fx.actual.tool.arguments | json}})</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 3. Evaluator results (with breakdown grid) -->
+            <section>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14M5 7l-3 7c0 2 1.3 3 3 3s3-1 3-3l-3-7zM19 7l-3 7c0 2 1.3 3 3 3s3-1 3-3l-3-7zM12 6l5 1M12 6 7 7"/></svg>
+                <span style="font-size:12px; font-weight:700;">Evaluator results</span>
+                <span style="font-size:10.5px; color:var(--text-muted);">{{fx.evaluators.length}} evaluator{{fx.evaluators.length !== 1 ? 's' : ''}} configured</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                @for (ev of fx.evaluators; track ev.evaluatorId) {
+                  @let evScoreC = ev.score >= 0.8 ? 'var(--success)' : ev.score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+                  <div style="background:var(--bg-card-2); border-radius:10px; padding:12px 14px;"
+                       [style.borderLeft]="'3px solid ' + ev.color">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; flex:1;">
+                        <span style="padding:2px 8px; border-radius:5px; font-size:11px; font-weight:700; flex-shrink:0;"
+                              [style.background]="ev.color + '20'"
+                              [style.color]="ev.color"
+                              [style.border]="'1px solid ' + ev.color + '40'">{{ev.evaluatorName}}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">{{ev.desc}}</span>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700;" [style.color]="evScoreC">{{ev.score.toFixed(2)}}</span>
+                        <span style="padding:2px 7px; border-radius:5px; font-size:10px; font-weight:700;"
+                              [style.background]="ev.pass ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
+                              [style.color]="ev.pass ? 'var(--success)' : 'var(--danger)'">{{ev.pass ? 'PASS' : 'FAIL'}}</span>
+                      </div>
+                    </div>
+                    @if (ev.breakdown.length > 0) {
+                      <div style="display:grid; grid-template-columns:auto 1fr auto; gap:4px 12px; font-size:11px; margin-bottom:8px;">
+                        @for (b of ev.breakdown; track $index) {
+                          <span style="color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{b.k}}</span>
+                          <span style="color:var(--text-secondary); font-family:'JetBrains Mono',monospace; overflow:hidden; text-overflow:ellipsis;">{{b.v}}</span>
+                          <span style="font-family:'JetBrains Mono',monospace; font-weight:700;" [style.color]="b.match ? 'var(--success)' : 'var(--danger)'">{{b.match ? '✓' : '✗'}}</span>
+                        }
+                      </div>
+                    }
+                    <div style="font-size:11.5px; line-height:1.55; padding:7px 10px; background:rgba(0,0,0,0.18); border-radius:7px;"
+                         [style.color]="ev.pass ? 'var(--text-secondary)' : '#e88a8a'">{{ev.note}}</div>
+                  </div>
+                }
+              </div>
+            </section>
+
+            <!-- 4 & 5. Runtime + Cost side by side -->
+            <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:14px;">
+
+              <!-- 4. Runtime breakdown -->
+              <section>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span style="font-size:12px; font-weight:700;">Runtime breakdown</span>
+                </div>
+                <!-- Stacked bar -->
+                <div style="display:flex; height:10px; border-radius:6px; overflow:hidden; margin-bottom:10px; box-shadow:inset 0 1px 0 rgba(0,0,0,0.2);">
+                  <div [style.width]="(fx.runtime.ttft / fx.runtime.total * 100) + '%'" style="background:#6b9eaa;" [title]="'Time to first token: ' + fx.runtime.ttft + 'ms'"></div>
+                  <div [style.width]="(fx.runtime.gen / fx.runtime.total * 100) + '%'" style="background:#c9944a;" [title]="'Generation: ' + fx.runtime.gen + 'ms'"></div>
+                  <div [style.width]="(fx.runtime.tools / fx.runtime.total * 100) + '%'" style="background:#3daa6f;" [title]="'Tool calls: ' + fx.runtime.tools + 'ms'"></div>
+                  @if (fx.runtime.judge) {
+                    <div [style.width]="(fx.runtime.judge / fx.runtime.total * 100) + '%'" style="background:#c2836b;" [title]="'LLM judge eval: ' + fx.runtime.judge + 'ms'"></div>
+                  }
+                </div>
+                <!-- Chips -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px,1fr)); gap:8px;">
+                  <div style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; border-left:2px solid #6b9eaa;">
+                    <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Time to first token</div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#6b9eaa; margin-top:2px;">{{formatLatency(fx.runtime.ttft)}}</div>
+                    <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{Math.round(fx.runtime.ttft / fx.runtime.total * 100)}}%</div>
+                  </div>
+                  <div style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; border-left:2px solid #c9944a;">
+                    <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Generation</div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#c9944a; margin-top:2px;">{{formatLatency(fx.runtime.gen)}}</div>
+                    <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{Math.round(fx.runtime.gen / fx.runtime.total * 100)}}%</div>
+                  </div>
+                  <div style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; border-left:2px solid #3daa6f;">
+                    <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Tool calls</div>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#3daa6f; margin-top:2px;">{{formatLatency(fx.runtime.tools)}}</div>
+                    <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{Math.round(fx.runtime.tools / fx.runtime.total * 100)}}%</div>
+                  </div>
+                  @if (fx.runtime.judge) {
+                    <div style="padding:8px 10px; background:var(--bg-card-2); border-radius:8px; border-left:2px solid #c2836b;">
+                      <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">LLM judge eval</div>
+                      <div style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:#c2836b; margin-top:2px;">{{formatLatency(fx.runtime.judge)}}</div>
+                      <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{Math.round(fx.runtime.judge / fx.runtime.total * 100)}}%</div>
+                    </div>
+                  }
+                </div>
+              </section>
+
+              <!-- 5. Cost by endpoint -->
+              <section>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <span style="font-size:12px; font-weight:700;">Cost by endpoint</span>
+                </div>
+                @let epTotal = fx.endpoints.reduce((s, e) => s + e.costUsd, 0);
+                @let epTokIn = fx.endpoints.reduce((s, e) => s + e.tokIn, 0);
+                @let epTokOut = fx.endpoints.reduce((s, e) => s + e.tokOut, 0);
+                <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:10px;">
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; letter-spacing:-0.02em;">${{epTotal.toFixed(5)}}</span>
+                  <span style="font-size:11px; color:var(--text-muted);">across {{fx.endpoints.length}} endpoint{{fx.endpoints.length > 1 ? 's' : ''}} · {{(epTokIn/1000).toFixed(1)}}k in / {{(epTokOut/1000).toFixed(1)}}k out</span>
+                </div>
+                <!-- Proportional bar -->
+                <div style="display:flex; height:6px; border-radius:100px; overflow:hidden; margin-bottom:10px; background:rgba(255,255,255,0.05);">
+                  @for (ep of fx.endpoints; track ep.id) {
+                    <div [style.width]="(ep.costUsd / epTotal * 100) + '%'"
+                         [style.background]="ep.color"
+                         [title]="ep.label + ': $' + ep.costUsd.toFixed(5)"></div>
+                  }
+                </div>
+                <!-- Endpoint rows -->
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                  @for (ep of fx.endpoints; track ep.id) {
+                    @let epPct = ep.costUsd / epTotal * 100;
+                    <div style="display:grid; grid-template-columns:1.6fr 1fr 0.9fr 0.9fr; gap:10px; align-items:center; padding:8px 10px; background:var(--bg-card-2); border-radius:8px;"
+                         [style.borderLeft]="'2px solid ' + ep.color">
+                      <div>
+                        <div style="font-size:12px; font-weight:600;" [style.color]="ep.color">{{ep.label}}</div>
+                        <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{ep.region}} · ${{ep.pricingIn}}/M in · ${{ep.pricingOut}}/M out</div>
+                      </div>
+                      <div>
+                        <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Tokens</div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-secondary);">{{ep.tokIn.toLocaleString()}} <span style="color:var(--text-muted);">↗</span> {{ep.tokOut.toLocaleString()}}</div>
+                      </div>
+                      <div>
+                        <div style="font-size:9.5px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Latency</div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-secondary);">{{formatLatency(ep.latency)}} · {{ep.calls}}×</div>
+                      </div>
+                      <div style="text-align:right;">
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700;" [style.color]="ep.color">${{ep.costUsd.toFixed(5)}}</div>
+                        <div style="font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">{{epPct.toFixed(0)}}%</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            </div>
+
+          } @else if (fixtureLoading()) {
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:10px; color:var(--text-muted);">
+              <span style="width:14px; height:14px; border-radius:50%; border:2px solid rgba(255,255,255,0.15); border-top-color:var(--text-muted); animation:spin 0.7s linear infinite; display:block; flex-shrink:0;"></span>
+              Loading case details…
+            </div>
+          } @else if (d.res) {
+            <!-- Fallback: evaluator results from d.res when fixture unavailable -->
+            @if (d.res.actualResponse) {
+              <section>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                  <span style="font-size:12px; font-weight:700;">Actual output</span>
+                </div>
+                <div style="background:var(--bg-card-2); border-radius:10px; overflow:hidden; box-shadow:0 1px 0 rgba(255,255,255,0.02) inset;">
+                  <div style="padding:7px 11px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline);">
+                    <span style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="width:6px; height:6px; border-radius:50%;" [style.background]="passC"></span>
+                      <span style="font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted);">{{isPass ? 'Actual ✓' : 'Actual ✗'}}</span>
+                    </span>
+                    <span style="font-size:9.5px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); text-transform:uppercase;">message</span>
+                  </div>
+                  <div style="padding:10px 12px; font-size:12px; line-height:1.55; color:var(--text-primary); white-space:pre-wrap; word-break:break-word;">{{d.res.actualResponse}}</div>
+                </div>
+              </section>
+            }
+            <section>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 21h14M5 7l-3 7c0 2 1.3 3 3 3s3-1 3-3l-3-7zM19 7l-3 7c0 2 1.3 3 3 3s3-1 3-3l-3-7zM12 6l5 1M12 6 7 7"/></svg>
+                <span style="font-size:12px; font-weight:700;">Evaluator results</span>
+                <span style="font-size:10.5px; color:var(--text-muted);">{{d.res.evaluations.length}} evaluator{{d.res.evaluations.length !== 1 ? 's' : ''}} configured</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                @for (ev of d.res.evaluations; track ev.evaluatorId) {
+                  @let evColor = evaluatorKindColor(ev.evaluatorKind);
+                  @let evNum = scoreToFloat(ev.score);
+                  @let evNumC = evNum >= 0.8 ? 'var(--success)' : evNum >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+                  @let evPass = scoreIsPassing(ev.score);
+                  <div style="background:var(--bg-card-2); border-radius:10px; padding:12px 14px;"
+                       [style.borderLeft]="'3px solid ' + evColor">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; flex:1;">
+                        <span style="padding:2px 8px; border-radius:5px; font-size:11px; font-weight:700; flex-shrink:0;"
+                              [style.background]="evColor + '20'"
+                              [style.color]="evColor"
+                              [style.border]="'1px solid ' + evColor + '40'">{{ev.evaluatorName}}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">{{evaluatorKindDesc(ev.evaluatorKind)}}</span>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700;" [style.color]="evNumC">{{evNum.toFixed(2)}}</span>
+                        <span style="padding:2px 7px; border-radius:5px; font-size:10px; font-weight:700;"
+                              [style.background]="evPass ? 'var(--success-subtle)' : 'var(--danger-subtle)'"
+                              [style.color]="evPass ? 'var(--success)' : 'var(--danger)'">{{evPass ? 'PASS' : 'FAIL'}}</span>
+                      </div>
+                    </div>
+                    @if (ev.reasoning) {
+                      <div style="font-size:11.5px; line-height:1.55; padding:7px 10px; background:rgba(0,0,0,0.18); border-radius:7px;"
+                           [style.color]="evPass ? 'var(--text-secondary)' : '#e88a8a'">{{ev.reasoning}}</div>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          } @else {
+            <div style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:13px;">
+              This case has not run yet.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+}
 
 @if (deleteTarget()) {
   <div (click)="closeDeleteModal()" style="position:fixed; inset:0; background:var(--modal-backdrop); backdrop-filter:var(--modal-blur); z-index:100; display:flex; align-items:center; justify-content:center;">
@@ -505,6 +1039,20 @@
   0% { transform: translateX(-100%); }
   100% { transform: translateX(350%); }
 }
+@keyframes indeterminate-h {
+  0% { transform: scaleX(0); transform-origin: left; }
+  50% { transform: scaleX(1); transform-origin: left; }
+  51% { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
@@ -520,6 +1068,12 @@
   opacity: 1 !important;
 }
 .tc-row:hover {
-  background: rgba(201,148,74,0.07);
+  background: rgba(139,92,246,0.05);
+}
+.case-dot-btn:hover {
+  transform: scale(1.25);
+}
+.case-card:hover {
+  filter: brightness(1.05);
 }
 </style>

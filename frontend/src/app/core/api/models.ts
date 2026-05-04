@@ -221,6 +221,74 @@ export interface TestRunDto {
   updatedAt: string;
 }
 
+export interface TestCaseMessageFixtureDto {
+  role: string;
+  content: string;
+  name?: string | null;
+}
+
+export interface ToolCallInfoDto {
+  name: string;
+  arguments: unknown;
+}
+
+export interface OutputValueDto {
+  kind: 'message' | 'tool_call';
+  content?: string | null;
+  tool?: ToolCallInfoDto | null;
+  name?: string | null;
+  arguments?: unknown;
+}
+
+export interface BreakdownItemDto {
+  k: string;
+  v: string;
+  match: boolean;
+}
+
+export interface EvaluatorFixtureResultDto {
+  evaluatorId: string;
+  evaluatorKind: string;
+  evaluatorName: string;
+  color: string;
+  desc: string;
+  score: number;
+  pass: boolean;
+  breakdown: BreakdownItemDto[];
+  note: string;
+}
+
+export interface RuntimeBreakdownDto {
+  total: number;
+  ttft: number;
+  gen: number;
+  tools: number;
+  judge?: number | null;
+}
+
+export interface EndpointUsageDto {
+  id: string;
+  label: string;
+  color: string;
+  region: string;
+  pricingIn: number;
+  pricingOut: number;
+  tokIn: number;
+  tokOut: number;
+  calls: number;
+  latency: number;
+  costUsd: number;
+}
+
+export interface TestCaseFixtureDto {
+  input: { messages: TestCaseMessageFixtureDto[] };
+  expected: OutputValueDto;
+  actual: OutputValueDto;
+  evaluators: EvaluatorFixtureResultDto[];
+  runtime: RuntimeBreakdownDto;
+  endpoints: EndpointUsageDto[];
+}
+
 export interface AgentCallFilter {
   projectId?: string;
   agentId?: string;
