@@ -7,7 +7,7 @@ namespace Trsr.Domain.TestRun;
 /// <summary>
 /// Represents an execution of a test suite against a single endpoint, belonging to a test run group.
 /// </summary>
-public interface ITestRun : IDomainEntity
+public interface ITestRun : IDomainEntity<ITestRun>
 {
     /// <summary>The group this run belongs to, which owns the suite and name.</summary>
     ITestRunGroup Group { get; }

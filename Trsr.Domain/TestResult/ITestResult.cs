@@ -7,7 +7,7 @@ namespace Trsr.Domain.TestResult;
 /// <summary>
 /// Records the outcome of running a single <see cref="ITestCase"/>, including the actual response and evaluation verdict.
 /// </summary>
-public interface ITestResult : IDomainEntity
+public interface ITestResult : IDomainEntity<ITestResult>
 {
     /// <summary>The test case that was executed.</summary>
     ITestCase TestCase { get; }

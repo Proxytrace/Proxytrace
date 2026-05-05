@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Streaming;
+using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -26,6 +27,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestRunGroupRepository testRunGroupRepository;
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
+    private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> cancellationTokens = new();
 
@@ -44,6 +46,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestRunGroupRepository testRunGroupRepository,
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
+        IAsyncLock asyncLock,
         ILogger<TestRunnerService> logger)
     {
         this.createTestResult = createTestResult;
@@ -53,6 +56,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.testRunGroupRepository = testRunGroupRepository;
         this.testResultRepository = testResultRepository;
         this.broadcaster = broadcaster;
+        this.asyncLock = asyncLock;
         this.logger = logger;
     }
 
@@ -152,45 +156,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             await EnsureGroupRunningAsync(testRun.Group.Id, cancellationToken);
 
             var suite = testRun.Group.Suite;
-            var groupId = testRun.Group.Id;
-            foreach (ITestCase testCase in suite.TestCases)
-            {
-                broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, groupId, testCase.Id));
-
-                var stopwatch = Stopwatch.StartNew();
-                AssistantMessage response = await suite.Agent.CompleteAsync(
-                    testCase.Input,
-                    testRun.Endpoint,
-                    cancellationToken);
-                TimeSpan elapsed = stopwatch.Elapsed;
-
-                broadcaster.Publish(new InferenceDoneEvent(testRun.Id, groupId, testCase.Id));
-
-                var testResult = createTestResult(testCase, response, [], elapsed);
-                await testResultRepository.AddAsync(testResult, cancellationToken);
-
-                foreach (IEvaluator evaluator in suite.Evaluators)
-                {
-                    IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
-                    if (evaluation is null)
-                        continue;
-                    testResult = await testResult.AddEvaluationAsync(evaluation, cancellationToken);
-                    broadcaster.Publish(new EvaluationArrivedEvent(
-                        testRun.Id,
-                        groupId,
-                        testCase.Id,
-                        new EvaluationEventData(
-                            evaluator.Id,
-                            evaluator.Kind,
-                            TestResultArrivedEvent.GetEvaluatorName(evaluator),
-                            evaluation.Score,
-                            evaluation.Reasoning)));
-                }
-
-                testRun = await testRun.SetTestResult(testResult, cancellationToken);
-                broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
-            }
-
+            var testCaseTasks = suite.TestCases
+                .Select(testCase => RunTestCase(testCase, testRun, cancellationToken));
+            
+            await Task.WhenAll(testCaseTasks);
             broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
             await UpdateGroupStatusOnRunCompleteAsync(testRun.Group.Id, cancellationToken);
             return testRun;
@@ -199,6 +168,64 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         {
             cancellationTokens.TryRemove(testRun.Id, out _);
         }
+    }
+
+    private async Task RunTestCase(
+        ITestCase testCase, 
+        ITestRun testRun, 
+        CancellationToken cancellationToken)
+    {
+        broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
+
+        var stopwatch = Stopwatch.StartNew();
+        AssistantMessage response = await testRun.Group.Suite.Agent.CompleteAsync(
+            testCase.Input,
+            testRun.Endpoint,
+            cancellationToken);
+        TimeSpan elapsed = stopwatch.Elapsed;
+
+        broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
+
+        var testResult = createTestResult(testCase, response, [], elapsed);
+        await testResultRepository.AddAsync(testResult, cancellationToken);
+
+        var run = testRun;
+        var evaluatorTasks = testRun.Group.Suite.Evaluators
+            .Select(evaluator => RunEvaluator(evaluator, testResult, run, cancellationToken));
+        
+        await Task.WhenAll(evaluatorTasks);
+        using  var sync = asyncLock.LockAsync(testRun.Id, cancellationToken);
+        testRun = await testRun.ReloadAsync(cancellationToken);
+        await testRun.SetTestResult(testResult, cancellationToken);
+        
+        broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
+    }
+
+    private async Task RunEvaluator(
+        IEvaluator evaluator, 
+        ITestResult testResult,
+        ITestRun testRun,
+        CancellationToken cancellationToken)
+    {
+        IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+        if (evaluation is null)
+        {
+            return;
+        }
+
+        using var sync = asyncLock.LockAsync(testResult.Id, cancellationToken);
+        testResult = await testResult.ReloadAsync(cancellationToken);
+        await testResult.AddEvaluationAsync(evaluation, cancellationToken);
+        broadcaster.Publish(new EvaluationArrivedEvent(
+            testRun.Id,
+            testRun.Group.Id,
+            testResult.TestCase.Id,
+            new EvaluationEventData(
+                evaluator.Id,
+                evaluator.Kind,
+                TestResultArrivedEvent.GetEvaluatorName(evaluator),
+                evaluation.Score,
+                evaluation.Reasoning)));
     }
 
     private async Task EnsureGroupRunningAsync(Guid groupId, CancellationToken cancellationToken)
