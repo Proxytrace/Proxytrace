@@ -12,6 +12,7 @@ import { fmtDate } from '../../lib/format';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { Avatar } from '../../components/ui/Avatar';
 
 const PROVIDER_KIND_OPTIONS = [
   { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
@@ -196,9 +197,7 @@ export default function Providers() {
               }}
             >
               <div className="flex items-center gap-[10px]">
-                <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 text-[13px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${providerColor(p.name)}cc, ${providerColor(p.name)}88)` }}>
-                  {p.name[0]}
-                </div>
+                <Avatar initials={p.name[0]} color={providerColor(p.name)} className="w-[34px] h-[34px] rounded-[10px] text-[13px]" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-[6px]">
                     <div className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
@@ -218,9 +217,7 @@ export default function Providers() {
             {/* Provider header */}
             <div className="p-[18px_20px] border-b border-hairline shrink-0">
               <div className="flex items-start gap-[14px]">
-                <div className="w-11 h-11 rounded-[13px] flex items-center justify-center shrink-0 text-[18px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${providerColor(selected.name)}cc, ${providerColor(selected.name)}88)` }}>
-                  {selected.name[0]}
-                </div>
+                <Avatar initials={selected.name[0]} color={providerColor(selected.name)} className="w-11 h-11 rounded-[13px] text-[18px]" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-[10px] mb-1">
                     <h2 className="text-[18px] font-bold m-0">{selected.name}</h2>

@@ -4,21 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 5. Extract `<Avatar>` Component
-
-**Scope:** `frontend-react/src/components/ui/` (new), `Shell.tsx`, `Agents.tsx`, `Providers.tsx`
-**Priority:** P2
-
-A gradient circle with initials appears 15+ times:
-`style={{ background: \`linear-gradient(135deg, \${color}cc, \${color}88)\` }}`.
-No shared component exists.
-
-**Approach:**
-- Create `src/components/ui/Avatar.tsx` accepting `initials`, `color`, optional `size`
-- Replace all occurrences in Shell, Agents, and Providers
-
----
-
 ## 6. Standardize EmptyState Usage
 
 **Scope:** `frontend-react/src/components/ui/EmptyState.tsx` (exists), 6 feature files

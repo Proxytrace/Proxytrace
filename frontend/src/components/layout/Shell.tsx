@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NavItem } from './NavItem';
+import { Avatar } from '../ui/Avatar';
 import { checkHealth } from '../../api/health';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
@@ -105,10 +106,7 @@ export function Shell() {
           <div
             className={`flex items-center gap-[10px] cursor-pointer rounded-lg p-1 ${collapsed ? 'justify-center' : 'justify-start'}`}
           >
-            <div
-              style={{ background: 'linear-gradient(135deg, #6b9eaa, #4a7a88)' }}
-              className="w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-white font-semibold text-xs"
-            >DP</div>
+            <Avatar initials="DP" color="#6b9eaa" className="w-7 h-7 rounded-md text-xs font-semibold" />
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold truncate">Default Project</div>
@@ -184,10 +182,7 @@ export function Shell() {
             New Test Suite
           </button>
 
-          <div
-            style={{ background: 'linear-gradient(135deg, #c9944a, #d4915c)' }}
-            className="w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center text-[11px] font-semibold text-white"
-          >JK</div>
+          <Avatar initials="JK" color="#c9944a" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
         </header>
 
         {/* Page content */}
