@@ -85,11 +85,13 @@ export default function Providers() {
       setShowNewProvider(false);
       setSelectedId(p.id);
     },
+    onError: (err) => toast((err as Error).message || 'Failed to create provider', 'error'),
   });
 
   const updateKind = useMutation({
     mutationFn: () => providersApi.update(selected!.id, { name: selected!.name, endpoint: selected!.endpoint, upstreamApiKey: selected!.upstreamApiKey, kind: editKindValue }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }); setEditingKind(false); },
+    onError: (err) => toast((err as Error).message || 'Failed to update provider', 'error'),
   });
 
   const delProvider = useMutation({
@@ -100,6 +102,7 @@ export default function Providers() {
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteProvider(false);
     },
+    onError: (err) => toast((err as Error).message || 'Failed to delete provider', 'error'),
   });
 
   const createModel = useMutation({
@@ -109,6 +112,7 @@ export default function Providers() {
       outputTokenCost: newModel.outputTokenCost ? parseFloat(newModel.outputTokenCost) : null,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
+    onError: (err) => toast((err as Error).message || 'Failed to create model', 'error'),
   });
 
   const updatePricing = useMutation({
@@ -117,16 +121,19 @@ export default function Providers() {
       outputTokenCost: editPricing.outputTokenCost ? parseFloat(editPricing.outputTokenCost) : null,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setEditingModel(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to update pricing', 'error'),
   });
 
   const createKey = useMutation({
     mutationFn: () => providersApi.createKey(selectedId!, { name: newKey.name, projectId: newKey.projectId }),
     onSuccess: (k) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setShowNewKey(false); setNewlyCreatedKey(k); },
+    onError: (err) => toast((err as Error).message || 'Failed to create API key', 'error'),
   });
 
   const delKey = useMutation({
     mutationFn: () => providersApi.deleteKey(selectedId!, deleteKey!.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setDeleteKey(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to delete API key', 'error'),
   });
 
   function selectProvider(p: ProviderDto) {

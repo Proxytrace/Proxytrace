@@ -6,6 +6,7 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentDto, ToolSpecDto } from '../../api/models';
 import { TrashIcon, ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
+import { useToast } from '../../components/ui/Toast';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
 
@@ -148,6 +149,7 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
 
 export default function Agents() {
   const qc = useQueryClient();
+  const { show: toast } = useToast();
   const [searchParams] = useSearchParams();
   const preselect = searchParams.get('id');
 
@@ -170,6 +172,7 @@ export default function Agents() {
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteOpen(false);
     },
+    onError: (err) => toast((err as Error).message || 'Failed to delete agent', 'error'),
   });
 
   return (

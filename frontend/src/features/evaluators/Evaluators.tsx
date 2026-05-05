@@ -6,6 +6,7 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { FilterTabs } from '../../components/ui/FilterTabs';
 import { Modal } from '../../components/overlays/Modal';
+import { useToast } from '../../components/ui/Toast';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import { fmtDate } from '../../lib/format';
 import { EVALUATOR_KIND_COLOR } from '../../lib/colors';
@@ -16,6 +17,7 @@ type Filter = 'all' | 'llm' | 'rule' | 'numeric';
 
 export default function Evaluators() {
   const qc = useQueryClient();
+  const { show: toast } = useToast();
   const [typeFilter, setTypeFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -59,6 +61,7 @@ export default function Evaluators() {
       return evaluatorsApi.create(payload);
     },
     onSuccess: (e) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setSelectedId(e.id); setCreateOpen(false); setPickedKind(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to create evaluator', 'error'),
   });
 
   const updateEval = useMutation({
@@ -72,6 +75,7 @@ export default function Evaluators() {
       return evaluatorsApi.update(ev.id, payload);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setEditOpen(false); setEditTargetId(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to update evaluator', 'error'),
   });
 
   const deleteEval = useMutation({
@@ -81,6 +85,7 @@ export default function Evaluators() {
       if (selectedId === deleteTargetId) setSelectedId(null);
       setDeleteTargetId(null);
     },
+    onError: (err) => toast((err as Error).message || 'Failed to delete evaluator', 'error'),
   });
 
   function openEdit(e: EvaluatorDetailDto) {

@@ -16,6 +16,7 @@ import { fmtRelative, fmtDate } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
+import { useToast } from '../../components/ui/Toast';
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
 
@@ -158,6 +159,7 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
 
 export default function Suites() {
   const qc = useQueryClient();
+  const { show: toast } = useToast();
   const [agentFilter, setAgentFilter] = useState('');
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
   const [runDone, setRunDone] = useState(false);
@@ -202,31 +204,37 @@ export default function Suites() {
   const startRun = useMutation({
     mutationFn: (endpointIds: string[]) => testRunGroupsApi.create(runSuite!.id, endpointIds),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setRunDone(true); },
+    onError: (err) => toast((err as Error).message || 'Failed to start run', 'error'),
   });
 
   const delSuite = useMutation({
     mutationFn: () => testSuitesApi.delete(deleteSuite!.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setDeleteSuite(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to delete suite', 'error'),
   });
 
   const addCase = useMutation({
     mutationFn: (callId: string) => testSuitesApi.addTestCase(editSuite!.id, callId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['test-suites'] }),
+    onError: (err) => toast((err as Error).message || 'Failed to add test case', 'error'),
   });
 
   const removeCase = useMutation({
     mutationFn: (caseId: string) => testSuitesApi.removeTestCase(editSuite!.id, caseId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['test-suites'] }),
+    onError: (err) => toast((err as Error).message || 'Failed to remove test case', 'error'),
   });
 
   const saveEvaluators = useMutation({
     mutationFn: () => testSuitesApi.updateEvaluators(editSuite!.id, Array.from(selectedEvaluatorIds)),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setEditSuite(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to save evaluators', 'error'),
   });
 
   const createSuite = useMutation({
     mutationFn: () => testSuitesApi.create({ name: createName, agentId: createAgentId, agentCallIds: Array.from(selectedCalls), evaluatorIds: Array.from(selectedEvaluatorIds) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setCreateOpen(false); resetCreate(); },
+    onError: (err) => toast((err as Error).message || 'Failed to create suite', 'error'),
   });
 
   function resetCreate() { setCreateStep(0); setCreateAgentId(''); setCreateName(''); setSelectedCalls(new Set()); setSelectedEvaluatorIds(new Set()); }

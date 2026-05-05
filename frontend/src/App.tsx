@@ -14,7 +14,7 @@ const Runs = lazy(() => import('./features/runs/Runs'));
 const Providers = lazy(() => import('./features/providers/Providers'));
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000, throwOnError: true } },
 });
 
 function PageLoader() {

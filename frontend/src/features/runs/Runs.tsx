@@ -12,6 +12,7 @@ import { agentColor, modelColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { FixtureDrawer } from './FixtureDrawer';
+import { useToast } from '../../components/ui/Toast';
 
 type CaseFilter = 'all' | 'passed' | 'failed';
 type ViewMode = 'table' | 'grid';
@@ -319,6 +320,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
 
 function GroupDetail({ group }: { group: TestRunGroupDto }) {
   const qc = useQueryClient();
+  const { show: toast } = useToast();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(group.runs[0]?.id ?? null);
   const c = agentColor(group.agentId);
   const active = group.runs.some(r => isActive(r.status));
@@ -326,6 +328,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
   const cancelGroup = useMutation({
     mutationFn: () => testRunGroupsApi.cancel(group.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['test-run-groups'] }),
+    onError: (err) => toast((err as Error).message || 'Failed to cancel run', 'error'),
   });
 
   useTestRunGroupStream(
@@ -391,6 +394,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
 
 export default function Runs() {
   const qc = useQueryClient();
+  const { show: toast } = useToast();
   const [agentFilter, setAgentFilter] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
@@ -412,6 +416,7 @@ export default function Runs() {
   const delGroup = useMutation({
     mutationFn: () => testRunGroupsApi.delete(deleteGroupId!),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setDeleteGroupId(null); if (deleteGroupId === selectedGroupId) setSelectedGroupId(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to delete run group', 'error'),
   });
 
   const deleteTarget = groups.find(g => g.id === deleteGroupId);

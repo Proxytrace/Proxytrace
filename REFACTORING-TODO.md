@@ -4,39 +4,7 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 1. Standardize TanStack Query Keys
-
-**Scope:** `frontend-react/src/features/dashboard/Dashboard.tsx`, `frontend-react/src/features/traces/Traces.tsx`
-**Priority:** P1
-
-Dashboard and Traces use inconsistent query keys for the same data: `'statistics-latency'` vs
-`'latency'`, `'agent-calls-recent'` vs `'agent-calls'`, `'model-breakdown'` (Traces) vs
-`'statistics-model-breakdown'` (Dashboard). This prevents cross-feature cache sharing and can
-produce stale reads after mutations.
-
-**Approach:**
-- Define a central `QUERY_KEYS` const object in `src/api/query-keys.ts`
-- Replace all bare string arrays with `QUERY_KEYS.*` references
-- Align Dashboard and Traces to the same key structure for shared queries
-
----
-
-## 2. Add Centralized Error Handling
-
-**Scope:** `frontend-react/src/features/` (all feature pages)
-**Priority:** P1
-
-No feature handles `isError` states from `useQuery`. Network failures silently show empty
-UI. The `Toast` context and `useToast` hook exist but are not wired to query error callbacks.
-
-**Approach:**
-- Add `onError` callback (or `throwOnError` + React error boundary) to each `useQuery`
-- Call `toast.error(message)` on mutation failures (already imported in some features)
-- Add a route-level `<ErrorBoundary>` in `App.tsx` as a final safety net
-
----
-
-## 3. Extract `<DataTable>` Component
+## 2. Extract `<DataTable>` Component
 
 **Scope:** `frontend-react/src/components/ui/` (new), six feature files
 **Priority:** P2
