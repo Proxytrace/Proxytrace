@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Autofac;
+using Trsr.Common.Async;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
 using Trsr.Common.Random;
@@ -30,5 +31,7 @@ public class Module : Autofac.Module
         builder.RegisterType<Serialization.Internal.JsonSerializer>()
             .As<ISerializer>()
             .SingleInstance();
+
+        builder.RegisterType<AsyncLock>().As<IAsyncLock>();
     }
 }

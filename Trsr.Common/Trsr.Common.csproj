@@ -5,6 +5,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
+    
+    <ItemGroup>
+        <InternalsVisibleTo Include="Trsr.Common.Tests" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Autofac" Version="9.1.0" />
