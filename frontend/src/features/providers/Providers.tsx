@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
 import { Modal } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
+import { FormField, formInputCls } from '../../components/ui/FormField';
 import { fmtDate } from '../../lib/format';
 
 const PROVIDER_KIND_OPTIONS = [
@@ -30,9 +31,6 @@ function providerColor(name: string) {
 function maskKey(k: string) {
   return k.length <= 8 ? '••••••••' : k.slice(0, 7) + '••••••••••••' + k.slice(-4);
 }
-
-const inputCls = 'w-full px-3 py-[9px] bg-card-2 rounded-[9px] text-[13px] text-primary outline-none border-none font-[inherit]';
-const labelCls = 'text-[12px] font-semibold text-muted uppercase tracking-[0.05em]';
 
 export default function Providers() {
   const qc = useQueryClient();
@@ -282,19 +280,16 @@ export default function Providers() {
                   {showNewModel && (
                     <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
                       <div className="text-[13px] font-semibold">Add Model</div>
-                      <div className="flex flex-col gap-[5px]">
-                        <label className={labelCls}>Model name</label>
-                        <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${inputCls} font-mono`} />
-                      </div>
+                      <FormField label="Model name">
+                        <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
+                      </FormField>
                       <div className="grid grid-cols-2 gap-[10px]">
-                        <div className="flex flex-col gap-[5px]">
-                          <label className={labelCls}>Input cost / 1M tokens (€)</label>
-                          <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" className={inputCls} />
-                        </div>
-                        <div className="flex flex-col gap-[5px]">
-                          <label className={labelCls}>Output cost / 1M tokens (€)</label>
-                          <input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" className={inputCls} />
-                        </div>
+                        <FormField label="Input cost / 1M tokens (€)">
+                          <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" className={formInputCls} />
+                        </FormField>
+                        <FormField label="Output cost / 1M tokens (€)">
+                          <input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" className={formInputCls} />
+                        </FormField>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <button className="btn-ghost" onClick={() => setShowNewModel(false)}>Cancel</button>
@@ -326,14 +321,12 @@ export default function Providers() {
                             <div className="p-[12px_16px_14px] bg-card border-t border-hairline flex flex-col gap-[10px]">
                               <div className="text-[12px] font-semibold text-secondary">Edit pricing for {m.modelName}</div>
                               <div className="grid grid-cols-2 gap-[10px]">
-                                <div className="flex flex-col gap-[5px]">
-                                  <label className={labelCls}>Input / 1M (€)</label>
-                                  <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" className={inputCls} />
-                                </div>
-                                <div className="flex flex-col gap-[5px]">
-                                  <label className={labelCls}>Output / 1M (€)</label>
-                                  <input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" className={inputCls} />
-                                </div>
+                                <FormField label="Input / 1M (€)">
+                                  <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" className={formInputCls} />
+                                </FormField>
+                                <FormField label="Output / 1M (€)">
+                                  <input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" className={formInputCls} />
+                                </FormField>
                               </div>
                               <div className="flex gap-2 justify-end">
                                 <button className="btn-ghost" onClick={() => setEditingModel(null)}>Cancel</button>
@@ -375,16 +368,14 @@ export default function Providers() {
                     <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
                       <div className="text-[13px] font-semibold">Generate New Key</div>
                       <div className="grid grid-cols-2 gap-[10px]">
-                        <div className="flex flex-col gap-[5px]">
-                          <label className={labelCls}>Key name</label>
-                          <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={inputCls} />
-                        </div>
-                        <div className="flex flex-col gap-[5px]">
-                          <label className={labelCls}>Project</label>
-                          <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} className={`${inputCls} bg-card`}>
+                        <FormField label="Key name">
+                          <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={formInputCls} />
+                        </FormField>
+                        <FormField label="Project">
+                          <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} className={formInputCls}>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
-                        </div>
+                        </FormField>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <button className="btn-ghost" onClick={() => setShowNewKey(false)}>Cancel</button>
@@ -443,30 +434,27 @@ export default function Providers() {
               { label: 'Endpoint URL', key: 'endpoint' as const, placeholder: 'https://api.anthropic.com/v1', type: 'text', mono: true },
               { label: 'Upstream API key', key: 'upstreamApiKey' as const, placeholder: 'sk-ant-…', type: 'password', mono: true },
             ].map(f => (
-              <div key={f.key} className="flex flex-col gap-[6px]">
-                <label className={labelCls}>{f.label}</label>
+              <FormField key={f.key} label={f.label}>
                 <input
                   type={f.type}
                   value={newProvider[f.key]}
                   onChange={e => setNewProvider(p => ({ ...p, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
-                  className={inputCls}
+                  className={formInputCls}
                   style={f.mono ? { fontFamily: "'JetBrains Mono',monospace" } : undefined}
                 />
-              </div>
+              </FormField>
             ))}
-            <div className="flex flex-col gap-[6px]">
-              <label className={labelCls}>Provider Kind</label>
-              <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={inputCls}>
+            <FormField label="Provider Kind">
+              <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
                 {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-            </div>
-            <div className="flex flex-col gap-[6px]">
-              <label className={labelCls}>Organization</label>
-              <select value={newProvider.organizationId} onChange={e => setNewProvider(p => ({ ...p, organizationId: e.target.value }))} className={inputCls}>
+            </FormField>
+            <FormField label="Organization">
+              <select value={newProvider.organizationId} onChange={e => setNewProvider(p => ({ ...p, organizationId: e.target.value }))} className={formInputCls}>
                 {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
-            </div>
+            </FormField>
           </div>
         </Modal>
       )}
