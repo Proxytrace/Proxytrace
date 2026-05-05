@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-muted)', fontSize: '13px' }}>
+    <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
       Loading…
     </div>
   );

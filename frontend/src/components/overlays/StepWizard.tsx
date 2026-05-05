@@ -18,29 +18,29 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
   const isLast = currentStep === steps.length - 1;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex flex-col gap-5">
       {/* Step indicators */}
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div className="flex gap-2 items-center">
         {steps.map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '24px', height: '24px', borderRadius: '50%',
-              background: i === currentStep ? 'var(--accent-primary)' : i < currentStep ? 'var(--success)' : 'var(--bg-card-2)',
-              color: i <= currentStep ? '#fff' : 'var(--text-muted)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '11px', fontWeight: 700, flexShrink: 0,
-              border: i === currentStep ? 'none' : '1px solid var(--border-color)',
-            }}>
+          <div key={i} className="flex items-center gap-2">
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                i === currentStep
+                  ? 'bg-accent text-white border-none'
+                  : i < currentStep
+                  ? 'bg-success text-white border-none'
+                  : 'bg-card-2 text-muted border border-border'
+              }`}
+            >
               {i < currentStep ? '✓' : i + 1}
             </div>
-            <span style={{
-              fontSize: '12px', fontWeight: i === currentStep ? 600 : 400,
-              color: i === currentStep ? 'var(--text-primary)' : 'var(--text-muted)',
-            }}>
+            <span
+              className={`text-xs ${i === currentStep ? 'text-primary font-semibold' : 'text-muted font-normal'}`}
+            >
               {s.label}
             </span>
             {i < steps.length - 1 && (
-              <div style={{ width: '24px', height: '1px', background: 'var(--border-color)', flexShrink: 0 }} />
+              <div className="w-6 h-px bg-border shrink-0" />
             )}
           </div>
         ))}
@@ -50,7 +50,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
       <div>{steps[currentStep].content}</div>
 
       {/* Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex justify-between items-center">
         <button className="btn-ghost" onClick={onBack} disabled={currentStep === 0}>
           ← Back
         </button>

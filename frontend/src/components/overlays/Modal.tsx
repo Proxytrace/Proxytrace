@@ -19,11 +19,11 @@ export function Modal({ title, onClose, children, footer, maxWidth = 560 }: Moda
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-panel fade-up" style={{ maxWidth }}>
         {title && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
             <button
               onClick={onClose}
-              style={{ color: 'var(--text-muted)', padding: '4px', borderRadius: '6px' }}
+              className="text-muted p-1 rounded-md"
             >
               ✕
             </button>
@@ -31,7 +31,7 @@ export function Modal({ title, onClose, children, footer, maxWidth = 560 }: Moda
         )}
         {children}
         {footer && (
-          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <div className="mt-5 flex justify-end gap-2">
             {footer}
           </div>
         )}

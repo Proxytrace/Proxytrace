@@ -18,18 +18,11 @@ function FilterChip({ label, value, active, onClick, accent }: {
   label: string; value: string; active?: boolean; onClick?: () => void; accent?: string;
 }) {
   return (
-    <button onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-      background: active ? 'var(--bg-card-2)' : 'var(--bg-card)',
-      color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-      boxShadow: active ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3)' : 'var(--shadow-pill)',
-      whiteSpace: 'nowrap', cursor: 'pointer',
-    }}>
-      {accent && <span style={{ width: 7, height: 7, borderRadius: 2, background: accent, flexShrink: 0 }} />}
-      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <button onClick={onClick} className={`inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer ${active ? 'bg-card-2 text-primary' : 'bg-card text-secondary'}`} style={{ boxShadow: active ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3)' : 'var(--shadow-pill)' }}>
+      {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
+      <span className="text-muted font-medium">{label}</span>
       <span>{value}</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginLeft: 2 }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted ml-[2px]">
         <polyline points="6 9 12 15 18 9" />
       </svg>
     </button>
@@ -53,8 +46,8 @@ function LatencyBar({ ms }: { ms: number }) {
   const pct = Math.min(100, ms / 60);
   const color = ms > 3000 ? 'var(--warn)' : 'var(--accent-primary)';
   return (
-    <span style={{ flex: 1, maxWidth: 60, height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 100, overflow: 'hidden', display: 'inline-block', verticalAlign: 'middle' }}>
-      <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: color, borderRadius: 100 }} />
+    <span className="flex-1 max-w-[60px] h-[3px] rounded-full overflow-hidden inline-block align-middle" style={{ background: 'rgba(255,255,255,0.05)' }}>
+      <span className="block h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
     </span>
   );
 }
@@ -102,35 +95,26 @@ export default function Traces() {
   }, [qc]));
 
   return (
-    <div style={{ width: '100%', maxWidth: 1320, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingBottom: 24, scrollbarGutter: 'stable' }}>
+    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
 
       {/* ── Header ── */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div className="fade-up flex items-start justify-between gap-4">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Traces</h1>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 100,
-              color: isFetching ? 'var(--accent-primary)' : 'var(--success)',
-              background: isFetching ? 'var(--accent-subtle)' : 'var(--success-subtle)',
-            }}>
-              <span style={{
-                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                background: isFetching ? 'var(--accent-primary)' : 'var(--success)',
-                animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite',
-              }} />
+          <div className="flex items-center gap-[10px] mb-[6px]">
+            <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0">Traces</h1>
+            <span className={`inline-flex items-center gap-[5px] text-[11px] font-semibold px-2 py-[3px] rounded-full ${isFetching ? 'text-accent bg-accent-subtle' : 'text-success bg-success-subtle'}`}>
+              <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${isFetching ? 'bg-accent' : 'bg-success'}`} style={{ animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite' }} />
               {isFetching ? 'Refreshing…' : 'Live'}
             </span>
           </div>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>Every LLM call captured by the proxy, grouped by agent.</p>
+          <p className="text-[13.5px] text-muted m-0">Every LLM call captured by the proxy, grouped by agent.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button style={{ padding: '8px 12px', background: 'var(--bg-card)', borderRadius: 9, fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex gap-2 shrink-0">
+          <button className="px-3 py-2 bg-card rounded-[9px] text-[12.5px] font-medium text-secondary inline-flex items-center gap-[6px]" style={{ boxShadow: 'var(--shadow-pill)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
             Export CSV
           </button>
-          <button style={{ padding: '8px 14px', background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', borderRadius: 9, fontSize: 12.5, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <button className="px-[14px] py-2 rounded-[9px] text-[12.5px] font-semibold text-white inline-flex items-center gap-[6px]" style={{ background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Test Case
           </button>
@@ -140,13 +124,10 @@ export default function Traces() {
       {/* ── Agent filter cards ── */}
       {agents.length > 0 && (
         <div
-          className="fade-up"
+          className="fade-up grid gap-2 p-1"
           style={{
             animationDelay: '40ms',
-            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-            gap: 8,
-            padding: 4,
           }}
         >
           {agents.map(a => {
@@ -158,37 +139,28 @@ export default function Traces() {
               <button
                 key={a.id}
                 onClick={() => setAgentFilter(isActive ? '' : a.id)}
-                style={{
-                  textAlign: 'left', background: 'var(--bg-card)', borderRadius: 12, padding: '12px 14px',
-                  boxShadow: isActive
-                    ? `0 0 0 1.5px ${c}88, 0 4px 16px -6px ${c}55`
-                    : 'var(--shadow-card)',
-                  position: 'relative', overflow: 'hidden',
-                  transition: 'box-shadow 0.15s', border: 'none', cursor: 'pointer',
-                }}
+                className="text-left bg-card rounded-xl px-[14px] py-3 relative overflow-hidden transition-[box-shadow] duration-[150ms] border-none cursor-pointer"
+                style={{ boxShadow: isActive ? `0 0 0 1.5px ${c}88, 0 4px 16px -6px ${c}55` : 'var(--shadow-card)' }}
               >
                 {/* Top color bar */}
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
-                <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 4 }}>
+                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+                <div className="text-[11.5px] font-semibold mb-[6px] overflow-hidden text-ellipsis whitespace-nowrap pr-1">
                   {a.name}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: isActive ? c : 'var(--text-primary)' }}>{callCount || '—'}</span>
-                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>traces</span>
+                <div className="flex items-baseline gap-[5px]">
+                  <span className="text-[20px] font-bold tracking-[-0.02em]" style={{ color: isActive ? c : 'var(--text-primary)' }}>{callCount || '—'}</span>
+                  <span className="text-[10.5px] text-muted">traces</span>
                 </div>
               </button>
             );
           })}
           {/* p95 latency tile — fixed slot, always same height */}
           {p95 != null && (
-            <div style={{
-              background: 'var(--bg-card)', borderRadius: 12, padding: '12px 14px',
-              boxShadow: 'var(--shadow-card)', position: 'relative', overflow: 'hidden',
-            }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, var(--teal), transparent)' }} />
-              <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 6, color: 'var(--text-muted)' }}>p95 Latency</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', fontFamily: "'JetBrains Mono',monospace", color: 'var(--teal)' }}>{fmtLatency(p95)}</span>
+            <div className="bg-card rounded-xl px-[14px] py-3 relative overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, var(--teal), transparent)' }} />
+              <div className="text-[11.5px] font-semibold mb-[6px] text-muted">p95 Latency</div>
+              <div className="flex items-baseline gap-[5px]">
+                <span className="text-[20px] font-bold tracking-[-0.02em] font-mono text-teal">{fmtLatency(p95)}</span>
               </div>
             </div>
           )}
@@ -196,22 +168,17 @@ export default function Traces() {
       )}
 
       {/* ── Search + filter chips ── */}
-      <div className="fade-up" style={{ animationDelay: '80ms', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div className="fade-up flex items-center gap-[10px] flex-wrap" style={{ animationDelay: '80ms' }}>
         {/* Search box */}
-        <div style={{
-          flex: 1, minWidth: 260, maxWidth: 420,
-          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-          background: 'var(--bg-card)', borderRadius: 10, fontSize: 13,
-          color: 'var(--text-muted)', boxShadow: 'var(--shadow-pill)',
-        }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+        <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-[13px] text-muted" style={{ boxShadow: 'var(--shadow-pill)' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by trace ID, content, or model…"
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit' }}
+            className="flex-1 bg-transparent border-none outline-none text-primary text-[13px] font-[inherit]"
           />
         </div>
 
@@ -239,27 +206,20 @@ export default function Traces() {
       </div>
 
       {/* ── Table ── */}
-      <div className="fade-up" style={{ animationDelay: '120ms', background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+      <div className="fade-up bg-card rounded-[14px] overflow-hidden" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
         {/* Column headers */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px',
-          padding: '10px 16px',
-          fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)',
-          letterSpacing: '0.07em', textTransform: 'uppercase',
-          borderBottom: '1px solid var(--hairline)',
-        }}>
+        <div className="grid px-4 py-[10px] text-[10.5px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px' }}>
           <span>Trace ID</span>
           <span>Agent</span>
           <span>Model</span>
           <span>Status</span>
           <span>Tokens</span>
           <span>Latency</span>
-          <span style={{ textAlign: 'right' }}>Time</span>
+          <span className="text-right">Time</span>
         </div>
 
         {traces.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '56px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+          <div className="text-center px-5 py-[56px] text-muted text-[13px]">
             {isFetching ? 'Loading…' : 'No traces found.'}
           </div>
         )}
@@ -273,56 +233,45 @@ export default function Traces() {
             <button
               key={trace.id}
               onClick={() => { setSelectedTrace(trace); setSelectedIdx(idx); }}
-              style={{
-                display: 'grid', width: '100%', textAlign: 'left',
-                gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px',
-                padding: '11px 16px', alignItems: 'center', fontSize: 12,
-                background: 'transparent', borderTop: '1px solid var(--hairline)',
-                transition: 'background 0.1s', border: 'none', cursor: 'pointer',
-              }}
+              className="grid w-full text-left px-4 py-[11px] items-center text-[12px] bg-transparent border-t border-hairline border-x-0 border-b-0 transition-[background] duration-[100ms] cursor-pointer"
+              style={{ gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,148,74,0.04)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               {/* Trace ID */}
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <span style={{ width: 3, height: 18, borderRadius: 2, background: c, flexShrink: 0 }} />
-                <span className="mono" style={{ color: 'var(--text-primary)', fontSize: 11 }}>
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
+                <span className="mono text-primary text-[11px]">
                   {trace.id.slice(0, 8)}…{trace.id.slice(-4)}
                 </span>
               </span>
               {/* Agent */}
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
-                {trace.agentName ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}
+              <span className="text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
+                {trace.agentName ?? <span className="text-muted">—</span>}
               </span>
               {/* Model */}
-              <span style={{ overflow: 'hidden' }}>
+              <span className="overflow-hidden">
                 <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
               </span>
               {/* Status */}
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+              <span className="inline-flex items-center gap-[5px]">
                 <StatusDot httpStatus={trace.httpStatus} />
-                <span className="mono" style={{
-                  fontSize: 11,
-                  color: statusOk ? 'var(--success)' : statusErr ? 'var(--danger)' : 'var(--warn)',
-                }}>{trace.httpStatus}</span>
+                <span className={`mono text-[11px] ${statusOk ? 'text-success' : statusErr ? 'text-danger' : 'text-warn'}`}>{trace.httpStatus}</span>
               </span>
               {/* Tokens */}
-              <span className="mono" style={{ fontSize: 11 }}>
-                <span style={{ color: 'var(--text-primary)' }}>{fmtTokens(tokTotal)}</span>
-                <span style={{ color: 'var(--text-muted)', marginLeft: 5, fontSize: 10 }}>
+              <span className="mono text-[11px]">
+                <span className="text-primary">{fmtTokens(tokTotal)}</span>
+                <span className="text-muted ml-[5px] text-[10px]">
                   {fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}
                 </span>
               </span>
               {/* Latency */}
-              <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span className="mono" style={{
-                  fontSize: 11, minWidth: 40, flexShrink: 0,
-                  color: trace.durationMs > 3000 ? 'var(--warn)' : 'var(--text-secondary)',
-                }}>{fmtLatency(trace.durationMs)}</span>
+              <span className="flex items-center gap-[7px]">
+                <span className={`mono text-[11px] min-w-[40px] shrink-0 ${trace.durationMs > 3000 ? 'text-warn' : 'text-secondary'}`}>{fmtLatency(trace.durationMs)}</span>
                 <LatencyBar ms={trace.durationMs} />
               </span>
               {/* Time */}
-              <span style={{ color: 'var(--text-muted)', fontSize: 11, textAlign: 'right', whiteSpace: 'nowrap' }}>
+              <span className="text-muted text-[11px] text-right whitespace-nowrap">
                 {fmtRelative(trace.createdAt)}
               </span>
             </button>
@@ -332,7 +281,7 @@ export default function Traces() {
 
       {/* ── Pagination ── */}
       {total > PAGE_SIZE && (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="flex justify-center">
           <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={setPage} />
         </div>
       )}

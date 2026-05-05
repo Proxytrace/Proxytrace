@@ -13,13 +13,6 @@ function ChevronRight({ size = 14 }: { size?: number }) {
   );
 }
 
-function ChevronDown({ size = 12 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
 
 function PlusIcon({ size = 13 }: { size?: number }) {
   return (
@@ -82,11 +75,11 @@ function JsonView({ value, depth = 0 }: { value: unknown; depth?: number }) {
 function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unknown }) {
   const [open, setOpen] = useState(true);
   return (
-    <div style={{ marginTop: 10, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)', borderRadius: 10, overflow: 'hidden' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', background: 'transparent', fontSize: 11.5, color: '#6ee7b7', fontFamily: "'JetBrains Mono', monospace" }}>
-        <span style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-flex' }}><ChevronRight size={10} /></span>
-        <span style={{ color: '#10b981', fontWeight: 700, letterSpacing: '0.04em' }}>TOOL</span>
-        <span style={{ color: '#d1fae5', fontWeight: 600 }}>{name}</span>
+    <div className="mt-[10px] rounded-[10px] overflow-hidden" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)' }}>
+      <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#6ee7b7' }}>
+        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRight size={10} /></span>
+        <span className="font-bold tracking-[0.04em]" style={{ color: '#10b981' }}>TOOL</span>
+        <span className="font-semibold" style={{ color: '#d1fae5' }}>{name}</span>
         <span style={{ color: '#71717a' }}>(</span>
         {typeof args === 'object' && args !== null && Object.keys(args as object).slice(0, 2).map((k, i, arr) => (
           <span key={k}>
@@ -98,11 +91,11 @@ function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unk
         ))}
         {typeof args === 'object' && args !== null && Object.keys(args as object).length > 2 && <span style={{ color: '#71717a' }}>, …</span>}
         <span style={{ color: '#71717a' }}>)</span>
-        <span style={{ marginLeft: 'auto', fontSize: 9.5, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{id}</span>
+        <span className="ml-auto text-[9.5px] uppercase tracking-[0.08em]" style={{ color: '#52525b' }}>{id}</span>
       </button>
       {open && (
-        <div style={{ padding: '10px 14px 12px 34px', borderTop: '1px dashed rgba(16,185,129,0.18)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, lineHeight: 1.55 }}>
-          <div style={{ color: '#52525b', fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Arguments</div>
+        <div className="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]" style={{ borderTop: '1px dashed rgba(16,185,129,0.18)' }}>
+          <div className="text-[9.5px] tracking-[0.08em] uppercase mb-1" style={{ color: '#52525b' }}>Arguments</div>
           <JsonView value={args} />
         </div>
       )}
@@ -118,15 +111,15 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
   try { parsed = JSON.parse(msg.content); } catch { /* leave as string */ }
   const sizeB = msg.content?.length ?? 0;
   return (
-    <div style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(6,182,212,0.22)', borderRadius: 10, overflow: 'hidden' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', background: 'transparent', fontSize: 11.5, color: '#67e8f9', fontFamily: "'JetBrains Mono', monospace" }}>
-        <span style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s', display: 'inline-flex' }}><ChevronRight size={10} /></span>
-        <span style={{ color: '#06b6d4', fontWeight: 700, letterSpacing: '0.04em' }}>RESULT</span>
-        <span style={{ color: '#cffafe', fontWeight: 600 }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
-        <span style={{ marginLeft: 'auto', fontSize: 10, color: '#52525b', fontFamily: "'JetBrains Mono', monospace" }}>{sizeB} B</span>
+    <div className="rounded-[10px] overflow-hidden" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(6,182,212,0.22)' }}>
+      <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#67e8f9' }}>
+        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRight size={10} /></span>
+        <span className="font-bold tracking-[0.04em]" style={{ color: '#06b6d4' }}>RESULT</span>
+        <span className="font-semibold" style={{ color: '#cffafe' }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
+        <span className="ml-auto text-[10px] font-mono" style={{ color: '#52525b' }}>{sizeB} B</span>
       </button>
       {open && (
-        <div style={{ padding: '10px 14px 12px 34px', borderTop: '1px dashed rgba(6,182,212,0.18)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, lineHeight: 1.55 }}>
+        <div className="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]" style={{ borderTop: '1px dashed rgba(6,182,212,0.18)' }}>
           <JsonView value={parsed} />
         </div>
       )}
@@ -146,12 +139,12 @@ function MessageBlock({ msg }: { msg: MessageDto }) {
   const content = msg.content;
   if (!content && !msg.toolRequests?.length) return null;
   return (
-    <div style={{ background: 'var(--bg-card-2)', borderRadius: 12, padding: '12px 14px', boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ padding: '2px 8px', borderRadius: 100, background: s.bg, color: s.fg, fontSize: 10.5, fontWeight: 600, letterSpacing: '0.02em' }}>{s.label}</span>
+    <div className="bg-card-2 rounded-xl px-[14px] py-3" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
+      <div className="mb-2">
+        <span className="px-2 py-[2px] rounded-full text-[10.5px] font-semibold tracking-[0.02em]" style={{ background: s.bg, color: s.fg }}>{s.label}</span>
       </div>
       {content && (
-        <div style={{ fontSize: 13, lineHeight: 1.65, color: msg.role === 'system' ? 'var(--text-secondary)' : 'var(--text-primary)', whiteSpace: 'pre-wrap', fontStyle: msg.role === 'system' ? 'italic' : 'normal' }}>
+        <div className={`text-[13px] leading-[1.65] whitespace-pre-wrap ${msg.role === 'system' ? 'text-secondary italic' : 'text-primary'}`}>
           {content}
         </div>
       )}
@@ -163,16 +156,16 @@ function MessageBlock({ msg }: { msg: MessageDto }) {
 
 function ToolSpecBlock({ tool }: { tool: ToolSpecDto }) {
   return (
-    <div style={{ background: 'var(--bg-card-2)', borderRadius: 12, padding: '12px 14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-        <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.14)', color: '#6ee7b7', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', fontFamily: "'JetBrains Mono', monospace" }}>FUNCTION</span>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 600 }}>{tool.name}</span>
+    <div className="bg-card-2 rounded-xl px-[14px] py-3">
+      <div className="flex items-center gap-2 mb-[6px]">
+        <span className="px-2 py-[2px] rounded-[6px] text-[10.5px] font-bold tracking-[0.04em] font-mono" style={{ background: 'rgba(16,185,129,0.14)', color: '#6ee7b7' }}>FUNCTION</span>
+        <span className="font-mono text-[13px] font-semibold">{tool.name}</span>
       </div>
       {tool.description && (
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.5 }}>{tool.description}</div>
+        <div className="text-[12.5px] text-secondary mb-2 leading-[1.5]">{tool.description}</div>
       )}
       {tool.arguments.length > 0 && (
-        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '8px 10px' }}>
+        <div className="font-mono text-[11px] rounded-[6px] px-[10px] py-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
           {tool.arguments.map(arg => (
             <div key={arg.name}>
               <span style={{ color: '#93c5fd' }}>{arg.name}</span>
@@ -192,9 +185,9 @@ function ToolSpecBlock({ tool }: { tool: ToolSpecDto }) {
 function DrawerStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div>
-      <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 15, fontWeight: 700, marginTop: 3, color: color ?? 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>{sub}</div>}
+      <div className="text-[10.5px] text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
+      <div className="text-[15px] font-bold mt-[3px] font-mono" style={{ color: color ?? 'var(--text-primary)' }}>{value}</div>
+      {sub && <div className="text-[10px] text-muted mt-[1px]">{sub}</div>}
     </div>
   );
 }
@@ -232,46 +225,46 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
   const selectedCount = Object.values(selected).filter(Boolean).length;
 
   if (step === 'done') return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fade-up 0.2s ease-out' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '48px 56px', textAlign: 'center', boxShadow: 'var(--shadow-float)', maxWidth: 440 }}>
-        <div style={{ width: 56, height: 56, borderRadius: 16, background: 'linear-gradient(135deg, #8b5cf6, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 8px 24px -8px rgba(139,92,246,0.6)', color: '#fff' }}>
+    <div onClick={onClose} className="fixed inset-0 z-[100] flex items-center justify-center fade-up" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}>
+      <div onClick={e => e.stopPropagation()} className="bg-card rounded-[20px] px-[56px] py-[48px] text-center max-w-[440px]" style={{ boxShadow: 'var(--shadow-float)' }}>
+        <div className="w-14 h-14 rounded-[16px] flex items-center justify-center mx-auto mb-[18px] text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #10b981)', boxShadow: '0 8px 24px -8px rgba(139,92,246,0.6)' }}>
           <CheckIcon size={26} />
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>{selectedCount} test case{selectedCount !== 1 ? 's' : ''} created</h2>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 28 }}>
-          Added to <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{agentLabel}</span> suite.
+        <h2 className="text-[20px] font-bold tracking-[-0.02em] mb-2">{selectedCount} test case{selectedCount !== 1 ? 's' : ''} created</h2>
+        <p className="text-[13.5px] text-muted leading-[1.6] mb-7">
+          Added to <span className="text-primary font-semibold">{agentLabel}</span> suite.
         </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          <button onClick={onClose} style={{ padding: '10px 20px', background: 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)' }}>Back to trace</button>
+        <div className="flex gap-[10px] justify-center">
+          <button onClick={onClose} className="px-5 py-[10px] bg-card-2 rounded-[10px] text-[13px] font-medium text-secondary" style={{ boxShadow: 'var(--shadow-pill)' }}>Back to trace</button>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, animation: 'fade-up 0.2s ease-out' }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 1060, height: 'min(780px, 90vh)', background: 'var(--bg-card)', borderRadius: 20, boxShadow: 'var(--shadow-float)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div onClick={onClose} className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-[1060px] h-[min(780px,90vh)] bg-card rounded-[20px] flex flex-col overflow-hidden" style={{ boxShadow: 'var(--shadow-float)' }}>
         {/* Header */}
-        <div style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid var(--hairline)' }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+        <div className="px-6 py-[18px] flex items-center gap-[14px] border-b border-hairline">
+          <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
             <PlusIcon size={18} />
           </div>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700 }}>Promote to Test Cases</h2>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Select which assistant turns to promote, then configure each test case.</p>
+          <div className="flex-1">
+            <h2 className="text-[16px] font-bold">Promote to Test Cases</h2>
+            <p className="text-[12px] text-muted mt-[2px]">Select which assistant turns to promote, then configure each test case.</p>
           </div>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px', borderRadius: 100, background: `${aColor}1f`, color: aColor, fontSize: 11, fontWeight: 600, border: `1px solid ${aColor}2e`, whiteSpace: 'nowrap' }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: aColor }} />
+          <span className="inline-flex items-center gap-[6px] px-[9px] py-[3px] rounded-full text-[11px] font-semibold whitespace-nowrap" style={{ background: `${aColor}1f`, color: aColor, border: `1px solid ${aColor}2e` }}>
+            <span className="w-[5px] h-[5px] rounded-full" style={{ background: aColor }} />
             {agentLabel}
           </span>
-          <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{trace.id.slice(0, 10)}…</span>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--bg-card-2)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
+          <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
+          <button onClick={onClose} className="w-[30px] h-[30px] rounded-[8px] bg-card-2 text-muted flex items-center justify-center shrink-0">✕</button>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div className="flex-1 flex overflow-hidden">
           {/* Left: conversation timeline */}
-          <div style={{ width: 340, flexShrink: 0, borderRight: '1px solid var(--hairline)', overflowY: 'auto', padding: '16px 0' }}>
-            <div style={{ padding: '0 18px 10px', fontSize: 10.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div className="w-[340px] shrink-0 border-r border-hairline overflow-y-auto py-4">
+            <div className="px-[18px] pb-[10px] text-[10.5px] font-semibold text-muted tracking-[0.08em] uppercase">
               Conversation · {allMessages.length} messages
             </div>
             {allMessages.map((msg, i) => {
@@ -281,21 +274,27 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
               return (
                 <div key={i}
                   onClick={isAssistant ? () => setExpanded(expanded === i ? null : i) : undefined}
-                  style={{ display: 'flex', gap: 12, padding: '8px 18px', cursor: isAssistant ? 'pointer' : 'default', background: isAssistant && expanded === i ? 'rgba(139,92,246,0.05)' : 'transparent', transition: 'background 0.12s' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: isAssistant ? (isSelected ? aColor : 'var(--bg-card-2)') : msg.role === 'user' ? '#0e7490' : msg.role === 'tool' ? '#065f46' : '#52525b', border: isAssistant && isSelected ? `2px solid ${aColor}` : '2px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', boxShadow: isAssistant && isSelected ? `0 0 12px ${aColor}66` : 'none', transition: 'all 0.15s' }}>
+                  className="flex gap-3 px-[18px] py-2 transition-[background] duration-[120ms]"
+                  style={{ cursor: isAssistant ? 'pointer' : 'default', background: isAssistant && expanded === i ? 'rgba(139,92,246,0.05)' : 'transparent' }}>
+                  <div className="w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white transition-all duration-[150ms]"
+                    style={{
+                      background: isAssistant ? (isSelected ? aColor : 'var(--bg-card-2)') : msg.role === 'user' ? '#0e7490' : msg.role === 'tool' ? '#065f46' : '#52525b',
+                      border: isAssistant && isSelected ? `2px solid ${aColor}` : '2px solid var(--border-color)',
+                      boxShadow: isAssistant && isSelected ? `0 0 12px ${aColor}66` : 'none',
+                    }}>
                     {isAssistant ? (assistantOrdinal + 1) : ''}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: isAssistant ? aColor : msg.role === 'user' ? '#67e8f9' : '#a1a1aa', marginRight: 6 }}>{msg.role.toUpperCase()}</span>
+                  <div className="flex-1 min-w-0 pt-[2px]">
+                    <div className="text-[12px] text-secondary leading-[1.5] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' } as React.CSSProperties}>
+                      <span className="text-[10px] font-semibold mr-[6px]" style={{ color: isAssistant ? aColor : msg.role === 'user' ? '#67e8f9' : '#a1a1aa' }}>{msg.role.toUpperCase()}</span>
                       {msg.content?.slice(0, 80)}{(msg.content?.length ?? 0) > 80 ? '…' : ''}
-                      {msg.toolRequests?.length > 0 && <span style={{ color: '#6ee7b7', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}> {msg.toolRequests.map(c => `${c.name}()`).join(', ')}</span>}
+                      {msg.toolRequests?.length > 0 && <span className="font-mono text-[11px]" style={{ color: '#6ee7b7' }}> {msg.toolRequests.map(c => `${c.name}()`).join(', ')}</span>}
                     </div>
                     {isAssistant && (
-                      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <label onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                          <input type="checkbox" checked={!!selected[i]} onChange={() => setSelected(s => ({ ...s, [i]: !s[i] }))} style={{ accentColor: aColor, width: 13, height: 13 }} />
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Promote this turn</span>
+                      <div className="mt-2 flex items-center gap-2">
+                        <label onClick={e => e.stopPropagation()} className="flex items-center gap-[6px] cursor-pointer">
+                          <input type="checkbox" checked={!!selected[i]} onChange={() => setSelected(s => ({ ...s, [i]: !s[i] }))} className="w-[13px] h-[13px]" style={{ accentColor: aColor }} />
+                          <span className="text-[11px] text-muted">Promote this turn</span>
                         </label>
                       </div>
                     )}
@@ -306,31 +305,30 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
           </div>
 
           {/* Right: per-case config */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-[14px]">
             {assistantIndices.filter(i => selected[i]).length === 0 ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 13, flexDirection: 'column', gap: 8 }}>
-                <span style={{ fontSize: 28 }}>☐</span>
+              <div className="flex-1 flex items-center justify-center text-muted text-[13px] flex-col gap-2">
+                <span className="text-[28px]">☐</span>
                 <span>Select at least one assistant turn on the left.</span>
               </div>
             ) : assistantIndices.filter(i => selected[i]).map((msgIdx, n) => {
               const msg = allMessages[msgIdx];
-              const ev = EVALUATORS.find(e => e.id === evaluators[msgIdx]);
               return (
-                <div key={msgIdx} style={{ background: 'var(--bg-card-2)', borderRadius: 14, overflow: 'hidden' }}>
-                  <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--hairline)' }}>
-                    <div style={{ width: 22, height: 22, borderRadius: 6, background: aColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{n + 1}</div>
-                    <input value={names[msgIdx] ?? ''} onChange={e => setNames(ns => ({ ...ns, [msgIdx]: e.target.value }))} style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }} placeholder="Test case name…" />
-                    {msg.toolRequests?.length > 0 && <span style={{ padding: '2px 7px', background: 'rgba(16,185,129,0.14)', color: '#6ee7b7', borderRadius: 5, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>TOOL CALL</span>}
+                <div key={msgIdx} className="bg-card-2 rounded-[14px] overflow-hidden">
+                  <div className="px-4 py-3 flex items-center gap-[10px] border-b border-hairline">
+                    <div className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center text-[10px] font-bold text-white shrink-0" style={{ background: aColor }}>{n + 1}</div>
+                    <input value={names[msgIdx] ?? ''} onChange={e => setNames(ns => ({ ...ns, [msgIdx]: e.target.value }))} className="flex-1 bg-transparent border-none outline-none text-[13px] font-semibold text-primary font-[Inter,sans-serif]" placeholder="Test case name…" />
+                    {msg.toolRequests?.length > 0 && <span className="px-[7px] py-[2px] rounded-[5px] text-[10px] font-mono font-semibold" style={{ background: 'rgba(16,185,129,0.14)', color: '#6ee7b7' }}>TOOL CALL</span>}
                   </div>
-                  <div style={{ padding: '12px 16px' }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Evaluator</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
+                  <div className="px-4 py-3">
+                    <div className="text-[10px] font-semibold text-muted uppercase tracking-[0.08em] mb-2">Evaluator</div>
+                    <div className="grid grid-cols-2 gap-[5px]">
                       {EVALUATORS.map(e => {
                         const isActive = evaluators[msgIdx] === e.id;
                         return (
-                          <button key={e.id} onClick={() => setEvaluators(ev => ({ ...ev, [msgIdx]: e.id }))} style={{ padding: '7px 8px', borderRadius: 8, textAlign: 'left', background: isActive ? `${e.color}1a` : 'rgba(0,0,0,0.2)', boxShadow: isActive ? `inset 0 0 0 1.5px ${e.color}55` : 'none', transition: 'all 0.12s' }}>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: isActive ? e.color : 'var(--text-secondary)', marginBottom: 2 }}>{e.label}</div>
-                            <div style={{ fontSize: 9.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>{e.desc}</div>
+                          <button key={e.id} onClick={() => setEvaluators(ev => ({ ...ev, [msgIdx]: e.id }))} className="px-2 py-[7px] rounded-[8px] text-left transition-all duration-[120ms]" style={{ background: isActive ? `${e.color}1a` : 'rgba(0,0,0,0.2)', boxShadow: isActive ? `inset 0 0 0 1.5px ${e.color}55` : 'none' }}>
+                            <div className="text-[11px] font-semibold mb-[2px]" style={{ color: isActive ? e.color : 'var(--text-secondary)' }}>{e.label}</div>
+                            <div className="text-[9.5px] text-muted leading-[1.4]">{e.desc}</div>
                           </button>
                         );
                       })}
@@ -343,13 +341,13 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.15)' }}>
-          <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{selectedCount}</span> of <span style={{ color: 'var(--text-secondary)' }}>{assistantIndices.length}</span> turns selected
+        <div className="px-6 py-[14px] border-t border-hairline flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.15)' }}>
+          <div className="text-[12.5px] text-muted">
+            <span className="text-primary font-semibold">{selectedCount}</span> of <span className="text-secondary">{assistantIndices.length}</span> turns selected
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onClose} style={{ padding: '9px 18px', background: 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
-            <button onClick={() => selectedCount > 0 && setStep('done')} disabled={selectedCount === 0} style={{ padding: '9px 20px', background: selectedCount > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedCount > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: selectedCount > 0 ? '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none' }}>
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-[18px] py-[9px] bg-card-2 rounded-[10px] text-[13px] font-medium text-secondary" style={{ boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
+            <button onClick={() => selectedCount > 0 && setStep('done')} disabled={selectedCount === 0} className="px-5 py-[9px] rounded-[10px] text-[13px] font-semibold inline-flex items-center gap-[6px]" style={{ background: selectedCount > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'var(--bg-card-2)', color: selectedCount > 0 ? '#fff' : 'var(--text-muted)', boxShadow: selectedCount > 0 ? '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none' }}>
               <PlusIcon size={13} /> Create {selectedCount > 0 ? selectedCount : ''} test case{selectedCount !== 1 ? 's' : ''}
             </button>
           </div>
@@ -414,58 +412,60 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50 }}
+        className="fixed inset-0 z-50"
+        style={{ background: 'rgba(0,0,0,0.4)' }}
       />
 
       {/* Panel */}
       <div
-        style={{ position: 'fixed', top: 76, right: 10, bottom: 10, width: 'min(720px, 92vw)', background: 'var(--bg-card)', borderRadius: 18, boxShadow: 'var(--shadow-float)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 51, animation: 'fade-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51]"
+        style={{ boxShadow: 'var(--shadow-float)', animation: 'fade-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
       >
         {/* Header */}
-        <div style={{ padding: '16px 20px 12px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--bg-card-2)', flexShrink: 0 }}>
+        <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
+          <button onClick={onClose} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
             <ChevronRight size={14} />
           </button>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: aColor, boxShadow: `0 0 8px ${aColor}`, flexShrink: 0 }} />
-              <span className="mono" style={{ fontSize: 13, fontWeight: 600 }}>{trace.id.slice(0, 18)}…</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', background: `${statusOk ? 'var(--success-subtle)' : statusErr ? 'var(--danger-subtle)' : 'rgba(212,145,92,0.15)'}`, color: statusColor, borderRadius: 100, fontSize: 10.5, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: statusColor }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
+              <span className="mono text-[13px] font-semibold">{trace.id.slice(0, 18)}…</span>
+              <span className="inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-[10.5px] font-semibold font-mono" style={{ background: statusOk ? 'var(--success-subtle)' : statusErr ? 'var(--danger-subtle)' : 'rgba(212,145,92,0.15)', color: statusColor }}>
+                <span className="w-[5px] h-[5px] rounded-full" style={{ background: statusColor }} />
                 {trace.httpStatus} {statusLabel}
               </span>
             </div>
-            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div className="mt-[6px] flex items-center gap-2 flex-wrap">
               {trace.agentName && (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 9px 3px 8px', borderRadius: 100, background: `${aColor}1f`, color: aColor, fontSize: 11, fontWeight: 600, border: `1px solid ${aColor}2e`, whiteSpace: 'nowrap' }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: aColor, boxShadow: `0 0 6px ${aColor}99` }} />
+                <span className="inline-flex items-center gap-[6px] pl-2 pr-[9px] py-[3px] rounded-full text-[11px] font-semibold whitespace-nowrap" style={{ background: `${aColor}1f`, color: aColor, border: `1px solid ${aColor}2e` }}>
+                  <span className="w-[5px] h-[5px] rounded-full" style={{ background: aColor, boxShadow: `0 0 6px ${aColor}99` }} />
                   {trace.agentName}
                 </span>
               )}
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: `${mColor}1f`, color: mColor, fontSize: 11, fontWeight: 500, fontFamily: "'JetBrains Mono', monospace", border: `1px solid ${mColor}33` }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: mColor }} />
+              <span className="inline-flex items-center gap-[5px] px-2 py-[3px] rounded-full text-[11px] font-medium font-mono" style={{ background: `${mColor}1f`, color: mColor, border: `1px solid ${mColor}33` }}>
+                <span className="w-[5px] h-[5px] rounded-full" style={{ background: mColor }} />
                 {trace.model}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>· {fmtRelative(trace.createdAt)} · {msgCount} msg{msgCount !== 1 ? 's' : ''} · {toolCallCount} tool call{toolCallCount !== 1 ? 's' : ''}</span>
+              <span className="text-[11px] text-muted">· {fmtRelative(trace.createdAt)} · {msgCount} msg{msgCount !== 1 ? 's' : ''} · {toolCallCount} tool call{toolCallCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
           {onPrev && (
-            <button onClick={onPrev} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--bg-card-2)', flexShrink: 0, transform: 'rotate(180deg)' }}>
+            <button onClick={onPrev} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0 rotate-180">
               <ChevronRight size={14} />
             </button>
           )}
           {onNext && (
-            <button onClick={onNext} style={{ width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--bg-card-2)', flexShrink: 0 }}>
+            <button onClick={onNext} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
               <ChevronRight size={14} />
             </button>
           )}
-          <button onClick={() => setPromoting(true)} style={{ padding: '7px 12px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#fff', boxShadow: '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+          <button onClick={() => setPromoting(true)} className="px-3 py-[7px] rounded-[8px] text-[12px] font-semibold text-white inline-flex items-center gap-[5px] shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', boxShadow: '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
             <PlusIcon size={12} /> Promote to test case
           </button>
         </div>
 
         {/* Stat band */}
-        <div style={{ margin: '14px 20px 0', padding: '14px 16px', background: 'var(--bg-card-2)', borderRadius: 12, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset', flexShrink: 0 }}>
+        <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }}>
           <DrawerStat label="Latency" value={fmtLatency(trace.durationMs)} sub={trace.durationMs > 3000 ? 'slow' : 'normal'} color={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
           <DrawerStat label="Input"  value={fmtTokens(trace.inputTokens)}  sub="tokens" />
           <DrawerStat label="Output" value={fmtTokens(trace.outputTokens)} sub="tokens" />
@@ -474,19 +474,19 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Tabs */}
-        <div style={{ padding: '14px 20px 0', display: 'flex', gap: 4, borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+        <div className="px-5 pt-[14px] flex gap-1 border-b border-hairline shrink-0">
           {TABS.map(([t, count]) => (
-            <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 14px 11px', fontSize: 12.5, fontWeight: 500, color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)', background: 'transparent', borderBottom: tab === t ? '2px solid #8b5cf6' : '2px solid transparent', marginBottom: -1, display: 'inline-flex', alignItems: 'center', gap: 6, transition: 'color 0.12s' }}>
+            <button key={t} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-[12.5px] font-medium bg-transparent -mb-px inline-flex items-center gap-[6px] transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-[#8b5cf6]' : 'text-muted border-b-transparent'}`}>
               {t}
               {count !== null && (
-                <span style={{ padding: '1px 6px', background: tab === t ? 'rgba(139,92,246,0.18)' : 'var(--bg-card-2)', color: tab === t ? '#c4b5fd' : 'var(--text-muted)', borderRadius: 100, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{count}</span>
+                <span className="px-[6px] py-[1px] rounded-full text-[10px] font-mono font-semibold" style={{ background: tab === t ? 'rgba(139,92,246,0.18)' : 'var(--bg-card-2)', color: tab === t ? '#c4b5fd' : 'var(--text-muted)' }}>{count}</span>
               )}
             </button>
           ))}
         </div>
 
         {/* Tab body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 20px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="flex-1 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px]">
           {tab === 'Messages' && (
             <>
               {allMessages.map((msg, i) => {
@@ -503,10 +503,10 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
                 );
               })}
               {trace.finishReason && (
-                <div style={{ marginTop: 4, padding: '8px 12px', background: 'var(--bg-card-2)', borderRadius: 8, fontSize: 11, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: 'var(--success)' }}>●</span>
-                  finish_reason: <span style={{ color: 'var(--text-secondary)' }}>{trace.finishReason}</span>
-                  <span style={{ marginLeft: 'auto' }}>completed in {fmtLatency(trace.durationMs)}</span>
+                <div className="mt-1 px-3 py-2 bg-card-2 rounded-[8px] text-[11px] text-muted font-mono flex items-center gap-2">
+                  <span className="text-success">●</span>
+                  finish_reason: <span className="text-secondary">{trace.finishReason}</span>
+                  <span className="ml-auto">completed in {fmtLatency(trace.durationMs)}</span>
                 </div>
               )}
             </>
@@ -514,12 +514,12 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
 
           {tab === 'Tools' && (
             trace.tools.length === 0
-              ? <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No tools were declared for this call.</div>
+              ? <div className="px-5 py-[40px] text-center text-muted text-[13px]">No tools were declared for this call.</div>
               : trace.tools.map(tool => <ToolSpecBlock key={tool.name} tool={tool} />)
           )}
 
           {tab === 'Raw JSON' && (
-            <div style={{ background: 'rgba(0,0,0,0.28)', borderRadius: 10, padding: '14px 16px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, lineHeight: 1.55, overflow: 'auto' }}>
+            <div className="rounded-[10px] px-4 py-[14px] font-mono text-[11.5px] leading-[1.55] overflow-auto" style={{ background: 'rgba(0,0,0,0.28)' }}>
               <JsonView value={{
                 id: trace.id,
                 object: 'chat.completion',
@@ -541,7 +541,7 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           )}
 
           {tab === 'Metadata' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="grid grid-cols-2 gap-[10px]">
               {([
                 ['trace.id', trace.id],
                 ['provider', trace.provider],
@@ -556,9 +556,9 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
                 ['created_at', fmtDate(trace.createdAt)],
                 ['updated_at', fmtDate(trace.updatedAt)],
               ] as [string, string][]).map(([k, v]) => (
-                <div key={k} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{k}</div>
-                  <div style={{ fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: 'var(--text-primary)', wordBreak: 'break-all' }}>{v}</div>
+                <div key={k} className="px-3 py-[10px] bg-card-2 rounded-[8px]">
+                  <div className="text-[10px] text-muted uppercase tracking-[0.06em] mb-[3px]">{k}</div>
+                  <div className="text-[12px] font-mono text-primary break-all">{v}</div>
                 </div>
               ))}
             </div>

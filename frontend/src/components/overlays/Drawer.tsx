@@ -23,56 +23,45 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
   return (
     <>
       <div
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 49 }}
+        className="fixed inset-0 bg-black/50 z-[49]"
         onClick={onClose}
       />
       <div className="drawer-panel fade-up">
-        <div style={{
-          padding: '20px 24px', borderBottom: '1px solid var(--hairline)',
-          display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
-        }}>
+        <div className="px-6 py-5 border-b border-hairline flex items-center gap-3 shrink-0">
           {(onPrev || onNext) && (
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div className="flex gap-1">
               <button
                 onClick={onPrev}
                 disabled={!onPrev}
-                style={{
-                  width: '28px', height: '28px', borderRadius: '6px',
-                  background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-                  color: 'var(--text-secondary)', fontSize: '13px',
-                  opacity: onPrev ? 1 : 0.3, cursor: onPrev ? 'pointer' : 'not-allowed',
-                }}
+                style={{ opacity: onPrev ? 1 : 0.3 }}
+                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onPrev ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >←</button>
               <button
                 onClick={onNext}
                 disabled={!onNext}
-                style={{
-                  width: '28px', height: '28px', borderRadius: '6px',
-                  background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-                  color: 'var(--text-secondary)', fontSize: '13px',
-                  opacity: onNext ? 1 : 0.3, cursor: onNext ? 'pointer' : 'not-allowed',
-                }}
+                style={{ opacity: onNext ? 1 : 0.3 }}
+                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onNext ? 'cursor-pointer' : 'cursor-not-allowed'}`}
               >→</button>
             </div>
           )}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="flex-1 min-w-0">
             {title && (
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div className="text-sm font-bold text-primary truncate">
                 {title}
               </div>
             )}
             {subtitle && (
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{subtitle}</div>
+              <div className="text-xs text-muted mt-[2px]">{subtitle}</div>
             )}
           </div>
           <button
             onClick={onClose}
-            style={{ color: 'var(--text-muted)', padding: '4px 6px', borderRadius: '6px', fontSize: '14px' }}
+            className="text-muted px-[6px] py-1 rounded-md text-sm"
           >
             ✕
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
           {children}
         </div>
       </div>

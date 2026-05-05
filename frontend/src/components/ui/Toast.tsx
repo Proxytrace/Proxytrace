@@ -22,20 +22,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
-      <div style={{
-        position: 'fixed', bottom: '24px', right: '24px',
-        display: 'flex', flexDirection: 'column', gap: '8px',
-        zIndex: 100, pointerEvents: 'none',
-      }}>
+      <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[100] pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} className="fade-up" style={{
-            padding: '10px 16px', borderRadius: '10px',
-            background: 'var(--bg-card)',
+          <div key={t.id} className="fade-up bg-card rounded-[10px] px-4 py-2.5 text-[13px] font-medium max-w-[320px]" style={{
             border: `1px solid ${typeColor(t.type)}44`,
             boxShadow: 'var(--shadow-float)',
-            fontSize: '13px', fontWeight: 500,
             color: typeColor(t.type),
-            maxWidth: '320px',
           }}>
             {t.message}
           </div>

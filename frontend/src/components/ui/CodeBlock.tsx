@@ -24,47 +24,24 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    <div className="flex flex-col gap-1.5">
       {heading && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          fontSize: '11px', fontWeight: 600, letterSpacing: '0.06em',
-          textTransform: 'uppercase', color: 'var(--text-muted)',
-        }}>
+        <div className="flex items-center justify-between text-[11px] font-semibold tracking-[0.06em] uppercase text-muted">
           <span>{heading}</span>
           <button
             onClick={copy}
-            style={{
-              fontSize: '11px', fontWeight: 500, padding: '2px 8px',
-              borderRadius: '6px', border: '1px solid var(--border-color)',
-              color: copied ? 'var(--success)' : 'var(--text-muted)',
-              transition: 'color 0.15s',
-            }}
+            className={`text-[11px] font-medium px-2 py-[2px] rounded-md border border-border transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
       )}
-      <div style={{ position: 'relative' }}>
-        <pre style={{
-          margin: 0,
-          padding: '12px 14px',
-          background: 'var(--bg-primary)',
-          borderRadius: '8px',
-          border: '1px solid var(--border-color)',
-          fontSize: '12px',
-          lineHeight: '1.6',
-          fontFamily: mono ? "'JetBrains Mono', 'Fira Code', monospace" : 'inherit',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          overflowX: 'auto',
-          color: 'var(--text-primary)',
-        }}>
+      <div className="relative">
+        <pre
+          className={`m-0 px-3.5 py-3 bg-surface border border-border rounded-lg text-xs leading-relaxed whitespace-pre-wrap break-words overflow-x-auto text-primary ${mono ? 'font-mono' : 'font-[inherit]'}`}
+        >
           {language && (
-            <span style={{
-              position: 'absolute', top: '8px', right: '10px',
-              fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'inherit',
-            }}>
+            <span className="absolute top-2 right-[10px] text-[10px] text-muted font-[inherit]">
               {language}
             </span>
           )}
@@ -73,14 +50,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
         {!heading && (
           <button
             onClick={copy}
-            style={{
-              position: 'absolute', top: '8px', right: '8px',
-              fontSize: '11px', fontWeight: 500, padding: '2px 7px',
-              borderRadius: '5px', border: '1px solid var(--border-color)',
-              background: 'var(--bg-card)',
-              color: copied ? 'var(--success)' : 'var(--text-muted)',
-              transition: 'color 0.15s',
-            }}
+            className={`absolute top-2 right-2 text-[11px] font-medium px-[7px] py-[2px] rounded-[5px] border border-border bg-card transition-colors ${copied ? 'text-success' : 'text-muted'}`}
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
@@ -89,10 +59,7 @@ export function CodeBlock({ heading, content, maxLines = 10, mono = true, langua
       {isTruncated && (
         <button
           onClick={() => setExpanded(e => !e)}
-          style={{
-            alignSelf: 'flex-start', fontSize: '12px', fontWeight: 500,
-            color: 'var(--accent-primary)', padding: '2px 0',
-          }}
+          className="self-start text-xs font-medium text-accent py-[2px]"
         >
           {expanded ? 'Show less' : `Show ${lines.length - maxLines} more lines`}
         </button>

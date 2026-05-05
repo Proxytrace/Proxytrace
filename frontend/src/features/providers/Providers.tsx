@@ -30,18 +30,8 @@ function maskKey(k: string) {
   return k.length <= 8 ? '••••••••' : k.slice(0, 7) + '••••••••••••' + k.slice(-4);
 }
 
-function inputStyle(extra?: React.CSSProperties): React.CSSProperties {
-  return {
-    padding: '9px 12px', background: 'var(--bg-card-2)', borderRadius: '9px',
-    fontSize: '13px', color: 'var(--text-primary)', outline: 'none',
-    boxShadow: 'inset 0 0 0 1px var(--hairline)', width: '100%', border: 'none',
-    fontFamily: 'inherit', ...extra,
-  };
-}
-
-function labelStyle(): React.CSSProperties {
-  return { fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' };
-}
+const inputCls = 'w-full px-3 py-[9px] bg-card-2 rounded-[9px] text-[13px] text-primary outline-none border-none font-[inherit]';
+const labelCls = 'text-[12px] font-semibold text-muted uppercase tracking-[0.05em]';
 
 export default function Providers() {
   const qc = useQueryClient();
@@ -150,112 +140,107 @@ export default function Providers() {
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 1400, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, height: 'calc(100vh - 80px)', overflow: 'hidden', paddingBottom: 24 }}>
+    <div className="w-full max-w-[1400px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-hidden pb-6 h-[calc(100vh-80px)]">
       {/* Header */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
+      <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 4px' }}>Providers</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Configure upstream model providers and manage Trsr API keys.</p>
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Providers</h1>
+          <p className="text-[14px] text-muted m-0">Configure upstream model providers and manage Trsr API keys.</p>
         </div>
-        <button className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: orgs[0]?.id ?? '' }); setShowNewProvider(true); }}>
+        <button className="btn-primary inline-flex items-center gap-[6px]" onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: orgs[0]?.id ?? '' }); setShowNewProvider(true); }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Provider
         </button>
       </div>
 
       {/* Master-detail */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 12, flex: 1, minHeight: 0 }}>
+      <div className="flex-1 min-h-0 grid grid-cols-[280px_1fr] gap-3">
         {/* Provider list */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2, padding: 8 }}>
-          {providersLoading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>}
-          {!providersLoading && providers.length === 0 && <div style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text-muted)', fontSize: 13 }}>No providers yet.</div>}
+        <div className="bg-card rounded-2xl overflow-y-auto flex flex-col gap-[2px] p-2" style={{ boxShadow: 'var(--shadow-card)' }}>
+          {providersLoading && <div className="text-center py-10 text-muted text-[13px]">Loading…</div>}
+          {!providersLoading && providers.length === 0 && <div className="text-center p-[40px_16px] text-muted text-[13px]">No providers yet.</div>}
           {providers.map(p => (
             <button
               key={p.id}
               onClick={() => selectProvider(p)}
+              className="w-full text-left p-[12px_14px] rounded-[10px] relative"
               style={{
-                width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 10,
                 background: selectedId === p.id ? 'rgba(201,148,74,0.08)' : 'transparent',
-                border: 'none', cursor: 'pointer', position: 'relative',
+                border: 'none', cursor: 'pointer',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#fff',
-                  background: `linear-gradient(135deg, ${providerColor(p.name)}cc, ${providerColor(p.name)}88)`,
-                }}>
+              <div className="flex items-center gap-[10px]">
+                <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0 text-[13px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${providerColor(p.name)}cc, ${providerColor(p.name)}88)` }}>
                   {p.name[0]}
                 </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <span style={{ flexShrink: 0, padding: '1px 6px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: `${kindColor(p.kind)}22`, color: kindColor(p.kind) }}>{kindLabel(p.kind)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-[6px]">
+                    <div className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
+                    <span className="shrink-0 px-[6px] py-[1px] rounded-full text-[10px] font-semibold" style={{ background: `${kindColor(p.kind)}22`, color: kindColor(p.kind) }}>{kindLabel(p.kind)}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "'JetBrains Mono',monospace" }}>{p.organizationName}</div>
+                  <div className="font-mono text-[11px] text-muted overflow-hidden text-ellipsis whitespace-nowrap">{p.organizationName}</div>
                 </div>
               </div>
-              {selectedId === p.id && <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 3, height: '50%', background: 'var(--accent-primary)', borderRadius: '0 2px 2px 0' }} />}
+              {selectedId === p.id && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-1/2 bg-accent rounded-[0_2px_2px_0]" />}
             </button>
           ))}
         </div>
 
         {/* Detail panel */}
         {selected ? (
-          <div style={{ background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="bg-card rounded-2xl flex flex-col overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             {/* Provider header */}
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, fontSize: 18, fontWeight: 700, color: '#fff',
-                  background: `linear-gradient(135deg, ${providerColor(selected.name)}cc, ${providerColor(selected.name)}88)`,
-                }}>
+            <div className="p-[18px_20px] border-b border-hairline shrink-0">
+              <div className="flex items-start gap-[14px]">
+                <div className="w-11 h-11 rounded-[13px] flex items-center justify-center shrink-0 text-[18px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${providerColor(selected.name)}cc, ${providerColor(selected.name)}88)` }}>
                   {selected.name[0]}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{selected.name}</h2>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-[10px] mb-1">
+                    <h2 className="text-[18px] font-bold m-0">{selected.name}</h2>
                     {!editingKind ? (
                       <button
                         onClick={() => { setEditKindValue(selected.kind); setEditingKind(true); }}
-                        style={{ padding: '2px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: `${kindColor(selected.kind)}22`, color: kindColor(selected.kind), border: 'none', cursor: 'pointer' }}
+                        className="px-2 py-[2px] rounded-full text-[11px] font-semibold"
+                        style={{ background: `${kindColor(selected.kind)}22`, color: kindColor(selected.kind), border: 'none', cursor: 'pointer' }}
                       >
                         {kindLabel(selected.kind)}
                       </button>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="flex items-center gap-[6px]">
                         <select
                           value={editKindValue}
                           onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
-                          style={{ padding: '2px 8px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: `${kindColor(editKindValue)}22`, color: kindColor(editKindValue), border: 'none', outline: 'none', cursor: 'pointer' }}
+                          className="px-2 py-[2px] rounded-full text-[11px] font-semibold outline-none cursor-pointer"
+                          style={{ background: `${kindColor(editKindValue)}22`, color: kindColor(editKindValue), border: 'none' }}
                         >
                           {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{o.label}</option>)}
                         </select>
-                        <button className="btn-primary" style={{ padding: '2px 10px', fontSize: 11, borderRadius: 100 }} onClick={() => updateKind.mutate()} disabled={updateKind.isPending}>{updateKind.isPending ? '…' : 'Save'}</button>
-                        <button onClick={() => setEditingKind(false)} style={{ padding: '2px 8px', borderRadius: 100, fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-card-2)', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                        <button className="btn-primary px-[10px] py-[2px] text-[11px] rounded-full" onClick={() => updateKind.mutate()} disabled={updateKind.isPending}>{updateKind.isPending ? '…' : 'Save'}</button>
+                        <button onClick={() => setEditingKind(false)} className="px-2 py-[2px] rounded-full text-[11px] text-muted bg-card-2" style={{ border: 'none', cursor: 'pointer' }}>Cancel</button>
                       </div>
                     )}
-                    <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 11, background: 'var(--bg-card-2)', color: 'var(--text-muted)' }}>{selected.organizationName}</span>
+                    <span className="px-2 py-[2px] rounded-full text-[11px] bg-card-2 text-muted">{selected.organizationName}</span>
                   </div>
-                  <div className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{selected.endpoint}</div>
+                  <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
                 </div>
-                <button onClick={() => setDeleteProvider(true)} style={{ padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(217,85,85,0.08)', display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger inline-flex items-center gap-[5px] shrink-0" style={{ background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>
                   🗑 Delete provider
                 </button>
               </div>
               {/* Upstream key row */}
-              <div style={{ marginTop: 14, padding: '10px 14px', background: 'var(--bg-card-2)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Upstream API key</span>
-                <code style={{ flex: 1, fontSize: 12, fontFamily: "'JetBrains Mono',monospace", color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div className="mt-[14px] px-[14px] py-[10px] bg-card-2 rounded-[10px] flex items-center gap-[10px]">
+                <span className="text-[12px] text-muted whitespace-nowrap">Upstream API key</span>
+                <code className="flex-1 mono text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
                   {revealKey ? selected.upstreamApiKey : maskKey(selected.upstreamApiKey)}
                 </code>
-                <button onClick={() => setRevealKey(v => !v)} style={{ fontSize: 11, color: 'var(--text-muted)', padding: '3px 8px', borderRadius: 6, background: 'var(--bg-card)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                <button onClick={() => setRevealKey(v => !v)} className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap" style={{ border: 'none', cursor: 'pointer' }}>
                   {revealKey ? 'Hide' : 'Reveal'}
                 </button>
                 <button
                   onClick={() => { navigator.clipboard.writeText(selected.upstreamApiKey); toast('Upstream key copied', 'success'); }}
-                  style={{ fontSize: 11, color: 'var(--text-muted)', padding: '3px 8px', borderRadius: 6, background: 'var(--bg-card)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap"
+                  style={{ border: 'none', cursor: 'pointer' }}
                 >
                   Copy
                 </button>
@@ -263,17 +248,16 @@ export default function Providers() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+            <div className="flex gap-0 border-b border-hairline shrink-0 -mb-px">
               {(['models', 'keys'] as const).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  style={{
-                    padding: '12px 20px', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
-                    background: 'transparent', color: tab === t ? 'var(--accent-primary)' : 'var(--text-muted)',
-                    borderBottom: tab === t ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                    marginBottom: -1,
-                  }}
+                  className={`px-5 py-3 text-[13px] font-semibold cursor-pointer bg-transparent border-none -mb-px ${
+                    tab === t
+                      ? 'text-accent border-b-2 border-b-accent'
+                      : 'text-muted border-b-2 border-b-transparent'
+                  }`}
                 >
                   {t === 'models' ? 'Models' : 'API Keys'}
                 </button>
@@ -281,76 +265,76 @@ export default function Providers() {
             </div>
 
             {/* Tab content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="flex-1 overflow-y-auto p-[16px_20px] flex flex-col gap-[14px]">
               {tab === 'models' && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Models</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Set pricing to compute trace costs.</div>
+                      <div className="text-[14px] font-bold mb-[2px]">Models</div>
+                      <div className="text-[12px] text-muted">Set pricing to compute trace costs.</div>
                     </div>
-                    <button onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }} style={{ padding: '7px 12px', background: 'var(--bg-card-2)', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                    <button onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px]" style={{ border: 'none', cursor: 'pointer' }}>
                       + Add Model
                     </button>
                   </div>
 
                   {showNewModel && (
-                    <div style={{ padding: '14px 16px', background: 'var(--bg-card-2)', borderRadius: 12, border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>Add Model</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        <label style={labelStyle()}>Model name</label>
-                        <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" style={{ ...inputStyle(), fontFamily: "'JetBrains Mono',monospace" }} />
+                    <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
+                      <div className="text-[13px] font-semibold">Add Model</div>
+                      <div className="flex flex-col gap-[5px]">
+                        <label className={labelCls}>Model name</label>
+                        <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${inputCls} font-mono`} />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <label style={labelStyle()}>Input cost / 1M tokens (€)</label>
-                          <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" style={inputStyle()} />
+                      <div className="grid grid-cols-2 gap-[10px]">
+                        <div className="flex flex-col gap-[5px]">
+                          <label className={labelCls}>Input cost / 1M tokens (€)</label>
+                          <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" className={inputCls} />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <label style={labelStyle()}>Output cost / 1M tokens (€)</label>
-                          <input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" style={inputStyle()} />
+                        <div className="flex flex-col gap-[5px]">
+                          <label className={labelCls}>Output cost / 1M tokens (€)</label>
+                          <input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" className={inputCls} />
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <div className="flex gap-2 justify-end">
                         <button className="btn-ghost" onClick={() => setShowNewModel(false)}>Cancel</button>
                         <button className="btn-primary" onClick={() => createModel.mutate()} disabled={!newModel.modelName || createModel.isPending}>{createModel.isPending ? 'Adding…' : 'Add Model'}</button>
                       </div>
                     </div>
                   )}
 
-                  {modelsLoading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>Loading models…</div>}
+                  {modelsLoading && <div className="text-center text-muted text-[13px] p-5">Loading models…</div>}
                   {!modelsLoading && models.length === 0 && !showNewModel && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '24px', border: '1px dashed var(--hairline)', borderRadius: 12 }}>
+                    <div className="text-center text-muted text-[13px] p-6 border border-dashed border-hairline rounded-xl">
                       No models yet. Add one or let Trsr auto-discover them from traces.
                     </div>
                   )}
                   {models.length > 0 && (
-                    <div style={{ background: 'var(--bg-card-2)', borderRadius: 12, overflow: 'hidden' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', padding: '10px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', borderBottom: '1px solid var(--hairline)' }}>
+                    <div className="bg-card-2 rounded-xl overflow-hidden">
+                      <div className="grid p-[10px_16px] text-[11px] font-semibold text-muted tracking-[0.06em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
                         <span>Model</span><span>Input / 1M €</span><span>Output / 1M €</span><span />
                       </div>
                       {models.map((m, i) => (
-                        <div key={m.id} style={{ borderBottom: i < models.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', padding: '11px 16px', alignItems: 'center' }}>
-                            <span className="mono" style={{ fontSize: 12 }}>{m.modelName}</span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
-                            <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} style={{ padding: '5px 8px', borderRadius: 7, color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>✎</button>
+                        <div key={m.id} className={i < models.length - 1 ? 'border-b border-hairline' : ''}>
+                          <div className="grid p-[11px_16px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
+                            <span className="mono text-[12px]">{m.modelName}</span>
+                            <span className="text-[12px] text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
+                            <span className="text-[12px] text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
+                            <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="p-[5px_8px] rounded-[7px] text-muted bg-transparent inline-flex items-center" style={{ border: 'none', cursor: 'pointer' }}>✎</button>
                           </div>
                           {editingModel?.id === m.id && (
-                            <div style={{ padding: '12px 16px 14px', background: 'var(--bg-card)', borderTop: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Edit pricing for {m.modelName}</div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                  <label style={labelStyle()}>Input / 1M (€)</label>
-                                  <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" style={inputStyle()} />
+                            <div className="p-[12px_16px_14px] bg-card border-t border-hairline flex flex-col gap-[10px]">
+                              <div className="text-[12px] font-semibold text-secondary">Edit pricing for {m.modelName}</div>
+                              <div className="grid grid-cols-2 gap-[10px]">
+                                <div className="flex flex-col gap-[5px]">
+                                  <label className={labelCls}>Input / 1M (€)</label>
+                                  <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" className={inputCls} />
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                  <label style={labelStyle()}>Output / 1M (€)</label>
-                                  <input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" style={inputStyle()} />
+                                <div className="flex flex-col gap-[5px]">
+                                  <label className={labelCls}>Output / 1M (€)</label>
+                                  <input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" className={inputCls} />
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                              <div className="flex gap-2 justify-end">
                                 <button className="btn-ghost" onClick={() => setEditingModel(null)}>Cancel</button>
                                 <button className="btn-primary" onClick={() => updatePricing.mutate()} disabled={updatePricing.isPending}>{updatePricing.isPending ? 'Saving…' : 'Save'}</button>
                               </div>
@@ -365,70 +349,70 @@ export default function Providers() {
 
               {tab === 'keys' && (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>Trsr API Keys</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Keys that authenticate clients at the Trsr proxy.</div>
+                      <div className="text-[14px] font-bold mb-[2px]">Trsr API Keys</div>
+                      <div className="text-[12px] text-muted">Keys that authenticate clients at the Trsr proxy.</div>
                     </div>
-                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: projects[0]?.id ?? '' }); }} style={{ padding: '7px 12px', background: 'var(--bg-card-2)', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
+                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px]" style={{ border: 'none', cursor: 'pointer' }}>
                       + Generate Key
                     </button>
                   </div>
 
                   {newlyCreatedKey && (
-                    <div style={{ padding: '12px 16px', borderRadius: 11, background: 'rgba(61,170,111,0.08)', border: '1px solid rgba(61,170,111,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#3daa6f', marginBottom: 4 }}>Key "{newlyCreatedKey.name}" created — copy it now</div>
-                        <code style={{ fontSize: 12, fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
+                    <div className="p-[12px_16px] rounded-[11px] flex items-center gap-3" style={{ background: 'rgba(61,170,111,0.08)', border: '1px solid rgba(61,170,111,0.2)' }}>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-semibold mb-1" style={{ color: '#3daa6f' }}>Key "{newlyCreatedKey.name}" created — copy it now</div>
+                        <code className="text-[12px]" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: '#3daa6f', color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>Copy</button>
-                      <button onClick={() => setNewlyCreatedKey(null)} style={{ color: 'var(--text-muted)', padding: 4, border: 'none', cursor: 'pointer', background: 'transparent' }}>✕</button>
+                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-[6px] rounded-[7px] text-[12px] font-semibold text-white whitespace-nowrap" style={{ background: '#3daa6f', border: 'none', cursor: 'pointer' }}>Copy</button>
+                      <button onClick={() => setNewlyCreatedKey(null)} className="text-muted p-1 bg-transparent" style={{ border: 'none', cursor: 'pointer' }}>✕</button>
                     </div>
                   )}
 
                   {showNewKey && (
-                    <div style={{ padding: '14px 16px', background: 'var(--bg-card-2)', borderRadius: 12, border: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>Generate New Key</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <label style={labelStyle()}>Key name</label>
-                          <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" style={inputStyle()} />
+                    <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
+                      <div className="text-[13px] font-semibold">Generate New Key</div>
+                      <div className="grid grid-cols-2 gap-[10px]">
+                        <div className="flex flex-col gap-[5px]">
+                          <label className={labelCls}>Key name</label>
+                          <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={inputCls} />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <label style={labelStyle()}>Project</label>
-                          <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} style={{ ...inputStyle(), background: 'var(--bg-card)' }}>
+                        <div className="flex flex-col gap-[5px]">
+                          <label className={labelCls}>Project</label>
+                          <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} className={`${inputCls} bg-card`}>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                      <div className="flex gap-2 justify-end">
                         <button className="btn-ghost" onClick={() => setShowNewKey(false)}>Cancel</button>
                         <button className="btn-primary" onClick={() => createKey.mutate()} disabled={!newKey.name || !newKey.projectId || createKey.isPending}>{createKey.isPending ? 'Generating…' : 'Generate'}</button>
                       </div>
                     </div>
                   )}
 
-                  {keysLoading && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>Loading keys…</div>}
+                  {keysLoading && <div className="text-center text-muted text-[13px] p-5">Loading keys…</div>}
                   {!keysLoading && keys.length === 0 && !showNewKey && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '40px', border: '1px dashed var(--hairline)', borderRadius: 12 }}>
+                    <div className="text-center text-muted text-[13px] p-10 border border-dashed border-hairline rounded-xl">
                       No API keys yet. Generate one to start proxying requests.
                     </div>
                   )}
                   {keys.length > 0 && (
-                    <div style={{ background: 'var(--bg-card-2)', borderRadius: 12, overflow: 'hidden' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto', padding: '10px 16px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', borderBottom: '1px solid var(--hairline)' }}>
+                    <div className="bg-card-2 rounded-xl overflow-hidden">
+                      <div className="grid p-[10px_16px] text-[11px] font-semibold text-muted tracking-[0.06em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto' }}>
                         <span>Name</span><span>Project</span><span>Key</span><span>Created</span><span />
                       </div>
                       {keys.map((key, i) => (
-                        <div key={key.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto', padding: '12px 16px', alignItems: 'center', borderBottom: i < keys.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{key.name}</span>
-                          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{key.projectName}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                            <code className="mono" style={{ fontSize: 12, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{maskKey(key.keyValue)}</code>
-                            <button onClick={() => { navigator.clipboard.writeText(key.keyValue); toast('API key copied', 'success'); }} style={{ flexShrink: 0, color: 'var(--text-muted)', padding: '3px 6px', borderRadius: 5, background: 'var(--bg-card)', border: 'none', cursor: 'pointer' }}>⧉</button>
+                        <div key={key.id} className={`grid p-[12px_16px] items-center ${i < keys.length - 1 ? 'border-b border-hairline' : ''}`} style={{ gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto' }}>
+                          <span className="text-[13px] font-semibold">{key.name}</span>
+                          <span className="text-[12px] text-secondary">{key.projectName}</span>
+                          <div className="flex items-center gap-[6px] min-w-0">
+                            <code className="mono text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(key.keyValue)}</code>
+                            <button onClick={() => { navigator.clipboard.writeText(key.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card" style={{ border: 'none', cursor: 'pointer' }}>⧉</button>
                           </div>
-                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(key.createdAt)}</span>
-                          <button onClick={() => setDeleteKey(key)} style={{ padding: '5px 8px', borderRadius: 7, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}>🗑</button>
+                          <span className="text-[12px] text-muted">{fmtDate(key.createdAt)}</span>
+                          <button onClick={() => setDeleteKey(key)} className="p-[5px_8px] rounded-[7px] text-danger bg-transparent" style={{ border: 'none', cursor: 'pointer' }}>🗑</button>
                         </div>
                       ))}
                     </div>
@@ -438,7 +422,7 @@ export default function Providers() {
             </div>
           </div>
         ) : (
-          <div style={{ background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+          <div className="bg-card rounded-2xl flex items-center justify-center text-muted text-sm" style={{ boxShadow: 'var(--shadow-card)' }}>
             Add your first provider to get started.
           </div>
         )}
@@ -452,32 +436,33 @@ export default function Providers() {
             <button className="btn-primary" onClick={() => createProvider.mutate()} disabled={!newProvider.name || !newProvider.endpoint || !newProvider.upstreamApiKey || createProvider.isPending}>{createProvider.isPending ? 'Saving…' : 'Add Provider'}</button>
           </>
         }>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="flex flex-col gap-[14px]">
             {[
               { label: 'Provider name', key: 'name' as const, placeholder: 'e.g. Anthropic', type: 'text' },
               { label: 'Endpoint URL', key: 'endpoint' as const, placeholder: 'https://api.anthropic.com/v1', type: 'text', mono: true },
               { label: 'Upstream API key', key: 'upstreamApiKey' as const, placeholder: 'sk-ant-…', type: 'password', mono: true },
             ].map(f => (
-              <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={labelStyle()}>{f.label}</label>
+              <div key={f.key} className="flex flex-col gap-[6px]">
+                <label className={labelCls}>{f.label}</label>
                 <input
                   type={f.type}
                   value={newProvider[f.key]}
                   onChange={e => setNewProvider(p => ({ ...p, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
-                  style={{ ...inputStyle(), fontFamily: f.mono ? "'JetBrains Mono',monospace" : 'inherit' }}
+                  className={inputCls}
+                  style={f.mono ? { fontFamily: "'JetBrains Mono',monospace" } : undefined}
                 />
               </div>
             ))}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={labelStyle()}>Provider Kind</label>
-              <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} style={inputStyle()}>
+            <div className="flex flex-col gap-[6px]">
+              <label className={labelCls}>Provider Kind</label>
+              <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={inputCls}>
                 {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={labelStyle()}>Organization</label>
-              <select value={newProvider.organizationId} onChange={e => setNewProvider(p => ({ ...p, organizationId: e.target.value }))} style={inputStyle()}>
+            <div className="flex flex-col gap-[6px]">
+              <label className={labelCls}>Organization</label>
+              <select value={newProvider.organizationId} onChange={e => setNewProvider(p => ({ ...p, organizationId: e.target.value }))} className={inputCls}>
                 {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
             </div>

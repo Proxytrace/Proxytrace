@@ -14,30 +14,25 @@ export function NavItem({ label, icon, to, badge, badgeAccent, collapsed }: NavI
     <NavLink
       to={to}
       title={collapsed ? label : undefined}
-      className={({ isActive }) => `nav-item${isActive ? ' nav-active' : ''}`}
-      style={{ justifyContent: collapsed ? 'center' : undefined }}
+      className={({ isActive }) => `nav-item${isActive ? ' nav-active' : ''}${collapsed ? ' justify-center' : ''}`}
     >
       {({ isActive }) => (
         <>
-          {/* Active left-side indicator bar */}
           {isActive && (
-            <span style={{
-              position: 'absolute', left: 0, top: 8, bottom: 8, width: 2,
-              background: 'var(--accent-primary)', borderRadius: '0 2px 2px 0',
-            }} />
+            <span className="absolute left-0 top-2 bottom-2 w-[2px] bg-accent rounded-[0_2px_2px_0]" />
           )}
-          <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
+          <span className="flex shrink-0">{icon}</span>
           {!collapsed && (
             <>
-              <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+              <span className="flex-1 text-left">{label}</span>
               {badge && (
-                <span style={{
-                  fontSize: '10px', fontWeight: 600,
-                  padding: '2px 6px', borderRadius: '100px',
-                  minWidth: '18px', textAlign: 'center',
-                  background: badgeAccent ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)' : 'var(--bg-card-2)',
-                  color: badgeAccent ? '#fff' : 'var(--text-secondary)',
-                }}>
+                <span
+                  style={{
+                    background: badgeAccent ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)' : 'var(--bg-card-2)',
+                    color: badgeAccent ? '#fff' : 'var(--text-secondary)',
+                  }}
+                  className="text-[10px] font-semibold px-[6px] py-[2px] rounded-full min-w-[18px] text-center"
+                >
                   {badge}
                 </span>
               )}

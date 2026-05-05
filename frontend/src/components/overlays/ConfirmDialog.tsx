@@ -26,20 +26,15 @@ export function ConfirmDialog({ entityName, displayName, onConfirm, onCancel, lo
         </>
       }
     >
-      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 16px' }}>
-        This action cannot be undone. Type <strong style={{ color: 'var(--text-primary)' }}>{entityName}</strong> to confirm.
+      <p className="text-[13px] text-secondary m-0 mb-4">
+        This action cannot be undone. Type <strong className="text-primary">{entityName}</strong> to confirm.
       </p>
       <input
         autoFocus
         value={input}
         onChange={e => setInput(e.target.value)}
         placeholder={entityName}
-        style={{
-          width: '100%', padding: '9px 12px',
-          background: 'var(--bg-primary)', border: '1px solid var(--border-color)',
-          borderRadius: '8px', fontSize: '13px', color: 'var(--text-primary)',
-          fontFamily: 'inherit', outline: 'none',
-        }}
+        className="w-full px-3 py-[9px] bg-surface border border-border rounded-lg text-[13px] text-primary font-[inherit] outline-none"
       />
     </Modal>
   );

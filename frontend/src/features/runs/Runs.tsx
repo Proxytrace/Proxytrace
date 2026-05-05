@@ -104,12 +104,12 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {/* Run header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-            <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{run.id.slice(0, 12)}…</span>
+          <div className="flex items-center gap-2 flex-wrap mb-[6px]">
+            <span className="mono text-[12px] text-muted">{run.id.slice(0, 12)}…</span>
             {run.status === TestRunStatus.Completed && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: passRate >= 75 ? 'var(--success-subtle)' : passRate >= 55 ? 'var(--warn-subtle)' : 'var(--danger-subtle)', color: passColor, fontSize: 10.5, fontWeight: 600 }}>
                 {run.passedCases}/{run.totalCases} passed
@@ -119,17 +119,17 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
               {run.status}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em', margin: 0 }}>{group.suiteName}</h2>
-            <span style={{ color: 'var(--text-muted)' }}>·</span>
-            <span style={{ padding: '2px 8px', borderRadius: 100, background: agentColor(group.agentId) + '20', color: agentColor(group.agentId), fontSize: 11, fontWeight: 600 }}>{group.agentName}</span>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[17px] font-bold tracking-[-0.01em] m-0">{group.suiteName}</h2>
+            <span className="text-muted">·</span>
+            <span className="px-2 py-[2px] rounded-full text-[11px] font-semibold" style={{ background: agentColor(group.agentId) + '20', color: agentColor(group.agentId) }}>{group.agentName}</span>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{fmtRelative(group.createdAt)} · {run.endpointName}</div>
+          <div className="text-[12px] text-muted mt-1">{fmtRelative(group.createdAt)} · {run.endpointName}</div>
         </div>
       </div>
 
       {/* Stats band */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+      <div className="grid gap-[10px]" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
         {[
           { label: 'Pass rate',  value: run.status === TestRunStatus.Completed ? `${passRate}%` : '—', color: run.status === TestRunStatus.Completed ? passColor : 'var(--text-muted)', sub: `${run.passedCases} of ${run.totalCases}` },
           { label: 'Passed',     value: String(run.passedCases), color: 'var(--success)', sub: 'test cases' },
@@ -137,20 +137,20 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
           { label: 'Duration',   value: fmtDuration(run.durationMs), color: 'var(--text-primary)', sub: 'wall time' },
           { label: 'Evaluators', value: String(run.evaluators.length), color: 'var(--text-primary)', sub: run.evaluators.map(e => e.name).join(', ') || '—' },
         ].map(s => (
-          <div key={s.label} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.sub}</div>
+          <div key={s.label} className="px-[14px] py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">{s.label}</div>
+            <div className="text-[20px] font-bold tracking-[-0.02em]" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-[10.5px] text-muted mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap">{s.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Minimap */}
       {run.results.length > 0 && (
-        <div style={{ padding: '12px 16px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>Results at a glance</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{passed} passed · {failed} failed</span>
+        <div className="px-4 py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-[12px] font-semibold">Results at a glance</span>
+            <span className="mono text-[11px] text-muted">{passed} passed · {failed} failed</span>
           </div>
           <ProgressBar value={run.passedCases} max={run.totalCases} height={7} />
           <div style={{ display: 'flex', gap: 4, marginTop: 10, flexWrap: 'wrap' }}>
@@ -174,32 +174,32 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
 
       {/* Case results explorer */}
       {run.results.length > 0 && (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+        <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
           {/* Toolbar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--hairline)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Test case results</span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                <span style={{ color: 'var(--success)', fontWeight: 600 }}>{passed} passed</span>
+          <div className="flex items-center justify-between p-[10px_14px] border-b border-hairline">
+            <div className="flex items-center gap-[10px]">
+              <span className="text-[12.5px] font-semibold">Test case results</span>
+              <span className="text-[11px] text-muted">
+                <span className="text-success font-semibold">{passed} passed</span>
                 {' · '}
-                <span style={{ color: failed > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 600 }}>{failed} failed</span>
+                <span className={`font-semibold ${failed > 0 ? 'text-danger' : 'text-muted'}`}>{failed} failed</span>
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="flex items-center gap-[6px]">
               {/* Filter tabs */}
-              <div style={{ display: 'flex', gap: 2, padding: 2, background: 'var(--bg-card-2)', borderRadius: 8 }}>
+              <div className="flex gap-[2px] p-[2px] bg-card-2 rounded-lg">
                 {([['all', 'All', run.results.length], ['passed', 'Passed', passed], ['failed', 'Failed', failed]] as [CaseFilter, string, number][]).map(([f, label, count]) => (
-                  <button key={f} onClick={() => setCaseFilter(f)} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer', background: caseFilter === f ? 'var(--bg-card)' : 'transparent', color: caseFilter === f ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: caseFilter === f ? 'var(--shadow-pill)' : 'none', whiteSpace: 'nowrap' }}>
-                    {label} <span className="mono" style={{ fontSize: 10, opacity: 0.7 }}>{count}</span>
+                  <button key={f} onClick={() => setCaseFilter(f)} className={`px-[9px] py-1 rounded-md text-[11px] font-medium cursor-pointer whitespace-nowrap ${caseFilter === f ? 'bg-card text-primary' : 'bg-transparent text-muted'}`} style={{ boxShadow: caseFilter === f ? 'var(--shadow-pill)' : 'none' }}>
+                    {label} <span className="mono text-[10px] opacity-70">{count}</span>
                   </button>
                 ))}
               </div>
               {/* View toggle */}
-              <div style={{ display: 'flex', gap: 2, padding: 2, background: 'var(--bg-card-2)', borderRadius: 8 }}>
-                <button onClick={() => setViewMode('grid')} title="Grid view" style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'grid' ? 'var(--bg-card)' : 'transparent', boxShadow: viewMode === 'grid' ? 'var(--shadow-pill)' : 'none', color: viewMode === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+              <div className="flex gap-[2px] p-[2px] bg-card-2 rounded-lg">
+                <button onClick={() => setViewMode('grid')} title="Grid view" className={`w-[26px] h-[26px] rounded-md border-none cursor-pointer flex items-center justify-center ${viewMode === 'grid' ? 'bg-card text-primary' : 'bg-transparent text-muted'}`} style={{ boxShadow: viewMode === 'grid' ? 'var(--shadow-pill)' : 'none' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                 </button>
-                <button onClick={() => setViewMode('table')} title="Table view" style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'table' ? 'var(--bg-card)' : 'transparent', boxShadow: viewMode === 'table' ? 'var(--shadow-pill)' : 'none', color: viewMode === 'table' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                <button onClick={() => setViewMode('table')} title="Table view" className={`w-[26px] h-[26px] rounded-md border-none cursor-pointer flex items-center justify-center ${viewMode === 'table' ? 'bg-card text-primary' : 'bg-transparent text-muted'}`} style={{ boxShadow: viewMode === 'table' ? 'var(--shadow-pill)' : 'none' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
                 </button>
               </div>
@@ -238,8 +238,8 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
 
           {/* Table view */}
           {viewMode === 'table' && (
-            <div style={{ overflow: 'hidden', borderRadius: '0 0 14px 14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '10px 16px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid var(--hairline)' }}>
+            <div className="overflow-hidden rounded-b-[14px]">
+              <div className="grid px-4 py-[10px] text-[10px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr' }}>
                 <span /><span>Test case</span><span>Evaluator</span><span>Score</span><span>Latency</span><span>Note</span>
               </div>
               {filteredResults.map((r, i) => {
@@ -340,22 +340,22 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
   const selectedRun = group.runs.find(r => r.id === selectedRunId) ?? group.runs[0] ?? null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="flex flex-col gap-3">
       {/* Group header */}
-      <div style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+      <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
-        <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="px-[18px] py-[14px] flex items-center gap-3">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 15, fontWeight: 700 }}>{group.suiteName}</span>
-              <span style={{ padding: '2px 8px', borderRadius: 100, background: c + '20', color: c, fontSize: 10.5, fontWeight: 600 }}>{group.agentName}</span>
-              <span style={{ padding: '2px 7px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: `${statusColor(group.status)}18`, color: statusColor(group.status) }}>{group.status}</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[15px] font-bold">{group.suiteName}</span>
+              <span className="px-2 py-[2px] rounded-full text-[10.5px] font-semibold" style={{ background: c + '20', color: c }}>{group.agentName}</span>
+              <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold" style={{ background: `${statusColor(group.status)}18`, color: statusColor(group.status) }}>{group.status}</span>
             </div>
-            <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{fmtRelative(group.createdAt)} · {group.runs.length} run{group.runs.length !== 1 ? 's' : ''}</span>
+            <span className="text-[11.5px] text-muted">{fmtRelative(group.createdAt)} · {group.runs.length} run{group.runs.length !== 1 ? 's' : ''}</span>
           </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div className="ml-auto flex gap-2">
             {active && (
-              <button onClick={() => cancelGroup.mutate()} style={{ fontSize: 12, padding: '5px 10px', borderRadius: 7, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => cancelGroup.mutate()} className="text-[12px] px-[10px] py-[5px] rounded-[7px] border border-border bg-transparent text-secondary cursor-pointer">Cancel</button>
             )}
           </div>
         </div>
@@ -363,7 +363,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
 
       {/* Run tabs (if multiple) */}
       {group.runs.length > 1 && (
-        <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-card)', borderRadius: 10, boxShadow: 'var(--shadow-pill)', flexWrap: 'wrap' }}>
+        <div className="flex gap-1 p-1 bg-card rounded-[10px] flex-wrap" style={{ boxShadow: 'var(--shadow-pill)' }}>
           {group.runs.map(run => {
             const isActive = selectedRunId === run.id;
             const mc = modelColor(run.endpointName);
@@ -423,40 +423,40 @@ export default function Runs() {
     : null;
 
   return (
-    <div style={{ width: '100%', maxWidth: 1360, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', padding: '4px 4px 24px' }}>
+    <div className="w-full max-w-[1360px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto p-[4px_4px_24px]">
       {/* Header */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+      <div className="fade-up flex items-center justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 6px' }}>Test Runs</h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>Evaluation results over time — per-case pass/fail, scores, and trends.</p>
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-[6px]">Test Runs</h1>
+          <p className="text-[13.5px] text-muted m-0">Evaluation results over time — per-case pass/fail, scores, and trends.</p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div className="flex gap-[10px]">
           {[
             { label: 'Total runs', value: String(totalRuns) },
             { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—' },
           ].map(s => (
-            <div key={s.label} style={{ padding: '10px 16px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)', textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
+            <div key={s.label} className="px-4 py-[10px] bg-card rounded-xl text-center" style={{ boxShadow: 'var(--shadow-card)' }}>
+              <div className="text-[18px] font-bold tracking-[-0.02em]">{s.value}</div>
+              <div className="text-[11px] text-muted mt-[2px]">{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Master–detail */}
-      <div className="fade-up" style={{ animationDelay: '40ms', display: 'grid', gridTemplateColumns: '280px 1fr', gap: 14, alignItems: 'start' }}>
+      <div className="fade-up grid gap-[14px] items-start" style={{ animationDelay: '40ms', gridTemplateColumns: '280px 1fr' }}>
         {/* Left: group list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* Agent filter */}
-          <div style={{ display: 'flex', gap: 3, padding: 3, background: 'var(--bg-card)', borderRadius: 10, boxShadow: 'var(--shadow-pill)', flexWrap: 'wrap' }}>
+          <div className="flex gap-[3px] p-[3px] bg-card rounded-[10px] flex-wrap" style={{ boxShadow: 'var(--shadow-pill)' }}>
             {agentList.map((a, i) => (
-              <button key={a} onClick={() => setAgentFilter(agentIds[i])} style={{ flex: '1 1 auto', padding: '5px 8px', borderRadius: 7, fontSize: 10.5, fontWeight: 500, background: agentFilter === agentIds[i] ? 'var(--bg-card-2)' : 'transparent', color: agentFilter === agentIds[i] ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: agentFilter === agentIds[i] ? 'var(--shadow-pill)' : 'none', whiteSpace: 'nowrap' }}>
+              <button key={a} onClick={() => setAgentFilter(agentIds[i])} className={`flex-[1_1_auto] px-2 py-[5px] rounded-[7px] text-[10.5px] font-medium whitespace-nowrap ${agentFilter === agentIds[i] ? 'bg-card-2 text-primary' : 'bg-transparent text-muted'}`} style={{ boxShadow: agentFilter === agentIds[i] ? 'var(--shadow-pill)' : 'none' }}>
                 {a}
               </button>
             ))}
           </div>
 
-          {isLoading && <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>}
+          {isLoading && <div className="text-center p-5 text-muted text-[13px]">Loading…</div>}
 
           {/* Group cards */}
           {groups.map(group => {
@@ -506,7 +506,7 @@ export default function Runs() {
           })}
 
           {!isLoading && groups.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13, background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)' }}>
+            <div className="text-center p-[40px] text-muted text-[13px] bg-card rounded-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>
               No test runs yet. Run a suite to get started.
             </div>
           )}
@@ -516,7 +516,7 @@ export default function Runs() {
         <div>
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} group={selectedGroup} />
-            : <div style={{ padding: 60, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)' }}>Select a run to see details.</div>
+            : <div className="p-[60px] text-center text-muted text-[13px] bg-card rounded-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>Select a run to see details.</div>
           }
         </div>
       </div>

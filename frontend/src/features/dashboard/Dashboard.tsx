@@ -131,7 +131,7 @@ function computeStackedBars(data: TokenDay[], width: number, height: number): St
   return { bars, grid, solidGridPath, dashedGridPath, colorPaths, baselineY: padT + h };
 }
 
-// ── Static mock data (same as Angular) ───────────────────────────────────────
+// ── Static mock data ──────────────────────────────────────────────────────────
 
 const VOLUME_RAW = [2, 4, 3, 1, 0, 2, 5, 8, 12, 18, 14, 22, 28, 34, 29, 36, 40, 32, 26, 20, 14, 18, 22, 15];
 const LATENCY_HIST_RAW = [3, 8, 22, 45, 38, 28, 15, 9, 4, 2];
@@ -180,13 +180,13 @@ function rangeLabel(r: string): string {
 
 function TraceRow({ trace }: { trace: AgentCallDto }) {
   return (
-    <div className="trace-row" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr', padding: '10px 18px', alignItems: 'center', borderBottom: '1px solid var(--border-subtle)' }}>
-      <span className="mono" style={{ fontSize: 12, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trace.id.slice(0, 13)}…</span>
+    <div className="trace-row grid items-center px-[18px] py-[10px] border-b border-border-subtle" style={{ gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr' }}>
+      <span className="mono text-xs text-primary truncate">{trace.id.slice(0, 13)}…</span>
       <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
       <StatusDot httpStatus={trace.httpStatus} />
-      <span className="mono" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>
-      <span className="mono" style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{fmtLatency(trace.durationMs)}</span>
-      <span style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right' }}>{fmtRelative(trace.createdAt)}</span>
+      <span className="mono text-[11px] text-secondary">{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>
+      <span className="mono text-[11px] text-secondary">{fmtLatency(trace.durationMs)}</span>
+      <span className="text-[11px] text-muted text-right">{fmtRelative(trace.createdAt)}</span>
     </div>
   );
 }
@@ -211,7 +211,6 @@ export default function Dashboard() {
 
   const recentTraces = tracesData?.items ?? [];
 
-  // Precomputed chart data (static mock)
   const charts = useMemo(() => {
     const volumeArea = computeAreaChart(VOLUME_RAW, 820, 240, 38, 10, 14, 24, true);
     const passRateArea = computeAreaChart(PASS_RATE_RAW, 360, 120, 4, 4, 4, 4, false);
@@ -238,32 +237,32 @@ export default function Dashboard() {
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
 
   return (
-    <div style={{ width: '100%', maxWidth: 1320, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
+    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-4 pb-6">
 
       {/* Title row */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div className="fade-up flex items-start justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 4px' }}>Dashboard</h1>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0 }}>Overview of your agent tracing and evaluation activity.</p>
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Dashboard</h1>
+          <p className="text-sm text-muted m-0">Overview of your agent tracing and evaluation activity.</p>
         </div>
-        <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-card)', borderRadius: 10, flexShrink: 0 }}>
+        <div className="flex gap-1 p-1 bg-card rounded-[10px] shrink-0">
           {(['1h', '24h', '7d', '30d'] as const).map(r => (
             <button
               key={r}
               onClick={() => setRange(r)}
               style={{
-                padding: '6px 12px', fontSize: 12, fontWeight: 500, borderRadius: 7, border: 'none', cursor: 'pointer',
-                background: range === r ? 'var(--bg-card-2)' : 'transparent',
-                color: range === r ? 'var(--text-primary)' : 'var(--text-muted)',
                 boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
               }}
+              className={`px-3 py-[6px] text-xs font-medium rounded-[7px] cursor-pointer ${
+                range === r ? 'bg-card-2 text-primary' : 'bg-transparent text-muted'
+              }`}
             >{r}</button>
           ))}
         </div>
       </div>
 
       {/* KPI Row */}
-      <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
         <KpiCard
           title="Total Traces"
           value={summaryLoading ? '…' : String(summary?.totalCalls ?? 0)}
@@ -300,21 +299,21 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row 1: Trace Volume + Latency Distribution */}
-      <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 12 }}>
+      <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
 
         {/* Trace Volume area chart */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="min-w-0 flex-1">
               <h3>Trace Volume</h3>
               <p>{rangeLabel(range)}</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: '#c9944a', display: 'inline-block' }} />
+            <div className="flex items-center gap-1.5 text-[11px] text-muted shrink-0">
+              <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: '#c9944a' }} />
               Traces
             </div>
           </div>
-          <div className="card-body" style={{ padding: '0 18px 18px' }}>
+          <div className="card-body px-[18px] pb-[18px] pt-0">
             <svg viewBox="0 0 820 240" width="100%" height="240" style={{ display: 'block', overflow: 'visible' }} preserveAspectRatio="none">
               <defs>
                 <linearGradient id="volGrad" x1="0" x2="0" y1="0" y2="1">
@@ -342,7 +341,7 @@ export default function Dashboard() {
         {/* Latency Distribution histogram */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="min-w-0 flex-1">
               <h3>Latency Distribution</h3>
               <p>60 samples · p95 4.1s</p>
             </div>
@@ -355,11 +354,11 @@ export default function Dashboard() {
                 <text key={i} x={r.labelX} y="192" textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
               ))}
             </svg>
-            <div style={{ display: 'flex', gap: 16, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+            <div className="flex gap-4 mt-3 pt-3 border-t border-border-subtle">
               {[['p50', '2.4s'], ['p90', '3.8s'], ['p95', '4.1s'], ['p99', '6.2s']].map(([k, v]) => (
                 <div key={k}>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{k}</div>
-                  <div className="mono" style={{ fontSize: 14, fontWeight: 600, marginTop: 2 }}>{v}</div>
+                  <div className="text-[11px] text-muted font-medium tracking-[0.05em] uppercase">{k}</div>
+                  <div className="mono text-sm font-semibold mt-[2px]">{v}</div>
                 </div>
               ))}
             </div>
@@ -368,25 +367,25 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row 2: Token Usage + Pass Rate */}
-      <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)', gap: 12 }}>
+      <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
 
         {/* Token Usage stacked bar */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="min-w-0 flex-1">
               <h3>Token Usage by Agent</h3>
               <p>Last 7 days · stacked</p>
             </div>
-            <div style={{ display: 'flex', gap: 10, fontSize: 11, color: 'var(--text-secondary)', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: 300, flexShrink: 0 }}>
+            <div className="flex gap-[10px] text-[11px] text-secondary flex-wrap justify-end max-w-[300px] shrink-0">
               {AGENT_COLOR_ENTRIES.map(e => (
-                <div key={e.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 2, display: 'inline-block', background: e.color }} />
+                <div key={e.name} className="flex items-center gap-[5px]">
+                  <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: e.color }} />
                   {e.name}
                 </div>
               ))}
             </div>
           </div>
-          <div className="card-body" style={{ padding: '0 18px 18px' }}>
+          <div className="card-body px-[18px] pb-[18px] pt-0">
             <svg viewBox="0 0 820 220" width="100%" height="220" style={{ display: 'block' }} preserveAspectRatio="none">
               <path d={charts.stackedBarData.solidGridPath} stroke="#343438" fill="none" />
               <path d={charts.stackedBarData.dashedGridPath} stroke="#343438" fill="none" strokeDasharray="3 4" />
@@ -406,13 +405,13 @@ export default function Dashboard() {
         {/* Pass Rate Over Runs */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="min-w-0 flex-1">
               <h3>Pass Rate Over Runs</h3>
               <p>Customer Support · Suite v2</p>
             </div>
           </div>
           <div className="card-body">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '4px 0 16px' }}>
+            <div className="flex items-center gap-[18px] py-1 pb-4">
               <svg width="80" height="80" style={{ display: 'block', transform: 'rotate(-90deg)', flexShrink: 0 }}>
                 <circle cx="40" cy="40" r="37" fill="none" stroke="#343438" strokeWidth="6" />
                 <circle
@@ -424,10 +423,10 @@ export default function Dashboard() {
                 />
               </svg>
               <div>
-                <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--success)' }}>
-                  {Math.round((summary?.overallPassRate ?? 0.82) * 100)}<span style={{ fontSize: 18, color: 'var(--text-muted)' }}>%</span>
+                <div className="text-[30px] font-bold tracking-[-0.02em] text-success">
+                  {Math.round((summary?.overallPassRate ?? 0.82) * 100)}<span className="text-[18px] text-muted">%</span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>last run · +7pt vs prev</div>
+                <div className="text-xs text-muted">last run · +7pt vs prev</div>
               </div>
             </div>
             <svg viewBox="0 0 360 120" width="100%" height="120" style={{ display: 'block' }} preserveAspectRatio="none">
@@ -442,7 +441,7 @@ export default function Dashboard() {
               <circle cx={charts.passRateArea.endX} cy={charts.passRateArea.endY} r="4" fill="#3daa6f" />
               <circle cx={charts.passRateArea.endX} cy={charts.passRateArea.endY} r="2" fill="var(--bg-card)" />
             </svg>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', marginTop: 4, fontFamily: "'JetBrains Mono',monospace" }}>
+            <div className="flex justify-between text-[10px] text-muted mt-1 font-mono">
               <span>Run 1</span><span>Run 4</span><span>Run 8</span>
             </div>
           </div>
@@ -450,25 +449,25 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row: Recent Traces + Agents */}
-      <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 12 }}>
+      <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)' }}>
 
         {/* Recent Traces */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}><h3>Recent Traces</h3></div>
-            <Link to="/traces" style={{ fontSize: 12, color: 'var(--accent-hover)', fontWeight: 500, padding: '0 18px 0 0', whiteSpace: 'nowrap', textDecoration: 'none' }}>View all →</Link>
+            <div className="min-w-0 flex-1"><h3>Recent Traces</h3></div>
+            <Link to="/traces" className="text-xs text-accent-hover font-medium pr-[18px] whitespace-nowrap no-underline">View all →</Link>
           </div>
           <div className="card-body-flush">
-            <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr', padding: '10px 18px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div className="grid px-[18px] py-[10px] text-[11px] font-semibold text-muted tracking-[0.05em] uppercase border-b border-border-subtle" style={{ gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr' }}>
               <span>Trace ID</span><span>Model</span><span>Status</span><span>Tokens</span><span>Latency</span><span />
             </div>
             {tracesLoading && (
-              <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)' }}>Loading…</div>
+              <div className="p-8 px-[18px] text-center text-xs text-muted">Loading…</div>
             )}
             {!tracesLoading && recentTraces.length === 0 && (
-              <div style={{ padding: '40px 18px', textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 4px' }}>No traces yet</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Route your agent through the Trsr proxy to start capturing traces.</p>
+              <div className="py-10 px-[18px] text-center">
+                <p className="text-[13px] text-secondary m-0 mb-1">No traces yet</p>
+                <p className="text-xs text-muted m-0">Route your agent through the Trsr proxy to start capturing traces.</p>
               </div>
             )}
             {recentTraces.map(trace => <TraceRow key={trace.id} trace={trace} />)}
@@ -478,47 +477,47 @@ export default function Dashboard() {
         {/* Agent Cards */}
         <div className="dash-card">
           <div className="card-header">
-            <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="min-w-0 flex-1">
               <h3>Agents</h3>
               <p>Detected from traces</p>
             </div>
           </div>
-          <div className="card-body" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="card-body flex flex-col gap-[10px] px-[18px] py-[14px]">
             {charts.agentCards.map(agent => (
-              <div key={agent.name} style={{ padding: 12, background: 'var(--bg-card-2)', borderRadius: 12, display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 12, alignItems: 'center', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{agent.name}</span>
-                    <span className="mono" style={{ fontSize: 10, padding: '1px 5px', background: 'var(--bg-card)', borderRadius: 4, color: 'var(--text-muted)' }}>{agent.version}</span>
+              <div key={agent.name} className="grid p-3 bg-card-2 rounded-xl items-center gap-3" style={{ gridTemplateColumns: '1fr auto auto', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-semibold">{agent.name}</span>
+                    <span className="mono text-[10px] px-[5px] py-[1px] bg-card rounded-[4px] text-muted">{agent.version}</span>
                   </div>
-                  <div style={{ marginTop: 5, display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <div className="mt-[5px] flex gap-1.5 items-center">
                     <Pill label={agent.model} color={modelColor(agent.model)} size="sm" />
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>· {agent.traces} traces</span>
+                    <span className="text-[11px] text-muted">· {agent.traces} traces</span>
                   </div>
                 </div>
                 <svg viewBox="0 0 64 24" width="64" height="24" style={{ display: 'block' }}>
                   <path d={agent.sparkline.path} fill="none" stroke={agent.passColor} strokeWidth="1.5" strokeLinecap="round" />
                   <circle cx={agent.sparkline.endX} cy={agent.sparkline.endY} r="2" fill={agent.passColor} />
                 </svg>
-                <div style={{ textAlign: 'right' }}>
+                <div className="text-right">
                   <div style={{ fontSize: 14, fontWeight: 700, color: agent.passColor }}>{agent.pass}%</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>pass</div>
+                  <div className="text-[10px] text-muted uppercase tracking-[0.05em]">pass</div>
                 </div>
               </div>
             ))}
 
             {/* Proposals teaser */}
-            <div style={{ marginTop: 4, padding: 12, borderRadius: 12, background: 'linear-gradient(135deg, rgba(201,148,74,0.10), rgba(107,158,170,0.07))', display: 'flex', gap: 10, alignItems: 'flex-start', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.2)' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, background: 'linear-gradient(135deg, #c9944a, #6b9eaa)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <div className="flex gap-[10px] items-start p-3 rounded-xl mt-1" style={{ background: 'linear-gradient(135deg, rgba(201,148,74,0.10), rgba(107,158,170,0.07))', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.2)' }}>
+              <div className="w-7 h-7 rounded-[7px] shrink-0 flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #c9944a, #6b9eaa)' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
                 </svg>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>2 optimization proposals ready</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>Est. +14% pass rate for Customer Support</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold">2 optimization proposals ready</div>
+                <div className="text-[11px] text-secondary mt-[2px]">Est. +14% pass rate for Customer Support</div>
               </div>
-              <button style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent-hover)', padding: '5px 10px', borderRadius: 6, background: 'var(--accent-subtle)', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Review</button>
+              <button className="text-[11px] font-semibold text-accent-hover px-[10px] py-[5px] rounded-md bg-accent-subtle cursor-pointer whitespace-nowrap shrink-0">Review</button>
             </div>
           </div>
         </div>

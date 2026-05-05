@@ -7,16 +7,12 @@ interface PillProps {
 }
 
 export function Pill({ label, color, size = 'md', onClick, selected }: PillProps) {
-  const pad = size === 'sm' ? '2px 6px' : '3px 8px';
-  const fs = size === 'sm' ? '10px' : '11px';
-
   return (
     <span
       onClick={onClick}
       style={{
-        display: 'inline-flex', alignItems: 'center',
-        padding: pad, borderRadius: '100px',
-        fontSize: fs, fontWeight: 600, letterSpacing: '0.02em',
+        padding: size === 'sm' ? '2px 6px' : '3px 8px',
+        fontSize: size === 'sm' ? '10px' : '11px',
         background: `${color}22`,
         color,
         border: `1px solid ${color}44`,
@@ -24,9 +20,8 @@ export function Pill({ label, color, size = 'md', onClick, selected }: PillProps
         cursor: onClick ? 'pointer' : 'default',
         outline: selected ? `2px solid ${color}` : 'none',
         outlineOffset: '1px',
-        transition: 'opacity 0.15s',
-        whiteSpace: 'nowrap',
       }}
+      className="inline-flex items-center rounded-full font-semibold tracking-[0.02em] transition-opacity whitespace-nowrap"
     >
       {label}
     </span>

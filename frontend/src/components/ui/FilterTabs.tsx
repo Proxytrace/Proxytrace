@@ -12,7 +12,7 @@ interface FilterTabsProps {
 
 export function FilterTabs({ options, value, onChange }: FilterTabsProps) {
   return (
-    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+    <div className="flex gap-1 flex-wrap">
       {options.map(opt => {
         const active = opt.value === value;
         return (
@@ -20,23 +20,22 @@ export function FilterTabs({ options, value, onChange }: FilterTabsProps) {
             key={opt.value}
             onClick={() => onChange(opt.value)}
             style={{
-              padding: '5px 12px', borderRadius: '8px',
-              fontSize: '12px', fontWeight: 600,
-              background: active ? 'var(--accent-subtle)' : 'var(--bg-card)',
-              color: active ? 'var(--accent-primary)' : 'var(--text-secondary)',
               border: active ? '1px solid rgba(201,148,74,0.3)' : '1px solid var(--border-color)',
-              transition: 'background 0.15s, color 0.15s',
-              display: 'flex', alignItems: 'center', gap: '5px',
             }}
+            className={`flex items-center gap-[5px] px-3 py-[5px] rounded-lg text-xs font-semibold transition-colors ${
+              active
+                ? 'bg-accent-subtle text-accent'
+                : 'bg-card text-secondary'
+            }`}
           >
             {opt.label}
             {opt.count != null && (
-              <span style={{
-                fontSize: '10px', fontWeight: 600,
-                padding: '1px 5px', borderRadius: '100px',
-                background: active ? 'rgba(201,148,74,0.2)' : 'var(--bg-card-2)',
-                color: active ? 'var(--accent-primary)' : 'var(--text-muted)',
-              }}>
+              <span
+                style={{
+                  background: active ? 'rgba(201,148,74,0.2)' : 'var(--bg-card-2)',
+                }}
+                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded-full ${active ? 'text-accent' : 'text-muted'}`}
+              >
                 {opt.count}
               </span>
             )}

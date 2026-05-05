@@ -26,26 +26,25 @@ export function Pagination({ page, total, pageSize, onChange }: PaginationProps)
       onClick={() => p != null && onChange(p)}
       disabled={disabled || p == null}
       style={{
-        minWidth: '30px', height: '30px', padding: '0 6px',
-        borderRadius: '6px', fontSize: '12px', fontWeight: 500,
-        background: p === page ? 'var(--accent-subtle)' : 'var(--bg-card)',
-        color: p === page ? 'var(--accent-primary)' : 'var(--text-secondary)',
         border: p === page ? '1px solid rgba(201,148,74,0.3)' : '1px solid var(--border-color)',
         opacity: disabled ? 0.4 : 1,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'background 0.15s',
       }}
+      className={`min-w-[30px] h-[30px] px-[6px] rounded-md text-xs font-medium transition-colors ${
+        p === page
+          ? 'bg-accent-subtle text-accent'
+          : 'bg-card text-secondary'
+      } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {label}
     </button>
   );
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div className="flex items-center gap-1">
       {btn('←', page > 1 ? page - 1 : null, page === 1)}
       {pages.map((p, i) =>
         p === '…'
-          ? <span key={`ellipsis-${i}`} style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '0 2px' }}>…</span>
+          ? <span key={`ellipsis-${i}`} className="text-xs text-muted px-[2px]">…</span>
           : btn(p, p as number)
       )}
       {btn('→', page < totalPages ? page + 1 : null, page === totalPages)}

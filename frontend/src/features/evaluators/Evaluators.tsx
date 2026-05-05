@@ -32,6 +32,9 @@ type Filter = 'all' | 'llm' | 'rule' | 'numeric';
 
 function initForm() { return { name: '', systemMessage: '', endpointId: '', jsonSchema: '', extractionPattern: '', tolerance: '0.01' }; }
 
+const inputCls = 'w-full px-3 py-[9px] bg-surface border border-border rounded-lg text-[13px] text-primary font-[inherit] outline-none';
+const labelCls = 'text-[11px] font-semibold text-muted uppercase tracking-[0.05em]';
+
 export default function Evaluators() {
   const qc = useQueryClient();
   const [typeFilter, setTypeFilter] = useState<Filter>('all');
@@ -113,23 +116,23 @@ export default function Evaluators() {
     if (!kind) return null;
     const meta = META[kind];
     const inp = (key: keyof typeof form, opts?: { label: string; placeholder?: string; type?: string; textarea?: boolean }) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{opts?.label ?? key}</label>
+      <div className="flex flex-col gap-[5px]">
+        <label className={labelCls}>{opts?.label ?? key}</label>
         {opts?.textarea ? (
-          <textarea value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} rows={5} style={{ padding: '9px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
+          <textarea value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} rows={5} className={inputCls} style={{ resize: 'vertical' }} />
         ) : (
-          <input type={opts?.type ?? 'text'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} style={{ padding: '9px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none' }} />
+          <input type={opts?.type ?? 'text'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} className={inputCls} />
         )}
       </div>
     );
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="flex flex-col gap-3">
         {kind === EvaluatorKind.Custom && inp('name', { label: 'Evaluator name', placeholder: 'My custom judge' })}
         {kind === EvaluatorKind.Custom && inp('systemMessage', { label: 'System message (rubric prompt)', placeholder: 'You are a grader…', textarea: true })}
         {meta.requiresEndpoint && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Judge model endpoint</label>
-            <select value={form.endpointId} onChange={e => setForm({ ...form, endpointId: e.target.value })} style={{ padding: '9px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', outline: 'none' }}>
+          <div className="flex flex-col gap-[5px]">
+            <label className={labelCls}>Judge model endpoint</label>
+            <select value={form.endpointId} onChange={e => setForm({ ...form, endpointId: e.target.value })} className={inputCls}>
               {endpoints.map(ep => <option key={ep.id} value={ep.id}>{ep.providerName} · {ep.modelName}</option>)}
             </select>
           </div>
@@ -142,19 +145,19 @@ export default function Evaluators() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 14, height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
+    <div className="flex gap-[14px] overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
       {/* Left panel */}
-      <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
+      <div className="flex flex-col gap-[10px] overflow-hidden shrink-0 w-[320px]">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Evaluators</h1>
-          <button className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px', fontSize: 12 }} onClick={() => { setCreateOpen(true); setPickedKind(null); setCreateForm(initForm()); }}>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[22px] font-bold m-0">Evaluators</h1>
+          <button className="btn-primary inline-flex items-center gap-[5px] px-3 py-[7px] text-[12px]" onClick={() => { setCreateOpen(true); setPickedKind(null); setCreateForm(initForm()); }}>
             + New
           </button>
         </div>
         <FilterTabs options={filterTabs} value={typeFilter} onChange={v => setTypeFilter(v as Filter)} />
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {isLoading && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>}
+        <div className="flex-1 overflow-y-auto flex flex-col gap-1">
+          {isLoading && <div className="text-center p-10 text-muted text-[13px]">Loading…</div>}
           {visible.map(e => {
             const c = EVALUATOR_KIND_COLOR[e.kind];
             const isActive = selected?.id === e.id;
@@ -162,74 +165,75 @@ export default function Evaluators() {
               <button
                 key={e.id}
                 onClick={() => setSelectedId(e.id)}
+                className="w-full text-left rounded-[10px]"
                 style={{
-                  width: '100%', textAlign: 'left', padding: '12px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                  padding: '12px 14px', border: 'none', cursor: 'pointer',
                   background: isActive ? `${c}14` : 'var(--bg-card)',
                   borderLeft: isActive ? `3px solid ${c}` : '3px solid transparent',
                   boxShadow: 'var(--shadow-card)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: `${c}22`, color: c }}>{META[e.kind]?.short}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-[2px] rounded-full text-[10px] font-semibold" style={{ background: `${c}22`, color: c }}>{META[e.kind]?.short}</span>
+                  <span className="text-[13px] font-semibold flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>
                 </div>
               </button>
             );
           })}
-          {!isLoading && visible.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)', fontSize: 13 }}>No evaluators match this filter.</div>}
+          {!isLoading && visible.length === 0 && <div className="text-center p-10 text-muted text-[13px]">No evaluators match this filter.</div>}
         </div>
       </div>
 
       {/* Detail panel */}
       {selected ? (
-        <div style={{ flex: 1, background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div className="flex-1 bg-card rounded-2xl flex flex-col overflow-hidden min-w-0" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="px-6 py-5 border-b border-hairline shrink-0">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: `${color}22`, color }}>{META[selected.kind]?.label}</span>
+                <div className="flex items-center gap-2 mb-[6px]">
+                  <span className="px-[10px] py-[3px] rounded-full text-[11px] font-semibold" style={{ background: `${color}22`, color }}>{META[selected.kind]?.label}</span>
                 </div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px' }}>{selected.name}</h2>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>{META[selected.kind]?.desc}</p>
+                <h2 className="text-[18px] font-bold m-0 mb-1">{selected.name}</h2>
+                <p className="text-[13px] text-muted m-0">{META[selected.kind]?.desc}</p>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => openEdit(selected)} style={{ padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Edit</button>
-                <button onClick={() => setDeleteTargetId(selected.id)} style={{ padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>Delete</button>
+              <div className="flex gap-[6px]">
+                <button onClick={() => openEdit(selected)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium border border-border text-secondary" style={{ background: 'transparent', cursor: 'pointer' }}>Edit</button>
+                <button onClick={() => setDeleteTargetId(selected.id)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger" style={{ background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>Delete</button>
               </div>
             </div>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div style={{ padding: '12px 16px', background: 'var(--bg-card-2)', borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Created</div>
-                <div style={{ fontSize: 13 }}>{fmtDate(selected.createdAt)}</div>
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="px-4 py-3 bg-card-2 rounded-[10px]">
+                <div className="text-[11px] font-semibold text-muted mb-1 uppercase tracking-[0.06em]">Created</div>
+                <div className="text-[13px]">{fmtDate(selected.createdAt)}</div>
               </div>
               {selected.endpointName && (
-                <div style={{ padding: '12px 16px', background: 'var(--bg-card-2)', borderRadius: 10 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Judge endpoint</div>
-                  <div style={{ fontSize: 13 }}>{selected.endpointName}</div>
+                <div className="px-4 py-3 bg-card-2 rounded-[10px]">
+                  <div className="text-[11px] font-semibold text-muted mb-1 uppercase tracking-[0.06em]">Judge endpoint</div>
+                  <div className="text-[13px]">{selected.endpointName}</div>
                 </div>
               )}
             </div>
             {selected.systemMessage && <CodeBlock heading="System message" content={selected.systemMessage} maxLines={20} />}
             {selected.jsonSchema && <CodeBlock heading="JSON Schema" content={selected.jsonSchema} maxLines={20} language="json" />}
             {selected.extractionPattern && (
-              <div style={{ padding: '12px 16px', background: 'var(--bg-card-2)', borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Extraction pattern</div>
-                <code className="mono" style={{ fontSize: 13 }}>{selected.extractionPattern}</code>
+              <div className="px-4 py-3 bg-card-2 rounded-[10px]">
+                <div className="text-[11px] font-semibold text-muted mb-1 uppercase tracking-[0.06em]">Extraction pattern</div>
+                <code className="mono text-[13px]">{selected.extractionPattern}</code>
               </div>
             )}
             {selected.tolerance != null && (
-              <div style={{ padding: '12px 16px', background: 'var(--bg-card-2)', borderRadius: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tolerance</div>
-                <div style={{ fontSize: 13 }}>{selected.tolerance}</div>
+              <div className="px-4 py-3 bg-card-2 rounded-[10px]">
+                <div className="text-[11px] font-semibold text-muted mb-1 uppercase tracking-[0.06em]">Tolerance</div>
+                <div className="text-[13px]">{selected.tolerance}</div>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <div style={{ flex: 1, background: 'var(--bg-card)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+        <div className="flex-1 bg-card rounded-2xl flex items-center justify-center text-muted text-sm" style={{ boxShadow: 'var(--shadow-card)' }}>
           Select an evaluator to inspect it.
         </div>
       )}
@@ -243,25 +247,25 @@ export default function Evaluators() {
           </>
         }>
           {!pickedKind ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '0 0 10px' }}>Choose an evaluator type:</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div className="flex flex-col gap-[6px]">
+              <p className="text-[13px] text-muted m-0 mb-[10px]">Choose an evaluator type:</p>
+              <div className="grid grid-cols-2 gap-2">
                 {KIND_ORDER.map(k => {
                   const c = EVALUATOR_KIND_COLOR[k];
                   return (
-                    <button key={k} onClick={() => setPickedKind(k)} style={{ padding: '12px 14px', borderRadius: 10, border: `1px solid ${c}33`, background: `${c}0a`, cursor: 'pointer', textAlign: 'left' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: c, marginBottom: 3 }}>{META[k].label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{META[k].desc}</div>
+                    <button key={k} onClick={() => setPickedKind(k)} className="p-[12px_14px] rounded-[10px] text-left cursor-pointer" style={{ border: `1px solid ${c}33`, background: `${c}0a` }}>
+                      <div className="text-[12px] font-bold mb-[3px]" style={{ color: c }}>{META[k].label}</div>
+                      <div className="text-[11px] text-muted leading-[1.4]">{META[k].desc}</div>
                     </button>
                   );
                 })}
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, background: `${EVALUATOR_KIND_COLOR[pickedKind]}22`, color: EVALUATOR_KIND_COLOR[pickedKind] }}>{META[pickedKind].label}</span>
-                <button onClick={() => setPickedKind(null)} style={{ fontSize: 11, color: 'var(--text-muted)', padding: '2px 6px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer' }}>← Change</button>
+            <div className="flex flex-col gap-[14px]">
+              <div className="flex items-center gap-2">
+                <span className="px-[10px] py-[3px] rounded-full text-[11px] font-semibold" style={{ background: `${EVALUATOR_KIND_COLOR[pickedKind]}22`, color: EVALUATOR_KIND_COLOR[pickedKind] }}>{META[pickedKind].label}</span>
+                <button onClick={() => setPickedKind(null)} className="text-[11px] text-muted px-[6px] py-[2px] rounded-md border border-border" style={{ background: 'transparent', cursor: 'pointer' }}>← Change</button>
               </div>
               <EvaluatorForm form={createForm} setForm={setCreateForm} kind={pickedKind} />
             </div>
@@ -293,7 +297,7 @@ export default function Evaluators() {
             </>
           }
         >
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+          <p className="text-[13px] text-secondary m-0">
             This will permanently remove the evaluator <strong>{deleteTarget.name}</strong> and detach it from all test suites.
           </p>
         </Modal>

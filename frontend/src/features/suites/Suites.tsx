@@ -414,12 +414,12 @@ export default function Suites() {
   const canAdvanceCreate = ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
 
   return (
-    <div style={{ width: '100%', maxWidth: 1320, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto', paddingBottom: 24 }}>
+    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
       {/* Header */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+      <div className="fade-up flex items-start justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 6px' }}>Test Suites</h1>
-          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>Agent-specific benchmark collections built from curated traces.</p>
+          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-[6px]">Test Suites</h1>
+          <p className="text-[13.5px] text-muted m-0">Agent-specific benchmark collections built from curated traces.</p>
         </div>
         <button
           onClick={() => { setCreateOpen(true); resetCreate(); }}
@@ -430,20 +430,20 @@ export default function Suites() {
       </div>
 
       {/* KPI row */}
-      <div className="fade-up" style={{ animationDelay: '30ms', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {[
           { label: 'Total suites',  value: suites.length,                                          sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: '#8b5cf6' },
           { label: 'Total cases',   value: totalCases,                                             sub: 'test case inputs',                                           color: '#06b6d4' },
           { label: 'Total runs',    value: totalRuns,                                              sub: 'evaluations run',                                            color: '#10b981' },
           { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—',         sub: 'across all suites',                                          color: '#f59e0b' },
         ].map(k => (
-          <div key={k.label} style={{ background: 'var(--bg-card)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 11, background: k.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: 18, fontWeight: 800, color: k.color, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-0.04em' }}>{k.value}</span>
+          <div key={k.label} className="bg-card rounded-[14px] px-[18px] py-4 flex items-center gap-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="w-10 h-10 rounded-[11px] flex items-center justify-center shrink-0" style={{ background: k.color + '18' }}>
+              <span className="font-mono text-[18px] font-[800] tracking-[-0.04em]" style={{ color: k.color }}>{k.value}</span>
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{k.label}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 1 }}>{k.sub}</div>
+              <div className="text-[13px] font-semibold">{k.label}</div>
+              <div className="text-[11.5px] text-muted mt-[1px]">{k.sub}</div>
             </div>
           </div>
         ))}
@@ -467,10 +467,10 @@ export default function Suites() {
         <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-muted)' }}>{visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {isLoading && <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>}
+      {isLoading && <div className="text-center p-[60px] text-muted text-[13px]">Loading…</div>}
 
       {/* Suite grid */}
-      <div className="fade-up" style={{ animationDelay: '100ms', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 14 }}>
+      <div className="fade-up grid gap-[14px]" style={{ animationDelay: '100ms', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))' }}>
         {visibleSuites.map(suite => (
           <SuiteCard
             key={suite.id}
@@ -481,7 +481,7 @@ export default function Suites() {
           />
         ))}
         {!isLoading && visibleSuites.length === 0 && (
-          <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 60, color: 'var(--text-muted)', fontSize: 13 }}>
+          <div className="col-span-full text-center p-[60px] text-muted text-[13px]">
             No test suites yet. Create one to start evaluating.
           </div>
         )}
@@ -510,9 +510,9 @@ export default function Suites() {
             <button className="btn-ghost" onClick={() => setEditSuite(null)}>Close</button>
           )
         }>
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--hairline)', marginBottom: 16 }}>
+          <div className="flex border-b border-hairline mb-4 -mb-px">
             {(['cases', 'evaluators'] as const).map(t => (
-              <button key={t} onClick={() => setEditTab(t)} style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: 'transparent', color: editTab === t ? 'var(--accent-primary)' : 'var(--text-muted)', borderBottom: editTab === t ? '2px solid var(--accent-primary)' : '2px solid transparent', marginBottom: -1 }}>
+              <button key={t} onClick={() => setEditTab(t)} className={`px-4 py-2 text-[13px] font-semibold border-none cursor-pointer bg-transparent -mb-px ${editTab === t ? 'text-accent border-b-2 border-b-accent' : 'text-muted border-b-2 border-b-transparent'}`}>
                 {t === 'cases' ? `Test Cases (${editSuite.testCases.length})` : 'Evaluators'}
               </button>
             ))}

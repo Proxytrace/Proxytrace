@@ -78,61 +78,44 @@ export function Shell() {
   const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
 
   return (
-    <div style={{
-      display: 'flex', width: '100%', height: '100vh', overflow: 'hidden',
-      background: 'var(--bg-primary)', position: 'relative', zIndex: 1,
-    }}>
+    <div className="flex w-full h-screen overflow-hidden bg-surface relative z-[1]">
       {/* Sidebar */}
-      <aside style={{
-        width: collapsed ? '64px' : '232px',
-        background: 'var(--bg-sidebar)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-        transition: 'width 0.2s ease',
-        position: 'relative', zIndex: 2,
-        boxShadow: 'var(--shadow-sidebar)',
-        margin: '10px 0 10px 10px',
-        borderRadius: '18px',
-        height: 'calc(100vh - 20px)',
-        overflow: 'hidden',
-      }}>
+      <aside
+        style={{
+          width: collapsed ? '64px' : '232px',
+          boxShadow: 'var(--shadow-sidebar)',
+          transition: 'width 0.2s ease',
+          height: 'calc(100vh - 20px)',
+        }}
+        className="bg-sidebar flex flex-col shrink-0 relative z-[2] m-[10px_0_10px_10px] rounded-[18px] overflow-hidden"
+      >
         {/* Brand */}
-        <div style={{
-          height: '60px', display: 'flex', alignItems: 'center',
-          borderBottom: '1px solid var(--hairline)', flexShrink: 0,
-          padding: collapsed ? '0' : '0 18px',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-        }}>
-          <div style={{
-            width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0,
-            background: 'linear-gradient(135deg, #c9944a, #a57038)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '13px',
-            boxShadow: '0 4px 16px -4px rgba(201, 148, 74, 0.55), inset 0 1px 0 rgba(255,255,255,0.15)',
-          }}>T</div>
+        <div
+          className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
+        >
+          <div
+            style={{ boxShadow: '0 4px 16px -4px rgba(201, 148, 74, 0.55), inset 0 1px 0 rgba(255,255,255,0.15)', background: 'linear-gradient(135deg, #c9944a, #a57038)' }}
+            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px]"
+          >T</div>
           {!collapsed && (
-            <div style={{ marginLeft: '10px' }}>
-              <div style={{ fontWeight: 700, fontSize: '14px', letterSpacing: '-0.01em' }}>Trsr</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '-1px' }}>v0.1 · alpha</div>
+            <div className="ml-[10px]">
+              <div className="font-bold text-sm tracking-[-0.01em]">Trsr</div>
+              <div className="text-[11px] text-muted mt-[-1px]">v0.1 · alpha</div>
             </div>
           )}
         </div>
 
         {/* Section label */}
         {!collapsed && (
-          <div style={{
-            padding: '18px 18px 6px',
-            fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em',
-            color: 'var(--text-muted)', textTransform: 'uppercase',
-          }}>
+          <div className="px-[18px] pt-[18px] pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
             Workspace
           </div>
         )}
 
         {/* Nav */}
-        <nav style={{
-          flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto',
-          padding: collapsed ? '12px 8px' : '6px 12px',
-        }}>
+        <nav
+          className={`flex-1 flex flex-col gap-[2px] overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-1.5'}`}
+        >
           {navItems.map(item => (
             <NavItem
               key={item.to}
@@ -147,22 +130,18 @@ export function Shell() {
         </nav>
 
         {/* Project footer */}
-        <div style={{ borderTop: '1px solid var(--hairline)', padding: collapsed ? '12px 8px' : '12px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            cursor: 'pointer', borderRadius: '8px', padding: '4px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-          }}>
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
-              background: 'linear-gradient(135deg, #6b9eaa, #4a7a88)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 600, fontSize: '12px',
-            }}>DP</div>
+        <div className={`border-t border-hairline ${collapsed ? 'p-2' : 'p-3'}`}>
+          <div
+            className={`flex items-center gap-[10px] cursor-pointer rounded-lg p-1 ${collapsed ? 'justify-center' : 'justify-start'}`}
+          >
+            <div
+              style={{ background: 'linear-gradient(135deg, #6b9eaa, #4a7a88)' }}
+              className="w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-white font-semibold text-xs"
+            >DP</div>
             {!collapsed && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Default Project</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>3 members</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold truncate">Default Project</div>
+                <div className="text-[11px] text-muted">3 members</div>
               </div>
             )}
           </div>
@@ -170,100 +149,87 @@ export function Shell() {
       </aside>
 
       {/* Main area */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', minWidth: 0 }}>
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {/* Topbar */}
-        <header style={{
-          height: '56px', flexShrink: 0,
-          display: 'flex', alignItems: 'center',
-          padding: '0 16px', gap: '12px',
-          background: 'rgba(30, 30, 34, 0.75)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-          position: 'relative', zIndex: 1,
-          margin: '10px 10px 0 10px',
-          borderRadius: '14px',
-          boxShadow: 'var(--shadow-topbar)',
-        }}>
+        <header
+          style={{
+            background: 'rgba(30, 30, 34, 0.75)',
+            backdropFilter: 'blur(20px) saturate(1.4)',
+            WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+            boxShadow: 'var(--shadow-topbar)',
+          }}
+          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px]"
+        >
           <button
             onClick={() => setCollapsed(c => !c)}
-            style={{ color: 'var(--text-muted)', padding: '6px', borderRadius: '6px' }}
+            className="text-muted p-[6px] rounded-md"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>
             </svg>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>Default Project</span>
-            <span style={{ color: 'var(--text-muted)' }}>/</span>
-            <span style={{ fontWeight: 600 }}>{pageLabel}</span>
+          <div className="flex items-center gap-2 text-[13px]">
+            <span className="text-muted">Default Project</span>
+            <span className="text-muted">/</span>
+            <span className="font-semibold">{pageLabel}</span>
           </div>
 
-          <div style={{
-            flex: 1, maxWidth: '460px', margin: '0 auto',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '7px 12px',
-            background: 'rgba(255,255,255,0.03)',
-            borderRadius: '10px',
-            fontSize: '13px', color: 'var(--text-muted)',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.2)',
-          }}>
+          <div
+            style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.2)', background: 'rgba(255,255,255,0.03)' }}
+            className="flex-1 max-w-[460px] mx-auto flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] text-muted"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
             </svg>
             <span>Search traces, agents, suites…</span>
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: '3px' }}>
-              <kbd style={{ padding: '1px 6px', background: 'var(--bg-card-2)', borderRadius: '4px', fontSize: '10px', fontFamily: "'JetBrains Mono',monospace" }}>⌘</kbd>
-              <kbd style={{ padding: '1px 6px', background: 'var(--bg-card-2)', borderRadius: '4px', fontSize: '10px', fontFamily: "'JetBrains Mono',monospace" }}>K</kbd>
+            <span className="ml-auto flex gap-[3px]">
+              <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">⌘</kbd>
+              <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">K</kbd>
             </span>
           </div>
 
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            padding: '6px 10px',
-            background: online === false ? 'rgba(217,85,85,0.12)' : online === true ? 'rgba(61,170,111,0.12)' : 'var(--warn-subtle)',
-            border: `1px solid ${online === false ? 'rgba(217,85,85,0.25)' : online === true ? 'rgba(61,170,111,0.25)' : 'rgba(245,158,11,0.25)'}`,
-            borderRadius: '100px',
-            fontSize: '12px', fontWeight: 600,
-            color: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)',
-            whiteSpace: 'nowrap', flexShrink: 0,
-          }}>
-            <span className={online === true ? 'pulse-dot' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)', display: 'inline-block' }} />
+          <div
+            style={{
+              background: online === false ? 'rgba(217,85,85,0.12)' : online === true ? 'rgba(61,170,111,0.12)' : 'var(--warn-subtle)',
+              border: `1px solid ${online === false ? 'rgba(217,85,85,0.25)' : online === true ? 'rgba(61,170,111,0.25)' : 'rgba(245,158,11,0.25)'}`,
+              color: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)',
+            }}
+            className="flex items-center gap-1.5 px-[10px] py-[6px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0"
+          >
+            <span
+              className={online === true ? 'pulse-dot' : ''}
+              style={{ width: '6px', height: '6px', borderRadius: '50%', background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)', display: 'inline-block' }}
+            />
             {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
 
-          <button style={{ color: 'var(--text-secondary)', padding: '8px', borderRadius: '8px', position: 'relative' }}>
+          <button className="text-secondary p-2 rounded-lg relative">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
             </svg>
-            <span style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', borderRadius: '50%', background: 'var(--accent-primary)', boxShadow: '0 0 0 2px var(--bg-primary)' }} />
+            <span className="absolute top-[6px] right-[6px] w-[7px] h-[7px] rounded-full bg-accent" style={{ boxShadow: '0 0 0 2px var(--bg-primary)' }} />
           </button>
 
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px',
-            background: 'linear-gradient(135deg, #c9944a, #a57038)', borderRadius: 8,
-            fontSize: 12.5, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', flexShrink: 0,
-            border: 'none', cursor: 'pointer',
-            boxShadow: '0 4px 14px -4px rgba(201, 148, 74, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-          }}>
+          <button
+            style={{
+              background: 'linear-gradient(135deg, #c9944a, #a57038)',
+              boxShadow: '0 4px 14px -4px rgba(201, 148, 74, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}
+            className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             New Test Suite
           </button>
 
-          <div style={{
-            width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #c9944a, #d4915c)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '11px', fontWeight: 600, color: '#fff',
-          }}>JK</div>
+          <div
+            style={{ background: 'linear-gradient(135deg, #c9944a, #d4915c)' }}
+            className="w-[30px] h-[30px] rounded-full shrink-0 flex items-center justify-center text-[11px] font-semibold text-white"
+          >JK</div>
         </header>
 
         {/* Page content */}
-        <main style={{
-          flex: 1, overflow: 'hidden', padding: '16px 10px',
-          background: 'transparent', position: 'relative', zIndex: 0,
-          display: 'flex', flexDirection: 'column',
-        }}>
+        <main className="flex-1 overflow-hidden p-[16px_10px] bg-transparent relative z-0 flex flex-col">
           <Outlet />
         </main>
       </div>
