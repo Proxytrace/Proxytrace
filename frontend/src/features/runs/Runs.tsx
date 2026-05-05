@@ -11,6 +11,8 @@ import { useTestRunGroupStream } from '../../api/event-stream';
 import { agentColor, modelColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { DataTable } from '../../components/ui/DataTable';
+import type { DataColumn } from '../../components/ui/DataTable';
 import { FixtureDrawer } from './FixtureDrawer';
 import { useToast } from '../../components/ui/Toast';
 
@@ -106,6 +108,50 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
     if (caseFilter === 'failed') return pass === false;
     return true;
   });
+
+  const RESULT_GRID_COLS = '20px 2fr 1fr 0.8fr 0.7fr 1.4fr';
+  const tableColumns: DataColumn<TestResultDto>[] = [
+    {
+      key: 'dot', label: '', width: '20px',
+      render: r => {
+        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+        return <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />;
+      },
+    },
+    {
+      key: 'case', label: 'Test case', width: '2fr',
+      render: r => <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>,
+    },
+    {
+      key: 'evaluator', label: 'Evaluator', width: '1fr',
+      render: r => {
+        const primaryEval = r.evaluations[0];
+        const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
+        return evalColor ? <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" /> : <span />;
+      },
+    },
+    {
+      key: 'score', label: 'Score', width: '0.8fr',
+      render: r => {
+        const tPassCount = r.evaluations.filter(e => e.score === 'Pass').length;
+        const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
+        const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+        return <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>;
+      },
+    },
+    {
+      key: 'latency', label: 'Latency', width: '0.7fr',
+      render: r => <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>,
+    },
+    {
+      key: 'note', label: 'Note', width: '1.4fr',
+      render: r => {
+        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
+        return <span style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>;
+      },
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-3">
@@ -243,42 +289,18 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
           {/* Table view */}
           {viewMode === 'table' && (
             <div className="overflow-hidden rounded-b-[14px]">
-              <div className="grid px-4 py-[10px] text-[10px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr' }}>
-                <span /><span>Test case</span><span>Evaluator</span><span>Score</span><span>Latency</span><span>Note</span>
-              </div>
-              {filteredResults.map((r, i) => {
-                const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
-                const tPassCount = r.evaluations.filter(e => e.score === 'Pass').length;
-                const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
-                const isSelected = selectedCase?.caseId === r.testCaseId;
-                const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
-                const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
-                const primaryEval = r.evaluations[0];
-                const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => setSelectedCase(isSelected ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
-                    style={{ display: 'grid', width: '100%', textAlign: 'left', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', background: isSelected ? 'rgba(201,148,74,0.06)' : 'transparent', transition: 'background 0.1s', cursor: 'pointer', border: 'none' }}
-                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />
-                    <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>
-                    {evalColor ? (
-                      <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" />
-                    ) : <span />}
-                    <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>
-                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
-                    <span style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>
-                  </button>
-                );
-              })}
+              <DataTable
+                columns={tableColumns}
+                rows={filteredResults}
+                rowKey={r => r.id}
+                onRowClick={(r, i) => setSelectedCase(selectedCase?.caseId === r.testCaseId ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
+                isSelected={r => selectedCase?.caseId === r.testCaseId}
+              />
               {/* Pending cases */}
               {run.testCases
                 .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
                 .map(tc => (
-                  <div key={tc.id} style={{ display: 'grid', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', opacity: 0.5 }}>
+                  <div key={tc.id} className="grid px-4 py-[11px] items-center border-b border-hairline" style={{ gridTemplateColumns: RESULT_GRID_COLS, opacity: 0.5 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
                     <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-muted)' }}>{tc.summary}</span>
                     <span />

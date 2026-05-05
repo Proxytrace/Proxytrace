@@ -9,6 +9,8 @@ import { Modal } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { fmtDate } from '../../lib/format';
+import { DataTable } from '../../components/ui/DataTable';
+import type { DataColumn } from '../../components/ui/DataTable';
 
 const PROVIDER_KIND_OPTIONS = [
   { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
@@ -135,6 +137,22 @@ export default function Providers() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setDeleteKey(null); },
     onError: (err) => toast((err as Error).message || 'Failed to delete API key', 'error'),
   });
+
+  const keysColumns: DataColumn<ApiKeyDto>[] = [
+    { key: 'name', label: 'Name', width: '1.5fr', render: k => <span className="text-[13px] font-semibold">{k.name}</span> },
+    { key: 'project', label: 'Project', width: '1.2fr', render: k => <span className="text-[12px] text-secondary">{k.projectName}</span> },
+    {
+      key: 'key', label: 'Key', width: '2fr',
+      render: k => (
+        <div className="flex items-center gap-[6px] min-w-0">
+          <code className="mono text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
+          <button onClick={() => { navigator.clipboard.writeText(k.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card" style={{ border: 'none', cursor: 'pointer' }}>⧉</button>
+        </div>
+      ),
+    },
+    { key: 'created', label: 'Created', width: '1fr', render: k => <span className="text-[12px] text-muted">{fmtDate(k.createdAt)}</span> },
+    { key: 'delete', label: '', width: 'auto', render: k => <button onClick={() => setDeleteKey(k)} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button> },
+  ];
 
   function selectProvider(p: ProviderDto) {
     setSelectedId(p.id);
@@ -400,21 +418,7 @@ export default function Providers() {
                   )}
                   {keys.length > 0 && (
                     <div className="bg-card-2 rounded-xl overflow-hidden">
-                      <div className="grid p-[10px_16px] text-[11px] font-semibold text-muted tracking-[0.06em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto' }}>
-                        <span>Name</span><span>Project</span><span>Key</span><span>Created</span><span />
-                      </div>
-                      {keys.map((key, i) => (
-                        <div key={key.id} className={`grid p-[12px_16px] items-center ${i < keys.length - 1 ? 'border-b border-hairline' : ''}`} style={{ gridTemplateColumns: '1.5fr 1.2fr 2fr 1fr auto' }}>
-                          <span className="text-[13px] font-semibold">{key.name}</span>
-                          <span className="text-[12px] text-secondary">{key.projectName}</span>
-                          <div className="flex items-center gap-[6px] min-w-0">
-                            <code className="mono text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(key.keyValue)}</code>
-                            <button onClick={() => { navigator.clipboard.writeText(key.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card" style={{ border: 'none', cursor: 'pointer' }}>⧉</button>
-                          </div>
-                          <span className="text-[12px] text-muted">{fmtDate(key.createdAt)}</span>
-                          <button onClick={() => setDeleteKey(key)} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button>
-                        </div>
-                      ))}
+                      <DataTable columns={keysColumns} rows={keys} rowKey={k => k.id} />
                     </div>
                   )}
                 </>
