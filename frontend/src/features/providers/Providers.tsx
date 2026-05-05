@@ -11,6 +11,7 @@ import { FormField, formInputCls } from '../../components/ui/FormField';
 import { fmtDate } from '../../lib/format';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
 const PROVIDER_KIND_OPTIONS = [
   { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
@@ -201,7 +202,7 @@ export default function Providers() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-[6px]">
                     <div className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
-                    <span className="shrink-0 px-[6px] py-[1px] rounded-full text-[10px] font-semibold" style={{ background: `${kindColor(p.kind)}22`, color: kindColor(p.kind) }}>{kindLabel(p.kind)}</span>
+                    <ColoredBadge color={kindColor(p.kind)} label={kindLabel(p.kind)} />
                   </div>
                   <div className="font-mono text-[11px] text-muted overflow-hidden text-ellipsis whitespace-nowrap">{p.organizationName}</div>
                 </div>

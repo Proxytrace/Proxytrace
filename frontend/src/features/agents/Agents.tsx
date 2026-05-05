@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
 const TYPE_COLORS: Record<string, string> = {
   string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
@@ -24,7 +25,7 @@ const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
   },
   {
     key: 'type', label: 'Type', width: '0.8fr',
-    render: p => <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[2px] rounded" style={{ background: (TYPE_COLORS[p.type] ?? '#888') + '20', color: TYPE_COLORS[p.type] ?? '#888' }}>{p.type}</span>,
+    render: p => <ColoredBadge color={TYPE_COLORS[p.type] ?? '#888'} label={p.type} shape="rounded" />,
   },
   {
     key: 'req', label: 'Req', width: '0.4fr',

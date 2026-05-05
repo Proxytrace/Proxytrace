@@ -4,21 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 4. Extract `<ColoredBadge>` Component
-
-**Scope:** `frontend-react/src/components/ui/` (new), 6+ feature files
-**Priority:** P2
-
-The pattern `style={{ background: \`\${color}1f\`, color, border: \`1px solid \${color}2e\` }}`
-appears 25+ times across `PromoteModal`, `TraceDetail`, `Agents`, `Runs`, `Suites`. It is
-mechanically identical each time but has no shared home.
-
-**Approach:**
-- Create `src/components/ui/ColoredBadge.tsx` accepting `color` and `label` props
-- Replace all 25+ inline occurrences
-
----
-
 ## 5. Extract `<Avatar>` Component
 
 **Scope:** `frontend-react/src/components/ui/` (new), `Shell.tsx`, `Agents.tsx`, `Providers.tsx`
