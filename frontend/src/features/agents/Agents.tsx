@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
 import type { AgentDto, ToolSpecDto } from '../../api/models';
+import { TrashIcon, ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
@@ -28,7 +29,7 @@ function ToolRow({ tool, last }: { tool: ToolSpecDto; last: boolean }) {
         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(16,185,129,0.04)')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
-        <span className="inline-flex text-muted shrink-0 text-[10px] transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
+        <span className="inline-flex text-muted shrink-0 transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} /></span>
         <span className="font-mono text-[13px] font-bold" style={{ color: '#6ee7b7' }}>{tool.name}</span>
         <span className="font-mono text-[11px] text-muted">{requiredParams(tool)}</span>
         <span className="ml-auto text-[11px] text-muted truncate max-w-[300px]">{tool.description}</span>
@@ -105,7 +106,7 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
               onClick={onDelete}
               style={{ padding: '7px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(239,68,68,0.08)', border: 'none', cursor: 'pointer' }}
             >
-              🗑 Delete
+              <TrashIcon size={13} /> Delete
             </button>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
+import { ChevronDownIcon, ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
 import { Pill } from '../../components/ui/Pill';
@@ -22,9 +23,7 @@ function FilterChip({ label, value, active, onClick, accent }: {
       {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
       <span className="text-muted font-medium">{label}</span>
       <span>{value}</span>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted ml-[2px]">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+      <ChevronDownIcon size={12} strokeWidth={2.5} className="text-muted ml-[2px]" />
     </button>
   );
 }
@@ -111,11 +110,11 @@ export default function Traces() {
         </div>
         <div className="flex gap-2 shrink-0">
           <button className="px-3 py-2 bg-card rounded-[9px] text-[12.5px] font-medium text-secondary inline-flex items-center gap-[6px]" style={{ boxShadow: 'var(--shadow-pill)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            <ExternalLinkIcon size={13} />
             Export CSV
           </button>
           <button className="px-[14px] py-2 rounded-[9px] text-[12.5px] font-semibold text-white inline-flex items-center gap-[6px]" style={{ background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <PlusIcon size={13} strokeWidth={2.5} />
             New Test Case
           </button>
         </div>
@@ -171,9 +170,7 @@ export default function Traces() {
       <div className="fade-up flex items-center gap-[10px] flex-wrap" style={{ animationDelay: '80ms' }}>
         {/* Search box */}
         <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-[13px] text-muted" style={{ boxShadow: 'var(--shadow-pill)' }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          <SearchIcon size={13} className="shrink-0" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}

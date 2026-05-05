@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { XIcon } from '../icons';
 
 interface DrawerProps {
   title?: string;
@@ -54,12 +55,7 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
               <div className="text-xs text-muted mt-[2px]">{subtitle}</div>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="text-muted px-[6px] py-1 rounded-md text-sm"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
           {children}

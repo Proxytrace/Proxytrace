@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
 import { ModelProviderKind, type ApiKeyDto, type ModelEndpointDto, type ProviderDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
+import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
 import { Modal } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { fmtDate } from '../../lib/format';
@@ -148,7 +149,7 @@ export default function Providers() {
           <p className="text-[14px] text-muted m-0">Configure upstream model providers and manage Trsr API keys.</p>
         </div>
         <button className="btn-primary inline-flex items-center gap-[6px]" onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: orgs[0]?.id ?? '' }); setShowNewProvider(true); }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <PlusIcon size={13} />
           Add Provider
         </button>
       </div>
@@ -225,7 +226,7 @@ export default function Providers() {
                   <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
                 </div>
                 <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger inline-flex items-center gap-[5px] shrink-0" style={{ background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>
-                  🗑 Delete provider
+                  <TrashIcon size={13} /> Delete provider
                 </button>
               </div>
               {/* Upstream key row */}
@@ -319,7 +320,7 @@ export default function Providers() {
                             <span className="mono text-[12px]">{m.modelName}</span>
                             <span className="text-[12px] text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
                             <span className="text-[12px] text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
-                            <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="p-[5px_8px] rounded-[7px] text-muted bg-transparent inline-flex items-center" style={{ border: 'none', cursor: 'pointer' }}>✎</button>
+                            <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="btn-icon"><EditIcon size={13} /></button>
                           </div>
                           {editingModel?.id === m.id && (
                             <div className="p-[12px_16px_14px] bg-card border-t border-hairline flex flex-col gap-[10px]">
@@ -366,7 +367,7 @@ export default function Providers() {
                         <code className="text-[12px]" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
                       </div>
                       <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-[6px] rounded-[7px] text-[12px] font-semibold text-white whitespace-nowrap" style={{ background: '#3daa6f', border: 'none', cursor: 'pointer' }}>Copy</button>
-                      <button onClick={() => setNewlyCreatedKey(null)} className="text-muted p-1 bg-transparent" style={{ border: 'none', cursor: 'pointer' }}>✕</button>
+                      <button onClick={() => setNewlyCreatedKey(null)} className="btn-icon"><XIcon size={14} /></button>
                     </div>
                   )}
 
@@ -412,7 +413,7 @@ export default function Providers() {
                             <button onClick={() => { navigator.clipboard.writeText(key.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card" style={{ border: 'none', cursor: 'pointer' }}>⧉</button>
                           </div>
                           <span className="text-[12px] text-muted">{fmtDate(key.createdAt)}</span>
-                          <button onClick={() => setDeleteKey(key)} className="p-[5px_8px] rounded-[7px] text-danger bg-transparent" style={{ border: 'none', cursor: 'pointer' }}>🗑</button>
+                          <button onClick={() => setDeleteKey(key)} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button>
                         </div>
                       ))}
                     </div>

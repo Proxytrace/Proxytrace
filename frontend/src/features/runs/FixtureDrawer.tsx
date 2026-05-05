@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { XIcon } from '../../components/icons';
 import { useQuery } from '@tanstack/react-query';
 import { testRunsApi } from '../../api/test-runs';
 import type {
@@ -270,7 +271,7 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
           </div>
 
           {/* Close */}
-          <button onClick={onClose} className="text-muted px-[6px] py-1 rounded-md text-[14px] shrink-0">✕</button>
+          <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
         </div>
 
         {/* Metric band */}

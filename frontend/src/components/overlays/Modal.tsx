@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { XIcon } from '../icons';
 
 interface ModalProps {
   title?: string;
@@ -21,12 +22,7 @@ export function Modal({ title, onClose, children, footer, maxWidth = 560 }: Moda
         {title && (
           <div className="flex items-center justify-between mb-5">
             <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
-            <button
-              onClick={onClose}
-              className="text-muted p-1 rounded-md"
-            >
-              ✕
-            </button>
+            <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
           </div>
         )}
         {children}

@@ -4,16 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 4. Centralize SVG icons
-
-Icons are copy-pasted inline across `Shell.tsx`, `TraceDetail.tsx`, `EmptyState.tsx`, and others. Each usage redefines the same SVG paths.
-
-**Approach:**
-- Create `components/icons/index.tsx` exporting named icon components (`<ChevronRight />`, `<CloseIcon />`, etc.)
-- Audit all feature and layout files for inline SVG definitions and replace with imports
-
----
-
 ## 5. Extract inline modal/form components
 
 Several large feature files define sub-components inline that belong in their own files:

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
+import { SparklesIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { KpiCard } from '../../components/ui/KpiCard';
 import { Pill } from '../../components/ui/Pill';
@@ -509,9 +510,7 @@ export default function Dashboard() {
             {/* Proposals teaser */}
             <div className="flex gap-[10px] items-start p-3 rounded-xl mt-1" style={{ background: 'linear-gradient(135deg, rgba(201,148,74,0.10), rgba(107,158,170,0.07))', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.2)' }}>
               <div className="w-7 h-7 rounded-[7px] shrink-0 flex items-center justify-center text-white" style={{ background: 'linear-gradient(135deg, #c9944a, #6b9eaa)' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
-                </svg>
+                <SparklesIcon size={14} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-semibold">2 optimization proposals ready</div>

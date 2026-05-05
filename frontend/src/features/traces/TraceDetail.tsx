@@ -2,33 +2,7 @@ import { useState, useEffect } from 'react';
 import type { AgentCallDto, MessageDto, ToolSpecDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function ChevronRight({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-
-function PlusIcon({ size = 13 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function CheckIcon({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
+import { ChevronRightIcon, PlusIcon, CheckIcon, XIcon } from '../../components/icons';
 
 // ─── JsonView ─────────────────────────────────────────────────────────────────
 
@@ -77,7 +51,7 @@ function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unk
   return (
     <div className="mt-[10px] rounded-[10px] overflow-hidden" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)' }}>
       <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#6ee7b7' }}>
-        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRight size={10} /></span>
+        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} strokeWidth={2.5} /></span>
         <span className="font-bold tracking-[0.04em]" style={{ color: '#10b981' }}>TOOL</span>
         <span className="font-semibold" style={{ color: '#d1fae5' }}>{name}</span>
         <span style={{ color: '#71717a' }}>(</span>
@@ -113,7 +87,7 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
   return (
     <div className="rounded-[10px] overflow-hidden" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(6,182,212,0.22)' }}>
       <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#67e8f9' }}>
-        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRight size={10} /></span>
+        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} strokeWidth={2.5} /></span>
         <span className="font-bold tracking-[0.04em]" style={{ color: '#06b6d4' }}>RESULT</span>
         <span className="font-semibold" style={{ color: '#cffafe' }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
         <span className="ml-auto text-[10px] font-mono" style={{ color: '#52525b' }}>{sizeB} B</span>
@@ -228,7 +202,7 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
     <div onClick={onClose} className="fixed inset-0 z-[100] flex items-center justify-center fade-up" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}>
       <div onClick={e => e.stopPropagation()} className="bg-card rounded-[20px] px-[56px] py-[48px] text-center max-w-[440px]" style={{ boxShadow: 'var(--shadow-float)' }}>
         <div className="w-14 h-14 rounded-[16px] flex items-center justify-center mx-auto mb-[18px] text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #10b981)', boxShadow: '0 8px 24px -8px rgba(139,92,246,0.6)' }}>
-          <CheckIcon size={26} />
+          <CheckIcon size={26} strokeWidth={2.5} />
         </div>
         <h2 className="text-[20px] font-bold tracking-[-0.02em] mb-2">{selectedCount} test case{selectedCount !== 1 ? 's' : ''} created</h2>
         <p className="text-[13.5px] text-muted leading-[1.6] mb-7">
@@ -247,7 +221,7 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
         {/* Header */}
         <div className="px-6 py-[18px] flex items-center gap-[14px] border-b border-hairline">
           <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
-            <PlusIcon size={18} />
+            <PlusIcon strokeWidth={2.5} size={18} />
           </div>
           <div className="flex-1">
             <h2 className="text-[16px] font-bold">Promote to Test Cases</h2>
@@ -258,7 +232,7 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
             {agentLabel}
           </span>
           <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
-          <button onClick={onClose} className="w-[30px] h-[30px] rounded-[8px] bg-card-2 text-muted flex items-center justify-center shrink-0">✕</button>
+          <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
@@ -348,7 +322,7 @@ function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose: () => 
           <div className="flex gap-2">
             <button onClick={onClose} className="px-[18px] py-[9px] bg-card-2 rounded-[10px] text-[13px] font-medium text-secondary" style={{ boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
             <button onClick={() => selectedCount > 0 && setStep('done')} disabled={selectedCount === 0} className="px-5 py-[9px] rounded-[10px] text-[13px] font-semibold inline-flex items-center gap-[6px]" style={{ background: selectedCount > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'var(--bg-card-2)', color: selectedCount > 0 ? '#fff' : 'var(--text-muted)', boxShadow: selectedCount > 0 ? '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none' }}>
-              <PlusIcon size={13} /> Create {selectedCount > 0 ? selectedCount : ''} test case{selectedCount !== 1 ? 's' : ''}
+              <PlusIcon strokeWidth={2.5} size={13} /> Create {selectedCount > 0 ? selectedCount : ''} test case{selectedCount !== 1 ? 's' : ''}
             </button>
           </div>
         </div>
@@ -424,7 +398,7 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
           <button onClick={onClose} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
-            <ChevronRight size={14} />
+            <ChevronRightIcon size={14} strokeWidth={2.5} />
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -451,16 +425,16 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           </div>
           {onPrev && (
             <button onClick={onPrev} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0 rotate-180">
-              <ChevronRight size={14} />
+              <ChevronRightIcon size={14} strokeWidth={2.5} />
             </button>
           )}
           {onNext && (
             <button onClick={onNext} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
-              <ChevronRight size={14} />
+              <ChevronRightIcon size={14} strokeWidth={2.5} />
             </button>
           )}
           <button onClick={() => setPromoting(true)} className="px-3 py-[7px] rounded-[8px] text-[12px] font-semibold text-white inline-flex items-center gap-[5px] shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', boxShadow: '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-            <PlusIcon size={12} /> Promote to test case
+            <PlusIcon strokeWidth={2.5} size={12} /> Promote to test case
           </button>
         </div>
 

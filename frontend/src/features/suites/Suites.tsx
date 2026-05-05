@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testSuitesApi } from '../../api/test-suites';
 import { testRunGroupsApi } from '../../api/test-run-groups';
+import { TrashIcon, XIcon, EditIcon } from '../../components/icons';
 import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
 import { providersApi } from '../../api/providers';
@@ -180,8 +181,8 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
             >
               ▶ {hasRuns ? 'Run again' : 'Run now'}
             </button>
-            <button onClick={onEdit} style={{ padding: '8px 9px', borderRadius: 9, fontSize: 12, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>✎</button>
-            <button onClick={onDelete} style={{ padding: '8px 9px', borderRadius: 9, fontSize: 12, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}>🗑</button>
+            <button onClick={onEdit} className="btn-icon"><EditIcon size={13} /></button>
+            <button onClick={onDelete} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button>
           </div>
         </div>
 
@@ -523,7 +524,7 @@ export default function Suites() {
               {editSuite.testCases.map(tc => (
                 <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)' }}>
                   <span style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tc.input[tc.input.length - 1]?.content?.slice(0, 60) ?? tc.id.slice(0, 12)}</span>
-                  <button onClick={() => removeCase.mutate(tc.id)} style={{ color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                  <button onClick={() => removeCase.mutate(tc.id)} className="btn-icon btn-icon-danger"><XIcon size={13} /></button>
                 </div>
               ))}
               <div style={{ fontSize: 12, fontWeight: 600, marginTop: 8, marginBottom: 4 }}>Add from traces</div>
