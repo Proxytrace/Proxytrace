@@ -13,6 +13,28 @@ import { fmtLatency, fmtRelative, fmtTokens } from '../../lib/format';
 import { TraceDetail } from './TraceDetail';
 
 const PAGE_SIZE = 20;
+
+function FilterChip({ label, value, active, onClick, accent }: {
+  label: string; value: string; active?: boolean; onClick?: () => void; accent?: string;
+}) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '6px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+      background: active ? 'var(--bg-card-2)' : 'var(--bg-card)',
+      color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+      boxShadow: active ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3)' : 'var(--shadow-pill)',
+      whiteSpace: 'nowrap', cursor: 'pointer',
+    }}>
+      {accent && <span style={{ width: 7, height: 7, borderRadius: 2, background: accent, flexShrink: 0 }} />}
+      <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+      <span>{value}</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginLeft: 2 }}>
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+  );
+}
 const RANGES = [
   { key: '1h', label: '1h' }, { key: '24h', label: '24h' },
   { key: '7d', label: '7d' }, { key: '30d', label: '30d' }, { key: 'all', label: 'All' },
@@ -79,46 +101,39 @@ export default function Traces() {
     qc.invalidateQueries({ queryKey: ['model-breakdown'] });
   }, [qc]));
 
-  const rangeCountText = total === 0
-    ? 'No traces'
-    : `${((page - 1) * PAGE_SIZE + 1)}–${Math.min(page * PAGE_SIZE, total)} of ${total}`;
-
   return (
     <div style={{ width: '100%', maxWidth: 1320, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingBottom: 24, scrollbarGutter: 'stable' }}>
 
       {/* ── Header ── */}
-      <div className="fade-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Traces</h1>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 100,
-            color: isFetching ? 'var(--accent-primary)' : 'var(--success)',
-            background: isFetching ? 'var(--accent-subtle)' : 'var(--success-subtle)',
-          }}>
+      <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Traces</h1>
             <span style={{
-              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-              background: isFetching ? 'var(--accent-primary)' : 'var(--success)',
-              animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite',
-            }} />
-            {isFetching ? 'Refreshing…' : 'Live'}
-          </span>
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 100,
+              color: isFetching ? 'var(--accent-primary)' : 'var(--success)',
+              background: isFetching ? 'var(--accent-subtle)' : 'var(--success-subtle)',
+            }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                background: isFetching ? 'var(--accent-primary)' : 'var(--success)',
+                animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite',
+              }} />
+              {isFetching ? 'Refreshing…' : 'Live'}
+            </span>
+          </div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>Every LLM call captured by the proxy, grouped by agent.</p>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {RANGES.map(r => (
-            <button
-              key={r.key}
-              onClick={() => { setRange(r.key); setPage(1); }}
-              style={{
-                padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 500,
-                background: range === r.key ? 'var(--accent-subtle)' : 'transparent',
-                color: range === r.key ? 'var(--accent-hover)' : 'var(--text-muted)',
-                transition: 'background 0.12s, color 0.12s',
-              }}
-            >
-              {r.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button style={{ padding: '8px 12px', background: 'var(--bg-card)', borderRadius: 9, fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+            Export CSV
+          </button>
+          <button style={{ padding: '8px 14px', background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', borderRadius: 9, fontSize: 12.5, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Test Case
+          </button>
         </div>
       </div>
 
@@ -131,6 +146,7 @@ export default function Traces() {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
             gap: 8,
+            padding: 4,
           }}
         >
           {agents.map(a => {
@@ -179,14 +195,14 @@ export default function Traces() {
         </div>
       )}
 
-      {/* ── Search + count row ── */}
-      <div className="fade-up" style={{ animationDelay: '80ms', display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* ── Search + filter chips ── */}
+      <div className="fade-up" style={{ animationDelay: '80ms', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
         {/* Search box */}
         <div style={{
+          flex: 1, minWidth: 260, maxWidth: 420,
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-          background: 'var(--bg-card)', borderRadius: 9, fontSize: 13,
+          background: 'var(--bg-card)', borderRadius: 10, fontSize: 13,
           color: 'var(--text-muted)', boxShadow: 'var(--shadow-pill)',
-          flex: '0 0 320px',
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -194,34 +210,32 @@ export default function Traces() {
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Search by trace ID, model…"
+            placeholder="Search by trace ID, content, or model…"
             style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit' }}
           />
         </div>
 
-        {/* Active agent filter pill — fixed space so row doesn't reflow */}
-        <div style={{ minWidth: 0, flex: 1 }}>
-          {agentFilter && (
-            <button
-              onClick={() => setAgentFilter('')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '5px 10px', borderRadius: 7,
-                background: agentColor(agentFilter) + '16',
-                border: `1px solid ${agentColor(agentFilter)}44`,
-                color: agentColor(agentFilter), fontSize: 12, fontWeight: 600,
-              }}
-            >
-              {agents.find(a => a.id === agentFilter)?.name ?? 'Agent'}
-              <span style={{ opacity: 0.7 }}>✕</span>
-            </button>
-          )}
-        </div>
+        {/* Agent filter chip */}
+        <FilterChip
+          label="Agent:"
+          value={agentFilter ? (agents.find(a => a.id === agentFilter)?.name ?? 'Agent') : 'All agents'}
+          active={!!agentFilter}
+          accent={agentFilter ? agentColor(agentFilter) : undefined}
+          onClick={() => setAgentFilter('')}
+        />
 
-        {/* Count */}
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0, whiteSpace: 'nowrap' }}>
-          {rangeCountText}
-        </span>
+        {/* Range chip */}
+        <FilterChip
+          label="Range:"
+          value={RANGES.find(r => r.key === range)?.label ?? range}
+          active
+          onClick={() => {
+            const idx = RANGES.findIndex(r => r.key === range);
+            const next = RANGES[(idx + 1) % RANGES.length];
+            setRange(next.key);
+            setPage(1);
+          }}
+        />
       </div>
 
       {/* ── Table ── */}
