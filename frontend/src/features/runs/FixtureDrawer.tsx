@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { XIcon } from '../../components/icons';
 import { useQuery } from '@tanstack/react-query';
 import { testRunsApi } from '../../api/test-runs';
+import { QUERY_KEYS } from '../../api/query-keys';
 import type {
   EvaluatorFixtureResultDto,
   OutputValueDto,
@@ -180,7 +181,7 @@ function CostPanel({ endpoints }: { endpoints: EndpointUsageDto[] }) {
 
 export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseSummary, onClose, onPrev, onNext }: Props) {
   const { data: fixture, isLoading } = useQuery({
-    queryKey: ['fixture', runId, caseId],
+    queryKey: QUERY_KEYS.fixture(runId, caseId),
     queryFn: () => testRunsApi.getFixture(runId, caseId),
   });
 

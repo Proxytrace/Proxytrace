@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { evaluatorsApi } from '../../api/evaluators';
 import { providersApi } from '../../api/providers';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { FilterTabs } from '../../components/ui/FilterTabs';
 import { Modal } from '../../components/overlays/Modal';
@@ -9,6 +10,7 @@ import { CodeBlock } from '../../components/ui/CodeBlock';
 import { fmtDate } from '../../lib/format';
 import { EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
 type Filter = 'all' | 'llm' | 'rule' | 'numeric';
 
@@ -24,8 +26,8 @@ export default function Evaluators() {
   const [editForm, setEditForm] = useState<EvaluatorFormState>(initForm());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const { data: evaluators = [], isLoading } = useQuery({ queryKey: ['evaluators'], queryFn: evaluatorsApi.list });
-  const { data: endpoints = [] } = useQuery({ queryKey: ['model-endpoints'], queryFn: providersApi.getAllModels });
+  const { data: evaluators = [], isLoading } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
+  const { data: endpoints = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
 
   const visible = evaluators.filter(e => {
     if (typeFilter === 'all') return true;
@@ -56,7 +58,7 @@ export default function Evaluators() {
       else if (k === EvaluatorKind.NumericMatch) { payload.extractionPattern = createForm.extractionPattern; payload.tolerance = parseFloat(createForm.tolerance) || 0.01; }
       return evaluatorsApi.create(payload);
     },
-    onSuccess: (e) => { qc.invalidateQueries({ queryKey: ['evaluators'] }); setSelectedId(e.id); setCreateOpen(false); setPickedKind(null); },
+    onSuccess: (e) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setSelectedId(e.id); setCreateOpen(false); setPickedKind(null); },
   });
 
   const updateEval = useMutation({
@@ -69,13 +71,13 @@ export default function Evaluators() {
       else if (ev.kind === EvaluatorKind.NumericMatch) { payload.extractionPattern = editForm.extractionPattern; payload.tolerance = parseFloat(editForm.tolerance) || 0.01; }
       return evaluatorsApi.update(ev.id, payload);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['evaluators'] }); setEditOpen(false); setEditTargetId(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setEditOpen(false); setEditTargetId(null); },
   });
 
   const deleteEval = useMutation({
     mutationFn: () => evaluatorsApi.delete(deleteTargetId!),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['evaluators'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators });
       if (selectedId === deleteTargetId) setSelectedId(null);
       setDeleteTargetId(null);
     },
@@ -119,7 +121,7 @@ export default function Evaluators() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-[2px] rounded-full text-[10px] font-semibold" style={{ background: `${c}22`, color: c }}>{META[e.kind]?.short}</span>
+                  <ColoredBadge color={c} label={META[e.kind]?.short} />
                   <span className="text-[13px] font-semibold flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>
                 </div>
               </button>
@@ -136,7 +138,7 @@ export default function Evaluators() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 mb-[6px]">
-                  <span className="px-[10px] py-[3px] rounded-full text-[11px] font-semibold" style={{ background: `${color}22`, color }}>{META[selected.kind]?.label}</span>
+                  <ColoredBadge color={color} label={META[selected.kind]?.label} size="md" />
                 </div>
                 <h2 className="text-[18px] font-bold m-0 mb-1">{selected.name}</h2>
                 <p className="text-[13px] text-muted m-0">{META[selected.kind]?.desc}</p>
@@ -209,7 +211,7 @@ export default function Evaluators() {
           ) : (
             <div className="flex flex-col gap-[14px]">
               <div className="flex items-center gap-2">
-                <span className="px-[10px] py-[3px] rounded-full text-[11px] font-semibold" style={{ background: `${EVALUATOR_KIND_COLOR[pickedKind]}22`, color: EVALUATOR_KIND_COLOR[pickedKind] }}>{META[pickedKind].label}</span>
+                <ColoredBadge color={EVALUATOR_KIND_COLOR[pickedKind]} label={META[pickedKind].label} size="md" />
                 <button onClick={() => setPickedKind(null)} className="text-[11px] text-muted px-[6px] py-[2px] rounded-md border border-border" style={{ background: 'transparent', cursor: 'pointer' }}>← Change</button>
               </div>
               <EvaluatorForm form={createForm} setForm={setCreateForm} kind={pickedKind} endpoints={endpoints} />

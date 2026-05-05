@@ -6,12 +6,14 @@ import { TrashIcon, XIcon, EditIcon } from '../../components/icons';
 import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
 import { agentCallsApi } from '../../api/agent-calls';
+import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtDate } from '../../lib/format';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
 
@@ -128,12 +130,9 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           {suite.evaluators.length > 0 && (
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              {suite.evaluators.map(e => {
-                const ec = EVALUATOR_KIND_COLOR[e.kind];
-                return (
-                  <span key={e.id} style={{ padding: '2px 8px', borderRadius: 5, background: ec + '1a', color: ec, fontSize: 10.5, fontWeight: 600, border: `1px solid ${ec}30` }}>{e.kind}</span>
-                );
-              })}
+              {suite.evaluators.map(e => (
+                <ColoredBadge key={e.id} color={EVALUATOR_KIND_COLOR[e.kind]} label={e.kind} shape="rounded" />
+              ))}
             </div>
           )}
           {suite.tags.length > 0 && (
@@ -172,16 +171,16 @@ export default function Suites() {
   const [selectedCalls, setSelectedCalls] = useState<Set<string>>(new Set());
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
 
-  const { data: suitesData, isLoading } = useQuery({ queryKey: ['test-suites', agentFilter], queryFn: () => testSuitesApi.list({ agentId: agentFilter || undefined, pageSize: 200 }) });
-  const { data: agentsData } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list({ pageSize: 200 }) });
-  const { data: evaluators = [] } = useQuery({ queryKey: ['evaluators'], queryFn: evaluatorsApi.list });
+  const { data: suitesData, isLoading } = useQuery({ queryKey: QUERY_KEYS.testSuites(agentFilter), queryFn: () => testSuitesApi.list({ agentId: agentFilter || undefined, pageSize: 200 }) });
+  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: evaluators = [] } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
   const { data: tracesData } = useQuery({
-    queryKey: ['agent-calls-for-suite', createAgentId],
+    queryKey: QUERY_KEYS.agentCallsForSuiteCreate(createAgentId),
     queryFn: () => agentCallsApi.list({ agentId: createAgentId, pageSize: 50 }),
     enabled: !!createAgentId && createStep === 2,
   });
   const { data: editTracesData } = useQuery({
-    queryKey: ['agent-calls-for-edit', editSuite?.agentId],
+    queryKey: QUERY_KEYS.agentCallsForSuiteEdit(editSuite?.agentId),
     queryFn: () => agentCallsApi.list({ agentId: editSuite?.agentId, pageSize: 50 }),
     enabled: !!editSuite && editTab === 'cases',
   });
@@ -296,7 +295,7 @@ export default function Suites() {
             return (
               <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
                 <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                <span style={{ padding: '1px 6px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: `${c}22`, color: c }}>{e.kind}</span>
+                <ColoredBadge color={c} label={e.kind} />
                 <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
               </label>
             );
@@ -438,7 +437,7 @@ export default function Suites() {
                 return (
                   <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card-2)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
                     <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                    <span style={{ padding: '1px 6px', borderRadius: 100, fontSize: 10, fontWeight: 600, background: `${c}22`, color: c }}>{e.kind}</span>
+                    <ColoredBadge color={c} label={e.kind} />
                     <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
                   </label>
                 );

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
+import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentDto, ToolSpecDto } from '../../api/models';
 import { TrashIcon, ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
@@ -151,7 +152,7 @@ export default function Agents() {
   const preselect = searchParams.get('id');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['agents'],
+    queryKey: QUERY_KEYS.agents,
     queryFn: () => agentsApi.list({ pageSize: 200 }),
   });
   const agents = data?.items ?? [];
@@ -164,7 +165,7 @@ export default function Agents() {
   const delAgent = useMutation({
     mutationFn: () => agentsApi.delete(selected!.id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['agents'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents });
       const remaining = agents.filter(a => a.id !== selected!.id);
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteOpen(false);

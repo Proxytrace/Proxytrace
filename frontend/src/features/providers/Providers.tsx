@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { ModelProviderKind, type ApiKeyDto, type ModelEndpointDto, type ProviderDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
@@ -55,11 +56,11 @@ export default function Providers() {
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<ApiKeyDto | null>(null);
 
   const { data: providersData, isLoading: providersLoading } = useQuery({
-    queryKey: ['providers'],
+    queryKey: QUERY_KEYS.providers,
     queryFn: () => providersApi.list({ pageSize: 200 }),
   });
-  const { data: orgsData } = useQuery({ queryKey: ['organizations'], queryFn: providersApi.getOrganizations });
-  const { data: projectsData } = useQuery({ queryKey: ['projects'], queryFn: providersApi.getProjects });
+  const { data: orgsData } = useQuery({ queryKey: QUERY_KEYS.organizations, queryFn: providersApi.getOrganizations });
+  const { data: projectsData } = useQuery({ queryKey: QUERY_KEYS.projects, queryFn: providersApi.getProjects });
 
   const providers = providersData?.items ?? [];
   const selected = providers.find(p => p.id === selectedId) ?? (providers.length > 0 && !selectedId ? providers[0] : null);
@@ -67,12 +68,12 @@ export default function Providers() {
   const projects = projectsData?.items ?? [];
 
   const { data: models = [], isLoading: modelsLoading } = useQuery({
-    queryKey: ['provider-models', selectedId],
+    queryKey: QUERY_KEYS.providerModels(selectedId),
     queryFn: () => providersApi.getModels(selectedId!),
     enabled: !!selectedId,
   });
   const { data: keys = [], isLoading: keysLoading } = useQuery({
-    queryKey: ['provider-keys', selectedId],
+    queryKey: QUERY_KEYS.providerKeys(selectedId),
     queryFn: () => providersApi.getKeys(selectedId!),
     enabled: !!selectedId,
   });
@@ -80,7 +81,7 @@ export default function Providers() {
   const createProvider = useMutation({
     mutationFn: () => providersApi.create({ ...newProvider, organizationId: newProvider.organizationId || (orgs[0]?.id ?? '') }),
     onSuccess: (p: { id: string }) => {
-      qc.invalidateQueries({ queryKey: ['providers'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.providers });
       setShowNewProvider(false);
       setSelectedId(p.id);
     },
@@ -88,13 +89,13 @@ export default function Providers() {
 
   const updateKind = useMutation({
     mutationFn: () => providersApi.update(selected!.id, { name: selected!.name, endpoint: selected!.endpoint, upstreamApiKey: selected!.upstreamApiKey, kind: editKindValue }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['providers'] }); setEditingKind(false); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }); setEditingKind(false); },
   });
 
   const delProvider = useMutation({
     mutationFn: () => providersApi.delete(selectedId!),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['providers'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.providers });
       const remaining = providers.filter(p => p.id !== selectedId);
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteProvider(false);
@@ -107,7 +108,7 @@ export default function Providers() {
       inputTokenCost: newModel.inputTokenCost ? parseFloat(newModel.inputTokenCost) : null,
       outputTokenCost: newModel.outputTokenCost ? parseFloat(newModel.outputTokenCost) : null,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['provider-models', selectedId] }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
   });
 
   const updatePricing = useMutation({
@@ -115,17 +116,17 @@ export default function Providers() {
       inputTokenCost: editPricing.inputTokenCost ? parseFloat(editPricing.inputTokenCost) : null,
       outputTokenCost: editPricing.outputTokenCost ? parseFloat(editPricing.outputTokenCost) : null,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['provider-models', selectedId] }); setEditingModel(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setEditingModel(null); },
   });
 
   const createKey = useMutation({
     mutationFn: () => providersApi.createKey(selectedId!, { name: newKey.name, projectId: newKey.projectId }),
-    onSuccess: (k) => { qc.invalidateQueries({ queryKey: ['provider-keys', selectedId] }); setShowNewKey(false); setNewlyCreatedKey(k); },
+    onSuccess: (k) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setShowNewKey(false); setNewlyCreatedKey(k); },
   });
 
   const delKey = useMutation({
     mutationFn: () => providersApi.deleteKey(selectedId!, deleteKey!.id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['provider-keys', selectedId] }); setDeleteKey(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setDeleteKey(null); },
   });
 
   function selectProvider(p: ProviderDto) {

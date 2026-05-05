@@ -3,11 +3,14 @@ import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-quer
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { ChevronDownIcon, ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
 import { Pill } from '../../components/ui/Pill';
 import { StatusDot } from '../../components/ui/StatusDot';
+import { DataTable } from '../../components/ui/DataTable';
+import type { DataColumn } from '../../components/ui/DataTable';
 import { useTraceStream } from '../../api/event-stream';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtRelative, fmtTokens } from '../../lib/format';
@@ -51,6 +54,68 @@ function LatencyBar({ ms }: { ms: number }) {
   );
 }
 
+const TRACES_COLUMNS: DataColumn<AgentCallDto>[] = [
+  {
+    key: 'id', label: 'Trace ID', width: '180px',
+    render: trace => {
+      const c = trace.agentId ? agentColor(trace.agentId) : modelColor(trace.model);
+      return (
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
+          <span className="mono text-primary text-[11px]">{trace.id.slice(0, 8)}…{trace.id.slice(-4)}</span>
+        </span>
+      );
+    },
+  },
+  {
+    key: 'agent', label: 'Agent', width: '1fr',
+    render: trace => (
+      <span className="text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
+        {trace.agentName ?? <span className="text-muted">—</span>}
+      </span>
+    ),
+  },
+  {
+    key: 'model', label: 'Model', width: '140px',
+    render: trace => <span className="overflow-hidden"><Pill label={trace.model} color={modelColor(trace.model)} size="sm" /></span>,
+  },
+  {
+    key: 'status', label: 'Status', width: '72px',
+    render: trace => {
+      const ok = trace.httpStatus >= 200 && trace.httpStatus < 300;
+      const err = trace.httpStatus >= 500;
+      return (
+        <span className="inline-flex items-center gap-[5px]">
+          <StatusDot httpStatus={trace.httpStatus} />
+          <span className={`mono text-[11px] ${ok ? 'text-success' : err ? 'text-danger' : 'text-warn'}`}>{trace.httpStatus}</span>
+        </span>
+      );
+    },
+  },
+  {
+    key: 'tokens', label: 'Tokens', width: '130px',
+    render: trace => (
+      <span className="mono text-[11px]">
+        <span className="text-primary">{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>
+        <span className="text-muted ml-[5px] text-[10px]">{fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}</span>
+      </span>
+    ),
+  },
+  {
+    key: 'latency', label: 'Latency', width: '120px',
+    render: trace => (
+      <span className="flex items-center gap-[7px]">
+        <span className={`mono text-[11px] min-w-[40px] shrink-0 ${trace.durationMs > 3000 ? 'text-warn' : 'text-secondary'}`}>{fmtLatency(trace.durationMs)}</span>
+        <LatencyBar ms={trace.durationMs} />
+      </span>
+    ),
+  },
+  {
+    key: 'time', label: 'Time', width: '80px', className: 'text-right',
+    render: trace => <span className="text-muted text-[11px] whitespace-nowrap">{fmtRelative(trace.createdAt)}</span>,
+  },
+];
+
 export default function Traces() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
@@ -68,18 +133,18 @@ export default function Traces() {
   }), [page, agentFilter, from]);
 
   const { data, isFetching } = useQuery({
-    queryKey: ['agent-calls', filter],
+    queryKey: QUERY_KEYS.agentCalls(filter),
     queryFn: () => agentCallsApi.list(filter),
     placeholderData: keepPreviousData,
   });
 
-  const { data: agentsData } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
   const { data: modelBreakdown = [] } = useQuery({
-    queryKey: ['model-breakdown', from, agentFilter],
+    queryKey: QUERY_KEYS.statisticsModelBreakdown(from, agentFilter || undefined),
     queryFn: () => statisticsApi.modelBreakdown({ from, agentId: agentFilter || undefined }),
   });
   const { data: latencyStats = [] } = useQuery({
-    queryKey: ['latency', from, agentFilter],
+    queryKey: QUERY_KEYS.statisticsLatency(from, agentFilter || undefined),
     queryFn: () => statisticsApi.latency({ from, agentId: agentFilter || undefined }),
   });
 
@@ -90,7 +155,7 @@ export default function Traces() {
 
   useTraceStream(useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
-    qc.invalidateQueries({ queryKey: ['model-breakdown'] });
+    qc.invalidateQueries({ queryKey: ['statistics-model-breakdown'] });
   }, [qc]));
 
   return (
@@ -204,76 +269,14 @@ export default function Traces() {
 
       {/* ── Table ── */}
       <div className="fade-up bg-card rounded-[14px] overflow-hidden" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
-        {/* Column headers */}
-        <div className="grid px-4 py-[10px] text-[10.5px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px' }}>
-          <span>Trace ID</span>
-          <span>Agent</span>
-          <span>Model</span>
-          <span>Status</span>
-          <span>Tokens</span>
-          <span>Latency</span>
-          <span className="text-right">Time</span>
-        </div>
-
-        {traces.length === 0 && (
-          <div className="text-center px-5 py-[56px] text-muted text-[13px]">
-            {isFetching ? 'Loading…' : 'No traces found.'}
-          </div>
-        )}
-
-        {traces.map((trace, idx) => {
-          const c = trace.agentId ? agentColor(trace.agentId) : modelColor(trace.model);
-          const tokTotal = trace.inputTokens + trace.outputTokens;
-          const statusOk = trace.httpStatus >= 200 && trace.httpStatus < 300;
-          const statusErr = trace.httpStatus >= 500;
-          return (
-            <button
-              key={trace.id}
-              onClick={() => { setSelectedTrace(trace); setSelectedIdx(idx); }}
-              className="grid w-full text-left px-4 py-[11px] items-center text-[12px] bg-transparent border-t border-hairline border-x-0 border-b-0 transition-[background] duration-[100ms] cursor-pointer"
-              style={{ gridTemplateColumns: '180px 1fr 140px 72px 130px 120px 80px' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,148,74,0.04)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              {/* Trace ID */}
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
-                <span className="mono text-primary text-[11px]">
-                  {trace.id.slice(0, 8)}…{trace.id.slice(-4)}
-                </span>
-              </span>
-              {/* Agent */}
-              <span className="text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-                {trace.agentName ?? <span className="text-muted">—</span>}
-              </span>
-              {/* Model */}
-              <span className="overflow-hidden">
-                <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
-              </span>
-              {/* Status */}
-              <span className="inline-flex items-center gap-[5px]">
-                <StatusDot httpStatus={trace.httpStatus} />
-                <span className={`mono text-[11px] ${statusOk ? 'text-success' : statusErr ? 'text-danger' : 'text-warn'}`}>{trace.httpStatus}</span>
-              </span>
-              {/* Tokens */}
-              <span className="mono text-[11px]">
-                <span className="text-primary">{fmtTokens(tokTotal)}</span>
-                <span className="text-muted ml-[5px] text-[10px]">
-                  {fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}
-                </span>
-              </span>
-              {/* Latency */}
-              <span className="flex items-center gap-[7px]">
-                <span className={`mono text-[11px] min-w-[40px] shrink-0 ${trace.durationMs > 3000 ? 'text-warn' : 'text-secondary'}`}>{fmtLatency(trace.durationMs)}</span>
-                <LatencyBar ms={trace.durationMs} />
-              </span>
-              {/* Time */}
-              <span className="text-muted text-[11px] text-right whitespace-nowrap">
-                {fmtRelative(trace.createdAt)}
-              </span>
-            </button>
-          );
-        })}
+        <DataTable
+          columns={TRACES_COLUMNS}
+          rows={traces}
+          rowKey={t => t.id}
+          onRowClick={(trace, idx) => { setSelectedTrace(trace); setSelectedIdx(idx); }}
+          isSelected={trace => trace.id === selectedTrace?.id}
+          emptyMessage={isFetching ? 'Loading…' : 'No traces found.'}
+        />
       </div>
 
       {/* ── Pagination ── */}

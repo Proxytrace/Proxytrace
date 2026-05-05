@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
 import type { ModelEndpointDto, TestSuiteDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
+import { QUERY_KEYS } from '../../api/query-keys';
 
 export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
   suite: TestSuiteDto;
@@ -13,7 +14,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
   done: boolean;
 }) {
   const navigate = useNavigate();
-  const { data: modelsData = [] } = useQuery({ queryKey: ['model-endpoints'], queryFn: providersApi.getAllModels });
+  const { data: modelsData = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const c = agentColor(suite.agentId);
 

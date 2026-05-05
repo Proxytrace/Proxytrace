@@ -4,12 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { SparklesIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { KpiCard } from '../../components/ui/KpiCard';
 import { Pill } from '../../components/ui/Pill';
 import { StatusDot } from '../../components/ui/StatusDot';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { DataTable } from '../../components/ui/DataTable';
+import type { DataColumn } from '../../components/ui/DataTable';
 import { modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../lib/format';
 
@@ -127,20 +130,16 @@ function rangeLabel(r: string): string {
   return 'Last 30 days · daily buckets';
 }
 
-// ── Recent trace row ──────────────────────────────────────────────────────────
+// ── Recent trace columns ──────────────────────────────────────────────────────
 
-function TraceRow({ trace }: { trace: AgentCallDto }) {
-  return (
-    <div className="trace-row grid items-center px-[18px] py-[10px] border-b border-border-subtle" style={{ gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr' }}>
-      <span className="mono text-xs text-primary truncate">{trace.id.slice(0, 13)}…</span>
-      <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
-      <StatusDot httpStatus={trace.httpStatus} />
-      <span className="mono text-[11px] text-secondary">{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>
-      <span className="mono text-[11px] text-secondary">{fmtLatency(trace.durationMs)}</span>
-      <span className="text-[11px] text-muted text-right">{fmtRelative(trace.createdAt)}</span>
-    </div>
-  );
-}
+const DASHBOARD_TRACE_COLUMNS: DataColumn<AgentCallDto>[] = [
+  { key: 'id',      label: 'Trace ID', width: '1.6fr', render: t => <span className="mono text-xs text-primary truncate">{t.id.slice(0, 13)}…</span> },
+  { key: 'model',   label: 'Model',    width: '1.4fr', render: t => <Pill label={t.model} color={modelColor(t.model)} size="sm" /> },
+  { key: 'status',  label: 'Status',   width: '0.7fr', render: t => <StatusDot httpStatus={t.httpStatus} /> },
+  { key: 'tokens',  label: 'Tokens',   width: '0.8fr', render: t => <span className="mono text-[11px] text-secondary">{fmtTokens(t.inputTokens + t.outputTokens)}</span> },
+  { key: 'latency', label: 'Latency',  width: '0.9fr', render: t => <span className="mono text-[11px] text-secondary">{fmtLatency(t.durationMs)}</span> },
+  { key: 'time',    label: '',         width: '0.3fr', className: 'text-right', render: t => <span className="text-[11px] text-muted text-right">{fmtRelative(t.createdAt)}</span> },
+];
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -149,31 +148,31 @@ export default function Dashboard() {
   const from = rangeFrom(range);
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['statistics-summary', from],
+    queryKey: QUERY_KEYS.statisticsSummary(from),
     queryFn: () => statisticsApi.summary({ from }),
     refetchInterval: 30_000,
   });
 
   const { data: tracesData, isLoading: tracesLoading } = useQuery({
-    queryKey: ['agent-calls-recent', from],
+    queryKey: QUERY_KEYS.agentCalls({ page: 1, pageSize: 7, from }),
     queryFn: () => agentCallsApi.list({ page: 1, pageSize: 7, from }),
     refetchInterval: 30_000,
   });
 
   const { data: agentsData, isLoading: agentsLoading } = useQuery({
-    queryKey: ['agents-list'],
+    queryKey: QUERY_KEYS.agents,
     queryFn: () => agentsApi.list({ pageSize: 10 }),
     refetchInterval: 60_000,
   });
 
   const { data: latencyData } = useQuery({
-    queryKey: ['statistics-latency', from],
+    queryKey: QUERY_KEYS.statisticsLatency(from),
     queryFn: () => statisticsApi.latency({ from }),
     refetchInterval: 30_000,
   });
 
   const { data: modelBreakdown, isLoading: modelLoading } = useQuery({
-    queryKey: ['statistics-model-breakdown', from],
+    queryKey: QUERY_KEYS.statisticsModelBreakdown(from),
     queryFn: () => statisticsApi.modelBreakdown({ from }),
     refetchInterval: 30_000,
   });
@@ -430,19 +429,22 @@ export default function Dashboard() {
             <Link to="/traces" className="text-xs text-accent-hover font-medium pr-[18px] whitespace-nowrap no-underline">View all →</Link>
           </div>
           <div className="card-body-flush">
-            <div className="grid px-[18px] py-[10px] text-[11px] font-semibold text-muted tracking-[0.05em] uppercase border-b border-border-subtle" style={{ gridTemplateColumns: '1.6fr 1.4fr 0.7fr 0.8fr 0.9fr 0.3fr' }}>
-              <span>Trace ID</span><span>Model</span><span>Status</span><span>Tokens</span><span>Latency</span><span />
-            </div>
             {tracesLoading && (
               <div className="p-8 px-[18px] text-center text-xs text-muted">Loading…</div>
             )}
-            {!tracesLoading && recentTraces.length === 0 && (
-              <div className="py-10 px-[18px] text-center">
-                <p className="text-[13px] text-secondary m-0 mb-1">No traces yet</p>
-                <p className="text-xs text-muted m-0">Route your agent through the Trsr proxy to start capturing traces.</p>
-              </div>
+            {!tracesLoading && (
+              <DataTable
+                columns={DASHBOARD_TRACE_COLUMNS}
+                rows={recentTraces}
+                rowKey={t => t.id}
+                emptySlot={
+                  <div className="py-10 px-[18px] text-center">
+                    <p className="text-[13px] text-secondary m-0 mb-1">No traces yet</p>
+                    <p className="text-xs text-muted m-0">Route your agent through the Trsr proxy to start capturing traces.</p>
+                  </div>
+                }
+              />
             )}
-            {recentTraces.map(trace => <TraceRow key={trace.id} trace={trace} />)}
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { TestRunStatus, EvaluatorKind, type TestRunDto, type TestRunGroupDto, type TestResultDto } from '../../api/models';
 import { GridIcon, TableIcon, TrashIcon } from '../../components/icons';
 import { ProgressBar } from '../../components/ui/ProgressBar';
@@ -9,6 +10,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useTestRunGroupStream } from '../../api/event-stream';
 import { agentColor, modelColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../lib/format';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { FixtureDrawer } from './FixtureDrawer';
 
 type CaseFilter = 'all' | 'passed' | 'failed';
@@ -57,7 +59,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
       {/* Row 3: evaluator pill + latency */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         {evalColor
-          ? <span style={{ padding: '2px 7px', borderRadius: 5, background: evalColor + '1a', color: evalColor, fontSize: 10.5, fontWeight: 600, border: `1px solid ${evalColor}30` }}>{primaryEval.evaluatorName}</span>
+          ? <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" />
           : <span />
         }
         <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
@@ -263,7 +265,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />
                     <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>
                     {evalColor ? (
-                      <span style={{ padding: '2px 7px', borderRadius: 5, background: evalColor + '1a', color: evalColor, fontSize: 10.5, fontWeight: 600, display: 'inline-block', border: `1px solid ${evalColor}30`, justifySelf: 'start', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{primaryEval.evaluatorName}</span>
+                      <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" />
                     ) : <span />}
                     <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>
                     <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
@@ -394,11 +396,11 @@ export default function Runs() {
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['test-run-groups', agentFilter],
+    queryKey: QUERY_KEYS.testRunGroups(agentFilter),
     queryFn: () => testRunGroupsApi.list({ agentId: agentFilter || undefined, pageSize: 100 }),
     refetchInterval: 15_000,
   });
-  const { data: agentsData } = useQuery({ queryKey: ['agents'], queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
 
   const groups = data?.items ?? [];
   const agents = agentsData?.items ?? [];

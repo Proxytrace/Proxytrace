@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AgentCallDto, MessageDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { PlusIcon, CheckIcon, XIcon } from '../../components/icons';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
 const EVALUATORS = [
   { id: 'tool_call_match', label: 'Tool call match',    desc: 'Checks function name + args are correct',     color: '#10b981' },
@@ -62,10 +63,7 @@ export function PromoteModal({ trace, onClose }: { trace: AgentCallDto; onClose:
             <h2 className="text-[16px] font-bold">Promote to Test Cases</h2>
             <p className="text-[12px] text-muted mt-[2px]">Select which assistant turns to promote, then configure each test case.</p>
           </div>
-          <span className="inline-flex items-center gap-[6px] px-[9px] py-[3px] rounded-full text-[11px] font-semibold whitespace-nowrap" style={{ background: `${aColor}1f`, color: aColor, border: `1px solid ${aColor}2e` }}>
-            <span className="w-[5px] h-[5px] rounded-full" style={{ background: aColor }} />
-            {agentLabel}
-          </span>
+          <ColoredBadge color={aColor} label={agentLabel} dot size="md" />
           <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
           <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
         </div>

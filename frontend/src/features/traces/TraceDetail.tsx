@@ -4,6 +4,7 @@ import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
 import { ChevronRightIcon, PlusIcon } from '../../components/icons';
 import { PromoteModal } from './PromoteModal';
+import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
 // ─── JsonView ─────────────────────────────────────────────────────────────────
 
@@ -247,15 +248,9 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
             </div>
             <div className="mt-[6px] flex items-center gap-2 flex-wrap">
               {trace.agentName && (
-                <span className="inline-flex items-center gap-[6px] pl-2 pr-[9px] py-[3px] rounded-full text-[11px] font-semibold whitespace-nowrap" style={{ background: `${aColor}1f`, color: aColor, border: `1px solid ${aColor}2e` }}>
-                  <span className="w-[5px] h-[5px] rounded-full" style={{ background: aColor, boxShadow: `0 0 6px ${aColor}99` }} />
-                  {trace.agentName}
-                </span>
+                <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
               )}
-              <span className="inline-flex items-center gap-[5px] px-2 py-[3px] rounded-full text-[11px] font-medium font-mono" style={{ background: `${mColor}1f`, color: mColor, border: `1px solid ${mColor}33` }}>
-                <span className="w-[5px] h-[5px] rounded-full" style={{ background: mColor }} />
-                {trace.model}
-              </span>
+              <ColoredBadge color={mColor} label={trace.model} dot size="md" />
               <span className="text-[11px] text-muted">· {fmtRelative(trace.createdAt)} · {msgCount} msg{msgCount !== 1 ? 's' : ''} · {toolCallCount} tool call{toolCallCount !== 1 ? 's' : ''}</span>
             </div>
           </div>
