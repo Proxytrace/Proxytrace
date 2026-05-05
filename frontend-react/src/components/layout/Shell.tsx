@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NavItem } from './NavItem';
+import { checkHealth } from '../../api/health';
 
 const navItems = [
   { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
@@ -61,7 +62,19 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
+  const [online, setOnline] = useState<boolean | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      const ok = await checkHealth();
+      if (!cancelled) setOnline(ok);
+    };
+    poll();
+    const timer = setInterval(poll, 10_000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
   const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
 
   return (
@@ -208,14 +221,15 @@ export function Shell() {
           <div style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '6px 10px',
-            background: 'var(--warn-subtle)',
-            border: '1px solid rgba(245,158,11,0.25)',
+            background: online === false ? 'rgba(217,85,85,0.12)' : online === true ? 'rgba(61,170,111,0.12)' : 'var(--warn-subtle)',
+            border: `1px solid ${online === false ? 'rgba(217,85,85,0.25)' : online === true ? 'rgba(61,170,111,0.25)' : 'rgba(245,158,11,0.25)'}`,
             borderRadius: '100px',
             fontSize: '12px', fontWeight: 600,
-            color: 'var(--warn)', whiteSpace: 'nowrap', flexShrink: 0,
+            color: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)',
+            whiteSpace: 'nowrap', flexShrink: 0,
           }}>
-            <span className="pulse-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--warn)', display: 'inline-block' }} />
-            Development
+            <span className={online === true ? 'pulse-dot' : ''} style={{ width: '6px', height: '6px', borderRadius: '50%', background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)', display: 'inline-block' }} />
+            {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
 
           <button style={{ color: 'var(--text-secondary)', padding: '8px', borderRadius: '8px', position: 'relative' }}>
