@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import type { AgentCallDto, MessageDto, ToolSpecDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
-import { ChevronRightIcon, PlusIcon } from '../../components/icons';
+import { PlusIcon, ChevronRightIcon } from '../../components/icons';
+import { Collapsible } from '../../components/ui/Collapsible';
 import { PromoteModal } from './PromoteModal';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
@@ -49,32 +50,36 @@ function JsonView({ value, depth = 0 }: { value: unknown; depth?: number }) {
 // ─── ToolCallBlock ────────────────────────────────────────────────────────────
 
 function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unknown }) {
-  const [open, setOpen] = useState(true);
   return (
     <div className="mt-[10px] rounded-[10px] overflow-hidden" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)' }}>
-      <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#6ee7b7' }}>
-        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} strokeWidth={2.5} /></span>
-        <span className="font-bold tracking-[0.04em]" style={{ color: '#10b981' }}>TOOL</span>
-        <span className="font-semibold" style={{ color: '#d1fae5' }}>{name}</span>
-        <span style={{ color: '#71717a' }}>(</span>
-        {typeof args === 'object' && args !== null && Object.keys(args as object).slice(0, 2).map((k, i, arr) => (
-          <span key={k}>
-            <span style={{ color: '#93c5fd' }}>{k}</span>
-            <span style={{ color: '#71717a' }}>: </span>
-            <span style={{ color: '#fde68a' }}>{JSON.stringify((args as Record<string, unknown>)[k]).slice(0, 24)}</span>
-            {i < arr.length - 1 && <span style={{ color: '#71717a' }}>, </span>}
+      <Collapsible
+        defaultOpen
+        headerClassName="px-3 py-[9px] text-[11.5px] font-mono"
+        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]"
+        title={
+          <span className="flex items-center gap-2 flex-1 min-w-0" style={{ color: '#6ee7b7' }}>
+            <span className="font-bold tracking-[0.04em]" style={{ color: '#10b981' }}>TOOL</span>
+            <span className="font-semibold" style={{ color: '#d1fae5' }}>{name}</span>
+            <span style={{ color: '#71717a' }}>(</span>
+            {typeof args === 'object' && args !== null && Object.keys(args as object).slice(0, 2).map((k, i, arr) => (
+              <span key={k}>
+                <span style={{ color: '#93c5fd' }}>{k}</span>
+                <span style={{ color: '#71717a' }}>: </span>
+                <span style={{ color: '#fde68a' }}>{JSON.stringify((args as Record<string, unknown>)[k]).slice(0, 24)}</span>
+                {i < arr.length - 1 && <span style={{ color: '#71717a' }}>, </span>}
+              </span>
+            ))}
+            {typeof args === 'object' && args !== null && Object.keys(args as object).length > 2 && <span style={{ color: '#71717a' }}>, …</span>}
+            <span style={{ color: '#71717a' }}>)</span>
+            <span className="ml-auto text-[9.5px] uppercase tracking-[0.08em]" style={{ color: '#52525b' }}>{id}</span>
           </span>
-        ))}
-        {typeof args === 'object' && args !== null && Object.keys(args as object).length > 2 && <span style={{ color: '#71717a' }}>, …</span>}
-        <span style={{ color: '#71717a' }}>)</span>
-        <span className="ml-auto text-[9.5px] uppercase tracking-[0.08em]" style={{ color: '#52525b' }}>{id}</span>
-      </button>
-      {open && (
-        <div className="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]" style={{ borderTop: '1px dashed rgba(16,185,129,0.18)' }}>
-          <div className="text-[9.5px] tracking-[0.08em] uppercase mb-1" style={{ color: '#52525b' }}>Arguments</div>
+        }
+      >
+        <div style={{ borderTop: '1px dashed rgba(16,185,129,0.18)' }}>
+          <div className="text-[9.5px] tracking-[0.08em] uppercase mb-1 mt-[10px]" style={{ color: '#52525b' }}>Arguments</div>
           <JsonView value={args} />
         </div>
-      )}
+      </Collapsible>
     </div>
   );
 }
@@ -82,23 +87,29 @@ function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unk
 // ─── ToolResultBlock ──────────────────────────────────────────────────────────
 
 function ToolResultBlock({ msg }: { msg: MessageDto }) {
-  const [open, setOpen] = useState(true);
   let parsed: unknown = msg.content;
   try { parsed = JSON.parse(msg.content); } catch { /* leave as string */ }
   const sizeB = msg.content?.length ?? 0;
   return (
     <div className="rounded-[10px] overflow-hidden" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(6,182,212,0.22)' }}>
-      <button onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center gap-2 px-3 py-[9px] bg-transparent text-[11.5px] font-mono" style={{ color: '#67e8f9' }}>
-        <span className="inline-flex transition-transform duration-[150ms]" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} strokeWidth={2.5} /></span>
-        <span className="font-bold tracking-[0.04em]" style={{ color: '#06b6d4' }}>RESULT</span>
-        <span className="font-semibold" style={{ color: '#cffafe' }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
-        <span className="ml-auto text-[10px] font-mono" style={{ color: '#52525b' }}>{sizeB} B</span>
-      </button>
-      {open && (
-        <div className="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]" style={{ borderTop: '1px dashed rgba(6,182,212,0.18)' }}>
-          <JsonView value={parsed} />
+      <Collapsible
+        defaultOpen
+        headerClassName="px-3 py-[9px] text-[11.5px] font-mono"
+        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]"
+        title={
+          <span className="flex items-center gap-2 flex-1" style={{ color: '#67e8f9' }}>
+            <span className="font-bold tracking-[0.04em]" style={{ color: '#06b6d4' }}>RESULT</span>
+            <span className="font-semibold" style={{ color: '#cffafe' }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
+            <span className="ml-auto text-[10px] font-mono" style={{ color: '#52525b' }}>{sizeB} B</span>
+          </span>
+        }
+      >
+        <div style={{ borderTop: '1px dashed rgba(6,182,212,0.18)' }}>
+          <div className="mt-[10px]">
+            <JsonView value={parsed} />
+          </div>
         </div>
-      )}
+      </Collapsible>
     </div>
   );
 }

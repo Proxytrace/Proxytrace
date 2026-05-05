@@ -4,7 +4,7 @@ import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { ChevronDownIcon, ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
+import { ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
 import { Pill } from '../../components/ui/Pill';
@@ -15,21 +15,10 @@ import { useTraceStream } from '../../api/event-stream';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtRelative, fmtTokens } from '../../lib/format';
 import { TraceDetail } from './TraceDetail';
+import { FilterChip } from '../../components/ui/FilterChip';
+import { DEFAULT_PAGE_SIZE } from '../../lib/constants';
 
-const PAGE_SIZE = 20;
-
-function FilterChip({ label, value, active, onClick, accent }: {
-  label: string; value: string; active?: boolean; onClick?: () => void; accent?: string;
-}) {
-  return (
-    <button onClick={onClick} className={`inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer ${active ? 'bg-card-2 text-primary' : 'bg-card text-secondary'}`} style={{ boxShadow: active ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3)' : 'var(--shadow-pill)' }}>
-      {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
-      <span className="text-muted font-medium">{label}</span>
-      <span>{value}</span>
-      <ChevronDownIcon size={12} strokeWidth={2.5} className="text-muted ml-[2px]" />
-    </button>
-  );
-}
+const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 const RANGES = [
   { key: '1h', label: '1h' }, { key: '24h', label: '24h' },
   { key: '7d', label: '7d' }, { key: '30d', label: '30d' }, { key: 'all', label: 'All' },
