@@ -2,15 +2,74 @@ import { useState, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
-import { TestRunStatus, type TestRunDto, type TestRunGroupDto } from '../../api/models';
+import { TestRunStatus, EvaluatorKind, type TestRunDto, type TestRunGroupDto, type TestResultDto } from '../../api/models';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useTestRunGroupStream } from '../../api/event-stream';
-import { agentColor, modelColor } from '../../lib/colors';
+import { agentColor, modelColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../lib/format';
 import { FixtureDrawer } from './FixtureDrawer';
 
 type CaseFilter = 'all' | 'passed' | 'failed';
+type ViewMode = 'table' | 'grid';
+
+// ─── CaseCard (grid view) ─────────────────────────────────────────────────────
+
+function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: boolean; onClick: () => void }) {
+  const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+  const passCount = r.evaluations.filter(e => e.score === 'Pass').length;
+  const score = r.evaluations.length > 0 ? passCount / r.evaluations.length : null;
+  const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+  const dotColor = pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
+  const primaryEval = r.evaluations[0];
+  const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
+
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        textAlign: 'left', padding: '14px 16px 0', cursor: 'pointer', width: '100%',
+        background: isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)',
+        border: `1px solid ${isSelected ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`,
+        borderRadius: 12,
+        display: 'flex', flexDirection: 'column',
+        transition: 'background 0.1s, border-color 0.1s',
+        overflow: 'hidden',
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-2)'; }}
+    >
+      {/* Row 1: dot + id | score */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0, boxShadow: pass !== null ? `0 0 6px ${dotColor}cc` : 'none' }} />
+          <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{r.testCaseId.slice(0, 7)}</span>
+        </div>
+        <span className="mono" style={{ fontSize: 20, fontWeight: 700, color: scoreColor, letterSpacing: '-0.03em' }}>
+          {score !== null ? score.toFixed(2) : '—'}
+        </span>
+      </div>
+      {/* Row 2: case name */}
+      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {r.testCaseSummary}
+      </div>
+      {/* Row 3: evaluator pill + latency */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        {evalColor
+          ? <span style={{ padding: '2px 7px', borderRadius: 5, background: evalColor + '1a', color: evalColor, fontSize: 10.5, fontWeight: 600, border: `1px solid ${evalColor}30` }}>{primaryEval.evaluatorName}</span>
+          : <span />
+        }
+        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
+      </div>
+      {/* Row 4: progress bar flush to card bottom */}
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.05)', marginLeft: -16, marginRight: -16 }}>
+        {score !== null && (
+          <div style={{ height: '100%', width: `${Math.round(score * 100)}%`, background: scoreColor }} />
+        )}
+      </div>
+    </button>
+  );
+}
 
 function statusColor(s: TestRunStatus) {
   if (s === TestRunStatus.Completed) return 'var(--success)';
@@ -29,6 +88,7 @@ function isActive(s: TestRunStatus) {
 function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) {
   const [selectedCase, setSelectedCase] = useState<{ runId: string; caseId: string; summary: string; idx: number } | null>(null);
   const [caseFilter, setCaseFilter] = useState<CaseFilter>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const passed = run.results.filter(r => r.evaluations.every(e => e.score === 'Pass')).length;
   const failed = run.results.filter(r => r.evaluations.some(e => e.score === 'Fail')).length;
@@ -69,17 +129,18 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
       </div>
 
       {/* Stats band */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
         {[
           { label: 'Pass rate',  value: run.status === TestRunStatus.Completed ? `${passRate}%` : '—', color: run.status === TestRunStatus.Completed ? passColor : 'var(--text-muted)', sub: `${run.passedCases} of ${run.totalCases}` },
           { label: 'Passed',     value: String(run.passedCases), color: 'var(--success)', sub: 'test cases' },
           { label: 'Failed',     value: String(run.failedCases), color: 'var(--danger)', sub: 'need attention' },
-          { label: 'Total',      value: String(run.totalCases), color: 'var(--text-primary)', sub: 'cases' },
+          { label: 'Duration',   value: fmtDuration(run.durationMs), color: 'var(--text-primary)', sub: 'wall time' },
+          { label: 'Evaluators', value: String(run.evaluators.length), color: 'var(--text-primary)', sub: run.evaluators.map(e => e.name).join(', ') || '—' },
         ].map(s => (
           <div key={s.label} style={{ padding: '12px 14px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2 }}>{s.sub}</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -111,54 +172,120 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
         </div>
       )}
 
-      {/* Case table */}
+      {/* Case results explorer */}
       {run.results.length > 0 && (
         <div style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', gap: 4, padding: '10px 16px', borderBottom: '1px solid var(--hairline)' }}>
-            {(['all', 'passed', 'failed'] as CaseFilter[]).map(f => (
-              <button key={f} onClick={() => setCaseFilter(f)} style={{ padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 500, background: caseFilter === f ? 'var(--accent-subtle)' : 'transparent', color: caseFilter === f ? 'var(--accent-hover)' : 'var(--text-muted)' }}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '20px 2fr 0.8fr 0.8fr 1.6fr', padding: '10px 16px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid var(--hairline)' }}>
-            <span /><span>Test case</span><span>Score</span><span>Latency</span><span>Note</span>
-          </div>
-          {filteredResults.map((r, i) => {
-            const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
-            const score = r.evaluations.length > 0 ? (r.evaluations.every(e => e.score === 'Pass') ? 1.0 : 0.0) : null;
-            const isSelected = selectedCase?.caseId === r.testCaseId;
-            const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
-            const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
-            return (
-              <button
-                key={r.id}
-                onClick={() => setSelectedCase(isSelected ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
-                style={{ display: 'grid', width: '100%', textAlign: 'left', gridTemplateColumns: '20px 2fr 0.8fr 0.8fr 1.6fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', background: isSelected ? 'rgba(139,92,246,0.07)' : 'transparent', transition: 'background 0.1s', cursor: 'pointer', border: 'none' }}
-                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block' }} />
-                <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
-                <span style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>
-              </button>
-            );
-          })}
-          {/* Pending cases */}
-          {run.testCases
-            .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
-            .map(tc => (
-              <div key={tc.id} style={{ display: 'grid', gridTemplateColumns: '20px 2fr 0.8fr 0.8fr 1.6fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', opacity: 0.5 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
-                <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-muted)' }}>{tc.summary}</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</span>
-                <span />
+          {/* Toolbar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--hairline)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Test case results</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                <span style={{ color: 'var(--success)', fontWeight: 600 }}>{passed} passed</span>
+                {' · '}
+                <span style={{ color: failed > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 600 }}>{failed} failed</span>
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {/* Filter tabs */}
+              <div style={{ display: 'flex', gap: 2, padding: 2, background: 'var(--bg-card-2)', borderRadius: 8 }}>
+                {([['all', 'All', run.results.length], ['passed', 'Passed', passed], ['failed', 'Failed', failed]] as [CaseFilter, string, number][]).map(([f, label, count]) => (
+                  <button key={f} onClick={() => setCaseFilter(f)} style={{ padding: '4px 9px', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer', background: caseFilter === f ? 'var(--bg-card)' : 'transparent', color: caseFilter === f ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: caseFilter === f ? 'var(--shadow-pill)' : 'none', whiteSpace: 'nowrap' }}>
+                    {label} <span className="mono" style={{ fontSize: 10, opacity: 0.7 }}>{count}</span>
+                  </button>
+                ))}
               </div>
-            ))
-          }
+              {/* View toggle */}
+              <div style={{ display: 'flex', gap: 2, padding: 2, background: 'var(--bg-card-2)', borderRadius: 8 }}>
+                <button onClick={() => setViewMode('grid')} title="Grid view" style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'grid' ? 'var(--bg-card)' : 'transparent', boxShadow: viewMode === 'grid' ? 'var(--shadow-pill)' : 'none', color: viewMode === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                </button>
+                <button onClick={() => setViewMode('table')} title="Table view" style={{ width: 26, height: 26, borderRadius: 5, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: viewMode === 'table' ? 'var(--bg-card)' : 'transparent', boxShadow: viewMode === 'table' ? 'var(--shadow-pill)' : 'none', color: viewMode === 'table' ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid view — rounded cards with gap */}
+          {viewMode === 'grid' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, padding: 12 }}>
+              {filteredResults.map((r, i) => {
+                const isSelected = selectedCase?.caseId === r.testCaseId;
+                return (
+                  <CaseCard
+                    key={r.id}
+                    r={r}
+                    isSelected={isSelected}
+                    onClick={() => setSelectedCase(isSelected ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
+                  />
+                );
+              })}
+              {run.testCases
+                .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
+                .map(tc => (
+                  <div key={tc.id} style={{ padding: '14px 16px 14px', border: '1px solid var(--hairline)', borderRadius: 12, background: 'var(--bg-card-2)', opacity: 0.4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
+                      <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{tc.summary}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</div>
+                  </div>
+                ))
+              }
+            </div>
+          )}
+
+          {/* Table view */}
+          {viewMode === 'table' && (
+            <div style={{ overflow: 'hidden', borderRadius: '0 0 14px 14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '10px 16px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.07em', textTransform: 'uppercase', borderBottom: '1px solid var(--hairline)' }}>
+                <span /><span>Test case</span><span>Evaluator</span><span>Score</span><span>Latency</span><span>Note</span>
+              </div>
+              {filteredResults.map((r, i) => {
+                const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+                const tPassCount = r.evaluations.filter(e => e.score === 'Pass').length;
+                const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
+                const isSelected = selectedCase?.caseId === r.testCaseId;
+                const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+                const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
+                const primaryEval = r.evaluations[0];
+                const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setSelectedCase(isSelected ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
+                    style={{ display: 'grid', width: '100%', textAlign: 'left', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', background: isSelected ? 'rgba(201,148,74,0.06)' : 'transparent', transition: 'background 0.1s', cursor: 'pointer', border: 'none' }}
+                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />
+                    <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>
+                    {evalColor ? (
+                      <span style={{ padding: '2px 7px', borderRadius: 5, background: evalColor + '1a', color: evalColor, fontSize: 10.5, fontWeight: 600, display: 'inline-block', border: `1px solid ${evalColor}30`, justifySelf: 'start', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{primaryEval.evaluatorName}</span>
+                    ) : <span />}
+                    <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>
+                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
+                    <span style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>
+                  </button>
+                );
+              })}
+              {/* Pending cases */}
+              {run.testCases
+                .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
+                .map(tc => (
+                  <div key={tc.id} style={{ display: 'grid', gridTemplateColumns: '20px 2fr 1fr 0.8fr 0.7fr 1.4fr', padding: '11px 16px', alignItems: 'center', borderTop: '1px solid var(--hairline)', opacity: 0.5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
+                    <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-muted)' }}>{tc.summary}</span>
+                    <span />
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</span>
+                    <span />
+                  </div>
+                ))
+              }
+            </div>
+          )}
         </div>
       )}
 
@@ -296,7 +423,7 @@ export default function Runs() {
     : null;
 
   return (
-    <div style={{ width: '100%', maxWidth: 1360, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingBottom: 24 }}>
+    <div style={{ width: '100%', maxWidth: 1360, margin: '0 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', padding: '4px 4px 24px' }}>
       {/* Header */}
       <div className="fade-up" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { testRunsApi } from '../../api/test-runs';
 import type {
@@ -217,7 +218,7 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
   const totalCost = fixture?.endpoints.reduce((s, ep) => s + ep.costUsd, 0) ?? 0;
   const totalTokens = fixture?.endpoints.reduce((s, ep) => s + ep.tokIn + ep.tokOut, 0) ?? 0;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 49 }} onClick={onClose} />
@@ -424,6 +425,7 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
           )}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
