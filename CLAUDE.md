@@ -51,10 +51,10 @@ dotnet ef migrations add <MigrationName>
 dotnet ef database update
 ```
 
-### Frontend (Angular 21, inside `frontend/`)
+### Frontend (React 19 / Vite, inside `frontend/`)
 ```bash
 npm install
-npm start           # Dev server on http://localhost:4201
+npm run dev         # Dev server on http://localhost:4201
 npm run build       # Production build
 npm test            # Vitest unit tests
 ```
@@ -78,7 +78,7 @@ Trsr.Storage  →  Trsr.Domain  →  Trsr.Common
 - **Trsr.Storage** — EF Core entities, configurations, mappers, migrations
 - **Trsr.Common** — Shared utilities: validation helpers, async extensions, DI extensions
 - **Trsr.Testing** — `BaseTest<TModule>` and shared test infrastructure
-- **frontend/** — Angular 21 standalone components with Tailwind CSS 4
+- **frontend/** — React 19 application built with Vite and Tailwind CSS 4
 
 DI is wired with Autofac. `Trsr.Domain.Module` and `Trsr.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations. The API serves the compiled Angular app in production (`wwwroot/`).
 

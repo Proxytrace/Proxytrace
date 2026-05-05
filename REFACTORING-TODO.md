@@ -4,26 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 1. Update CLAUDE.md to reflect current frontend
-
-The Frontend Architecture section describes the old Angular app. It needs to be replaced with accurate documentation of the current React implementation.
-
-**What to fix:**
-- Replace Angular 21 / NgModule language with React 19 / Vite
-- Update directory layout: `frontend/src/` with `api/`, `components/`, `features/`, `lib/`
-- Update commands: `npm run dev` (not `npm start`); dev server on port 4201
-- Update routing: React Router 7 via `App.tsx` and lazy `loadComponent` → `lazy()`
-- Update HTTP layer: TanStack Query v5 + custom `api/client.ts` fetch wrapper (not Angular `HttpClient`)
-- Update test framework: Vitest (already correct, keep it)
-- Remove references to `.scss` / NgModules / standalone component decorators
-- Note Tailwind 4 is configured via `@tailwindcss/vite` but not yet used in components (inline styles are current practice — to be addressed in item 3)
-
-**Bonus fixes in the same pass:**
-- Fix `dev.sh`: references `frontend-react/` (empty stub directory) but code lives in `frontend/`
-- Fix `vite.config.ts` proxy: points to `http://localhost:5000` but backend runs on `http://localhost:5001`
-
----
-
 ## 2. Delete the stale `frontend-react/` directory
 
 `frontend-react/` contains only a `.vite` cache folder and is referenced incorrectly by `dev.sh`. Once CLAUDE.md and `dev.sh` are updated, remove it.

@@ -12,7 +12,7 @@ Read `REFACTORING-TODO.md`.
 
 - **File does not exist or is empty:** Invoke the `/plan-refactor` skill to generate the list, then re-read the file before continuing.
 - **All items are complete:** Tell the user the list is finished and suggest running `/plan-refactor` on a new scope if there is more to do. Stop here.
-- **Items remain:** Identify the first item that is not yet complete. An item is complete if its heading contains a checkmark or it is explicitly marked done. Proceed with that item.
+- **Items remain:** Identify the first item in the list. Proceed with that item.
 
 ## Step 2 — Understand the item
 
@@ -30,9 +30,9 @@ Carry out the refactoring described in the Approach bullets. Follow all conventi
 - If the item touches backend code, verify the build still passes: `dotnet build Trsr.sln`
 - If the item touches frontend code, verify the TypeScript compiles: `npm run build` inside `frontend/`
 
-## Step 4 — Mark the item complete
+## Step 4 — Remove the item from the list
 
-Update `REFACTORING-TODO.md`: add ` ✓` to the end of the completed item's heading line (e.g., `## 3. Extract inline modal/form components ✓`). Do not remove or renumber other items.
+Delete the completed item's entire section from `REFACTORING-TODO.md` — that means the heading line and all its body content (Scope, Priority, Approach, etc.). Do not renumber remaining items.
 
 ## Step 5 — Report back
 
