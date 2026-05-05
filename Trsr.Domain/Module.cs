@@ -24,14 +24,16 @@ public sealed class Module : Autofac.Module
         var directBases = new HashSet<Type> { typeof(IDomainEntity), typeof(IDomainObject) };
         var domainInterfaceTypes = typeof(Module).Assembly
             .GetTypes()
-            .Where(t => t is { IsInterface: true } && t != typeof(IDomainEntity) && t != typeof(IDomainObject))
+            .Where(t => t is { IsInterface: true } && t != typeof(IDomainEntity) && t != typeof(IDomainObject)
+                && !(t.IsGenericTypeDefinition && t.GetGenericTypeDefinition() == typeof(IDomainEntity<>)))
             .Where(t =>
             {
-                // compute the "direct" interfaces (not reachable through another interface)
+                // compute the "direct" interfaces (not reachable through another intermediate interface)
                 var all = t.GetInterfaces();
                 var transitive = all.SelectMany(i => i.GetInterfaces()).ToHashSet();
                 var direct = all.Where(i => !transitive.Contains(i));
-                return direct.Any(i => directBases.Contains(i));
+                return direct.Any(i => directBases.Contains(i)
+                    || (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDomainEntity<>)));
             })
             .ToList();
 
