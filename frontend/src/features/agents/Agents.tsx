@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
-import type { AgentDto, ToolSpecDto } from '../../api/models';
+import type { AgentDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
+import { DataTable } from '../../components/ui/DataTable';
+import type { DataColumn } from '../../components/ui/DataTable';
 import { TrashIcon, ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
@@ -14,6 +16,25 @@ const TYPE_COLORS: Record<string, string> = {
   string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
   boolean: '#f472b6', enum: '#6ee7b7', object: '#f9a8d4', array: '#86efac',
 };
+
+const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
+  {
+    key: 'name', label: 'Name', width: '1.2fr',
+    render: p => <span className="font-mono text-[12px] font-semibold" style={{ color: '#93c5fd' }}>{p.name}</span>,
+  },
+  {
+    key: 'type', label: 'Type', width: '0.8fr',
+    render: p => <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[2px] rounded" style={{ background: (TYPE_COLORS[p.type] ?? '#888') + '20', color: TYPE_COLORS[p.type] ?? '#888' }}>{p.type}</span>,
+  },
+  {
+    key: 'req', label: 'Req', width: '0.4fr',
+    render: p => <span className={`text-[12px] font-bold ${p.isRequired ? 'text-danger' : 'text-muted'}`}>{p.isRequired ? '✓' : '—'}</span>,
+  },
+  {
+    key: 'desc', label: 'Description', width: '2.5fr',
+    render: p => <span className="text-[12px] text-secondary leading-[1.55]">{p.description ?? '—'}</span>,
+  },
+];
 
 function requiredParams(tool: ToolSpecDto) {
   const req = tool.arguments.filter(a => a.isRequired).map(a => a.name);
@@ -47,17 +68,7 @@ function ToolRow({ tool, last }: { tool: ToolSpecDto; last: boolean }) {
             <>
               <div className="text-[10px] font-semibold text-muted tracking-[0.08em] uppercase mb-[6px]">Parameters</div>
               <div style={{ background: 'rgba(0,0,0,0.22)', borderRadius: 8, overflow: 'hidden' }}>
-                <div className="grid px-3 py-[7px] text-[9.5px] font-bold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '1.2fr 0.8fr 0.4fr 2.5fr' }}>
-                  <span>Name</span><span>Type</span><span>Req</span><span>Description</span>
-                </div>
-                {tool.arguments.map((p, i) => (
-                  <div key={p.name} className={`grid px-3 py-[9px] items-start ${i < tool.arguments.length - 1 ? 'border-b border-hairline' : ''}`} style={{ gridTemplateColumns: '1.2fr 0.8fr 0.4fr 2.5fr' }}>
-                    <span className="font-mono text-[12px] font-semibold" style={{ color: '#93c5fd' }}>{p.name}</span>
-                    <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[2px] rounded" style={{ background: (TYPE_COLORS[p.type] ?? '#888') + '20', color: TYPE_COLORS[p.type] ?? '#888' }}>{p.type}</span>
-                    <span className={`text-[12px] font-bold ${p.isRequired ? 'text-danger' : 'text-muted'}`}>{p.isRequired ? '✓' : '—'}</span>
-                    <span className="text-[12px] text-secondary leading-[1.55]">{p.description ?? '—'}</span>
-                  </div>
-                ))}
+                <DataTable columns={TOOL_ARG_COLUMNS} rows={tool.arguments} rowKey={p => p.name} />
               </div>
               {tool.arguments.some(a => a.enumValues?.length) && (
                 <div className="mt-2 flex gap-1 flex-wrap">

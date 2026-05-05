@@ -4,23 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 2. Extract `<DataTable>` Component
-
-**Scope:** `frontend-react/src/components/ui/` (new), six feature files
-**Priority:** P2
-
-Six feature files duplicate an identical CSS-grid table structure: header row + data rows with
-uppercase labels, hairline borders, and overflow-ellipsis cells. Any new tabular view requires
-copying ~30 lines of structure.
-
-**Approach:**
-- Create `src/components/ui/DataTable.tsx` accepting `columns: { key, label, width }[]` + `data`
-  + optional `onRowClick`
-- Replace duplicated grid tables in `Traces.tsx`, `Dashboard.tsx`, `Providers.tsx` (×2),
-  `Agents.tsx`, and `Runs.tsx`
-
----
-
 ## 4. Extract `<ColoredBadge>` Component
 
 **Scope:** `frontend-react/src/components/ui/` (new), 6+ feature files
