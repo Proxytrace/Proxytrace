@@ -8,32 +8,9 @@ import { Modal } from '../../components/overlays/Modal';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import { fmtDate } from '../../lib/format';
 import { EVALUATOR_KIND_COLOR } from '../../lib/colors';
-
-interface EvaluatorMeta { label: string; short: string; desc: string; requiresEndpoint: boolean; }
-
-const META: Record<EvaluatorKind, EvaluatorMeta> = {
-  [EvaluatorKind.Custom]: { label: 'Custom LLM Judge', short: 'LLM judge', desc: 'A grader model scores responses against a custom rubric prompt.', requiresEndpoint: true },
-  [EvaluatorKind.Helpfulness]: { label: 'Helpfulness', short: 'LLM judge', desc: 'Preset LLM judge that rates responses for helpfulness on a 1–5 scale.', requiresEndpoint: true },
-  [EvaluatorKind.Politeness]: { label: 'Politeness', short: 'LLM judge', desc: 'Preset LLM judge that rates responses for politeness and tone.', requiresEndpoint: true },
-  [EvaluatorKind.Safety]: { label: 'Safety Classifier', short: 'Classifier', desc: 'Preset LLM classifier that checks for harmful or policy-violating content.', requiresEndpoint: true },
-  [EvaluatorKind.ExactMatch]: { label: 'Exact Match', short: 'Rule', desc: 'Passes when the agent response exactly matches the expected output.', requiresEndpoint: false },
-  [EvaluatorKind.JsonSchemaMatch]: { label: 'JSON Schema Match', short: 'Rule', desc: 'Validates the agent response against a JSON Schema definition.', requiresEndpoint: false },
-  [EvaluatorKind.NumericMatch]: { label: 'Numeric Match', short: 'Numeric', desc: 'Extract a number from the response and check it within a tolerance.', requiresEndpoint: false },
-  [EvaluatorKind.ToolUsage]: { label: 'Tool Usage', short: 'Tool', desc: 'Preset LLM judge that checks whether the agent made the correct tool calls.', requiresEndpoint: true },
-};
-
-const KIND_ORDER: EvaluatorKind[] = [
-  EvaluatorKind.Custom, EvaluatorKind.ExactMatch, EvaluatorKind.NumericMatch,
-  EvaluatorKind.Helpfulness, EvaluatorKind.Politeness, EvaluatorKind.JsonSchemaMatch,
-  EvaluatorKind.Safety, EvaluatorKind.ToolUsage,
-];
+import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
 
 type Filter = 'all' | 'llm' | 'rule' | 'numeric';
-
-function initForm() { return { name: '', systemMessage: '', endpointId: '', jsonSchema: '', extractionPattern: '', tolerance: '0.01' }; }
-
-const inputCls = 'w-full px-3 py-[9px] bg-surface border border-border rounded-lg text-[13px] text-primary font-[inherit] outline-none';
-const labelCls = 'text-[11px] font-semibold text-muted uppercase tracking-[0.05em]';
 
 export default function Evaluators() {
   const qc = useQueryClient();
@@ -41,10 +18,10 @@ export default function Evaluators() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
-  const [createForm, setCreateForm] = useState(initForm());
+  const [createForm, setCreateForm] = useState<EvaluatorFormState>(initForm());
   const [editOpen, setEditOpen] = useState(false);
   const [editTargetId, setEditTargetId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState(initForm());
+  const [editForm, setEditForm] = useState<EvaluatorFormState>(initForm());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const { data: evaluators = [], isLoading } = useQuery({ queryKey: ['evaluators'], queryFn: evaluatorsApi.list });
@@ -111,38 +88,6 @@ export default function Evaluators() {
   }
 
   const color = selected ? EVALUATOR_KIND_COLOR[selected.kind] : '#c9944a';
-
-  function EvaluatorForm({ form, setForm, kind }: { form: typeof createForm; setForm: (f: typeof createForm) => void; kind: EvaluatorKind | null }) {
-    if (!kind) return null;
-    const meta = META[kind];
-    const inp = (key: keyof typeof form, opts?: { label: string; placeholder?: string; type?: string; textarea?: boolean }) => (
-      <div className="flex flex-col gap-[5px]">
-        <label className={labelCls}>{opts?.label ?? key}</label>
-        {opts?.textarea ? (
-          <textarea value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} rows={5} className={inputCls} style={{ resize: 'vertical' }} />
-        ) : (
-          <input type={opts?.type ?? 'text'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={opts?.placeholder} className={inputCls} />
-        )}
-      </div>
-    );
-    return (
-      <div className="flex flex-col gap-3">
-        {kind === EvaluatorKind.Custom && inp('name', { label: 'Evaluator name', placeholder: 'My custom judge' })}
-        {kind === EvaluatorKind.Custom && inp('systemMessage', { label: 'System message (rubric prompt)', placeholder: 'You are a grader…', textarea: true })}
-        {meta.requiresEndpoint && (
-          <div className="flex flex-col gap-[5px]">
-            <label className={labelCls}>Judge model endpoint</label>
-            <select value={form.endpointId} onChange={e => setForm({ ...form, endpointId: e.target.value })} className={inputCls}>
-              {endpoints.map(ep => <option key={ep.id} value={ep.id}>{ep.providerName} · {ep.modelName}</option>)}
-            </select>
-          </div>
-        )}
-        {kind === EvaluatorKind.JsonSchemaMatch && inp('jsonSchema', { label: 'JSON Schema', placeholder: '{"type":"object"…}', textarea: true })}
-        {kind === EvaluatorKind.NumericMatch && inp('extractionPattern', { label: 'Extraction pattern (regex)', placeholder: 'score: (\\d+)' })}
-        {kind === EvaluatorKind.NumericMatch && inp('tolerance', { label: 'Tolerance', placeholder: '0.01', type: 'number' })}
-      </div>
-    );
-  }
 
   return (
     <div className="flex gap-[14px] overflow-hidden" style={{ height: 'calc(100vh - 80px)' }}>
@@ -267,7 +212,7 @@ export default function Evaluators() {
                 <span className="px-[10px] py-[3px] rounded-full text-[11px] font-semibold" style={{ background: `${EVALUATOR_KIND_COLOR[pickedKind]}22`, color: EVALUATOR_KIND_COLOR[pickedKind] }}>{META[pickedKind].label}</span>
                 <button onClick={() => setPickedKind(null)} className="text-[11px] text-muted px-[6px] py-[2px] rounded-md border border-border" style={{ background: 'transparent', cursor: 'pointer' }}>← Change</button>
               </div>
-              <EvaluatorForm form={createForm} setForm={setCreateForm} kind={pickedKind} />
+              <EvaluatorForm form={createForm} setForm={setCreateForm} kind={pickedKind} endpoints={endpoints} />
             </div>
           )}
         </Modal>
@@ -281,7 +226,7 @@ export default function Evaluators() {
             <button className="btn-primary" onClick={() => updateEval.mutate()} disabled={updateEval.isPending}>{updateEval.isPending ? 'Saving…' : 'Save'}</button>
           </>
         }>
-          <EvaluatorForm form={editForm} setForm={setEditForm} kind={editTarget.kind} />
+          <EvaluatorForm form={editForm} setForm={setEditForm} kind={editTarget.kind} endpoints={endpoints} />
         </Modal>
       )}
 

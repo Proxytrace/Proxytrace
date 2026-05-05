@@ -4,20 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 5. Extract inline modal/form components
-
-Several large feature files define sub-components inline that belong in their own files:
-
-- `TraceDetail.tsx` → `PromoteModal` (~150 lines, complex 2-panel layout)
-- `Suites.tsx` → `RunConfirmModal` (~50 lines)
-- `Evaluators.tsx` → `EvaluatorForm` (branching form by kind)
-
-**Approach:**
-- Move each to a co-located file (e.g., `features/traces/PromoteModal.tsx`)
-- No API changes needed — just file splits
-
----
-
 ## 6. Wire Dashboard to real API data
 
 `Dashboard.tsx` uses hardcoded static arrays for every chart and table. The API services exist (`statistics.ts`, `agents.ts`, `agent-calls.ts`) but are not called from the dashboard.
