@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
+import { agentsApi } from '../../api/agents';
 import { SparklesIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { KpiCard } from '../../components/ui/KpiCard';
 import { Pill } from '../../components/ui/Pill';
 import { StatusDot } from '../../components/ui/StatusDot';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../lib/format';
 
@@ -24,13 +26,6 @@ interface AreaChartData {
 interface SparklineData { path: string; endX: number; endY: number; }
 interface HistRect { x: number; y: number; w: number; h: number; label: string; labelX: number; }
 interface HistData { rects: HistRect[]; barsPath: string; baselineY: number; }
-interface StackedBarData {
-  bars: { label: string; labelX: number; labelY: number }[];
-  grid: GridLine[];
-  solidGridPath: string; dashedGridPath: string;
-  colorPaths: { color: string; path: string }[];
-  baselineY: number;
-}
 
 // ── Chart computation ─────────────────────────────────────────────────────────
 
@@ -90,74 +85,29 @@ function computeHistogram(data: number[], width: number, height: number): HistDa
   return { rects, barsPath, baselineY: padT + h };
 }
 
-type TokenDay = { d: string; support: number; code: number; triage: number; classify: number };
-
-function computeStackedBars(data: TokenDay[], width: number, height: number): StackedBarData {
-  const padL = 38, padR = 10, padT = 14, padB = 28;
+function computeModelBars(data: { label: string; value: number }[], width: number, height: number): HistData {
+  if (data.length === 0) return { rects: [], barsPath: '', baselineY: height - 36 };
+  const padL = 38, padR = 10, padT = 10, padB = 36;
   const w = width - padL - padR, h = height - padT - padB;
-  const totals = data.map(d => d.support + d.code + d.triage + d.classify);
-  const max = Math.max(...totals) * 1.1;
-  const bw = w / data.length * 0.58, gap = w / data.length * 0.42;
-  const yTicks = 4;
-  const grid: GridLine[] = Array.from({ length: yTicks }, (_, i) => ({
-    y: padT + (i / (yTicks - 1)) * h,
-    val: Math.round(max * (1 - i / (yTicks - 1)) / 1000) + 'k',
-    isDashed: i !== yTicks - 1,
+  const max = Math.max(...data.map(d => d.value)) * 1.1 || 1;
+  const bw = w / data.length * 0.7, gap = w / data.length * 0.3;
+  const rects: HistRect[] = data.map((d, i) => ({
+    x: padL + i * (bw + gap) + gap / 2, w: bw,
+    y: padT + h - (d.value / max) * h, h: (d.value / max) * h,
+    label: d.label.length > 10 ? d.label.slice(0, 9) + '…' : d.label,
+    labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
   }));
-  const segsSpec = [
-    { key: 'support' as const, color: '#c9944a' },
-    { key: 'code' as const, color: '#6b9eaa' },
-    { key: 'triage' as const, color: '#3daa6f' },
-    { key: 'classify' as const, color: '#d4915c' },
-  ];
-  const pathsByColor: Record<string, string[]> = {};
-  segsSpec.forEach(s => { pathsByColor[s.color] = []; });
-
-  const bars = data.map((d, i) => {
-    const x = padL + i * (bw + gap) + gap / 2;
-    let y = padT + h;
-    segsSpec.forEach(spec => {
-      const segH = (d[spec.key] / max) * h;
-      const rectY = y - segH;
-      y = rectY;
-      pathsByColor[spec.color].push(
-        `M ${x.toFixed(1)} ${rectY.toFixed(1)} h ${bw.toFixed(1)} v ${segH.toFixed(1)} h -${bw.toFixed(1)} Z`
-      );
-    });
-    return { label: d.d, labelX: x + bw / 2, labelY: height - 10 };
-  });
-
-  const colorPaths = segsSpec.map(s => ({ color: s.color, path: pathsByColor[s.color].join(' ') }));
-  const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
-  return { bars, grid, solidGridPath, dashedGridPath, colorPaths, baselineY: padT + h };
+  const barsPath = rects.map(r =>
+    `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
+  ).join(' ');
+  return { rects, barsPath, baselineY: padT + h };
 }
 
-// ── Static mock data ──────────────────────────────────────────────────────────
+// ── Static fallback data (no time-series API exists yet) ──────────────────────
 
 const VOLUME_RAW = [2, 4, 3, 1, 0, 2, 5, 8, 12, 18, 14, 22, 28, 34, 29, 36, 40, 32, 26, 20, 14, 18, 22, 15];
 const LATENCY_HIST_RAW = [3, 8, 22, 45, 38, 28, 15, 9, 4, 2];
 const PASS_RATE_RAW = [42, 55, 61, 68, 72, 78, 82, 85];
-const TOKEN_BY_DAY: TokenDay[] = [
-  { d: 'Mon', support: 7400, code: 3200, triage: 2100, classify: 900 },
-  { d: 'Tue', support: 8600, code: 3900, triage: 2400, classify: 1200 },
-  { d: 'Wed', support: 7100, code: 3600, triage: 1900, classify: 800 },
-  { d: 'Thu', support: 9800, code: 4400, triage: 2800, classify: 1100 },
-  { d: 'Fri', support: 10600, code: 5000, triage: 3100, classify: 1400 },
-  { d: 'Sat', support: 6000, code: 2700, triage: 1500, classify: 600 },
-  { d: 'Sun', support: 6700, code: 3100, triage: 1700, classify: 700 },
-];
-const AGENT_CARDS = [
-  { name: 'Customer Support', model: 'gpt-4o', version: 'v2', traces: 34, pass: 82, trend: [40, 50, 55, 62, 68, 75, 82], tokens: 56200, latency: '1.9s' },
-  { name: 'Code Helper', model: 'gpt-4o-mini', version: 'v1', traces: 18, pass: 67, trend: [30, 42, 48, 50, 55, 62, 67], tokens: 25900, latency: '2.4s' },
-  { name: 'Ticket Triage', model: 'claude-3.5-sonnet', version: 'v2', traces: 12, pass: 78, trend: [50, 55, 62, 68, 70, 74, 78], tokens: 15500, latency: '1.2s' },
-  { name: 'Classifier', model: 'gpt-3.5-turbo', version: 'v3', traces: 8, pass: 45, trend: [60, 55, 52, 48, 46, 44, 45], tokens: 6700, latency: '4.7s' },
-];
-const AGENT_COLOR_ENTRIES = [
-  { name: 'Customer Support', color: '#c9944a' },
-  { name: 'Code Helper', color: '#6b9eaa' },
-  { name: 'Ticket Triage', color: '#3daa6f' },
-  { name: 'Classifier', color: '#d4915c' },
-];
 
 // ── Range helpers ─────────────────────────────────────────────────────────────
 
@@ -210,30 +160,56 @@ export default function Dashboard() {
     refetchInterval: 30_000,
   });
 
+  const { data: agentsData, isLoading: agentsLoading } = useQuery({
+    queryKey: ['agents-list'],
+    queryFn: () => agentsApi.list({ pageSize: 10 }),
+    refetchInterval: 60_000,
+  });
+
+  const { data: latencyData } = useQuery({
+    queryKey: ['statistics-latency', from],
+    queryFn: () => statisticsApi.latency({ from }),
+    refetchInterval: 30_000,
+  });
+
+  const { data: modelBreakdown, isLoading: modelLoading } = useQuery({
+    queryKey: ['statistics-model-breakdown', from],
+    queryFn: () => statisticsApi.modelBreakdown({ from }),
+    refetchInterval: 30_000,
+  });
+
   const recentTraces = tracesData?.items ?? [];
+  const agents = agentsData?.items ?? [];
+
+  const latencyStats = useMemo(() => {
+    if (!latencyData || latencyData.length === 0) return null;
+    const totalSamples = latencyData.reduce((s, d) => s + d.sampleCount, 0) || 1;
+    return {
+      p50: Math.round(latencyData.reduce((s, d) => s + d.p50Ms * d.sampleCount, 0) / totalSamples),
+      p95: Math.round(latencyData.reduce((s, d) => s + d.p95Ms * d.sampleCount, 0) / totalSamples),
+      p99: Math.round(latencyData.reduce((s, d) => s + d.p99Ms * d.sampleCount, 0) / totalSamples),
+    };
+  }, [latencyData]);
 
   const charts = useMemo(() => {
     const volumeArea = computeAreaChart(VOLUME_RAW, 820, 240, 38, 10, 14, 24, true);
     const passRateArea = computeAreaChart(PASS_RATE_RAW, 360, 120, 4, 4, 4, 4, false);
     const histData = computeHistogram(LATENCY_HIST_RAW, 360, 200);
-    const stackedBarData = computeStackedBars(TOKEN_BY_DAY, 820, 220);
     const kpiSparklines = {
       traces: computeSparkline(VOLUME_RAW, 72, 24),
-      tokens: computeSparkline(TOKEN_BY_DAY.map(d => d.support + d.code + d.triage + d.classify), 72, 24),
-      latency: computeSparkline([3100, 2900, 2700, 2800, 2600, 2500, 2400, 2800], 72, 24),
       passRate: computeSparkline(PASS_RATE_RAW, 72, 24),
     };
-    const agentCards = AGENT_CARDS.map(a => ({
-      ...a,
-      sparkline: computeSparkline(a.trend, 64, 24),
-      passColor: a.pass >= 75 ? 'var(--success)' : a.pass >= 55 ? 'var(--warn)' : 'var(--danger)',
+    const modelBarItems = (modelBreakdown ?? []).map(m => ({
+      label: m.modelName,
+      value: m.totalInputTokens + m.totalOutputTokens,
     }));
+    const modelBarsData = computeModelBars(modelBarItems, 820, 220);
     const r = 37;
     const circumference = 2 * Math.PI * r;
-    const passRate = summary?.overallPassRate ?? 0.82;
+    const passRate = summary?.overallPassRate ?? 0;
     const dashoffset = circumference - passRate * circumference;
-    return { volumeArea, passRateArea, histData, stackedBarData, kpiSparklines, agentCards, circumference, dashoffset };
-  }, [summary?.overallPassRate]);
+    return { volumeArea, passRateArea, histData, kpiSparklines, modelBarsData, circumference, dashoffset };
+  }, [summary?.overallPassRate, modelBreakdown]);
 
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
 
@@ -278,21 +254,19 @@ export default function Dashboard() {
           value={summaryLoading ? '…' : fmtTokens(totalTokens)}
           subtitle={summaryLoading ? '' : `${(summary?.totalInputTokens ?? 0).toLocaleString()} in · ${(summary?.totalOutputTokens ?? 0).toLocaleString()} out`}
           trend={{ direction: 'up', pct: '+12%', positive: true }}
-          sparkline={TOKEN_BY_DAY.map(d => d.support + d.code + d.triage + d.classify)}
           sparklineColor="#6b9eaa"
         />
         <KpiCard
           title="Avg Latency"
           value={summaryLoading ? '…' : fmtLatency(summary?.avgLatencyMs ?? 0)}
-          subtitle="p95 4.1s · p99 6.2s"
+          subtitle={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : ''}
           trend={{ direction: 'down', pct: '-8%', positive: false }}
-          sparkline={[3100, 2900, 2700, 2800, 2600, 2500, 2400, 2800]}
           sparklineColor="#d4915c"
         />
         <KpiCard
           title="Pass Rate"
           value={summaryLoading ? '…' : `${Math.round((summary?.overallPassRate ?? 0) * 100)}%`}
-          subtitle="8 runs · Support suite v2"
+          subtitle="latest evaluation suite run"
           trend={{ direction: 'up', pct: '+7pt', positive: true }}
           sparkline={PASS_RATE_RAW}
           sparklineColor="#3daa6f"
@@ -344,7 +318,7 @@ export default function Dashboard() {
           <div className="card-header">
             <div className="min-w-0 flex-1">
               <h3>Latency Distribution</h3>
-              <p>60 samples · p95 4.1s</p>
+              <p>{latencyData ? `${latencyData.reduce((s, d) => s + d.sampleCount, 0)} samples` : 'Loading…'}</p>
             </div>
           </div>
           <div className="card-body">
@@ -356,7 +330,10 @@ export default function Dashboard() {
               ))}
             </svg>
             <div className="flex gap-4 mt-3 pt-3 border-t border-border-subtle">
-              {[['p50', '2.4s'], ['p90', '3.8s'], ['p95', '4.1s'], ['p99', '6.2s']].map(([k, v]) => (
+              {(latencyStats
+                ? [['p50', fmtLatency(latencyStats.p50)], ['p95', fmtLatency(latencyStats.p95)], ['p99', fmtLatency(latencyStats.p99)]]
+                : [['p50', '—'], ['p95', '—'], ['p99', '—']]
+              ).map(([k, v]) => (
                 <div key={k}>
                   <div className="text-[11px] text-muted font-medium tracking-[0.05em] uppercase">{k}</div>
                   <div className="mono text-sm font-semibold mt-[2px]">{v}</div>
@@ -370,36 +347,30 @@ export default function Dashboard() {
       {/* Charts Row 2: Token Usage + Pass Rate */}
       <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
 
-        {/* Token Usage stacked bar */}
+        {/* Token Usage by Model */}
         <div className="dash-card">
           <div className="card-header">
             <div className="min-w-0 flex-1">
-              <h3>Token Usage by Agent</h3>
-              <p>Last 7 days · stacked</p>
-            </div>
-            <div className="flex gap-[10px] text-[11px] text-secondary flex-wrap justify-end max-w-[300px] shrink-0">
-              {AGENT_COLOR_ENTRIES.map(e => (
-                <div key={e.name} className="flex items-center gap-[5px]">
-                  <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: e.color }} />
-                  {e.name}
-                </div>
-              ))}
+              <h3>Token Usage by Model</h3>
+              <p>Total tokens per model · {rangeLabel(range).split(' · ')[0].toLowerCase()}</p>
             </div>
           </div>
           <div className="card-body px-[18px] pb-[18px] pt-0">
-            <svg viewBox="0 0 820 220" width="100%" height="220" style={{ display: 'block' }} preserveAspectRatio="none">
-              <path d={charts.stackedBarData.solidGridPath} stroke="#343438" fill="none" />
-              <path d={charts.stackedBarData.dashedGridPath} stroke="#343438" fill="none" strokeDasharray="3 4" />
-              {charts.stackedBarData.grid.map((g, i) => (
-                <text key={i} x="30" y={g.y + 4} textAnchor="end" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{g.val}</text>
-              ))}
-              {charts.stackedBarData.colorPaths.map(cp => (
-                <path key={cp.color} d={cp.path} fill={cp.color} />
-              ))}
-              {charts.stackedBarData.bars.map((b, i) => (
-                <text key={i} x={b.labelX} y={b.labelY} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{b.label}</text>
-              ))}
-            </svg>
+            {modelLoading && (
+              <div className="h-[220px] flex items-center justify-center text-xs text-muted">Loading…</div>
+            )}
+            {!modelLoading && charts.modelBarsData.rects.length === 0 && (
+              <EmptyState title="No data yet" description="Token usage will appear once traces are captured." />
+            )}
+            {!modelLoading && charts.modelBarsData.rects.length > 0 && (
+              <svg viewBox="0 0 820 220" width="100%" height="220" style={{ display: 'block' }} preserveAspectRatio="none">
+                <line x1="38" x2="810" y1={charts.modelBarsData.baselineY} y2={charts.modelBarsData.baselineY} stroke="#343438" />
+                <path d={charts.modelBarsData.barsPath} fill="#c9944a" opacity="0.85" />
+                {charts.modelBarsData.rects.map((r, i) => (
+                  <text key={i} x={r.labelX} y={charts.modelBarsData.baselineY + 14} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+                ))}
+              </svg>
+            )}
           </div>
         </div>
 
@@ -408,7 +379,7 @@ export default function Dashboard() {
           <div className="card-header">
             <div className="min-w-0 flex-1">
               <h3>Pass Rate Over Runs</h3>
-              <p>Customer Support · Suite v2</p>
+              <p>Latest evaluation suite</p>
             </div>
           </div>
           <div className="card-body">
@@ -425,7 +396,7 @@ export default function Dashboard() {
               </svg>
               <div>
                 <div className="text-[30px] font-bold tracking-[-0.02em] text-success">
-                  {Math.round((summary?.overallPassRate ?? 0.82) * 100)}<span className="text-[18px] text-muted">%</span>
+                  {Math.round((summary?.overallPassRate ?? 0) * 100)}<span className="text-[18px] text-muted">%</span>
                 </div>
                 <div className="text-xs text-muted">last run · +7pt vs prev</div>
               </div>
@@ -484,25 +455,28 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="card-body flex flex-col gap-[10px] px-[18px] py-[14px]">
-            {charts.agentCards.map(agent => (
-              <div key={agent.name} className="grid p-3 bg-card-2 rounded-xl items-center gap-3" style={{ gridTemplateColumns: '1fr auto auto', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}>
+            {agentsLoading && (
+              <div className="text-center text-xs text-muted py-8">Loading…</div>
+            )}
+            {!agentsLoading && agents.length === 0 && (
+              <EmptyState
+                title="No agents yet"
+                description="Agents are detected automatically when you route traffic through the Trsr proxy."
+              />
+            )}
+            {agents.map(agent => (
+              <div key={agent.id} className="grid p-3 bg-card-2 rounded-xl items-center gap-3" style={{ gridTemplateColumns: '1fr auto', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-semibold">{agent.name}</span>
-                    <span className="mono text-[10px] px-[5px] py-[1px] bg-card rounded-[4px] text-muted">{agent.version}</span>
-                  </div>
-                  <div className="mt-[5px] flex gap-1.5 items-center">
-                    <Pill label={agent.model} color={modelColor(agent.model)} size="sm" />
-                    <span className="text-[11px] text-muted">· {agent.traces} traces</span>
+                  <span className="text-[13px] font-semibold truncate block">{agent.name}</span>
+                  <div className="mt-[5px] flex gap-1.5 items-center flex-wrap">
+                    <span className="text-[11px] text-muted">{agent.projectName}</span>
+                    {agent.tools.length > 0 && (
+                      <span className="text-[11px] text-muted">· {agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}</span>
+                    )}
                   </div>
                 </div>
-                <svg viewBox="0 0 64 24" width="64" height="24" style={{ display: 'block' }}>
-                  <path d={agent.sparkline.path} fill="none" stroke={agent.passColor} strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx={agent.sparkline.endX} cy={agent.sparkline.endY} r="2" fill={agent.passColor} />
-                </svg>
-                <div className="text-right">
-                  <div style={{ fontSize: 14, fontWeight: 700, color: agent.passColor }}>{agent.pass}%</div>
-                  <div className="text-[10px] text-muted uppercase tracking-[0.05em]">pass</div>
+                <div className="text-right text-[11px] text-muted whitespace-nowrap shrink-0">
+                  {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}
                 </div>
               </div>
             ))}
