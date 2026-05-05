@@ -302,6 +302,14 @@ public class TestSuitesController : ControllerBase
             tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
             new TestSuiteMessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
         )).ToArray(),
+        Description: null,
+        Tags: [],
+        TotalRuns: 0,
+        PassRate: null,
+        PrevPassRate: null,
+        PassRateTrend: [],
+        LastRunAt: null,
+        LastRunGroupId: null,
         s.CreatedAt,
         s.UpdatedAt);
 

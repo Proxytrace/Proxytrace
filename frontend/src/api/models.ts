@@ -131,6 +131,14 @@ export interface TestSuiteDto {
   agentName: string;
   evaluators: SuiteEvaluatorDto[];
   testCases: TestCaseDto[];
+  description: string | null;
+  tags: string[];
+  totalRuns: number;
+  passRate: number | null;
+  prevPassRate: number | null;
+  passRateTrend: number[];
+  lastRunAt: string | null;
+  lastRunGroupId: string | null;
   createdAt: string;
   updatedAt: string;
 }

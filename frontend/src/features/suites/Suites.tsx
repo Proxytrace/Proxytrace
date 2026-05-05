@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testSuitesApi } from '../../api/test-suites';
 import { testRunGroupsApi } from '../../api/test-run-groups';
@@ -11,16 +12,31 @@ import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { agentColor, EVALUATOR_KIND_COLOR, modelColor } from '../../lib/colors';
-import { fmtRelative } from '../../lib/format';
+import { fmtRelative, fmtDate } from '../../lib/format';
+import { sparklinePath } from '../../lib/charts';
+
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+
+function Sparkline({ data, width = 80, height = 20, color }: { data: number[]; width?: number; height?: number; color: string }) {
+  if (data.length < 2) return null;
+  const path = sparklinePath(data, width, height);
+  return (
+    <svg width={width} height={height} style={{ display: 'block', marginTop: 4, overflow: 'visible' }}>
+      <path d={path} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
+    </svg>
+  );
+}
 
 // ─── RunConfirmModal ──────────────────────────────────────────────────────────
 
-function RunConfirmModal({ suite, onClose, onSubmit, loading }: {
+function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
   suite: TestSuiteDto;
   onClose: () => void;
   onSubmit: (endpointIds: string[]) => void;
   loading: boolean;
+  done: boolean;
 }) {
+  const navigate = useNavigate();
   const { data: modelsData = [] } = useQuery({ queryKey: ['model-endpoints'], queryFn: providersApi.getAllModels });
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const c = agentColor(suite.agentId);
@@ -35,54 +51,82 @@ function RunConfirmModal({ suite, onClose, onSubmit, loading }: {
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fade-up 0.18s ease-out' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 480, background: 'var(--bg-card)', borderRadius: 20, boxShadow: 'var(--shadow-float)', overflow: 'hidden' }}>
         <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}55)` }} />
-        <div style={{ padding: '24px 28px' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Start new test run</h3>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.55 }}>
-            Run <strong style={{ color: 'var(--text-primary)' }}>{suite.testCases.length} test cases</strong> from <strong style={{ color: 'var(--text-primary)' }}>{suite.name}</strong> and compare results.
-          </p>
 
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-              Model endpoints to evaluate
-              {isMulti && (
-                <span style={{ padding: '2px 8px', background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.12))', color: '#c4b5fd', borderRadius: 100, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
-                  Parallel · {selectedEndpoints.size} selected
-                </span>
-              )}
+        {done ? (
+          <div style={{ padding: '40px 32px', textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--success-subtle)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--success)', fontSize: 24 }}>
+              ✓
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
-              {modelsData.map((ep: ModelEndpointDto) => {
-                const mc = modelColor(ep.modelName);
-                const isOn = selectedEndpoints.has(ep.id);
-                return (
-                  <button key={ep.id} onClick={() => toggle(ep.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, textAlign: 'left', background: isOn ? mc + '12' : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px ${mc}44` : 'var(--shadow-pill)', transition: 'all 0.12s' }}>
-                    <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.12s' }}>
-                      {isOn && <span style={{ color: '#000', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                    </div>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 600, color: isOn ? mc : 'var(--text-secondary)', flex: 1 }}>{ep.modelName}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ep.providerName}</span>
-                  </button>
-                );
-              })}
-              {modelsData.length === 0 && (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>
-                  No endpoints configured. Add providers first.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button onClick={onClose} style={{ padding: '9px 18px', background: 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{isMulti ? 'Parallel evaluation started' : 'Evaluation started'}</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
+              Running <strong style={{ color: 'var(--text-primary)' }}>{suite.testCases.length} test cases</strong>
+              {isMulti
+                ? <> across <strong style={{ color: c }}>{selectedEndpoints.size} models</strong> in parallel</>
+                : selectedEndpoints.size === 1
+                  ? <> against <strong style={{ color: c }}>{[...modelsData].find((ep: ModelEndpointDto) => selectedEndpoints.has(ep.id))?.modelName ?? 'selected model'}</strong></>
+                  : null
+              }.
+            </p>
             <button
-              onClick={() => onSubmit(Array.from(selectedEndpoints))}
-              disabled={loading || selectedEndpoints.size === 0}
-              style={{ padding: '9px 20px', background: selectedEndpoints.size > 0 ? 'linear-gradient(135deg, #c9944a, #a57038)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedEndpoints.size > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 7, opacity: loading ? 0.7 : 1, transition: 'all 0.15s' }}
+              onClick={() => { navigate('/runs'); onClose(); }}
+              style={{ padding: '10px 28px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(139,92,246,0.5)' }}
             >
-              {loading ? 'Starting…' : `▶ ${isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}`}
+              View Test Runs →
             </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ padding: '24px 28px' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Start new test run</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.55 }}>
+              Run <strong style={{ color: 'var(--text-primary)' }}>{suite.testCases.length} test cases</strong> from <strong style={{ color: 'var(--text-primary)' }}>{suite.name}</strong> and compare results.
+            </p>
+
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Model endpoints to evaluate
+                {isMulti && (
+                  <span style={{ padding: '2px 8px', background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.12))', color: '#c4b5fd', borderRadius: 100, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
+                    Parallel · {selectedEndpoints.size} selected
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
+                {modelsData.map((ep: ModelEndpointDto) => {
+                  const mc = modelColor(ep.modelName);
+                  const isOn = selectedEndpoints.has(ep.id);
+                  return (
+                    <button key={ep.id} onClick={() => toggle(ep.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, textAlign: 'left', background: isOn ? mc + '12' : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px ${mc}44` : 'var(--shadow-pill)', transition: 'all 0.12s' }}>
+                      <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.12s' }}>
+                        {isOn && <span style={{ color: '#000', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                      </div>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 600, color: isOn ? mc : 'var(--text-secondary)', flex: 1 }}>{ep.modelName}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ep.providerName}</span>
+                    </button>
+                  );
+                })}
+                {modelsData.length === 0 && (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>
+                    No endpoints configured. Add providers first.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={onClose} style={{ padding: '9px 18px', background: 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
+              <button
+                onClick={() => onSubmit(Array.from(selectedEndpoints))}
+                disabled={loading || selectedEndpoints.size === 0}
+                style={{ padding: '9px 20px', background: selectedEndpoints.size > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedEndpoints.size > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 7, opacity: loading ? 0.7 : 1, transition: 'all 0.15s', boxShadow: selectedEndpoints.size > 0 ? '0 4px 14px -4px rgba(139,92,246,0.5)' : 'none' }}
+              >
+                {loading
+                  ? <><span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite', display: 'block' }} /> Running…</>
+                  : <>▶ {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}</>
+                }
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -97,18 +141,32 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
   onDelete: () => void;
 }) {
   const c = agentColor(suite.agentId);
+  const hasRuns = suite.totalRuns > 0;
+  const passColor = suite.passRate === null
+    ? 'var(--text-muted)'
+    : suite.passRate >= 75 ? 'var(--success)'
+    : suite.passRate >= 55 ? 'var(--warn)'
+    : 'var(--danger)';
+  const delta = suite.passRate !== null && suite.prevPassRate !== null ? suite.passRate - suite.prevPassRate : null;
+
   return (
     <div
       style={{ background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', transition: 'box-shadow 0.18s' }}
-      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 12px rgba(0,0,0,0.35), 0 16px 40px -16px ${c}44`)}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px ${c}40`)}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-card)')}
     >
       <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
       <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
         {/* Top row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 4 }}>{suite.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em' }}>{suite.name}</span>
+              {!hasRuns && (
+                <span style={{ padding: '2px 7px', background: 'var(--warn-subtle)', color: 'var(--warn)', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>No runs yet</span>
+              )}
+            </div>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 100, background: c + '20', color: c, fontSize: 10.5, fontWeight: 600, boxShadow: 'var(--shadow-pill)' }}>
               {suite.agentName}
             </span>
@@ -116,48 +174,85 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
               onClick={onRun}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 9, fontSize: 12.5, fontWeight: 600, background: 'linear-gradient(135deg, #c9944a, #a57038)', color: '#fff', boxShadow: '0 4px 14px -6px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, fontSize: 12.5, fontWeight: 600, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', color: '#fff', boxShadow: '0 4px 14px -6px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              ▶ Run
+              ▶ {hasRuns ? 'Run again' : 'Run now'}
             </button>
-            <button onClick={onEdit} style={{ padding: '7px 9px', borderRadius: 9, fontSize: 12, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>✎</button>
-            <button onClick={onDelete} style={{ padding: '7px 9px', borderRadius: 9, fontSize: 12, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}>🗑</button>
+            <button onClick={onEdit} style={{ padding: '8px 9px', borderRadius: 9, fontSize: 12, border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>✎</button>
+            <button onClick={onDelete} style={{ padding: '8px 9px', borderRadius: 9, fontSize: 12, color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer' }}>🗑</button>
           </div>
         </div>
+
+        {/* Description */}
+        {suite.description && (
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>{suite.description}</p>
+        )}
 
         {/* Stats grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {/* Pass rate */}
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Pass rate</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 700, color: passColor, letterSpacing: '-0.02em' }}>
+                {suite.passRate !== null ? `${Math.round(suite.passRate)}%` : '—'}
+              </span>
+              {delta !== null && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: delta >= 0 ? 'var(--success)' : 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                  {delta >= 0 ? '↗' : '↘'}{Math.abs(Math.round(delta))}pt
+                </span>
+              )}
+            </div>
+            {hasRuns && suite.passRateTrend.length >= 2 && (
+              <Sparkline data={suite.passRateTrend} width={80} height={20} color={passColor} />
+            )}
+          </div>
+
+          {/* Test cases */}
           <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Test cases</div>
             <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{suite.testCases.length}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{suite.totalRuns} run{suite.totalRuns !== 1 ? 's' : ''} total</div>
           </div>
+
+          {/* Last run */}
           <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Evaluators</div>
-            <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{suite.evaluators.length}</div>
-          </div>
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Created</div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, color: 'var(--text-secondary)' }}>{fmtRelative(suite.createdAt)}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Last run</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: hasRuns ? 'var(--text-primary)' : 'var(--text-muted)', marginTop: 2 }}>
+              {suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'Never'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
+              {suite.lastRunGroupId ? suite.lastRunGroupId.slice(0, 8) : 'Not yet run'}
+            </div>
           </div>
         </div>
 
-        {/* Evaluator badges */}
-        {suite.evaluators.length > 0 && (
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            {suite.evaluators.map(e => {
-              const ec = EVALUATOR_KIND_COLOR[e.kind];
-              return (
-                <span key={e.id} style={{ padding: '2px 8px', borderRadius: 5, background: ec + '1a', color: ec, fontSize: 10.5, fontWeight: 600, border: `1px solid ${ec}30` }}>{e.kind}</span>
-              );
-            })}
-          </div>
-        )}
+        {/* Evaluator badges + tags */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          {suite.evaluators.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {suite.evaluators.map(e => {
+                const ec = EVALUATOR_KIND_COLOR[e.kind];
+                return (
+                  <span key={e.id} style={{ padding: '2px 8px', borderRadius: 5, background: ec + '1a', color: ec, fontSize: 10.5, fontWeight: 600, border: `1px solid ${ec}30` }}>{e.kind}</span>
+                );
+              })}
+            </div>
+          )}
+          {suite.tags.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {suite.tags.map(t => (
+                <span key={t} style={{ padding: '2px 8px', background: 'var(--bg-card-2)', color: 'var(--text-muted)', borderRadius: 5, fontSize: 10.5, fontFamily: "'JetBrains Mono', monospace" }}>#{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--hairline)', fontSize: 11, color: 'var(--text-muted)' }}>
-          <span>{suite.testCases.length} cases</span>
+          <span>Created {fmtDate(suite.createdAt)}</span>
           <button style={{ fontSize: 11.5, color: 'var(--accent-hover)', fontWeight: 500 }} onClick={onEdit}>View cases ›</button>
         </div>
       </div>
@@ -171,6 +266,7 @@ export default function Suites() {
   const qc = useQueryClient();
   const [agentFilter, setAgentFilter] = useState('');
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
+  const [runDone, setRunDone] = useState(false);
   const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
   const [editTab, setEditTab] = useState<'cases' | 'evaluators'>('cases');
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteDto | null>(null);
@@ -203,11 +299,15 @@ export default function Suites() {
   const visibleSuites = agentFilter ? suites.filter(s => s.agentId === agentFilter) : suites;
 
   const totalCases = suites.reduce((n, s) => n + s.testCases.length, 0);
-  const totalEvaluators = suites.reduce((n, s) => n + s.evaluators.length, 0);
+  const totalRuns = suites.reduce((n, s) => n + s.totalRuns, 0);
+  const suitesWithPassRate = suites.filter(s => s.passRate !== null);
+  const avgPassRate = suitesWithPassRate.length > 0
+    ? Math.round(suitesWithPassRate.reduce((n, s) => n + s.passRate!, 0) / suitesWithPassRate.length)
+    : null;
 
   const startRun = useMutation({
     mutationFn: (endpointIds: string[]) => testRunGroupsApi.create(runSuite!.id, endpointIds),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setRunSuite(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setRunDone(true); },
   });
 
   const delSuite = useMutation({
@@ -242,6 +342,8 @@ export default function Suites() {
     setEditTab('cases');
     setSelectedEvaluatorIds(new Set(suite.evaluators.map(e => e.id)));
   }
+
+  function closeRunModal() { setRunSuite(null); setRunDone(false); }
 
   // Agent filter tabs
   const agentList = [{ id: '', name: 'All', count: suites.length }, ...agents.map(a => ({ id: a.id, name: a.name, count: suites.filter(s => s.agentId === a.id).length }))];
@@ -321,7 +423,7 @@ export default function Suites() {
         </div>
         <button
           onClick={() => { setCreateOpen(true); resetCreate(); }}
-          style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #c9944a, #a57038)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.45), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
+          style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
         >
           + New suite
         </button>
@@ -330,10 +432,10 @@ export default function Suites() {
       {/* KPI row */}
       <div className="fade-up" style={{ animationDelay: '30ms', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[
-          { label: 'Total suites', value: suites.length, sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: '#c9944a' },
-          { label: 'Total cases', value: totalCases, sub: 'test case inputs', color: '#06b6d4' },
-          { label: 'Total evaluators', value: totalEvaluators, sub: 'across all suites', color: '#10b981' },
-          { label: 'Agents covered', value: new Set(suites.map(s => s.agentId)).size, sub: 'unique agents', color: '#f59e0b' },
+          { label: 'Total suites',  value: suites.length,                                          sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: '#8b5cf6' },
+          { label: 'Total cases',   value: totalCases,                                             sub: 'test case inputs',                                           color: '#06b6d4' },
+          { label: 'Total runs',    value: totalRuns,                                              sub: 'evaluations run',                                            color: '#10b981' },
+          { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—',         sub: 'across all suites',                                          color: '#f59e0b' },
         ].map(k => (
           <div key={k.label} style={{ background: 'var(--bg-card)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ width: 40, height: 40, borderRadius: 11, background: k.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -373,7 +475,7 @@ export default function Suites() {
           <SuiteCard
             key={suite.id}
             suite={suite}
-            onRun={() => setRunSuite(suite)}
+            onRun={() => { setRunSuite(suite); setRunDone(false); }}
             onEdit={() => openEdit(suite)}
             onDelete={() => setDeleteSuite(suite)}
           />
@@ -389,9 +491,10 @@ export default function Suites() {
       {runSuite && (
         <RunConfirmModal
           suite={runSuite}
-          onClose={() => setRunSuite(null)}
+          onClose={closeRunModal}
           onSubmit={ids => startRun.mutate(ids)}
           loading={startRun.isPending}
+          done={runDone}
         />
       )}
 

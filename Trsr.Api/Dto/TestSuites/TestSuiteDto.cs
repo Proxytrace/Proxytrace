@@ -9,6 +9,14 @@ public record TestSuiteDto(
     string AgentName,
     IReadOnlyList<EvaluatorDto> Evaluators,
     IReadOnlyList<TestCaseDto> TestCases,
+    string? Description,
+    IReadOnlyList<string> Tags,
+    int TotalRuns,
+    double? PassRate,
+    double? PrevPassRate,
+    IReadOnlyList<double> PassRateTrend,
+    DateTimeOffset? LastRunAt,
+    Guid? LastRunGroupId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
