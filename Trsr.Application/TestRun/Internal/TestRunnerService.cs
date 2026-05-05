@@ -29,6 +29,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestResultBroadcaster broadcaster;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
+    private readonly TestRunnerConfiguration configuration;
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> cancellationTokens = new();
 
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
@@ -47,7 +48,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
         IAsyncLock asyncLock,
-        ILogger<TestRunnerService> logger)
+        ILogger<TestRunnerService> logger,
+        TestRunnerConfiguration configuration)
     {
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
@@ -58,6 +60,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.broadcaster = broadcaster;
         this.asyncLock = asyncLock;
         this.logger = logger;
+        this.configuration = configuration;
     }
 
     public ChannelReader<Guid> Reader
@@ -156,10 +159,15 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             await EnsureGroupRunningAsync(testRun.Group.Id, cancellationToken);
 
             var suite = testRun.Group.Suite;
-            var testCaseTasks = suite.TestCases
-                .Select(testCase => RunTestCase(testCase, testRun, cancellationToken));
+            var parallelOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
+                CancellationToken = cancellationToken
+            };
             
-            await Task.WhenAll(testCaseTasks);
+            await Parallel.ForEachAsync(suite.TestCases, parallelOptions, 
+                async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
+            
             broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
             await UpdateGroupStatusOnRunCompleteAsync(testRun.Group.Id, cancellationToken);
             return testRun;
@@ -190,11 +198,16 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         await testResultRepository.AddAsync(testResult, cancellationToken);
 
         var run = testRun;
-        var evaluatorTasks = testRun.Group.Suite.Evaluators
-            .Select(evaluator => RunEvaluator(evaluator, testResult, run, cancellationToken));
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
+            CancellationToken = cancellationToken
+        };
         
-        await Task.WhenAll(evaluatorTasks);
-        using  var sync = asyncLock.LockAsync(testRun.Id, cancellationToken);
+        await Parallel.ForEachAsync(testRun.Group.Suite.Evaluators, parallelOptions,
+            async (evaluator, ct) => await RunEvaluator(evaluator, testResult, run, ct));
+        
+        using var sync = asyncLock.LockAsync(testRun.Id, cancellationToken);
         testRun = await testRun.ReloadAsync(cancellationToken);
         await testRun.SetTestResult(testResult, cancellationToken);
         

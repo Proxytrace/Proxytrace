@@ -2,6 +2,7 @@ using Autofac;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Trsr.Application.Ingestion.Internal;
+using Trsr.Application.TestRun;
 using Trsr.Application.TestRun.Internal;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
@@ -24,6 +25,10 @@ public class Module : Autofac.Module
         builder.RegisterStub<IAgentNameGenerator>(stub =>
             stub.GenerateNameAsync(Arg.Any<SystemMessage>(), Arg.Any<IModelEndpoint>(), Arg.Any<CancellationToken>())
                 .ReturnsForAnyArgs(Task.FromResult("Test Agent")));
+
+        builder.RegisterInstance(new TestRunnerConfiguration())
+            .As<TestRunnerConfiguration>()
+            .SingleInstance();
 
         builder.RegisterType<TestRunnerService>()
             .AsImplementedInterfaces()

@@ -20,7 +20,7 @@ internal sealed class Module : Autofac.Module
         builder.RegisterModule<Infrastructure.Module>();
         
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-        var configuration = configurationBuilder
+        IConfiguration configuration = configurationBuilder
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile("appsettings.development.json", optional: true, reloadOnChange: true)
             .Build();
@@ -53,7 +53,7 @@ internal sealed class Module : Autofac.Module
         });
 
         builder.RegisterModule<Domain.Module>();
-        builder.RegisterModule(new Application.Module(isDevelopment: isDevelopment));
+        builder.RegisterModule(new Application.Module(isDevelopment: isDevelopment, configuration: configuration));
 
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");

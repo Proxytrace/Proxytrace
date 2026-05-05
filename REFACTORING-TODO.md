@@ -4,24 +4,6 @@ Ordered by priority. Complete each item before moving to the next.
 
 ---
 
-## 2. Delete the stale `frontend-react/` directory
-
-`frontend-react/` contains only a `.vite` cache folder and is referenced incorrectly by `dev.sh`. Once CLAUDE.md and `dev.sh` are updated, remove it.
-
----
-
-## 3. Migrate inline styles to Tailwind
-
-Every component uses `style={{...}}` inline objects referencing CSS custom properties (`--bg-primary`, `--text-secondary`, etc.). Tailwind 4 is already configured but unused in components.
-
-**Approach:**
-- Audit `index.css` for the CSS variable definitions and map them to Tailwind theme tokens
-- Work through components file by file, replacing inline style objects with Tailwind classes
-- Priority order: shared UI components first (`components/ui/`, `components/layout/`), then features
-- Keep CSS variables as Tailwind theme tokens (not hard-coded hex values) so the design system remains in one place
-
----
-
 ## 4. Centralize SVG icons
 
 Icons are copy-pasted inline across `Shell.tsx`, `TraceDetail.tsx`, `EmptyState.tsx`, and others. Each usage redefines the same SVG paths.
