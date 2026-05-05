@@ -15,10 +15,10 @@ trap cleanup EXIT INT TERM
 
 echo "=== Trsr Dev Mode ==="
 
-# Install frontend-react dependencies if node_modules is missing
-if [ ! -d "$REPO_ROOT/frontend-react/node_modules" ]; then
-    echo "Installing frontend-react dependencies..."
-    (cd "$REPO_ROOT/frontend-react" && npm install)
+# Install frontend dependencies if node_modules is missing
+if [ ! -d "$REPO_ROOT/frontend/node_modules" ]; then
+    echo "Installing frontend dependencies..."
+    (cd "$REPO_ROOT/frontend" && npm install)
 fi
 
 # Start backend in development mode
@@ -30,7 +30,7 @@ sleep 2
 
 # Start frontend dev server
 echo "Starting frontend on http://localhost:4201 ..."
-(cd "$REPO_ROOT/frontend-react" && npm run dev -- --port 4201) &
+(cd "$REPO_ROOT/frontend" && npm run dev -- --port 4201) &
 
 echo ""
 echo "Dev servers running:"

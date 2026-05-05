@@ -203,15 +203,18 @@ SQLite is recommended for local development (zero config). See `DATABASE.md` for
 
 ## Frontend Architecture
 
-Angular 21 with strict standalone components — no NgModules. Layout:
+React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code lives in `frontend/`. Layout:
 
-- `src/app/core/api/` — typed HTTP services (`agents.service.ts`, `agent-calls.service.ts`, `providers.service.ts`, `statistics.service.ts`) and shared `models.ts`
-- `src/app/core/shell/` — top-level chrome (nav, layout)
-- `src/app/features/` — one folder per route: `dashboard`, `traces`, `agents`, `suites`, `runs`, `providers`. Each is a standalone component, lazy-loaded via `loadComponent` in `app.routes.ts`
-- Tailwind CSS 4 via `@tailwindcss/vite`; component styles use `.scss` or `.css`
-- Tests use Vitest (`*.spec.ts`) — not Karma/Jasmine
+- `src/api/` — typed fetch services (`agents.ts`, `agent-calls.ts`, `providers.ts`, `statistics.ts`, etc.), shared `models.ts`, base `client.ts` wrapper, and SSE hooks in `event-stream.ts`
+- `src/components/layout/` — top-level chrome (`Shell.tsx`, `NavItem.tsx`)
+- `src/components/overlays/` — `Modal.tsx`, `Drawer.tsx`, `ConfirmDialog.tsx`, `StepWizard.tsx`
+- `src/components/ui/` — shared primitives: `KpiCard`, `Pill`, `Pagination`, `FilterTabs`, `EmptyState`, `CodeBlock`, `StatusDot`, `ProgressBar`, `Toast`
+- `src/features/` — one folder per route: `dashboard`, `traces`, `agents`, `suites`, `evaluators`, `runs`, `providers`. Each is a lazy-loaded page component via `React.lazy()` in `App.tsx`
+- `src/lib/` — pure utilities: `format.ts` (number/date formatters), `colors.ts` (model/status color maps), `charts.ts` (SVG path math)
+- Tailwind CSS 4 via `@tailwindcss/vite`; currently components use inline `style={{}}` objects — migration to Tailwind classes is in progress
+- Tests use Vitest (`*.spec.ts`)
 
-Backend endpoints are reached through the dev proxy when running `./dev.sh` (frontend 4201 → backend 5001).
+Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201.
 
 ## Reference Implementations
 
