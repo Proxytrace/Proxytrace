@@ -35,3 +35,27 @@ export function Modal({ title, onClose, children, footer, maxWidth = 560 }: Moda
     </div>
   );
 }
+
+interface ModalFooterProps {
+  onCancel: () => void;
+  onSubmit: () => void;
+  submitLabel: string;
+  loading?: boolean;
+  disabled?: boolean;
+  danger?: boolean;
+}
+
+export function ModalFooter({ onCancel, onSubmit, submitLabel, loading, disabled, danger }: ModalFooterProps) {
+  return (
+    <>
+      <button className="btn-ghost" onClick={onCancel}>Cancel</button>
+      <button
+        className={danger ? 'btn-danger' : 'btn-primary'}
+        onClick={onSubmit}
+        disabled={loading || disabled}
+      >
+        {submitLabel}
+      </button>
+    </>
+  );
+}

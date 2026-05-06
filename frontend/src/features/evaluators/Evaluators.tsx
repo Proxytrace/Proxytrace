@@ -6,7 +6,9 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { FilterTabs } from '../../components/ui/FilterTabs';
 import { Modal } from '../../components/overlays/Modal';
+import { ModalFooter } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
+import { useFilter } from '../../hooks/useFilter';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import { fmtDate } from '../../lib/format';
 import { EVALUATOR_KIND_COLOR } from '../../lib/colors';
@@ -18,7 +20,6 @@ type Filter = 'all' | 'llm' | 'rule' | 'numeric';
 export default function Evaluators() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
-  const [typeFilter, setTypeFilter] = useState<Filter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
@@ -31,13 +32,17 @@ export default function Evaluators() {
   const { data: evaluators = [], isLoading } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
   const { data: endpoints = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
 
-  const visible = evaluators.filter(e => {
-    if (typeFilter === 'all') return true;
-    if (typeFilter === 'llm') return META[e.kind]?.requiresEndpoint;
-    if (typeFilter === 'rule') return !META[e.kind]?.requiresEndpoint && e.kind !== EvaluatorKind.NumericMatch;
-    if (typeFilter === 'numeric') return e.kind === EvaluatorKind.NumericMatch;
-    return true;
-  });
+  const { filter: typeFilter, setFilter: setTypeFilter, filtered: visible } = useFilter<EvaluatorDetailDto, Filter>(
+    evaluators,
+    (e, f) => {
+      if (f === 'all') return true;
+      if (f === 'llm') return !!META[e.kind]?.requiresEndpoint;
+      if (f === 'rule') return !META[e.kind]?.requiresEndpoint && e.kind !== EvaluatorKind.NumericMatch;
+      if (f === 'numeric') return e.kind === EvaluatorKind.NumericMatch;
+      return true;
+    },
+    'all',
+  );
 
   const selected = evaluators.find(e => e.id === selectedId) ?? visible[0] ?? null;
   const editTarget = evaluators.find(e => e.id === editTargetId) ?? null;
@@ -108,6 +113,7 @@ export default function Evaluators() {
           </button>
         </div>
         <FilterTabs options={filterTabs} value={typeFilter} onChange={v => setTypeFilter(v as Filter)} />
+
         <div className="flex-1 overflow-y-auto flex flex-col gap-1">
           {isLoading && <div className="text-center p-10 text-muted text-[13px]">Loading…</div>}
           {visible.map(e => {
@@ -149,8 +155,8 @@ export default function Evaluators() {
                 <p className="text-[13px] text-muted m-0">{META[selected.kind]?.desc}</p>
               </div>
               <div className="flex gap-[6px]">
-                <button onClick={() => openEdit(selected)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium border border-border text-secondary" style={{ background: 'transparent', cursor: 'pointer' }}>Edit</button>
-                <button onClick={() => setDeleteTargetId(selected.id)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger" style={{ background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>Delete</button>
+                <button onClick={() => openEdit(selected)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium border border-border text-secondary bg-transparent cursor-pointer">Edit</button>
+                <button onClick={() => setDeleteTargetId(selected.id)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger border-none cursor-pointer" style={{ background: 'rgba(217,85,85,0.08)' }}>Delete</button>
               </div>
             </div>
           </div>
@@ -193,10 +199,7 @@ export default function Evaluators() {
       {/* Create modal */}
       {createOpen && (
         <Modal title="New Evaluator" onClose={() => setCreateOpen(false)} maxWidth={520} footer={
-          <>
-            <button className="btn-ghost" onClick={() => setCreateOpen(false)}>Cancel</button>
-            <button className="btn-primary" onClick={() => createEval.mutate()} disabled={!pickedKind || createEval.isPending}>{createEval.isPending ? 'Creating…' : 'Create'}</button>
-          </>
+          <ModalFooter onCancel={() => setCreateOpen(false)} onSubmit={() => createEval.mutate()} submitLabel={createEval.isPending ? 'Creating…' : 'Create'} loading={createEval.isPending} disabled={!pickedKind} />
         }>
           {!pickedKind ? (
             <div className="flex flex-col gap-[6px]">
@@ -217,7 +220,7 @@ export default function Evaluators() {
             <div className="flex flex-col gap-[14px]">
               <div className="flex items-center gap-2">
                 <ColoredBadge color={EVALUATOR_KIND_COLOR[pickedKind]} label={META[pickedKind].label} size="md" />
-                <button onClick={() => setPickedKind(null)} className="text-[11px] text-muted px-[6px] py-[2px] rounded-md border border-border" style={{ background: 'transparent', cursor: 'pointer' }}>← Change</button>
+                <button onClick={() => setPickedKind(null)} className="text-[11px] text-muted px-[6px] py-[2px] rounded-md border border-border bg-transparent cursor-pointer">← Change</button>
               </div>
               <EvaluatorForm form={createForm} setForm={setCreateForm} kind={pickedKind} endpoints={endpoints} />
             </div>
@@ -228,10 +231,7 @@ export default function Evaluators() {
       {/* Edit modal */}
       {editOpen && editTarget && (
         <Modal title={`Edit ${META[editTarget.kind]?.label ?? 'Evaluator'}`} onClose={() => { setEditOpen(false); setEditTargetId(null); }} maxWidth={520} footer={
-          <>
-            <button className="btn-ghost" onClick={() => { setEditOpen(false); setEditTargetId(null); }}>Cancel</button>
-            <button className="btn-primary" onClick={() => updateEval.mutate()} disabled={updateEval.isPending}>{updateEval.isPending ? 'Saving…' : 'Save'}</button>
-          </>
+          <ModalFooter onCancel={() => { setEditOpen(false); setEditTargetId(null); }} onSubmit={() => updateEval.mutate()} submitLabel={updateEval.isPending ? 'Saving…' : 'Save'} loading={updateEval.isPending} />
         }>
           <EvaluatorForm form={editForm} setForm={setEditForm} kind={editTarget.kind} endpoints={endpoints} />
         </Modal>
@@ -243,10 +243,7 @@ export default function Evaluators() {
           title={`Delete "${deleteTarget.name}"`}
           onClose={() => setDeleteTargetId(null)}
           footer={
-            <>
-              <button className="btn-ghost" onClick={() => setDeleteTargetId(null)}>Cancel</button>
-              <button className="btn-danger" onClick={() => deleteEval.mutate()} disabled={deleteEval.isPending}>{deleteEval.isPending ? 'Deleting…' : 'Delete'}</button>
-            </>
+            <ModalFooter onCancel={() => setDeleteTargetId(null)} onSubmit={() => deleteEval.mutate()} submitLabel={deleteEval.isPending ? 'Deleting…' : 'Delete'} loading={deleteEval.isPending} danger />
           }
         >
           <p className="text-[13px] text-secondary m-0">

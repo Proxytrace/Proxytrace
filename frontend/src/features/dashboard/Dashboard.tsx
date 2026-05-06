@@ -15,6 +15,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../lib/format';
+import { REFETCH_INTERVAL_FAST, REFETCH_INTERVAL_SLOW } from '../../lib/constants';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -150,31 +151,31 @@ export default function Dashboard() {
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: QUERY_KEYS.statisticsSummary(from),
     queryFn: () => statisticsApi.summary({ from }),
-    refetchInterval: 30_000,
+    refetchInterval: REFETCH_INTERVAL_FAST,
   });
 
   const { data: tracesData, isLoading: tracesLoading } = useQuery({
     queryKey: QUERY_KEYS.agentCalls({ page: 1, pageSize: 7, from }),
     queryFn: () => agentCallsApi.list({ page: 1, pageSize: 7, from }),
-    refetchInterval: 30_000,
+    refetchInterval: REFETCH_INTERVAL_FAST,
   });
 
   const { data: agentsData, isLoading: agentsLoading } = useQuery({
     queryKey: QUERY_KEYS.agents,
     queryFn: () => agentsApi.list({ pageSize: 10 }),
-    refetchInterval: 60_000,
+    refetchInterval: REFETCH_INTERVAL_SLOW,
   });
 
   const { data: latencyData } = useQuery({
     queryKey: QUERY_KEYS.statisticsLatency(from),
     queryFn: () => statisticsApi.latency({ from }),
-    refetchInterval: 30_000,
+    refetchInterval: REFETCH_INTERVAL_FAST,
   });
 
   const { data: modelBreakdown, isLoading: modelLoading } = useQuery({
     queryKey: QUERY_KEYS.statisticsModelBreakdown(from),
     queryFn: () => statisticsApi.modelBreakdown({ from }),
-    refetchInterval: 30_000,
+    refetchInterval: REFETCH_INTERVAL_FAST,
   });
 
   const recentTraces = tracesData?.items ?? [];

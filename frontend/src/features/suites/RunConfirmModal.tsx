@@ -72,8 +72,8 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
                   const mc = modelColor(ep.modelName);
                   const isOn = selectedEndpoints.has(ep.id);
                   return (
-                    <button key={ep.id} onClick={() => toggle(ep.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, textAlign: 'left', background: isOn ? mc + '12' : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px ${mc}44` : 'var(--shadow-pill)', transition: 'all 0.12s' }}>
-                      <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.12s' }}>
+                    <button key={ep.id} onClick={() => toggle(ep.id)} className="flex items-center transition-all duration-[120ms] cursor-pointer" style={{ gap: 10, padding: '9px 12px', borderRadius: 10, textAlign: 'left', background: isOn ? mc + '12' : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px ${mc}44` : 'var(--shadow-pill)' }}>
+                      <div className="flex items-center justify-center shrink-0 transition-all duration-[120ms]" style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent' }}>
                         {isOn && <span style={{ color: '#000', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
                       </div>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 600, color: isOn ? mc : 'var(--text-secondary)', flex: 1 }}>{ep.modelName}</span>

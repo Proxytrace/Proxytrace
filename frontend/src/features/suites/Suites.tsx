@@ -9,26 +9,18 @@ import { agentCallsApi } from '../../api/agent-calls';
 import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
+import { ModalFooter } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtDate } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
 import { useToast } from '../../components/ui/Toast';
-
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-
-function Sparkline({ data, width = 80, height = 20, color }: { data: number[]; width?: number; height?: number; color: string }) {
-  if (data.length < 2) return null;
-  const path = sparklinePath(data, width, height);
-  return (
-    <svg width={width} height={height} style={{ display: 'block', marginTop: 4, overflow: 'visible' }}>
-      <path d={path} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
-    </svg>
-  );
-}
+import { useFilter } from '../../hooks/useFilter';
+import { PASS_RATE_WARN, PASS_RATE_DANGER, LIST_PAGE_SIZE } from '../../lib/constants';
 
 // ─── SuiteCard ────────────────────────────────────────────────────────────────
 
@@ -42,8 +34,8 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
   const hasRuns = suite.totalRuns > 0;
   const passColor = suite.passRate === null
     ? 'var(--text-muted)'
-    : suite.passRate >= 75 ? 'var(--success)'
-    : suite.passRate >= 55 ? 'var(--warn)'
+    : suite.passRate >= PASS_RATE_WARN ? 'var(--success)'
+    : suite.passRate >= PASS_RATE_DANGER ? 'var(--warn)'
     : 'var(--danger)';
   const delta = suite.passRate !== null && suite.prevPassRate !== null ? suite.passRate - suite.prevPassRate : null;
 
@@ -104,7 +96,9 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
               )}
             </div>
             {hasRuns && suite.passRateTrend.length >= 2 && (
-              <Sparkline data={suite.passRateTrend} width={80} height={20} color={passColor} />
+              <svg width={80} height={20} style={{ display: 'block', marginTop: 4, overflow: 'visible' }}>
+                <path d={sparklinePath(suite.passRateTrend, 80, 20)} fill="none" stroke={passColor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.7} />
+              </svg>
             )}
           </div>
 
@@ -160,7 +154,6 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
 export default function Suites() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
-  const [agentFilter, setAgentFilter] = useState('');
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
   const [runDone, setRunDone] = useState(false);
   const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
@@ -173,8 +166,8 @@ export default function Suites() {
   const [selectedCalls, setSelectedCalls] = useState<Set<string>>(new Set());
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
 
-  const { data: suitesData, isLoading } = useQuery({ queryKey: QUERY_KEYS.testSuites(agentFilter), queryFn: () => testSuitesApi.list({ agentId: agentFilter || undefined, pageSize: 200 }) });
-  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: suitesData, isLoading } = useQuery({ queryKey: QUERY_KEYS.testSuites(''), queryFn: () => testSuitesApi.list({ pageSize: LIST_PAGE_SIZE }) });
+  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }) });
   const { data: evaluators = [] } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
   const { data: tracesData } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteCreate(createAgentId),
@@ -192,7 +185,11 @@ export default function Suites() {
   const traces = tracesData?.items ?? [];
   const editTraces = editTracesData?.items ?? [];
 
-  const visibleSuites = agentFilter ? suites.filter(s => s.agentId === agentFilter) : suites;
+  const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(
+    suites,
+    (s, id: string) => !id || s.agentId === id,
+    '',
+  );
 
   const totalCases = suites.reduce((n, s) => n + s.testCases.length, 0);
   const totalRuns = suites.reduce((n, s) => n + s.totalRuns, 0);
@@ -352,7 +349,7 @@ export default function Suites() {
       </div>
 
       {/* Agent filter tabs */}
-      <div className="fade-up" style={{ animationDelay: '60ms', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="fade-up flex items-center gap-6" style={{ animationDelay: '60ms' }}>
         <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-card)', borderRadius: 11, boxShadow: 'var(--shadow-pill)', flexWrap: 'wrap' }}>
           {agentList.map(a => {
             const isActive = agentFilter === a.id;
@@ -366,7 +363,7 @@ export default function Suites() {
             );
           })}
         </div>
-        <span style={{ marginLeft: 8, fontSize: 12, color: 'var(--text-muted)' }}>{visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}</span>
+        <span className="text-[12px] text-muted">{visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}</span>
       </div>
 
       {isLoading && <div className="text-center p-[60px] text-muted text-[13px]">Loading…</div>}
@@ -383,8 +380,8 @@ export default function Suites() {
           />
         ))}
         {!isLoading && visibleSuites.length === 0 && (
-          <div className="col-span-full text-center p-[60px] text-muted text-[13px]">
-            No test suites yet. Create one to start evaluating.
+          <div className="col-span-full">
+            <EmptyState title="No test suites yet" description="Create one to start evaluating." />
           </div>
         )}
       </div>
@@ -402,16 +399,23 @@ export default function Suites() {
 
       {/* Edit modal */}
       {editSuite && (
-        <Modal title={`Edit "${editSuite.name}"`} onClose={() => setEditSuite(null)} maxWidth={600} footer={
-          editTab === 'evaluators' ? (
-            <>
-              <button className="btn-ghost" onClick={() => setEditSuite(null)}>Cancel</button>
-              <button className="btn-primary" onClick={() => saveEvaluators.mutate()} disabled={saveEvaluators.isPending}>{saveEvaluators.isPending ? 'Saving…' : 'Save evaluators'}</button>
-            </>
-          ) : (
-            <button className="btn-ghost" onClick={() => setEditSuite(null)}>Close</button>
-          )
-        }>
+        <Modal
+          title={`Edit "${editSuite.name}"`}
+          onClose={() => setEditSuite(null)}
+          maxWidth={600}
+          footer={
+            editTab === 'evaluators' ? (
+              <ModalFooter
+                onCancel={() => setEditSuite(null)}
+                onSubmit={() => saveEvaluators.mutate()}
+                submitLabel={saveEvaluators.isPending ? 'Saving…' : 'Save evaluators'}
+                loading={saveEvaluators.isPending}
+              />
+            ) : (
+              <button className="btn-ghost" onClick={() => setEditSuite(null)}>Close</button>
+            )
+          }
+        >
           <div className="flex border-b border-hairline mb-4 -mb-px">
             {(['cases', 'evaluators'] as const).map(t => (
               <button key={t} onClick={() => setEditTab(t)} className={`px-4 py-2 text-[13px] font-semibold border-none cursor-pointer bg-transparent -mb-px ${editTab === t ? 'text-accent border-b-2 border-b-accent' : 'text-muted border-b-2 border-b-transparent'}`}>
@@ -424,7 +428,7 @@ export default function Suites() {
               <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Current test cases</div>
               {editSuite.testCases.map(tc => (
                 <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)' }}>
-                  <span style={{ flex: 1, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tc.input[tc.input.length - 1]?.content?.slice(0, 60) ?? tc.id.slice(0, 12)}</span>
+                  <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 12 }}>{tc.input[tc.input.length - 1]?.content?.slice(0, 60) ?? tc.id.slice(0, 12)}</span>
                   <button onClick={() => removeCase.mutate(tc.id)} className="btn-icon btn-icon-danger"><XIcon size={13} /></button>
                 </div>
               ))}

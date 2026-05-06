@@ -15,6 +15,8 @@ import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { FixtureDrawer } from './FixtureDrawer';
 import { useToast } from '../../components/ui/Toast';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER, REFETCH_INTERVAL_LIVE, LIST_PAGE_SIZE } from '../../lib/constants';
 
 type CaseFilter = 'all' | 'passed' | 'failed';
 type ViewMode = 'table' | 'grid';
@@ -25,7 +27,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
   const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
   const passCount = r.evaluations.filter(e => e.score === 'Pass').length;
   const score = r.evaluations.length > 0 ? passCount / r.evaluations.length : null;
-  const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+  const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
   const dotColor = pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
   const primaryEval = r.evaluations[0];
   const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
@@ -56,7 +58,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
         </span>
       </div>
       {/* Row 2: case name */}
-      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>
         {r.testCaseSummary}
       </div>
       {/* Row 3: evaluator pill + latency */}
@@ -99,7 +101,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
   const passed = run.results.filter(r => r.evaluations.every(e => e.score === 'Pass')).length;
   const failed = run.results.filter(r => r.evaluations.some(e => e.score === 'Fail')).length;
   const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : 0;
-  const passColor = passRate >= 75 ? 'var(--success)' : passRate >= 55 ? 'var(--warn)' : 'var(--danger)';
+  const passColor = passRate >= PASS_RATE_WARN ? 'var(--success)' : passRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)';
 
   const filteredResults = run.results.filter(r => {
     if (caseFilter === 'all') return true;
@@ -120,7 +122,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
     },
     {
       key: 'case', label: 'Test case', width: '2fr',
-      render: r => <span style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.testCaseSummary}</span>,
+      render: r => <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 12.5, fontWeight: 500, paddingRight: 12 }}>{r.testCaseSummary}</span>,
     },
     {
       key: 'evaluator', label: 'Evaluator', width: '1fr',
@@ -135,7 +137,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
       render: r => {
         const tPassCount = r.evaluations.filter(e => e.score === 'Pass').length;
         const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
-        const scoreColor = score === null ? 'var(--text-muted)' : score >= 0.8 ? 'var(--success)' : score >= 0.5 ? 'var(--warn)' : 'var(--danger)';
+        const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
         return <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>;
       },
     },
@@ -148,7 +150,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
       render: r => {
         const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
         const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
-        return <span style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{note}</span>;
+        return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5' }}>{note}</span>;
       },
     },
   ];
@@ -161,7 +163,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
           <div className="flex items-center gap-2 flex-wrap mb-[6px]">
             <span className="mono text-[12px] text-muted">{run.id.slice(0, 12)}…</span>
             {run.status === TestRunStatus.Completed && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: passRate >= 75 ? 'var(--success-subtle)' : passRate >= 55 ? 'var(--warn-subtle)' : 'var(--danger-subtle)', color: passColor, fontSize: 10.5, fontWeight: 600 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: passRate >= PASS_RATE_WARN ? 'var(--success-subtle)' : passRate >= PASS_RATE_DANGER ? 'var(--warn-subtle)' : 'var(--danger-subtle)', color: passColor, fontSize: 10.5, fontWeight: 600 }}>
                 {run.passedCases}/{run.totalCases} passed
               </span>
             )}
@@ -278,7 +280,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
                       <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{tc.summary}</div>
+                    <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>{tc.summary}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</div>
                   </div>
                 ))
@@ -400,7 +402,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
               <button key={run.id} onClick={() => setSelectedRunId(run.id)} style={{ flex: '1 1 auto', padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 500, background: isActive ? 'var(--bg-card-2)' : 'transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: isActive ? 'var(--shadow-pill)' : 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 2, background: mc }} />
                 {run.endpointName}
-                {rPassRate !== null && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: rPassRate >= 75 ? 'var(--success)' : rPassRate >= 55 ? 'var(--warn)' : 'var(--danger)', fontWeight: 700 }}>{rPassRate}%</span>}
+                {rPassRate !== null && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: rPassRate >= PASS_RATE_WARN ? 'var(--success)' : rPassRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)', fontWeight: 700 }}>{rPassRate}%</span>}
               </button>
             );
           })}
@@ -424,9 +426,9 @@ export default function Runs() {
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.testRunGroups(agentFilter),
     queryFn: () => testRunGroupsApi.list({ agentId: agentFilter || undefined, pageSize: 100 }),
-    refetchInterval: 15_000,
+    refetchInterval: REFETCH_INTERVAL_LIVE,
   });
-  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }) });
 
   const groups = data?.items ?? [];
   const agents = agentsData?.items ?? [];
@@ -495,12 +497,13 @@ export default function Runs() {
             const totalCases = group.runs.reduce((s, r) => s + r.totalCases, 0);
             const passedCases = group.runs.reduce((s, r) => s + r.passedCases, 0);
             const passRate = totalCases > 0 ? Math.round((passedCases / totalCases) * 100) : null;
-            const passColor = passRate !== null ? (passRate >= 75 ? 'var(--success)' : passRate >= 55 ? 'var(--warn)' : 'var(--danger)') : 'var(--text-muted)';
+            const passColor = passRate !== null ? (passRate >= PASS_RATE_WARN ? 'var(--success)' : passRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)') : 'var(--text-muted)';
             return (
               <button
                 key={group.id}
                 onClick={() => setSelectedGroupId(group.id)}
-                style={{ textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 13, padding: '12px 14px 12px 17px', boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}55, 0 8px 24px -8px ${c}44` : 'var(--shadow-card)', transition: 'box-shadow 0.15s', position: 'relative', overflow: 'hidden', border: 'none', cursor: 'pointer' }}
+                className="overflow-hidden border-none cursor-pointer"
+                style={{ textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 13, padding: '12px 14px 12px 17px', boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}55, 0 8px 24px -8px ${c}44` : 'var(--shadow-card)', transition: 'box-shadow 0.15s', position: 'relative' }}
               >
                 <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: c, borderRadius: '13px 0 0 13px' }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -536,9 +539,7 @@ export default function Runs() {
           })}
 
           {!isLoading && groups.length === 0 && (
-            <div className="text-center p-[40px] text-muted text-[13px] bg-card rounded-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>
-              No test runs yet. Run a suite to get started.
-            </div>
+            <EmptyState title="No test runs yet" description="Run a suite to get started." />
           )}
         </div>
 

@@ -6,9 +6,12 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
-import { TrashIcon, ChevronRightIcon } from '../../components/icons';
+import { TrashIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { Collapsible } from '../../components/ui/Collapsible';
+import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
@@ -43,45 +46,40 @@ function requiredParams(tool: ToolSpecDto) {
 }
 
 function ToolRow({ tool, last }: { tool: ToolSpecDto; last: boolean }) {
-  const [open, setOpen] = useState(false);
   return (
     <div className={last ? '' : 'border-b border-hairline'}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{ background: 'transparent', transition: 'background 0.1s' }}
-        className="w-full text-left flex items-center gap-[10px] px-4 py-[11px]"
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(16,185,129,0.04)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      <Collapsible
+        headerClassName="gap-[10px] px-4 py-[11px] hover:bg-[rgba(16,185,129,0.04)] transition-[background] duration-100"
+        contentClassName="px-4 pb-[14px] pl-[38px]"
+        title={
+          <>
+            <span className="font-mono text-[13px] font-bold" style={{ color: '#6ee7b7' }}>{tool.name}</span>
+            <span className="font-mono text-[11px] text-muted">{requiredParams(tool)}</span>
+            <span className="ml-auto text-[11px] text-muted truncate max-w-[300px]">{tool.description}</span>
+          </>
+        }
       >
-        <span className="inline-flex text-muted shrink-0 transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}><ChevronRightIcon size={10} /></span>
-        <span className="font-mono text-[13px] font-bold" style={{ color: '#6ee7b7' }}>{tool.name}</span>
-        <span className="font-mono text-[11px] text-muted">{requiredParams(tool)}</span>
-        <span className="ml-auto text-[11px] text-muted truncate max-w-[300px]">{tool.description}</span>
-      </button>
-      {open && (
-        <div style={{ padding: '0 16px 14px 38px' }}>
-          {tool.description && (
-            <div className="text-[12.5px] text-secondary leading-relaxed mb-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.05)', borderLeft: '2px solid rgba(16,185,129,0.3)' }}>
-              {tool.description}
+        {tool.description && (
+          <div className="text-[12.5px] text-secondary leading-relaxed mb-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.05)', borderLeft: '2px solid rgba(16,185,129,0.3)' }}>
+            {tool.description}
+          </div>
+        )}
+        {tool.arguments.length > 0 && (
+          <>
+            <div className="text-[10px] font-semibold text-muted tracking-[0.08em] uppercase mb-[6px]">Parameters</div>
+            <div className="overflow-hidden rounded-lg" style={{ background: 'rgba(0,0,0,0.22)' }}>
+              <DataTable columns={TOOL_ARG_COLUMNS} rows={tool.arguments} rowKey={p => p.name} />
             </div>
-          )}
-          {tool.arguments.length > 0 && (
-            <>
-              <div className="text-[10px] font-semibold text-muted tracking-[0.08em] uppercase mb-[6px]">Parameters</div>
-              <div style={{ background: 'rgba(0,0,0,0.22)', borderRadius: 8, overflow: 'hidden' }}>
-                <DataTable columns={TOOL_ARG_COLUMNS} rows={tool.arguments} rowKey={p => p.name} />
+            {tool.arguments.some(a => a.enumValues?.length) && (
+              <div className="mt-2 flex gap-1 flex-wrap">
+                {tool.arguments.filter(a => a.enumValues?.length).flatMap(a => (a.enumValues ?? []).map(v => (
+                  <span key={`${a.name}-${v}`} className="font-mono text-[9.5px] px-[5px] py-[1px] rounded-[3px]" style={{ background: 'rgba(110,231,183,0.1)', color: '#6ee7b7' }}>{v}</span>
+                )))}
               </div>
-              {tool.arguments.some(a => a.enumValues?.length) && (
-                <div className="mt-2 flex gap-1 flex-wrap">
-                  {tool.arguments.filter(a => a.enumValues?.length).flatMap(a => (a.enumValues ?? []).map(v => (
-                    <span key={`${a.name}-${v}`} className="font-mono text-[9.5px] px-[5px] py-[1px] rounded-[3px]" style={{ background: 'rgba(110,231,183,0.1)', color: '#6ee7b7' }}>{v}</span>
-                  )))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </Collapsible>
     </div>
   );
 }
@@ -167,7 +165,7 @@ export default function Agents() {
 
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.agents,
-    queryFn: () => agentsApi.list({ pageSize: 200 }),
+    queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
   const agents = data?.items ?? [];
 
@@ -207,7 +205,8 @@ export default function Agents() {
             <button
               key={a.id}
               onClick={() => setSelectedId(a.id)}
-              style={{ textAlign: 'left', background: 'var(--bg-card)', borderRadius: 16, padding: 16, boxShadow: isActive ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}66, 0 10px 32px -10px ${c}55` : 'var(--shadow-card)', position: 'relative', overflow: 'hidden', transition: 'box-shadow 0.18s', border: 'none', cursor: 'pointer' }}
+              className="overflow-hidden border-none cursor-pointer"
+              style={{ textAlign: 'left', background: 'var(--bg-card)', borderRadius: 16, padding: 16, boxShadow: isActive ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}66, 0 10px 32px -10px ${c}55` : 'var(--shadow-card)', position: 'relative', transition: 'box-shadow 0.18s' }}
               onMouseEnter={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-float)'; }}
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
             >
@@ -239,9 +238,7 @@ export default function Agents() {
       )}
 
       {!isLoading && agents.length === 0 && (
-        <div className="text-center p-[60px] text-muted text-[13px]">
-          No agents found. Agents are auto-created when traces are captured.
-        </div>
+        <EmptyState title="No agents found" description="Agents are auto-created when traces are captured." />
       )}
 
       {deleteOpen && selected && (

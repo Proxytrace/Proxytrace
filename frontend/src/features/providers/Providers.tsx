@@ -6,6 +6,9 @@ import { ModelProviderKind, type ApiKeyDto, type ModelEndpointDto, type Provider
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
 import { Modal } from '../../components/overlays/Modal';
+import { ModalFooter } from '../../components/overlays/Modal';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { useToast } from '../../components/ui/Toast';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { fmtDate } from '../../lib/format';
@@ -61,7 +64,7 @@ export default function Providers() {
 
   const { data: providersData, isLoading: providersLoading } = useQuery({
     queryKey: QUERY_KEYS.providers,
-    queryFn: () => providersApi.list({ pageSize: 200 }),
+    queryFn: () => providersApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
   const { data: orgsData } = useQuery({ queryKey: QUERY_KEYS.organizations, queryFn: providersApi.getOrganizations });
   const { data: projectsData } = useQuery({ queryKey: QUERY_KEYS.projects, queryFn: providersApi.getProjects });
@@ -148,7 +151,7 @@ export default function Providers() {
       render: k => (
         <div className="flex items-center gap-[6px] min-w-0">
           <code className="mono text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
-          <button onClick={() => { navigator.clipboard.writeText(k.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card" style={{ border: 'none', cursor: 'pointer' }}>⧉</button>
+          <button onClick={() => { navigator.clipboard.writeText(k.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card border-none cursor-pointer">⧉</button>
         </div>
       ),
     },
@@ -185,15 +188,14 @@ export default function Providers() {
         {/* Provider list */}
         <div className="bg-card rounded-2xl overflow-y-auto flex flex-col gap-[2px] p-2" style={{ boxShadow: 'var(--shadow-card)' }}>
           {providersLoading && <div className="text-center py-10 text-muted text-[13px]">Loading…</div>}
-          {!providersLoading && providers.length === 0 && <div className="text-center p-[40px_16px] text-muted text-[13px]">No providers yet.</div>}
+          {!providersLoading && providers.length === 0 && <EmptyState title="No providers yet" description="Add a provider to route traffic through Trsr." />}
           {providers.map(p => (
             <button
               key={p.id}
               onClick={() => selectProvider(p)}
-              className="w-full text-left p-[12px_14px] rounded-[10px] relative"
+              className="w-full text-left p-[12px_14px] rounded-[10px] relative border-none cursor-pointer"
               style={{
                 background: selectedId === p.id ? 'rgba(201,148,74,0.08)' : 'transparent',
-                border: 'none', cursor: 'pointer',
               }}
             >
               <div className="flex items-center gap-[10px]">
@@ -224,8 +226,8 @@ export default function Providers() {
                     {!editingKind ? (
                       <button
                         onClick={() => { setEditKindValue(selected.kind); setEditingKind(true); }}
-                        className="px-2 py-[2px] rounded-full text-[11px] font-semibold"
-                        style={{ background: `${kindColor(selected.kind)}22`, color: kindColor(selected.kind), border: 'none', cursor: 'pointer' }}
+                        className="px-2 py-[2px] rounded-full text-[11px] font-semibold border-none cursor-pointer"
+                        style={{ background: `${kindColor(selected.kind)}22`, color: kindColor(selected.kind) }}
                       >
                         {kindLabel(selected.kind)}
                       </button>
@@ -240,14 +242,14 @@ export default function Providers() {
                           {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{o.label}</option>)}
                         </select>
                         <button className="btn-primary px-[10px] py-[2px] text-[11px] rounded-full" onClick={() => updateKind.mutate()} disabled={updateKind.isPending}>{updateKind.isPending ? '…' : 'Save'}</button>
-                        <button onClick={() => setEditingKind(false)} className="px-2 py-[2px] rounded-full text-[11px] text-muted bg-card-2" style={{ border: 'none', cursor: 'pointer' }}>Cancel</button>
+                        <button onClick={() => setEditingKind(false)} className="px-2 py-[2px] rounded-full text-[11px] text-muted bg-card-2 border-none cursor-pointer">Cancel</button>
                       </div>
                     )}
                     <span className="px-2 py-[2px] rounded-full text-[11px] bg-card-2 text-muted">{selected.organizationName}</span>
                   </div>
                   <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
                 </div>
-                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger inline-flex items-center gap-[5px] shrink-0" style={{ background: 'rgba(217,85,85,0.08)', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger inline-flex items-center gap-[5px] shrink-0 border-none cursor-pointer" style={{ background: 'rgba(217,85,85,0.08)' }}>
                   <TrashIcon size={13} /> Delete provider
                 </button>
               </div>
@@ -257,13 +259,12 @@ export default function Providers() {
                 <code className="flex-1 mono text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
                   {revealKey ? selected.upstreamApiKey : maskKey(selected.upstreamApiKey)}
                 </code>
-                <button onClick={() => setRevealKey(v => !v)} className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap" style={{ border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setRevealKey(v => !v)} className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap border-none cursor-pointer">
                   {revealKey ? 'Hide' : 'Reveal'}
                 </button>
                 <button
                   onClick={() => { navigator.clipboard.writeText(selected.upstreamApiKey); toast('Upstream key copied', 'success'); }}
-                  className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap"
-                  style={{ border: 'none', cursor: 'pointer' }}
+                  className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap border-none cursor-pointer"
                 >
                   Copy
                 </button>
@@ -296,7 +297,7 @@ export default function Providers() {
                       <div className="text-[14px] font-bold mb-[2px]">Models</div>
                       <div className="text-[12px] text-muted">Set pricing to compute trace costs.</div>
                     </div>
-                    <button onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px]" style={{ border: 'none', cursor: 'pointer' }}>
+                    <button onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
                       + Add Model
                     </button>
                   </div>
@@ -324,9 +325,7 @@ export default function Providers() {
 
                   {modelsLoading && <div className="text-center text-muted text-[13px] p-5">Loading models…</div>}
                   {!modelsLoading && models.length === 0 && !showNewModel && (
-                    <div className="text-center text-muted text-[13px] p-6 border border-dashed border-hairline rounded-xl">
-                      No models yet. Add one or let Trsr auto-discover them from traces.
-                    </div>
+                    <EmptyState title="No models yet" description="Add one or let Trsr auto-discover them from traces." />
                   )}
                   {models.length > 0 && (
                     <div className="bg-card-2 rounded-xl overflow-hidden">
@@ -372,7 +371,7 @@ export default function Providers() {
                       <div className="text-[14px] font-bold mb-[2px]">Trsr API Keys</div>
                       <div className="text-[12px] text-muted">Keys that authenticate clients at the Trsr proxy.</div>
                     </div>
-                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px]" style={{ border: 'none', cursor: 'pointer' }}>
+                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
                       + Generate Key
                     </button>
                   </div>
@@ -383,7 +382,7 @@ export default function Providers() {
                         <div className="text-[12px] font-semibold mb-1" style={{ color: '#3daa6f' }}>Key "{newlyCreatedKey.name}" created — copy it now</div>
                         <code className="text-[12px]" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-[6px] rounded-[7px] text-[12px] font-semibold text-white whitespace-nowrap" style={{ background: '#3daa6f', border: 'none', cursor: 'pointer' }}>Copy</button>
+                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-[6px] rounded-[7px] text-[12px] font-semibold text-white whitespace-nowrap border-none cursor-pointer" style={{ background: '#3daa6f' }}>Copy</button>
                       <button onClick={() => setNewlyCreatedKey(null)} className="btn-icon"><XIcon size={14} /></button>
                     </div>
                   )}
@@ -410,9 +409,7 @@ export default function Providers() {
 
                   {keysLoading && <div className="text-center text-muted text-[13px] p-5">Loading keys…</div>}
                   {!keysLoading && keys.length === 0 && !showNewKey && (
-                    <div className="text-center text-muted text-[13px] p-10 border border-dashed border-hairline rounded-xl">
-                      No API keys yet. Generate one to start proxying requests.
-                    </div>
+                    <EmptyState title="No API keys yet" description="Generate one to start proxying requests." />
                   )}
                   {keys.length > 0 && (
                     <div className="bg-card-2 rounded-xl overflow-hidden">
@@ -433,10 +430,7 @@ export default function Providers() {
       {/* Add Provider Modal */}
       {showNewProvider && (
         <Modal title="Add Provider" onClose={() => setShowNewProvider(false)} maxWidth={460} footer={
-          <>
-            <button className="btn-ghost" onClick={() => setShowNewProvider(false)}>Cancel</button>
-            <button className="btn-primary" onClick={() => createProvider.mutate()} disabled={!newProvider.name || !newProvider.endpoint || !newProvider.upstreamApiKey || createProvider.isPending}>{createProvider.isPending ? 'Saving…' : 'Add Provider'}</button>
-          </>
+          <ModalFooter onCancel={() => setShowNewProvider(false)} onSubmit={() => createProvider.mutate()} submitLabel={createProvider.isPending ? 'Saving…' : 'Add Provider'} loading={createProvider.isPending} disabled={!newProvider.name || !newProvider.endpoint || !newProvider.upstreamApiKey} />
         }>
           <div className="flex flex-col gap-[14px]">
             {[
