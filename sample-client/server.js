@@ -562,10 +562,12 @@ app.post("/chat", async (req, res) => {
         toolMessages.push({ role: "tool", tool_call_id: tc.id, content: result });
       }
 
-      // Turn 2: stream the final answer with full context including tool results
+      // Turn 2: stream the final answer with full context including tool results.
+      // Tools are re-sent so the model can call another tool if needed (multi-step use).
       const stream = await openai.chat.completions.create({
         model: MODEL,
         messages: [...fullMessages, ...toolMessages],
+        tools: agent.tools,
         stream: true,
       });
 
