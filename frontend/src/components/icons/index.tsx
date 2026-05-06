@@ -172,6 +172,58 @@ export function ArrowDownIcon(props: IconProps) {
   );
 }
 
+export function ArrowUpRightIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+    </Svg>
+  );
+}
+
+export function BeakerIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4.5 3h15M6 3v13a5 5 0 0 0 6 5 5 5 0 0 0 6-5V3"/><path d="M6 13h12"/>
+    </Svg>
+  );
+}
+
+export function ZapIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </Svg>
+  );
+}
+
+export function CpuIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+      <line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/>
+      <line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/>
+      <line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="15" x2="22" y2="15"/>
+      <line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="15" x2="4" y2="15"/>
+    </Svg>
+  );
+}
+
+export function TargetIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+    </Svg>
+  );
+}
+
+export function CopyIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </Svg>
+  );
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <Svg {...props}>
