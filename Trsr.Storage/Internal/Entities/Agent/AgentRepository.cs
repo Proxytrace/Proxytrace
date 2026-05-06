@@ -48,7 +48,12 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         }
 
         var name = await nameGenerator.GenerateNameAsync(systemMessage, endpoint, cancellationToken);
-        var agent = createNew(name, systemMessage, tools, project);
+        var agent = createNew(
+            name,
+            systemMessage,
+            tools,
+            endpoint,
+            project);
         return await AddAsync(agent, cancellationToken);
     }
 

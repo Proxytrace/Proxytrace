@@ -2,15 +2,15 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Domain.User;
-using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
 
 [TestClass]
-public sealed class AgentValidationTests : BaseTest<Module>
+public sealed class AgentValidationTests : DomainTest<Module>
 {
     [TestMethod]
     public async Task CreateNew_WithValidInputs_CreatesAgent()
@@ -20,9 +20,10 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var systemMessage = new SystemMessage("You are a helpful assistant");
         var project = CreateTestProject(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agent = factory("Test Agent", systemMessage, [], project);
+        var agent = factory("Test Agent", systemMessage, [], endpoint, project);
 
         // Assert
         agent.Should().NotBeNull();
@@ -41,10 +42,11 @@ public sealed class AgentValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var project = CreateTestProject(services);
-
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+        
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", null!, [], project);
+        var action = () => factory("Test Agent", null!, [], endpoint, project);
         action.Should().Throw<Exception>();
     }
 
@@ -55,10 +57,11 @@ public sealed class AgentValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var systemMessage = new SystemMessage("You are a helpful assistant");
-
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+        
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", systemMessage, [], null!);
+        var action = () => factory("Test Agent", systemMessage, [], endpoint, null!);
         action.Should().Throw<Exception>();
     }
 
@@ -70,9 +73,9 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var createExisting = services.GetRequiredService<IAgent.CreateExisting>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var existingAgent = await generator.CreateAsync(CancellationToken);
-
+        
         // Act
-        var agent = createExisting(existingAgent.Name, existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
+        var agent = createExisting(existingAgent.Name, existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Endpoint, existingAgent);
 
         // Assert
         agent.Should().NotBeNull();
@@ -95,7 +98,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent);
+        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Endpoint, existingAgent);
         action.Should().Throw<Exception>();
     }
 
@@ -107,10 +110,11 @@ public sealed class AgentValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var systemMessage = new SystemMessage("You are a helpful assistant");
         var project = CreateTestProject(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agent1 = factory("Agent One", systemMessage, [], project);
-        var agent2 = factory("Agent Two", systemMessage, [], project);
+        var agent1 = factory("Agent One", systemMessage, [], endpoint, project);
+        var agent2 = factory("Agent Two", systemMessage, [], endpoint, project);
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);

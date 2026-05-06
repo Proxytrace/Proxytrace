@@ -22,7 +22,7 @@ internal class StatisticsCalculator : IStatisticsCalculator
             TestCases: results.Count,
             Passed: results.Count(r => r.Passed),
             Usage: usage,
-            TotalDuration: results
+            Latency: results
                 .Select(r => r.Statistics.Latency)
                 .Aggregate(TimeSpan.Zero, (a, b) => a + b),
             Cost: cost);

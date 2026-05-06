@@ -93,7 +93,13 @@ internal sealed class DemoDataSeeder : IHostedService
 
         var agentFactory = services.GetRequiredService<IAgent.CreateExisting>();
         var agent = await services.GetRequiredService<IRepository<IAgent>>()
-            .UpsertAsync(agentFactory(scenario.Agent.Name, foundation.Project, scenario.Agent.SystemMessage, scenario.Agent.Tools, data), ct);
+            .UpsertAsync(agentFactory(
+                scenario.Agent.Name,
+                foundation.Project, 
+                scenario.Agent.SystemMessage,
+                scenario.Agent.Tools, 
+                endpoint,
+                data), ct);
 
         await SeedCallsAsync(services, agent, endpoint, scenario.Calls, ct);
         var testCases = await SeedTestCasesAsync(services, scenario.TestCases, ct);

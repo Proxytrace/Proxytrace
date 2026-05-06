@@ -12,7 +12,10 @@ namespace Trsr.Domain.Agent.Internal;
 
 internal record Agent : DomainEntity<IAgent>, IAgent
 {
+    private readonly ILogger<IAgent> logger;
+    
     public string Name { get; }
+    public IModelEndpoint Endpoint { get; }
     public IProject Project { get; }
     public SystemMessage SystemMessage { get; }
     public IReadOnlyList<ToolSpecification> Tools { get; }
@@ -21,13 +24,17 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         string name,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
+        IModelEndpoint endpoint,
         IProject project,
-        IRepository<IAgent> repository) : base(repository)
+        IRepository<IAgent> repository,
+        ILogger<IAgent> logger) : base(repository)
     {
+        this.logger = logger;
         Name = name;
         SystemMessage = systemMessage;
         Project = project;
         Tools = tools;
+        Endpoint = endpoint;
     }
 
     public Agent(
@@ -35,14 +42,17 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IProject project,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
+        IModelEndpoint endpoint,
         IDomainEntityData existing,
-        ILogger<Agent> logger,
-        IRepository<IAgent> repository) : base(existing, repository)
+        IRepository<IAgent> repository,
+        ILogger<IAgent> logger) : base(existing, repository)
     {
+        this.logger = logger;
         Name = name;
         Project = project;
         SystemMessage = systemMessage;
         Tools = tools;
+        Endpoint = endpoint;
     }
 
     public Task<ICompletion> CompleteAsync(
@@ -57,6 +67,27 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             cancellationToken);
     }
 
+    public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint, CancellationToken cancellationToken = default)
+    {
+        if (modelEndpoint.Id == Endpoint.Id)
+        {
+            logger.LogWarning("Attempted to change agent endpoint to the same endpoint (AgentId: {AgentId}, EndpointId: {EndpointId})", Id, modelEndpoint.Id);
+            return this;
+        }
+        
+        var update = new Agent(
+            Name,
+            Project,
+            SystemMessage,
+            Tools,
+            modelEndpoint,
+            this,
+            repository,
+            logger);
+        
+        return await update.UpdateAsync(cancellationToken);
+    }
+
     /// <inheritdoc />
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -67,7 +98,12 @@ internal record Agent : DomainEntity<IAgent>, IAgent
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
+            yield return Validation.NotNullOrWhiteSpace(Name);
+        }
+        
+        foreach (var result in Endpoint.Validate(validationContext))
+        {
+            yield return result;
         }
 
         foreach (var result in SystemMessage.Validate(validationContext))

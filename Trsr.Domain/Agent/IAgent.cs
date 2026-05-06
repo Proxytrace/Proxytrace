@@ -14,6 +14,11 @@ public interface IAgent : IDomainEntity
 {
     /// <summary>Short human-readable name generated from the system message at creation time.</summary>
     string Name { get; }
+    
+    /// <summary>
+    /// The endpoint the agent completes against
+    /// </summary>
+    IModelEndpoint Endpoint { get; }
 
     /// <summary>The project this agent belongs to.</summary>
     IProject Project { get; }
@@ -29,6 +34,7 @@ public interface IAgent : IDomainEntity
         string name,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
+        IModelEndpoint endpoint,
         IProject project);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
@@ -37,6 +43,7 @@ public interface IAgent : IDomainEntity
         IProject project,
         SystemMessage systemMessage,
         IReadOnlyList<ToolSpecification> tools,
+        IModelEndpoint endpoint,
         IDomainEntityData existing);
     
     /// <summary>
@@ -45,5 +52,9 @@ public interface IAgent : IDomainEntity
     Task<ICompletion> CompleteAsync(
         Conversation conversation,
         IModelEndpoint endpoint,
+        CancellationToken cancellationToken = default);
+    
+    Task<IAgent> ChangeEndpoint(
+        IModelEndpoint modelEndpoint, 
         CancellationToken cancellationToken = default);
 }

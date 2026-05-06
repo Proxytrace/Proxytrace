@@ -5,8 +5,10 @@ using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
+using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.Project;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
@@ -17,17 +19,20 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     private readonly ISerializer serializer;
     private readonly Lazy<IAgentRepository> repository;
     private readonly IRepository<IProject> projects;
+    private readonly IRepository<IModelEndpoint> endpoints;
 
     public AgentConfig(
         IAgent.CreateExisting factory,
         ISerializer serializer,
         Lazy<IAgentRepository> repository,
-        IRepository<IProject> projects)
+        IRepository<IProject> projects,
+        IRepository<IModelEndpoint> endpoints)
     {
         this.factory = factory;
         this.serializer = serializer;
         this.repository = repository;
         this.projects = projects;
+        this.endpoints = endpoints;
     }
 
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
@@ -40,6 +45,12 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             .HasOne<ProjectEntity>()
             .WithMany()
             .HasForeignKey(e => e.Project)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne<ModelEndpointEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.Endpoint)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
@@ -60,7 +71,14 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public async Task<IAgent> Map(AgentEntity stored, CancellationToken cancellationToken = default)
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
-        return factory(stored.Name, project, stored.SystemMessage, stored.Tools, stored);
+        var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
+        return factory(
+            stored.Name,
+            project, 
+            stored.SystemMessage,
+            stored.Tools,
+            endpoint,
+            stored);
     }
 
     public Task<AgentEntity> Map(IAgent domain, CancellationToken cancellationToken = default)
@@ -72,6 +90,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             Fingerprint = repository.Value.GetAgentFingerprint(domain),
             SystemMessage = domain.SystemMessage,
             Tools = domain.Tools,
+            Endpoint = domain.Endpoint.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

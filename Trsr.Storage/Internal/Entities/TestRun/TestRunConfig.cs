@@ -72,7 +72,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             Usage: stored is {StatInputTokens: not null, StatOutputTokens: not null} 
                 ? new TokenUsage((ulong)stored.StatInputTokens.Value, (ulong)stored.StatOutputTokens.Value)
                 : null,
-            TotalDuration: stored.StatTotalDurationMs.HasValue 
+            Latency: stored.StatTotalDurationMs.HasValue 
                 ? TimeSpan.FromMilliseconds(stored.StatTotalDurationMs.Value)
                 : null,
             Cost: stored.StatCost);
@@ -100,7 +100,7 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             StatPassed = domain.Statistics.Passed,
             StatInputTokens = (long?)domain.Statistics.Usage?.InputTokenCount,
             StatOutputTokens = (long?)domain.Statistics.Usage?.OutputTokenCount,
-            StatTotalDurationMs = (long?)domain.Statistics.TotalDuration?.TotalMilliseconds,
+            StatTotalDurationMs = (long?)domain.Statistics.Latency?.TotalMilliseconds,
             StatCost = domain.Statistics.Cost,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

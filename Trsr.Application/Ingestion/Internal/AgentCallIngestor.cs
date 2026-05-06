@@ -208,6 +208,11 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     endpoint,
                     cancellationToken);
 
+            if (agent.Endpoint.Id != endpoint.Id)
+            {
+                agent = await agent.ChangeEndpoint(endpoint, cancellationToken);
+            }
+
             IAgentCall persistedCall;
 
             if (continuationOfId is { } existingId)

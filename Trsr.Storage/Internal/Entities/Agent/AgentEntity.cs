@@ -15,6 +15,8 @@ internal record AgentEntity : Entity
     /// <see cref="Trsr.Domain.Agent.IAgent.Project"/>
     /// </summary>
     public required Guid Project { get; init; }
+    
+    public required Guid Endpoint { get; init; }
 
     /// <summary>
     /// SHA-256 fingerprint of system message + tools + model + provider, used for efficient get-or-create lookups.
