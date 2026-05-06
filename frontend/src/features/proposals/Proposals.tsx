@@ -677,41 +677,6 @@ function ProposalDetail({ p }: { p: Proposal }) {
         </div>
       )}
 
-      {/* Action bar */}
-      {!isTerminal && (
-        <div
-          className="sticky bottom-0 flex gap-2 justify-end flex-wrap mt-1 pt-4"
-          style={{ background: 'linear-gradient(180deg, transparent, var(--bg-primary) 30%)' }}
-        >
-          <button className="btn-ghost text-[12.5px] font-medium" style={{ padding: '9px 14px', borderRadius: 9 }}>Dismiss</button>
-          <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 9 }}>
-            <CopyIcon size={12}/> Edit &amp; re-run
-          </button>
-          {p.status === 'new' && (
-            <button
-              className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold"
-              style={{ padding: '9px 16px', background: 'var(--bg-card)', borderRadius: 9, color: '#8ec0cc', boxShadow: '0 1px 0 rgba(255,255,255,0.02) inset, 0 4px 14px -8px rgba(107,158,170,0.4)', border: '1px solid rgba(107,158,170,0.25)' }}
-            >
-              <BeakerIcon size={12}/> Run A/B test
-            </button>
-          )}
-          <button
-            className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-white"
-            style={{
-              padding: '9px 18px',
-              background: p.status === 'ready'
-                ? 'linear-gradient(135deg, #3daa6f, #059669)'
-                : 'linear-gradient(135deg, #c9944a, #a07434)',
-              borderRadius: 9,
-              boxShadow: p.status === 'ready'
-                ? '0 4px 14px -4px rgba(61,170,111,0.5), inset 0 1px 0 rgba(255,255,255,0.15)'
-                : '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
-            }}
-          >
-            <ArrowUpRightIcon size={12}/> {p.status === 'ready' ? `Promote to ${p.proposedVersion}` : 'Apply now'}
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -942,11 +907,47 @@ export default function Proposals() {
         </div>
 
         {/* Right: detail */}
-        <div className="overflow-y-auto overflow-x-hidden min-w-0 pb-6" style={{ scrollbarGutter: 'stable' }}>
-          {selected
-            ? <ProposalDetail p={selected}/>
-            : <div className="text-center text-muted text-[13px]" style={{ padding: 60 }}>Select a proposal</div>
-          }
+        <div className="flex flex-col min-h-0 min-w-0 overflow-hidden">
+          <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 pb-6" style={{ scrollbarGutter: 'stable' }}>
+            {selected
+              ? <ProposalDetail p={selected}/>
+              : <div className="text-center text-muted text-[13px]" style={{ padding: 60 }}>Select a proposal</div>
+            }
+          </div>
+          {selected && selected.status !== 'promoted' && selected.status !== 'dismissed' && (
+            <div
+              className="flex gap-2 justify-end flex-wrap shrink-0 pt-3 pb-2"
+              style={{ borderTop: '1px solid var(--hairline)' }}
+            >
+              <button className="btn-ghost text-[12.5px] font-medium" style={{ padding: '9px 14px', borderRadius: 9 }}>Dismiss</button>
+              <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 9 }}>
+                <CopyIcon size={12}/> Edit &amp; re-run
+              </button>
+              {selected.status === 'new' && (
+                <button
+                  className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold"
+                  style={{ padding: '9px 16px', background: 'var(--bg-card)', borderRadius: 9, color: '#8ec0cc', boxShadow: '0 1px 0 rgba(255,255,255,0.02) inset, 0 4px 14px -8px rgba(107,158,170,0.4)', border: '1px solid rgba(107,158,170,0.25)' }}
+                >
+                  <BeakerIcon size={12}/> Run A/B test
+                </button>
+              )}
+              <button
+                className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-white"
+                style={{
+                  padding: '9px 18px',
+                  background: selected.status === 'ready'
+                    ? 'linear-gradient(135deg, #3daa6f, #059669)'
+                    : 'linear-gradient(135deg, #c9944a, #a07434)',
+                  borderRadius: 9,
+                  boxShadow: selected.status === 'ready'
+                    ? '0 4px 14px -4px rgba(61,170,111,0.5), inset 0 1px 0 rgba(255,255,255,0.15)'
+                    : '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                }}
+              >
+                <ArrowUpRightIcon size={12}/> {selected.status === 'ready' ? `Promote to ${selected.proposedVersion}` : 'Apply now'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
