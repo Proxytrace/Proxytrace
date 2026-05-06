@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Common.Async;
 using Trsr.Domain;
@@ -26,6 +27,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestRunGroupRepository testRunGroupRepository;
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
+    private readonly IOptimizerService optimizer;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
     private readonly TestRunnerConfiguration configuration;
@@ -46,6 +48,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestRunGroupRepository testRunGroupRepository,
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
+        IOptimizerService optimizer,
         IAsyncLock asyncLock,
         ILogger<TestRunnerService> logger,
         TestRunnerConfiguration configuration)
@@ -57,6 +60,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.testRunGroupRepository = testRunGroupRepository;
         this.testResultRepository = testResultRepository;
         this.broadcaster = broadcaster;
+        this.optimizer = optimizer;
         this.asyncLock = asyncLock;
         this.logger = logger;
         this.configuration = configuration;
@@ -154,6 +158,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             
             group = await group.ReloadAsync(cancellationToken);
             broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+
+            await optimizer.EnqueueAsync(group, cancellationToken);
             return group;
         }
         finally

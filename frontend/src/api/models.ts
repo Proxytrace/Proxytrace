@@ -349,6 +349,20 @@ export interface AgentCallFilter {
   pageSize?: number;
 }
 
+/* ── Optimization ── */
+export enum ProposalKind { SystemPrompt = 'SystemPrompt', Tool = 'Tool', Both = 'Both', ModelSwitch = 'ModelSwitch' }
+export enum Priority { Low = 'Low', Medium = 'Medium', High = 'High', Critical = 'Critical' }
+
+export interface ProposalCreatedEvent {
+  type: 'proposal-created';
+  id: string;
+  agentId: string;
+  kind: ProposalKind;
+  priority: Priority;
+  rationale: string;
+  createdAt: string;
+}
+
 /* ── SSE Events ── */
 export interface TraceCreatedEvent {
   id: string;

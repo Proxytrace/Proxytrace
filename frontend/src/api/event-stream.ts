@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { GroupRunCompleteEvent, TestRunEvent, TraceCreatedEvent } from './models';
+import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TraceCreatedEvent } from './models';
 
 export function useEventStream<T>(
   url: string | null,
@@ -40,6 +40,14 @@ export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {
     '/api/agent-calls/stream',
     ['trace-created'],
     onTrace,
+  );
+}
+
+export function useProposalStream(agentId: string | null, onProposal: (e: ProposalCreatedEvent) => void) {
+  useEventStream<ProposalCreatedEvent>(
+    agentId ? `/api/agents/${agentId}/proposals/stream` : null,
+    ['proposal-created'],
+    onProposal,
   );
 }
 

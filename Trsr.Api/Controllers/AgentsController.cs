@@ -1,7 +1,9 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Agents;
+using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -14,13 +16,24 @@ namespace Trsr.Api.Controllers;
 [Route("api/agents")]
 public class AgentsController : ControllerBase
 {
+    private static readonly JsonSerializerOptions SseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() },
+    };
+
     private readonly IAgentRepository repository;
     private readonly IAgentCallRepository agentCallRepository;
+    private readonly IProposalBroadcaster proposalBroadcaster;
 
-    public AgentsController(IAgentRepository repository, IAgentCallRepository agentCallRepository)
+    public AgentsController(
+        IAgentRepository repository,
+        IAgentCallRepository agentCallRepository,
+        IProposalBroadcaster proposalBroadcaster)
     {
         this.repository = repository;
         this.agentCallRepository = agentCallRepository;
+        this.proposalBroadcaster = proposalBroadcaster;
     }
 
     [HttpGet]
@@ -57,6 +70,28 @@ public class AgentsController : ControllerBase
         var agent = await repository.GetAsync(id, cancellationToken);
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
         return ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
+    }
+
+    [HttpGet("{id:guid}/proposals/stream")]
+    public async Task StreamProposals(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+        {
+            Response.StatusCode = 404;
+            return;
+        }
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var reader = proposalBroadcaster.Subscribe(id, cancellationToken);
+        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        {
+            var data = JsonSerializer.Serialize(evt, SseOptions);
+            await Response.WriteAsync($"event: proposal-created\ndata: {data}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
     }
 
     [HttpDelete("{id:guid}")]

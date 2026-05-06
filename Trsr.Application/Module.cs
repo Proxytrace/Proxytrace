@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
 using Trsr.Application.Demo.Internal;
 using Trsr.Application.Ingestion.Internal;
+using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
 using Trsr.Application.TestRun;
@@ -35,10 +36,16 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()
             .SingleInstance();
-        
+
         builder.RegisterType<TestResultBroadcaster>()
             .As<ITestResultBroadcaster>()
             .SingleInstance();
+
+        builder.RegisterType<ProposalBroadcaster>()
+            .As<IProposalBroadcaster>()
+            .SingleInstance();
+
+        builder.RegisterModule<Optimization.Module>();
 
         builder.RegisterType<AgentNameGenerator>()
             .As<IAgentNameGenerator>()
