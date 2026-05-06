@@ -6,7 +6,7 @@ namespace Trsr.Domain.TestRunGroup;
 /// <summary>
 /// Groups test runs executing the same suite against multiple endpoints for model comparison.
 /// </summary>
-public interface ITestRunGroup : IDomainEntity
+public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
 {
     /// <summary>The test suite executed by all runs in this group.</summary>
     ITestSuite Suite { get; }

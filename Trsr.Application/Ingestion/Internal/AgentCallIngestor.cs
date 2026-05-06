@@ -74,7 +74,14 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         string? sessionId = null,
         CancellationToken cancellationToken = default)
         => await channel.Writer.WriteAsync(
-            new IngestJob(provider, project, requestBody, responseBody, duration, httpStatus, sessionId),
+            new IngestJob(
+                provider,
+                project,
+                requestBody,
+                responseBody, 
+                duration,
+                httpStatus,
+                sessionId),
             cancellationToken);
 
     private async Task CreatePendingToolCallsAsync(
@@ -278,7 +285,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         }
 
         // Non-UUID strings are hashed to a deterministic GUID so any string session ID works.
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(sessionId));
+        var hash = SHA1.HashData(Encoding.UTF8.GetBytes(sessionId));
         return new Guid(hash);
     }
 
