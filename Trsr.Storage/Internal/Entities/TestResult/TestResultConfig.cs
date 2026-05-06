@@ -70,7 +70,6 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
             evaluations: evaluations,
-            duration: TimeSpan.FromMilliseconds(stored.DurationMs),
             existing: stored);
     }
 
@@ -83,7 +82,9 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             Evaluations = domain.Evaluations
                 .Select(e => new StoredEvaluation { EvaluatorId = e.Evaluator.Id, Score = e.Score, Reasoning = e.Reasoning })
                 .ToArray(),
-            DurationMs = (long)domain.Duration.TotalMilliseconds,
+            DurationMs = (long)domain.Statistics.Duration.TotalMicroseconds,
+            InputTokens = domain.Statistics.InputTokens,
+            OutputTokens = domain.Statistics.OutputTokens,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

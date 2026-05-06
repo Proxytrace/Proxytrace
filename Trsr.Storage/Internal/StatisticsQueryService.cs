@@ -11,6 +11,7 @@ using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
 using Trsr.Storage.Internal.Entities.TestSuite;
+using TestRunStatistics = Trsr.Domain.TestRunStatistics;
 
 namespace Trsr.Storage.Internal;
 
@@ -222,9 +223,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
             return new CostEstimateStat(
                 EndpointId: b.EndpointId,
-                InputCostEur: inputCost.HasValue ? Math.Round(inputCost.Value, 4) : (decimal?)null,
-                OutputCostEur: outputCost.HasValue ? Math.Round(outputCost.Value, 4) : (decimal?)null,
-                TotalCostEur: inputCost.HasValue && outputCost.HasValue ? Math.Round(inputCost.Value + outputCost.Value, 4) : (decimal?)null);
+                InputCostEur: inputCost.HasValue ? Math.Round(inputCost.Value, 4) : null,
+                OutputCostEur: outputCost.HasValue ? Math.Round(outputCost.Value, 4) : null,
+                TotalCostEur: inputCost.HasValue && outputCost.HasValue ? Math.Round(inputCost.Value + outputCost.Value, 4) : null);
         })
         .Await()
         .ContinueWith(x => x.Result.ToList(), cancellationToken);
@@ -257,6 +258,96 @@ internal class StatisticsQueryService : IStatisticsQueryService
             query = query.Where(e => e.CreatedAt <= filter.To.Value);
 
         return query;
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsByGroupAsync(Guid groupId, CancellationToken cancellationToken = default)
+    {
+        return await AggregateKpi(
+            contextFactory().Set<TestRunEntity>().AsNoTracking().Where(r => r.Group == groupId),
+            cancellationToken);
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        var suiteIds = await context.Set<TestSuiteEntity>().AsNoTracking()
+            .Where(s => s.Agent == agentId)
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var groupIds = await context.Set<TestRunGroupEntity>().AsNoTracking()
+            .Where(g => suiteIds.Contains(g.Suite))
+            .Select(g => g.Id)
+            .ToListAsync(cancellationToken);
+
+        return await AggregateKpi(
+            context.Set<TestRunEntity>().AsNoTracking().Where(r => groupIds.Contains(r.Group)),
+            cancellationToken);
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = context.Set<TestRunEntity>().AsNoTracking();
+
+        if (filter.From.HasValue)
+            query = query.Where(r => r.CompletedAt >= filter.From.Value);
+        if (filter.To.HasValue)
+            query = query.Where(r => r.CompletedAt <= filter.To.Value);
+
+        if (filter.AgentId.HasValue || filter.ProjectId.HasValue)
+        {
+            var agentQuery = context.Set<AgentEntity>().AsNoTracking();
+            if (filter.AgentId.HasValue)
+                agentQuery = agentQuery.Where(a => a.Id == filter.AgentId.Value);
+            if (filter.ProjectId.HasValue)
+                agentQuery = agentQuery.Where(a => a.Project == filter.ProjectId.Value);
+
+            var agentIds = await agentQuery.Select(a => a.Id).ToListAsync(cancellationToken);
+
+            var suiteIds = await context.Set<TestSuiteEntity>().AsNoTracking()
+                .Where(s => agentIds.Contains(s.Agent))
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+
+            var groupIds = await context.Set<TestRunGroupEntity>().AsNoTracking()
+                .Where(g => suiteIds.Contains(g.Suite))
+                .Select(g => g.Id)
+                .ToListAsync(cancellationToken);
+
+            query = query.Where(r => groupIds.Contains(r.Group));
+        }
+
+        return await AggregateKpi(query, cancellationToken);
+    }
+
+    private static async Task<TestRunStatistics> AggregateKpi(
+        IQueryable<TestRunEntity> query,
+        CancellationToken cancellationToken)
+    {
+        var totals = await query
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TestCases = g.Sum(r => r.StatTestCases),
+                Passed = g.Sum(r => r.StatPassed),
+                TotalDurationMs = g.Sum(r => r.StatTotalDurationMs),
+                TotalInputTokens = g.Sum(r => r.StatInputTokens),
+                TotalOutputTokens = g.Sum(r => r.StatOutputTokens),
+                TotalCost = (decimal?)g.Sum(r => (double?)r.StatCost),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (totals is null)
+            return TestRunStatistics.Empty;
+
+        return new TestRunStatistics(
+            TestCases: totals.TestCases,
+            Passed: totals.Passed,
+            TotalDuration: TimeSpan.FromMilliseconds(totals.TotalDurationMs),
+            TotalTokens: totals.TotalInputTokens + totals.TotalOutputTokens,
+            TotalCost: totals.TotalCost.HasValue ? Math.Round(totals.TotalCost.Value, 4) : null);
     }
 
     private static double Percentile(double[] sorted, double percentile)

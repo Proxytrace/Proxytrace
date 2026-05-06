@@ -13,6 +13,7 @@ using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
+using Trsr.Domain.Usage;
 using Trsr.Testing;
 
 namespace Trsr.Application.Tests;
@@ -56,7 +57,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
     {
         IModelClient? handler = Substitute.For<IModelClient>();
         handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(response));
+            .Returns(Task.FromResult(new Completion(response, TokenUsage.None)));
         builder.RegisterInstance(handler);
     }
 

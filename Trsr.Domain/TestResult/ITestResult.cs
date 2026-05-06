@@ -23,22 +23,20 @@ public interface ITestResult : IDomainEntity<ITestResult>
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     IReadOnlyCollection<IEvaluation> Evaluations { get; }
 
-    /// <summary>How long the LLM call took for this test case, in milliseconds.</summary>
-    TimeSpan Duration { get; }
+    /// <summary>Token usage and latency statistics for this test result.</summary>
+    TestResultStatistics Statistics { get; }
 
     /// <summary>Factory delegate for creating a new test result.</summary>
     public delegate ITestResult CreateNew(
         ITestCase testCase,
         AssistantMessage actualResponse,
-        IReadOnlyCollection<IEvaluation> evaluations, 
-        TimeSpan duration);
+        IReadOnlyCollection<IEvaluation> evaluations);
 
     /// <summary>Factory delegate for reconstituting an existing test result from persistence.</summary>
     public delegate ITestResult CreateExisting(
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
-        TimeSpan duration,
         IDomainEntityData existing);
 
     /// <summary>

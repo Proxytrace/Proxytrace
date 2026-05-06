@@ -5,6 +5,7 @@ using OpenAI;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
+using Trsr.Domain.Usage;
 using Trsr.Serialization;
 
 namespace Trsr.Infrastructure.Internal;
@@ -31,8 +32,8 @@ internal class ModelClient : IModelClient
         this.outputFormatFactory = outputFormatFactory;
         this.chatClient = chatClient;
     }
-    
-    public async Task<AssistantMessage> CompleteAsync(
+
+    public async Task<Completion> CompleteAsync(
         Conversation conversation,
         ModelOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -58,19 +59,29 @@ internal class ModelClient : IModelClient
         if (!string.IsNullOrWhiteSpace(response.Text))
             responseContents.Add(Content.FromText(response.Text));
 
-        return Message.CreateAssistantMessage(
+        var message = Message.CreateAssistantMessage(
             contents: responseContents,
             toolRequests: toolRequests);
+
+        TokenUsage? usage = null;
+        if (response.Usage is { InputTokenCount: not null, OutputTokenCount: not null })
+        {
+            usage = new TokenUsage(
+                (ulong)response.Usage.InputTokenCount.Value,
+                (ulong)response.Usage.OutputTokenCount.Value);
+        }
+
+        return new Completion(message, usage);
     }
 
     public async Task<TOutput?> CompleteAsync<TOutput>(
-        Conversation conversation, 
+        Conversation conversation,
         ModelOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         IOutputFormat outputFormat = outputFormatFactory(typeof(TOutput));
-        AssistantMessage completion = await CompleteAsync(conversation, options, cancellationToken);
-        return await outputFormat.ParseAsync<TOutput>(completion.GetTextResponse(), cancellationToken);
+        Completion completion = await CompleteAsync(conversation, options, cancellationToken);
+        return await outputFormat.ParseAsync<TOutput>(completion.Response.GetTextResponse(), cancellationToken);
     }
 
     private static IChatClient CreateChatClient(IModelEndpoint endpoint)

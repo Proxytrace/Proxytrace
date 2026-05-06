@@ -52,7 +52,7 @@ public record TestResultArrivedEvent(
                 GetEvaluatorName(e.Evaluator),
                 e.Score,
                 e.Reasoning)).ToArray(),
-            (long)result.Duration.TotalMilliseconds);
+            (long)result.Statistics.Duration.TotalMilliseconds);
 
     internal static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
     {

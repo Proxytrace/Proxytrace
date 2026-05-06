@@ -172,12 +172,12 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
             CancellationToken = cancellationToken
         };
-            
+
         await Parallel.ForEachAsync(
             testRun.Group.Suite.TestCases,
-            parallelOptions, 
+            parallelOptions,
             async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
-        
+
         testRun = await testRun.ReloadAsync(cancellationToken);
         broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
     }
@@ -190,15 +190,15 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
         var stopwatch = Stopwatch.StartNew();
-        AssistantMessage response = await testRun.Group.Suite.Agent.CompleteAsync(
+        Completion completion = await testRun.Group.Suite.Agent.CompleteAsync(
             testCase.Input,
             testRun.Endpoint,
             cancellationToken);
-        TimeSpan elapsed = stopwatch.Elapsed;
+        long elapsedMs = stopwatch.ElapsedMilliseconds;
 
         broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
-
-        var testResult = createTestResult(testCase, response, [], elapsed);
+        
+        var testResult = createTestResult(testCase, completion.Response, []);
         await testResultRepository.AddAsync(testResult, cancellationToken);
 
         var run = testRun;

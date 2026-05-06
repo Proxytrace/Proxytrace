@@ -123,11 +123,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().ContainSingle()
+        result.Response.Contents.Should().ContainSingle()
             .Which.Text.Should().Be(expectedText);
-        result.ToolRequests.Should().BeEmpty();
+        result.Response.ToolRequests.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -140,10 +140,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().BeEmpty();
-        result.ToolRequests.Should().BeEmpty();
+        result.Response.Contents.Should().BeEmpty();
+        result.Response.ToolRequests.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -156,9 +156,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().BeEmpty();
+        result.Response.Contents.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -172,12 +172,12 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().ContainSingle();
-        result.ToolRequests[0].Id.Should().Be("call-1");
-        result.ToolRequests[0].Name.Should().Be("web_search");
-        result.Contents.Should().BeEmpty();
+        result.Response.ToolRequests.Should().ContainSingle();
+        result.Response.ToolRequests[0].Id.Should().Be("call-1");
+        result.Response.ToolRequests[0].Name.Should().Be("web_search");
+        result.Response.Contents.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -191,9 +191,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        var argsJson = result.ToolRequests[0].Arguments;
+        var argsJson = result.Response.ToolRequests[0].Arguments;
         using var doc = JsonDocument.Parse(argsJson);
         doc.RootElement.GetProperty("city").GetString().Should().Be("London");
         doc.RootElement.GetProperty("unit").GetString().Should().Be("celsius");
@@ -209,9 +209,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests[0].Arguments.Should().Be("{}");
+        result.Response.ToolRequests[0].Arguments.Should().Be("{}");
     }
 
     [TestMethod]
@@ -230,11 +230,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().HaveCount(3);
-        result.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-1", "id-2", "id-3");
-        result.ToolRequests.Select(r => r.Name).Should().ContainInOrder("tool_a", "tool_b", "tool_c");
+        result.Response.ToolRequests.Should().HaveCount(3);
+        result.Response.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-1", "id-2", "id-3");
+        result.Response.ToolRequests.Select(r => r.Name).Should().ContainInOrder("tool_a", "tool_b", "tool_c");
     }
 
     [TestMethod]
@@ -249,10 +249,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().ContainSingle().Which.Text.Should().Be(text);
-        result.ToolRequests.Should().ContainSingle().Which.Name.Should().Be("search");
+        result.Response.Contents.Should().ContainSingle().Which.Text.Should().Be(text);
+        result.Response.ToolRequests.Should().ContainSingle().Which.Name.Should().Be("search");
     }
 
     [TestMethod]
@@ -271,10 +271,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().HaveCount(2);
-        result.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-a", "id-b");
+        result.Response.ToolRequests.Should().HaveCount(2);
+        result.Response.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-a", "id-b");
     }
 
     [TestMethod]

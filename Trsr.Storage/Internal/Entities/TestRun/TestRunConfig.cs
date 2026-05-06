@@ -9,6 +9,7 @@ using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
+using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Storage.Internal.Entities.TestRun;
 
@@ -64,12 +65,21 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
 
         await Task.WhenAll(groupTask, endpointTask, resultsTask);
 
+        TestRunStatistics statistics = new TestRunStatistics(
+            TestCases: stored.StatTestCases,
+            Passed: stored.StatPassed,
+            InputTokens: stored.StatInputTokens,
+            OutputTokens: stored.StatOutputTokens,
+            TotalDuration: TimeSpan.FromMilliseconds(stored.StatTotalDurationMs),
+            Cost: stored.StatCost);
+
         return factory(
             group: groupTask.Result,
             endpoint: endpointTask.Result,
             status: stored.Status,
             completedAt: stored.CompletedAt,
             testResults: resultsTask.Result,
+            statistics: statistics,
             existing: stored);
     }
 
@@ -82,6 +92,12 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,
             TestResults = domain.TestResults.Select(x => x.Id).ToArray(),
+            StatTestCases = domain.Statistics.TestCases,
+            StatPassed = domain.Statistics.Passed,
+            StatInputTokens = domain.Statistics.InputTokens,
+            StatOutputTokens = domain.Statistics.OutputTokens,
+            StatTotalDurationMs = (long)domain.Statistics.TotalDuration.TotalMilliseconds,
+            StatCost = domain.Statistics.Cost,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

@@ -25,6 +25,15 @@ public interface IStatisticsQueryService
 
     /// <summary>Returns estimated USD cost per model for the given <paramref name="filter"/>.</summary>
     Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs in the given test run group.</summary>
+    Task<TestRunStatistics> GetStatisticsByGroupAsync(Guid groupId, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs associated with the given agent.</summary>
+    Task<TestRunStatistics> GetStatisticsByAgentAsync(Guid agentId, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs matching the filter (used by the dashboard).</summary>
+    Task<TestRunStatistics> GetStatisticsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 }
 
 public record StatisticsFilter(
@@ -82,3 +91,13 @@ public record CostEstimateStat(
     decimal? InputCostEur,
     decimal? OutputCostEur,
     decimal? TotalCostEur);
+
+public record TestRunStatistics(
+    int TestCases,
+    int Passed,
+    TimeSpan TotalDuration,
+    long TotalTokens,
+    decimal? TotalCost)
+{
+    public static TestRunStatistics Empty => new(0, 0, TimeSpan.Zero, 0, null);
+}

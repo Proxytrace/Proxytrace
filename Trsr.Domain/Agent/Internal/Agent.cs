@@ -44,19 +44,16 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         Tools = tools;
     }
 
-    public async Task<AssistantMessage> CompleteAsync(
-        Conversation conversation, 
+    public Task<Completion> CompleteAsync(
+        Conversation conversation,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
         conversation = Conversation.ReplaceSystemMessage(conversation, SystemMessage);
-
-        AssistantMessage response = await endpoint.CreateClient().CompleteAsync(
+        return endpoint.CreateClient().CompleteAsync(
             conversation,
             ModelOptions.FromAgent(this, endpoint.Model),
             cancellationToken);
-
-        return response;
     }
 
     /// <inheritdoc />

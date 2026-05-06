@@ -41,8 +41,8 @@ public interface IAgent : IDomainEntity
     /// <summary>
     /// Given a conversation history, complete the next message by calling the language model defined in the provided model endpoint.
     /// </summary>
-    Task<AssistantMessage> CompleteAsync(
-        Conversation conversation, 
+    Task<Completion> CompleteAsync(
+        Conversation conversation,
         IModelEndpoint endpoint,
-        CancellationToken cancellationToken = default); 
+        CancellationToken cancellationToken = default);
 }

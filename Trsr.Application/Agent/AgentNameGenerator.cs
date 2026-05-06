@@ -35,8 +35,8 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
             conversation.AddSystemMessage(Message.CreateSystemMessage(Prompt));
             conversation.Add(Message.CreateUserMessage(systemMessage.ToString()));
             
-            var response = await client.CompleteAsync(conversation, cancellationToken: cancellationToken);
-            return response.GetTextResponse();
+            var result = await client.CompleteAsync(conversation, cancellationToken: cancellationToken);
+            return result.Response.GetTextResponse();
         }
         catch (Exception ex)
         {
