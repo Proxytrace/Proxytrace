@@ -209,10 +209,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         await Parallel.ForEachAsync(testRun.Group.Suite.Evaluators, parallelOptions,
             async (evaluator, ct) => await RunEvaluator(evaluator, testResult, run, ct));
         
-        using var sync = asyncLock.LockAsync(testRun.Id, cancellationToken);
+        using var sync = await asyncLock.LockAsync(testRun.Id, cancellationToken);
         testRun = await testRun.ReloadAsync(cancellationToken);
-        await testRun.SetTestResult(testResult, cancellationToken);
-        
+        testRun = await testRun.SetTestResult(testResult, cancellationToken);
+
         broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
     }
 
@@ -228,7 +228,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             return;
         }
 
-        using var sync = asyncLock.LockAsync(testResult.Id, cancellationToken);
+        using var sync = await asyncLock.LockAsync(testResult.Id, cancellationToken);
         testResult = await testResult.ReloadAsync(cancellationToken);
         await testResult.AddEvaluationAsync(evaluation, cancellationToken);
         broadcaster.Publish(new EvaluationArrivedEvent(
