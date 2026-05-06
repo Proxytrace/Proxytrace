@@ -4,9 +4,7 @@ using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.OptimizationProposal;
-using Trsr.Domain.Tools;
 using Trsr.Storage.Internal.Entities.Agent;
 
 namespace Trsr.Storage.Internal.Entities.OptimizationProposal;
@@ -39,26 +37,29 @@ internal class OptimizationProposalConfig :
 
         builder.HasIndex(e => e.Agent);
         builder.HasIndex(e => e.Status);
+        builder.HasIndex(e => e.Kind);
     }
 
     public async Task<IOptimizationProposal> Map(OptimizationProposalEntity stored, CancellationToken cancellationToken = default)
     {
         var agent = await agents.GetAsync(stored.Agent, cancellationToken);
-        var proposedSystemMessage = stored.ProposedSystemMessage is null
-            ? null
-            : serializer.Deserialize<SystemMessage>(stored.ProposedSystemMessage);
-        var proposedTools = serializer.Deserialize<IReadOnlyCollection<ToolSpecification>>(stored.ProposedTools)
-                            ?? Array.Empty<ToolSpecification>();
         var evidenceTestRunIds = serializer.Deserialize<IReadOnlyCollection<Guid>>(stored.EvidenceTestRunIds)
                                  ?? Array.Empty<Guid>();
 
+        ProposalDetails details = stored.Kind switch
+        {
+            ProposalKind.ModelSwitch => serializer.Deserialize<ModelSwitchDetails>(stored.Details)!,
+            ProposalKind.SystemPrompt => serializer.Deserialize<SystemPromptDetails>(stored.Details)!,
+            ProposalKind.Tool => serializer.Deserialize<ToolDetails>(stored.Details)!,
+            _ => throw new ArgumentOutOfRangeException(nameof(stored.Kind))
+        };
+
         return factory(
             agent: agent,
-            kind: stored.Kind,
             status: stored.Status,
+            priority: stored.Priority,
             rationale: stored.Rationale,
-            proposedSystemMessage: proposedSystemMessage,
-            proposedTools: proposedTools,
+            details: details,
             evidenceTestRunIds: evidenceTestRunIds,
             existing: stored);
     }
@@ -70,11 +71,9 @@ internal class OptimizationProposalConfig :
             Agent = domain.Agent.Id,
             Kind = domain.Kind,
             Status = domain.Status,
+            Priority = domain.Priority,
             Rationale = domain.Rationale,
-            ProposedSystemMessage = domain.ProposedSystemMessage is null
-                ? null
-                : serializer.Serialize(domain.ProposedSystemMessage),
-            ProposedTools = serializer.Serialize(domain.ProposedTools),
+            Details = serializer.Serialize(domain.Details),
             EvidenceTestRunIds = serializer.Serialize(domain.EvidenceTestRunIds),
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

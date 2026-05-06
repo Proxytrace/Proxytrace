@@ -7,7 +7,6 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Usage;
@@ -104,7 +103,6 @@ internal sealed class DemoDataSeeder : IHostedService
         await SeedCallsAsync(services, agent, endpoint, scenario.Calls, ct);
         var testCases = await SeedTestCasesAsync(services, scenario.TestCases, ct);
         await SeedTestSuiteAsync(services, foundation, agent, testCases, scenario.TestSuite, ct);
-        await SeedOptimizationProposalsAsync(services, agent, scenario.OptimizationProposals, ct);
     }
 
     private static async Task SeedCallsAsync(
@@ -164,23 +162,5 @@ internal sealed class DemoDataSeeder : IHostedService
         var repo = services.GetRequiredService<IRepository<ITestSuite>>();
         var data = new DemoEntityData(suite.Id, suite.CreatedAt, suite.CreatedAt);
         await repo.UpsertAsync(factory(suite.Name, agent, [foundation.Evaluator], testCases.Values.ToList(), data), ct);
-    }
-
-    private static async Task SeedOptimizationProposalsAsync(
-        IServiceProvider services,
-        IAgent agent,
-        IReadOnlyList<OptimizationProposalSeedData> proposals,
-        CancellationToken ct)
-    {
-        var factory = services.GetRequiredService<IOptimizationProposal.CreateExisting>();
-        var repo = services.GetRequiredService<IRepository<IOptimizationProposal>>();
-        foreach (var proposal in proposals)
-        {
-            var data = new DemoEntityData(proposal.Id, proposal.CreatedAt, proposal.CreatedAt);
-            var evidenceIds = proposal.EvidenceTestRunIds.ToList();
-            await repo.UpsertAsync(
-                factory(agent, proposal.Kind, proposal.Status, proposal.Rationale,
-                    proposal.ProposedSystemMessage, proposal.ProposedTools, evidenceIds, data), ct);
-        }
     }
 }
