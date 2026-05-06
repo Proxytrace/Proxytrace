@@ -123,7 +123,8 @@ internal sealed class DemoDataSeeder : IHostedService
                 (HttpStatusCode)call.HttpStatus,
                 call.FinishReason,
                 call.ErrorMessage,
-                data);
+                data,
+                conversationId: null);
             await repo.UpsertAsync(entity, ct);
         }
     }

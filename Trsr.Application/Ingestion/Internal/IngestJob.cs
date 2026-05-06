@@ -10,4 +10,5 @@ internal sealed record IngestJob(
     string RequestBody,
     string? ResponseBody,
     TimeSpan Duration,
-    HttpStatusCode HttpStatus);
+    HttpStatusCode HttpStatus,
+    string? SessionId = null);

@@ -46,6 +46,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.HasIndex(e => e.CreatedAt);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
+        builder.HasIndex(e => e.ConversationId);
 
         builder
             .Property(e => e.Request)
@@ -60,7 +61,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
                 v => serializer.Serialize(v),
                 v => serializer.DeserializeRequired<AssistantMessage>(v)
             );
-        
+
         builder
             .HasOne<ModelEndpointEntity>()
             .WithMany()
@@ -83,7 +84,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             httpStatus: (HttpStatusCode)stored.HttpStatus,
             finishReason: stored.FinishReason,
             errorMessage: stored.ErrorMessage,
-            existing: stored);
+            existing: stored,
+            conversationId: stored.ConversationId);
     }
 
     public Task<AgentCallEntity> Map(IAgentCall domain, CancellationToken cancellationToken = default)
@@ -100,6 +102,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             HttpStatus = (int)domain.HttpStatus,
             FinishReason = domain.FinishReason,
             ErrorMessage = domain.ErrorMessage,
+            ConversationId = domain.ConversationId,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

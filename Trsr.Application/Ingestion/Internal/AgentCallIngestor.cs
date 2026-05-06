@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -28,7 +30,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
     private readonly IModelEndpointRepository endpointRepository;
     private readonly ITraceBroadcaster traceBroadcaster;
     private readonly ILogger<AgentCallIngestor> logger;
-    
+
     private readonly Channel<IngestJob> channel = Channel.CreateUnbounded<IngestJob>(
         new UnboundedChannelOptions
         {
@@ -61,17 +63,18 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         this.traceBroadcaster = traceBroadcaster;
         this.logger = logger;
     }
-    
+
     public async Task IngestInBackgroundAsync(
-        IModelProvider provider, 
+        IModelProvider provider,
         IProject project,
-        string requestBody, 
-        string? responseBody, 
+        string requestBody,
+        string? responseBody,
         TimeSpan duration,
-        HttpStatusCode httpStatus, 
-        CancellationToken cancellationToken = default) 
+        HttpStatusCode httpStatus,
+        string? sessionId = null,
+        CancellationToken cancellationToken = default)
         => await channel.Writer.WriteAsync(
-            new IngestJob(provider, project, requestBody, responseBody, duration, httpStatus),
+            new IngestJob(provider, project, requestBody, responseBody, duration, httpStatus, sessionId),
             cancellationToken);
 
     private async Task CreatePendingToolCallsAsync(
@@ -155,7 +158,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
             // graceful shutdown
         }
     }
-    
+
     internal async Task IngestAsync(
         IngestJob job,
         CancellationToken cancellationToken)
@@ -163,10 +166,10 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         try
         {
             if (!parser.TryParse(
-                    job.Provider, 
-                    job.RequestBody, 
-                    job.ResponseBody, 
-                    job.Duration, 
+                    job.Provider,
+                    job.RequestBody,
+                    job.ResponseBody,
+                    job.Duration,
                     job.HttpStatus,
                     out OpenAiCallParseResult? parsed))
             {
@@ -176,18 +179,27 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
             var endpoint = await endpointRepository
                 .GetOrCreateAsync(parsed.Model, parsed.Provider, cancellationToken);
 
-            var agent = await agentRepository.GetOrCreateAsync(
-                parsed.SystemMessage,
-                parsed.Tools,
-                job.Project,
-                endpoint,
-                cancellationToken);
-
             var toolMessages = parsed.Request.Messages.OfType<ToolMessage>().ToList();
             var toolMessageIds = toolMessages.Select(m => m.Id).ToList();
 
             var continuationOfId = await toolCallRepository
                 .FindAgentCallIdByToolCallIdsAsync(toolMessageIds, job.Project, cancellationToken);
+
+            // ── Resolve conversation context ───────────────────────────────────
+            var (conversationId, priorConversationCall) = await ResolveConversationAsync(
+                job, cancellationToken);
+
+            // ── Agent resolution ───────────────────────────────────────────────
+            // When we detect a continuation and the client didn't re-send tool definitions,
+            // inherit the agent from the prior call to avoid creating a duplicate agent.
+            var agent = priorConversationCall is not null && parsed.Tools.Count == 0
+                ? priorConversationCall.Agent
+                : await agentRepository.GetOrCreateAsync(
+                    parsed.SystemMessage,
+                    parsed.Tools,
+                    job.Project,
+                    endpoint,
+                    cancellationToken);
 
             IAgentCall persistedCall;
 
@@ -208,7 +220,8 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     httpStatus: parsed.HttpStatus,
                     finishReason: parsed.FinishReason,
                     errorMessage: parsed.ErrorMessage,
-                    existing: existing);
+                    existing: existing,
+                    conversationId: conversationId ?? existing.ConversationId);
 
                 persistedCall = await agentCallRepository.UpdateAsync(updated, cancellationToken);
 
@@ -225,7 +238,8 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     duration: parsed.Duration,
                     httpStatus: parsed.HttpStatus,
                     finishReason: parsed.FinishReason,
-                    errorMessage: parsed.ErrorMessage);
+                    errorMessage: parsed.ErrorMessage,
+                    conversationId: conversationId);
 
                 persistedCall = await agentCallRepository.AddAsync(call, cancellationToken);
                 traceBroadcaster.Publish(TraceCreatedEvent.Create(persistedCall));
@@ -236,8 +250,36 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to ingest agent call (provider={Provider}, status={HttpStatus})",
-                job.Provider.Name, 
+                job.Provider.Name,
                 job.HttpStatus);
         }
     }
+
+    private async Task<(Guid? conversationId, IAgentCall? priorCall)> ResolveConversationAsync(
+        IngestJob job,
+        CancellationToken cancellationToken)
+    {
+        if (job.SessionId is not { } rawSessionId)
+        {
+            return (null, null);
+        }
+
+        var sessionGuid = ParseSessionId(rawSessionId);
+        var prior = await agentCallRepository
+            .FindLatestByConversationIdAsync(sessionGuid, job.Project, cancellationToken);
+        return (sessionGuid, prior);
+    }
+
+    private static Guid ParseSessionId(string sessionId)
+    {
+        if (Guid.TryParse(sessionId, out var guid))
+        {
+            return guid;
+        }
+
+        // Non-UUID strings are hashed to a deterministic GUID so any string session ID works.
+        var hash = MD5.HashData(Encoding.UTF8.GetBytes(sessionId));
+        return new Guid(hash);
+    }
+
 }

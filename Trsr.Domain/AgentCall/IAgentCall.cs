@@ -37,6 +37,12 @@ public interface IAgentCall : IDomainEntity
     /// <summary>Error message if the call failed; otherwise <see langword="null"/>.</summary>
     string? ErrorMessage { get; }
 
+    /// <summary>
+    /// Groups this call with other calls from the same conversation thread.
+    /// Set from the <c>X-Trsr-Session-Id</c> header or detected via message-history matching.
+    /// </summary>
+    Guid? ConversationId { get; }
+
     public delegate IAgentCall CreateNew(
         IAgent agent,
         IModelEndpoint endpoint,
@@ -46,7 +52,8 @@ public interface IAgentCall : IDomainEntity
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? finishReason,
-        string? errorMessage);
+        string? errorMessage,
+        Guid? conversationId = null);
 
     public delegate IAgentCall CreateExisting(
         IAgent agent,
@@ -58,5 +65,6 @@ public interface IAgentCall : IDomainEntity
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
-        IDomainEntityData existing);
+        IDomainEntityData existing,
+        Guid? conversationId = null);
 }

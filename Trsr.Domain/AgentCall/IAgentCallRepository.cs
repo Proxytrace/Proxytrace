@@ -1,3 +1,5 @@
+using Trsr.Domain.Project;
+
 namespace Trsr.Domain.AgentCall;
 
 /// <summary>
@@ -19,5 +21,13 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
     /// Agents with no calls are omitted.
     /// </summary>
     Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the most recently created call for the given conversation, or <see langword="null"/> if none exists.
+    /// </summary>
+    Task<IAgentCall?> FindLatestByConversationIdAsync(
+        Guid conversationId,
+        IProject project,
         CancellationToken cancellationToken = default);
 }
