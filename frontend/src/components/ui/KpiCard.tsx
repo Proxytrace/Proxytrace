@@ -76,8 +76,7 @@ export function KpiCard({
     >
       {accent && (
         <div
-          style={{ background: 'radial-gradient(circle, rgba(201, 148, 74, 0.16), transparent 70%)' }}
-          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none"
+          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none bg-[radial-gradient(circle,rgba(201,148,74,0.16),transparent_70%)]"
         />
       )}
 

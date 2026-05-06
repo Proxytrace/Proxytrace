@@ -18,8 +18,7 @@ export function Collapsible({ title, defaultOpen = false, children, headerClassN
         className={`w-full text-left flex items-center gap-2 bg-transparent ${headerClassName ?? ''}`}
       >
         <span
-          className="inline-flex shrink-0 transition-transform duration-[150ms]"
-          style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+          className={`inline-flex shrink-0 transition-transform duration-[150ms] ${open ? 'rotate-90' : 'rotate-0'}`}
         >
           <ChevronRightIcon size={10} strokeWidth={2.5} />
         </span>

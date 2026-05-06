@@ -19,22 +19,16 @@ export function FilterTabs({ options, value, onChange }: FilterTabsProps) {
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            style={{
-              border: active ? '1px solid rgba(201,148,74,0.3)' : '1px solid var(--border-color)',
-            }}
-            className={`flex items-center gap-[5px] px-3 py-[5px] rounded-lg text-xs font-semibold transition-colors ${
+            className={`flex items-center gap-[5px] px-3 py-[5px] rounded-lg text-xs font-semibold transition-colors border ${
               active
-                ? 'bg-accent-subtle text-accent'
-                : 'bg-card text-secondary'
+                ? 'bg-accent-subtle text-accent border-[rgba(201,148,74,0.3)]'
+                : 'bg-card text-secondary border-border'
             }`}
           >
             {opt.label}
             {opt.count != null && (
               <span
-                style={{
-                  background: active ? 'rgba(201,148,74,0.2)' : 'var(--bg-card-2)',
-                }}
-                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded-full ${active ? 'text-accent' : 'text-muted'}`}
+                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded-full ${active ? 'text-accent bg-[rgba(201,148,74,0.2)]' : 'text-muted bg-card-2'}`}
               >
                 {opt.count}
               </span>

@@ -50,7 +50,7 @@ export function EvaluatorForm({ form, setForm, kind, endpoints }: {
       )}
       {kind === EvaluatorKind.Custom && (
         <FormField label="System message (rubric prompt)">
-          <textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader…" rows={5} className={formInputCls} style={{ resize: 'vertical' }} />
+          <textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader…" rows={5} className={`${formInputCls} resize-y`} />
         </FormField>
       )}
       {meta.requiresEndpoint && (
@@ -62,7 +62,7 @@ export function EvaluatorForm({ form, setForm, kind, endpoints }: {
       )}
       {kind === EvaluatorKind.JsonSchemaMatch && (
         <FormField label="JSON Schema">
-          <textarea value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} className={formInputCls} style={{ resize: 'vertical' }} />
+          <textarea value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} className={`${formInputCls} resize-y`} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (

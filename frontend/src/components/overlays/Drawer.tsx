@@ -34,14 +34,12 @@ export function Drawer({ title, onClose, onPrev, onNext, children, subtitle }: D
               <button
                 onClick={onPrev}
                 disabled={!onPrev}
-                style={{ opacity: onPrev ? 1 : 0.3 }}
-                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onPrev ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onPrev ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-30'}`}
               >←</button>
               <button
                 onClick={onNext}
                 disabled={!onNext}
-                style={{ opacity: onNext ? 1 : 0.3 }}
-                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onNext ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`w-7 h-7 rounded-md bg-card border border-border text-secondary text-[13px] ${onNext ? 'cursor-pointer opacity-100' : 'cursor-not-allowed opacity-30'}`}
               >→</button>
             </div>
           )}

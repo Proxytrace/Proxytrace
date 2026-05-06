@@ -27,11 +27,11 @@ export function NavItem({ label, icon, to, badge, badgeAccent, collapsed }: NavI
               <span className="flex-1 text-left">{label}</span>
               {badge && (
                 <span
-                  style={{
-                    background: badgeAccent ? 'linear-gradient(135deg, #8b5cf6, #06b6d4)' : 'var(--bg-card-2)',
-                    color: badgeAccent ? '#fff' : 'var(--text-secondary)',
-                  }}
-                  className="text-[10px] font-semibold px-[6px] py-[2px] rounded-full min-w-[18px] text-center"
+                  className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full min-w-[18px] text-center ${
+                    badgeAccent
+                      ? 'bg-[linear-gradient(135deg,#8b5cf6,#06b6d4)] text-white'
+                      : 'bg-card-2 text-secondary'
+                  }`}
                 >
                   {badge}
                 </span>
