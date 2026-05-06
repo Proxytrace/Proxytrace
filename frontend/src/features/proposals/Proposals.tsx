@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   SparklesIcon, BeakerIcon, ZapIcon, CpuIcon, TargetIcon,
   ChevronRightIcon, CheckboxIcon, ArrowUpRightIcon, CopyIcon,
 } from '../../components/icons';
+import { proposalsApi } from '../../api/proposals';
+import type { OptimizationProposalDto, ModelSwitchDetailsDto, SystemPromptDetailsDto, ToolDetailsDto } from '../../api/models';
+import { ProposalStatus as ApiProposalStatus } from '../../api/models';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,178 +103,107 @@ const MODEL_COLORS: Record<string, string> = {
   'claude-3.5-sonnet':'#3daa6f',
 };
 
-// ── Mock data ────────────────────────────────────────────────────────────────
+// ── DTO → local Proposal mapping ─────────────────────────────────────────────
 
-const PROPOSALS_DATA: Proposal[] = [
-  {
-    id: 'prp_8f2a',
-    type: 'prompt',
-    status: 'ready',
-    agent: 'Customer Support',
-    targetVersion: 'v2',
-    proposedVersion: 'v3',
-    title: 'Always confirm order ID before issuing refunds',
-    summary: 'Refund policy questions consistently fail when the model assumes context. Adding an explicit confirmation step recovered 11 of 14 failed cases in A/B.',
-    source: 'Failed test cases · 14 in last 7 days',
-    createdAt: '6h ago',
-    impact: { passDelta: +12, costDelta: -2, latencyDelta: +120 },
-    confidence: 0.86,
-    abResult: { current: 78, proposed: 90, sampleCases: 42, runtime: '4m 12s' },
-    diff: {
-      before: `You are a helpful customer support agent for Acme Co.
-Help the user with their order, billing, or shipping question.
-Use the provided tools when needed.
-Be friendly but concise.`,
-      after: `You are a helpful customer support agent for Acme Co.
-Help the user with their order, billing, or shipping question.
-Use the provided tools when needed.
-Be friendly but concise.
+function mapKind(dto: OptimizationProposalDto): ProposalType {
+  switch (dto.kind) {
+    case 'SystemPrompt': return 'prompt';
+    case 'Tool':         return 'tool';
+    case 'ModelSwitch':  return 'model';
+    default:             return 'prompt';
+  }
+}
 
-Before issuing any refund, store credit, or order modification, you MUST:
-1. Ask the user to confirm their order ID if not already provided.
-2. Look up the order with get_order to verify status.
-3. State the action you will take and ask for explicit confirmation.
+function mapStatus(dto: OptimizationProposalDto): ProposalStatus {
+  switch (dto.status) {
+    case ApiProposalStatus.Accepted: return 'promoted';
+    case ApiProposalStatus.Rejected: return 'dismissed';
+    default:                         return 'new';
+  }
+}
 
-If the user is frustrated, acknowledge it before continuing.`,
-    },
-    evidence: [
-      { id: 'tc_9a3b', name: 'Refund without order ID',      failure: 'Issued refund before lookup',  severity: 'high' },
-      { id: 'tc_1c4d', name: 'Ambiguous return request',     failure: 'Did not confirm intent',       severity: 'medium' },
-      { id: 'tc_7e2f', name: 'Cancel with multiple orders',  failure: 'Cancelled wrong order',        severity: 'high' },
-      { id: 'tc_4b8a', name: 'Frustrated user — refund',     failure: 'Skipped acknowledgement',      severity: 'low' },
-    ],
-  },
-  {
-    id: 'prp_3d91',
-    type: 'tool',
-    status: 'ab_running',
-    agent: 'Customer Support',
-    targetVersion: 'v2',
-    proposedVersion: 'v3-ab',
-    title: 'Add lookup_shipping_carrier tool',
-    summary: 'Agent fabricates carrier-specific tracking instructions in 23% of shipping queries. A typed tool grounds the response in real data.',
-    source: 'Production trace cluster · 47 similar failures',
-    createdAt: '11h ago',
-    progress: 0.62,
-    impact: { passDelta: +8, costDelta: +1, latencyDelta: -340 },
-    confidence: 0.74,
-    toolDiff: {
-      added: [{ name: 'lookup_shipping_carrier', desc: 'Returns carrier name, tracking URL pattern, and estimated delivery window for a given tracking number prefix.' }],
-      removed: [],
-      modified: [],
-    },
-    diff: null,
-    evidence: [
-      { id: 'tr_a8b7', name: 'UPS tracking link query',  failure: 'Wrong URL format',    severity: 'medium' },
-      { id: 'tr_c4f1', name: 'DHL international query',  failure: 'Hallucinated carrier', severity: 'high' },
-      { id: 'tr_e9d2', name: 'USPS pickup question',     failure: 'Vague answer',         severity: 'low' },
-    ],
-  },
-  {
-    id: 'prp_6c47',
-    type: 'model',
-    status: 'new',
-    agent: 'Code Helper',
-    targetVersion: 'v1',
-    proposedVersion: 'v2',
-    title: 'Switch from gpt-4o-mini → claude-3.5-sonnet',
-    summary: 'Multi-model run on Bug Localisation suite shows claude-3.5-sonnet at 86% pass vs gpt-4o-mini at 64%. 3.2× cost increase but 2.4× higher recall.',
-    source: 'Multi-model evaluation · run_x4f9c',
-    createdAt: '2d ago',
-    impact: { passDelta: +22, costDelta: +220, latencyDelta: +680 },
-    confidence: 0.91,
-    modelChange: { from: 'gpt-4o-mini', to: 'claude-3.5-sonnet' },
-    evidence: [
-      { id: 'tc_b1c2', name: 'Stack trace localisation', failure: 'Pointed to wrong file',   severity: 'high' },
-      { id: 'tc_d3e4', name: 'Async race condition',      failure: 'Missed root cause',       severity: 'high' },
-      { id: 'tc_f5g6', name: 'Type narrowing bug',        failure: 'Suggested unsafe fix',    severity: 'medium' },
-    ],
-  },
-  {
-    id: 'prp_b215',
-    type: 'prompt',
-    status: 'new',
-    agent: 'Classifier',
-    targetVersion: 'v3',
-    proposedVersion: 'v4',
-    title: 'Add few-shot examples for edge categories',
-    summary: 'Categories "billing-dispute" and "abuse-report" together account for 71% of misclassifications. Six curated examples cover the long tail.',
-    source: 'Failed test cases · 21 in last 7 days',
-    createdAt: '1d ago',
-    impact: { passDelta: +18, costDelta: +4, latencyDelta: +90 },
-    confidence: 0.79,
-    diff: {
-      before: `Classify the user message into one of: order, billing, account, technical, other.
-Output only the category name.`,
-      after: `Classify the user message into one of: order, billing, account, technical, billing-dispute, abuse-report, other.
-Output only the category name.
+function priorityToConfidence(p: string): number {
+  switch (p) {
+    case 'Critical': return 0.95;
+    case 'High':     return 0.80;
+    case 'Medium':   return 0.65;
+    default:         return 0.50;
+  }
+}
 
-Examples:
-- "I want my money back, this is fraud" → billing-dispute
-- "Someone is harassing me on the platform" → abuse-report
-- "My subscription was charged twice" → billing-dispute
-- "User @x is sending threats" → abuse-report
-- "How do I cancel?" → billing
-- "Reset my password" → account`,
-    },
-    evidence: [
-      { id: 'tc_h7i8', name: 'Fraud claim → billing',  failure: 'Mislabeled as "billing"', severity: 'high' },
-      { id: 'tc_j9k0', name: 'Harassment → other',      failure: 'Mislabeled as "other"',  severity: 'high' },
-    ],
-  },
-  {
-    id: 'prp_4e88',
-    type: 'param',
-    status: 'new',
-    agent: 'Classifier',
-    targetVersion: 'v3',
-    proposedVersion: 'v4-temp',
-    title: 'Lower temperature 0.7 → 0.2',
-    summary: 'Same input classified differently across runs in 11% of traces. Lowering temperature should improve consistency without affecting accuracy.',
-    source: 'Production trace analysis · consistency check',
-    createdAt: '3d ago',
-    impact: { passDelta: +6, costDelta: 0, latencyDelta: 0 },
-    confidence: 0.68,
-    paramDiff: { temperature: { from: 0.7, to: 0.2 } },
-    evidence: [
-      { id: 'tr_l1m2', name: '"Cancel my plan" inconsistency', failure: 'order vs billing in 3 retries', severity: 'medium' },
-    ],
-  },
-  {
-    id: 'prp_2a05',
-    type: 'prompt',
-    status: 'promoted',
-    agent: 'Ticket Triage',
-    targetVersion: 'v1',
-    proposedVersion: 'v2',
-    title: 'Tighten priority threshold language',
-    summary: 'Promoted 3 days ago. Pass rate climbed from 71% → 78% on Priority Routing suite over the next 24 hours.',
-    source: 'Failed test cases · 9 in last 14 days',
-    createdAt: '5d ago',
-    promotedAt: '3d ago',
-    impact: { passDelta: +7, costDelta: 0, latencyDelta: 0 },
-    confidence: 0.82,
-    diff: null,
-    evidence: [],
-  },
-  {
-    id: 'prp_9f31',
-    type: 'tool',
-    status: 'dismissed',
-    agent: 'Code Helper',
-    targetVersion: 'v1',
-    proposedVersion: '—',
-    title: 'Remove read_file_chunked',
-    summary: 'Suggested removal due to low usage (2% of calls). Dismissed: tool is essential for large repo evals.',
-    source: 'Tool usage analysis',
-    createdAt: '4d ago',
-    dismissedAt: '2d ago',
-    dismissReason: 'False positive — tool is critical for evals on monorepos.',
-    impact: { passDelta: 0, costDelta: -1, latencyDelta: -50 },
-    confidence: 0.41,
-    evidence: [],
-  },
-];
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60)   return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)    return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function mapImpact(details: OptimizationProposalDto['details']): ImpactMetrics {
+  if (details.kind !== 'ModelSwitch') return { passDelta: 0, costDelta: 0, latencyDelta: 0 };
+  const ms = details as ModelSwitchDetailsDto;
+  return {
+    passDelta:    Math.round((ms.expectedPassRateDelta ?? 0) * 100),
+    costDelta:    ms.expectedCostDelta != null ? Math.round(ms.expectedCostDelta * 100) : 0,
+    latencyDelta: ms.expectedLatencyMs ?? 0,
+  };
+}
+
+function mapDiff(details: OptimizationProposalDto['details']): Proposal['diff'] {
+  if (details.kind !== 'SystemPrompt') return undefined;
+  const sp = details as SystemPromptDetailsDto;
+  return { before: sp.currentSystemMessage, after: sp.proposedSystemMessage };
+}
+
+function mapToolDiff(details: OptimizationProposalDto['details']): ToolDiff | undefined {
+  if (details.kind !== 'Tool') return undefined;
+  const td = details as ToolDetailsDto;
+  const currentNames = new Set(td.currentTools.map(t => t.name));
+  const proposedNames = new Set(td.proposedTools.map(t => t.name));
+  return {
+    added:    td.proposedTools.filter(t => !currentNames.has(t.name)).map(t => ({ name: t.name, desc: t.description })),
+    removed:  td.currentTools.filter(t => !proposedNames.has(t.name)).map(t => ({ name: t.name, desc: t.description })),
+    modified: td.proposedTools.filter(t => currentNames.has(t.name)).map(t => ({ name: t.name, desc: t.description })),
+  };
+}
+
+function mapModelChange(details: OptimizationProposalDto['details']): ModelChange | undefined {
+  if (details.kind !== 'ModelSwitch') return undefined;
+  const ms = details as ModelSwitchDetailsDto;
+  return { from: ms.currentModelName, to: ms.proposedModelName };
+}
+
+function dtoToProposal(dto: OptimizationProposalDto): Proposal {
+  const status = mapStatus(dto);
+  return {
+    id:              dto.id,
+    type:            mapKind(dto),
+    status,
+    agent:           dto.agentName,
+    targetVersion:   'current',
+    proposedVersion: 'proposed',
+    title:           dto.rationale.split(/[.!?]/)[0]?.trim() ?? dto.rationale,
+    summary:         dto.rationale,
+    source:          dto.evidenceTestRunIds.length > 0
+                       ? `${dto.evidenceTestRunIds.length} evidence test run${dto.evidenceTestRunIds.length !== 1 ? 's' : ''}`
+                       : 'Generated by optimizer',
+    createdAt:       relativeTime(dto.createdAt),
+    promotedAt:      status === 'promoted' ? relativeTime(dto.updatedAt) : undefined,
+    dismissedAt:     status === 'dismissed' ? relativeTime(dto.updatedAt) : undefined,
+    impact:          mapImpact(dto.details),
+    confidence:      priorityToConfidence(dto.priority),
+    diff:            mapDiff(dto.details),
+    toolDiff:        mapToolDiff(dto.details),
+    modelChange:     mapModelChange(dto.details),
+    evidence:        dto.evidenceTestRunIds.map((runId, i) => ({
+                       id:       runId,
+                       name:     `Test run ${i + 1}`,
+                       failure:  '',
+                       severity: 'medium' as const,
+                     })),
+  };
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -434,7 +367,7 @@ function ABResultPanel({ ab, agentColor }: { ab: NonNullable<Proposal['abResult'
       </div>
       <div className="grid grid-cols-2 gap-[10px]">
         {([
-          { label: `Current (${PROPOSALS_DATA[0].targetVersion})`, val: ab.current, color: 'var(--text-muted)', isWinner: winner === 'current' },
+          { label: 'Current', val: ab.current, color: 'var(--text-muted)', isWinner: winner === 'current' },
           { label: 'Proposed',                                      val: ab.proposed, color: agentColor,        isWinner: winner === 'proposed' },
         ] as const).map(s => (
           <div key={s.label} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8, boxShadow: s.isWinner ? `inset 0 0 0 1.5px ${agentColor}55` : 'none' }}>
@@ -551,7 +484,6 @@ function ParamDiffPanel({ paramDiff }: { paramDiff: Record<string, ParamChange> 
 function ProposalDetail({ p }: { p: Proposal }) {
   const c  = AGENT_COLORS[p.agent] ?? '#c9944a';
   const tm = PROPOSAL_TYPE_META[p.type];
-  const isTerminal = p.status === 'promoted' || p.status === 'dismissed';
 
   return (
     <div className="flex flex-col gap-3">
@@ -744,11 +676,28 @@ type StatusFilter = 'open' | 'all' | ProposalStatus;
 type TypeFilter = 'all' | ProposalType;
 
 export default function Proposals() {
+  const queryClient = useQueryClient();
   const [filter, setFilter]         = useState<StatusFilter>('open');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [selected, setSelected]     = useState<Proposal>(PROPOSALS_DATA[0]);
+  const [selected, setSelected]     = useState<Proposal | null>(null);
 
-  const filtered = PROPOSALS_DATA.filter(p => {
+  const { data: dtos = [], isLoading } = useQuery({
+    queryKey: ['proposals'],
+    queryFn: () => proposalsApi.getAll(),
+  });
+
+  const proposals: Proposal[] = dtos.map(dtoToProposal);
+
+  const updateStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ApiProposalStatus }) =>
+      proposalsApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      setSelected(null);
+    },
+  });
+
+  const filtered = proposals.filter(p => {
     if (filter === 'open' && (p.status === 'promoted' || p.status === 'dismissed')) return false;
     if (filter !== 'open' && filter !== 'all' && p.status !== filter) return false;
     if (typeFilter !== 'all' && p.type !== typeFilter) return false;
@@ -756,16 +705,16 @@ export default function Proposals() {
   });
 
   const counts = {
-    open:       PROPOSALS_DATA.filter(p => p.status !== 'promoted' && p.status !== 'dismissed').length,
-    new:        PROPOSALS_DATA.filter(p => p.status === 'new').length,
-    ab_running: PROPOSALS_DATA.filter(p => p.status === 'ab_running').length,
-    ready:      PROPOSALS_DATA.filter(p => p.status === 'ready').length,
-    promoted:   PROPOSALS_DATA.filter(p => p.status === 'promoted').length,
-    dismissed:  PROPOSALS_DATA.filter(p => p.status === 'dismissed').length,
-    all:        PROPOSALS_DATA.length,
+    open:       proposals.filter(p => p.status !== 'promoted' && p.status !== 'dismissed').length,
+    new:        proposals.filter(p => p.status === 'new').length,
+    ab_running: proposals.filter(p => p.status === 'ab_running').length,
+    ready:      proposals.filter(p => p.status === 'ready').length,
+    promoted:   proposals.filter(p => p.status === 'promoted').length,
+    dismissed:  proposals.filter(p => p.status === 'dismissed').length,
+    all:        proposals.length,
   };
 
-  const openProposals = PROPOSALS_DATA.filter(p => p.status === 'new' || p.status === 'ready' || p.status === 'ab_running');
+  const openProposals = proposals.filter(p => p.status === 'new' || p.status === 'ready' || p.status === 'ab_running');
   const totalPotentialPt = openProposals.reduce((n, p) => n + Math.max(0, p.impact.passDelta), 0);
 
   const statusTabs: { key: StatusFilter; label: string; count: number }[] = [
@@ -897,7 +846,9 @@ export default function Proposals() {
         <div className="relative">
           <div className="absolute overflow-y-auto" style={{ inset: '0 -20px 0 0', paddingRight: 20, paddingTop: 4, paddingBottom: 24 }}>
             <div className="flex flex-col gap-2">
-              {filtered.length > 0 ? filtered.map(p => (
+              {isLoading ? (
+                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>Loading proposals…</div>
+              ) : filtered.length > 0 ? filtered.map(p => (
                 <ProposalCard key={p.id} p={p} isActive={selected?.id === p.id} onClick={() => setSelected(p)}/>
               )) : (
                 <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>No proposals match this filter.</div>
@@ -919,32 +870,28 @@ export default function Proposals() {
               className="flex gap-2 justify-end flex-wrap shrink-0 pt-3 pb-2"
               style={{ borderTop: '1px solid var(--hairline)' }}
             >
-              <button className="btn-ghost text-[12.5px] font-medium" style={{ padding: '9px 14px', borderRadius: 9 }}>Dismiss</button>
+              <button
+                className="btn-ghost text-[12.5px] font-medium"
+                style={{ padding: '9px 14px', borderRadius: 9 }}
+                disabled={updateStatus.isPending}
+                onClick={() => updateStatus.mutate({ id: selected.id, status: ApiProposalStatus.Rejected })}
+              >Dismiss</button>
               <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 9 }}>
                 <CopyIcon size={12}/> Edit &amp; re-run
               </button>
-              {selected.status === 'new' && (
-                <button
-                  className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold"
-                  style={{ padding: '9px 16px', background: 'var(--bg-card)', borderRadius: 9, color: '#8ec0cc', boxShadow: '0 1px 0 rgba(255,255,255,0.02) inset, 0 4px 14px -8px rgba(107,158,170,0.4)', border: '1px solid rgba(107,158,170,0.25)' }}
-                >
-                  <BeakerIcon size={12}/> Run A/B test
-                </button>
-              )}
               <button
                 className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-white"
+                disabled={updateStatus.isPending}
                 style={{
                   padding: '9px 18px',
-                  background: selected.status === 'ready'
-                    ? 'linear-gradient(135deg, #3daa6f, #059669)'
-                    : 'linear-gradient(135deg, #c9944a, #a07434)',
+                  background: 'linear-gradient(135deg, #3daa6f, #059669)',
                   borderRadius: 9,
-                  boxShadow: selected.status === 'ready'
-                    ? '0 4px 14px -4px rgba(61,170,111,0.5), inset 0 1px 0 rgba(255,255,255,0.15)'
-                    : '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  boxShadow: '0 4px 14px -4px rgba(61,170,111,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  opacity: updateStatus.isPending ? 0.6 : 1,
                 }}
+                onClick={() => updateStatus.mutate({ id: selected.id, status: ApiProposalStatus.Accepted })}
               >
-                <ArrowUpRightIcon size={12}/> {selected.status === 'ready' ? `Promote to ${selected.proposedVersion}` : 'Apply now'}
+                <ArrowUpRightIcon size={12}/> Apply now
               </button>
             </div>
           )}

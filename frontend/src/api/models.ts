@@ -350,8 +350,47 @@ export interface AgentCallFilter {
 }
 
 /* ── Optimization ── */
-export enum ProposalKind { SystemPrompt = 'SystemPrompt', Tool = 'Tool', Both = 'Both', ModelSwitch = 'ModelSwitch' }
+export enum ProposalKind { SystemPrompt = 'SystemPrompt', Tool = 'Tool', ModelSwitch = 'ModelSwitch' }
+export enum ProposalStatus { Draft = 'Draft', Accepted = 'Accepted', Rejected = 'Rejected' }
 export enum Priority { Low = 'Low', Medium = 'Medium', High = 'High', Critical = 'Critical' }
+
+export interface ModelSwitchDetailsDto {
+  kind: 'ModelSwitch';
+  endpointId: string;
+  currentModelName: string;
+  proposedModelName: string;
+  expectedPassRateDelta: number | null;
+  expectedCostDelta: number | null;
+  expectedLatencyMs: number | null;
+}
+
+export interface SystemPromptDetailsDto {
+  kind: 'SystemPrompt';
+  currentSystemMessage: string;
+  proposedSystemMessage: string;
+}
+
+export interface ToolDetailsDto {
+  kind: 'Tool';
+  currentTools: ToolSpecDto[];
+  proposedTools: ToolSpecDto[];
+}
+
+export type ProposalDetailsDto = ModelSwitchDetailsDto | SystemPromptDetailsDto | ToolDetailsDto;
+
+export interface OptimizationProposalDto {
+  id: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  agentId: string;
+  agentName: string;
+  priority: Priority;
+  rationale: string;
+  details: ProposalDetailsDto;
+  evidenceTestRunIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface ProposalCreatedEvent {
   type: 'proposal-created';
