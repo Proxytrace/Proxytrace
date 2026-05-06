@@ -927,14 +927,18 @@ export default function Proposals() {
       </div>
 
       {/* Master-detail */}
-      <div className="fade-up flex-1 min-h-0" style={{ animationDelay: '60ms', display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 14 }}>
-        {/* Left: list */}
-        <div className="overflow-y-auto flex flex-col gap-2" style={{ padding: '4px 2px 24px', scrollbarGutter: 'stable' }}>
-          {filtered.length > 0 ? filtered.map(p => (
-            <ProposalCard key={p.id} p={p} isActive={selected?.id === p.id} onClick={() => setSelected(p)}/>
-          )) : (
-            <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>No proposals match this filter.</div>
-          )}
+      <div className="fade-up flex-1 min-h-0 overflow-hidden" style={{ animationDelay: '60ms', display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 14 }}>
+        {/* Left: list — outer fills grid track, inner scroll extends right into gap for shadow room */}
+        <div className="relative">
+          <div className="absolute overflow-y-auto" style={{ inset: '0 -20px 0 0', paddingRight: 20, paddingTop: 4, paddingBottom: 24 }}>
+            <div className="flex flex-col gap-2">
+              {filtered.length > 0 ? filtered.map(p => (
+                <ProposalCard key={p.id} p={p} isActive={selected?.id === p.id} onClick={() => setSelected(p)}/>
+              )) : (
+                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>No proposals match this filter.</div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right: detail */}
