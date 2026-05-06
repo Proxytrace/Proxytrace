@@ -1,5 +1,5 @@
-using Trsr.Domain.Evaluation;
 using Trsr.Domain.TestResult;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.TestRun.Internal;
 
@@ -8,27 +8,22 @@ internal class StatisticsCalculator : IStatisticsCalculator
     public TestRunStatistics CalculateStatistics(ITestRun testRun)
     {
         IReadOnlyList<ITestResult> results = testRun.TestResults;
-        long inputTokens = results.Sum(r => r.Statistics.InputTokens);
-        long outputTokens = results.Sum(r => r.Statistics.OutputTokens);
+        
+        TokenUsage? usage = results.Select(x => x.Statistics.Usage)
+            .Where(x => x != null)
+            .Aggregate((TokenUsage?)null, (a, b) 
+                => a == null || b == null ? a ?? b : a + b);
 
-        decimal? cost = null;
-        if (testRun.Endpoint is { InputTokenCost: not null, OutputTokenCost: not null })
-        {
-            cost = Math.Round(
-                inputTokens / 1_000_000m * testRun.Endpoint.InputTokenCost.Value +
-                outputTokens / 1_000_000m * testRun.Endpoint.OutputTokenCost.Value,
-                6);
-        }
+        decimal? cost = usage != null
+            ? testRun.Endpoint.CalculateCost(usage) 
+            : null;
 
         return new TestRunStatistics(
             TestCases: results.Count,
-            Passed: results.Count(r =>
-                r.Evaluations.Count > 0 &&
-                r.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable)),
-            InputTokens: inputTokens,
-            OutputTokens: outputTokens,
+            Passed: results.Count(r => r.Passed),
+            Usage: usage,
             TotalDuration: results
-                .Select(r => r.Statistics.Duration)
+                .Select(r => r.Statistics.Latency)
                 .Aggregate(TimeSpan.Zero, (a, b) => a + b),
             Cost: cost);
     }

@@ -1,14 +1,13 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Streaming;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
@@ -189,16 +188,14 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     {
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        var stopwatch = Stopwatch.StartNew();
-        Completion completion = await testRun.Group.Suite.Agent.CompleteAsync(
+        ICompletion completion = await testRun.Group.Suite.Agent.CompleteAsync(
             testCase.Input,
             testRun.Endpoint,
             cancellationToken);
-        long elapsedMs = stopwatch.ElapsedMilliseconds;
 
         broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
         
-        var testResult = createTestResult(testCase, completion.Response, []);
+        var testResult = createTestResult(testCase, completion, []);
         await testResultRepository.AddAsync(testResult, cancellationToken);
 
         var run = testRun;

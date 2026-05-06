@@ -4,6 +4,7 @@ using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelProvider;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.ModelEndpoint.Internal;
 
@@ -49,6 +50,12 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
     
     public IModelClient CreateClient() 
         => modelClientFactory(this);
+
+    public decimal? CalculateCost(TokenUsage usage) 
+        => this is { InputTokenCost: not null, OutputTokenCost: not null }
+            ? (InputTokenCost.Value * usage.InputTokenCount + OutputTokenCost.Value * usage.OutputTokenCount) /
+              1_000_000m
+            : null;
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

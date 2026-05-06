@@ -10,8 +10,8 @@ internal record TestResultEntity : Entity
     public required AssistantMessage ActualResponse { get; init; }
     public required IReadOnlyCollection<StoredEvaluation> Evaluations { get; init; }
     public required long DurationMs { get; init; }
-    public required long InputTokens { get; init; }
-    public required long OutputTokens { get; init; }
+    public required long? InputTokens { get; init; }
+    public required long? OutputTokens { get; init; }
 }
 
 /// <summary>

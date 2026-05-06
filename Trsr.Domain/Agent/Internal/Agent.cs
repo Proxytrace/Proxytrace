@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Logging;
 using Trsr.Common.Validation;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -44,7 +45,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         Tools = tools;
     }
 
-    public Task<Completion> CompleteAsync(
+    public Task<ICompletion> CompleteAsync(
         Conversation conversation,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)

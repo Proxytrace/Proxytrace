@@ -179,7 +179,7 @@ public class TestRunsController : ControllerBase
                     GetEvaluatorName(e.Evaluator),
                     e.Score,
                     e.Reasoning)).ToArray(),
-                res.Statistics.DurationMs
+                (long)res.Statistics.Latency.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
@@ -265,8 +265,8 @@ public class TestRunsController : ControllerBase
 
     private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)
     {
-        var total = result.Statistics.DurationMs;
-        return new RuntimeBreakdownDto(Total: total, Ttft: 0, Gen: total, Tools: 0, Judge: null);
+        var total = result.Statistics.Latency.TotalMilliseconds;
+        return new RuntimeBreakdownDto(Total: (long)total, Ttft: 0, Gen: (long)total, Tools: 0, Judge: null);
     }
 
     private static EndpointUsageDto[] MapEndpoints(ITestRun run, Domain.TestResult.ITestResult result)
@@ -279,10 +279,10 @@ public class TestRunsController : ControllerBase
                 Region: "n/a",
                 PricingIn: (double)(run.Endpoint.InputTokenCost ?? 0),
                 PricingOut: (double)(run.Endpoint.OutputTokenCost ?? 0),
-                TokIn: result.Statistics.InputTokens,
-                TokOut: result.Statistics.OutputTokens,
+                TokIn: result.Statistics.Usage?.InputTokenCount,
+                TokOut: result.Statistics.Usage?.OutputTokenCount,
                 Calls: 1,
-                Latency: result.Statistics.DurationMs,
+                Latency: (long)result.Statistics.Latency.TotalMilliseconds,
                 CostUsd: 0
             )
         ];

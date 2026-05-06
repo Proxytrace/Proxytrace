@@ -3,6 +3,7 @@ using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
@@ -345,9 +346,15 @@ internal class StatisticsQueryService : IStatisticsQueryService
         return new TestRunStatistics(
             TestCases: totals.TestCases,
             Passed: totals.Passed,
-            TotalDuration: TimeSpan.FromMilliseconds(totals.TotalDurationMs),
-            TotalTokens: totals.TotalInputTokens + totals.TotalOutputTokens,
-            TotalCost: totals.TotalCost.HasValue ? Math.Round(totals.TotalCost.Value, 4) : null);
+            TotalDuration: totals.TotalDurationMs.HasValue 
+                ? TimeSpan.FromMilliseconds(totals.TotalDurationMs.Value) 
+                : null,
+            TotalUsage: totals is {TotalInputTokens: not null, TotalOutputTokens: not null } 
+                ? new TokenUsage((ulong)totals.TotalInputTokens.Value, (ulong)totals.TotalOutputTokens.Value) 
+                : null,
+            TotalCost: totals.TotalCost.HasValue
+                ? Math.Round(totals.TotalCost.Value, 4) 
+                : null);
     }
 
     private static double Percentile(double[] sorted, double percentile)

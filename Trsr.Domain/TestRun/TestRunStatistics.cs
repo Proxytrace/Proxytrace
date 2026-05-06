@@ -1,19 +1,25 @@
+using Trsr.Domain.Usage;
+
 namespace Trsr.Domain.TestRun;
 
 public record TestRunStatistics(
     int TestCases,
     int Passed,
-    long InputTokens,
-    long OutputTokens,
-    TimeSpan TotalDuration,
+    TokenUsage? Usage,
+    TimeSpan? TotalDuration,
     decimal? Cost)
 {
     public int Failed
         => TestCases - Passed;
     
-    public double PassRate 
-        => Passed / (double)TestCases;
+    public double? PassRate 
+        => TestCases > 0 ? Passed / (double)TestCases : null;
     
     public static TestRunStatistics Empty
-        => new(0, 0, 0, 0, TimeSpan.Zero, null);
+        => new(
+            TestCases: 0,
+            Passed: 0,
+            Usage: null, 
+            TotalDuration: TimeSpan.Zero, 
+            Cost: null);
 }

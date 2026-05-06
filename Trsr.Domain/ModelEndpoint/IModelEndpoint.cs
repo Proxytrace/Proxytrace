@@ -1,5 +1,6 @@
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelProvider;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.ModelEndpoint;
 
@@ -47,4 +48,9 @@ public interface IModelEndpoint : IDomainEntity
     /// Gets an chat client instance 
     /// </summary>
     IModelClient CreateClient();
+
+    /// <summary>
+    /// Calculates cost associated with this endpoint for a given usage
+    /// </summary>
+    decimal? CalculateCost(TokenUsage usage);
 }

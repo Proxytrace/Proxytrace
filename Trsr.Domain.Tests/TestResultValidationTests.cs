@@ -19,13 +19,12 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var testCase = await CreateTestCaseAsync(services);
         var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
-        var testResult = factory(testCase, actualResponse, [], TimeSpan.FromMilliseconds(1500L));
+        var testResult = factory(testCase, actualResponse, []);
 
         testResult.Should().NotBeNull();
         testResult.TestCase.Should().Be(testCase);
         testResult.ActualResponse.Should().Be(actualResponse);
         testResult.Evaluations.Should().BeEmpty();
-        testResult.Duration.Should().Be(TimeSpan.FromMilliseconds(1500L));
         testResult.Id.Should().NotBe(Guid.Empty);
         testResult.CreatedAt.Should().NotBe(default);
         testResult.UpdatedAt.Should().NotBe(default);
@@ -41,7 +40,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
             var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
             // ReSharper disable once NullableWarningSuppressionIsUsed
-            var action = () => factory(null!, actualResponse, [], TimeSpan.Zero);
+            var action = () => factory(null!, actualResponse, []);
             action.Should().Throw<Exception>();
             return Task.CompletedTask;
         }
@@ -59,7 +58,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var testCase = await CreateTestCaseAsync(services);
 
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(testCase, null!, [], TimeSpan.Zero);
+        var action = () => factory(testCase, null!, []);
         action.Should().Throw<Exception>();
     }
 
@@ -75,7 +74,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var evaluator = await evaluatorGenerator.GetOrCreateAsync(default);
         var evaluation = createEvaluation(evaluator, EvaluationScore.Good, "Correct");
 
-        var testResult = factory(testCase, actualResponse, [evaluation], TimeSpan.FromMilliseconds(2000L));
+        var testResult = factory(testCase, actualResponse, [evaluation]);
 
         testResult.Evaluations.Should().ContainSingle().Which.Score.Should().Be(EvaluationScore.Good);
     }
@@ -88,14 +87,13 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<ITestResult>>();
         var existing = await generator.CreateAsync(CancellationToken);
 
-        var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluations, existing.Duration, existing);
+        var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluations, existing);
 
         testResult.Should().NotBeNull();
         testResult.Id.Should().Be(existing.Id);
         testResult.TestCase.Should().Be(existing.TestCase);
         testResult.ActualResponse.Should().Be(existing.ActualResponse);
         testResult.Evaluations.Should().BeEquivalentTo(existing.Evaluations);
-        testResult.Duration.Should().Be(existing.Duration);
         testResult.CreatedAt.Should().Be(existing.CreatedAt);
         testResult.UpdatedAt.Should().Be(existing.UpdatedAt);
     }
@@ -108,8 +106,8 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var testCase = await CreateTestCaseAsync(services);
         var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
 
-        var testResult1 = factory(testCase, actualResponse, [], TimeSpan.Zero);
-        var testResult2 = factory(testCase, actualResponse, [], TimeSpan.Zero);
+        var testResult1 = factory(testCase, actualResponse, []);
+        var testResult2 = factory(testCase, actualResponse, []);
 
         testResult1.Id.Should().NotBe(testResult2.Id);
     }

@@ -1,32 +1,32 @@
 using System.ComponentModel.DataAnnotations;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestResult.Internal;
 
 internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
-    private readonly IStatisticsCalculator statisticsCalculator;
     public ITestCase TestCase { get; }
     public AssistantMessage ActualResponse { get; }
+    public bool Passed => Evaluations.All(x => x.Passed);
     public IReadOnlyCollection<IEvaluation> Evaluations { get; }
     public TestResultStatistics Statistics { get; }
     public EvaluationScore? OverallScore { get; }
 
     public TestResult(
         ITestCase testCase,
-        AssistantMessage actualResponse,
+        ICompletion completion,
         IReadOnlyCollection<IEvaluation> evaluations,
-        IRepository<ITestResult> repository,
-        IStatisticsCalculator statisticsCalculator) : base(repository)
+        IRepository<ITestResult> repository) : base(repository)
     {
-        this.statisticsCalculator = statisticsCalculator;
         TestCase = testCase;
-        ActualResponse = actualResponse;
+        ActualResponse = completion.Response;
         Evaluations = evaluations;
-        Statistics = statisticsCalculator.CalculateStatistics(this);
+        Statistics = TestResultStatistics.FromCompletion(completion);
         OverallScore = evaluations.CombineScores();
     }
 
@@ -35,14 +35,13 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
         IDomainEntityData existing,
-        IRepository<ITestResult> repository,
-        IStatisticsCalculator statisticsCalculator) : base(existing, repository)
+        TestResultStatistics statistics,
+        IRepository<ITestResult> repository) : base(existing, repository)
     {
-        this.statisticsCalculator = statisticsCalculator;
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;
-        Statistics = statisticsCalculator.CalculateStatistics(this);
+        Statistics = statistics;
         OverallScore = evaluations.CombineScores();
     }
 
@@ -59,8 +58,8 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
             ActualResponse,
             updatedEvaluations,
             this,
-            repository,
-            statisticsCalculator);
+            Statistics,
+            repository);
         return await repository.UpdateAsync(updatedResults, cancellationToken);
     }
 

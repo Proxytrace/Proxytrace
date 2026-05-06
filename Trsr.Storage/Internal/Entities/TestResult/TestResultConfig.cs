@@ -82,9 +82,9 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             Evaluations = domain.Evaluations
                 .Select(e => new StoredEvaluation { EvaluatorId = e.Evaluator.Id, Score = e.Score, Reasoning = e.Reasoning })
                 .ToArray(),
-            DurationMs = (long)domain.Statistics.Duration.TotalMicroseconds,
-            InputTokens = domain.Statistics.InputTokens,
-            OutputTokens = domain.Statistics.OutputTokens,
+            DurationMs = (long)domain.Statistics.Latency.TotalMicroseconds,
+            InputTokens = (long?)domain.Statistics.Usage?.InputTokenCount,
+            OutputTokens = (long?)domain.Statistics.Usage?.OutputTokenCount,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

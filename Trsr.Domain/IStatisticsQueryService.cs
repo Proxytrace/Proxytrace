@@ -1,3 +1,5 @@
+using Trsr.Domain.Usage;
+
 namespace Trsr.Domain;
 
 /// <summary>
@@ -95,9 +97,14 @@ public record CostEstimateStat(
 public record TestRunStatistics(
     int TestCases,
     int Passed,
-    TimeSpan TotalDuration,
-    long TotalTokens,
+    TimeSpan? TotalDuration,
+    TokenUsage? TotalUsage,
     decimal? TotalCost)
 {
-    public static TestRunStatistics Empty => new(0, 0, TimeSpan.Zero, 0, null);
+    public static TestRunStatistics Empty => new(
+        TestCases: 0,
+        Passed: 0,
+        TotalDuration: null,
+        TotalUsage: null, 
+        TotalCost: null);
 }

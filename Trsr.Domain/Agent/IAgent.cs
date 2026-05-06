@@ -1,3 +1,4 @@
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
@@ -41,7 +42,7 @@ public interface IAgent : IDomainEntity
     /// <summary>
     /// Given a conversation history, complete the next message by calling the language model defined in the provided model endpoint.
     /// </summary>
-    Task<Completion> CompleteAsync(
+    Task<ICompletion> CompleteAsync(
         Conversation conversation,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);

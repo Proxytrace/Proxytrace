@@ -1,4 +1,5 @@
 using Trsr.Domain.Agent;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
 using Trsr.Domain.Tools;
@@ -22,15 +23,11 @@ public record ModelOptions(
             Tools: agent.Tools);
 }
 
-public record Completion(
-    AssistantMessage Response,
-    TokenUsage? Usage);
-
 public interface IModelClient
 {
     public delegate IModelClient Factory(IModelEndpoint endpoint);
 
-    Task<Completion> CompleteAsync(
+    Task<ICompletion> CompleteAsync(
         Conversation conversation,
         ModelOptions? options = null,
         CancellationToken cancellationToken = default);

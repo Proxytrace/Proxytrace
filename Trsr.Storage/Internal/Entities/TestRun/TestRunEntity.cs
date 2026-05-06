@@ -13,8 +13,8 @@ internal record TestRunEntity : Entity
 
     public required int StatTestCases { get; init; }
     public required int StatPassed { get; init; }
-    public required long StatInputTokens { get; init; }
-    public required long StatOutputTokens { get; init; }
-    public required long StatTotalDurationMs { get; init; }
+    public required long? StatInputTokens { get; init; }
+    public required long? StatOutputTokens { get; init; }
+    public required long? StatTotalDurationMs { get; init; }
     public required decimal? StatCost { get; init; }
 }

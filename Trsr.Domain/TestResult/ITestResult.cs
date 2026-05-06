@@ -1,3 +1,4 @@
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -19,6 +20,11 @@ public interface ITestResult : IDomainEntity<ITestResult>
     /// The overall score from combining all evaluations
     /// </summary>
     EvaluationScore? OverallScore { get; }
+    
+    /// <summary>
+    /// Whether the test has passed
+    /// </summary>
+    bool Passed { get; }
 
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     IReadOnlyCollection<IEvaluation> Evaluations { get; }
@@ -29,7 +35,7 @@ public interface ITestResult : IDomainEntity<ITestResult>
     /// <summary>Factory delegate for creating a new test result.</summary>
     public delegate ITestResult CreateNew(
         ITestCase testCase,
-        AssistantMessage actualResponse,
+        ICompletion completion,
         IReadOnlyCollection<IEvaluation> evaluations);
 
     /// <summary>Factory delegate for reconstituting an existing test result from persistence.</summary>

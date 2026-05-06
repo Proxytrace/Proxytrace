@@ -5,6 +5,7 @@ using NSubstitute;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
@@ -13,7 +14,6 @@ using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;
-using Trsr.Domain.Usage;
 using Trsr.Testing;
 
 namespace Trsr.Application.Tests;
@@ -55,10 +55,14 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
     private void RegisterFakeModelClient(ContainerBuilder builder, AssistantMessage response)
     {
-        IModelClient? handler = Substitute.For<IModelClient>();
-        handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new Completion(response, TokenUsage.None)));
-        builder.RegisterInstance(handler);
+        builder.Register(ct =>
+        {
+            IModelClient handler = Substitute.For<IModelClient>();
+            var completionFactory = ct.Resolve<ICompletion.Create>();
+            handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(completionFactory(response, null, TimeSpan.FromMilliseconds(1000))));
+            return handler;
+        });
     }
 
     [TestMethod]

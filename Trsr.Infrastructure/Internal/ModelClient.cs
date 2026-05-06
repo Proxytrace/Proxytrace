@@ -1,7 +1,9 @@
 using System.ClientModel;
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
@@ -12,38 +14,45 @@ namespace Trsr.Infrastructure.Internal;
 
 internal class ModelClient : IModelClient
 {
+    private readonly ICompletion.Create completionFactory;
     private readonly IModelEndpoint endpoint;
     private readonly IOutputFormat.Create outputFormatFactory;
     private readonly IChatClient chatClient;
 
     public ModelClient(
         IModelEndpoint endpoint,
+        ICompletion.Create completionFactory,
         IOutputFormat.Create outputFormatFactory)
-        : this(endpoint, outputFormatFactory, CreateChatClient(endpoint))
+        : this(endpoint, completionFactory, outputFormatFactory, CreateChatClient(endpoint))
     {
+        this.completionFactory = completionFactory;
     }
 
     internal ModelClient(
         IModelEndpoint endpoint,
+        ICompletion.Create completionFactory,
         IOutputFormat.Create outputFormatFactory,
         IChatClient chatClient)
     {
         this.endpoint = endpoint;
+        this.completionFactory = completionFactory;
         this.outputFormatFactory = outputFormatFactory;
         this.chatClient = chatClient;
     }
 
-    public async Task<Completion> CompleteAsync(
+    public async Task<ICompletion> CompleteAsync(
         Conversation conversation,
         ModelOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         options ??= ModelOptions.FromModel(endpoint.Model);
 
+        Stopwatch sw = Stopwatch.StartNew();
         ChatResponse response = await chatClient.GetResponseAsync(
             conversation.ToChatMessages(),
             options.ToChatOptions(),
             cancellationToken);
+        TimeSpan latency = sw.Elapsed;
 
         var toolRequests = response
             .Messages
@@ -70,8 +79,9 @@ internal class ModelClient : IModelClient
                 (ulong)response.Usage.InputTokenCount.Value,
                 (ulong)response.Usage.OutputTokenCount.Value);
         }
-
-        return new Completion(message, usage);
+        
+        var completion = completionFactory(message, usage, latency);
+        return completion;
     }
 
     public async Task<TOutput?> CompleteAsync<TOutput>(
@@ -80,7 +90,7 @@ internal class ModelClient : IModelClient
         CancellationToken cancellationToken = default)
     {
         IOutputFormat outputFormat = outputFormatFactory(typeof(TOutput));
-        Completion completion = await CompleteAsync(conversation, options, cancellationToken);
+        ICompletion completion = await CompleteAsync(conversation, options, cancellationToken);
         return await outputFormat.ParseAsync<TOutput>(completion.Response.GetTextResponse(), cancellationToken);
     }
 
