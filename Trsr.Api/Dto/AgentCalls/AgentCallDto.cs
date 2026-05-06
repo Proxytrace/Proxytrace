@@ -20,7 +20,8 @@ public record AgentCallDto(
     string? ErrorMessage,
     decimal? CostEur,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    Guid? ConversationId);
 
 public record AgentCallMessageDto(string Role, string Content, IReadOnlyList<AgentCallToolRequestDto> ToolRequests, string? ToolCallId = null);
 

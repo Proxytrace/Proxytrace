@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Project;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
@@ -94,5 +95,27 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             .Select(g => new { AgentId = g.Key, LastUsedAt = g.Max(e => e.CreatedAt) })
             .ToDictionaryAsync(x => x.AgentId, x => x.LastUsedAt, cancellationToken);
         return result;
+    }
+
+    public async Task<IAgentCall?> FindLatestByConversationIdAsync(
+        Guid conversationId,
+        IProject project,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var projectId = project.Id;
+        var stored = await context.Set<AgentCallEntity>()
+            .AsNoTracking()
+            .Where(e => e.ConversationId == conversationId)
+            .Where(e => context.Set<AgentEntity>()
+                .Where(a => a.Project == projectId)
+                .Select(a => a.Id)
+                .Contains(e.AgentId))
+            .OrderByDescending(e => e.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return stored is null
+            ? null
+            : await mapper.Map(stored, cancellationToken);
     }
 }

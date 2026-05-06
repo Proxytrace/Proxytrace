@@ -8,6 +8,8 @@ const shortcutsListEl = document.getElementById("shortcuts-list");
 
 // Per-agent conversation history: agentId → message[]
 const histories = {};
+// Per-agent session ID sent as X-Trsr-Session-Id; null until the first message is sent
+const sessionIds = {};
 let agents = [];
 let activeAgentId = null;
 let streaming = false;
@@ -18,7 +20,7 @@ async function loadAgents() {
   try {
     const res = await fetch("/agents");
     agents = await res.json();
-    agents.forEach((a) => { histories[a.id] = []; });
+    agents.forEach((a) => { histories[a.id] = []; sessionIds[a.id] = null; });
     renderAgentTabs();
     selectAgent(agents[0].id);
   } catch {
@@ -208,6 +210,7 @@ async function send() {
   sendBtn.disabled = true;
 
   const history = histories[activeAgentId];
+  if (!sessionIds[activeAgentId]) sessionIds[activeAgentId] = crypto.randomUUID();
   history.push({ role: "user", content: text });
   addMessage("user", text);
 
@@ -221,7 +224,7 @@ async function send() {
     const res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history, agentId: activeAgentId }),
+      body: JSON.stringify({ messages: history, agentId: activeAgentId, sessionId: sessionIds[activeAgentId] }),
     });
 
     if (!res.ok) {

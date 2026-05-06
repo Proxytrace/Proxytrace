@@ -126,6 +126,66 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
                                                                            }
                                                                            """;
 
+    // Plain multi-turn chat (no tools) — used for conversation grouping tests
+    private const string ChatTurn1RequestBody = $$"""
+                                                  {
+                                                      "model": "{{Model}}",
+                                                      "messages": [
+                                                          {"role": "system", "content": "{{SystemPrompt}}"},
+                                                          {"role": "user", "content": "What is 2+2?"}
+                                                      ],
+                                                      "tools": [{
+                                                          "type": "function",
+                                                          "function": {
+                                                              "name": "{{ToolName}}",
+                                                              "description": "Get current weather",
+                                                              "parameters": {"type": "object", "properties": "{}"}
+                                                          }
+                                                      }]
+                                                  }
+                                                  """;
+
+    private const string ChatTurn1ResponseBody = $$"""
+                                                   {
+                                                       "id": "chatcmpl-4",
+                                                       "object": "chat.completion",
+                                                       "model": "{{Model}}",
+                                                       "choices": [{
+                                                           "index": 0,
+                                                           "message": {"role": "assistant", "content": "2+2 equals 4."},
+                                                           "finish_reason": "stop"
+                                                       }],
+                                                       "usage": {"prompt_tokens": 15, "completion_tokens": 5, "total_tokens": 20}
+                                                   }
+                                                   """;
+
+    // Turn 2 — includes the assistant reply from turn 1 in history, no tools re-sent
+    private const string ChatTurn2RequestBodyNoTools = $$"""
+                                                         {
+                                                             "model": "{{Model}}",
+                                                             "messages": [
+                                                                 {"role": "system", "content": "{{SystemPrompt}}"},
+                                                                 {"role": "user", "content": "What is 2+2?"},
+                                                                 {"role": "assistant", "content": "2+2 equals 4."},
+                                                                 {"role": "user", "content": "What about 3+3?"}
+                                                             ]
+                                                         }
+                                                         """;
+
+    private const string ChatTurn2ResponseBody = $$"""
+                                                   {
+                                                       "id": "chatcmpl-5",
+                                                       "object": "chat.completion",
+                                                       "model": "{{Model}}",
+                                                       "choices": [{
+                                                           "index": 0,
+                                                           "message": {"role": "assistant", "content": "3+3 equals 6."},
+                                                           "finish_reason": "stop"
+                                                       }],
+                                                       "usage": {"prompt_tokens": 20, "completion_tokens": 5, "total_tokens": 25}
+                                                   }
+                                                   """;
+
     private const string UnrelatedRequestBody = $$"""
                                                   {
                                                       "model": "{{Model}}",
@@ -280,6 +340,89 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
 
         // Should merge into the same agent call despite the different system message
         (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenSessionIdProvided_GroupsCallsUnderSameConversationId()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+        var sessionId = Guid.NewGuid().ToString();
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn1RequestBody,
+                ResponseBody: ChatTurn1ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn2RequestBodyNoTools,
+                ResponseBody: ChatTurn2ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(2);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+
+        var sharedConversationId = calls[0].ConversationId;
+        sharedConversationId.Should().NotBeNull();
+        calls[1].ConversationId.Should().Be(sharedConversationId);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenSessionIdAndToolsNotResent_InheritsAgentFromPriorCall()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var agentRepo = services.GetRequiredService<IRepository<Trsr.Domain.Agent.IAgent>>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+        var sessionId = Guid.NewGuid().ToString();
+
+        // Turn 1: request includes tool definitions → creates agent A
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn1RequestBody,
+                ResponseBody: ChatTurn1ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        // Turn 2: same session, no tools re-sent → should reuse agent A (not create agent B)
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: ChatTurn2RequestBodyNoTools,
+                ResponseBody: ChatTurn2ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: sessionId),
+            cancellationToken: CancellationToken);
+
+        // There should be exactly one agent (not two)
+        (await agentRepo.CountAsync(CancellationToken)).Should().Be(1);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls[0].Agent.Id.Should().Be(calls[1].Agent.Id);
     }
 
     [TestMethod]

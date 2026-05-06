@@ -517,7 +517,7 @@ app.get("/agents", (_req, res) => {
 //   { toolResult: { name, result } }        — tool execution result
 //   { error: "..." }                        — error message
 app.post("/chat", async (req, res) => {
-  const { messages, agentId } = req.body;
+  const { messages, agentId, sessionId } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array is required" });
   }
@@ -532,7 +532,8 @@ app.post("/chat", async (req, res) => {
 
   try {
     const fullMessages = [{ role: "system", content: agent.systemPrompt }, ...messages];
-    console.log(`[chat] agent=${agent.id} → ${MODEL}  messages=${fullMessages.length}`);
+    const sessionHeaders = sessionId ? { "x-trsr-session-id": sessionId } : {};
+    console.log(`[chat] agent=${agent.id} session=${sessionId ?? "none"} → ${MODEL}  messages=${fullMessages.length}`);
 
     // Turn 1: non-streaming with tools so tool_calls can be detected
     const turn1 = await openai.chat.completions.create({
@@ -540,7 +541,7 @@ app.post("/chat", async (req, res) => {
       messages: fullMessages,
       tools: agent.tools,
       stream: false,
-    });
+    }, { headers: sessionHeaders });
 
     const choice = turn1.choices[0];
     const toolCalls = choice.message.tool_calls ?? [];
@@ -562,12 +563,14 @@ app.post("/chat", async (req, res) => {
         toolMessages.push({ role: "tool", tool_call_id: tc.id, content: result });
       }
 
-      // Turn 2: stream the final answer with full context including tool results
+      // Turn 2: stream the final answer with full context including tool results.
+      // Tools are re-sent so the model can call another tool if needed (multi-step use).
       const stream = await openai.chat.completions.create({
         model: MODEL,
         messages: [...fullMessages, ...toolMessages],
+        tools: agent.tools,
         stream: true,
-      });
+      }, { headers: sessionHeaders });
 
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta?.content ?? "";

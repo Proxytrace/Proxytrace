@@ -19,6 +19,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public HttpStatusCode HttpStatus { get; }
     public string? FinishReason { get; }
     public string? ErrorMessage { get; }
+    public Guid? ConversationId { get; }
 
     public AgentCall(
         IAgent agent,
@@ -30,6 +31,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
+        Guid? conversationId,
         IRepository<IAgentCall> repository) : base(repository)
     {
         Agent = agent;
@@ -41,6 +43,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
+        ConversationId = conversationId;
     }
 
     public AgentCall(
@@ -54,6 +57,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         string? finishReason,
         string? errorMessage,
         IDomainEntityData existing,
+        Guid? conversationId,
         IRepository<IAgentCall> repository) : base(existing, repository)
     {
         Agent = agent;
@@ -65,6 +69,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
+        ConversationId = conversationId;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

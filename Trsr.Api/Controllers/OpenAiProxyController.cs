@@ -20,10 +20,12 @@ namespace Trsr.Api.Controllers;
 [Route("openai")]
 public class OpenAiProxyController : ControllerBase
 {
+    private const string SessionIdHeader = "x-trsr-session-id";
+
     private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
     [
-        "authorization", 
-        "content-type", 
+        "authorization",
+        "content-type",
         "openai-organization",
         "openai-project"
     ]);
@@ -74,6 +76,10 @@ public class OpenAiProxyController : ControllerBase
         var requestBodyBytes = requestBodyStream.ToArray();
         var requestBody = Encoding.UTF8.GetString(requestBodyBytes);
 
+        var sessionId = Request.Headers.TryGetValue(SessionIdHeader, out var sid)
+            ? sid.ToString()
+            : null;
+
         var isStreaming = IsStreamingRequest(requestBody, Request.ContentType);
 
         if (isStreaming)
@@ -114,11 +120,11 @@ public class OpenAiProxyController : ControllerBase
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyStreamingResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, cancellationToken);
+            await ProxyBufferedResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
         }
     }
 
@@ -145,6 +151,7 @@ public class OpenAiProxyController : ControllerBase
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
+        string? sessionId,
         CancellationToken cancellationToken)
     {
         var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -152,7 +159,7 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, cancellationToken);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -163,6 +170,7 @@ public class OpenAiProxyController : ControllerBase
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
+        string? sessionId,
         CancellationToken cancellationToken)
     {
         var accumulated = new StringBuilder();
@@ -187,7 +195,7 @@ public class OpenAiProxyController : ControllerBase
 
         sw.Stop();
 
-        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, cancellationToken);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -199,6 +207,7 @@ public class OpenAiProxyController : ControllerBase
         string? responseBody,
         TimeSpan duration,
         HttpStatusCode httpStatus,
+        string? sessionId,
         CancellationToken cancellationToken)
     {
         try
@@ -210,6 +219,7 @@ public class OpenAiProxyController : ControllerBase
                 responseBody: responseBody,
                 duration: duration,
                 httpStatus: httpStatus,
+                sessionId: sessionId,
                 cancellationToken: cancellationToken);
         }
         catch (Exception ex)

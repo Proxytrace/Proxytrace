@@ -6,7 +6,7 @@ export enum TestRunStatus {
   Cancelled = 'Cancelled',
 }
 
-export enum Evaluation { Pass = 'Pass', Fail = 'Fail', Undecided = 'Undecided' }
+export enum EvaluationScore { Terrible = 'Terrible', Bad = 'Bad', Acceptable = 'Acceptable', Good = 'Good', Excellent = 'Excellent' }
 
 export enum EvaluatorKind {
   Custom = 'Custom',
@@ -75,6 +75,7 @@ export interface AgentCallDto {
   costEur: number | null;
   createdAt: string;
   updatedAt: string;
+  conversationId: string | null;
 }
 
 /* ── Agents ── */
@@ -148,7 +149,7 @@ export interface EvaluationResultDto {
   evaluatorId: string;
   evaluatorKind: EvaluatorKind;
   evaluatorName: string;
-  score: string;
+  score: EvaluationScore;
   reasoning: string | null;
 }
 export interface TestResultDto {
@@ -360,7 +361,7 @@ export interface TraceCreatedEvent {
 export interface TestCaseStartedEvent { type: 'test-case-started'; runId: string; groupId: string; testCaseId: string; }
 export interface InferenceDoneEvent { type: 'inference-done'; runId: string; groupId: string; testCaseId: string; }
 export interface EvaluationArrivedEvent { type: 'evaluation-arrived'; runId: string; groupId: string; testCaseId: string; evaluation: EvaluationResultDto; }
-export interface TestResultArrivedEvent { type: 'test-result-arrived'; runId: string; groupId: string; testCaseId: string; overallScore: string | null; evaluations: EvaluationResultDto[]; durationMs: number; }
+export interface TestResultArrivedEvent { type: 'test-result-arrived'; runId: string; groupId: string; testCaseId: string; overallScore: EvaluationScore | null; evaluations: EvaluationResultDto[]; durationMs: number; }
 export interface RunCompleteEvent { type: 'run-complete'; runId: string; groupId: string; status: TestRunStatus; completedAt: string | null; }
 export interface GroupRunCompleteEvent { type: 'group-run-complete'; runId: string; groupId: string; groupStatus: TestRunStatus; groupCompletedAt: string | null; }
 export type TestRunEvent =

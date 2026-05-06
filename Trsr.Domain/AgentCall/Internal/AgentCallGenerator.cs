@@ -45,5 +45,6 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>
             duration: random.TimeSpan(),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null);
+            errorMessage: null,
+            conversationId: null);
 }

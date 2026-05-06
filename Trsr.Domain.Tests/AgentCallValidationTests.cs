@@ -34,7 +34,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null);
+            errorMessage: null,
+            conversationId: null);
 
         // Assert
         agentCall.Should().NotBeNull();
@@ -71,7 +72,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null);
+            errorMessage: null,
+            conversationId: null);
 
         // Assert
         agentCall.Agent.Should().Be(agent);
@@ -99,7 +101,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null);
+            errorMessage: null,
+            conversationId: null);
         action.Should().Throw<Exception>();
     }
 
@@ -125,7 +128,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
-            errorMessage: null);
+            errorMessage: null,
+            conversationId: null);
         action.Should().Throw<Exception>();
     }
 
@@ -149,7 +153,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             existing.HttpStatus,
             existing.FinishReason,
             existing.ErrorMessage,
-            existing);
+            existing,
+            conversationId: null);
 
         // Assert
         agentCall.Should().NotBeNull();
@@ -173,8 +178,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
         
         // Act
-        var agentCall1 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
-        var agentCall2 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null);
+        var agentCall1 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null, null);
+        var agentCall2 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null, null);
 
         // Assert
         agentCall1.Id.Should().NotBe(agentCall2.Id);

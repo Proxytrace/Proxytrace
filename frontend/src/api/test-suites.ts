@@ -13,7 +13,7 @@ export const testSuitesApi = {
     api.get<PagedResult<TestSuiteDto>>(`/api/test-suites${qs(params ?? {})}`),
   get: (id: string) => api.get<TestSuiteDto>(`/api/test-suites/${id}`),
   create: (payload: CreateTestSuitePayload) =>
-    api.post<TestSuiteDto>('/api/test-suites', payload),
+    api.post<TestSuiteDto>('/api/test-suites/from-traces', payload),
   updateEvaluators: (id: string, evaluatorIds: string[]) =>
     api.put<TestSuiteDto>(`/api/test-suites/${id}`, { evaluatorIds }),
   delete: (id: string) => api.del(`/api/test-suites/${id}`),

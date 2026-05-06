@@ -15,4 +15,5 @@ internal record AgentCallEntity : Entity
     public required int HttpStatus { get; init; }
     public string? FinishReason { get; init; }
     public string? ErrorMessage { get; init; }
+    public Guid? ConversationId { get; init; }
 }
