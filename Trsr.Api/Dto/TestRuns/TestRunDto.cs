@@ -48,10 +48,6 @@ public record TestResultDto(
 
 public record TestRunMessageDto(string Role, string Content);
 
-public record CreateTestRunRequest(
-    Guid TestSuiteId,
-    Guid ModelEndpointId);
-
 public record TestRunGroupDto(
     Guid Id,
     Guid SuiteId,

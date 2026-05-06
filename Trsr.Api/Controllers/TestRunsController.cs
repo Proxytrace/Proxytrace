@@ -86,19 +86,6 @@ public class TestRunsController : ControllerBase
         return ToFixtureDto(run, result);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<TestRunDto>> Create(
-        [FromBody] CreateTestRunRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!await suiteRepository.ContainsAsync(request.TestSuiteId, cancellationToken))
-            return BadRequest($"Test suite {request.TestSuiteId} not found.");
-        var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
-        var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
-        var run = await runner.RunInBackgroundAsync(suite, endpoint, cancellationToken);
-        return AcceptedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
-    }
-
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {

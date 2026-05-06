@@ -1,14 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
-using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Dto.TestSuites;
-using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 
@@ -23,8 +20,6 @@ public class TestSuitesController : ControllerBase
     private readonly IAgentCallRepository agentCallRepository;
     private readonly ITestCaseRepository testCaseRepository;
     private readonly IEvaluatorRepository evaluatorRepository;
-    private readonly IModelEndpointRepository modelEndpointRepository;
-    private readonly ITestRunnerService testRunnerService;
     private readonly ITestCase.CreateNew createTestCase;
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
@@ -36,8 +31,6 @@ public class TestSuitesController : ControllerBase
         IAgentCallRepository agentCallRepository,
         ITestCaseRepository testCaseRepository,
         IEvaluatorRepository evaluatorRepository,
-        IModelEndpointRepository modelEndpointRepository,
-        ITestRunnerService testRunnerService,
         ITestCase.CreateNew createTestCase,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
@@ -48,8 +41,6 @@ public class TestSuitesController : ControllerBase
         this.agentCallRepository = agentCallRepository;
         this.testCaseRepository = testCaseRepository;
         this.evaluatorRepository = evaluatorRepository;
-        this.modelEndpointRepository = modelEndpointRepository;
-        this.testRunnerService = testRunnerService;
         this.createTestCase = createTestCase;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
@@ -209,25 +200,6 @@ public class TestSuitesController : ControllerBase
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(savedSuite);
-    }
-
-    [HttpPost("{id:guid}/run")]
-    public async Task<ActionResult<TestRunDto>> Run(Guid id, CancellationToken cancellationToken)
-    {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
-            return NotFound();
-        var suite = await suiteRepository.GetAsync(id, cancellationToken);
-
-        if (suite.TestCases.Count == 0)
-            return BadRequest("Cannot run a suite with no test cases.");
-
-        var endpoints = await modelEndpointRepository.GetAllAsync(cancellationToken);
-        var endpoint = endpoints.FirstOrDefault();
-        if (endpoint is null)
-            return BadRequest("No model endpoints are configured. Send at least one proxied LLM call first.");
-
-        var run = await testRunnerService.RunInBackgroundAsync(suite, endpoint, cancellationToken);
-        return TestRunsController.ToDto(run);
     }
 
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
