@@ -165,6 +165,7 @@ export default function Suites() {
   const [createName, setCreateName] = useState('');
   const [selectedCalls, setSelectedCalls] = useState<Set<string>>(new Set());
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
+  const [addedTraceIds, setAddedTraceIds] = useState<Set<string>>(new Set());
 
   const { data: suitesData, isLoading } = useQuery({ queryKey: QUERY_KEYS.testSuites(''), queryFn: () => testSuitesApi.list({ pageSize: LIST_PAGE_SIZE }) });
   const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }) });
@@ -212,13 +213,20 @@ export default function Suites() {
 
   const addCase = useMutation({
     mutationFn: (callId: string) => testSuitesApi.addTestCase(editSuite!.id, callId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['test-suites'] }),
+    onSuccess: (updatedSuite, callId) => {
+      qc.invalidateQueries({ queryKey: ['test-suites'] });
+      setEditSuite(updatedSuite);
+      setAddedTraceIds(prev => new Set([...prev, callId]));
+    },
     onError: (err) => toast((err as Error).message || 'Failed to add test case', 'error'),
   });
 
   const removeCase = useMutation({
     mutationFn: (caseId: string) => testSuitesApi.removeTestCase(editSuite!.id, caseId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['test-suites'] }),
+    onSuccess: (_, caseId) => {
+      qc.invalidateQueries({ queryKey: ['test-suites'] });
+      setEditSuite(prev => prev ? { ...prev, testCases: prev.testCases.filter(tc => tc.id !== caseId) } : prev);
+    },
     onError: (err) => toast((err as Error).message || 'Failed to remove test case', 'error'),
   });
 
@@ -240,6 +248,7 @@ export default function Suites() {
     setEditSuite(suite);
     setEditTab('cases');
     setSelectedEvaluatorIds(new Set(suite.evaluators.map(e => e.id)));
+    setAddedTraceIds(new Set());
   }
 
   function closeRunModal() { setRunSuite(null); setRunDone(false); }
@@ -424,21 +433,96 @@ export default function Suites() {
             ))}
           </div>
           {editTab === 'cases' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Current test cases</div>
-              {editSuite.testCases.map(tc => (
-                <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)' }}>
-                  <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 12 }}>{tc.input[tc.input.length - 1]?.content?.slice(0, 60) ?? tc.id.slice(0, 12)}</span>
-                  <button onClick={() => removeCase.mutate(tc.id)} className="btn-icon btn-icon-danger"><XIcon size={13} /></button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Current test cases */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                  {editSuite.testCases.length} test case{editSuite.testCases.length !== 1 ? 's' : ''}
                 </div>
-              ))}
-              <div style={{ fontSize: 12, fontWeight: 600, marginTop: 8, marginBottom: 4 }}>Add from traces</div>
-              <div style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {editTraces.filter((t: AgentCallDto) => !editSuite.testCases.some(tc => tc.id === t.id)).map((t: AgentCallDto) => (
-                  <button key={t.id} onClick={() => addCase.mutate(t.id)} style={{ textAlign: 'left', padding: '8px 10px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', cursor: 'pointer', fontSize: 12 }}>
-                    <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.id.slice(0, 12)}…</span> {t.model} · {fmtRelative(t.createdAt)}
-                  </button>
-                ))}
+                {editSuite.testCases.length === 0 ? (
+                  <div style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
+                    No test cases yet — add traces below to get started.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {editSuite.testCases.map(tc => {
+                      const preview = [...tc.input].reverse().find(m => m.role === 'user')?.content ?? tc.input[tc.input.length - 1]?.content;
+                      const isRemoving = removeCase.isPending && removeCase.variables === tc.id;
+                      return (
+                        <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)', opacity: isRemoving ? 0.5 : 1, transition: 'opacity 0.15s' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {preview?.slice(0, 80) || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No user message</span>}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              {tc.input.length} message{tc.input.length !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeCase.mutate(tc.id)}
+                            disabled={isRemoving}
+                            className="btn-icon btn-icon-danger"
+                            title="Remove test case"
+                          >
+                            <XIcon size={13} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--hairline)' }} />
+
+              {/* Add from traces */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                  Add from traces
+                </div>
+                {editTracesData === undefined ? (
+                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>Loading traces…</div>
+                ) : (() => {
+                  const available = editTraces.filter((t: AgentCallDto) => !addedTraceIds.has(t.id));
+                  if (available.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '14px 16px', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
+                        {editTraces.length === 0 ? 'No traces found for this agent.' : 'All available traces have been added.'}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {available.map((t: AgentCallDto) => {
+                        const lastMsg = [...t.request].reverse().find(m => m.role === 'user');
+                        const isAdding = addCase.isPending && addCase.variables === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => addCase.mutate(t.id)}
+                            disabled={isAdding}
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', cursor: isAdding ? 'default' : 'pointer', opacity: isAdding ? 0.65 : 1, transition: 'border-color 0.15s, background 0.15s' }}
+                            onMouseEnter={e => { if (!isAdding) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.background = 'var(--accent-subtle)'; } }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600 }}>{t.model}</span>
+                                <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(t.createdAt)}</span>
+                              </div>
+                              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {lastMsg?.content?.slice(0, 60) ?? <span className="mono" style={{ fontSize: 10.5 }}>{t.id.slice(0, 12)}…</span>}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: 11.5, fontWeight: 600, color: isAdding ? 'var(--text-muted)' : 'var(--accent)', flexShrink: 0 }}>
+                              {isAdding ? '…' : '+ Add'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

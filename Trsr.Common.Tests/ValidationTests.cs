@@ -638,8 +638,8 @@ public sealed class ValidationTests
 
         // Assert
         result.MemberNames.Should().NotBeEmpty();
-        // CallerMemberName captures the calling method name, which is the test method name
-        result.MemberNames.Should().Contain("ValidationResults_IncludeMemberName");
+        // CallerArgumentExpression captures the argument expression at the call site
+        result.MemberNames.Should().Contain("string.Empty");
     }
 
     [TestMethod]

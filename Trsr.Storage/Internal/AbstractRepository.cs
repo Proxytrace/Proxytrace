@@ -181,8 +181,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
 
-            // Return the updated domain entity
-            return await mapper.Map(existing, cancellationToken);
+            return await this.GetAsync(entity.Id, cancellationToken);
         });
 
     protected virtual Task UpdateRelationsAsync(
