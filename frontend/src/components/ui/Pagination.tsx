@@ -25,15 +25,11 @@ export function Pagination({ page, total, pageSize, onChange }: PaginationProps)
       key={String(label)}
       onClick={() => p != null && onChange(p)}
       disabled={disabled || p == null}
-      style={{
-        border: p === page ? '1px solid rgba(201,148,74,0.3)' : '1px solid var(--border-color)',
-        opacity: disabled ? 0.4 : 1,
-      }}
-      className={`min-w-[30px] h-[30px] px-[6px] rounded-md text-xs font-medium transition-colors ${
+      className={`min-w-[30px] h-[30px] px-[6px] rounded-md text-xs font-medium transition-colors border ${
         p === page
-          ? 'bg-accent-subtle text-accent'
-          : 'bg-card text-secondary'
-      } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          ? 'bg-accent-subtle text-accent border-[rgba(201,148,74,0.3)]'
+          : 'bg-card text-secondary border-border'
+      } ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
     >
       {label}
     </button>

@@ -24,8 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="text-[13px] text-muted max-w-[400px] leading-relaxed">{this.state.error.message}</div>
           <button
             onClick={() => this.setState({ error: null })}
-            className="px-4 py-2 bg-card rounded-[8px] text-[13px] font-medium text-secondary"
-            style={{ boxShadow: 'var(--shadow-card)' }}
+            className="px-4 py-2 bg-card rounded-[8px] text-[13px] font-medium text-secondary shadow-[var(--shadow-card)]"
           >
             Try again
           </button>

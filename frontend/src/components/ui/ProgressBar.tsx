@@ -11,7 +11,7 @@ export function ProgressBar({ value, max = 100, color = 'var(--success)', height
   return (
     <div className="flex items-center gap-2 w-full">
       <div style={{ height, borderRadius: height }} className="flex-1 bg-card-2 overflow-hidden">
-        <div style={{ width: `${pct}%`, height: '100%', borderRadius: height, background: color, transition: 'width 0.3s ease' }} />
+        <div style={{ width: `${pct}%`, borderRadius: height, background: color }} className="h-full transition-[width] duration-300" />
       </div>
       {showLabel && (
         <span className="text-[11px] font-semibold text-muted shrink-0 min-w-[32px]">

@@ -53,21 +53,14 @@ export function Shell() {
     <div className="flex w-full h-screen overflow-hidden bg-surface relative z-[1]">
       {/* Sidebar */}
       <aside
-        style={{
-          width: collapsed ? '64px' : '232px',
-          boxShadow: 'var(--shadow-sidebar)',
-          transition: 'width 0.2s ease',
-          height: 'calc(100vh - 20px)',
-        }}
-        className="bg-sidebar flex flex-col shrink-0 relative z-[2] m-[10px_0_10px_10px] rounded-[18px] overflow-hidden"
+        className={`bg-sidebar flex flex-col shrink-0 relative z-[2] m-[10px_0_10px_10px] rounded-[18px] overflow-hidden shadow-[var(--shadow-sidebar)] transition-[width] duration-200 h-[calc(100vh-20px)] ${collapsed ? 'w-16' : 'w-[232px]'}`}
       >
         {/* Brand */}
         <div
           className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
         >
           <div
-            style={{ boxShadow: '0 4px 16px -4px rgba(201, 148, 74, 0.55), inset 0 1px 0 rgba(255,255,255,0.15)', background: 'linear-gradient(135deg, #c9944a, #a57038)' }}
-            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px]"
+            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_16px_-4px_rgba(201,148,74,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]"
           >T</div>
           {!collapsed && (
             <div className="ml-[10px]">
@@ -121,13 +114,7 @@ export function Shell() {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {/* Topbar */}
         <header
-          style={{
-            background: 'rgba(30, 30, 34, 0.75)',
-            backdropFilter: 'blur(20px) saturate(1.4)',
-            WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-            boxShadow: 'var(--shadow-topbar)',
-          }}
-          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px]"
+          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[rgba(30,30,34,0.75)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
           <button onClick={() => setCollapsed(c => !c)} className="btn-icon">
             <LayoutSidebarIcon size={16} />
@@ -140,8 +127,7 @@ export function Shell() {
           </div>
 
           <div
-            style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.2)', background: 'rgba(255,255,255,0.03)' }}
-            className="flex-1 max-w-[460px] mx-auto flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] text-muted"
+            className="flex-1 max-w-[460px] mx-auto flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] text-muted bg-white/[.03] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)]"
           >
             <SearchIcon size={14} />
             <span>Search traces, agents, suites…</span>
@@ -160,23 +146,19 @@ export function Shell() {
             className="flex items-center gap-1.5 px-[10px] py-[6px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0"
           >
             <span
-              className={online === true ? 'pulse-dot' : ''}
-              style={{ width: '6px', height: '6px', borderRadius: '50%', background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)', display: 'inline-block' }}
+              className={`size-[6px] rounded-full inline-block ${online === true ? 'pulse-dot' : ''}`}
+              style={{ background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)' }}
             />
             {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
 
           <button className="btn-icon relative">
             <BellIcon size={16} />
-            <span className="absolute top-[6px] right-[6px] w-[7px] h-[7px] rounded-full bg-accent" style={{ boxShadow: '0 0 0 2px var(--bg-primary)' }} />
+            <span className="absolute top-[6px] right-[6px] w-[7px] h-[7px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-primary)]" />
           </button>
 
           <button
-            style={{
-              background: 'linear-gradient(135deg, #c9944a, #a57038)',
-              boxShadow: '0 4px 14px -4px rgba(201, 148, 74, 0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-            }}
-            className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]"
           >
             <PlusIcon size={14} />
             New Test Suite
