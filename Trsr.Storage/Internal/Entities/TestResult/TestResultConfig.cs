@@ -8,6 +8,7 @@ using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
+using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.TestCase;
 
 namespace Trsr.Storage.Internal.Entities.TestResult;
@@ -66,11 +67,18 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             evaluations.Add(createEvaluation(evaluator, e.Score, e.Reasoning));
         }
 
+        var statistics = new TestResultStatistics(
+            Usage: stored.InputTokens.HasValue && stored.OutputTokens.HasValue
+                ? new TokenUsage((ulong)stored.InputTokens.Value, (ulong)stored.OutputTokens.Value)
+                : null,
+            Latency: TimeSpan.FromMicroseconds(stored.DurationMs));
+
         return factory(
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
             evaluations: evaluations,
-            existing: stored);
+            existing: stored,
+            statistics: statistics);
     }
 
     public Task<TestResultEntity> Map(ITestResult domain, CancellationToken cancellationToken = default)

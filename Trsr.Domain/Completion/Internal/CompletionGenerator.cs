@@ -8,12 +8,12 @@ namespace Trsr.Domain.Completion.Internal;
 internal class CompletionGenerator : DomainObjectGenerator<ICompletion>
 {
     private readonly IDomainObjectGenerator<AssistantMessage> messageGenerator;
-    private readonly DomainObjectGenerator<TokenUsage> usageGenerator;
+    private readonly IDomainObjectGenerator<TokenUsage> usageGenerator;
     private readonly ICompletion.Create factory;
 
     public CompletionGenerator(
         IDomainObjectGenerator<AssistantMessage> messageGenerator,
-        DomainObjectGenerator<TokenUsage> usageGenerator,
+        IDomainObjectGenerator<TokenUsage> usageGenerator,
         ICompletion.Create factory,
         IRandom random) : base(random)
     {

@@ -43,7 +43,8 @@ public interface ITestResult : IDomainEntity<ITestResult>
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
-        IDomainEntityData existing);
+        IDomainEntityData existing,
+        TestResultStatistics statistics);
 
     /// <summary>
     /// Adds the evaluation to the test result

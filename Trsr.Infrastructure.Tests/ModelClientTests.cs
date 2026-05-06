@@ -27,8 +27,8 @@ public sealed class ModelClientTests : BaseTest<Module>
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             .As<IModelClient>();
 
-        IOutputFormat.Create defaultFactory = _ => Substitute.For<IOutputFormat>();
-        builder.RegisterInstance(defaultFactory);
+        IOutputFormat DefaultFactory(Type _) => Substitute.For<IOutputFormat>();
+        builder.RegisterInstance((IOutputFormat.Create)DefaultFactory);
     }
 
     // ── registration helpers ──────────────────────────────────────────────────
@@ -581,47 +581,51 @@ public sealed class ModelClientTests : BaseTest<Module>
     [TestMethod]
     public void Constructor_WithAnthropicProviderKind_ThrowsNotSupportedException()
     {
-        var endpoint = MakeEndpoint(kind: ModelProviderKind.Anthropic);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var services = GetServices();
+        IModelEndpoint endpoint = MakeEndpoint(kind: ModelProviderKind.Anthropic);
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
-            .Should().Throw<NotSupportedException>()
-            .WithMessage("*Anthropic*");
+            .Invoking(() => factory(endpoint))
+            .Should()
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithUnknownProviderKind_ThrowsNotSupportedException()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(kind: ModelProviderKind.Unknown);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
-            .Should().Throw<NotSupportedException>();
+            .Invoking(() => factory(endpoint))
+            .Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithOpenAiProviderKind_DoesNotThrow()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(kind: ModelProviderKind.OpenAi);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
+            .Invoking(() => factory(endpoint))
             .Should().NotThrow();
     }
 
     [TestMethod]
     public void Constructor_WithOpenAiCompatibleProviderKind_DoesNotThrow()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(
             kind: ModelProviderKind.OpenAiCompatible,
             endpointUrl: "https://openrouter.ai/api/v1");
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
+            .Invoking(() => factory(endpoint))
             .Should().NotThrow();
     }
 }

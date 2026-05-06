@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -11,19 +12,24 @@ namespace Trsr.Domain.Tests;
 [TestClass]
 public sealed class TestResultValidationTests : BaseTest<Module>
 {
+    private ICompletion CreateCompletion(string response, IServiceProvider services)
+    {
+        var completionFactory = services.GetRequiredService<ICompletion.Create>();
+        return completionFactory(new AssistantMessage([Content.FromText(response)], []), null, TimeSpan.FromMilliseconds(1000));
+    }
+    
     [TestMethod]
     public async Task CreateNew_WithValidInputs_CreatesTestResult()
     {
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
-        var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
-
-        var testResult = factory(testCase, actualResponse, []);
+        var completion =  CreateCompletion("Result", services);
+        var testResult = factory(testCase, completion, []);
 
         testResult.Should().NotBeNull();
         testResult.TestCase.Should().Be(testCase);
-        testResult.ActualResponse.Should().Be(actualResponse);
+        testResult.ActualResponse.Should().Be(completion.Response);
         testResult.Evaluations.Should().BeEmpty();
         testResult.Id.Should().NotBe(Guid.Empty);
         testResult.CreatedAt.Should().NotBe(default);
@@ -37,10 +43,10 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         {
             IServiceProvider services = GetServices();
             var factory = services.GetRequiredService<ITestResult.CreateNew>();
-            var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
+            var completion =  CreateCompletion("Result", services);
 
             // ReSharper disable once NullableWarningSuppressionIsUsed
-            var action = () => factory(null!, actualResponse, []);
+            Func<ITestResult> action = () => factory(null!, completion, []);
             action.Should().Throw<Exception>();
             return Task.CompletedTask;
         }
@@ -68,13 +74,14 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var createEvaluation = services.GetRequiredService<IEvaluation.Create>();
-        var evaluatorGenerator = services.GetRequiredService<IDomainEntityGenerator<Trsr.Domain.Evaluator.IEvaluator>>();
+        var evaluatorGenerator = services.GetRequiredService<IDomainEntityGenerator<Evaluator.IEvaluator>>();
         var testCase = await CreateTestCaseAsync(services);
-        var actualResponse = new AssistantMessage([Content.FromText("Answer")], []);
-        var evaluator = await evaluatorGenerator.GetOrCreateAsync(default);
+        var completion =  CreateCompletion("Answer", services);
+        
+        var evaluator = await evaluatorGenerator.GetOrCreateAsync();
         var evaluation = createEvaluation(evaluator, EvaluationScore.Good, "Correct");
 
-        var testResult = factory(testCase, actualResponse, [evaluation]);
+        var testResult = factory(testCase, completion, [evaluation]);
 
         testResult.Evaluations.Should().ContainSingle().Which.Score.Should().Be(EvaluationScore.Good);
     }
@@ -87,7 +94,12 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<ITestResult>>();
         var existing = await generator.CreateAsync(CancellationToken);
 
-        var testResult = createExisting(existing.TestCase, existing.ActualResponse, existing.Evaluations, existing);
+        var testResult = createExisting(
+            existing.TestCase, 
+            existing.ActualResponse, 
+            existing.Evaluations, 
+            existing,
+            existing.Statistics);
 
         testResult.Should().NotBeNull();
         testResult.Id.Should().Be(existing.Id);
@@ -104,10 +116,10 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
-        var actualResponse = new AssistantMessage([Content.FromText("Result")], []);
+        var completion =  CreateCompletion("Result", services);
 
-        var testResult1 = factory(testCase, actualResponse, []);
-        var testResult2 = factory(testCase, actualResponse, []);
+        var testResult1 = factory(testCase, completion, []);
+        var testResult2 = factory(testCase, completion, []);
 
         testResult1.Id.Should().NotBe(testResult2.Id);
     }
