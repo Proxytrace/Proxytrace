@@ -27,6 +27,9 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("Endpoint")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Fingerprint")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -53,6 +56,8 @@ namespace Trsr.Storage.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Endpoint");
 
                     b.HasIndex("Fingerprint")
                         .IsUnique();
@@ -519,10 +524,10 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("InputTokens")
+                    b.Property<long?>("InputTokens")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("OutputTokens")
+                    b.Property<long?>("OutputTokens")
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid>("TestCase")
@@ -567,10 +572,10 @@ namespace Trsr.Storage.Migrations
                     b.Property<long?>("StatOutputTokens")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("StatPassed")
+                    b.Property<int>("StatPassed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("StatTestCases")
+                    b.Property<int>("StatTestCases")
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("StatTotalDurationMs")
@@ -706,6 +711,12 @@ namespace Trsr.Storage.Migrations
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Agent.AgentEntity", b =>
                 {
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Endpoint")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
                         .WithMany()
                         .HasForeignKey("Project")
