@@ -168,6 +168,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             await Parallel.ForEachAsync(suite.TestCases, parallelOptions, 
                 async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
             
+            testRun = await testRun.ReloadAsync(cancellationToken);
+            
             broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
             await UpdateGroupStatusOnRunCompleteAsync(testRun.Group.Id, cancellationToken);
             return testRun;
