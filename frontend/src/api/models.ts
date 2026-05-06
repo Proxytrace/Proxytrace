@@ -75,6 +75,7 @@ export interface AgentCallDto {
   costEur: number | null;
   createdAt: string;
   updatedAt: string;
+  conversationId: string | null;
 }
 
 /* ── Agents ── */

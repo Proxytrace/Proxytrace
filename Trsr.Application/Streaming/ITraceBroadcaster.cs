@@ -9,7 +9,8 @@ public record TraceCreatedEvent(
     string AgentName,
     string Model,
     string Provider,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    Guid? ConversationId)
 {
     public static TraceCreatedEvent Create(IAgentCall call)
         => new(
@@ -18,7 +19,8 @@ public record TraceCreatedEvent(
             call.Agent.Name,
             call.Endpoint.Model.Name,
             call.Endpoint.Provider.Name,
-            call.CreatedAt);
+            call.CreatedAt,
+            call.ConversationId);
 }
 
 public interface ITraceBroadcaster

@@ -99,7 +99,8 @@ public class AgentCallsController : ControllerBase
         c.ErrorMessage,
         ComputeCost(c),
         c.CreatedAt,
-        c.UpdatedAt);
+        c.UpdatedAt,
+        c.ConversationId);
 
     private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t) => new(
         t.Name,
