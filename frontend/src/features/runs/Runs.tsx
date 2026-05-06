@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { TestRunStatus, EvaluatorKind, type TestRunDto, type TestRunGroupDto, type TestResultDto } from '../../api/models';
+import { TestRunStatus, EvaluatorKind, EvaluationScore, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
+
+const PASSING_SCORES = new Set<EvaluationScore>([EvaluationScore.Acceptable, EvaluationScore.Good, EvaluationScore.Excellent]);
+const isPass = (score: EvaluationScore) => PASSING_SCORES.has(score);
 import { GridIcon, TableIcon, TrashIcon } from '../../components/icons';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
@@ -24,8 +27,8 @@ type ViewMode = 'table' | 'grid';
 // ─── CaseCard (grid view) ─────────────────────────────────────────────────────
 
 function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: boolean; onClick: () => void }) {
-  const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
-  const passCount = r.evaluations.filter(e => e.score === 'Pass').length;
+  const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
+  const passCount = r.evaluations.filter(e => isPass(e.score)).length;
   const score = r.evaluations.length > 0 ? passCount / r.evaluations.length : null;
   const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
   const dotColor = pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
@@ -93,19 +96,19 @@ function isActive(s: TestRunStatus) {
 
 // ─── RunDetail ────────────────────────────────────────────────────────────────
 
-function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) {
+function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: TestRunGroupDto; activeCaseIds?: Set<string> }) {
   const [selectedCase, setSelectedCase] = useState<{ runId: string; caseId: string; summary: string; idx: number } | null>(null);
   const [caseFilter, setCaseFilter] = useState<CaseFilter>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  const passed = run.results.filter(r => r.evaluations.every(e => e.score === 'Pass')).length;
-  const failed = run.results.filter(r => r.evaluations.some(e => e.score === 'Fail')).length;
+  const passed = run.results.filter(r => r.evaluations.length > 0 && r.evaluations.every(e => isPass(e.score))).length;
+  const failed = run.results.filter(r => r.evaluations.some(e => !isPass(e.score))).length;
   const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : 0;
   const passColor = passRate >= PASS_RATE_WARN ? 'var(--success)' : passRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)';
 
   const filteredResults = run.results.filter(r => {
     if (caseFilter === 'all') return true;
-    const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+    const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
     if (caseFilter === 'passed') return pass === true;
     if (caseFilter === 'failed') return pass === false;
     return true;
@@ -116,7 +119,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
     {
       key: 'dot', label: '', width: '20px',
       render: r => {
-        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
         return <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />;
       },
     },
@@ -135,7 +138,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
     {
       key: 'score', label: 'Score', width: '0.8fr',
       render: r => {
-        const tPassCount = r.evaluations.filter(e => e.score === 'Pass').length;
+        const tPassCount = r.evaluations.filter(e => isPass(e.score)).length;
         const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
         const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
         return <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>;
@@ -148,8 +151,8 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
     {
       key: 'note', label: 'Note', width: '1.4fr',
       render: r => {
-        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
-        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => e.score === 'Fail')?.score ?? '';
+        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
+        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => !isPass(e.score))?.score ?? '';
         return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5' }}>{note}</span>;
       },
     },
@@ -197,6 +200,20 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
         ))}
       </div>
 
+      {/* Execution progress (shown while running) */}
+      {isActive(run.status) && (
+        <div className="px-4 py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-[7px]">
+              <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block' }} />
+              <span className="text-[12px] font-semibold">Executing</span>
+            </div>
+            <span className="mono text-[11px] text-muted">{run.results.length} / {run.totalCases} complete</span>
+          </div>
+          <ProgressBar value={run.results.length} max={run.totalCases} color="var(--accent-primary)" height={6} />
+        </div>
+      )}
+
       {/* Minimap */}
       {run.results.length > 0 && (
         <div className="px-4 py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
@@ -207,7 +224,7 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
           <ProgressBar value={run.passedCases} max={run.totalCases} height={7} />
           <div style={{ display: 'flex', gap: 4, marginTop: 10, flexWrap: 'wrap' }}>
             {run.results.map((r, i) => {
-              const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => e.score === 'Pass');
+              const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
               const isSelected = selectedCase?.caseId === r.testCaseId;
               return (
                 <button
@@ -274,16 +291,19 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
               })}
               {run.testCases
                 .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
-                .map(tc => (
-                  <div key={tc.id} style={{ padding: '14px 16px 14px', border: '1px solid var(--hairline)', borderRadius: 12, background: 'var(--bg-card-2)', opacity: 0.4 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0 }} />
-                      <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
+                .map(tc => {
+                  const running = activeCaseIds?.has(tc.id) ?? false;
+                  return (
+                    <div key={tc.id} style={{ padding: '14px 16px 14px', border: `1px solid ${running ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`, borderRadius: 12, background: running ? 'rgba(201,148,74,0.04)' : 'var(--bg-card-2)', opacity: running ? 0.85 : 0.4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+                        <span className={running ? 'pulse-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0, boxShadow: running ? '0 0 6px rgba(201,148,74,0.5)' : 'none', display: 'inline-block' }} />
+                        <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, color: running ? 'var(--text-primary)' : 'var(--text-muted)', marginBottom: 6 }}>{tc.summary}</div>
+                      <div style={{ fontSize: 11, color: running ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{running ? 'running…' : 'pending…'}</div>
                     </div>
-                    <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6 }}>{tc.summary}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</div>
-                  </div>
-                ))
+                  );
+                })
               }
             </div>
           )}
@@ -301,16 +321,19 @@ function RunDetail({ run, group }: { run: TestRunDto; group: TestRunGroupDto }) 
               {/* Pending cases */}
               {run.testCases
                 .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
-                .map(tc => (
-                  <div key={tc.id} className="grid px-4 py-[11px] items-center border-b border-hairline" style={{ gridTemplateColumns: RESULT_GRID_COLS, opacity: 0.5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
-                    <span style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-muted)' }}>{tc.summary}</span>
-                    <span />
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>pending…</span>
-                    <span />
-                  </div>
-                ))
+                .map(tc => {
+                  const running = activeCaseIds?.has(tc.id) ?? false;
+                  return (
+                    <div key={tc.id} className="grid px-4 py-[11px] items-center border-b border-hairline" style={{ gridTemplateColumns: RESULT_GRID_COLS, opacity: running ? 1 : 0.5 }}>
+                      <span className={running ? 'pulse-dot' : undefined} style={{ width: 8, height: 8, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'inline-block', boxShadow: running ? '0 0 6px rgba(201,148,74,0.5)' : 'none' }} />
+                      <span style={{ fontSize: 12.5, fontWeight: 500, color: running ? 'var(--text-primary)' : 'var(--text-muted)' }}>{tc.summary}</span>
+                      <span />
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
+                      <span style={{ fontSize: 11, color: running ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{running ? 'running…' : 'pending…'}</span>
+                      <span />
+                    </div>
+                  );
+                })
               }
             </div>
           )}
@@ -346,6 +369,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
   const qc = useQueryClient();
   const { show: toast } = useToast();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(group.runs[0]?.id ?? null);
+  const [activeCaseIds, setActiveCaseIds] = useState<Set<string>>(new Set());
   const c = agentColor(group.agentId);
   const active = group.runs.some(r => isActive(r.status));
 
@@ -355,10 +379,24 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
     onError: (err) => toast((err as Error).message || 'Failed to cancel run', 'error'),
   });
 
+  const handleStreamEvent = useCallback((e: TestRunEvent) => {
+    if (e.type === 'test-case-started') {
+      setActiveCaseIds(prev => new Set([...prev, e.testCaseId]));
+    } else if (e.type === 'test-result-arrived') {
+      setActiveCaseIds(prev => { const next = new Set(prev); next.delete(e.testCaseId); return next; });
+    }
+    qc.invalidateQueries({ queryKey: ['test-run-groups'] });
+  }, [qc]);
+
+  const handleStreamDone = useCallback(() => {
+    setActiveCaseIds(new Set());
+    qc.invalidateQueries({ queryKey: ['test-run-groups'] });
+  }, [qc]);
+
   useTestRunGroupStream(
     active ? group.id : null,
-    useCallback(() => qc.invalidateQueries({ queryKey: ['test-run-groups'] }), [qc]),
-    useCallback(() => qc.invalidateQueries({ queryKey: ['test-run-groups'] }), [qc]),
+    handleStreamEvent,
+    handleStreamDone,
   );
 
   useEffect(() => {
@@ -409,7 +447,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
         </div>
       )}
 
-      {selectedRun && <RunDetail run={selectedRun} group={group} />}
+      {selectedRun && <RunDetail run={selectedRun} group={group} activeCaseIds={activeCaseIds} />}
     </div>
   );
 }

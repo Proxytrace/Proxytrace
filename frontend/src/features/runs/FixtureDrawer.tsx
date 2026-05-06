@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { XIcon } from '../../components/icons';
+import { XIcon, ChevronDownIcon } from '../../components/icons';
 import { useQuery } from '@tanstack/react-query';
 import { testRunsApi } from '../../api/test-runs';
 import { QUERY_KEYS } from '../../api/query-keys';
@@ -57,37 +57,62 @@ function OutputBlock({ label, color, value }: { label: string; color: string; va
   );
 }
 
-function EvaluatorPanel({ ev }: { ev: EvaluatorFixtureResultDto }) {
+function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResultDto; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const hasDetails = !!ev.note || ev.breakdown.length > 0 || !!ev.desc;
+
   return (
     <div className="bg-card-2 rounded-[10px] overflow-hidden" style={{ borderLeft: `3px solid ${ev.color}` }}>
-      <div className="p-[10px_14px] flex items-center gap-2">
-        <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold" style={{ background: `${ev.color}20`, color: ev.color }}>{ev.evaluatorKind}</span>
-        <span className="text-[13px] font-semibold flex-1">{ev.evaluatorName}</span>
+      {/* Header row — always visible, click to toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full p-[10px_14px] flex items-center gap-2 cursor-pointer bg-transparent border-none text-left"
+        style={{ borderRadius: open ? '10px 10px 0 0' : 10 }}
+      >
+        <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold shrink-0" style={{ background: `${ev.color}20`, color: ev.color }}>{ev.evaluatorKind}</span>
+        <span className="text-[13px] font-semibold flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{ev.evaluatorName}</span>
         {typeof ev.score === 'number' && (
-          <span className="font-mono text-[12px] text-secondary">
+          <span className="font-mono text-[12px] text-secondary shrink-0">
             {(ev.score * 100).toFixed(0)}%
           </span>
         )}
         <span
-          className="px-2 py-[2px] rounded-[5px] text-[11px] font-bold"
+          className="px-2 py-[2px] rounded-[5px] text-[11px] font-bold shrink-0"
           style={{
             background: ev.pass ? 'rgba(61,170,111,0.12)' : 'rgba(217,85,85,0.12)',
             color: ev.pass ? '#3daa6f' : '#d95555',
           }}
         >{ev.pass ? '✓ Pass' : '✗ Fail'}</span>
-      </div>
-      {ev.note && (
-        <div className="px-[14px] pb-[10px] text-[12.5px] text-secondary leading-[1.55]">{ev.note}</div>
-      )}
-      {ev.breakdown.length > 0 && (
-        <div className="border-t border-hairline p-[10px_14px] grid grid-cols-[1fr_auto_auto] items-center gap-[6px_14px]">
-          {ev.breakdown.map((b, i) => (
-            <div key={i} style={{ display: 'contents' }}>
-              <span className="text-[12px] text-muted">{b.k}</span>
-              <span className="font-mono text-[11px] text-secondary text-right">{b.v}</span>
-              <span className="text-[11px] font-bold text-right" style={{ color: b.match ? '#3daa6f' : '#d95555' }}>{b.match ? '✓' : '✗'}</span>
+        {hasDetails && (
+          <span style={{ display: 'flex', color: 'var(--text-muted)', transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+            <ChevronDownIcon size={13} />
+          </span>
+        )}
+      </button>
+
+      {/* Expandable details */}
+      {open && hasDetails && (
+        <div className="border-t border-hairline">
+          {ev.desc && (
+            <div className="px-[14px] pt-[10px] pb-[2px] text-[11.5px] text-muted italic leading-[1.5]">{ev.desc}</div>
+          )}
+          {ev.note && (
+            <div className="px-[14px] py-[10px]">
+              <div className="text-[10px] font-semibold text-muted uppercase tracking-[0.07em] mb-[5px]">Reasoning</div>
+              <div className="text-[12.5px] text-secondary leading-[1.55]">{ev.note}</div>
             </div>
-          ))}
+          )}
+          {ev.breakdown.length > 0 && (
+            <div className="p-[10px_14px] grid grid-cols-[1fr_auto_auto] items-center gap-[6px_14px]" style={{ borderTop: (ev.desc || ev.note) ? '1px solid var(--hairline)' : 'none' }}>
+              {ev.breakdown.map((b, i) => (
+                <div key={i} style={{ display: 'contents' }}>
+                  <span className="text-[12px] text-muted">{b.k}</span>
+                  <span className="font-mono text-[11px] text-secondary text-right">{b.v}</span>
+                  <span className="text-[11px] font-bold text-right" style={{ color: b.match ? '#3daa6f' : '#d95555' }}>{b.match ? '✓' : '✗'}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -343,7 +368,7 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
                   </div>
                   <div className="flex flex-col gap-2">
                     {fixture.evaluators.map((ev, i) => (
-                      <EvaluatorPanel key={i} ev={ev} />
+                      <EvaluatorPanel key={i} ev={ev} defaultOpen={!ev.pass} />
                     ))}
                   </div>
                 </section>
