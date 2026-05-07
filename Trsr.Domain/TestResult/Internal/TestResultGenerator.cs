@@ -1,5 +1,6 @@
 using Trsr.Common.Async;
 using Trsr.Common.Random;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
@@ -12,46 +13,44 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
     private readonly ITestResult.CreateNew factory;
     private readonly IDomainEntityGenerator<ITestCase> testCaseGenerator;
     private readonly IDomainObjectGenerator<IEvaluation> evaluationGenerator;
-    private readonly IDomainObjectGenerator<AssistantMessage> assistantMessageGenerator;
+    private readonly IDomainObjectGenerator<ICompletion> completionGenerator;
 
     public TestResultGenerator(
         ITestResult.CreateNew factory,
         IRepository<ITestResult> repository,
         IDomainEntityGenerator<ITestCase> testCaseGenerator,
         IDomainObjectGenerator<IEvaluation> evaluationGenerator,
-        IDomainObjectGenerator<AssistantMessage> assistantMessageGenerator,
+        IDomainObjectGenerator<ICompletion> completionGenerator,
         IRandom random) : base(repository, random)
     {
         this.factory = factory;
         this.testCaseGenerator = testCaseGenerator;
         this.evaluationGenerator = evaluationGenerator;
-        this.assistantMessageGenerator = assistantMessageGenerator;
+        this.completionGenerator = completionGenerator;
     }
 
     public override async Task<ITestResult> GenerateAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1,3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
-        
+
         return factory(
             testCase: await testCaseGenerator.CreateAsync(cancellationToken),
-            actualResponse: await assistantMessageGenerator.CreateAsync(cancellationToken),
-            evaluations: evaluations,
-            duration: random.TimeSpan(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(5000)));
+            completion: await completionGenerator.CreateAsync(cancellationToken),
+            evaluations: evaluations);
     }
 
     public async Task<ITestResult> CreateAsync(ITestCase testCase, CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1,3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
-        
+
         var result = factory(
             testCase: testCase,
-            actualResponse: await assistantMessageGenerator.CreateAsync(cancellationToken),
-            evaluations: evaluations,
-            duration: random.TimeSpan(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(5000)));
+            completion: await completionGenerator.CreateAsync(cancellationToken),
+            evaluations: evaluations);
         return await repository.AddAsync(result, cancellationToken);
     }
 }

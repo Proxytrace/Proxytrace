@@ -1,29 +1,29 @@
-using Trsr.Common.Random;
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
 internal class CustomEvaluatorGenerator : EvaluatorGeneratorBase<ICustomEvaluator>
 {
     private readonly ICustomEvaluator.CreateNew factory;
-    private readonly IRandom random;
-    private readonly IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator;
+    private readonly IDomainEntityGenerator<IProject> projectGenerator;
+    private readonly IDomainObjectGenerator<IPromptTemplate> promptGenerator;
 
     public CustomEvaluatorGenerator(
         ICustomEvaluator.CreateNew factory,
-        IRandom random,
-        IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator,
+        IDomainEntityGenerator<IProject> projectGenerator,
+        IDomainObjectGenerator<IPromptTemplate> promptGenerator,
         IRepository<IEvaluator> repository) : base(repository)
     {
         this.factory = factory;
-        this.random = random;
-        this.modelEndpointGenerator = modelEndpointGenerator;
+        this.projectGenerator = projectGenerator;
+        this.promptGenerator = promptGenerator;
     }
 
     public override async Task<ICustomEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
-        => factory(
-            random.String(),
-            new SystemMessage([Content.FromText("Evaluate the response.")]),
-            await modelEndpointGenerator.GetOrCreateAsync(cancellationToken));
+    {
+        var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        var prompt = await promptGenerator.CreateAsync(cancellationToken);
+        return factory(prompt, project);
+    }
 }

@@ -11,14 +11,17 @@ namespace Trsr.Storage.Internal;
 /// </summary>
 internal class DatabaseInitializationService : IHostedService, IDatabaseInitializer
 {
-        private readonly IServiceProvider serviceProvider;
+    private readonly IServiceProvider serviceProvider;
+    private readonly StorageConfiguration configuration;
     private readonly ILogger<DatabaseInitializationService> logger;
 
     public DatabaseInitializationService(
         IServiceProvider serviceProvider,
+        StorageConfiguration configuration,
         ILogger<DatabaseInitializationService> logger)
     {
         this.serviceProvider = serviceProvider;
+        this.configuration = configuration;
         this.logger = logger;
     }
 
@@ -27,12 +30,18 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<StorageDbContext>();
-        
-        logger.LogInformation("Ensuring database is created and up to date...");
-        
-        // This will create the database if it doesn't exist and apply any pending migrations
-        await context.Database.MigrateAsync(cancellationToken);
-        
+
+        if (configuration is SqliteConfiguration)
+        {
+            logger.LogInformation("Ensuring SQLite database schema is created (code-first)...");
+            await context.Database.EnsureCreatedAsync(cancellationToken);
+        }
+        else
+        {
+            logger.LogInformation("Ensuring database is created and up to date via migrations...");
+            await context.Database.MigrateAsync(cancellationToken);
+        }
+
         logger.LogInformation("Database initialization completed successfully");
     }
 

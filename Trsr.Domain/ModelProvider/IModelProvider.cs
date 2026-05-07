@@ -1,3 +1,4 @@
+
 namespace Trsr.Domain.ModelProvider;
 
 /// <summary>

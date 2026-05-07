@@ -9,22 +9,27 @@ namespace Trsr.Domain.TestRun.Internal;
 
 internal record TestRun : DomainEntity<ITestRun>, ITestRun
 {
+    private readonly IStatisticsCalculator statisticsCalculator;
     public ITestRunGroup Group { get; }
     public IModelEndpoint Endpoint { get; }
     public TestRunStatus Status { get; }
     public DateTimeOffset? CompletedAt { get; }
     public IReadOnlyList<ITestResult> TestResults { get; }
+    public TestRunStatistics Statistics { get; }
 
     public TestRun(
         ITestRunGroup group,
         IModelEndpoint endpoint,
-        IRepository<ITestRun> repository) : base(repository)
+        IRepository<ITestRun> repository,
+        IStatisticsCalculator statisticsCalculator) : base(repository)
     {
+        this.statisticsCalculator = statisticsCalculator;
         Group = group;
         Endpoint = endpoint;
         Status = TestRunStatus.Pending;
         CompletedAt = null;
         TestResults = [];
+        Statistics = TestRunStatistics.Empty;
     }
 
     public TestRun(
@@ -33,14 +38,18 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         TestRunStatus status,
         DateTimeOffset? completedAt,
         IReadOnlyList<ITestResult> testResults,
+        TestRunStatistics statistics,
         IDomainEntityData existing,
-        IRepository<ITestRun> repository) : base(existing, repository)
+        IRepository<ITestRun> repository,
+        IStatisticsCalculator statisticsCalculator) : base(existing, repository)
     {
+        this.statisticsCalculator = statisticsCalculator;
         Group = group;
         Endpoint = endpoint;
         Status = status;
         CompletedAt = completedAt;
         TestResults = testResults.ToArray();
+        Statistics = statistics;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -72,6 +81,8 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         bool isCompleted = updatedResults.Count == Group.Suite.TestCases.Count;
         DateTimeOffset? completedAt = isCompleted ? DateTimeOffset.UtcNow : null;
         TestRunStatus status = isCompleted ? TestRunStatus.Completed : TestRunStatus.Running;
+        
+        TestRunStatistics statistics = statisticsCalculator.CalculateStatistics(this);
 
         var updatedRun = new TestRun(
             Group,
@@ -79,8 +90,10 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
             status,
             completedAt,
             updatedResults,
+            statistics,
             this,
-            repository);
+            repository,
+            statisticsCalculator);
         return await repository.UpdateAsync(updatedRun, cancellationToken);
     }
 
@@ -122,8 +135,10 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
             state,
             completedAt,
             TestResults,
+            Statistics,
             this,
-            repository);
+            repository,
+            statisticsCalculator);
         return repository.UpdateAsync(updatedRun, cancellationToken);
     }
 

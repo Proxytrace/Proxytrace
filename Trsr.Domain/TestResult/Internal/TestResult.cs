@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestResult.Internal;
@@ -10,39 +12,39 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
     public ITestCase TestCase { get; }
     public AssistantMessage ActualResponse { get; }
+    public bool Passed => Evaluations.All(x => x.Passed);
     public IReadOnlyCollection<IEvaluation> Evaluations { get; }
-    public TimeSpan Duration { get; }
+    public TestResultStatistics Statistics { get; }
     public EvaluationScore? OverallScore { get; }
 
     public TestResult(
-        ITestCase testCase, 
-        AssistantMessage actualResponse,
+        ITestCase testCase,
+        ICompletion completion,
         IReadOnlyCollection<IEvaluation> evaluations,
-        TimeSpan duration,
         IRepository<ITestResult> repository) : base(repository)
     {
         TestCase = testCase;
-        ActualResponse = actualResponse;
+        ActualResponse = completion.Response;
         Evaluations = evaluations;
-        Duration = duration;
+        Statistics = TestResultStatistics.FromCompletion(completion);
         OverallScore = evaluations.CombineScores();
     }
 
     public TestResult(
         ITestCase testCase,
         AssistantMessage actualResponse,
-        IReadOnlyCollection<IEvaluation> evaluations, 
-        TimeSpan duration,
+        IReadOnlyCollection<IEvaluation> evaluations,
         IDomainEntityData existing,
+        TestResultStatistics statistics,
         IRepository<ITestResult> repository) : base(existing, repository)
     {
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;
-        Duration = duration;
+        Statistics = statistics;
         OverallScore = evaluations.CombineScores();
     }
-    
+
     public async Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<IEvaluation> updatedEvaluations =
@@ -55,8 +57,8 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
             TestCase,
             ActualResponse,
             updatedEvaluations,
-            Duration,
             this,
+            Statistics,
             repository);
         return await repository.UpdateAsync(updatedResults, cancellationToken);
     }

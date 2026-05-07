@@ -3,9 +3,19 @@ namespace Trsr.Api.Dto.Projects;
 public record ProjectDto(
     Guid Id,
     string Name,
+    Guid SystemEndpointId,
+    IReadOnlyList<ProjectMemberDto> Members,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record CreateProjectRequest(string Name);
+public record ProjectMemberDto(Guid Id, string Name);
 
-public record UpdateProjectRequest(string Name);
+public record CreateProjectRequest(
+    string Name,
+    Guid SystemEndpointId,
+    IReadOnlyList<Guid>? MemberIds = null);
+
+public record UpdateProjectRequest(
+    string Name,
+    Guid SystemEndpointId,
+    IReadOnlyList<Guid>? MemberIds = null);

@@ -4,9 +4,9 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
@@ -15,27 +15,32 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgentRepository
 {
     private readonly IAgent.CreateNew createNew;
-    private readonly IAgentNameGenerator nameGenerator;
+    private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly Lazy<IAgentNameGenerator> nameGenerator;
 
     public AgentRepository(
         IMapper<IAgent, AgentEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IAgent.CreateNew createNew,
-        IAgentNameGenerator nameGenerator) : base(mapper, contextFactory, transaction)
+        IPromptTemplate.Create promptTemplateFactory,
+        Lazy<IAgentNameGenerator> nameGenerator) : base(mapper, contextFactory, transaction)
     {
         this.createNew = createNew;
+        this.promptTemplateFactory = promptTemplateFactory;
         this.nameGenerator = nameGenerator;
     }
 
     public async Task<IAgent> GetOrCreateAsync(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
+        string? name = null,
+        bool isSystemAgent = false,
         CancellationToken cancellationToken = default)
     {
-        var fingerprint = GetAgentFingerprint(systemMessage, tools);
+        var fingerprint = GetAgentFingerprint(systemPrompt, tools);
 
         var existing = await contextFactory()
             .Set<AgentEntity>()
@@ -47,20 +52,24 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var name = await nameGenerator.GenerateNameAsync(systemMessage, endpoint, cancellationToken);
-        var agent = createNew(name, systemMessage, tools, project);
+        name ??= await nameGenerator.Value.GenerateNameAsync(systemPrompt, project, cancellationToken);
+        systemPrompt = promptTemplateFactory(name, systemPrompt.Template);
+        var agent = createNew(
+            name: name,
+            systemPrompt: systemPrompt,
+            tools: tools,
+            endpoint: endpoint,
+            isSystemAgent: isSystemAgent,
+            project: project);
         return await AddAsync(agent, cancellationToken);
     }
 
     public string GetAgentFingerprint(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyCollection<ToolSpecification> tools)
     {
         var sb = new StringBuilder();
-
-        foreach (var content in systemMessage.Contents)
-            sb.Append(content.Text ?? "");
-
+        sb.Append(systemPrompt.Template).Append('\0');
         sb.Append('\0');
 
         foreach (var tool in tools.OrderBy(t => t.Name, StringComparer.Ordinal))
@@ -75,5 +84,5 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
     }
 
     public string GetAgentFingerprint(IAgent agent)
-        => GetAgentFingerprint(agent.SystemMessage, agent.Tools);
+        => GetAgentFingerprint(agent.SystemPrompt, agent.Tools);
 }

@@ -1,14 +1,14 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
@@ -27,6 +27,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestRunGroupRepository testRunGroupRepository;
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
+    private readonly IOptimizerService optimizer;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
     private readonly TestRunnerConfiguration configuration;
@@ -47,6 +48,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestRunGroupRepository testRunGroupRepository,
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
+        IOptimizerService optimizer,
         IAsyncLock asyncLock,
         ILogger<TestRunnerService> logger,
         TestRunnerConfiguration configuration)
@@ -58,49 +60,35 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.testRunGroupRepository = testRunGroupRepository;
         this.testResultRepository = testResultRepository;
         this.broadcaster = broadcaster;
+        this.optimizer = optimizer;
         this.asyncLock = asyncLock;
         this.logger = logger;
         this.configuration = configuration;
     }
 
-    public ChannelReader<Guid> Reader
-        => channel.Reader;
-
-    public void Enqueue(Guid runId)
-        => channel.Writer.TryWrite(runId);
-
-    public async Task<ITestRun> RunInForegroundAsync(
-        ITestSuite suite,
-        IModelEndpoint endpoint,
-        CancellationToken cancellationToken = default)
-    {
-        ITestRunGroup group = createTestRunGroup(suite);
-        group = await testRunGroupRepository.AddAsync(group, cancellationToken);
-
-        ITestRun newRun = createTestRun(group, endpoint);
-        newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
-        newRun = await ExecuteRunAsync(newRun, cancellationToken);
-        return newRun;
-    }
-
-    public async Task<ITestRun> RunInBackgroundAsync(
-        ITestSuite suite,
-        IModelEndpoint endpoint,
-        CancellationToken cancellationToken = default)
-    {
-        ITestRunGroup group = createTestRunGroup(suite);
-        group = await testRunGroupRepository.AddAsync(group, cancellationToken);
-
-        ITestRun newRun = createTestRun(group, endpoint);
-        newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
-        await channel.Writer.WriteAsync(newRun.Id, cancellationToken);
-        return newRun;
-    }
-
-    public async Task<ITestRunGroup> RunGroupInBackgroundAsync(
+    public async Task<ITestRunGroup> RunInForegroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
         CancellationToken cancellationToken = default)
+    {
+        ITestRunGroup group = await CreateGroup(suite, endpoints, cancellationToken);
+        return await ExecuteGroupAsync(group, cancellationToken);
+    }
+
+    public async Task<ITestRunGroup> RunInBackgroundAsync(
+        ITestSuite suite,
+        IReadOnlyList<IModelEndpoint> endpoints,
+        CancellationToken cancellationToken = default)
+    {
+        ITestRunGroup group = await CreateGroup(suite, endpoints, cancellationToken);
+        await channel.Writer.WriteAsync(group.Id, cancellationToken);
+        return group;
+    }
+
+    private async Task<ITestRunGroup> CreateGroup(
+        ITestSuite suite,
+        IReadOnlyList<IModelEndpoint> endpoints,
+        CancellationToken cancellationToken)
     {
         ITestRunGroup group = createTestRunGroup(suite);
         group = await testRunGroupRepository.AddAsync(group, cancellationToken);
@@ -108,8 +96,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         foreach (var endpoint in endpoints)
         {
             ITestRun newRun = createTestRun(group, endpoint);
-            newRun = await testRunRepository.AddAsync(newRun, cancellationToken);
-            await channel.Writer.WriteAsync(newRun.Id, cancellationToken);
+            await testRunRepository.AddAsync(newRun, cancellationToken);
         }
 
         return group;
@@ -140,44 +127,64 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         return group;
     }
 
-    private async Task<ITestRun> ExecuteRunAsync(
-        ITestRun testRun,
+    private async Task<ITestRunGroup> ExecuteGroupAsync(
+        ITestRunGroup group,
         CancellationToken cancellationToken = default)
     {
-        if (testRun.Status != TestRunStatus.Pending)
+        if (group.Status != TestRunStatus.Pending)
         {
-            throw new InvalidOperationException($"Cannot execute test run {testRun.Id} because it is not in pending status.");
+            throw new InvalidOperationException($"Cannot execute test run {group.Id} because it is not in pending status.");
         }
+        await group.SetRunning(cancellationToken);
 
         CancellationTokenSource cts = new CancellationTokenSource();
-        cancellationTokens.TryAdd(testRun.Id, cts);
+        cancellationTokens.TryAdd(group.Id, cts);
         cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts.Token).Token;
 
         try
         {
-            testRun = await testRun.SetRunning(cancellationToken);
-            await EnsureGroupRunningAsync(testRun.Group.Id, cancellationToken);
-
-            var suite = testRun.Group.Suite;
+            var testRuns = await testRunRepository.GetByGroupAsync(group.Id, cancellationToken);
+            
             var parallelOptions = new ParallelOptions
             {
                 MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
                 CancellationToken = cancellationToken
             };
             
-            await Parallel.ForEachAsync(suite.TestCases, parallelOptions, 
-                async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
+            await Parallel.ForEachAsync(
+                testRuns,
+                parallelOptions, 
+                async (testRun, ct) => await RunTestRun(testRun, ct));
             
-            testRun = await testRun.ReloadAsync(cancellationToken);
-            
-            broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
-            await UpdateGroupStatusOnRunCompleteAsync(testRun.Group.Id, cancellationToken);
-            return testRun;
+            group = await group.ReloadAsync(cancellationToken);
+            broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+
+            await optimizer.EnqueueAsync(group, cancellationToken);
+            return group;
         }
         finally
         {
-            cancellationTokens.TryRemove(testRun.Id, out _);
+            cancellationTokens.TryRemove(group.Id, out _);
         }
+    }
+
+    private async Task RunTestRun(
+        ITestRun testRun,
+        CancellationToken cancellationToken)
+    {
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
+            CancellationToken = cancellationToken
+        };
+
+        await Parallel.ForEachAsync(
+            testRun.Group.Suite.TestCases,
+            parallelOptions,
+            async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
+
+        testRun = await testRun.ReloadAsync(cancellationToken);
+        broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
     }
 
     private async Task RunTestCase(
@@ -187,16 +194,14 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     {
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        var stopwatch = Stopwatch.StartNew();
-        AssistantMessage response = await testRun.Group.Suite.Agent.CompleteAsync(
+        IModelClient client = testRun.Group.Suite.Agent.CreateClient(customEndpoint: testRun.Endpoint);
+        ICompletion completion = await client.CompleteAsync(
             testCase.Input,
-            testRun.Endpoint,
-            cancellationToken);
-        TimeSpan elapsed = stopwatch.Elapsed;
+            cancellationToken: cancellationToken);
 
         broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
-
-        var testResult = createTestResult(testCase, response, [], elapsed);
+        
+        var testResult = createTestResult(testCase, completion, []);
         await testResultRepository.AddAsync(testResult, cancellationToken);
 
         var run = testRun;
@@ -243,31 +248,6 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluation.Reasoning)));
     }
 
-    private async Task EnsureGroupRunningAsync(Guid groupId, CancellationToken cancellationToken)
-    {
-        var group = await testRunGroupRepository.GetAsync(groupId, cancellationToken);
-        if (group.Status == TestRunStatus.Pending)
-            await group.SetRunning(cancellationToken);
-    }
-
-    private async Task UpdateGroupStatusOnRunCompleteAsync(Guid groupId, CancellationToken cancellationToken)
-    {
-        var group = await testRunGroupRepository.GetAsync(groupId, cancellationToken);
-        if (IsTerminal(group.Status))
-            return;
-
-        var allRuns = await testRunRepository.GetByGroupAsync(groupId, cancellationToken);
-        if (!allRuns.All(r => IsTerminal(r.Status)))
-            return;
-
-        bool anyFailed = allRuns.Any(r => r.Status is TestRunStatus.Failed or TestRunStatus.Cancelled);
-        var updatedGroup = anyFailed
-            ? await group.SetFailed(cancellationToken)
-            : await group.SetCompleted(cancellationToken);
-
-        broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(updatedGroup));
-    }
-
     private static bool IsTerminal(TestRunStatus status)
         => status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled;
 
@@ -275,18 +255,18 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     {
         try
         {
-            await foreach (Guid runId in channel.Reader.ReadAllAsync(cancellationToken))
+            await foreach (Guid groupId in channel.Reader.ReadAllAsync(cancellationToken))
             {
                 try
                 {
-                    ITestRun? testRun = await testRunRepository.FindAsync(runId, cancellationToken);
-                    if (testRun != null)
+                    ITestRunGroup? group = await testRunGroupRepository.FindAsync(groupId, cancellationToken);
+                    if (group != null)
                     {
-                        await ExecuteRunAsync(testRun, cancellationToken);
+                        await ExecuteGroupAsync(group, cancellationToken);
                     }
                     else
                     {
-                        logger.LogWarning("Test run with ID {RunId} not found in repository", runId);
+                        logger.LogWarning("Test run group with ID {RunId} not found in repository", groupId);
                     }
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -295,7 +275,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Failed to execute test run {RunId}", runId);
+                    logger.LogWarning(ex, "Failed to execute test run {RunId}", groupId);
                 }
             }
         }

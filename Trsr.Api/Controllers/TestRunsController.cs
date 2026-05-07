@@ -86,19 +86,6 @@ public class TestRunsController : ControllerBase
         return ToFixtureDto(run, result);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<TestRunDto>> Create(
-        [FromBody] CreateTestRunRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!await suiteRepository.ContainsAsync(request.TestSuiteId, cancellationToken))
-            return BadRequest($"Test suite {request.TestSuiteId} not found.");
-        var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
-        var endpoint = await endpoints.GetAsync(request.ModelEndpointId, cancellationToken);
-        var run = await runner.RunInBackgroundAsync(suite, endpoint, cancellationToken);
-        return AcceptedAtAction(nameof(Get), new { id = run.Id }, ToDto(run));
-    }
-
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
@@ -192,7 +179,7 @@ public class TestRunsController : ControllerBase
                     GetEvaluatorName(e.Evaluator),
                     e.Score,
                     e.Reasoning)).ToArray(),
-                (long)res.Duration.TotalMilliseconds
+                (long)res.Statistics.Latency.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
@@ -278,8 +265,8 @@ public class TestRunsController : ControllerBase
 
     private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)
     {
-        var total = (long)result.Duration.TotalMilliseconds;
-        return new RuntimeBreakdownDto(Total: total, Ttft: 0, Gen: total, Tools: 0, Judge: null);
+        var total = result.Statistics.Latency.TotalMilliseconds;
+        return new RuntimeBreakdownDto(Total: (long)total, Ttft: 0, Gen: (long)total, Tools: 0, Judge: null);
     }
 
     private static EndpointUsageDto[] MapEndpoints(ITestRun run, Domain.TestResult.ITestResult result)
@@ -292,10 +279,10 @@ public class TestRunsController : ControllerBase
                 Region: "n/a",
                 PricingIn: (double)(run.Endpoint.InputTokenCost ?? 0),
                 PricingOut: (double)(run.Endpoint.OutputTokenCost ?? 0),
-                TokIn: 0,
-                TokOut: 0,
+                TokIn: result.Statistics.Usage?.InputTokenCount,
+                TokOut: result.Statistics.Usage?.OutputTokenCount,
                 Calls: 1,
-                Latency: (long)result.Duration.TotalMilliseconds,
+                Latency: (long)result.Statistics.Latency.TotalMilliseconds,
                 CostUsd: 0
             )
         ];

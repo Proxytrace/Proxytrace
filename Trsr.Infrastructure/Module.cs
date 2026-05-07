@@ -9,6 +9,7 @@ public class Module : Autofac.Module
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
+        builder.RegisterModule<Trsr.Domain.Module>();
         builder.RegisterModule<Trsr.Serialization.Module>();
 
         builder.RegisterType<ModelClient>()

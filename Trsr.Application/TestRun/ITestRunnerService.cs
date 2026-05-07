@@ -11,24 +11,16 @@ public interface ITestRunnerService
     /// Executes a single-endpoint test run synchronously and returns the completed run.
     /// Used for direct invocations and tests.
     /// </summary>
-    internal Task<ITestRun> RunInForegroundAsync(
+    internal Task<ITestRunGroup> RunInForegroundAsync(
         ITestSuite suite,
-        IModelEndpoint endpoint,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Creates a single-endpoint group, queues background execution, and returns the pending run.
-    /// </summary>
-    Task<ITestRun> RunInBackgroundAsync(
-        ITestSuite suite,
-        IModelEndpoint endpoint,
+        IReadOnlyList<IModelEndpoint> endpoints,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a group of runs — one per endpoint — executing the same suite for model comparison.
     /// Queues all runs for background execution and returns immediately with the pending group.
     /// </summary>
-    Task<ITestRunGroup> RunGroupInBackgroundAsync(
+    Task<ITestRunGroup> RunInBackgroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
         CancellationToken cancellationToken = default);

@@ -46,8 +46,8 @@ public record EndpointUsageDto(
     string Region,
     double PricingIn,
     double PricingOut,
-    long TokIn,
-    long TokOut,
+    ulong? TokIn,
+    ulong? TokOut,
     int Calls,
     long Latency,
     double CostUsd

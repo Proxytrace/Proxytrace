@@ -5,6 +5,7 @@ import { Avatar } from '../ui/Avatar';
 import { checkHealth } from '../../api/health';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
+  SettingsIcon,
   LayoutSidebarIcon, SearchIcon, BellIcon, PlusIcon,
 } from '../icons';
 
@@ -17,6 +18,7 @@ const navItems = [
   { label: 'Test Runs', icon: 'play', to: '/runs' },
   { label: 'Proposals', icon: 'sparkles', to: '/proposals', badge: '2', badgeAccent: true },
   { label: 'Providers', icon: 'server', to: '/providers' },
+  { label: 'Settings', icon: 'settings', to: '/settings' },
 ] as const;
 
 type NavIconName = typeof navItems[number]['icon'];
@@ -30,6 +32,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   play: <PlayIcon size={16} />,
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
+  settings: <SettingsIcon size={16} />,
 };
 
 export function Shell() {

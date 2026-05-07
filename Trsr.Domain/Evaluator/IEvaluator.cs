@@ -1,4 +1,5 @@
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Project;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator;
@@ -10,6 +11,8 @@ public interface IEvaluator : IDomainEntity
 {
     /// <summary>The evaluation strategy used by this evaluator.</summary>
     EvaluatorKind Kind { get; }
+    
+    IProject Project { get; }
 
     /// <summary>
     /// Evaluates the actual output against the expected output, given the input conversation.

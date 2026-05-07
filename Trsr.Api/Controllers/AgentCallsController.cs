@@ -89,11 +89,11 @@ public class AgentCallsController : ControllerBase
         c.Endpoint.Model.Name,
         c.Endpoint.Provider.Name,
         c.Request.Messages.Select(ToMessageDto).ToArray(),
-        ToMessageDto(c.Response),
+        c.Response != null ? ToMessageDto(c.Response.Response) : null,
         c.Agent.Tools.Select(ToToolSpecDto).ToArray(),
-        (long)c.Usage.InputTokenCount,
-        (long)c.Usage.OutputTokenCount,
-        c.Duration.TotalMilliseconds,
+        c.Response?.Usage?.InputTokenCount,
+        c.Response?.Usage?.OutputTokenCount,
+        c.Response?.Latency.TotalMilliseconds,
         (int)c.HttpStatus,
         c.FinishReason,
         c.ErrorMessage,
@@ -120,7 +120,11 @@ public class AgentCallsController : ControllerBase
             if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
                 enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
+
         return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
 
@@ -149,8 +153,9 @@ public class AgentCallsController : ControllerBase
         {
             return null;
         }
-        return (c.Usage.InputTokenCount / 1_000_000m) * e.InputTokenCost.Value
-             + (c.Usage.OutputTokenCount / 1_000_000m) * e.OutputTokenCost.Value;
+
+        var usage = c.Response?.Usage;
+        return usage != null ? c.Endpoint.CalculateCost(usage) : null;
     }
 
     private static string GetText(Message m) => m switch

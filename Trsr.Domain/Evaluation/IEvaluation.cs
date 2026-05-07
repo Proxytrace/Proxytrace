@@ -21,6 +21,11 @@ public interface IEvaluation : IDomainObject
     EvaluationScore Score { get; }
     
     /// <summary>
+    /// Whether the evaluation has passed
+    /// </summary>
+    bool Passed { get; }
+    
+    /// <summary>
     /// A short explanation of the evaluation
     /// </summary>
     string? Reasoning { get; }

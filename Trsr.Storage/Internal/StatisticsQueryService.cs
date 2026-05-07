@@ -3,6 +3,7 @@ using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
@@ -11,6 +12,7 @@ using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
 using Trsr.Storage.Internal.Entities.TestSuite;
+using TestRunStatistics = Trsr.Domain.TestRunStatistics;
 
 namespace Trsr.Storage.Internal;
 
@@ -37,9 +39,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .Select(g => new
             {
                 TotalCalls = g.Count(),
-                TotalInputTokens = (long)g.Sum(e => e.InputTokens),
-                TotalOutputTokens = (long)g.Sum(e => e.OutputTokens),
-                AvgLatencyMs = g.Average(e => (double)e.DurationMs),
+                TotalInputTokens = g.Sum(e => (long?)e.InputTokens),
+                TotalOutputTokens = g.Sum(e => (long?)e.OutputTokens),
+                AvgLatencyMs = g.Average(e => e.LatencyMs),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -69,8 +71,8 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .Select(g => new TokenUsageStat(
                 Date: g.Key.Date,
                 EndpointId: g.Key.EndpointId,
-                InputTokens: g.Sum(e => (long)e.InputTokens),
-                OutputTokens: g.Sum(e => (long)e.OutputTokens)))
+                InputTokens: g.Sum(e => (long?)e.InputTokens),
+                OutputTokens: g.Sum(e => (long?)e.OutputTokens)))
             .OrderBy(s => s.Date)
             .ThenBy(s => s.EndpointId)
             .ToArray();
@@ -86,7 +88,10 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .GroupBy(e => e.EndpointId)
             .Select(g =>
             {
-                var sorted = g.Select(e => (double)e.DurationMs).OrderBy(x => x).ToArray();
+                var sorted = g
+                    .Where(x => x.LatencyMs.HasValue)
+                    .Select(e => e.LatencyMs ?? 0)
+                    .OrderBy(x => x).ToArray();
                 return new LatencyStat(
                     EndpointId: g.Key,
                     P50Ms: Percentile(sorted, 0.50),
@@ -179,9 +184,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
             {
                 EndpointId = g.Key,
                 CallCount = g.Count(),
-                TotalInputTokens = (long)g.Sum(e => e.InputTokens),
-                TotalOutputTokens = (long)g.Sum(e => e.OutputTokens),
-                AvgDurationMs = g.Average(e => (double)e.DurationMs),
+                TotalInputTokens = g.Sum(e => (long?)e.InputTokens),
+                TotalOutputTokens = g.Sum(e => (long?)e.OutputTokens),
+                AvgDurationMs = g.Average(e => e.LatencyMs),
             })
             .ToListAsync(cancellationToken);
 
@@ -215,16 +220,16 @@ internal class StatisticsQueryService : IStatisticsQueryService
             var endpoint = await endpoints.GetAsync(b.EndpointId, cancellationToken);
             var inputCost = endpoint.InputTokenCost.HasValue
                 ? b.TotalInputTokens / 1_000_000m * endpoint.InputTokenCost.Value
-                : (decimal?)null;
+                : null;
             var outputCost = endpoint.OutputTokenCost.HasValue
                 ? b.TotalOutputTokens / 1_000_000m * endpoint.OutputTokenCost.Value
-                : (decimal?)null;
+                : null;
 
             return new CostEstimateStat(
                 EndpointId: b.EndpointId,
-                InputCostEur: inputCost.HasValue ? Math.Round(inputCost.Value, 4) : (decimal?)null,
-                OutputCostEur: outputCost.HasValue ? Math.Round(outputCost.Value, 4) : (decimal?)null,
-                TotalCostEur: inputCost.HasValue && outputCost.HasValue ? Math.Round(inputCost.Value + outputCost.Value, 4) : (decimal?)null);
+                InputCostEur: inputCost.HasValue ? Math.Round(inputCost.Value, 4) : null,
+                OutputCostEur: outputCost.HasValue ? Math.Round(outputCost.Value, 4) : null,
+                TotalCostEur: inputCost.HasValue && outputCost.HasValue ? Math.Round(inputCost.Value + outputCost.Value, 4) : null);
         })
         .Await()
         .ContinueWith(x => x.Result.ToList(), cancellationToken);
@@ -257,6 +262,102 @@ internal class StatisticsQueryService : IStatisticsQueryService
             query = query.Where(e => e.CreatedAt <= filter.To.Value);
 
         return query;
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsByGroupAsync(Guid groupId, CancellationToken cancellationToken = default)
+    {
+        return await AggregateKpi(
+            contextFactory().Set<TestRunEntity>().AsNoTracking().Where(r => r.Group == groupId),
+            cancellationToken);
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        var suiteIds = await context.Set<TestSuiteEntity>().AsNoTracking()
+            .Where(s => s.Agent == agentId)
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var groupIds = await context.Set<TestRunGroupEntity>().AsNoTracking()
+            .Where(g => suiteIds.Contains(g.Suite))
+            .Select(g => g.Id)
+            .ToListAsync(cancellationToken);
+
+        return await AggregateKpi(
+            context.Set<TestRunEntity>().AsNoTracking().Where(r => groupIds.Contains(r.Group)),
+            cancellationToken);
+    }
+
+    public async Task<TestRunStatistics> GetStatisticsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = context.Set<TestRunEntity>().AsNoTracking();
+
+        if (filter.From.HasValue)
+            query = query.Where(r => r.CompletedAt >= filter.From.Value);
+        if (filter.To.HasValue)
+            query = query.Where(r => r.CompletedAt <= filter.To.Value);
+
+        if (filter.AgentId.HasValue || filter.ProjectId.HasValue)
+        {
+            var agentQuery = context.Set<AgentEntity>().AsNoTracking();
+            if (filter.AgentId.HasValue)
+                agentQuery = agentQuery.Where(a => a.Id == filter.AgentId.Value);
+            if (filter.ProjectId.HasValue)
+                agentQuery = agentQuery.Where(a => a.Project == filter.ProjectId.Value);
+
+            var agentIds = await agentQuery.Select(a => a.Id).ToListAsync(cancellationToken);
+
+            var suiteIds = await context.Set<TestSuiteEntity>().AsNoTracking()
+                .Where(s => agentIds.Contains(s.Agent))
+                .Select(s => s.Id)
+                .ToListAsync(cancellationToken);
+
+            var groupIds = await context.Set<TestRunGroupEntity>().AsNoTracking()
+                .Where(g => suiteIds.Contains(g.Suite))
+                .Select(g => g.Id)
+                .ToListAsync(cancellationToken);
+
+            query = query.Where(r => groupIds.Contains(r.Group));
+        }
+
+        return await AggregateKpi(query, cancellationToken);
+    }
+
+    private static async Task<TestRunStatistics> AggregateKpi(
+        IQueryable<TestRunEntity> query,
+        CancellationToken cancellationToken)
+    {
+        var totals = await query
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TestCases = g.Sum(r => r.StatTestCases),
+                Passed = g.Sum(r => r.StatPassed),
+                TotalDurationMs = g.Sum(r => r.StatTotalDurationMs),
+                TotalInputTokens = g.Sum(r => r.StatInputTokens),
+                TotalOutputTokens = g.Sum(r => r.StatOutputTokens),
+                TotalCost = (decimal?)g.Sum(r => (double?)r.StatCost),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (totals is null)
+            return TestRunStatistics.Empty;
+
+        return new TestRunStatistics(
+            TestCases: totals.TestCases,
+            Passed: totals.Passed,
+            TotalDuration: totals.TotalDurationMs.HasValue 
+                ? TimeSpan.FromMilliseconds(totals.TotalDurationMs.Value) 
+                : null,
+            TotalUsage: totals is {TotalInputTokens: not null, TotalOutputTokens: not null } 
+                ? new TokenUsage((ulong)totals.TotalInputTokens.Value, (ulong)totals.TotalOutputTokens.Value) 
+                : null,
+            TotalCost: totals.TotalCost.HasValue
+                ? Math.Round(totals.TotalCost.Value, 4) 
+                : null);
     }
 
     private static double Percentile(double[] sorted, double percentile)

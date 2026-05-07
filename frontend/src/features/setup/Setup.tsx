@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { FormField, formInputCls } from '../../components/ui/FormField';
@@ -25,7 +24,6 @@ const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
 };
 
 export default function Setup() {
-  const navigate = useNavigate();
   const toast = useToast();
   const qc = useQueryClient();
 
@@ -116,7 +114,7 @@ export default function Setup() {
           break;
         }
         case 3: {
-          const project = await setupApi.createProject(projectName.trim());
+          const project = await setupApi.createProject(projectName.trim(), ids.endpointId!);
           setIds(prev => ({ ...prev, projectId: project.id }));
           break;
         }
@@ -134,7 +132,7 @@ export default function Setup() {
   async function handleSubmit() {
     if (done) {
       qc.setQueryData(['setup-status'], { isConfigured: true });
-      navigate('/traces');
+      window.location.assign('/traces');
       return;
     }
 

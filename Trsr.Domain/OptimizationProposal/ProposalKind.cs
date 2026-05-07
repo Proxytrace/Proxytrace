@@ -11,6 +11,6 @@ public enum ProposalKind
     /// <summary>The proposal suggests changes to the agent's tool definitions only.</summary>
     Tool,
 
-    /// <summary>The proposal suggests changes to both the system prompt and tool definitions.</summary>
-    Both,
+    /// <summary>The proposal suggests switching to a different model endpoint.</summary>
+    ModelSwitch,
 }

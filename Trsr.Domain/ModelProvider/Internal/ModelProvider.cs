@@ -25,7 +25,7 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
     }
 
     public ModelProvider(
-        string name,
+        string name, 
         Uri endpoint,
         string apiKey,
         ModelProviderKind kind,
@@ -47,12 +47,12 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
+            yield return Validation.NotNullOrWhiteSpace(Name);
         }
 
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
-            yield return Validation.NotNullOrWhiteSpace(ApiKey, nameof(ApiKey));
+            yield return Validation.NotNullOrWhiteSpace(ApiKey);
         }
     }
 }

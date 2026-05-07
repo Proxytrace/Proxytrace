@@ -23,7 +23,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
     }
 
     public Task<IModelProvider> Map(ModelProviderEntity stored, CancellationToken cancellationToken = default)
-        => Task.FromResult(factory(stored.Name, new Uri(stored.Endpoint), stored.ApiKey, stored.Kind, stored));
+        => factory(stored.Name, new Uri(stored.Endpoint), stored.ApiKey, stored.Kind, stored).ToTaskResult();
 
     public Task<ModelProviderEntity> Map(IModelProvider domain, CancellationToken cancellationToken = default)
         => new ModelProviderEntity

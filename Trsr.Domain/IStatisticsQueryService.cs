@@ -1,3 +1,5 @@
+using Trsr.Domain.Usage;
+
 namespace Trsr.Domain;
 
 /// <summary>
@@ -25,6 +27,15 @@ public interface IStatisticsQueryService
 
     /// <summary>Returns estimated USD cost per model for the given <paramref name="filter"/>.</summary>
     Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs in the given test run group.</summary>
+    Task<TestRunStatistics> GetStatisticsByGroupAsync(Guid groupId, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs associated with the given agent.</summary>
+    Task<TestRunStatistics> GetStatisticsByAgentAsync(Guid agentId, CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate test-run KPIs for all finalized runs matching the filter (used by the dashboard).</summary>
+    Task<TestRunStatistics> GetStatisticsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 }
 
 public record StatisticsFilter(
@@ -44,8 +55,8 @@ public record StatisticsSummary(
 public record TokenUsageStat(
     DateOnly Date,
     Guid EndpointId,
-    long InputTokens,
-    long OutputTokens);
+    long? InputTokens,
+    long? OutputTokens);
 
 public record LatencyStat(
     Guid EndpointId,
@@ -73,12 +84,27 @@ public record ModelBreakdownStat(
     Guid EndpointId,
     string ModelName,
     int CallCount,
-    long TotalInputTokens,
-    long TotalOutputTokens,
-    double AvgDurationMs);
+    long? TotalInputTokens,
+    long? TotalOutputTokens,
+    double? AvgDurationMs);
 
 public record CostEstimateStat(
     Guid EndpointId,
     decimal? InputCostEur,
     decimal? OutputCostEur,
     decimal? TotalCostEur);
+
+public record TestRunStatistics(
+    int TestCases,
+    int Passed,
+    TimeSpan? TotalDuration,
+    TokenUsage? TotalUsage,
+    decimal? TotalCost)
+{
+    public static TestRunStatistics Empty => new(
+        TestCases: 0,
+        Passed: 0,
+        TotalDuration: null,
+        TotalUsage: null, 
+        TotalCost: null);
+}

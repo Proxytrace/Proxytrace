@@ -1,3 +1,4 @@
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -19,27 +20,31 @@ public interface ITestResult : IDomainEntity<ITestResult>
     /// The overall score from combining all evaluations
     /// </summary>
     EvaluationScore? OverallScore { get; }
+    
+    /// <summary>
+    /// Whether the test has passed
+    /// </summary>
+    bool Passed { get; }
 
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     IReadOnlyCollection<IEvaluation> Evaluations { get; }
 
-    /// <summary>How long the LLM call took for this test case, in milliseconds.</summary>
-    TimeSpan Duration { get; }
+    /// <summary>Token usage and latency statistics for this test result.</summary>
+    TestResultStatistics Statistics { get; }
 
     /// <summary>Factory delegate for creating a new test result.</summary>
     public delegate ITestResult CreateNew(
         ITestCase testCase,
-        AssistantMessage actualResponse,
-        IReadOnlyCollection<IEvaluation> evaluations, 
-        TimeSpan duration);
+        ICompletion completion,
+        IReadOnlyCollection<IEvaluation> evaluations);
 
     /// <summary>Factory delegate for reconstituting an existing test result from persistence.</summary>
     public delegate ITestResult CreateExisting(
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
-        TimeSpan duration,
-        IDomainEntityData existing);
+        IDomainEntityData existing,
+        TestResultStatistics statistics);
 
     /// <summary>
     /// Adds the evaluation to the test result

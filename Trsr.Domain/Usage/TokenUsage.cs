@@ -42,41 +42,33 @@ public sealed record TokenUsage : IDomainObject
     }
     
     /// <summary>
-    /// Increments the token usage by the values from another <paramref name="usage"/>.
+    /// Overloads the - operator to add two TokenUsage instances.
     /// </summary>
-    /// <param name="usage"></param>
-    public void Increment(TokenUsage usage)
-        => Increment(usage.InputTokenCount, usage.OutputTokenCount);  
-    
-    /// <summary>
-    /// Increments the token usage by the specified <paramref name="inputTokens"/> and <paramref name="outputTokens"/>.
-    /// </summary>
-    public void Increment(ulong inputTokens, ulong outputTokens)
-    {
-        InputTokenCount += inputTokens;
-        OutputTokenCount += outputTokens;
-    }
-    
-    /// <summary>
-    /// Overloads the - operator to subtract two TokenUsage instances.
-    /// </summary>
-    public static TokenUsage operator -(TokenUsage a, TokenUsage b) =>
-        new(
-            Math.Max(a.InputTokenCount - b.InputTokenCount, 0), 
-            Math.Max(a.OutputTokenCount - b.OutputTokenCount, 0));
-    
+    public static TokenUsage? operator -(TokenUsage? a, TokenUsage? b)
+        => a == null || b == null
+            ? a ?? b
+            : new(
+                a.InputTokenCount - b.InputTokenCount,
+                a.OutputTokenCount - b.OutputTokenCount);
+
     /// <summary>
     /// Overloads the + operator to add two TokenUsage instances.
     /// </summary>
-    public static TokenUsage operator +(TokenUsage a, TokenUsage b) =>
-        new(
-            Math.Max(a.InputTokenCount + b.InputTokenCount, 0), 
-            Math.Max(a.OutputTokenCount + b.OutputTokenCount, 0));
+    public static TokenUsage? operator +(TokenUsage? a, TokenUsage? b)
+        => a == null || b == null
+            ? a ?? b
+            : new(
+                a.InputTokenCount + b.InputTokenCount,
+                a.OutputTokenCount + b.OutputTokenCount);
+    
+    public static TokenUsage? Create(ulong? inputTokenCount, ulong? outputTokenCount)
+        => inputTokenCount.HasValue && outputTokenCount.HasValue
+            ? new TokenUsage(inputTokenCount.Value, outputTokenCount.Value)
+            : null;
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield return Validation.NotNegative(InputTokenCount);
-        yield return Validation.NotNegative(OutputTokenCount);
+        yield break;
     }
 }

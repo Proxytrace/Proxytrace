@@ -9,7 +9,7 @@ public static class TaskExtensions
     
     public static async Task<IReadOnlyCollection<T>> Await<T>(this IEnumerable<Task<T>> tasks)
         => await Task.WhenAll(tasks);
-    
+
     public static TResult SynchronouslyAwait<TResult>(this Task<TResult> task)
         => task.ConfigureAwait(false).GetAwaiter().GetResult();
     

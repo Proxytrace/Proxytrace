@@ -34,16 +34,22 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()
             .SingleInstance();
-        
+
         builder.RegisterType<TestResultBroadcaster>()
             .As<ITestResultBroadcaster>()
             .SingleInstance();
+
+        builder.RegisterType<ProposalBroadcaster>()
+            .As<IProposalBroadcaster>()
+            .SingleInstance();
+
+        builder.RegisterModule<Optimization.Module>();
 
         builder.RegisterType<AgentNameGenerator>()
             .As<IAgentNameGenerator>()
             .SingleInstance();
         
-        builder.Register<TestRunnerConfiguration>(ctx =>
+        builder.Register<TestRunnerConfiguration>(_ =>
             {
                 var config = this.configuration?.GetSection("TestRunner").Get<TestRunnerConfiguration>();
                 return config ?? new TestRunnerConfiguration();
@@ -72,5 +78,7 @@ public sealed class Module : Autofac.Module
         {
             services.AddHostedService(sc => sc.GetRequiredService<AgentCallIngestor>());
         });
+        
+        builder.RegisterInstance(Prompts.ResourceManager);
     }
 }

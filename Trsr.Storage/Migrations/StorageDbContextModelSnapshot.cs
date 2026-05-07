@@ -27,10 +27,16 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("Endpoint")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Fingerprint")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsSystemAgent")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -40,7 +46,7 @@ namespace Trsr.Storage.Migrations
                     b.Property<Guid>("Project")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SystemMessage")
+                    b.Property<string>("SystemPrompt")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -53,6 +59,8 @@ namespace Trsr.Storage.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Endpoint");
 
                     b.HasIndex("Fingerprint")
                         .IsUnique();
@@ -78,9 +86,6 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long>("DurationMs")
-                        .HasColumnType("INTEGER");
-
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
@@ -95,10 +100,13 @@ namespace Trsr.Storage.Migrations
                     b.Property<int>("HttpStatus")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("InputTokens")
+                    b.Property<ulong?>("InputTokens")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OutputTokens")
+                    b.Property<double?>("LatencyMs")
+                        .HasColumnType("REAL");
+
+                    b.Property<ulong?>("OutputTokens")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Request")
@@ -106,7 +114,6 @@ namespace Trsr.Storage.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Response")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UpdatedAt")
@@ -124,47 +131,6 @@ namespace Trsr.Storage.Migrations
                     b.HasIndex("EndpointId");
 
                     b.ToTable("AgentCallEntity");
-                });
-
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.AgentToolCall.AgentToolCallEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("AgentCallId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<long?>("DurationMs")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Request")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Response")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ToolCallId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AgentCallId");
-
-                    b.HasIndex("ToolCallId");
-
-                    b.ToTable("AgentToolCallEntity");
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.ApiKey.ApiKeyEntity", b =>
@@ -225,6 +191,9 @@ namespace Trsr.Storage.Migrations
 
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("Project")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UpdatedAt")
                         .IsRequired()
@@ -355,6 +324,10 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("EvidenceTestRunIds")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -362,12 +335,8 @@ namespace Trsr.Storage.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ProposedSystemMessage")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ProposedTools")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Priority")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Rationale")
                         .IsRequired()
@@ -383,6 +352,8 @@ namespace Trsr.Storage.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Agent");
+
+                    b.HasIndex("Kind");
 
                     b.HasIndex("Status");
 
@@ -403,6 +374,9 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid>("SystemEndpoint")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("UpdatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -412,7 +386,24 @@ namespace Trsr.Storage.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
+                    b.HasIndex("SystemEndpoint");
+
                     b.ToTable("ProjectEntity");
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectUserEntity", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ProjectId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ProjectUserEntity");
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestCase.TestCaseEntity", b =>
@@ -463,6 +454,12 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<long?>("InputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("OutputTokens")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("TestCase")
                         .HasColumnType("TEXT");
 
@@ -495,6 +492,24 @@ namespace Trsr.Storage.Migrations
 
                     b.Property<Guid>("Group")
                         .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("StatCost")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("StatInputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("StatOutputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StatPassed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("StatTestCases")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("StatTotalDurationMs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
@@ -626,6 +641,12 @@ namespace Trsr.Storage.Migrations
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Agent.AgentEntity", b =>
                 {
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Endpoint")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
                         .WithMany()
                         .HasForeignKey("Project")
@@ -644,15 +665,6 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
                         .WithMany()
                         .HasForeignKey("EndpointId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Trsr.Storage.Internal.Entities.AgentToolCall.AgentToolCallEntity", b =>
-                {
-                    b.HasOne("Trsr.Storage.Internal.Entities.AgentCall.AgentCallEntity", null)
-                        .WithMany()
-                        .HasForeignKey("AgentCallId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -692,6 +704,30 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.Agent.AgentEntity", null)
                         .WithMany()
                         .HasForeignKey("Agent")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
+                        .WithMany()
+                        .HasForeignKey("SystemEndpoint")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectUserEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
+                        .WithMany("ProjectUsers")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Trsr.Storage.Internal.Entities.User.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -755,6 +791,11 @@ namespace Trsr.Storage.Migrations
                         .HasForeignKey("TestSuiteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Project.ProjectEntity", b =>
+                {
+                    b.Navigation("ProjectUsers");
                 });
 
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>

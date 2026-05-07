@@ -45,27 +45,27 @@ namespace Trsr.Domain {
             }
         }
         
-        internal static string HelpfulnessEvaluator {
+        internal static string politeness_evaluator {
             get {
-                return ResourceManager.GetString("HelpfulnessEvaluator", resourceCulture);
+                return ResourceManager.GetString("politeness_evaluator", resourceCulture);
             }
         }
-
-        internal static string PolitenessEvaluator {
+        
+        internal static string safety_classifier {
             get {
-                return ResourceManager.GetString("PolitenessEvaluator", resourceCulture);
+                return ResourceManager.GetString("safety_classifier", resourceCulture);
             }
         }
-
-        internal static string SafetyClassifier {
+        
+        internal static string tool_usage_evaluator {
             get {
-                return ResourceManager.GetString("SafetyClassifier", resourceCulture);
+                return ResourceManager.GetString("tool_usage_evaluator", resourceCulture);
             }
         }
-
-        internal static string ToolUsageEvaluator {
+        
+        internal static string helpfulness_evaluator {
             get {
-                return ResourceManager.GetString("ToolUsageEvaluator", resourceCulture);
+                return ResourceManager.GetString("helpfulness_evaluator", resourceCulture);
             }
         }
     }

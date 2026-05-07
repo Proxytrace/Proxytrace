@@ -1,7 +1,8 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
@@ -10,53 +11,59 @@ namespace Trsr.Application.Ingestion.Internal;
 
 internal class OpenAiCallParser : IOpenAiCallParser
 {
-    public bool TryParse(
-        IModelProvider provider,
+    private readonly ICompletion.Create completionFactory;
+    private readonly IModelEndpointRepository endpointRepository;
+
+    public OpenAiCallParser(
+        ICompletion.Create completionFactory,
+        IModelEndpointRepository endpointRepository)
+    {
+        this.completionFactory = completionFactory;
+        this.endpointRepository = endpointRepository;
+    }
+    
+    public async Task<ParseResult?> TryParse(IModelProvider provider,
         string requestBody,
         string? responseBody,
         TimeSpan duration,
         HttpStatusCode httpStatus,
-        [NotNullWhen(true)] out OpenAiCallParseResult? result)
+        CancellationToken cancellationToken = default)
     {
         var conversation = ParseConversation(requestBody);
         if (conversation is null)
         {
-            result = null;
-            return false;
+            return null;
         }
 
         var agentMessage = ParseAgentMessage(responseBody);
-        if (agentMessage is null)
+        if (agentMessage is null && httpStatus is >= (HttpStatusCode)200 and < (HttpStatusCode)300)
         {
-            result = null;
-            return false;
+            return null;
         }
 
         var model = ParseModel(requestBody);
         var (inputTokens, outputTokens, finishReason) = ParseUsage(responseBody);
+        var usage = TokenUsage.Create(inputTokens ?? 0, outputTokens ?? 0);
         var errorMessage = (int)httpStatus >= 400 ? ParseErrorMessage(responseBody) : null;
         var systemMessage = ParseSystemMessage(requestBody);
         if(systemMessage is null)
         {
-            result = null;
-            return false;
+            return null;
         }
         
         var tools = ParseTools(requestBody);
 
-        result = new OpenAiCallParseResult(
-            Model: model,
-            Provider: provider,
+        IModelEndpoint endpoint = await endpointRepository.GetOrCreateAsync(model, provider, cancellationToken);
+        ICompletion? completion = agentMessage != null ? completionFactory(agentMessage, usage, duration) : null;
+        return new ParseResult(
+            Endpoint: endpoint,
             Request: conversation,
-            Response: agentMessage,
-            Usage: new TokenUsage((ulong)(inputTokens ?? 0), (ulong)(outputTokens ?? 0)),
-            Duration: duration,
+            Response: completion,
             HttpStatus: httpStatus,
             FinishReason: finishReason,
             ErrorMessage: errorMessage,
             SystemMessage: systemMessage,
             Tools: tools);
-        return true;
     }
 
     // ── OpenAI request → Conversation ────────────────────────────────────────
@@ -351,7 +358,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
         return "unknown";
     }
 
-    private static (int? inputTokens, int? outputTokens, string? finishReason) ParseUsage(string? responseBody)
+    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ParseUsage(string? responseBody)
     {
         if (responseBody is null)
         {
@@ -371,10 +378,10 @@ internal class OpenAiCallParser : IOpenAiCallParser
         catch { return (null, null, null); }
     }
 
-    private static (int? inputTokens, int? outputTokens, string? finishReason) ParseUsageFromSse(string responseBody)
+    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ParseUsageFromSse(string responseBody)
     {
-        int? inputTokens = null;
-        int? outputTokens = null;
+        ulong? inputTokens = null;
+        ulong? outputTokens = null;
         string? finishReason = null;
 
         foreach (var line in responseBody.Split('\n'))
@@ -399,22 +406,22 @@ internal class OpenAiCallParser : IOpenAiCallParser
         return (inputTokens, outputTokens, finishReason);
     }
 
-    private static (int? inputTokens, int? outputTokens, string? finishReason) ExtractUsageFromElement(JsonElement root)
+    private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ExtractUsageFromElement(JsonElement root)
     {
-        int? inputTokens = null;
-        int? outputTokens = null;
+        ulong? inputTokens = null;
+        ulong? outputTokens = null;
         string? finishReason = null;
 
         if (root.TryGetProperty("usage", out var usage))
         {
             if (usage.TryGetProperty("prompt_tokens", out var pt))
             {
-                inputTokens = pt.GetInt32();
+                inputTokens = pt.GetUInt64();
             }
 
             if (usage.TryGetProperty("completion_tokens", out var ct))
             {
-                outputTokens = ct.GetInt32();
+                outputTokens = ct.GetUInt64();
             }
         }
 

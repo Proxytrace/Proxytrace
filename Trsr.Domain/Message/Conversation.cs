@@ -21,6 +21,9 @@ public sealed record Conversation : IDomainObject
     /// </summary>
     public IReadOnlyList<Message> Messages 
         => messages.ToArray();
+    
+    public SystemMessage? SystemMessage 
+        => Messages.FirstOrDefault(x => x.Role == Role.System) as SystemMessage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Conversation"/> class with the specified id, title, user name, and messages.
@@ -66,6 +69,13 @@ public sealed record Conversation : IDomainObject
         }
         messages = [systemMessage, ..Messages];
     }
+    
+    /// <summary>
+    /// Returns the Conversation without the system message
+    /// </summary>
+    [Pure]
+    public Conversation WithoutSystemMessage() 
+        => new(Id, Messages.Where(x => x.Role != Role.System).ToArray());
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -83,16 +93,14 @@ public sealed record Conversation : IDomainObject
     /// <inheritdoc />
     public override int GetHashCode() 
         => HashCode.Combine(Id, Messages);
-
+    
     /// <summary>
     /// Replaces any existing system Prompt with this system prompt
     /// </summary>
     [Pure]
     public static Conversation ReplaceSystemMessage(Conversation conversation, SystemMessage systemMessage)
     {
-        var upstreamMessages = conversation.Messages.Where(x => x.Role != Role.System).ToList();
-        
-        var newConversation = new Conversation(conversation.Id, upstreamMessages);
+        var newConversation = conversation.WithoutSystemMessage();
         newConversation.AddSystemMessage(systemMessage);
         return newConversation;
     }

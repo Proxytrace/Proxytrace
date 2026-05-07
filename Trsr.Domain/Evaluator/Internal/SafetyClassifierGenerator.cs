@@ -1,21 +1,24 @@
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
 internal class SafetyClassifierGenerator : EvaluatorGeneratorBase<ISafetyClassifier>
 {
     private readonly ISafetyClassifier.CreateNew factory;
-    private readonly IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator;
+    private readonly IDomainEntityGenerator<IProject> projectGenerator;
 
     public SafetyClassifierGenerator(
         ISafetyClassifier.CreateNew factory,
-        IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator,
+        IDomainEntityGenerator<IProject> projectGenerator,
         IRepository<IEvaluator> repository) : base(repository)
     {
         this.factory = factory;
-        this.modelEndpointGenerator = modelEndpointGenerator;
+        this.projectGenerator = projectGenerator;
     }
 
     public override async Task<ISafetyClassifier> GenerateAsync(CancellationToken cancellationToken = default)
-        => factory(await modelEndpointGenerator.GetOrCreateAsync(cancellationToken));
+    {
+        IProject project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        return factory(project);
+    }
 }

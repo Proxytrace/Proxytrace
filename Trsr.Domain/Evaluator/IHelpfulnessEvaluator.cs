@@ -1,13 +1,13 @@
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator;
 
 public interface IHelpfulnessEvaluator : IAgenticEvaluator
 {
-    public delegate IHelpfulnessEvaluator CreateNew(
-        IModelEndpoint endpoint);
+    public delegate IHelpfulnessEvaluator CreateNew(IProject project);
     
     public delegate IHelpfulnessEvaluator CreateExisting(
-        IModelEndpoint endpoint,
+        IProject project,
         IDomainEntityData existing);
 }

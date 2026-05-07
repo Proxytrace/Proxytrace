@@ -1,7 +1,11 @@
+using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
+
+internal record SystemPromptData(string Name, string Template);
 
 [StoredDomainEntity(typeof(Trsr.Domain.Agent.IAgent))]
 internal record AgentEntity : Entity
@@ -15,6 +19,8 @@ internal record AgentEntity : Entity
     /// <see cref="Trsr.Domain.Agent.IAgent.Project"/>
     /// </summary>
     public required Guid Project { get; init; }
+    
+    public required Guid Endpoint { get; init; }
 
     /// <summary>
     /// SHA-256 fingerprint of system message + tools + model + provider, used for efficient get-or-create lookups.
@@ -22,9 +28,14 @@ internal record AgentEntity : Entity
     public required string Fingerprint { get; init; }
 
     /// <summary>
-    /// <see cref="Trsr.Domain.Agent.IAgent.SystemMessage"/> - stored as JSON in the database
+    /// <see cref="IAgent.SystemPrompt"/> - stored as JSON in the database
     /// </summary>
-    public required SystemMessage SystemMessage { get; init; }
+    public required SystemPromptData SystemPrompt { get; init; }
+    
+    /// <summary>
+    /// <see cref="IAgent.IsSystemAgent"/>
+    /// </summary>
+    public required bool IsSystemAgent { get; init; }
 
     /// <summary>
     /// <see cref="Trsr.Domain.Agent.IAgent.Tools"/> - stored as JSON in the database

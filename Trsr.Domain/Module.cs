@@ -4,6 +4,9 @@ using Autofac;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Message.Internal;
+using Trsr.Domain.Prompt;
+using Trsr.Domain.Prompt.Internal;
+using Trsr.Domain.TestRun.Internal;
 using Trsr.Domain.Tools.Internal;
 
 namespace Trsr.Domain;
@@ -65,6 +68,12 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<EvaluatorGenerator>()
             .As<IDomainEntityGenerator<IEvaluator>>();
+
+        builder.RegisterType<StatisticsCalculator>()
+            .As<IStatisticsCalculator>()
+            .SingleInstance();
+        
+        builder.RegisterType<ResourcesPromptRepository>().As<IPromptTemplateRepository>();
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)

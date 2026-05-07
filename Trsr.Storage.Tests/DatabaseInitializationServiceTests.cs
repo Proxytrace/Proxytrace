@@ -19,7 +19,8 @@ public sealed class DatabaseInitializationServiceTests : BaseTest<Module>
         // Arrange
         var services = GetServices();
         var logger = NullLogger<DatabaseInitializationService>.Instance;
-        var service = new DatabaseInitializationService(services, logger);
+        var configuration = StorageConfiguration.InMemory();
+        var service = new DatabaseInitializationService(services, configuration, logger);
 
         // Act
         var action = () => service.StopAsync(CancellationToken);
@@ -34,7 +35,8 @@ public sealed class DatabaseInitializationServiceTests : BaseTest<Module>
         // Arrange
         var services = GetServices();
         var logger = NullLogger<DatabaseInitializationService>.Instance;
-        var service = new DatabaseInitializationService(services, logger);
+        var configuration = StorageConfiguration.InMemory();
+        var service = new DatabaseInitializationService(services, configuration, logger);
 
         // Act
         await service.StopAsync(CancellationToken);

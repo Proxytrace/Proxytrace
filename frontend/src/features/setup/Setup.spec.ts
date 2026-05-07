@@ -51,16 +51,16 @@ describe('setupApi', () => {
   });
 
   describe('createProject', () => {
-    it('posts to /api/projects with name', async () => {
+    it('posts to /api/projects with name and systemEndpointId', async () => {
       const fetch = mockFetch({ id: 'proj-1', name: 'My App' });
       vi.stubGlobal('fetch', fetch);
-      const result = await setupApi.createProject('My App');
+      const result = await setupApi.createProject('My App', 'endpoint-1');
       expect(result.id).toBe('proj-1');
       expect(fetch).toHaveBeenCalledWith(
         '/api/projects',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ name: 'My App' }),
+          body: JSON.stringify({ name: 'My App', systemEndpointId: 'endpoint-1' }),
         }),
       );
     });

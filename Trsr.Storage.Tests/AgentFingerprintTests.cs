@@ -3,9 +3,9 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 using Trsr.Testing;
 
@@ -29,7 +29,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
 
     private sealed class StubNameGenerator : IAgentNameGenerator
     {
-        public Task<string> GenerateNameAsync(SystemMessage systemMessage, IModelEndpoint endpoint, CancellationToken cancellationToken = default)
+        public Task<string> GenerateNameAsync(IPromptTemplate systemPrompt, IProject project, CancellationToken cancellationToken = default)
             => Task.FromResult<string>("Test Agent");
     }
 
@@ -41,6 +41,9 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     private static async Task<IModelEndpoint> CreateEndpointAsync(IServiceProvider services, CancellationToken ct)
         => await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().CreateAsync(ct);
 
+    private static IPromptTemplate MakePrompt(IServiceProvider services, string content)
+        => services.GetRequiredService<IPromptTemplate.Create>()("test-prompt", content);
+
     private static ToolSpecification MakeTool(string name)
         => new(name, $"{name} description", ToolArguments.None);
 
@@ -51,7 +54,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     {
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
-        var msg  = new SystemMessage("You are a helpful assistant");
+        var msg  = MakePrompt(services, "You are a helpful assistant");
         var tools = (IReadOnlyCollection<ToolSpecification>)[MakeTool("search")];
 
         var fp1 = repo.GetAgentFingerprint(msg, tools);
@@ -65,7 +68,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     {
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
-        var fp = repo.GetAgentFingerprint(new SystemMessage("test"), []);
+        var fp = repo.GetAgentFingerprint(MakePrompt(services, "test"), []);
 
         fp.Should().HaveLength(64);
         fp.Should().MatchRegex("^[0-9a-f]+$");
@@ -79,8 +82,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
 
-        var fp1 = repo.GetAgentFingerprint(new SystemMessage("You are agent A"), []);
-        var fp2 = repo.GetAgentFingerprint(new SystemMessage("You are agent B"), []);
+        var fp1 = repo.GetAgentFingerprint(MakePrompt(services, "You are agent A"), []);
+        var fp2 = repo.GetAgentFingerprint(MakePrompt(services, "You are agent B"), []);
 
         fp1.Should().NotBe(fp2);
     }
@@ -90,7 +93,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     {
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
-        var msg = new SystemMessage("You are a helpful assistant");
+        var msg = MakePrompt(services, "You are a helpful assistant");
 
         var fp1 = repo.GetAgentFingerprint(msg, [MakeTool("search")]);
         var fp2 = repo.GetAgentFingerprint(msg, [MakeTool("calculator")]);
@@ -103,7 +106,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     {
         var services = GetServices();
         var repo = services.GetRequiredService<IAgentRepository>();
-        var msg = new SystemMessage("You are a helpful assistant");
+        var msg = MakePrompt(services, "You are a helpful assistant");
         var toolA = MakeTool("aaa");
         var toolB = MakeTool("bbb");
 
@@ -122,10 +125,10 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo     = services.GetRequiredService<IAgentRepository>();
         var project  = await CreateProjectAsync(services, CancellationToken);
         var endpoint = await CreateEndpointAsync(services, CancellationToken);
-        var msg      = new SystemMessage("You are a helpful assistant");
+        var msg      = MakePrompt(services, "You are a helpful assistant");
 
-        var agent1 = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, endpoint, cancellationToken: CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, endpoint, cancellationToken: CancellationToken);
 
         agent1.Id.Should().Be(agent2.Id);
     }
@@ -138,8 +141,8 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var project  = await CreateProjectAsync(services, CancellationToken);
         var endpoint = await CreateEndpointAsync(services, CancellationToken);
 
-        var agent1 = await repo.GetOrCreateAsync(new SystemMessage("You are agent A"), [], project, endpoint, CancellationToken);
-        var agent2 = await repo.GetOrCreateAsync(new SystemMessage("You are agent B"), [], project, endpoint, CancellationToken);
+        var agent1 = await repo.GetOrCreateAsync(MakePrompt(services, "You are agent A"), [], project, endpoint, cancellationToken: CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(MakePrompt(services, "You are agent B"), [], project, endpoint, cancellationToken: CancellationToken);
 
         agent1.Id.Should().NotBe(agent2.Id);
     }
@@ -151,12 +154,11 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo     = services.GetRequiredService<IAgentRepository>();
         var project  = await CreateProjectAsync(services, CancellationToken);
         var endpoint = await CreateEndpointAsync(services, CancellationToken);
-        var msg      = new SystemMessage("You are a helpful assistant");
+        var msg      = MakePrompt(services, "You are a helpful assistant");
 
-        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, endpoint, CancellationToken);
+        var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, endpoint, cancellationToken: CancellationToken);
 
         agent.Name.Should().Be("Test Agent");
-        agent.SystemMessage.Should().Be(msg);
         agent.Tools.Should().HaveCount(1);
         agent.Project.Id.Should().Be(project.Id);
     }
@@ -168,9 +170,9 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var repo     = services.GetRequiredService<IAgentRepository>();
         var project  = await CreateProjectAsync(services, CancellationToken);
         var endpoint = await CreateEndpointAsync(services, CancellationToken);
-        var msg      = new SystemMessage("You are a helpful assistant");
+        var msg      = MakePrompt(services, "You are a helpful assistant");
 
-        var agent    = await repo.GetOrCreateAsync(msg, [], project, endpoint, CancellationToken);
+        var agent    = await repo.GetOrCreateAsync(msg, [], project, endpoint, cancellationToken: CancellationToken);
         var expected = repo.GetAgentFingerprint(msg, []);
 
         repo.GetAgentFingerprint(agent).Should().Be(expected);

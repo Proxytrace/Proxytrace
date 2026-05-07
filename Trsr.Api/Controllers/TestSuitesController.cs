@@ -1,14 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
-using Trsr.Api.Dto.TestRuns;
 using Trsr.Api.Dto.TestSuites;
-using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 
@@ -23,9 +20,8 @@ public class TestSuitesController : ControllerBase
     private readonly IAgentCallRepository agentCallRepository;
     private readonly ITestCaseRepository testCaseRepository;
     private readonly IEvaluatorRepository evaluatorRepository;
-    private readonly IModelEndpointRepository modelEndpointRepository;
-    private readonly ITestRunnerService testRunnerService;
     private readonly ITestCase.CreateNew createTestCase;
+    private readonly ITestCase.CreateNewFromCall createTestCaseFromCall;
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
@@ -36,9 +32,8 @@ public class TestSuitesController : ControllerBase
         IAgentCallRepository agentCallRepository,
         ITestCaseRepository testCaseRepository,
         IEvaluatorRepository evaluatorRepository,
-        IModelEndpointRepository modelEndpointRepository,
-        ITestRunnerService testRunnerService,
         ITestCase.CreateNew createTestCase,
+        ITestCase.CreateNewFromCall createTestCaseFromCall,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting)
@@ -48,9 +43,8 @@ public class TestSuitesController : ControllerBase
         this.agentCallRepository = agentCallRepository;
         this.testCaseRepository = testCaseRepository;
         this.evaluatorRepository = evaluatorRepository;
-        this.modelEndpointRepository = modelEndpointRepository;
-        this.testRunnerService = testRunnerService;
         this.createTestCase = createTestCase;
+        this.createTestCaseFromCall = createTestCaseFromCall;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
@@ -95,7 +89,7 @@ public class TestSuitesController : ControllerBase
         }
         else
         {
-            var defaultEvaluator = createEvaluator();
+            var defaultEvaluator = createEvaluator(agent.Project);
             var savedDefault = await evaluatorRepository.AddAsync(defaultEvaluator, cancellationToken);
             evaluators = [savedDefault];
         }
@@ -164,9 +158,9 @@ public class TestSuitesController : ControllerBase
 
         if (request.AgentCallIds.Count == 0)
             return BadRequest("At least one agent call ID must be provided.");
-
+        
         var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
-        var evaluator = createEvaluator();
+        var evaluator = createEvaluator(agent.Project);
         var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
 
         var testCases = new List<ITestCase>();
@@ -176,11 +170,12 @@ public class TestSuitesController : ControllerBase
                 return BadRequest($"Agent call {callId} not found.");
 
             var call = await agentCallRepository.GetAsync(callId, cancellationToken);
-            var nonSystemMessages = call.Request.Messages
-                .Where(m => m is not SystemMessage)
-                .ToList();
-            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
-            var testCase = createTestCase(input, call.Response);
+            if (call.Response is null)
+            {
+                throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
+            }
+            
+            var testCase = createTestCaseFromCall(call);
             var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
             testCases.Add(saved);
         }
@@ -211,25 +206,6 @@ public class TestSuitesController : ControllerBase
         return ToDto(savedSuite);
     }
 
-    [HttpPost("{id:guid}/run")]
-    public async Task<ActionResult<TestRunDto>> Run(Guid id, CancellationToken cancellationToken)
-    {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
-            return NotFound();
-        var suite = await suiteRepository.GetAsync(id, cancellationToken);
-
-        if (suite.TestCases.Count == 0)
-            return BadRequest("Cannot run a suite with no test cases.");
-
-        var endpoints = await modelEndpointRepository.GetAllAsync(cancellationToken);
-        var endpoint = endpoints.FirstOrDefault();
-        if (endpoint is null)
-            return BadRequest("No model endpoints are configured. Send at least one proxied LLM call first.");
-
-        var run = await testRunnerService.RunInBackgroundAsync(suite, endpoint, cancellationToken);
-        return TestRunsController.ToDto(run);
-    }
-
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
     public async Task<ActionResult<TestSuiteDto>> RemoveTestCase(
         Guid id,
@@ -254,11 +230,7 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            var nonSystemMessages = call.Request.Messages
-                .Where(m => m is not SystemMessage)
-                .ToList();
-            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
-            return createTestCase(input, call.Response);
+            return createTestCaseFromCall(call);
         }
 
         if (inputMessages is not null && expectedOutput is not null)

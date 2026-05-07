@@ -5,6 +5,7 @@ using NSubstitute;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
@@ -54,10 +55,14 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
 
     private void RegisterFakeModelClient(ContainerBuilder builder, AssistantMessage response)
     {
-        IModelClient? handler = Substitute.For<IModelClient>();
-        handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(response));
-        builder.RegisterInstance(handler);
+        builder.Register(ct =>
+        {
+            IModelClient handler = Substitute.For<IModelClient>();
+            var completionFactory = ct.Resolve<ICompletion.Create>();
+            handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<IReadOnlyDictionary<string, string>?>(), Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(completionFactory(response, null, TimeSpan.FromMilliseconds(1000))));
+            return handler;
+        });
     }
 
     [TestMethod]
@@ -74,8 +79,13 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var runner = services.GetRequiredService<ITestRunnerService>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], CancellationToken);
 
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        IReadOnlyList<ITestRun> testRuns = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+
+        testRuns.Should().HaveCount(1);
+        var testRun = testRuns.First();
         testRun.TestResults.Should().HaveCount(1);
         testRun.TestResults[0].Evaluations.Should().ContainSingle()
             .Which.Score.Should().Be(EvaluationScore.Acceptable);
@@ -96,8 +106,13 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var runner = services.GetRequiredService<ITestRunnerService>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], CancellationToken);
 
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        IReadOnlyList<ITestRun> testRuns = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+
+        testRuns.Should().HaveCount(1);
+        var testRun = testRuns.First();
         testRun.TestResults.Should().HaveCount(1);
         testRun.TestResults[0].Evaluations.Should().ContainSingle()
             .Which.Score.Should().Be(EvaluationScore.Terrible);
@@ -117,7 +132,11 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        IReadOnlyList<ITestRun> testRuns = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+        var testRun = testRuns.First();
 
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
         storedResult.Evaluations.Should().ContainSingle()
@@ -140,7 +159,11 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var resultRepo = services.GetRequiredService<IRepository<ITestResult>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        IReadOnlyList<ITestRun> testRuns = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+        var testRun = testRuns.First();
 
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
         storedResult.Evaluations.Should().ContainSingle()
@@ -161,7 +184,11 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
 
-        var testRun = await runner.RunInForegroundAsync(suite, endpoint, CancellationToken);
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        IReadOnlyList<ITestRun> testRuns = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+        var testRun = testRuns.First();
 
         var storedRun = await runRepo.GetAsync(testRun.Id, CancellationToken);
         storedRun.Should().NotBeNull();

@@ -149,4 +149,9 @@ public static class Validation
         => variable <= greaterThan
             ? new ValidationResult($"{memberName} must be greater than {greaterThan}")
             : ValidationResult.Success!;
+
+    public static ValidationResult Positive(TimeSpan variable, [CallerArgumentExpression(nameof(variable))] string memberName = "")
+        => variable <= TimeSpan.Zero
+            ? new ValidationResult($"{memberName} must be positive")
+            : ValidationResult.Success!;
 }

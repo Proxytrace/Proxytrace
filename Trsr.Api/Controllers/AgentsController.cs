@@ -1,11 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Agents;
+using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
-using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Api.Controllers;
@@ -14,13 +16,27 @@ namespace Trsr.Api.Controllers;
 [Route("api/agents")]
 public class AgentsController : ControllerBase
 {
-    private readonly IAgentRepository repository;
-    private readonly IAgentCallRepository agentCallRepository;
+    private static readonly JsonSerializerOptions SseOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() },
+    };
 
-    public AgentsController(IAgentRepository repository, IAgentCallRepository agentCallRepository)
+    private readonly IAgentRepository repository;
+    private readonly IRepository<IModelEndpoint> endpoints;
+    private readonly IAgentCallRepository agentCallRepository;
+    private readonly IProposalBroadcaster proposalBroadcaster;
+
+    public AgentsController(
+        IAgentRepository repository,
+        IRepository<IModelEndpoint> endpoints,
+        IAgentCallRepository agentCallRepository,
+        IProposalBroadcaster proposalBroadcaster)
     {
         this.repository = repository;
+        this.endpoints = endpoints;
         this.agentCallRepository = agentCallRepository;
+        this.proposalBroadcaster = proposalBroadcaster;
     }
 
     [HttpGet]
@@ -59,6 +75,28 @@ public class AgentsController : ControllerBase
         return ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
     }
 
+    [HttpGet("{id:guid}/proposals/stream")]
+    public async Task StreamProposals(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+        {
+            Response.StatusCode = 404;
+            return;
+        }
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var reader = proposalBroadcaster.Subscribe(id, cancellationToken);
+        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        {
+            var data = JsonSerializer.Serialize(evt, SseOptions);
+            await Response.WriteAsync($"event: proposal-created\ndata: {data}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -66,17 +104,31 @@ public class AgentsController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
+    [HttpPatch("{id:guid}/endpoint")]
+    public async Task<IActionResult> UpdateEndpoint(
+        Guid id, 
+        [FromBody] UpdateAgentEndpointRequest request,
+        CancellationToken cancellationToken)
+    {
+        IAgent agent = await repository.GetAsync(id, cancellationToken);
+        IModelEndpoint endpoint = await endpoints.GetAsync(request.EndpointId, cancellationToken);
+        await agent.ChangeEndpoint(endpoint, cancellationToken);
+        return NoContent();
+    }
+
     private static AgentDto ToDto(IAgent a, DateTimeOffset? lastUsedAt) => new(
         a.Id,
         a.Project.Id,
         a.Project.Name,
         a.Name,
-        GetSystemMessageText(a.SystemMessage),
+        a.SystemPrompt.Template,
         a.Tools.Select(t => new ToolSpecificationDto(
             t.Name,
             t.Description,
             t.Arguments.Arguments.Select(ToArgumentDto).ToArray()
         )).ToArray(),
+        a.Endpoint.Id,
+        $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
         a.CreatedAt,
         a.UpdatedAt,
         lastUsedAt);
@@ -94,10 +146,11 @@ public class AgentsController : ControllerBase
             if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
                 enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
+
         return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
-
-    private static string GetSystemMessageText(SystemMessage msg)
-        => string.Concat(msg.Contents.Select(c => c.Text ?? ""));
 }

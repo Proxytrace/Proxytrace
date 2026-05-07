@@ -1,5 +1,5 @@
 import { api, qs } from './client';
-import type { PagedResult, TestRunDto, TestSuiteDto } from './models';
+import type { PagedResult, TestSuiteDto } from './models';
 
 export interface CreateTestSuitePayload {
   name: string;
@@ -21,5 +21,4 @@ export const testSuitesApi = {
     api.post<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases`, { fromAgentCallId }),
   removeTestCase: (suiteId: string, caseId: string) =>
     api.del(`/api/test-suites/${suiteId}/test-cases/${caseId}`),
-  run: (suiteId: string) => api.post<TestRunDto>(`/api/test-suites/${suiteId}/run`),
 };

@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Trsr.Common.Validation;
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 
@@ -11,17 +11,27 @@ internal record TestCase : DomainEntity<ITestCase>, ITestCase
     public AssistantMessage ExpectedOutput { get; }
 
     public TestCase(
+        IAgentCall agentCall,
+        IRepository<ITestCase> repository) : this(
+        agentCall.Request,
+        agentCall.Response?.Response
+            ?? throw new InvalidOperationException("Agent call response cannot be null when creating a test case."),
+        repository)
+    {
+    }
+
+    public TestCase(
         Conversation input,
-        AssistantMessage expectedOutput, 
+        AssistantMessage expectedOutput,
         IRepository<ITestCase> repository) : base(repository)
     {
-        Input = input;
+        Input = input.WithoutSystemMessage();
         ExpectedOutput = expectedOutput;
     }
 
     public TestCase(
-        Conversation input, 
-        AssistantMessage expectedOutput, 
+        Conversation input,
+        AssistantMessage expectedOutput,
         IDomainEntityData existing,
         IRepository<ITestCase> repository) : base(existing, repository)
     {
@@ -36,14 +46,20 @@ internal record TestCase : DomainEntity<ITestCase>, ITestCase
             yield return result;
         }
 
-        if (Input is null)
+        foreach (var result in Input.Validate(validationContext))
         {
-            yield return Validation.NotNull(Input, nameof(Input));
+            yield return result;
         }
 
-        if (ExpectedOutput is null)
+        if (Input.Messages.Any(x => x.Role == Role.System))
         {
-            yield return Validation.NotNull(ExpectedOutput, nameof(ExpectedOutput));
+            yield return new ValidationResult("Input conversation cannot contain system messages.", [nameof(Input)]);
         }
+        
+        foreach (var result in ExpectedOutput.Validate(validationContext))
+        {
+            yield return result;
+        }
+        
     }
 }

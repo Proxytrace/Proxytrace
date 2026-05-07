@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
+using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Application.TestRun;
 using Trsr.Domain;
@@ -29,6 +30,7 @@ public class TestRunGroupsController : ControllerBase
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly ITestRunnerService runner;
     private readonly ITestResultBroadcaster broadcaster;
+    private readonly IOptimizerService optimizerService;
 
     public TestRunGroupsController(
         ITestRunGroupRepository groupRepository,
@@ -36,7 +38,8 @@ public class TestRunGroupsController : ControllerBase
         ITestSuiteRepository suiteRepository,
         IRepository<IModelEndpoint> endpoints,
         ITestRunnerService runner,
-        ITestResultBroadcaster broadcaster)
+        ITestResultBroadcaster broadcaster,
+        IOptimizerService optimizerService)
     {
         this.groupRepository = groupRepository;
         this.runRepository = runRepository;
@@ -44,6 +47,7 @@ public class TestRunGroupsController : ControllerBase
         this.endpoints = endpoints;
         this.runner = runner;
         this.broadcaster = broadcaster;
+        this.optimizerService = optimizerService;
     }
 
     [HttpGet]
@@ -91,7 +95,7 @@ public class TestRunGroupsController : ControllerBase
         var endpointList = await Task.WhenAll(
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 
-        var group = await runner.RunGroupInBackgroundAsync(
+        var group = await runner.RunInBackgroundAsync(
             suite, endpointList, cancellationToken);
 
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
@@ -126,6 +130,18 @@ public class TestRunGroupsController : ControllerBase
         {
             await WriteEventAsync(evt, cancellationToken);
         }
+    }
+
+    [HttpPost("{id:guid}/optimize")]
+    public async Task<IActionResult> Optimize(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await groupRepository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+        var group = await groupRepository.GetAsync(id, cancellationToken);
+        if (group.Status is not TestRunStatus.Completed)
+            return BadRequest("Only completed test run groups can be optimized.");
+        await optimizerService.EnqueueAsync(group, cancellationToken);
+        return Accepted();
     }
 
     [HttpPost("{id:guid}/cancel")]

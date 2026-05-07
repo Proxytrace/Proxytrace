@@ -1,3 +1,4 @@
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 
 namespace Trsr.Domain.TestCase;
@@ -14,9 +15,10 @@ public interface ITestCase : IDomainEntity
     AssistantMessage ExpectedOutput { get; }
 
     /// <summary>Factory delegate for creating a new test case.</summary>
-    public delegate ITestCase CreateNew(
-        Conversation input,
-        AssistantMessage expectedOutput);
+    public delegate ITestCase CreateNewFromCall(IAgentCall agentCall);
+
+    /// <summary>Factory delegate for creating a new test case.</summary>
+    public delegate ITestCase CreateNew(Conversation input, AssistantMessage expectedOutput);
 
     /// <summary>Factory delegate for reconstituting an existing test case from persistence.</summary>
     public delegate ITestCase CreateExisting(

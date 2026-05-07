@@ -1,15 +1,15 @@
 using System.Net;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall;
 
 /// <summary>
 /// Records a single LLM call made by an agent, including request, response, token usage, and latency.
 /// </summary>
-public interface IAgentCall : IDomainEntity
+public interface IAgentCall : IDomainEntity<IAgentCall>
 {
     /// <summary>The agent that initiated this call, if associated.</summary>
     IAgent Agent { get; }
@@ -20,13 +20,7 @@ public interface IAgentCall : IDomainEntity
     Conversation Request { get; }
 
     /// <summary>The assistant message returned as the response.</summary>
-    AssistantMessage Response { get; }
-
-    /// <summary>Token consumption metrics for this call.</summary>
-    TokenUsage Usage { get; }
-
-    /// <summary>Wall-clock time elapsed for the call.</summary>
-    TimeSpan Duration { get; }
+    ICompletion? Response { get; }
 
     /// <summary>HTTP status code returned by the provider.</summary>
     HttpStatusCode HttpStatus { get; }
@@ -47,21 +41,17 @@ public interface IAgentCall : IDomainEntity
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        AssistantMessage response,
-        TokenUsage usage,
-        TimeSpan duration,
-        HttpStatusCode httpStatus,
-        string? finishReason,
-        string? errorMessage,
+        ICompletion? response,
+        HttpStatusCode httpStatus = HttpStatusCode.OK,
+        string? finishReason = null,
+        string? errorMessage = null,
         Guid? conversationId = null);
-
+    
     public delegate IAgentCall CreateExisting(
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        AssistantMessage response,
-        TokenUsage usage,
-        TimeSpan duration,
+        ICompletion? response,
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,

@@ -7,8 +7,10 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
+using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
+using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Storage.Internal.Entities.TestRun;
 
@@ -64,12 +66,24 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
 
         await Task.WhenAll(groupTask, endpointTask, resultsTask);
 
+        TestRunStatistics statistics = new TestRunStatistics(
+            TestCases: stored.StatTestCases,
+            Passed: stored.StatPassed,
+            Usage: stored is {StatInputTokens: not null, StatOutputTokens: not null} 
+                ? new TokenUsage((ulong)stored.StatInputTokens.Value, (ulong)stored.StatOutputTokens.Value)
+                : null,
+            Latency: stored.StatTotalDurationMs.HasValue 
+                ? TimeSpan.FromMilliseconds(stored.StatTotalDurationMs.Value)
+                : null,
+            Cost: stored.StatCost);
+
         return factory(
             group: groupTask.Result,
             endpoint: endpointTask.Result,
             status: stored.Status,
             completedAt: stored.CompletedAt,
             testResults: resultsTask.Result,
+            statistics: statistics,
             existing: stored);
     }
 
@@ -82,6 +96,12 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,
             TestResults = domain.TestResults.Select(x => x.Id).ToArray(),
+            StatTestCases = domain.Statistics.TestCases,
+            StatPassed = domain.Statistics.Passed,
+            StatInputTokens = (long?)domain.Statistics.Usage?.InputTokenCount,
+            StatOutputTokens = (long?)domain.Statistics.Usage?.OutputTokenCount,
+            StatTotalDurationMs = (long?)domain.Statistics.Latency?.TotalMilliseconds,
+            StatCost = domain.Statistics.Cost,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

@@ -24,4 +24,5 @@ internal record ModelProviderEntity : Entity
     /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.Kind"/>
     /// </summary>
     public required ModelProviderKind Kind { get; init; }
+
 }

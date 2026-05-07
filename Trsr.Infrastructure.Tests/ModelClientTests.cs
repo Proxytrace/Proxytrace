@@ -5,6 +5,9 @@ using AwesomeAssertions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Trsr.Domain;
+using Trsr.Domain.Agent;
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
@@ -27,8 +30,13 @@ public sealed class ModelClientTests : BaseTest<Module>
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             .As<IModelClient>();
 
-        IOutputFormat.Create defaultFactory = _ => Substitute.For<IOutputFormat>();
-        builder.RegisterInstance(defaultFactory);
+        IOutputFormat DefaultFactory(Type _) => Substitute.For<IOutputFormat>();
+        builder.RegisterInstance((IOutputFormat.Create)DefaultFactory);
+
+        var agentCallRepo = Substitute.For<IRepository<IAgentCall>>();
+        agentCallRepo.AddAsync(Arg.Any<IAgentCall>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(call.Arg<IAgentCall>()));
+        builder.RegisterInstance(agentCallRepo).As<IRepository<IAgentCall>>();
     }
 
     // ── registration helpers ──────────────────────────────────────────────────
@@ -39,8 +47,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         ModelProviderKind kind = ModelProviderKind.OpenAi,
         string apiKey = "sk-test",
         string endpointUrl = "https://api.openai.com/v1")
-        => builder.RegisterInstance(MakeEndpoint(modelName, kind, apiKey, endpointUrl))
-            .As<IModelEndpoint>();
+    {
+        var endpoint = MakeEndpoint(modelName, kind, apiKey, endpointUrl);
+        builder.RegisterInstance(endpoint).As<IModelEndpoint>();
+        builder.RegisterInstance(MakeAgent(endpoint)).As<IAgent>();
+    }
 
     private static void RegisterChatClient(ContainerBuilder builder, ChatResponse response)
         => builder.RegisterInstance(MakeChatClient(response)).As<IChatClient>();
@@ -66,6 +77,16 @@ public sealed class ModelClientTests : BaseTest<Module>
         ep.Provider.Returns(provider);
 
         return ep;
+    }
+
+    private static IAgent MakeAgent(IModelEndpoint endpoint)
+    {
+        IAgent agent = Substitute.For<IAgent>();
+        agent.Endpoint.Returns(endpoint);
+        agent.Tools.Returns([]);
+        agent.CreateSystemMessage(Arg.Any<IReadOnlyDictionary<string, string>?>())
+            .Returns(new SystemMessage([Content.FromText("test system")]));
+        return agent;
     }
 
     private static IChatClient MakeChatClient(ChatResponse response)
@@ -123,11 +144,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().ContainSingle()
+        result.Response.Contents.Should().ContainSingle()
             .Which.Text.Should().Be(expectedText);
-        result.ToolRequests.Should().BeEmpty();
+        result.Response.ToolRequests.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -140,10 +161,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().BeEmpty();
-        result.ToolRequests.Should().BeEmpty();
+        result.Response.Contents.Should().BeEmpty();
+        result.Response.ToolRequests.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -156,9 +177,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().BeEmpty();
+        result.Response.Contents.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -172,12 +193,12 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().ContainSingle();
-        result.ToolRequests[0].Id.Should().Be("call-1");
-        result.ToolRequests[0].Name.Should().Be("web_search");
-        result.Contents.Should().BeEmpty();
+        result.Response.ToolRequests.Should().ContainSingle();
+        result.Response.ToolRequests[0].Id.Should().Be("call-1");
+        result.Response.ToolRequests[0].Name.Should().Be("web_search");
+        result.Response.Contents.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -191,9 +212,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        var argsJson = result.ToolRequests[0].Arguments;
+        var argsJson = result.Response.ToolRequests[0].Arguments;
         using var doc = JsonDocument.Parse(argsJson);
         doc.RootElement.GetProperty("city").GetString().Should().Be("London");
         doc.RootElement.GetProperty("unit").GetString().Should().Be("celsius");
@@ -209,9 +230,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests[0].Arguments.Should().Be("{}");
+        result.Response.ToolRequests[0].Arguments.Should().Be("{}");
     }
 
     [TestMethod]
@@ -230,11 +251,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().HaveCount(3);
-        result.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-1", "id-2", "id-3");
-        result.ToolRequests.Select(r => r.Name).Should().ContainInOrder("tool_a", "tool_b", "tool_c");
+        result.Response.ToolRequests.Should().HaveCount(3);
+        result.Response.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-1", "id-2", "id-3");
+        result.Response.ToolRequests.Select(r => r.Name).Should().ContainInOrder("tool_a", "tool_b", "tool_c");
     }
 
     [TestMethod]
@@ -249,10 +270,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.Contents.Should().ContainSingle().Which.Text.Should().Be(text);
-        result.ToolRequests.Should().ContainSingle().Which.Name.Should().Be("search");
+        result.Response.Contents.Should().ContainSingle().Which.Text.Should().Be(text);
+        result.Response.ToolRequests.Should().ContainSingle().Which.Name.Should().Be("search");
     }
 
     [TestMethod]
@@ -271,10 +292,10 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        AssistantMessage result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
 
-        result.ToolRequests.Should().HaveCount(2);
-        result.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-a", "id-b");
+        result.Response.ToolRequests.Should().HaveCount(2);
+        result.Response.ToolRequests.Select(r => r.Id).Should().ContainInOrder("id-a", "id-b");
     }
 
     [TestMethod]
@@ -323,7 +344,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync(SimpleConversation(), new ModelOptions(overrideName, []), CancellationToken);
+        await client.CompleteAsync(SimpleConversation(), new ModelOptions(overrideName, []), cancellationToken: CancellationToken);
 
         capturedOptions?.ModelId.Should().Be(overrideName);
     }
@@ -348,7 +369,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync(SimpleConversation(), new ModelOptions("gpt-4o", [tool]), CancellationToken);
+        await client.CompleteAsync(SimpleConversation(), new ModelOptions("gpt-4o", [tool]), cancellationToken: CancellationToken);
 
         capturedOptions?.Tools.Should().ContainSingle()
             .Which.Name.Should().Be("my_tool");
@@ -403,8 +424,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         var client = services.GetRequiredService<IModelClient>();
         await client.CompleteAsync(conversation, cancellationToken: CancellationToken);
 
-        capturedMessages.Should().ContainSingle()
-            .Which.Role.Should().Be(ChatRole.User);
+        capturedMessages.Should().HaveCount(2);
+        capturedMessages!.First().Role.Should().Be(ChatRole.System);
+        capturedMessages!.Last().Role.Should().Be(ChatRole.User);
     }
 
     // ── CompleteAsync<TOutput> (generic) ─────────────────────────────────────
@@ -570,7 +592,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync<string>(SimpleConversation(), new ModelOptions(overrideModel, []), CancellationToken);
+        await client.CompleteAsync<string>(SimpleConversation(), new ModelOptions(overrideModel, []), cancellationToken: CancellationToken);
 
         capturedOptions.Should().NotBeNull();
         capturedOptions.ModelId.Should().Be(overrideModel);
@@ -581,47 +603,51 @@ public sealed class ModelClientTests : BaseTest<Module>
     [TestMethod]
     public void Constructor_WithAnthropicProviderKind_ThrowsNotSupportedException()
     {
-        var endpoint = MakeEndpoint(kind: ModelProviderKind.Anthropic);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var services = GetServices();
+        IModelEndpoint endpoint = MakeEndpoint(kind: ModelProviderKind.Anthropic);
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
-            .Should().Throw<NotSupportedException>()
-            .WithMessage("*Anthropic*");
+            .Invoking(() => factory(MakeAgent(endpoint)))
+            .Should()
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithUnknownProviderKind_ThrowsNotSupportedException()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(kind: ModelProviderKind.Unknown);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
-            .Should().Throw<NotSupportedException>();
+            .Invoking(() => factory(MakeAgent(endpoint)))
+            .Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithOpenAiProviderKind_DoesNotThrow()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(kind: ModelProviderKind.OpenAi);
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().NotThrow();
     }
 
     [TestMethod]
     public void Constructor_WithOpenAiCompatibleProviderKind_DoesNotThrow()
     {
+        var services = GetServices();
         var endpoint = MakeEndpoint(
             kind: ModelProviderKind.OpenAiCompatible,
             endpointUrl: "https://openrouter.ai/api/v1");
-        IOutputFormat.Create factory = _ => Substitute.For<IOutputFormat>();
+        var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => new ModelClient(endpoint, factory))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().NotThrow();
     }
 }

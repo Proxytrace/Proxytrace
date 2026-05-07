@@ -1,4 +1,5 @@
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Evaluator;
@@ -9,9 +10,9 @@ namespace Trsr.Domain.Evaluator;
 public interface IPolitenessEvaluator : IAgenticEvaluator
 {
     public delegate IPolitenessEvaluator CreateNew(
-        IModelEndpoint endpoint);
+        IProject project);
     
     public delegate IPolitenessEvaluator CreateExisting(
-        IModelEndpoint endpoint,
+        IProject project,
         IDomainEntityData existing);
 }

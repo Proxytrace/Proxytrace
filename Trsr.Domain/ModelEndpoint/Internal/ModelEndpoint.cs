@@ -1,15 +1,14 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.AI;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelProvider;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.ModelEndpoint.Internal;
 
 internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
 {
-    private readonly IModelClient.Factory modelClientFactory;
     public IModel Model { get; }
     public IModelProvider Provider { get; }
     public decimal? InputTokenCost { get; }
@@ -20,10 +19,8 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         IModelProvider provider,
         decimal? inputTokenCost,
         decimal? outputTokenCost,
-        IModelClient.Factory modelClientFactory,
         IRepository<IModelEndpoint> repository) : base(repository)
     {
-        this.modelClientFactory = modelClientFactory;
         Model = model;
         Provider = provider;
         InputTokenCost = inputTokenCost;
@@ -36,19 +33,20 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
         decimal? inputTokenCost,
         decimal? outputTokenCost,
         IDomainEntityData existing,
-        IModelClient.Factory modelClientFactory,
         IRepository<IModelEndpoint> repository)
         : base(existing, repository)
     {
-        this.modelClientFactory = modelClientFactory;
         Model = model;
         Provider = provider;
         InputTokenCost = inputTokenCost;
         OutputTokenCost = outputTokenCost;
     }
-    
-    public IModelClient CreateClient() 
-        => modelClientFactory(this);
+
+    public decimal? CalculateCost(TokenUsage usage) 
+        => this is { InputTokenCost: not null, OutputTokenCost: not null }
+            ? (InputTokenCost.Value * usage.InputTokenCount + OutputTokenCost.Value * usage.OutputTokenCount) /
+              1_000_000m
+            : null;
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

@@ -86,6 +86,8 @@ export interface AgentDto {
   name: string;
   systemMessage: string;
   tools: ToolSpecDto[];
+  endpointId: string;
+  endpointName: string;
   createdAt: string;
   updatedAt: string;
   lastUsedAt: string | null;
@@ -252,7 +254,19 @@ export interface ApiKeyDto {
   providerName: string;
   createdAt: string;
 }
+export interface ProjectMemberDto {
+  id: string;
+  name: string;
+}
 export interface ProjectDto {
+  id: string;
+  name: string;
+  systemEndpointId: string;
+  members: ProjectMemberDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+export interface UserDto {
   id: string;
   name: string;
   createdAt: string;
@@ -341,6 +355,59 @@ export interface AgentCallFilter {
   httpStatus?: number;
   page?: number;
   pageSize?: number;
+}
+
+/* ── Optimization ── */
+export enum ProposalKind { SystemPrompt = 'SystemPrompt', Tool = 'Tool', ModelSwitch = 'ModelSwitch' }
+export enum ProposalStatus { Draft = 'Draft', Accepted = 'Accepted', Rejected = 'Rejected' }
+export enum Priority { Low = 'Low', Medium = 'Medium', High = 'High', Critical = 'Critical' }
+
+export interface ModelSwitchDetailsDto {
+  kind: 'ModelSwitch';
+  endpointId: string;
+  currentModelName: string;
+  proposedModelName: string;
+  expectedPassRateDelta: number | null;
+  expectedCostDelta: number | null;
+  expectedLatencyMs: number | null;
+}
+
+export interface SystemPromptDetailsDto {
+  kind: 'SystemPrompt';
+  currentSystemMessage: string;
+  proposedSystemMessage: string;
+}
+
+export interface ToolDetailsDto {
+  kind: 'Tool';
+  currentTools: ToolSpecDto[];
+  proposedTools: ToolSpecDto[];
+}
+
+export type ProposalDetailsDto = ModelSwitchDetailsDto | SystemPromptDetailsDto | ToolDetailsDto;
+
+export interface OptimizationProposalDto {
+  id: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  agentId: string;
+  agentName: string;
+  priority: Priority;
+  rationale: string;
+  details: ProposalDetailsDto;
+  evidenceTestRunIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProposalCreatedEvent {
+  type: 'proposal-created';
+  id: string;
+  agentId: string;
+  kind: ProposalKind;
+  priority: Priority;
+  rationale: string;
+  createdAt: string;
 }
 
 /* ── SSE Events ── */

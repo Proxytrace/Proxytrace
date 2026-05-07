@@ -2,6 +2,7 @@ using Trsr.Common.Random;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
+using Trsr.Domain.Proposal;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
@@ -25,10 +26,9 @@ internal class OptimizationProposalGenerator : DomainEntityGenerator<IOptimizati
         var agent = await agentGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
             agent: agent,
-            kind: ProposalKind.SystemPrompt,
+            priority: Priority.Medium,
             rationale: random.String(),
-            proposedSystemMessage: new SystemMessage(random.String()),
-            proposedTools: [],
+            details: new SystemPromptDetails(random.String()),
             evidenceTestRunIds: []);
     }
 }

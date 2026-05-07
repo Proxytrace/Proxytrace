@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Project;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
@@ -13,18 +14,24 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
     public EvaluatorKind Kind
         => EvaluatorKind.ExactMatch;
 
+    public IProject Project { get; }
+
     public ExactMatchEvaluator(
+        IProject project,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(repository)
     {
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 
     public ExactMatchEvaluator(
+        IProject project,
         IDomainEntityData existing,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(existing, repository)
     {
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 

@@ -9,6 +9,7 @@ using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;
 using Trsr.Storage.Internal.Entities;
+using Trsr.Storage.Internal.Entities.Project;
 using Trsr.Storage.Internal.Entities.TestSuite;
 
 namespace Trsr.Storage;
@@ -64,6 +65,7 @@ public sealed class Module : Autofac.Module
 
         ConfigureEntities(builder);
         ConfigureEntity(typeof(TestSuiteEvaluatorEntity), builder);
+        ConfigureEntity(typeof(ProjectUserEntity), builder);
 
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
