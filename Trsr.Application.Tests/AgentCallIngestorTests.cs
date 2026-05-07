@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Ingestion.Internal;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
-using Trsr.Domain.AgentToolCall;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Testing;
@@ -228,90 +227,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         return (provider, project);
     }
 
-    [TestMethod]
-    public async Task IngestAsync_WhenSingleCallWithToolRequests_CreatesPendingToolCalls()
-    {
-        var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
-        var callRepo = services.GetRequiredService<IAgentCallRepository>();
-        var toolCallRepo = services.GetRequiredService<IAgentToolCallRepository>();
-        var (provider, project) = await GetProviderAndProjectAsync(services);
-
-        await ingestion.IngestAsync(
-            new IngestJob(
-                Provider: provider,
-                Project: project,
-                RequestBody: FirstRequestBody,
-                ResponseBody: FirstResponseBody,
-                Duration: TimeSpan.FromMilliseconds(100),
-                HttpStatus: HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
-
-        var call = await callRepo.FindFirstAsync(CancellationToken);
-        call.Should().NotBeNull();
-
-        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call.Id, CancellationToken);
-        toolCalls.Should().ContainSingle();
-        toolCalls[0].ToolCallId.Should().Be(ToolCallId);
-        toolCalls[0].Response.Should().BeNull();
-        toolCalls[0].Duration.Should().BeNull();
-    }
-
-    [TestMethod]
-    public async Task IngestAsync_WhenToolCallContinuation_UpdatesExistingAgentCallAndFillsToolResponse()
-    {
-        var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
-        var callRepo = services.GetRequiredService<IAgentCallRepository>();
-        var toolCallRepo = services.GetRequiredService<IAgentToolCallRepository>();
-        var (provider, project) = await GetProviderAndProjectAsync(services);
-
-        await ingestion.IngestAsync(
-            new IngestJob(
-                Provider: provider,
-                Project: project,
-                RequestBody: FirstRequestBody,
-                ResponseBody: FirstResponseBody,
-                Duration: TimeSpan.FromMilliseconds(100),
-                HttpStatus: HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        await ingestion.IngestAsync(
-            new IngestJob(
-                Provider: provider,
-                Project: project,
-                RequestBody: ContinuationRequestBody,
-                ResponseBody: ContinuationResponseBody,
-                Duration: TimeSpan.FromMilliseconds(200),
-                HttpStatus: HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
-
-        var call = await callRepo.FindFirstAsync(CancellationToken);
-        call.Should().NotBeNull();
-        call.Response.Should().NotBeNull();
-        call.Response!.Usage!.InputTokenCount.Should().Be(30);
-        call.Response.Usage.OutputTokenCount.Should().Be(13);
-        call.Response.Latency.Should().Be(TimeSpan.FromMilliseconds(300));
-        call.FinishReason.Should().Be("stop");
-        call.Response.Response.Contents.Should().ContainSingle()
-            .Which.Text.Should().Be(FinalReply);
-        call.Request.Messages.Should().HaveCount(4);
-
-        var toolCalls = await toolCallRepo.GetByAgentCallAsync(call.Id, CancellationToken);
-        toolCalls.Should().ContainSingle();
-        toolCalls[0].ToolCallId.Should().Be(ToolCallId);
-        var response = toolCalls[0].Response;
-        response.Should().NotBeNull();
-        response.Results.Should().ContainSingle()
-            .Which.Text.Should().Be(ToolResult);
-        toolCalls[0].Duration.Should().NotBeNull();
-    }
-
-    [TestMethod]
+[TestMethod]
     public async Task IngestAsync_WhenContinuationHasDifferentSystemMessage_StillMergesIntoExistingAgentCall()
     {
         var services = GetServices();

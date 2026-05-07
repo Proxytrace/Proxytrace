@@ -39,6 +39,22 @@ internal class ModelClient : IModelClient
         chatClient = CreateChatClient(endpoint);
     }
 
+    internal ModelClient(
+        IAgent agent,
+        IModelEndpoint? customEndpoint,
+        ICompletion.Create completionFactory,
+        IAgentCall.CreateNew agentCallFactory,
+        IOutputFormat.Create outputFormatFactory,
+        IChatClient chatClient)
+    {
+        this.endpoint = customEndpoint ?? agent.Endpoint;
+        this.agent = agent;
+        this.completionFactory = completionFactory;
+        this.agentCallFactory = agentCallFactory;
+        this.outputFormatFactory = outputFormatFactory;
+        this.chatClient = chatClient;
+    }
+
     public Task<ICompletion> CompleteAsync(
         Conversation conversation,
         ModelOptions? options = null,

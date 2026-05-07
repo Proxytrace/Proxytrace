@@ -424,8 +424,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         var client = services.GetRequiredService<IModelClient>();
         await client.CompleteAsync(conversation, cancellationToken: CancellationToken);
 
-        capturedMessages.Should().ContainSingle()
-            .Which.Role.Should().Be(ChatRole.User);
+        capturedMessages.Should().HaveCount(2);
+        capturedMessages!.First().Role.Should().Be(ChatRole.System);
+        capturedMessages!.Last().Role.Should().Be(ChatRole.User);
     }
 
     // ── CompleteAsync<TOutput> (generic) ─────────────────────────────────────

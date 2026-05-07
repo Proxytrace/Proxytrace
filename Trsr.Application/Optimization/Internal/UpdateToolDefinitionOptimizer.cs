@@ -76,6 +76,17 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             return [];
         }
 
+        if (completion.Tools.Count != agent.Tools.Count)
+        {
+            return [];
+        }
+
+        var existingNames = agent.Tools.Select(t => t.Name).ToHashSet();
+        if (completion.Tools.Any(t => !existingNames.Contains(t.Name)))
+        {
+            return [];
+        }
+
         Priority priority = currentRun.Statistics.GetOptimizationPriority();
         string fullRationale =
             $"""

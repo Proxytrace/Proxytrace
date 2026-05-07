@@ -13,7 +13,9 @@ internal class JsonSerializer : ISerializer
 {
     private readonly JsonSerializerOptions serializerOptions;
     
-    public JsonSerializer()
+    public JsonSerializer() : this([]) { }
+
+    public JsonSerializer(IEnumerable<JsonConverter> converters)
     {
         JsonSerializerOptions jsonSerializerOptions = new()
         {
@@ -23,12 +25,15 @@ internal class JsonSerializer : ISerializer
             PropertyNameCaseInsensitive = true,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         };
-        
-        // Add ObjectToInferredTypesConverter to unwrap JsonElement to actual types when deserializing object?
+
         jsonSerializerOptions.Converters.Add(new ObjectToInferredTypesConverter());
-        
-        // Add JsonStringEnumConverter to handle both integer and string enum values
         jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
+
+        foreach (var converter in converters)
+        {
+            jsonSerializerOptions.Converters.Add(converter);
+        }
+
         serializerOptions = jsonSerializerOptions;
     }
     

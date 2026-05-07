@@ -65,7 +65,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
                 Message.CreateUserMessage(evidence.ToJson()),
                 cancellationToken: cancellationToken);
 
-        if (output is null)
+        if (output is null || string.IsNullOrWhiteSpace(output.ProposedSystemPrompt))
         {
             return [];
         }
