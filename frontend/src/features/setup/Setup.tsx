@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { CodeBlock } from '../../components/ui/CodeBlock';
@@ -26,6 +27,7 @@ const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
 export default function Setup() {
   const navigate = useNavigate();
   const toast = useToast();
+  const qc = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -131,6 +133,7 @@ export default function Setup() {
 
   async function handleSubmit() {
     if (done) {
+      qc.setQueryData(['setup-status'], { isConfigured: true });
       navigate('/traces');
       return;
     }
