@@ -7,7 +7,6 @@ using Trsr.Domain.ApiKey;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Controllers;
@@ -17,7 +16,6 @@ namespace Trsr.Api.Controllers;
 public class ModelProvidersController : ControllerBase
 {
     private readonly IRepository<IModelProvider> providerRepository;
-    private readonly IOrganizationRepository organizationRepository;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly IProjectRepository projectRepository;
     private readonly IModelEndpointRepository endpointRepository;
@@ -31,7 +29,6 @@ public class ModelProvidersController : ControllerBase
 
     public ModelProvidersController(
         IRepository<IModelProvider> providerRepository,
-        IOrganizationRepository organizationRepository,
         IApiKeyRepository apiKeyRepository,
         IProjectRepository projectRepository,
         IModelEndpointRepository endpointRepository,
@@ -44,7 +41,6 @@ public class ModelProvidersController : ControllerBase
         IModelEndpoint.CreateExisting updateEndpoint)
     {
         this.providerRepository = providerRepository;
-        this.organizationRepository = organizationRepository;
         this.apiKeyRepository = apiKeyRepository;
         this.projectRepository = projectRepository;
         this.endpointRepository = endpointRepository;
@@ -81,10 +77,7 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateModelProviderRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await organizationRepository.ContainsAsync(request.OrganizationId, cancellationToken))
-            return BadRequest($"Organization {request.OrganizationId} not found.");
-        var org = await organizationRepository.GetAsync(request.OrganizationId, cancellationToken);
-        var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, org);
+        var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
@@ -98,7 +91,7 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var existing = await providerRepository.GetAsync(id, cancellationToken);
-        var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing.Organization, existing);
+        var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -161,20 +154,14 @@ public class ModelProvidersController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
-        {
             return NotFound("Provider not found.");
-        }
 
         if (!await endpointRepository.ContainsAsync(endpointId, cancellationToken))
-        {
             return NotFound("Model endpoint not found.");
-        }
 
         var existing = await endpointRepository.GetAsync(endpointId, cancellationToken);
         if (existing.Provider.Id != providerId)
-        {
             return NotFound("Model endpoint not found.");
-        }
 
         var updated = updateEndpoint(existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost, existing);
         var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);
@@ -221,7 +208,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     private static ModelProviderDto ToDto(IModelProvider p) =>
-        new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Kind, p.Organization.Id, p.Organization.Name, p.CreatedAt, p.UpdatedAt);
+        new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Kind, p.CreatedAt, p.UpdatedAt);
 
     private static ApiKeyDto ToKeyDto(IApiKey k) =>
         new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);

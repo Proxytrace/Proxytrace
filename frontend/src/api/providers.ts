@@ -1,7 +1,7 @@
 import { api, qs } from './client';
 import type {
   ApiKeyDto, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
-  ModelEndpointDto, ModelProviderKind, OrganizationDto, PagedResult,
+  ModelEndpointDto, ModelProviderKind, PagedResult,
   ProjectDto, ProviderDto, UpdateModelEndpointPricingRequest,
 } from './models';
 
@@ -28,5 +28,4 @@ export const providersApi = {
     api.del(`/api/providers/${providerId}/keys/${keyId}`),
 
   getProjects: () => api.get<PagedResult<ProjectDto>>('/api/projects'),
-  getOrganizations: () => api.get<PagedResult<OrganizationDto>>('/api/organizations'),
 };

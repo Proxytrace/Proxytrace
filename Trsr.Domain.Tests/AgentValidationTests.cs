@@ -2,9 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
-using Trsr.Domain.User;
 using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
@@ -118,11 +116,7 @@ public sealed class AgentValidationTests : BaseTest<Module>
 
     private static IProject CreateTestProject(IServiceProvider services)
     {
-        var userFactory = services.GetRequiredService<IUser.CreateNew>();
-        var orgFactory = services.GetRequiredService<IOrganization.CreateNew>();
         var projectFactory = services.GetRequiredService<IProject.CreateNew>();
-        var user = userFactory("Test User");
-        var org = orgFactory("Test Org", [user]);
-        return projectFactory("Test Project", org);
+        return projectFactory("Test Project");
     }
 }

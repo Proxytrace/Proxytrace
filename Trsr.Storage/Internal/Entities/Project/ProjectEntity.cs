@@ -7,9 +7,4 @@ internal record ProjectEntity : Entity
     /// <see cref="Trsr.Domain.Project.IProject.Name"/>
     /// </summary>
     public required string Name { get; init; }
-
-    /// <summary>
-    /// <see cref="Trsr.Domain.Project.IProject.Organization"/>
-    /// </summary>
-    public required Guid Organization { get; init; }
 }

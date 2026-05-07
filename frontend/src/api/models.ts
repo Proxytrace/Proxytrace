@@ -229,8 +229,6 @@ export interface ProviderDto {
   endpoint: string;
   upstreamApiKey: string;
   kind: ModelProviderKind;
-  organizationId: string;
-  organizationName: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -257,12 +255,9 @@ export interface ApiKeyDto {
 export interface ProjectDto {
   id: string;
   name: string;
-  organizationId: string;
-  organizationName: string;
   createdAt: string;
   updatedAt: string;
 }
-export interface OrganizationDto { id: string; name: string; }
 export interface CreateModelEndpointRequest {
   modelName: string;
   inputTokenCost: number | null;
@@ -277,7 +272,6 @@ export interface CreateProviderRequest {
   endpoint: string;
   upstreamApiKey: string;
   kind: ModelProviderKind;
-  organizationId: string;
 }
 export interface CreateApiKeyRequest { name: string; projectId: string; }
 

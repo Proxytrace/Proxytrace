@@ -2,7 +2,6 @@ using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
-using Trsr.Application.Demo.Internal;
 using Trsr.Application.Ingestion.Internal;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
@@ -73,13 +72,5 @@ public sealed class Module : Autofac.Module
         {
             services.AddHostedService(sc => sc.GetRequiredService<AgentCallIngestor>());
         });
-        
-        if (isDevelopment)
-        {
-            builder.RegisterServiceCollection(services =>
-            {
-                services.AddHostedService<DemoDataSeeder>();
-            });
-        }
     }
 }

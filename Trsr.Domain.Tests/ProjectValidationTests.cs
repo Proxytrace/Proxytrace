@@ -1,6 +1,5 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Testing;
 
@@ -10,21 +9,19 @@ namespace Trsr.Domain.Tests;
 public sealed class ProjectValidationTests : BaseTest<Module>
 {
     [TestMethod]
-    public void CreateNew_WithValidNameAndOrganization_CreatesProject()
+    public void CreateNew_WithValidName_CreatesProject()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
         var name = "Test Project";
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project = factory(name, organization);
+        var project = factory(name);
 
         // Assert
         project.Should().NotBeNull();
         project.Name.Should().Be(name);
-        project.Organization.Should().Be(organization);
         project.Id.Should().NotBe(Guid.Empty);
         project.CreatedAt.Should().NotBe(default);
         project.UpdatedAt.Should().NotBe(default);
@@ -36,11 +33,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, organization);
+        var action = () => factory(null!);
         action.Should().Throw<Exception>();
     }
 
@@ -50,10 +46,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act & Assert
-        var action = () => factory(string.Empty, organization);
+        var action = () => factory(string.Empty);
         action.Should().Throw<Exception>();
     }
 
@@ -63,10 +58,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act & Assert
-        var action = () => factory("   ", organization);
+        var action = () => factory("   ");
         action.Should().Throw<Exception>();
     }
 
@@ -76,36 +70,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act & Assert
-        var action = () => factory("\t\t\t", organization);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public void CreateNew_WithNullOrganization_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IProject.CreateNew>();
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Project", null!);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public void CreateNew_WithBothInvalidNameAndOrganization_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IProject.CreateNew>();
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(string.Empty, null!);
+        var action = () => factory("\t\t\t");
         action.Should().Throw<Exception>();
     }
 
@@ -119,13 +86,12 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var project = createExisting(existingProject.Name, existingProject.Organization, existingProject);
+        var project = createExisting(existingProject.Name, existingProject);
 
         // Assert
         project.Should().NotBeNull();
         project.Id.Should().Be(existingProject.Id);
         project.Name.Should().Be(existingProject.Name);
-        project.Organization.Should().Be(existingProject.Organization);
         project.CreatedAt.Should().Be(existingProject.CreatedAt);
         project.UpdatedAt.Should().Be(existingProject.UpdatedAt);
     }
@@ -140,22 +106,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act & Assert
-        var action = () => createExisting(string.Empty, existingProject.Organization, existingProject);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateExisting_WithNullOrganization_ThrowsException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var createExisting = services.GetRequiredService<IProject.CreateExisting>();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
-        var existingProject = await generator.CreateAsync(CancellationToken);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingProject.Name, null!, existingProject);
+        var action = () => createExisting(string.Empty, existingProject);
         action.Should().Throw<Exception>();
     }
 
@@ -165,33 +116,28 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project1 = factory("Project 1", organization);
-        var project2 = factory("Project 2", organization);
+        var project1 = factory("Project 1");
+        var project2 = factory("Project 2");
 
         // Assert
         project1.Id.Should().NotBe(project2.Id);
     }
 
     [TestMethod]
-    public void CreateNew_MultipleProjectsForSameOrganization_Succeeds()
+    public void CreateNew_MultipleProjects_AllSucceed()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project1 = factory("Project 1", organization);
-        var project2 = factory("Project 2", organization);
-        var project3 = factory("Project 3", organization);
+        var project1 = factory("Project 1");
+        var project2 = factory("Project 2");
+        var project3 = factory("Project 3");
 
         // Assert
-        project1.Organization.Should().Be(organization);
-        project2.Organization.Should().Be(organization);
-        project3.Organization.Should().Be(organization);
         project1.Id.Should().NotBe(project2.Id);
         project2.Id.Should().NotBe(project3.Id);
         project1.Id.Should().NotBe(project3.Id);
@@ -203,10 +149,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project = factory(new string('A', 1000), organization);
+        var project = factory(new string('A', 1000));
 
         // Assert
         project.Should().NotBeNull();
@@ -219,10 +164,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project = factory("Project @#$% 123 !&*()", organization);
+        var project = factory("Project @#$% 123 !&*()");
 
         // Assert
         project.Should().NotBeNull();
@@ -235,10 +179,9 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
 
         // Act
-        var project = factory("项目 José Müller", organization);
+        var project = factory("项目 José Müller");
 
         // Assert
         project.Should().NotBeNull();
@@ -258,7 +201,4 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         nameProperty.Should().NotBeNull();
         nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
     }
-
-    private static IOrganization CreateTestOrganization(IServiceProvider services)
-        => services.GetRequiredService<IOrganization.CreateNew>()("Test Organization", []);
 }

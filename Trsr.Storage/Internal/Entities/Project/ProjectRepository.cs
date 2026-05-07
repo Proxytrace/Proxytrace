@@ -1,7 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 
 namespace Trsr.Storage.Internal.Entities.Project;
@@ -16,15 +15,12 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
     {
     }
 
-    public async Task<IProject?> FindByNameAsync(
-        string name,
-        IOrganization organization,
-        CancellationToken cancellationToken = default)
+    public async Task<IProject?> FindByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         var entity = await contextFactory()
             .Set<ProjectEntity>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Name == name && p.Organization == organization.Id, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Name == name, cancellationToken);
         return await Map(entity, cancellationToken);
     }
 }
