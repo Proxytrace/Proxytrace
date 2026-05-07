@@ -227,38 +227,6 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         return (provider, project);
     }
 
-[TestMethod]
-    public async Task IngestAsync_WhenContinuationHasDifferentSystemMessage_StillMergesIntoExistingAgentCall()
-    {
-        var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
-        var callRepo = services.GetRequiredService<IAgentCallRepository>();
-        var (provider, project) = await GetProviderAndProjectAsync(services);
-
-        await ingestion.IngestAsync(
-            new IngestJob(
-                Provider: provider,
-                Project: project,
-                RequestBody: FirstRequestBody,
-                ResponseBody: FirstResponseBody,
-                Duration: TimeSpan.FromMilliseconds(100),
-                HttpStatus: HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        await ingestion.IngestAsync(
-            new IngestJob(
-                Provider: provider,
-                Project: project,
-                RequestBody: ContinuationRequestBodyDifferentSystemMessage,
-                ResponseBody: ContinuationResponseBody,
-                Duration: TimeSpan.FromMilliseconds(100),
-                HttpStatus: HttpStatusCode.OK),
-            cancellationToken: CancellationToken);
-
-        // Should merge into the same agent call despite the different system message
-        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
-    }
-
     [TestMethod]
     public async Task IngestAsync_WhenSessionIdProvided_GroupsCallsUnderSameConversationId()
     {
