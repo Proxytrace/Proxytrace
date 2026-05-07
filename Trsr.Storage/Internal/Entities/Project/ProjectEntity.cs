@@ -12,4 +12,9 @@ internal record ProjectEntity : Entity
     /// <see cref="Trsr.Domain.Project.IProject.Organization"/>
     /// </summary>
     public required Guid Organization { get; init; }
+    
+    /// <summary>
+    /// <see cref="Trsr.Domain.Project.IProject.SystemEndpoint"/>
+    /// </summary>
+    public required Guid SystemEndpoint { get; init; }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Projects;
 using Trsr.Domain;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 
@@ -13,17 +14,20 @@ public class ProjectsController : ControllerBase
 {
     private readonly IProjectRepository repository;
     private readonly IOrganizationRepository organizationRepository;
+    private readonly IRepository<IModelEndpoint> endpointRepository;
     private readonly IProject.CreateNew createNew;
     private readonly IProject.CreateExisting createExisting;
 
     public ProjectsController(
         IProjectRepository repository,
         IOrganizationRepository organizationRepository,
+        IRepository<IModelEndpoint> endpointRepository,
         IProject.CreateNew createNew,
         IProject.CreateExisting createExisting)
     {
         this.repository = repository;
         this.organizationRepository = organizationRepository;
+        this.endpointRepository = endpointRepository;
         this.createNew = createNew;
         this.createExisting = createExisting;
     }
@@ -60,7 +64,8 @@ public class ProjectsController : ControllerBase
         if (!await organizationRepository.ContainsAsync(request.OrganizationId, cancellationToken))
             return BadRequest($"Organization {request.OrganizationId} not found.");
         var org = await organizationRepository.GetAsync(request.OrganizationId, cancellationToken);
-        var project = createNew(request.Name, org);
+        var endpoint = await endpointRepository.GetAsync(request.OrganizationId, cancellationToken);
+        var project = createNew(request.Name, endpoint, org);
         var saved = await repository.AddAsync(project, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
@@ -74,7 +79,15 @@ public class ProjectsController : ControllerBase
         if (!await repository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var existing = await repository.GetAsync(id, cancellationToken);
-        var updated = createExisting(request.Name, existing.Organization, existing);
+        var endpoint = existing.SystemEndpoint.Id == request.SystemEndpointId 
+            ? existing.SystemEndpoint 
+            : await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
+        
+        var updated = createExisting(
+            request.Name,
+            endpoint,
+            existing.Organization, 
+            existing);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }

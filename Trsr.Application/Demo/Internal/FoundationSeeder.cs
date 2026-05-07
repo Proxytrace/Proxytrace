@@ -20,8 +20,6 @@ internal sealed class FoundationSeeder(IServiceProvider services)
     {
         var user = await UpsertUserAsync(new Guid("00000000-0000-0000-0000-000000000002"), "demo-admin", cancellationToken);
         var org = await UpsertOrganizationAsync(new Guid("00000000-0000-0000-0000-000000000001"), "TechShop Demo", [user], cancellationToken);
-        var project = await UpsertProjectAsync(new Guid("00000000-0000-0000-0000-000000000003"), "Production AI", org, cancellationToken);
-        var evaluator = await UpsertEvaluatorAsync(new Guid("00000000-0000-0000-0000-000000000004"), cancellationToken);
 
         var openAi = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000001"), "OpenAI", new Uri("https://api.openai.com/v1"), ModelProviderKind.OpenAi, org, cancellationToken);
 
@@ -31,6 +29,9 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         var endpointGpt4o = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000020"), gpt4o, openAi, 0.0000025m, 0.000010m, cancellationToken);
         var endpointGpt4oMini = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000022"), gpt4oMini, openAi, 0.00000015m, 0.0000006m, cancellationToken);
 
+        var project = await UpsertProjectAsync(new Guid("00000000-0000-0000-0000-000000000003"), "Production AI", endpointGpt4oMini, org, cancellationToken);
+        var evaluator = await UpsertEvaluatorAsync(new Guid("00000000-0000-0000-0000-000000000004"), cancellationToken);
+        
         await UpsertApiKeyAsync(new Guid("a0000000-0000-0000-0000-000000000001"), "Demo OpenAI Key", "trsr-demo-openai", project, openAi, cancellationToken);
 
         return new FoundationData(project, evaluator, new Dictionary<Guid, IModelEndpoint>
@@ -56,11 +57,16 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         return await repo.UpsertAsync(factory(name, users, At(id)), ct);
     }
 
-    private async Task<IProject> UpsertProjectAsync(Guid id, string name, IOrganization org, CancellationToken ct)
+    private async Task<IProject> UpsertProjectAsync(
+        Guid id, 
+        string name, 
+        IModelEndpoint systemEndpoint,
+        IOrganization org,
+        CancellationToken ct)
     {
         var factory = services.GetRequiredService<IProject.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IProject>>();
-        return await repo.UpsertAsync(factory(name, org, At(id)), ct);
+        return await repo.UpsertAsync(factory(name, systemEndpoint, org, At(id)), ct);
     }
 
     private async Task<IEvaluator> UpsertEvaluatorAsync(Guid id, CancellationToken ct)

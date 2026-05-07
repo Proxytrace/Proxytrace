@@ -2,6 +2,7 @@ using Autofac;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Storage;
 using Trsr.Testing;
@@ -19,7 +20,7 @@ public sealed class Module : Autofac.Module
     {
         public Task<string> GenerateNameAsync(
             IPromptTemplate systemPrompt,
-            IModelEndpoint endpoint,
+            IProject project,
             CancellationToken cancellationToken = default)
             => Task.FromResult<string>("Test Agent");
     }

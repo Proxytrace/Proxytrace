@@ -210,7 +210,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     parsed.Tools,
                     job.Project,
                     endpoint,
-                    cancellationToken);
+                    cancellationToken: cancellationToken);
 
             if (agent.Endpoint.Id != endpoint.Id)
             {

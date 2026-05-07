@@ -20,6 +20,8 @@ public interface IAgentRepository : IRepository<IAgent>
         IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
+        string? name = null,
+        bool isSystemAgent = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

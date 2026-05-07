@@ -14,7 +14,7 @@ namespace Trsr.Domain.Agent.Internal;
 internal record Agent : DomainEntity<IAgent>, IAgent
 {
     private readonly ILogger<IAgent> logger;
-    
+
     public string Name { get; }
     public IModelEndpoint Endpoint { get; }
     public IProject Project { get; }
@@ -63,26 +63,32 @@ internal record Agent : DomainEntity<IAgent>, IAgent
 
     public Task<ICompletion> CompleteAsync(
         Conversation conversation,
-        IModelEndpoint endpoint,
+        IModelEndpoint? endpoint = null,
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
         SystemMessage systemMessage = CreateSystemMessage(variables);
         conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
-        return endpoint.CreateClient().CompleteAsync(
-            conversation,
-            ModelOptions.FromAgent(this, endpoint.Model),
-            cancellationToken);
+        endpoint ??= Endpoint;
+        return endpoint
+            .CreateClient()
+            .CompleteAsync(
+                conversation,
+                ModelOptions.FromAgent(this, endpoint.Model),
+                cancellationToken);
     }
 
-    public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint, CancellationToken cancellationToken = default)
+    public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
+        CancellationToken cancellationToken = default)
     {
         if (modelEndpoint.Id == Endpoint.Id)
         {
-            logger.LogWarning("Attempted to change agent endpoint to the same endpoint (AgentId: {AgentId}, EndpointId: {EndpointId})", Id, modelEndpoint.Id);
+            logger.LogWarning(
+                "Attempted to change agent endpoint to the same endpoint (AgentId: {AgentId}, EndpointId: {EndpointId})",
+                Id, modelEndpoint.Id);
             return this;
         }
-        
+
         var update = new Agent(
             name: Name,
             systemPrompt: SystemPrompt,
@@ -93,11 +99,11 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             existing: this,
             repository: repository,
             logger: logger);
-        
+
         return await update.UpdateAsync(cancellationToken);
     }
 
-    public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null) 
+    public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null)
         => Message.Message.CreateSystemMessage(SystemPrompt, variables);
 
     /// <inheritdoc />
@@ -112,7 +118,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         {
             yield return Validation.NotNullOrWhiteSpace(Name);
         }
-        
+
         foreach (var result in Endpoint.Validate(validationContext))
         {
             yield return result;

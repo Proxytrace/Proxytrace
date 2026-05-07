@@ -36,6 +36,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
+        string? name = null,
+        bool isSystemAgent = false,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemPrompt, tools);
@@ -50,14 +52,15 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var name = await nameGenerator.GenerateNameAsync(systemPrompt, endpoint, cancellationToken);
+        name ??= await nameGenerator.GenerateNameAsync(systemPrompt, project, cancellationToken);
         systemPrompt = promptTemplateFactory(name, systemPrompt.Template);
         var agent = createNew(
-            name,
-            systemPrompt,
-            tools,
-            endpoint,
-            project);
+            name: name,
+            systemPrompt: systemPrompt,
+            tools: tools,
+            endpoint: endpoint,
+            isSystemAgent: isSystemAgent,
+            project: project);
         return await AddAsync(agent, cancellationToken);
     }
 

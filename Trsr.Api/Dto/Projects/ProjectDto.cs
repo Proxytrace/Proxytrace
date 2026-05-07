@@ -8,6 +8,11 @@ public record ProjectDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record CreateProjectRequest(string Name, Guid OrganizationId);
+public record CreateProjectRequest(
+    string Name,
+    Guid SystemEndpointId,
+    Guid OrganizationId);
 
-public record UpdateProjectRequest(string Name);
+public record UpdateProjectRequest(
+    string Name,
+    Guid SystemEndpointId);

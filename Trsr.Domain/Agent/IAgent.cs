@@ -59,7 +59,7 @@ public interface IAgent : IDomainEntity
     /// </summary>
     Task<ICompletion> CompleteAsync(
         Conversation conversation,
-        IModelEndpoint endpoint,
+        IModelEndpoint? endpoint = null,
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default);
     
