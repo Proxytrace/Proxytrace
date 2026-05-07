@@ -77,6 +77,23 @@ internal record Agent : DomainEntity<IAgent>, IAgent
                 ModelOptions.FromAgent(this, endpoint.Model),
                 cancellationToken);
     }
+    
+    public Task<TOutput?> CompleteAsync<TOutput>(
+        Conversation conversation,
+        IModelEndpoint? endpoint = null,
+        IReadOnlyDictionary<string, string>? variables = null,
+        CancellationToken cancellationToken = default)
+    {
+        SystemMessage systemMessage = CreateSystemMessage(variables);
+        conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
+        endpoint ??= Endpoint;
+        return endpoint
+            .CreateClient()
+            .CompleteAsync<TOutput>(
+                conversation,
+                ModelOptions.FromAgent(this, endpoint.Model),
+                cancellationToken);
+    }
 
     public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
         CancellationToken cancellationToken = default)

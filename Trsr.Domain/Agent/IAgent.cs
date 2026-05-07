@@ -63,6 +63,12 @@ public interface IAgent : IDomainEntity
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default);
     
+    Task<TOutput?> CompleteAsync<TOutput>(
+        Conversation conversation,
+        IModelEndpoint? endpoint = null,
+        IReadOnlyDictionary<string, string>? variables = null,
+        CancellationToken cancellationToken = default);
+    
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint, 
         CancellationToken cancellationToken = default);

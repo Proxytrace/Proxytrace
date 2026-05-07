@@ -13,7 +13,7 @@ public record ModelSwitchDetails(
 ) : ProposalDetails;
 
 public record SystemPromptDetails(
-    SystemMessage ProposedSystemMessage
+    string ProposedSystemMessage
 ) : ProposalDetails;
 
 public record ToolDetails(

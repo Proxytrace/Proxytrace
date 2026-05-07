@@ -24,4 +24,20 @@ public static class AgentExtensions
             variables,
             cancellationToken);
     }
+
+    public static Task<TOutput?> CompleteAsync<TOutput>(
+        this IAgent agent,
+        UserMessage userMessage,
+        IModelEndpoint? endpoint = null,
+        IReadOnlyDictionary<string, string>? variables = null,
+        CancellationToken cancellationToken = default)
+    {
+        Conversation conversation = Conversation.Create();
+        conversation.Add(userMessage);
+        return agent.CompleteAsync<TOutput>(
+            conversation, 
+            endpoint, 
+            variables,
+            cancellationToken);
+    }
 }

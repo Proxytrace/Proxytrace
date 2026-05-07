@@ -90,8 +90,25 @@ internal class ModelClient : IModelClient
         CancellationToken cancellationToken = default)
     {
         IOutputFormat outputFormat = outputFormatFactory(typeof(TOutput));
-        ICompletion completion = await CompleteAsync(conversation, options, cancellationToken);
-        return await outputFormat.ParseAsync<TOutput>(completion.Response.GetTextResponse(), cancellationToken);
+
+        var systemMessage = conversation.SystemMessage;
+        
+        // add expected output format to system message
+        systemMessage = new SystemMessage($"""
+                                            {systemMessage}
+                                            {outputFormat.ToPromptString()}
+                                            """);
+        
+        conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
+        
+        ICompletion completion = await CompleteAsync(
+            conversation,
+            options,
+            cancellationToken);
+        
+        return await outputFormat.ParseAsync<TOutput>(
+            completion.Response.GetTextResponse(),
+            cancellationToken);
     }
 
     private static IChatClient CreateChatClient(IModelEndpoint endpoint)

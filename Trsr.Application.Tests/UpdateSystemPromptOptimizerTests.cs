@@ -283,8 +283,7 @@ public sealed class UpdateSystemPromptOptimizerTests
             var optimizer = new UpdateSystemPromptOptimizer(
                 factory,
                 prompts,
-                agents,
-                NullLogger<UpdateSystemPromptOptimizer>.Instance);
+                agents);
 
             return new OptimizerFixture
             {

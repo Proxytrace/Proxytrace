@@ -57,8 +57,8 @@
 	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Translogica_002EAI_002EAgents_002EPrompting_002ETests_002FPrompts/@EntryIndexRemoved">True</s:Boolean>
 	
 	
-	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EApplication_002FPrompts/@EntryIndexedValue">False</s:Boolean>
-	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EDomain_002ETests_002FPrompts/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EApplication_002FPrompts/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EDomain_002ETests_002FPrompts/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EDomain_002FPrompts/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Trsr_002EPrompting_002ETests_002FPrompts/@EntryIndexedValue">True</s:Boolean>
 	

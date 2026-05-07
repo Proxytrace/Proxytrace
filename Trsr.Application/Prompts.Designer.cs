@@ -50,13 +50,13 @@ namespace Trsr.Application {
                 return ResourceManager.GetString("agent_name_generator", resourceCulture);
             }
         }
-
+        
         internal static string update_system_prompt_optimizer {
             get {
                 return ResourceManager.GetString("update_system_prompt_optimizer", resourceCulture);
             }
         }
-
+        
         internal static string update_tool_definition_optimizer {
             get {
                 return ResourceManager.GetString("update_tool_definition_optimizer", resourceCulture);

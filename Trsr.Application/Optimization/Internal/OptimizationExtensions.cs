@@ -3,9 +3,9 @@ using Trsr.Domain.TestRun;
 
 namespace Trsr.Application.Optimization.Internal;
 
-internal static class OptimizerPriority
+internal static class OptimizationExtensions
 {
-    public static Priority FromFailRate(TestRunStatistics statistics)
+    public static Priority GetOptimizationPriority(this TestRunStatistics statistics)
     {
         if (statistics.TestCases <= 0)
         {

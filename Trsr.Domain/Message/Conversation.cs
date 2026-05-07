@@ -21,6 +21,9 @@ public sealed record Conversation : IDomainObject
     /// </summary>
     public IReadOnlyList<Message> Messages 
         => messages.ToArray();
+    
+    public SystemMessage? SystemMessage 
+        => Messages.FirstOrDefault(x => x.Role == Role.System) as SystemMessage;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Conversation"/> class with the specified id, title, user name, and messages.
@@ -83,7 +86,7 @@ public sealed record Conversation : IDomainObject
     /// <inheritdoc />
     public override int GetHashCode() 
         => HashCode.Combine(Id, Messages);
-
+    
     /// <summary>
     /// Replaces any existing system Prompt with this system prompt
     /// </summary>

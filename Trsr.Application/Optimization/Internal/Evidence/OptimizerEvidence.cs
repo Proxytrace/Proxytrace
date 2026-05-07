@@ -1,58 +1,35 @@
 using System.Text.Json;
 using Trsr.Domain.Agent;
 using Trsr.Domain.TestResult;
-using Trsr.Domain.TestRun;
 
-namespace Trsr.Application.Optimization.Internal;
+namespace Trsr.Application.Optimization.Internal.Evidence;
 
 internal sealed record OptimizerEvidence(
+    IAgent Agent,
     IReadOnlyList<ITestResult> Failing,
-    IReadOnlyList<ITestResult> PassingSample);
-
-internal static class OptimizerEvidenceBuilder
+    IReadOnlyList<ITestResult> PassingSample)
 {
-    public const int MaxFailing = 20;
-    public const int PassingSampleSize = 3;
-
-    private static readonly JsonSerializerOptions SerializerOptions = new()
+    private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
     };
 
-    public static OptimizerEvidence Build(ITestRun run)
-    {
-        var failing = run.TestResults
-            .Where(r => !r.Passed)
-            .OrderBy(r => (int?)r.OverallScore ?? 0)
-            .ThenBy(r => r.Id)
-            .Take(MaxFailing)
-            .ToList();
-
-        var passingSample = run.TestResults
-            .Where(r => r.Passed)
-            .OrderBy(r => r.Id)
-            .Take(PassingSampleSize)
-            .ToList();
-
-        return new OptimizerEvidence(failing, passingSample);
-    }
-
-    public static string RenderToJson(IAgent agent, OptimizerEvidence evidence)
+    public string ToJson()
     {
         var payload = new
         {
             agent = new
             {
-                name = agent.Name,
-                system_prompt = agent.SystemPrompt.Template,
-                tools = agent.Tools.Select(ToToolPayload).ToArray(),
+                name = Agent.Name,
+                system_prompt = Agent.SystemPrompt.Template,
+                tools = Agent.Tools.Select(ToToolPayload).ToArray(),
             },
-            failing = evidence.Failing.Select(ToResultPayload).ToArray(),
-            passing = evidence.PassingSample.Select(ToResultPayload).ToArray(),
+            failing = Failing.Select(ToResultPayload).ToArray(),
+            passing = PassingSample.Select(ToResultPayload).ToArray(),
         };
 
-        return JsonSerializer.Serialize(payload, SerializerOptions);
+        return JsonSerializer.Serialize(payload, serializerOptions);
     }
 
     private static object ToToolPayload(Domain.Tools.ToolSpecification tool)
