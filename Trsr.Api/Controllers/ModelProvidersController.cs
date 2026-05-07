@@ -154,20 +154,14 @@ public class ModelProvidersController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
-        {
             return NotFound("Provider not found.");
-        }
 
         if (!await endpointRepository.ContainsAsync(endpointId, cancellationToken))
-        {
             return NotFound("Model endpoint not found.");
-        }
 
         var existing = await endpointRepository.GetAsync(endpointId, cancellationToken);
         if (existing.Provider.Id != providerId)
-        {
             return NotFound("Model endpoint not found.");
-        }
 
         var updated = updateEndpoint(existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost, existing);
         var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);

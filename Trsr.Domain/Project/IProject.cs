@@ -3,7 +3,7 @@ using Trsr.Domain.ModelEndpoint;
 namespace Trsr.Domain.Project;
 
 /// <summary>
-/// Represents a project within an organization that owns agents and test suites.
+/// Represents a project that owns agents and test suites.
 /// </summary>
 public interface IProject : IDomainEntity
 {

@@ -48,7 +48,7 @@ export default function Providers() {
 
   // Forms / dialog state
   const [showNewProvider, setShowNewProvider] = useState(false);
-  const [newProvider, setNewProvider] = useState({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: '' });
+  const [newProvider, setNewProvider] = useState({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic });
   const [editingKind, setEditingKind] = useState(false);
   const [editKindValue, setEditKindValue] = useState<ModelProviderKind>(ModelProviderKind.Unknown);
   const [deleteProvider, setDeleteProvider] = useState(false);
@@ -66,12 +66,10 @@ export default function Providers() {
     queryKey: QUERY_KEYS.providers,
     queryFn: () => providersApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
-  const { data: orgsData } = useQuery({ queryKey: QUERY_KEYS.organizations, queryFn: providersApi.getOrganizations });
   const { data: projectsData } = useQuery({ queryKey: QUERY_KEYS.projects, queryFn: providersApi.getProjects });
 
   const providers = providersData?.items ?? [];
   const selected = providers.find(p => p.id === selectedId) ?? (providers.length > 0 && !selectedId ? providers[0] : null);
-  const orgs = orgsData?.items ?? [];
   const projects = projectsData?.items ?? [];
 
   const { data: models = [], isLoading: modelsLoading } = useQuery({
@@ -86,7 +84,7 @@ export default function Providers() {
   });
 
   const createProvider = useMutation({
-    mutationFn: () => providersApi.create({ ...newProvider, organizationId: newProvider.organizationId || (orgs[0]?.id ?? '') }),
+    mutationFn: () => providersApi.create({ ...newProvider }),
     onSuccess: (p: { id: string }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providers });
       setShowNewProvider(false);
@@ -177,7 +175,7 @@ export default function Providers() {
           <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Providers</h1>
           <p className="text-[14px] text-muted m-0">Configure upstream model providers and manage Trsr API keys.</p>
         </div>
-        <button className="btn-primary inline-flex items-center gap-[6px]" onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic, organizationId: orgs[0]?.id ?? '' }); setShowNewProvider(true); }}>
+        <button className="btn-primary inline-flex items-center gap-[6px]" onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic }); setShowNewProvider(true); }}>
           <PlusIcon size={13} />
           Add Provider
         </button>
@@ -205,7 +203,6 @@ export default function Providers() {
                     <div className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
                     <ColoredBadge color={kindColor(p.kind)} label={kindLabel(p.kind)} />
                   </div>
-                  <div className="font-mono text-[11px] text-muted overflow-hidden text-ellipsis whitespace-nowrap">{p.organizationName}</div>
                 </div>
               </div>
               {selectedId === p.id && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-1/2 bg-accent rounded-[0_2px_2px_0]" />}
@@ -245,7 +242,6 @@ export default function Providers() {
                         <button onClick={() => setEditingKind(false)} className="px-2 py-[2px] rounded-full text-[11px] text-muted bg-card-2 border-none cursor-pointer">Cancel</button>
                       </div>
                     )}
-                    <span className="px-2 py-[2px] rounded-full text-[11px] bg-card-2 text-muted">{selected.organizationName}</span>
                   </div>
                   <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
                 </div>
@@ -452,11 +448,6 @@ export default function Providers() {
             <FormField label="Provider Kind">
               <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
                 {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Organization">
-              <select value={newProvider.organizationId} onChange={e => setNewProvider(p => ({ ...p, organizationId: e.target.value }))} className={formInputCls}>
-                {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
               </select>
             </FormField>
           </div>

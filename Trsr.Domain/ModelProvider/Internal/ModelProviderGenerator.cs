@@ -1,4 +1,3 @@
-using Trsr.Common.Async;
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 
@@ -25,12 +24,10 @@ internal class ModelProviderGenerator : DomainEntityGenerator<IModelProvider>
         this.factory = factory;
     }
 
-    public override async Task<IModelProvider> GenerateAsync(CancellationToken cancellationToken = default)
-    {
-        return factory(
+    public override Task<IModelProvider> GenerateAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(factory(
             name: $"{random.Any(ProviderNames)}-{random.UniqueString()}",
             endpoint: new Uri($"https://api.{random.Int(1, int.MaxValue)}.example.com/v1"),
             apiKey: random.String(),
-            kind: ModelProviderKind.OpenAiCompatible);
-    }
+            kind: ModelProviderKind.OpenAiCompatible));
 }
