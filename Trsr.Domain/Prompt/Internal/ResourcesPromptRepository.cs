@@ -22,13 +22,24 @@ internal class ResourcesPromptRepository : IPromptTemplateRepository
     /// <inheritdoc />
     public Task<IPromptTemplate?> FindAsync(string name, CancellationToken cancellationToken = default)
     {
-        string? templateContent = resources.Select(res => res.GetString(name))
+        string? templateContent = resources.Select(res =>
+            {
+                try
+                {
+                    return res.GetString(name);
+                }
+                catch (MissingManifestResourceException)
+                {
+                    // Resource not found in this assembly, ignore and continue
+                    return null;
+                }
+            })
             .FirstOrDefault(content => !string.IsNullOrWhiteSpace(content));
         if (string.IsNullOrWhiteSpace(templateContent))
         {
             return Task.FromResult<IPromptTemplate?>(null);
         }
-        
+
         IPromptTemplate template = new PromptTemplate(name, templateContent);
         template.Validate();
         return Task.FromResult<IPromptTemplate?>(template);

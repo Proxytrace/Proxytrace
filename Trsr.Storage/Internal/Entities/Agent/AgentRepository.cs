@@ -16,7 +16,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 {
     private readonly IAgent.CreateNew createNew;
     private readonly IPromptTemplate.Create promptTemplateFactory;
-    private readonly IAgentNameGenerator nameGenerator;
+    private readonly Lazy<IAgentNameGenerator> nameGenerator;
 
     public AgentRepository(
         IMapper<IAgent, AgentEntity> mapper,
@@ -24,7 +24,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         ITransaction transaction,
         IAgent.CreateNew createNew,
         IPromptTemplate.Create promptTemplateFactory,
-        IAgentNameGenerator nameGenerator) : base(mapper, contextFactory, transaction)
+        Lazy<IAgentNameGenerator> nameGenerator) : base(mapper, contextFactory, transaction)
     {
         this.createNew = createNew;
         this.promptTemplateFactory = promptTemplateFactory;
@@ -52,7 +52,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        name ??= await nameGenerator.GenerateNameAsync(systemPrompt, project, cancellationToken);
+        name ??= await nameGenerator.Value.GenerateNameAsync(systemPrompt, project, cancellationToken);
         systemPrompt = promptTemplateFactory(name, systemPrompt.Template);
         var agent = createNew(
             name: name,

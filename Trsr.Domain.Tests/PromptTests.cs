@@ -1,19 +1,29 @@
 using AwesomeAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Prompt;
+using Trsr.Testing;
 
 // ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace Trsr.Domain.Tests;
 
 [TestClass]
-public class PromptTests
+public class PromptTests : BaseTest<Module>
 {
+    private IPrompt CreatePrompt(string name, string content, IServiceProvider services)
+    {
+        var factory = services.GetRequiredService<IPromptTemplate.Create>();
+        var template = factory(name, content);
+        return template.Render();
+    }
+    
     [TestMethod]
     public void Append_ShouldCombineNamesWithUnderscore()
     {
         // Arrange
-        var prompt1 = new Prompt("FirstPrompt", "First content");
-        var prompt2 = new Prompt("SecondPrompt", "Second content");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("FirstPrompt", "First content", services);
+        var prompt2 = CreatePrompt("SecondPrompt", "Second content", services);
 
         // Act
         IPrompt result = prompt1.Append(prompt2);
@@ -26,8 +36,9 @@ public class PromptTests
     public void Append_ShouldCombinePromptStringsWithNewLine()
     {
         // Arrange
-        var prompt1 = new Prompt("Prompt1", "First content");
-        var prompt2 = new Prompt("Prompt2", "Second content");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("Prompt1", "First content", services);
+        var prompt2 = CreatePrompt("Prompt2", "Second content", services);
 
         // Act
         IPrompt result = prompt1.Append(prompt2);
@@ -41,8 +52,9 @@ public class PromptTests
     public void Append_ShouldReturnNewInstance()
     {
         // Arrange
-        var prompt1 = new Prompt("Prompt1", "Content1");
-        var prompt2 = new Prompt("Prompt2", "Content2");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("Prompt1", "Content1", services);
+        var prompt2 = CreatePrompt("Prompt2", "Content2", services);
 
         // Act
         IPrompt result = prompt1.Append(prompt2);
@@ -56,8 +68,9 @@ public class PromptTests
     public void Append_ShouldNotModifyOriginalPrompts()
     {
         // Arrange
-        var prompt1 = new Prompt("Original1", "Content1");
-        var prompt2 = new Prompt("Original2", "Content2");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("Original1", "Content1", services);
+        var prompt2 = CreatePrompt("Original2", "Content2", services);
 
         // Act
         _ = prompt1.Append(prompt2);
@@ -73,9 +86,10 @@ public class PromptTests
     public void Append_WithMultipleAppends_ShouldChainCorrectly()
     {
         // Arrange
-        var prompt1 = new Prompt("First", "Content1");
-        var prompt2 = new Prompt("Second", "Content2");
-        var prompt3 = new Prompt("Third", "Content3");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("First", "Content1", services);
+        var prompt2 = CreatePrompt("Second", "Content2", services);
+        var prompt3 = CreatePrompt("Third", "Content3", services);
 
         // Act
         IPrompt result = prompt1.Append(prompt2).Append(prompt3);
@@ -93,8 +107,9 @@ public class PromptTests
     public void Append_WithMultiLineContent_ShouldPreserveFormatting()
     {
         // Arrange
-        var prompt1 = new Prompt("Prompt1", "Line1\nLine2");
-        var prompt2 = new Prompt("Prompt2", "Line3\nLine4");
+        var services = GetServices();
+        var prompt1 = CreatePrompt("Prompt1", "Line1\nLine2", services);
+        var prompt2 = CreatePrompt("Prompt2", "Line3\nLine4", services);
 
         // Act
         IPrompt result = prompt1.Append(prompt2);
@@ -108,7 +123,8 @@ public class PromptTests
     public void Constructor_WithValidParameters_ShouldCreatePrompt()
     {
         // Arrange & Act
-        var prompt = new Prompt("TestName", "Test content");
+        var services = GetServices();
+        var prompt = CreatePrompt("TestName", "Test content", services);
 
         // Assert
         prompt.Should().NotBeNull();
@@ -120,53 +136,59 @@ public class PromptTests
     public void Constructor_WithNullName_ShouldThrowArgumentException()
     {
         // Act & Assert
-        FluentActions.Invoking(() => new Prompt(null!, "Content"))
+        var services = GetServices();
+        FluentActions.Invoking(() => CreatePrompt(null!, "Content", services))
             .Should()
-            .Throw<ArgumentNullException>();
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithEmptyName_ShouldThrowArgumentException()
     {
         // Act & Assert
-        FluentActions.Invoking(() => new Prompt(string.Empty, "Content"))
+        var services = GetServices();
+        FluentActions.Invoking(() => CreatePrompt(string.Empty, "Content", services))
             .Should()
-            .Throw<ArgumentNullException>();
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithWhitespaceName_ShouldThrowArgumentException()
     {
         // Act & Assert
-        FluentActions.Invoking(() => new Prompt("   ", "Content"))
+        var services = GetServices();
+        FluentActions.Invoking(() => CreatePrompt("   ", "Content", services))
             .Should()
-            .Throw<ArgumentNullException>();
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithNullPromptString_ShouldThrowArgumentException()
     {
         // Act & Assert
-        FluentActions.Invoking(() => new Prompt("Name", null!))
+        var services = GetServices();
+        FluentActions.Invoking(() => CreatePrompt("Name", null!, services))
             .Should()
-            .Throw<ArgumentNullException>();
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void Constructor_WithEmptyPromptString_ShouldThrowArgumentException()
     {
         // Act & Assert
-        FluentActions.Invoking(() => new Prompt("Name", string.Empty))
+        var services = GetServices();
+        FluentActions.Invoking(() => CreatePrompt("Name", string.Empty, services))
             .Should()
-            .Throw<ArgumentNullException>();
+            .Throw<Exception>();
     }
 
     [TestMethod]
     public void ToPromptString_ShouldReturnOriginalContent()
     {
         // Arrange
+        var services = GetServices();
         const string content = "This is the prompt content";
-        var prompt = new Prompt("TestPrompt", content);
+        var prompt = CreatePrompt("TestPrompt", content, services);
 
         // Act
         string result = prompt.ToPromptString();

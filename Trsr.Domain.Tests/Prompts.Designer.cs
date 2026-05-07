@@ -25,7 +25,7 @@ namespace Trsr.Domain.Tests {
         internal static System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.Equals(null, resourceMan)) {
-                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("Trsr.Prompting.Tests.Prompts", typeof(Prompts).Assembly);
+                    System.Resources.ResourceManager temp = new System.Resources.ResourceManager("Trsr.Domain.Tests.Prompts", typeof(Prompts).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

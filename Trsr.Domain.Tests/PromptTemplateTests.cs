@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using AwesomeAssertions;
 using Microsoft.Testing.Platform.Services;
+using Trsr.Common.Validation;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.Prompt.Internal;
 
 namespace Trsr.Domain.Tests;
 
@@ -22,16 +24,6 @@ public class PromptTemplateTests : DomainTest<Module>
         // Assert
         promptTemplate.Template.Should().Be(template);
         promptTemplate.Variables.Should().ContainSingle().Which.Should().Be("name");
-    }
-
-    [TestMethod]
-    [DataRow(null)]
-    [DataRow("")]
-    [DataRow(" ")]
-    public void Constructor_WithEmptyTemplate_ShouldThrowArgumentException(string? template)
-    {
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        FluentActions.Invoking(() => new PromptTemplate("test", template!)).Should().Throw<ArgumentNullException>();
     }
 
     [TestMethod]

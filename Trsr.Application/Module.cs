@@ -2,9 +2,7 @@ using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
-using Trsr.Application.Demo.Internal;
 using Trsr.Application.Ingestion.Internal;
-using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
 using Trsr.Application.TestRun;
@@ -51,7 +49,7 @@ public sealed class Module : Autofac.Module
             .As<IAgentNameGenerator>()
             .SingleInstance();
         
-        builder.Register<TestRunnerConfiguration>(ctx =>
+        builder.Register<TestRunnerConfiguration>(_ =>
             {
                 var config = this.configuration?.GetSection("TestRunner").Get<TestRunnerConfiguration>();
                 return config ?? new TestRunnerConfiguration();
@@ -81,14 +79,6 @@ public sealed class Module : Autofac.Module
             services.AddHostedService(sc => sc.GetRequiredService<AgentCallIngestor>());
         });
         
-        if (isDevelopment)
-        {
-            builder.RegisterServiceCollection(services =>
-            {
-                services.AddHostedService<DemoDataSeeder>();
-            });
-        }
-
         builder.RegisterInstance(Prompts.ResourceManager);
     }
 }
