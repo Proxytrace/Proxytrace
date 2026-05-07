@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
-using Trsr.Domain.Organization;
 
 namespace Trsr.Domain.ModelProvider.Internal;
 
@@ -11,21 +10,18 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
     public Uri Endpoint { get; }
     public string ApiKey { get; }
     public ModelProviderKind Kind { get; }
-    public IOrganization Organization { get; }
 
     public ModelProvider(
         string name,
         Uri endpoint,
         string apiKey,
         ModelProviderKind kind,
-        IOrganization organization,
         IRepository<IModelProvider> repository) : base(repository)
     {
         Name = name;
         Endpoint = endpoint;
         ApiKey = apiKey;
         Kind = kind;
-        Organization = organization;
     }
 
     public ModelProvider(
@@ -33,7 +29,6 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
         Uri endpoint,
         string apiKey,
         ModelProviderKind kind,
-        IOrganization organization, 
         IDomainEntityData existing,
         IRepository<IModelProvider> repository) : base(existing, repository)
     {
@@ -41,7 +36,6 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
         Endpoint = endpoint;
         ApiKey = apiKey;
         Kind = kind;
-        Organization = organization;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -53,17 +47,12 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhiteSpace(Name, nameof(Name));
+            yield return Validation.NotNullOrWhiteSpace(Name);
         }
 
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
-            yield return Validation.NotNullOrWhiteSpace(ApiKey, nameof(ApiKey));
-        }
-
-        if (Organization is null)
-        {
-            yield return Validation.NotNull(Organization, nameof(Organization));
+            yield return Validation.NotNullOrWhiteSpace(ApiKey);
         }
     }
 }

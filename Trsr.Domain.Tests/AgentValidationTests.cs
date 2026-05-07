@@ -2,10 +2,8 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
-using Trsr.Domain.User;
 
 namespace Trsr.Domain.Tests;
 
@@ -137,12 +135,8 @@ public sealed class AgentValidationTests : DomainTest<Module>
 
     private async Task<IProject> CreateTestProjectAsync(IServiceProvider services)
     {
-        var userFactory = services.GetRequiredService<IUser.CreateNew>();
-        var orgFactory = services.GetRequiredService<IOrganization.CreateNew>();
         var projectFactory = services.GetRequiredService<IProject.CreateNew>();
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
-        var user = userFactory("Test User");
-        var org = orgFactory("Test Org", [user]);
-        return projectFactory("Test Project", endpoint, org);
+        return projectFactory("Test Project", endpoint);
     }
 }

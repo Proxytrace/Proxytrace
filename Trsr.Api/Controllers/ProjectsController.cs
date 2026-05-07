@@ -3,7 +3,6 @@ using Trsr.Api.Dto;
 using Trsr.Api.Dto.Projects;
 using Trsr.Domain;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 
 namespace Trsr.Api.Controllers;
@@ -13,20 +12,17 @@ namespace Trsr.Api.Controllers;
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectRepository repository;
-    private readonly IOrganizationRepository organizationRepository;
     private readonly IRepository<IModelEndpoint> endpointRepository;
     private readonly IProject.CreateNew createNew;
     private readonly IProject.CreateExisting createExisting;
 
     public ProjectsController(
         IProjectRepository repository,
-        IOrganizationRepository organizationRepository,
         IRepository<IModelEndpoint> endpointRepository,
         IProject.CreateNew createNew,
         IProject.CreateExisting createExisting)
     {
         this.repository = repository;
-        this.organizationRepository = organizationRepository;
         this.endpointRepository = endpointRepository;
         this.createNew = createNew;
         this.createExisting = createExisting;
@@ -34,17 +30,13 @@ public class ProjectsController : ControllerBase
 
     [HttpGet]
     public async Task<PagedResult<ProjectDto>> GetAll(
-        [FromQuery] Guid? orgId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
         var all = await repository.GetAllAsync(cancellationToken);
-        var filtered = orgId.HasValue
-            ? all.Where(p => p.Organization.Id == orgId.Value).ToArray()
-            : all;
-        var items = filtered.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<ProjectDto>(items, filtered.Count(), page, pageSize);
+        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
+        return new PagedResult<ProjectDto>(items, all.Count, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]
@@ -61,11 +53,10 @@ public class ProjectsController : ControllerBase
         [FromBody] CreateProjectRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await organizationRepository.ContainsAsync(request.OrganizationId, cancellationToken))
-            return BadRequest($"Organization {request.OrganizationId} not found.");
-        var org = await organizationRepository.GetAsync(request.OrganizationId, cancellationToken);
-        var endpoint = await endpointRepository.GetAsync(request.OrganizationId, cancellationToken);
-        var project = createNew(request.Name, endpoint, org);
+        if (!await endpointRepository.ContainsAsync(request.SystemEndpointId, cancellationToken))
+            return BadRequest($"SystemEndpoint {request.SystemEndpointId} not found.");
+        var endpoint = await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
+        var project = createNew(request.Name, endpoint);
         var saved = await repository.AddAsync(project, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
@@ -79,15 +70,11 @@ public class ProjectsController : ControllerBase
         if (!await repository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var existing = await repository.GetAsync(id, cancellationToken);
-        var endpoint = existing.SystemEndpoint.Id == request.SystemEndpointId 
-            ? existing.SystemEndpoint 
+        var endpoint = existing.SystemEndpoint.Id == request.SystemEndpointId
+            ? existing.SystemEndpoint
             : await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
-        
-        var updated = createExisting(
-            request.Name,
-            endpoint,
-            existing.Organization, 
-            existing);
+
+        var updated = createExisting(request.Name, endpoint, existing);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
     }
@@ -100,5 +87,5 @@ public class ProjectsController : ControllerBase
     }
 
     private static ProjectDto ToDto(IProject p) =>
-        new(p.Id, p.Name, p.Organization.Id, p.Organization.Name, p.CreatedAt, p.UpdatedAt);
+        new(p.Id, p.Name, p.CreatedAt, p.UpdatedAt);
 }

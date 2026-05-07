@@ -25,8 +25,4 @@ internal record ModelProviderEntity : Entity
     /// </summary>
     public required ModelProviderKind Kind { get; init; }
 
-    /// <summary>
-    /// <see cref="Trsr.Domain.ModelProvider.IModelProvider.Organization"/>
-    /// </summary>
-    public required Guid Organization { get; init; }
 }

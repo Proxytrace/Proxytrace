@@ -1,4 +1,3 @@
-using Trsr.Domain.Organization;
 
 namespace Trsr.Domain.ModelProvider;
 
@@ -27,18 +26,12 @@ public interface IModelProvider : IDomainEntity
     /// </summary>
     ModelProviderKind Kind { get; }
 
-    /// <summary>
-    /// The organization the model provider is configured for
-    /// </summary>
-    IOrganization Organization { get; }
-
     /// <summary>Factory delegate for creating a new model provider.</summary>
     public delegate IModelProvider CreateNew(
         string name,
         Uri endpoint,
         string apiKey,
-        ModelProviderKind kind,
-        IOrganization organization);
+        ModelProviderKind kind);
 
     /// <summary>Factory delegate for reconstituting an existing model provider from persistence.</summary>
     public delegate IModelProvider CreateExisting(
@@ -46,6 +39,5 @@ public interface IModelProvider : IDomainEntity
         Uri endpoint,
         string apiKey,
         ModelProviderKind kind,
-        IOrganization organization,
         IDomainEntityData existing);
 }

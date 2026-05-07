@@ -1,7 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Testing;
 
@@ -11,22 +10,20 @@ namespace Trsr.Domain.Tests;
 public sealed class ProjectValidationTests : BaseTest<Module>
 {
     [TestMethod]
-    public async Task CreateNew_WithValidNameAndOrganization_CreatesProject()
+    public async Task CreateNew_WithValidName_CreatesProject()
     {
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
         var name = "Test Project";
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory(name, endpoint, organization);
+        var project = factory(name, endpoint);
 
         // Assert
         project.Should().NotBeNull();
         project.Name.Should().Be(name);
-        project.Organization.Should().Be(organization);
         project.Id.Should().NotBe(Guid.Empty);
         project.CreatedAt.Should().NotBe(default);
         project.UpdatedAt.Should().NotBe(default);
@@ -38,12 +35,11 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, endpoint, organization);
+        var action = () => factory(null!, endpoint);
         action.Should().Throw<Exception>();
     }
 
@@ -53,11 +49,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory(string.Empty, endpoint, organization);
+        var action = () => factory(string.Empty, endpoint);
         action.Should().Throw<Exception>();
     }
 
@@ -67,11 +62,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory("   ", endpoint, organization);
+        var action = () => factory("   ", endpoint);
         action.Should().Throw<Exception>();
     }
 
@@ -81,39 +75,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory("\t\t\t", endpoint, organization);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateNew_WithNullOrganization_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IProject.CreateNew>();
-        var endpoint = await GetEndpointAsync(services);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Project", endpoint, null!);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateNew_WithBothInvalidNameAndOrganization_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IProject.CreateNew>();
-        var endpoint = await GetEndpointAsync(services);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(string.Empty, endpoint, null!);
+        var action = () => factory("\t\t\t", endpoint);
         action.Should().Throw<Exception>();
     }
 
@@ -127,13 +92,12 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var project = createExisting(existingProject.Name, existingProject.SystemEndpoint, existingProject.Organization, existingProject);
+        var project = createExisting(existingProject.Name, existingProject.SystemEndpoint, existingProject);
 
         // Assert
         project.Should().NotBeNull();
         project.Id.Should().Be(existingProject.Id);
         project.Name.Should().Be(existingProject.Name);
-        project.Organization.Should().Be(existingProject.Organization);
         project.CreatedAt.Should().Be(existingProject.CreatedAt);
         project.UpdatedAt.Should().Be(existingProject.UpdatedAt);
     }
@@ -148,22 +112,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act & Assert
-        var action = () => createExisting(string.Empty, existingProject.SystemEndpoint, existingProject.Organization, existingProject);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateExisting_WithNullOrganization_ThrowsException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var createExisting = services.GetRequiredService<IProject.CreateExisting>();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
-        var existingProject = await generator.CreateAsync(CancellationToken);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingProject.Name, existingProject.SystemEndpoint, null!, existingProject);
+        var action = () => createExisting(string.Empty, existingProject.SystemEndpoint, existingProject);
         action.Should().Throw<Exception>();
     }
 
@@ -173,38 +122,14 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project1 = factory("Project 1", endpoint, organization);
-        var project2 = factory("Project 2", endpoint, organization);
+        var project1 = factory("Project 1", endpoint);
+        var project2 = factory("Project 2", endpoint);
 
         // Assert
         project1.Id.Should().NotBe(project2.Id);
-    }
-
-    [TestMethod]
-    public async Task CreateNew_MultipleProjectsForSameOrganization_Succeeds()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
-        var endpoint = await GetEndpointAsync(services);
-
-        // Act
-        var project1 = factory("Project 1", endpoint, organization);
-        var project2 = factory("Project 2", endpoint, organization);
-        var project3 = factory("Project 3", endpoint, organization);
-
-        // Assert
-        project1.Organization.Should().Be(organization);
-        project2.Organization.Should().Be(organization);
-        project3.Organization.Should().Be(organization);
-        project1.Id.Should().NotBe(project2.Id);
-        project2.Id.Should().NotBe(project3.Id);
-        project1.Id.Should().NotBe(project3.Id);
     }
 
     [TestMethod]
@@ -213,11 +138,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory(new string('A', 1000), endpoint, organization);
+        var project = factory(new string('A', 1000), endpoint);
 
         // Assert
         project.Should().NotBeNull();
@@ -230,11 +154,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory("Project @#$% 123 !&*()", endpoint, organization);
+        var project = factory("Project @#$% 123 !&*()", endpoint);
 
         // Assert
         project.Should().NotBeNull();
@@ -247,11 +170,10 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IProject.CreateNew>();
-        var organization = CreateTestOrganization(services);
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory("项目 José Müller", endpoint, organization);
+        var project = factory("项目 José Müller", endpoint);
 
         // Assert
         project.Should().NotBeNull();
@@ -269,11 +191,8 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         // Act & Assert
         var nameProperty = project.GetType().GetProperty("Name");
         nameProperty.Should().NotBeNull();
-        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
+        nameProperty.SetMethod.Should().BeNull();
     }
-
-    private static IOrganization CreateTestOrganization(IServiceProvider services)
-        => services.GetRequiredService<IOrganization.CreateNew>()("Test Organization", []);
 
     private async Task<IModelEndpoint> GetEndpointAsync(IServiceProvider services)
         => await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);

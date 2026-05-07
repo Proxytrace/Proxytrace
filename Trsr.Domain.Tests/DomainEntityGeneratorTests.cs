@@ -1,7 +1,6 @@
 using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Domain.User;
 using Trsr.Storage;
@@ -113,102 +112,6 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         user2.Name.Should().NotBe(user3.Name);
     }
 
-    // Organization Generator Tests
-
-    [TestMethod]
-    public async Task OrganizationGenerator_GenerateAsync_CreatesValidOrganization()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
-
-        // Act
-        var organization = await generator.CreateAsync(CancellationToken);
-
-        // Assert
-        organization.Should().NotBeNull();
-        organization.Id.Should().NotBe(Guid.Empty);
-        organization.Name.Should().NotBeNullOrWhiteSpace();
-        organization.Users.Should().NotBeNull();
-        organization.CreatedAt.Should().NotBe(default);
-        organization.UpdatedAt.Should().NotBe(default);
-    }
-
-    [TestMethod]
-    public async Task OrganizationGenerator_CreateAsync_CreatesAndPersistsOrganization()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
-        var repository = services.GetRequiredService<IRepository<IOrganization>>();
-
-        // Act
-        var organization = await generator.CreateAsync(CancellationToken);
-
-        // Assert
-        organization.Should().NotBeNull();
-        organization.Id.Should().NotBe(Guid.Empty);
-
-        // Verify it was persisted
-        var retrieved = await repository.GetAsync(organization.Id, CancellationToken);
-        retrieved.Should().NotBeNull();
-        retrieved.Id.Should().Be(organization.Id);
-        retrieved.Name.Should().Be(organization.Name);
-    }
-
-    [TestMethod]
-    public async Task OrganizationGenerator_GetOrCreateAsync_CreatesNewOrganizationFirstTime()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
-        var repository = services.GetRequiredService<IRepository<IOrganization>>();
-        var initialCount = await repository.CountAsync(CancellationToken);
-
-        // Act
-        var organization = await generator.GetOrCreateAsync(CancellationToken);
-
-        // Assert
-        organization.Should().NotBeNull();
-        var finalCount = await repository.CountAsync(CancellationToken);
-        finalCount.Should().Be(initialCount + 1);
-    }
-
-    [TestMethod]
-    public async Task OrganizationGenerator_GetOrCreateAsync_ReusesSameOrganizationOnSecondCall()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
-
-        // Act
-        var org1 = await generator.GetOrCreateAsync(CancellationToken);
-        var org2 = await generator.GetOrCreateAsync(CancellationToken);
-
-        // Assert
-        org1.Id.Should().Be(org2.Id);
-    }
-
-    [TestMethod]
-    public async Task OrganizationGenerator_MultipleGenerateAsync_CreatesUniqueOrganizations()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IOrganization>>();
-
-        // Act
-        var org1 = await generator.CreateAsync(CancellationToken);
-        var org2 = await generator.CreateAsync(CancellationToken);
-        var org3 = await generator.CreateAsync(CancellationToken);
-
-        // Assert
-        org1.Id.Should().NotBe(org2.Id);
-        org2.Id.Should().NotBe(org3.Id);
-        org1.Id.Should().NotBe(org3.Id);
-        org1.Name.Should().NotBe(org2.Name);
-        org2.Name.Should().NotBe(org3.Name);
-    }
-
     // Project Generator Tests
 
     [TestMethod]
@@ -225,7 +128,6 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         project.Should().NotBeNull();
         project.Id.Should().NotBe(Guid.Empty);
         project.Name.Should().NotBeNullOrWhiteSpace();
-        project.Organization.Should().NotBe(Guid.Empty);
         project.CreatedAt.Should().NotBe(default);
         project.UpdatedAt.Should().NotBe(default);
     }
@@ -250,7 +152,6 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         retrieved.Should().NotBeNull();
         retrieved.Id.Should().Be(project.Id);
         retrieved.Name.Should().Be(project.Name);
-        retrieved.Organization.Should().Be(project.Organization);
     }
 
     [TestMethod]
