@@ -2,6 +2,7 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent;
@@ -24,26 +25,33 @@ public interface IAgent : IDomainEntity
     IProject Project { get; }
 
     /// <summary>The system message that defines this agent's behaviour.</summary>
-    SystemMessage SystemMessage { get; }
+    IPromptTemplate SystemPrompt { get; }
 
     /// <summary>The tools available to this agent.</summary>
     IReadOnlyList<ToolSpecification> Tools { get; }
+    
+    /// <summary>
+    /// Whether the agent is a built-in agent (e.g. for prompt optimization)
+    /// </summary>
+    bool IsSystemAgent { get; }
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
         string name,
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
-        IProject project);
+        IProject project,
+        bool isSystemAgent = false);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(
         string name,
         IProject project,
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
+        bool isSystemAgent,
         IDomainEntityData existing);
     
     /// <summary>
@@ -52,9 +60,12 @@ public interface IAgent : IDomainEntity
     Task<ICompletion> CompleteAsync(
         Conversation conversation,
         IModelEndpoint endpoint,
+        IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default);
     
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint, 
         CancellationToken cancellationToken = default);
+
+    SystemMessage RenderSystemMessage(IReadOnlyDictionary<string, string>? variables = null);
 }

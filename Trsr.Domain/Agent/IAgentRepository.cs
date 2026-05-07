@@ -1,6 +1,6 @@
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent;
@@ -16,7 +16,7 @@ public interface IAgentRepository : IRepository<IAgent>
     /// using the supplied <paramref name="endpoint"/>.
     /// </summary>
     Task<IAgent> GetOrCreateAsync(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
@@ -27,7 +27,7 @@ public interface IAgentRepository : IRepository<IAgent>
     /// The fingerprint changes when any of system message, tools, model, or provider changes.
     /// </summary>
     string GetAgentFingerprint(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyCollection<ToolSpecification> tools);
 
     /// <summary>

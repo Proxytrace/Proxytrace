@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Application.Agent;
 
@@ -23,7 +24,7 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
         """; 
 
     public async Task<string> GenerateNameAsync(
-        SystemMessage systemMessage,
+        IPromptTemplate promptTemplate,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
@@ -33,7 +34,7 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
 
             var conversation = Conversation.Create();
             conversation.AddSystemMessage(Message.CreateSystemMessage(Prompt));
-            conversation.Add(Message.CreateUserMessage(systemMessage.ToString()));
+            conversation.Add(Message.CreateUserMessage(promptTemplate.Template));
             
             var result = await client.CompleteAsync(conversation, cancellationToken: cancellationToken);
             return result.Response.GetTextResponse();

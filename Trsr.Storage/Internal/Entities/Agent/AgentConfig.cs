@@ -4,9 +4,9 @@ using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.Project;
@@ -16,6 +16,7 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<IAgent, AgentEntity>
 {
     private readonly IAgent.CreateExisting factory;
+    private readonly IPromptTemplate.Create promptTemplateFactory;
     private readonly ISerializer serializer;
     private readonly Lazy<IAgentRepository> repository;
     private readonly IRepository<IProject> projects;
@@ -23,12 +24,14 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
 
     public AgentConfig(
         IAgent.CreateExisting factory,
+        IPromptTemplate.Create promptTemplateFactory,
         ISerializer serializer,
         Lazy<IAgentRepository> repository,
         IRepository<IProject> projects,
         IRepository<IModelEndpoint> endpoints)
     {
         this.factory = factory;
+        this.promptTemplateFactory = promptTemplateFactory;
         this.serializer = serializer;
         this.repository = repository;
         this.projects = projects;
@@ -54,10 +57,10 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
-            .Property(e => e.SystemMessage)
+            .Property(e => e.SystemPrompt)
             .HasConversion(
                 v => serializer.Serialize(v),
-                v => serializer.Deserialize<SystemMessage>(v) ?? new SystemMessage(string.Empty)
+                v => serializer.Deserialize<SystemPromptData>(v) ?? new SystemPromptData(string.Empty, string.Empty)
             );
 
         builder
@@ -72,13 +75,15 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
+        var systemPrompt = promptTemplateFactory(stored.SystemPrompt.Name, stored.SystemPrompt.Template);
         return factory(
-            stored.Name,
-            project, 
-            stored.SystemMessage,
-            stored.Tools,
-            endpoint,
-            stored);
+            name: stored.Name,
+            project: project, 
+            systemPrompt: systemPrompt,
+            tools: stored.Tools,
+            endpoint: endpoint,
+            isSystemAgent: stored.IsSystemAgent,
+            existing: stored);
     }
 
     public Task<AgentEntity> Map(IAgent domain, CancellationToken cancellationToken = default)
@@ -88,9 +93,12 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             Name = domain.Name,
             Project = domain.Project.Id,
             Fingerprint = repository.Value.GetAgentFingerprint(domain),
-            SystemMessage = domain.SystemMessage,
+            SystemPrompt = new SystemPromptData(
+                Name: domain.SystemPrompt.Name,
+                Template: domain.SystemPrompt.Template),
             Tools = domain.Tools,
             Endpoint = domain.Endpoint.Id,
+            IsSystemAgent = domain.IsSystemAgent,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

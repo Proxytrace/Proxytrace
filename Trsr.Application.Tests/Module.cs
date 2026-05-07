@@ -7,6 +7,7 @@ using Trsr.Application.TestRun.Internal;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 using Trsr.Storage;
 using Trsr.Testing;
 
@@ -23,7 +24,7 @@ public class Module : Autofac.Module
         builder.RegisterStub<IModelClient>();
 
         builder.RegisterStub<IAgentNameGenerator>(stub =>
-            stub.GenerateNameAsync(Arg.Any<SystemMessage>(), Arg.Any<IModelEndpoint>(), Arg.Any<CancellationToken>())
+            stub.GenerateNameAsync(Arg.Any<IPromptTemplate>(), Arg.Any<IModelEndpoint>(), Arg.Any<CancellationToken>())
                 .ReturnsForAnyArgs(Task.FromResult("Test Agent")));
 
         builder.RegisterInstance(new TestRunnerConfiguration())

@@ -7,7 +7,6 @@ using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Tools;
 
@@ -122,7 +121,7 @@ public class AgentsController : ControllerBase
         a.Project.Id,
         a.Project.Name,
         a.Name,
-        GetSystemMessageText(a.SystemMessage),
+        a.SystemPrompt.Template,
         a.Tools.Select(t => new ToolSpecificationDto(
             t.Name,
             t.Description,
@@ -154,7 +153,4 @@ public class AgentsController : ControllerBase
 
         return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
-
-    private static string GetSystemMessageText(SystemMessage msg)
-        => string.Concat(msg.Contents.Select(c => c.Text ?? ""));
 }

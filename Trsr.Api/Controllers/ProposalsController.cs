@@ -104,7 +104,7 @@ public class ProposalsController : ControllerBase
     }
 
     private static SystemPromptDetailsDto ToSystemPromptDto(IAgent agent, SystemPromptDetails sp)
-        => new(agent.SystemMessage.ToString(), sp.ProposedSystemMessage.ToString());
+        => new(agent.SystemPrompt.Template, sp.ProposedSystemMessage.ToString());
 
     private static ToolDetailsDto ToToolDto(IAgent agent, ToolDetails td)
         => new(

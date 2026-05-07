@@ -13,6 +13,7 @@ using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Application.Ingestion.Internal;
@@ -25,6 +26,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
     private readonly IAgentCall.CreateExisting createExistingCall;
     private readonly IAgentToolCall.CreateNew createNewToolCall;
     private readonly IAgentToolCall.CreateExisting createExistingToolCall;
+    private readonly IPromptTemplate.Create createPromptTemplate;
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly IModelEndpointRepository endpointRepository;
@@ -45,6 +47,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         IAgentCall.CreateExisting createExistingCall,
         IAgentToolCall.CreateNew createNewToolCall,
         IAgentToolCall.CreateExisting createExistingToolCall,
+        IPromptTemplate.Create createPromptTemplate,
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         IModelEndpointRepository endpointRepository,
@@ -57,6 +60,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         this.createExistingCall = createExistingCall;
         this.createNewToolCall = createNewToolCall;
         this.createExistingToolCall = createExistingToolCall;
+        this.createPromptTemplate = createPromptTemplate;
         this.parser = parser;
         this.agentRepository = agentRepository;
         this.endpointRepository = endpointRepository;
@@ -202,7 +206,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
             var agent = priorConversationCall is not null && parsed.Tools.Count == 0
                 ? priorConversationCall.Agent
                 : await agentRepository.GetOrCreateAsync(
-                    parsed.SystemMessage,
+                    createPromptTemplate("unknown", parsed.SystemMessage.ToString()),
                     parsed.Tools,
                     job.Project,
                     endpoint,

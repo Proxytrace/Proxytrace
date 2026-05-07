@@ -7,6 +7,7 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Usage;
@@ -89,16 +90,18 @@ internal sealed class DemoDataSeeder : IHostedService
     {
         var endpoint = foundation.Endpoints[scenario.Agent.EndpointId];
         var data = new DemoEntityData(scenario.Agent.Id, scenario.Agent.CreatedAt, scenario.Agent.CreatedAt);
-
+        var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        
         var agentFactory = services.GetRequiredService<IAgent.CreateExisting>();
         var agent = await services.GetRequiredService<IRepository<IAgent>>()
             .UpsertAsync(agentFactory(
-                scenario.Agent.Name,
-                foundation.Project, 
-                scenario.Agent.SystemMessage,
-                scenario.Agent.Tools, 
-                endpoint,
-                data), ct);
+                name: scenario.Agent.Name,
+                project: foundation.Project, 
+                systemPrompt: promptTemplateFactory(scenario.Agent.Name, scenario.Agent.SystemMessage.ToString()),
+                tools: scenario.Agent.Tools, 
+                endpoint: endpoint,
+                isSystemAgent: false,
+                existing: data), ct);
 
         await SeedCallsAsync(services, agent, endpoint, scenario.Calls, ct);
         var testCases = await SeedTestCasesAsync(services, scenario.TestCases, ct);

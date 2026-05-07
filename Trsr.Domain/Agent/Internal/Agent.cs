@@ -6,6 +6,7 @@ using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent.Internal;
@@ -17,32 +18,36 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     public string Name { get; }
     public IModelEndpoint Endpoint { get; }
     public IProject Project { get; }
-    public SystemMessage SystemMessage { get; }
+    public IPromptTemplate SystemPrompt { get; }
     public IReadOnlyList<ToolSpecification> Tools { get; }
+    public bool IsSystemAgent { get; }
 
     public Agent(
         string name,
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         IProject project,
+        bool isSystemAgent,
         IRepository<IAgent> repository,
         ILogger<IAgent> logger) : base(repository)
     {
         this.logger = logger;
         Name = name;
-        SystemMessage = systemMessage;
+        SystemPrompt = systemPrompt;
         Project = project;
         Tools = tools;
         Endpoint = endpoint;
+        IsSystemAgent = isSystemAgent;
     }
 
     public Agent(
         string name,
         IProject project,
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
+        bool isSystemAgent,
         IDomainEntityData existing,
         IRepository<IAgent> repository,
         ILogger<IAgent> logger) : base(existing, repository)
@@ -50,17 +55,20 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         this.logger = logger;
         Name = name;
         Project = project;
-        SystemMessage = systemMessage;
+        SystemPrompt = systemPrompt;
         Tools = tools;
         Endpoint = endpoint;
+        IsSystemAgent = isSystemAgent;
     }
 
     public Task<ICompletion> CompleteAsync(
         Conversation conversation,
         IModelEndpoint endpoint,
+        IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
-        conversation = Conversation.ReplaceSystemMessage(conversation, SystemMessage);
+        SystemMessage systemMessage = RenderSystemMessage(variables);
+        conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
         return endpoint.CreateClient().CompleteAsync(
             conversation,
             ModelOptions.FromAgent(this, endpoint.Model),
@@ -76,16 +84,23 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         }
         
         var update = new Agent(
-            Name,
-            Project,
-            SystemMessage,
-            Tools,
-            modelEndpoint,
-            this,
-            repository,
-            logger);
+            name: Name,
+            systemPrompt: SystemPrompt,
+            tools: Tools,
+            endpoint: modelEndpoint,
+            project: Project,
+            isSystemAgent: IsSystemAgent,
+            existing: this,
+            repository: repository,
+            logger: logger);
         
         return await update.UpdateAsync(cancellationToken);
+    }
+
+    public SystemMessage RenderSystemMessage(IReadOnlyDictionary<string, string>? variables = null)
+    {
+        IPrompt prompt = SystemPrompt.Render(variables);
+        return Message.Message.CreateSystemMessage(prompt.ToPromptString());
     }
 
     /// <inheritdoc />
@@ -106,7 +121,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             yield return result;
         }
 
-        foreach (var result in SystemMessage.Validate(validationContext))
+        foreach (var result in SystemPrompt.Validate(validationContext))
         {
             yield return result;
         }

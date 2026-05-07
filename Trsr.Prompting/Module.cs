@@ -16,7 +16,6 @@ public sealed class Module : Autofac.Module
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
-        builder.RegisterType<PromptBuilder>().As<IPromptBuilder>();
-        builder.RegisterType<ResourcesPromptRepository>().As<IPromptTemplateRepository>();
+
     }
 }

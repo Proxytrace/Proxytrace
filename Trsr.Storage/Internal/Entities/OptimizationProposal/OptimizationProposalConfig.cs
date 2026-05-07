@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Async;
@@ -46,13 +47,21 @@ internal class OptimizationProposalConfig :
         var evidenceTestRunIds = serializer.Deserialize<IReadOnlyCollection<Guid>>(stored.EvidenceTestRunIds)
                                  ?? Array.Empty<Guid>();
 
-        ProposalDetails details = stored.Kind switch
+        ProposalDetails? details = stored.Kind switch
         {
-            ProposalKind.ModelSwitch => serializer.Deserialize<ModelSwitchDetails>(stored.Details)!,
-            ProposalKind.SystemPrompt => serializer.Deserialize<SystemPromptDetails>(stored.Details)!,
-            ProposalKind.Tool => serializer.Deserialize<ToolDetails>(stored.Details)!,
+            ProposalKind.ModelSwitch 
+                => serializer.Deserialize<ModelSwitchDetails>(stored.Details),
+            ProposalKind.SystemPrompt 
+                => serializer.Deserialize<SystemPromptDetails>(stored.Details),
+            ProposalKind.Tool 
+                => serializer.Deserialize<ToolDetails>(stored.Details),
             _ => throw new ArgumentOutOfRangeException(nameof(stored.Kind))
         };
+
+        if (details == null)
+        {
+            throw new SerializationException($"Failed to deserialize details for proposal {stored.Id} of kind {stored.Kind}");
+        }
 
         return factory(
             agent: agent,

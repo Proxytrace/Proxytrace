@@ -1,5 +1,6 @@
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Agent;
 
@@ -9,7 +10,7 @@ namespace Trsr.Domain.Agent;
 public interface IAgentNameGenerator
 {
     Task<string> GenerateNameAsync(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default);
 }

@@ -5,6 +5,7 @@ using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.User;
 
 namespace Trsr.Domain.Tests;
@@ -18,17 +19,23 @@ public sealed class AgentValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
-        var systemMessage = new SystemMessage("You are a helpful assistant");
+        var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        var systemPrompt = promptTemplateFactory("Test Agent", "You are a helpful assistant");
         var project = CreateTestProject(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agent = factory("Test Agent", systemMessage, [], endpoint, project);
+        var agent = factory(
+            "Test Agent",
+            systemPrompt, 
+            [],
+            endpoint, 
+            project);
 
         // Assert
         agent.Should().NotBeNull();
         agent.Name.Should().Be("Test Agent");
-        agent.SystemMessage.Should().Be(systemMessage);
+        agent.SystemPrompt.Should().Be(systemPrompt);
         agent.Project.Should().Be(project);
         agent.Id.Should().NotBe(Guid.Empty);
         agent.CreatedAt.Should().NotBe(default);
@@ -75,14 +82,20 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
         
         // Act
-        var agent = createExisting(existingAgent.Name, existingAgent.Project, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Endpoint, existingAgent);
+        var agent = createExisting(
+            existingAgent.Name,
+            existingAgent.Project,
+            existingAgent.SystemPrompt, 
+            existingAgent.Tools,
+            existingAgent.Endpoint,
+            existingAgent);
 
         // Assert
         agent.Should().NotBeNull();
         agent.Id.Should().Be(existingAgent.Id);
         agent.Name.Should().Be(existingAgent.Name);
         agent.Project.Should().Be(existingAgent.Project);
-        agent.SystemMessage.Should().Be(existingAgent.SystemMessage);
+        agent.SystemPrompt.Should().Be(existingAgent.SystemPrompt);
         agent.CreatedAt.Should().Be(existingAgent.CreatedAt);
         agent.UpdatedAt.Should().Be(existingAgent.UpdatedAt);
     }
@@ -98,7 +111,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemMessage, existingAgent.Tools, existingAgent.Endpoint, existingAgent);
+        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent);
         action.Should().Throw<Exception>();
     }
 

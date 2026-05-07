@@ -156,7 +156,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var agent = await repo.GetOrCreateAsync(msg, [MakeTool("search")], project, endpoint, CancellationToken);
 
         agent.Name.Should().Be("Test Agent");
-        agent.SystemMessage.Should().Be(msg);
+        agent.SystemPrompt.Should().Be(msg);
         agent.Tools.Should().HaveCount(1);
         agent.Project.Id.Should().Be(project.Id);
     }

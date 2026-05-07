@@ -4,9 +4,9 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
@@ -15,6 +15,7 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgentRepository
 {
     private readonly IAgent.CreateNew createNew;
+    private readonly IPromptTemplate.Create promptTemplateFactory;
     private readonly IAgentNameGenerator nameGenerator;
 
     public AgentRepository(
@@ -22,20 +23,22 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IAgent.CreateNew createNew,
+        IPromptTemplate.Create promptTemplateFactory,
         IAgentNameGenerator nameGenerator) : base(mapper, contextFactory, transaction)
     {
         this.createNew = createNew;
+        this.promptTemplateFactory = promptTemplateFactory;
         this.nameGenerator = nameGenerator;
     }
 
     public async Task<IAgent> GetOrCreateAsync(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyList<ToolSpecification> tools,
         IProject project,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
-        var fingerprint = GetAgentFingerprint(systemMessage, tools);
+        var fingerprint = GetAgentFingerprint(systemPrompt, tools);
 
         var existing = await contextFactory()
             .Set<AgentEntity>()
@@ -47,10 +50,11 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             return await mapper.Map(existing, cancellationToken);
         }
 
-        var name = await nameGenerator.GenerateNameAsync(systemMessage, endpoint, cancellationToken);
+        var name = await nameGenerator.GenerateNameAsync(systemPrompt, endpoint, cancellationToken);
+        systemPrompt = promptTemplateFactory(name, systemPrompt.Template);
         var agent = createNew(
             name,
-            systemMessage,
+            systemPrompt,
             tools,
             endpoint,
             project);
@@ -58,14 +62,11 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
     }
 
     public string GetAgentFingerprint(
-        SystemMessage systemMessage,
+        IPromptTemplate systemPrompt,
         IReadOnlyCollection<ToolSpecification> tools)
     {
         var sb = new StringBuilder();
-
-        foreach (var content in systemMessage.Contents)
-            sb.Append(content.Text ?? "");
-
+        sb.Append(systemPrompt.Template).Append('\0');
         sb.Append('\0');
 
         foreach (var tool in tools.OrderBy(t => t.Name, StringComparer.Ordinal))
@@ -80,5 +81,5 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
     }
 
     public string GetAgentFingerprint(IAgent agent)
-        => GetAgentFingerprint(agent.SystemMessage, agent.Tools);
+        => GetAgentFingerprint(agent.SystemPrompt, agent.Tools);
 }

@@ -2,6 +2,7 @@ using Autofac;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 using Trsr.Storage;
 using Trsr.Testing;
 
@@ -17,7 +18,7 @@ public sealed class Module : Autofac.Module
     private sealed class StubAgentNameGenerator : IAgentNameGenerator
     {
         public Task<string> GenerateNameAsync(
-            SystemMessage systemMessage,
+            IPromptTemplate systemPrompt,
             IModelEndpoint endpoint,
             CancellationToken cancellationToken = default)
             => Task.FromResult<string>("Test Agent");
