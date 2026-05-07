@@ -55,19 +55,9 @@ public interface IAgent : IDomainEntity
         IDomainEntityData existing);
     
     /// <summary>
-    /// Given a conversation history, complete the next message by calling the language model defined in the provided model endpoint.
+    /// Gets an chat client instance 
     /// </summary>
-    Task<ICompletion> CompleteAsync(
-        Conversation conversation,
-        IModelEndpoint? endpoint = null,
-        IReadOnlyDictionary<string, string>? variables = null,
-        CancellationToken cancellationToken = default);
-    
-    Task<TOutput?> CompleteAsync<TOutput>(
-        Conversation conversation,
-        IModelEndpoint? endpoint = null,
-        IReadOnlyDictionary<string, string>? variables = null,
-        CancellationToken cancellationToken = default);
+    IModelClient CreateClient(IModelEndpoint? customEndpoint = null);
     
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint, 

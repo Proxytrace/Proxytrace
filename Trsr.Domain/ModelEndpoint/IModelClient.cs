@@ -25,15 +25,19 @@ public record ModelOptions(
 
 public interface IModelClient
 {
-    public delegate IModelClient Factory(IModelEndpoint endpoint);
+    public delegate IModelClient Factory(
+        IAgent agent,
+        IModelEndpoint? customEndpoint = null);
 
     Task<ICompletion> CompleteAsync(
         Conversation conversation,
         ModelOptions? options = null,
+        IReadOnlyDictionary<string, string>? promptVariables = null,
         CancellationToken cancellationToken = default);
 
     Task<TOutput?> CompleteAsync<TOutput>(
         Conversation conversation,
         ModelOptions? options = null,
+        IReadOnlyDictionary<string, string>? promptVariables = null,
         CancellationToken cancellationToken = default);
 }

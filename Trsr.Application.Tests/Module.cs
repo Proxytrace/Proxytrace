@@ -5,7 +5,6 @@ using Trsr.Application.Ingestion.Internal;
 using Trsr.Application.TestRun;
 using Trsr.Application.TestRun.Internal;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
@@ -21,6 +20,7 @@ public class Module : Autofac.Module
         base.Load(builder);
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterModule<Trsr.Serialization.Module>();
 
         builder.RegisterStub<IModelClient>();
 

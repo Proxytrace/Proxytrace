@@ -1,4 +1,4 @@
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
@@ -6,18 +6,21 @@ namespace Trsr.Domain.Evaluator.Internal;
 // implementation is constructed directly rather than through the delegate.
 internal class HelpfulnessEvaluatorGenerator : EvaluatorGeneratorBase<IHelpfulnessEvaluator>
 {
-    private readonly IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator;
+    private readonly IDomainEntityGenerator<IProject> projectGenerator;
     private readonly IHelpfulnessEvaluator.CreateNew factory;
 
     public HelpfulnessEvaluatorGenerator(
-        IDomainEntityGenerator<IModelEndpoint> modelEndpointGenerator,
+        IDomainEntityGenerator<IProject> projectGenerator,
         IHelpfulnessEvaluator.CreateNew factory,
         IRepository<IEvaluator> repository) : base(repository)
     {
-        this.modelEndpointGenerator = modelEndpointGenerator;
+        this.projectGenerator = projectGenerator;
         this.factory = factory;
     }
 
     public override async Task<IHelpfulnessEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
-        => factory(await modelEndpointGenerator.GetOrCreateAsync(cancellationToken));
+    {
+        IProject project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        return factory(project);
+    }
 }

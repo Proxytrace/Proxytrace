@@ -39,9 +39,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .Select(g => new
             {
                 TotalCalls = g.Count(),
-                TotalInputTokens = (long)g.Sum(e => e.InputTokens),
-                TotalOutputTokens = (long)g.Sum(e => e.OutputTokens),
-                AvgLatencyMs = g.Average(e => (double)e.DurationMs),
+                TotalInputTokens = g.Sum(e => (long?)e.InputTokens),
+                TotalOutputTokens = g.Sum(e => (long?)e.OutputTokens),
+                AvgLatencyMs = g.Average(e => e.LatencyMs),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -71,8 +71,8 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .Select(g => new TokenUsageStat(
                 Date: g.Key.Date,
                 EndpointId: g.Key.EndpointId,
-                InputTokens: g.Sum(e => (long)e.InputTokens),
-                OutputTokens: g.Sum(e => (long)e.OutputTokens)))
+                InputTokens: g.Sum(e => (long?)e.InputTokens),
+                OutputTokens: g.Sum(e => (long?)e.OutputTokens)))
             .OrderBy(s => s.Date)
             .ThenBy(s => s.EndpointId)
             .ToArray();
@@ -88,7 +88,10 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .GroupBy(e => e.EndpointId)
             .Select(g =>
             {
-                var sorted = g.Select(e => (double)e.DurationMs).OrderBy(x => x).ToArray();
+                var sorted = g
+                    .Where(x => x.LatencyMs.HasValue)
+                    .Select(e => e.LatencyMs ?? 0)
+                    .OrderBy(x => x).ToArray();
                 return new LatencyStat(
                     EndpointId: g.Key,
                     P50Ms: Percentile(sorted, 0.50),
@@ -181,9 +184,9 @@ internal class StatisticsQueryService : IStatisticsQueryService
             {
                 EndpointId = g.Key,
                 CallCount = g.Count(),
-                TotalInputTokens = (long)g.Sum(e => e.InputTokens),
-                TotalOutputTokens = (long)g.Sum(e => e.OutputTokens),
-                AvgDurationMs = g.Average(e => (double)e.DurationMs),
+                TotalInputTokens = g.Sum(e => (long?)e.InputTokens),
+                TotalOutputTokens = g.Sum(e => (long?)e.OutputTokens),
+                AvgDurationMs = g.Average(e => e.LatencyMs),
             })
             .ToListAsync(cancellationToken);
 
@@ -217,10 +220,10 @@ internal class StatisticsQueryService : IStatisticsQueryService
             var endpoint = await endpoints.GetAsync(b.EndpointId, cancellationToken);
             var inputCost = endpoint.InputTokenCost.HasValue
                 ? b.TotalInputTokens / 1_000_000m * endpoint.InputTokenCost.Value
-                : (decimal?)null;
+                : null;
             var outputCost = endpoint.OutputTokenCost.HasValue
                 ? b.TotalOutputTokens / 1_000_000m * endpoint.OutputTokenCost.Value
-                : (decimal?)null;
+                : null;
 
             return new CostEstimateStat(
                 EndpointId: b.EndpointId,

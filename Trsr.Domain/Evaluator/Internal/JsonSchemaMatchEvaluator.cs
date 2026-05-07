@@ -5,6 +5,7 @@ using Json.Schema;
 using Trsr.Common.Validation;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Project;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
@@ -17,24 +18,30 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
     public EvaluatorKind Kind
         => EvaluatorKind.JsonSchemaMatch;
 
+    public IProject Project { get; }
+
     public string JsonSchema { get; }
 
     public JsonSchemaMatchEvaluator(
         string jsonSchema,
+        IProject project,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(repository)
     {
         JsonSchema = jsonSchema;
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 
     public JsonSchemaMatchEvaluator(
         string jsonSchema,
+        IProject project,
         IDomainEntityData existing,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(existing, repository)
     {
         JsonSchema = jsonSchema;
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 
@@ -81,6 +88,6 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
-        yield return Validation.NotNullOrWhiteSpace(JsonSchema, nameof(JsonSchema));
+        yield return Validation.NotNullOrWhiteSpace(JsonSchema);
     }
 }

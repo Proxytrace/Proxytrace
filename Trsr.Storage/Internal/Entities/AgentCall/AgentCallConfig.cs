@@ -6,6 +6,7 @@ using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
@@ -19,17 +20,20 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
     private readonly IAgentCall.CreateExisting factory;
     private readonly ISerializer serializer;
     private readonly IRepository<IAgent> agents;
+    private readonly ICompletion.Create completionFactory;
     private readonly IRepository<IModelEndpoint> endpoints;
 
     public AgentCallConfig(
         IAgentCall.CreateExisting factory,
         ISerializer serializer,
         IRepository<IAgent> agents,
+        ICompletion.Create completionFactory,
         IRepository<IModelEndpoint> endpoints)
     {
         this.factory = factory;
         this.serializer = serializer;
         this.agents = agents;
+        this.completionFactory = completionFactory;
         this.endpoints = endpoints;
     }
 
@@ -73,14 +77,18 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
     {
         IAgent agent = await agents.GetAsync(stored.AgentId, cancellationToken);
         IModelEndpoint endpoint = await endpoints.GetAsync(stored.EndpointId, cancellationToken);
-
+        var completion =
+            stored.Response is not null
+                ? completionFactory(
+                    stored.Response,
+                    usage: TokenUsage.Create(stored.InputTokens, stored.OutputTokens),
+                    latency: TimeSpan.FromMilliseconds(stored.LatencyMs ?? 0))
+                : null;
         return factory(
             agent: agent,
             endpoint: endpoint,
             request: stored.Request,
-            response: stored.Response,
-            usage: new TokenUsage((ulong)stored.InputTokens, (ulong)stored.OutputTokens),
-            duration: TimeSpan.FromMilliseconds(stored.DurationMs),
+            response: completion,
             httpStatus: (HttpStatusCode)stored.HttpStatus,
             finishReason: stored.FinishReason,
             errorMessage: stored.ErrorMessage,
@@ -95,10 +103,10 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             AgentId = domain.Agent.Id,
             EndpointId = domain.Endpoint.Id,
             Request = domain.Request,
-            Response = domain.Response,
-            InputTokens = (int)domain.Usage.InputTokenCount,
-            OutputTokens = (int)domain.Usage.OutputTokenCount,
-            DurationMs = (long)domain.Duration.TotalMilliseconds,
+            Response = domain.Response?.Response,
+            InputTokens = domain.Response?.Usage?.InputTokenCount,
+            OutputTokens = domain.Response?.Usage?.OutputTokenCount,
+            LatencyMs = domain.Response?.Latency.TotalMilliseconds,
             HttpStatus = (int)domain.HttpStatus,
             FinishReason = domain.FinishReason,
             ErrorMessage = domain.ErrorMessage,

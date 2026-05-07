@@ -1,42 +1,41 @@
 using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 
-namespace Trsr.Domain.Agent;
+namespace Trsr.Domain.ModelEndpoint;
 
 /// <summary>
-/// Extensions for <see cref="IAgent"/>
+/// Extensions for <see cref="IModelClient"/>
 /// </summary>
-public static class AgentExtensions
+public static class ModelClientExtensions
 {
     public static Task<ICompletion> CompleteAsync(
-        this IAgent agent,
+        this IModelClient client,
         UserMessage userMessage,
-        IModelEndpoint? endpoint = null,
+        ModelOptions? modelOptions = null,
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
         Conversation conversation = Conversation.Create();
         conversation.Add(userMessage);
-        return agent.CompleteAsync(
+        return client.CompleteAsync(
             conversation, 
-            endpoint, 
+            modelOptions,
             variables,
             cancellationToken);
     }
 
     public static Task<TOutput?> CompleteAsync<TOutput>(
-        this IAgent agent,
+        this IModelClient client,
         UserMessage userMessage,
-        IModelEndpoint? endpoint = null,
+        ModelOptions? modelOptions = null,
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
         Conversation conversation = Conversation.Create();
         conversation.Add(userMessage);
-        return agent.CompleteAsync<TOutput>(
+        return client.CompleteAsync<TOutput>(
             conversation, 
-            endpoint, 
+            modelOptions, 
             variables,
             cancellationToken);
     }

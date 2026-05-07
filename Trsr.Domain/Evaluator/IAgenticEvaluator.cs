@@ -1,10 +1,7 @@
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Evaluator;
 
-public interface IAgenticEvaluator : IEvaluator
-{
-    SystemMessage SystemMessage { get; }
-    IModelEndpoint Endpoint { get; }
-}
+public interface IAgenticEvaluator : IEvaluator;

@@ -43,11 +43,6 @@ public interface IModelEndpoint : IDomainEntity
         decimal? inputTokenCost,
         decimal? outputTokenCost, 
         IDomainEntityData existing);
-    
-    /// <summary>
-    /// Gets an chat client instance 
-    /// </summary>
-    IModelClient CreateClient();
 
     /// <summary>
     /// Calculates cost associated with this endpoint for a given usage

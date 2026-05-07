@@ -21,6 +21,7 @@ public class TestSuitesController : ControllerBase
     private readonly ITestCaseRepository testCaseRepository;
     private readonly IEvaluatorRepository evaluatorRepository;
     private readonly ITestCase.CreateNew createTestCase;
+    private readonly ITestCase.CreateNewFromCall createTestCaseFromCall;
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
@@ -32,6 +33,7 @@ public class TestSuitesController : ControllerBase
         ITestCaseRepository testCaseRepository,
         IEvaluatorRepository evaluatorRepository,
         ITestCase.CreateNew createTestCase,
+        ITestCase.CreateNewFromCall createTestCaseFromCall,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting)
@@ -42,6 +44,7 @@ public class TestSuitesController : ControllerBase
         this.testCaseRepository = testCaseRepository;
         this.evaluatorRepository = evaluatorRepository;
         this.createTestCase = createTestCase;
+        this.createTestCaseFromCall = createTestCaseFromCall;
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
@@ -155,7 +158,7 @@ public class TestSuitesController : ControllerBase
 
         if (request.AgentCallIds.Count == 0)
             return BadRequest("At least one agent call ID must be provided.");
-
+        
         var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
         var evaluator = createEvaluator();
         var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
@@ -167,11 +170,12 @@ public class TestSuitesController : ControllerBase
                 return BadRequest($"Agent call {callId} not found.");
 
             var call = await agentCallRepository.GetAsync(callId, cancellationToken);
-            var nonSystemMessages = call.Request.Messages
-                .Where(m => m is not SystemMessage)
-                .ToList();
-            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
-            var testCase = createTestCase(input, call.Response);
+            if (call.Response is null)
+            {
+                throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
+            }
+            
+            var testCase = createTestCaseFromCall(call);
             var saved = await testCaseRepository.AddAsync(testCase, cancellationToken);
             testCases.Add(saved);
         }
@@ -226,11 +230,7 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            var nonSystemMessages = call.Request.Messages
-                .Where(m => m is not SystemMessage)
-                .ToList();
-            var input = new Conversation(Guid.NewGuid(), nonSystemMessages);
-            return createTestCase(input, call.Response);
+            return createTestCaseFromCall(call);
         }
 
         if (inputMessages is not null && expectedOutput is not null)

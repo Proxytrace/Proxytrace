@@ -5,6 +5,8 @@ using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Storage.Internal.Entities.Evaluator;
 
@@ -18,7 +20,8 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     private readonly IToolUsageEvaluator.CreateExisting createToolUsage;
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatch;
     private readonly INumericMatchEvaluator.CreateExisting createNumericMatch;
-    private readonly IRepository<IModelEndpoint> modelEndpoints;
+    private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IRepository<IProject> projects;
     private readonly ISerializer serializer;
 
     public EvaluatorConfig(
@@ -30,7 +33,9 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         IToolUsageEvaluator.CreateExisting createToolUsage,
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatch,
         INumericMatchEvaluator.CreateExisting createNumericMatch,
+        IPromptTemplate.Create promptTemplateFactory,
         IRepository<IModelEndpoint> modelEndpoints,
+        IRepository<IProject> projects,
         ISerializer serializer)
     {
         this.createExactMatch = createExactMatch;
@@ -41,7 +46,8 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         this.createToolUsage = createToolUsage;
         this.createJsonSchemaMatch = createJsonSchemaMatch;
         this.createNumericMatch = createNumericMatch;
-        this.modelEndpoints = modelEndpoints;
+        this.promptTemplateFactory = promptTemplateFactory;
+        this.projects = projects;
         this.serializer = serializer;
     }
 
@@ -51,46 +57,39 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     }
 
     public async Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)
-        => stored.Kind switch
+    {
+        IProject project = await projects.GetAsync(stored.Project, cancellationToken);
+        return stored.Kind switch
         {
-            EvaluatorKind.ExactMatch => createExactMatch(stored),
-            EvaluatorKind.Custom => await MapCustom(stored, cancellationToken),
-            EvaluatorKind.Helpfulness => await MapAgentic(stored, (ep, ex) => createHelpfulness(ep, ex), cancellationToken),
-            EvaluatorKind.Politeness => await MapAgentic(stored, (ep, ex) => createPoliteness(ep, ex), cancellationToken),
-            EvaluatorKind.Safety => await MapAgentic(stored, (ep, ex) => createSafety(ep, ex), cancellationToken),
-            EvaluatorKind.ToolUsage => await MapAgentic(stored, (ep, ex) => createToolUsage(ep, ex), cancellationToken),
-            EvaluatorKind.JsonSchemaMatch => MapJsonSchemaMatch(stored),
-            EvaluatorKind.NumericMatch => MapNumericMatch(stored),
+            EvaluatorKind.ExactMatch => createExactMatch(project, stored),
+            EvaluatorKind.Custom => MapCustom(stored, project),
+            EvaluatorKind.Helpfulness => createHelpfulness(project, stored),
+            EvaluatorKind.Politeness => createPoliteness(project, stored),
+            EvaluatorKind.Safety => createSafety(project, stored),
+            EvaluatorKind.ToolUsage => createToolUsage(project, stored),
+            EvaluatorKind.JsonSchemaMatch => MapJsonSchemaMatch(stored, project),
+            EvaluatorKind.NumericMatch => MapNumericMatch(stored, project),
             _ => throw new InvalidOperationException($"Unknown evaluator kind: {stored.Kind}")
         };
-
-    private async Task<IEvaluator> MapAgentic(
-        EvaluatorEntity stored,
-        Func<IModelEndpoint, IDomainEntityData, IEvaluator> create,
-        CancellationToken cancellationToken)
-    {
-        var data = serializer.DeserializeRequired<AgenticEvaluatorData>(stored.Data);
-        var endpoint = await modelEndpoints.GetAsync(data.EndpointId, cancellationToken);
-        return create(endpoint, stored);
     }
-
-    private async Task<ICustomEvaluator> MapCustom(EvaluatorEntity stored, CancellationToken cancellationToken)
+    
+    private ICustomEvaluator MapCustom(EvaluatorEntity stored, IProject project)
     {
         var data = serializer.DeserializeRequired<CustomEvaluatorData>(stored.Data);
-        var endpoint = await modelEndpoints.GetAsync(data.EndpointId, cancellationToken);
-        return createCustom(data.Name, data.SystemMessage, endpoint, stored);
+        var promptTemplate = promptTemplateFactory(data.Name, data.SystemPrompt);
+        return createCustom(promptTemplate, project, stored);
     }
 
-    private IJsonSchemaMatchEvaluator MapJsonSchemaMatch(EvaluatorEntity stored)
+    private IJsonSchemaMatchEvaluator MapJsonSchemaMatch(EvaluatorEntity stored, IProject project)
     {
         var data = serializer.DeserializeRequired<JsonSchemaMatchEvaluatorData>(stored.Data);
-        return createJsonSchemaMatch(data.JsonSchema, stored);
+        return createJsonSchemaMatch(data.JsonSchema, project, stored);
     }
 
-    private INumericMatchEvaluator MapNumericMatch(EvaluatorEntity stored)
+    private INumericMatchEvaluator MapNumericMatch(EvaluatorEntity stored, IProject project)
     {
         var data = serializer.DeserializeRequired<NumericMatchEvaluatorData>(stored.Data);
-        return createNumericMatch(new Regex(data.ExtractionPattern), data.Tolerance, stored);
+        return createNumericMatch(new Regex(data.ExtractionPattern), data.Tolerance, project, stored);
     }
 
     public Task<EvaluatorEntity> Map(IEvaluator domain, CancellationToken cancellationToken = default)
@@ -98,9 +97,9 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         string data = domain switch
         {
             ICustomEvaluator agentic =>
-                serializer.Serialize(new CustomEvaluatorData(agentic.Name, agentic.SystemMessage, agentic.Endpoint.Id)),
-            IAgenticEvaluator agentic =>
-                serializer.Serialize(new AgenticEvaluatorData(agentic.Endpoint.Id)),
+                serializer.Serialize(new CustomEvaluatorData(agentic.SystemPrompt.Name, agentic.SystemPrompt.Template)),
+            IAgenticEvaluator =>
+                serializer.Serialize(new AgenticEvaluatorData()),
             IExactMatchEvaluator =>
                 serializer.Serialize(new ExactMatchEvaluatorData()),
             IJsonSchemaMatchEvaluator jsonSchema =>
@@ -115,6 +114,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
             Id = domain.Id,
             Kind = domain.Kind,
             Data = data,
+            Project = domain.Project.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Project;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
@@ -16,29 +17,35 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
     public EvaluatorKind Kind
         => EvaluatorKind.NumericMatch;
 
+    public IProject Project { get; }
+
     public Regex ExtractionPattern { get; }
     public decimal Tolerance { get; }
 
     public NumericMatchEvaluator(
         Regex extractionPattern,
         decimal tolerance,
+        IProject project,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(repository)
     {
         ExtractionPattern = extractionPattern;
         Tolerance = tolerance;
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 
     public NumericMatchEvaluator(
         Regex extractionPattern,
         decimal tolerance,
+        IProject project,
         IDomainEntityData existing,
         IEvaluation.Create evaluationFactory,
         IRepository<IEvaluator> repository) : base(existing, repository)
     {
         ExtractionPattern = extractionPattern;
         Tolerance = tolerance;
+        Project = project;
         this.evaluationFactory = evaluationFactory;
     }
 
@@ -89,7 +96,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
-        yield return Validation.NotNull(ExtractionPattern, nameof(ExtractionPattern));
-        yield return Validation.NotDefault(Tolerance, nameof(Tolerance));
+        yield return Validation.NotNull(ExtractionPattern);
+        yield return Validation.NotDefault(Tolerance);
     }
 }

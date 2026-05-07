@@ -1,16 +1,24 @@
+using Trsr.Domain.Project;
+
 namespace Trsr.Domain.Evaluator.Internal;
 
 internal class ExactMatchEvaluatorGenerator : EvaluatorGeneratorBase<IExactMatchEvaluator>
 {
     private readonly IExactMatchEvaluator.CreateNew factory;
+    private readonly IDomainEntityGenerator<IProject> projectGenerator;
 
     public ExactMatchEvaluatorGenerator(
         IExactMatchEvaluator.CreateNew factory,
+        IDomainEntityGenerator<IProject> projectGenerator,
         IRepository<IEvaluator> repository) : base(repository)
     {
         this.factory = factory;
+        this.projectGenerator = projectGenerator;
     }
 
-    public override Task<IExactMatchEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(factory());
+    public override async Task<IExactMatchEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
+    {
+        IProject project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        return factory(project);
+    }
 }

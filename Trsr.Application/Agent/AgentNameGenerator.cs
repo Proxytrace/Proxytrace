@@ -35,9 +35,11 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
         try
         {
             var agent = await GetGeneratorAgent(project, cancellationToken);
-            var result = await agent.CompleteAsync(
-                Message.CreateUserMessage(promptTemplate.Template),
-                cancellationToken: cancellationToken);
+            var result = await agent
+                .CreateClient()
+                .CompleteAsync(
+                    Message.CreateUserMessage(promptTemplate.Template),
+                    cancellationToken: cancellationToken);
             return result.Response.GetTextResponse();
         }
         catch (Exception ex)
@@ -47,7 +49,7 @@ internal sealed class AgentNameGenerator : IAgentNameGenerator
         }
     }
 
-    private async Task<IAgent> GetGeneratorAgent(IProject project, CancellationToken cancellationToken) 
+    private async Task<IAgent> GetGeneratorAgent(IProject project, CancellationToken cancellationToken)
         => await agentRepository.GetOrCreateAsync(
             name: PromptName,
             systemPrompt: await prompts.GetAsync(PromptName, cancellationToken),

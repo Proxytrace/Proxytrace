@@ -1,20 +1,19 @@
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Evaluator;
 
 public interface ICustomEvaluator : IAgenticEvaluator
 {
     string Name { get; }
+    IPromptTemplate SystemPrompt { get; }
 
     public delegate ICustomEvaluator CreateNew(
-        string name,
-        SystemMessage systemMessage,
-        IModelEndpoint endpoint);
+        IPromptTemplate systemPrompt,
+        IProject project);
 
     public delegate ICustomEvaluator CreateExisting(
-        string name,
-        SystemMessage systemMessage,
-        IModelEndpoint endpoint,
+        IPromptTemplate systemPrompt,
+        IProject project,
         IDomainEntityData existing);
 }

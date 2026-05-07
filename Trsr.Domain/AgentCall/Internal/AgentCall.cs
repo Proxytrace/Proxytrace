@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -13,7 +14,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public IAgent Agent { get; }
     public IModelEndpoint Endpoint { get; }
     public Conversation Request { get; }
-    public AssistantMessage Response { get; }
+    public ICompletion Response { get; }
     public TokenUsage Usage { get; }
     public TimeSpan Duration { get; }
     public HttpStatusCode HttpStatus { get; }
@@ -25,7 +26,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        AssistantMessage response,
+        ICompletion response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,
@@ -50,7 +51,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        AssistantMessage response,
+        ICompletion response,
         TokenUsage usage,
         TimeSpan duration,
         HttpStatusCode httpStatus,

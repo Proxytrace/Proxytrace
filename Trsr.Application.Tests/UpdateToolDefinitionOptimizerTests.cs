@@ -1,11 +1,10 @@
 using AwesomeAssertions;
-using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Trsr.Application.Optimization.Internal;
-using Trsr.Domain;
+using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
@@ -13,18 +12,20 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
-using Trsr.Domain.Proposal;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestResult;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Tools;
+using Trsr.Serialization;
+using Trsr.Testing;
+using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Application.Tests;
 
 [TestClass]
-public sealed class UpdateToolDefinitionOptimizerTests
+public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 {
     private const string OnlyToolName = "search";
 
@@ -34,7 +35,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
             {
               "name": "{{OnlyToolName}}",
               "description": "Refined search description.",
-              "parameters": {
+              "arguments": {
                 "type": "object",
                 "properties": {
                   "query": { "type": "string", "description": "the new query" }
@@ -50,7 +51,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_AgentHasNoTools_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse, includeTool: false);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse, includeTool: false);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -60,7 +61,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -68,7 +69,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: Guid.NewGuid(),
             failed: 1,
@@ -78,7 +79,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -86,7 +87,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_ZeroFailures_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 0,
@@ -96,7 +97,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -104,7 +105,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_HappyPath_ProducesToolProposal()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -114,7 +115,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().HaveCount(1);
         IOptimizationProposal proposal = proposals[0];
@@ -137,13 +138,13 @@ public sealed class UpdateToolDefinitionOptimizerTests
                 {
                   "name": "different_name",
                   "description": "...",
-                  "parameters": { "type": "object", "properties": {} }
+                  "arguments": { "type": "object", "properties": {} }
                 }
               ],
               "rationale": "..."
             }
             """;
-        OptimizerFixture fixture = OptimizerFixture.Build(renamedJson);
+        OptimizerFixture fixture = BuildFixture(renamedJson);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -153,7 +154,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -164,7 +165,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         const string wrongCountJson = """
             { "tools": [], "rationale": "..." }
             """;
-        OptimizerFixture fixture = OptimizerFixture.Build(wrongCountJson);
+        OptimizerFixture fixture = BuildFixture(wrongCountJson);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -174,7 +175,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -182,7 +183,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_MalformedJsonResponse_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(cannedResponse: "this is not JSON");
+        OptimizerFixture fixture = BuildFixture(cannedResponse: "this is not JSON");
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -192,16 +193,21 @@ public sealed class UpdateToolDefinitionOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
+    }
+
+    private OptimizerFixture BuildFixture(string cannedResponse, bool includeTool = true)
+    {
+        IServiceProvider services = GetServices();
+        return OptimizerFixture.Build(services, cannedResponse, includeTool);
     }
 
     private sealed class OptimizerFixture
     {
         public required UpdateToolDefinitionOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
-        public required IAgent Agent { get; init; }
         public required Guid AgentEndpointId { get; init; }
 
         public ITestRun CreateRun(
@@ -217,6 +223,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
             run.Id.Returns(Guid.NewGuid());
             run.Endpoint.Returns(endpoint);
             run.TestResults.Returns(results);
+            run.Group.Returns(Group);
             run.Statistics.Returns(new TestRunStatistics(
                 TestCases: total,
                 Passed: total - failed,
@@ -256,8 +263,11 @@ public sealed class UpdateToolDefinitionOptimizerTests
             return result;
         }
 
-        public static OptimizerFixture Build(string cannedResponse, bool includeTool = true)
+        public static OptimizerFixture Build(IServiceProvider services, string cannedResponse, bool includeTool = true)
         {
+            var proposalFactory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+            var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
+
             var agentEndpointId = Guid.NewGuid();
             var systemEndpoint = Substitute.For<IModelEndpoint>();
             systemEndpoint.Id.Returns(Guid.NewGuid());
@@ -294,16 +304,7 @@ public sealed class UpdateToolDefinitionOptimizerTests
             group.Id.Returns(Guid.NewGuid());
             group.Suite.Returns(suite);
 
-            var systemAgent = Substitute.For<IAgent>();
-            var assistant = new AssistantMessage([Content.FromText(cannedResponse)], []);
-            var completion = Substitute.For<ICompletion>();
-            completion.Response.Returns(assistant);
-            systemAgent.CompleteAsync(
-                    Arg.Any<Conversation>(),
-                    Arg.Any<IModelEndpoint?>(),
-                    Arg.Any<IReadOnlyDictionary<string, string>?>(),
-                    Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(completion));
+            var systemAgent = new CannedJsonAgent(cannedResponse, outputFormatFactory);
 
             var prompts = Substitute.For<IPromptTemplateRepository>();
             prompts.GetAsync(UpdateToolDefinitionOptimizer.PromptName, Arg.Any<CancellationToken>())
@@ -318,30 +319,19 @@ public sealed class UpdateToolDefinitionOptimizerTests
                     Arg.Any<string?>(),
                     Arg.Any<bool>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(systemAgent));
-
-            IOptimizationProposal.CreateNew factory = (a, p, r, d, e) =>
-            {
-                var proposal = Substitute.For<IOptimizationProposal>();
-                proposal.Agent.Returns(a);
-                proposal.Priority.Returns(p);
-                proposal.Rationale.Returns(r);
-                proposal.Details.Returns(d);
-                proposal.EvidenceTestRunIds.Returns(e);
-                return proposal;
-            };
+                .Returns(Task.FromResult<IAgent>(systemAgent));
 
             var optimizer = new UpdateToolDefinitionOptimizer(
-                factory,
+                proposalFactory,
                 prompts,
                 agents,
+                new OptimizerEvidenceBuilder(),
                 NullLogger<UpdateToolDefinitionOptimizer>.Instance);
 
             return new OptimizerFixture
             {
                 Optimizer = optimizer,
                 Group = group,
-                Agent = agent,
                 AgentEndpointId = agentEndpointId,
             };
         }

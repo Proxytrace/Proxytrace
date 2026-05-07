@@ -1,3 +1,5 @@
+using Trsr.Domain.Project;
+
 namespace Trsr.Domain.Evaluator;
 
 /// <summary>
@@ -8,9 +10,11 @@ public interface IJsonSchemaMatchEvaluator : IEvaluator
     string JsonSchema { get; }
     
     public delegate IJsonSchemaMatchEvaluator CreateNew(
-        string jsonSchema);
+        string jsonSchema,
+        IProject project);
     
     public delegate IJsonSchemaMatchEvaluator CreateExisting(
         string jsonSchema,
+        IProject project,
         IDomainEntityData existing);
 }

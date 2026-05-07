@@ -194,9 +194,9 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     {
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        ICompletion completion = await testRun.Group.Suite.Agent.CompleteAsync(
+        IModelClient client = testRun.Group.Suite.Agent.CreateClient(customEndpoint: testRun.Endpoint);
+        ICompletion completion = await client.CompleteAsync(
             testCase.Input,
-            testRun.Endpoint,
             cancellationToken: cancellationToken);
 
         broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));

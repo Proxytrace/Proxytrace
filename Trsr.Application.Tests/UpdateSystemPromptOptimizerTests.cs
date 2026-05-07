@@ -1,11 +1,9 @@
 using AwesomeAssertions;
-using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Trsr.Application.Optimization.Internal;
-using Trsr.Domain;
+using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
@@ -20,15 +18,18 @@ using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
 using Trsr.Domain.Tools;
+using Trsr.Serialization;
+using Trsr.Testing;
+using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Application.Tests;
 
 [TestClass]
-public sealed class UpdateSystemPromptOptimizerTests
+public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 {
     private const string ValidJsonResponse = """
         {
-          "proposed_system_prompt": "You are an even better assistant.",
+          "proposedSystemPrompt": "You are an even better assistant.",
           "rationale": "Failing cases lacked structured guidance."
         }
         """;
@@ -36,7 +37,7 @@ public sealed class UpdateSystemPromptOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun runForOtherEndpoint = fixture.CreateRun(
             endpointId: Guid.NewGuid(),
             failed: 1,
@@ -46,7 +47,7 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [runForOtherEndpoint],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -54,7 +55,7 @@ public sealed class UpdateSystemPromptOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_ZeroFailures_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 0,
@@ -64,7 +65,7 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -72,7 +73,7 @@ public sealed class UpdateSystemPromptOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_HappyPath_ProducesSystemPromptProposal()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -82,12 +83,12 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().HaveCount(1);
         IOptimizationProposal proposal = proposals[0];
         proposal.Details.Should().BeOfType<SystemPromptDetails>();
-        ((SystemPromptDetails)proposal.Details).ProposedSystemMessage.ToString()
+        ((SystemPromptDetails)proposal.Details).ProposedSystemMessage
             .Should().Be("You are an even better assistant.");
         proposal.Rationale.Should().Contain("Failing cases lacked structured guidance.");
         proposal.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(run.Id);
@@ -100,7 +101,7 @@ public sealed class UpdateSystemPromptOptimizerTests
     [DataRow(12, 20, Priority.Critical)] // 60%
     public async Task DiscoverOptimizations_PriorityBuckets(int failed, int total, Priority expected)
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(ValidJsonResponse);
+        OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: failed,
@@ -110,7 +111,7 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().ContainSingle()
             .Which.Priority.Should().Be(expected);
@@ -119,7 +120,7 @@ public sealed class UpdateSystemPromptOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_MalformedJsonResponse_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(cannedResponse: "this is not JSON");
+        OptimizerFixture fixture = BuildFixture(cannedResponse: "this is not JSON");
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -129,7 +130,7 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
     }
@@ -137,8 +138,8 @@ public sealed class UpdateSystemPromptOptimizerTests
     [TestMethod]
     public async Task DiscoverOptimizations_EmptyProposedPrompt_ReturnsEmpty()
     {
-        OptimizerFixture fixture = OptimizerFixture.Build(
-            """{ "proposed_system_prompt": "", "rationale": "blank" }""");
+        OptimizerFixture fixture = BuildFixture(
+            """{ "proposedSystemPrompt": "", "rationale": "blank" }""");
         ITestRun run = fixture.CreateRun(
             endpointId: fixture.AgentEndpointId,
             failed: 1,
@@ -148,16 +149,21 @@ public sealed class UpdateSystemPromptOptimizerTests
         var proposals = await fixture.Optimizer.DiscoverOptimizations(
             fixture.Group,
             [run],
-            CancellationToken.None);
+            CancellationToken);
 
         proposals.Should().BeEmpty();
+    }
+
+    private OptimizerFixture BuildFixture(string cannedResponse)
+    {
+        IServiceProvider services = GetServices();
+        return OptimizerFixture.Build(services, cannedResponse);
     }
 
     private sealed class OptimizerFixture
     {
         public required UpdateSystemPromptOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
-        public required IAgent Agent { get; init; }
         public required Guid AgentEndpointId { get; init; }
 
         public ITestRun CreateRun(
@@ -173,6 +179,7 @@ public sealed class UpdateSystemPromptOptimizerTests
             run.Id.Returns(Guid.NewGuid());
             run.Endpoint.Returns(endpoint);
             run.TestResults.Returns(results);
+            run.Group.Returns(Group);
             run.Statistics.Returns(new TestRunStatistics(
                 TestCases: total,
                 Passed: total - failed,
@@ -212,8 +219,11 @@ public sealed class UpdateSystemPromptOptimizerTests
             return result;
         }
 
-        public static OptimizerFixture Build(string cannedResponse)
+        public static OptimizerFixture Build(IServiceProvider services, string cannedResponse)
         {
+            var proposalFactory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+            var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
+
             var agentEndpointId = Guid.NewGuid();
             var systemEndpoint = Substitute.For<IModelEndpoint>();
             systemEndpoint.Id.Returns(Guid.NewGuid());
@@ -243,16 +253,7 @@ public sealed class UpdateSystemPromptOptimizerTests
             group.Id.Returns(Guid.NewGuid());
             group.Suite.Returns(suite);
 
-            var systemAgent = Substitute.For<IAgent>();
-            var assistant = new AssistantMessage([Content.FromText(cannedResponse)], []);
-            var completion = Substitute.For<ICompletion>();
-            completion.Response.Returns(assistant);
-            systemAgent.CompleteAsync(
-                    Arg.Any<Conversation>(),
-                    Arg.Any<IModelEndpoint?>(),
-                    Arg.Any<IReadOnlyDictionary<string, string>?>(),
-                    Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(completion));
+            var systemAgent = new CannedJsonAgent(cannedResponse, outputFormatFactory);
 
             var prompts = Substitute.For<IPromptTemplateRepository>();
             prompts.GetAsync(UpdateSystemPromptOptimizer.PromptName, Arg.Any<CancellationToken>())
@@ -267,29 +268,18 @@ public sealed class UpdateSystemPromptOptimizerTests
                     Arg.Any<string?>(),
                     Arg.Any<bool>(),
                     Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(systemAgent));
-
-            IOptimizationProposal.CreateNew factory = (a, p, r, d, e) =>
-            {
-                var proposal = Substitute.For<IOptimizationProposal>();
-                proposal.Agent.Returns(a);
-                proposal.Priority.Returns(p);
-                proposal.Rationale.Returns(r);
-                proposal.Details.Returns(d);
-                proposal.EvidenceTestRunIds.Returns(e);
-                return proposal;
-            };
+                .Returns(Task.FromResult<IAgent>(systemAgent));
 
             var optimizer = new UpdateSystemPromptOptimizer(
-                factory,
+                proposalFactory,
                 prompts,
-                agents);
+                agents,
+                new OptimizerEvidenceBuilder());
 
             return new OptimizerFixture
             {
                 Optimizer = optimizer,
                 Group = group,
-                Agent = agent,
                 AgentEndpointId = agentEndpointId,
             };
         }

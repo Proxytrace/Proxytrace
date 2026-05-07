@@ -1,4 +1,5 @@
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Evaluator;
@@ -9,9 +10,9 @@ namespace Trsr.Domain.Evaluator;
 public interface IToolUsageEvaluator : IAgenticEvaluator
 {
     public delegate IToolUsageEvaluator CreateNew(
-        IModelEndpoint endpoint);
+        IProject project);
     
     public delegate IToolUsageEvaluator CreateExisting(
-        IModelEndpoint endpoint,
+        IProject project,
         IDomainEntityData existing);
 }

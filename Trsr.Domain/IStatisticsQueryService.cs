@@ -55,8 +55,8 @@ public record StatisticsSummary(
 public record TokenUsageStat(
     DateOnly Date,
     Guid EndpointId,
-    long InputTokens,
-    long OutputTokens);
+    long? InputTokens,
+    long? OutputTokens);
 
 public record LatencyStat(
     Guid EndpointId,
@@ -84,9 +84,9 @@ public record ModelBreakdownStat(
     Guid EndpointId,
     string ModelName,
     int CallCount,
-    long TotalInputTokens,
-    long TotalOutputTokens,
-    double AvgDurationMs);
+    long? TotalInputTokens,
+    long? TotalOutputTokens,
+    double? AvgDurationMs);
 
 public record CostEstimateStat(
     Guid EndpointId,

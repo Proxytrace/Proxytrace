@@ -1,4 +1,5 @@
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator;
 
@@ -8,9 +9,9 @@ namespace Trsr.Domain.Evaluator;
 public interface ISafetyClassifier : IAgenticEvaluator
 {
     public delegate ISafetyClassifier CreateNew(
-        IModelEndpoint endpoint);
+        IProject project);
     
     public delegate ISafetyClassifier CreateExisting(
-        IModelEndpoint endpoint,
+        IProject project,
         IDomainEntityData existing);
 }

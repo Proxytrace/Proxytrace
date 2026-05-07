@@ -1,18 +1,25 @@
 using System.Text.RegularExpressions;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
 internal class NumericMatchEvaluatorGenerator : EvaluatorGeneratorBase<INumericMatchEvaluator>
 {
     private readonly INumericMatchEvaluator.CreateNew factory;
+    private readonly IDomainEntityGenerator<IProject> projectGenerator;
 
     public NumericMatchEvaluatorGenerator(
         INumericMatchEvaluator.CreateNew factory,
+        IDomainEntityGenerator<IProject> projectGenerator,
         IRepository<IEvaluator> repository) : base(repository)
     {
         this.factory = factory;
+        this.projectGenerator = projectGenerator;
     }
 
-    public override Task<INumericMatchEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
-        => Task.FromResult(factory(new Regex(@"\d+(?:\.\d+)?"), 0.01m));
+    public override async Task<INumericMatchEvaluator> GenerateAsync(CancellationToken cancellationToken = default)
+    {
+        IProject project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        return factory(new Regex(@"\d+(?:\.\d+)?"), 0.01m, project);
+    }
 }

@@ -1,34 +1,27 @@
 using JetBrains.Annotations;
+using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
 [UsedImplicitly]
-internal record SafetyClassifier : AbstractAgenticEvaluator, ISafetyClassifier
+internal record SafetyClassifier : PresetAgenticEvaluator, ISafetyClassifier
 {
+    protected override string PromptName 
+        => "safety_evaluator";
+    
     public override EvaluatorKind Kind
-        => EvaluatorKind.Safety;
-    public override SystemMessage SystemMessage { get; }
-    public override IModelEndpoint Endpoint { get; }
-
-    public SafetyClassifier(
-        IModelEndpoint endpoint,
-        IEvaluation.Create evaluationFactory,
-        IRepository<IEvaluator> repository) : base(evaluationFactory, repository)
+        =>  EvaluatorKind.Safety;
+    
+    public SafetyClassifier(IProject project, IPromptTemplateRepository promptTemplateRepository, IEvaluation.Create evaluationFactory, IAgentRepository agentRepository, IRepository<IEvaluator> repository) : base(project, promptTemplateRepository, evaluationFactory, agentRepository, repository)
     {
-        Endpoint = endpoint;
-        SystemMessage = Message.Message.CreateSystemMessage(Prompts.SafetyClassifier);
     }
 
-    public SafetyClassifier(
-        IModelEndpoint endpoint,
-        IDomainEntityData existing,
-        IEvaluation.Create evaluationFactory,
-        IRepository<IEvaluator> repository) : base(evaluationFactory, existing, repository)
+    public SafetyClassifier(IProject project, IPromptTemplateRepository promptTemplateRepository, IEvaluation.Create evaluationFactory, IAgentRepository agentRepository, IDomainEntityData existing, IRepository<IEvaluator> repository) : base(project, promptTemplateRepository, evaluationFactory, agentRepository, existing, repository)
     {
-        Endpoint = endpoint;
-        SystemMessage = Message.Message.CreateSystemMessage(Prompts.SafetyClassifier);
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Proposal;
@@ -64,9 +65,11 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             cancellationToken: cancellationToken);
 
         OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
-        ToolOptimizerOutput? completion = await systemAgent.CompleteAsync<ToolOptimizerOutput>(
-            Message.CreateUserMessage(evidence.ToJson()),
-            cancellationToken: cancellationToken);
+        ToolOptimizerOutput? completion = await systemAgent
+            .CreateClient()
+            .CompleteAsync<ToolOptimizerOutput>(
+                Message.CreateUserMessage(evidence.ToJson()),
+                cancellationToken: cancellationToken);
 
         if (completion == null)
         {

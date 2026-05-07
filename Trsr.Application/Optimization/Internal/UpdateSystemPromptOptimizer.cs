@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Proposal;
@@ -40,7 +41,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
     {
         var agent = testRunGroup.Suite.Agent;
         var currentRun = testRuns.FirstOrDefault(r => r.Endpoint.Id == agent.Endpoint.Id);
-        
+
         if (currentRun is null || currentRun.Statistics.Failed == 0)
         {
             return [];
@@ -58,9 +59,11 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
 
         OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
 
-        SystemPromptOptimizerOutput? output = await systemAgent.CompleteAsync<SystemPromptOptimizerOutput>(
-            Message.CreateUserMessage(evidence.ToJson()),
-            cancellationToken: cancellationToken);
+        SystemPromptOptimizerOutput? output = await systemAgent
+            .CreateClient()
+            .CompleteAsync<SystemPromptOptimizerOutput>(
+                Message.CreateUserMessage(evidence.ToJson()),
+                cancellationToken: cancellationToken);
 
         if (output is null)
         {

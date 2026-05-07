@@ -9,6 +9,8 @@ internal record EvaluatorEntity : Entity
     /// <see cref="IEvaluator.Kind"/> — discriminator for deserialization
     /// </summary>
     public required EvaluatorKind Kind { get; init; }
+    
+    public required Guid Project { get; init; }
 
     /// <summary>
     /// Kind-specific JSON payload. Shape is determined by <see cref="Kind"/>.
