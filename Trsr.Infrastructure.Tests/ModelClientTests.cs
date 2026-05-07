@@ -5,6 +5,9 @@ using AwesomeAssertions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Trsr.Domain;
+using Trsr.Domain.Agent;
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
@@ -29,6 +32,11 @@ public sealed class ModelClientTests : BaseTest<Module>
 
         IOutputFormat DefaultFactory(Type _) => Substitute.For<IOutputFormat>();
         builder.RegisterInstance((IOutputFormat.Create)DefaultFactory);
+
+        var agentCallRepo = Substitute.For<IRepository<IAgentCall>>();
+        agentCallRepo.AddAsync(Arg.Any<IAgentCall>(), Arg.Any<CancellationToken>())
+            .Returns(call => Task.FromResult(call.Arg<IAgentCall>()));
+        builder.RegisterInstance(agentCallRepo).As<IRepository<IAgentCall>>();
     }
 
     // ── registration helpers ──────────────────────────────────────────────────
@@ -39,8 +47,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         ModelProviderKind kind = ModelProviderKind.OpenAi,
         string apiKey = "sk-test",
         string endpointUrl = "https://api.openai.com/v1")
-        => builder.RegisterInstance(MakeEndpoint(modelName, kind, apiKey, endpointUrl))
-            .As<IModelEndpoint>();
+    {
+        var endpoint = MakeEndpoint(modelName, kind, apiKey, endpointUrl);
+        builder.RegisterInstance(endpoint).As<IModelEndpoint>();
+        builder.RegisterInstance(MakeAgent(endpoint)).As<IAgent>();
+    }
 
     private static void RegisterChatClient(ContainerBuilder builder, ChatResponse response)
         => builder.RegisterInstance(MakeChatClient(response)).As<IChatClient>();
@@ -66,6 +77,16 @@ public sealed class ModelClientTests : BaseTest<Module>
         ep.Provider.Returns(provider);
 
         return ep;
+    }
+
+    private static IAgent MakeAgent(IModelEndpoint endpoint)
+    {
+        IAgent agent = Substitute.For<IAgent>();
+        agent.Endpoint.Returns(endpoint);
+        agent.Tools.Returns([]);
+        agent.CreateSystemMessage(Arg.Any<IReadOnlyDictionary<string, string>?>())
+            .Returns(new SystemMessage([Content.FromText("test system")]));
+        return agent;
     }
 
     private static IChatClient MakeChatClient(ChatResponse response)
@@ -323,7 +344,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync(SimpleConversation(), new ModelOptions(overrideName, []), CancellationToken);
+        await client.CompleteAsync(SimpleConversation(), new ModelOptions(overrideName, []), cancellationToken: CancellationToken);
 
         capturedOptions?.ModelId.Should().Be(overrideName);
     }
@@ -348,7 +369,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync(SimpleConversation(), new ModelOptions("gpt-4o", [tool]), CancellationToken);
+        await client.CompleteAsync(SimpleConversation(), new ModelOptions("gpt-4o", [tool]), cancellationToken: CancellationToken);
 
         capturedOptions?.Tools.Should().ContainSingle()
             .Which.Name.Should().Be("my_tool");
@@ -570,7 +591,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        await client.CompleteAsync<string>(SimpleConversation(), new ModelOptions(overrideModel, []), CancellationToken);
+        await client.CompleteAsync<string>(SimpleConversation(), new ModelOptions(overrideModel, []), cancellationToken: CancellationToken);
 
         capturedOptions.Should().NotBeNull();
         capturedOptions.ModelId.Should().Be(overrideModel);
@@ -586,7 +607,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => factory(endpoint))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should()
             .Throw<Exception>();
     }
@@ -599,7 +620,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => factory(endpoint))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().Throw<Exception>();
     }
 
@@ -611,7 +632,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => factory(endpoint))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().NotThrow();
     }
 
@@ -625,7 +646,7 @@ public sealed class ModelClientTests : BaseTest<Module>
         var factory = services.GetRequiredService<IModelClient.Factory>();
 
         FluentActions
-            .Invoking(() => factory(endpoint))
+            .Invoking(() => factory(MakeAgent(endpoint)))
             .Should().NotThrow();
     }
 }

@@ -292,11 +292,12 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
 
         var call = await callRepo.FindFirstAsync(CancellationToken);
         call.Should().NotBeNull();
-        call.Usage.InputTokenCount.Should().Be(30);
-        call.Usage.OutputTokenCount.Should().Be(13);
-        call.Duration.Should().Be(TimeSpan.FromMilliseconds(300));
+        call.Response.Should().NotBeNull();
+        call.Response!.Usage!.InputTokenCount.Should().Be(30);
+        call.Response.Usage.OutputTokenCount.Should().Be(13);
+        call.Response.Latency.Should().Be(TimeSpan.FromMilliseconds(300));
         call.FinishReason.Should().Be("stop");
-        call.Response.Contents.Should().ContainSingle()
+        call.Response.Response.Contents.Should().ContainSingle()
             .Which.Text.Should().Be(FinalReply);
         call.Request.Messages.Should().HaveCount(4);
 

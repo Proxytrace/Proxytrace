@@ -17,7 +17,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
-        var details = new SystemPromptDetails(new SystemMessage("Improved system prompt"));
+        var details = new SystemPromptDetails("Improved system prompt");
 
         var proposal = factory(
             agent: agent,
@@ -86,7 +86,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
 
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, Priority.Low, "rationale", new SystemPromptDetails(new SystemMessage("msg")), []);
+        var action = () => factory(null!, Priority.Low, "rationale", new SystemPromptDetails("msg"), []);
         action.Should().Throw<Exception>();
     }
 
@@ -98,7 +98,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var agent = await CreateAgentAsync(services);
 
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(agent, Priority.Low, null!, new SystemPromptDetails(new SystemMessage("msg")), []);
+        var action = () => factory(agent, Priority.Low, null!, new SystemPromptDetails("msg"), []);
         action.Should().Throw<Exception>();
     }
 
@@ -109,7 +109,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
 
-        var action = () => factory(agent, Priority.Low, "   ", new SystemPromptDetails(new SystemMessage("msg")), []);
+        var action = () => factory(agent, Priority.Low, "   ", new SystemPromptDetails("msg"), []);
         action.Should().Throw<Exception>();
     }
 
@@ -150,7 +150,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             agent: agent,
             priority: Priority.Medium,
             rationale: "Multiple test runs failed.",
-            details: new SystemPromptDetails(new SystemMessage("New prompt")),
+            details: new SystemPromptDetails("New prompt"),
             evidenceTestRunIds: evidenceIds);
 
         proposal.EvidenceTestRunIds.Should().HaveCount(3);

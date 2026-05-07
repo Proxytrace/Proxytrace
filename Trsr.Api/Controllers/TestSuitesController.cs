@@ -89,7 +89,7 @@ public class TestSuitesController : ControllerBase
         }
         else
         {
-            var defaultEvaluator = createEvaluator();
+            var defaultEvaluator = createEvaluator(agent.Project);
             var savedDefault = await evaluatorRepository.AddAsync(defaultEvaluator, cancellationToken);
             evaluators = [savedDefault];
         }
@@ -160,7 +160,7 @@ public class TestSuitesController : ControllerBase
             return BadRequest("At least one agent call ID must be provided.");
         
         var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
-        var evaluator = createEvaluator();
+        var evaluator = createEvaluator(agent.Project);
         var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
 
         var testCases = new List<ITestCase>();

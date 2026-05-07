@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Evaluators;
 using Trsr.Domain;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Api.Controllers;
 
@@ -13,7 +13,8 @@ namespace Trsr.Api.Controllers;
 public class EvaluatorsController : ControllerBase
 {
     private readonly IEvaluatorRepository evaluatorRepository;
-    private readonly IModelEndpointRepository modelEndpointRepository;
+    private readonly IProjectRepository projectRepository;
+    private readonly IPromptTemplate.Create createPromptTemplate;
     private readonly ICustomEvaluator.CreateNew createCustom;
     private readonly ICustomEvaluator.CreateExisting createCustomExisting;
     private readonly IExactMatchEvaluator.CreateNew createExactMatch;
@@ -33,7 +34,8 @@ public class EvaluatorsController : ControllerBase
 
     public EvaluatorsController(
         IEvaluatorRepository evaluatorRepository,
-        IModelEndpointRepository modelEndpointRepository,
+        IProjectRepository projectRepository,
+        IPromptTemplate.Create createPromptTemplate,
         ICustomEvaluator.CreateNew createCustom,
         ICustomEvaluator.CreateExisting createCustomExisting,
         IExactMatchEvaluator.CreateNew createExactMatch,
@@ -52,7 +54,8 @@ public class EvaluatorsController : ControllerBase
         IToolUsageEvaluator.CreateExisting createToolUsageExisting)
     {
         this.evaluatorRepository = evaluatorRepository;
-        this.modelEndpointRepository = modelEndpointRepository;
+        this.projectRepository = projectRepository;
+        this.createPromptTemplate = createPromptTemplate;
         this.createCustom = createCustom;
         this.createCustomExisting = createCustomExisting;
         this.createExactMatch = createExactMatch;
@@ -92,6 +95,10 @@ public class EvaluatorsController : ControllerBase
         [FromBody] CreateEvaluatorRequest request,
         CancellationToken cancellationToken)
     {
+        if (!await projectRepository.ContainsAsync(request.ProjectId, cancellationToken))
+            return BadRequest($"Project {request.ProjectId} not found.");
+        var project = await projectRepository.GetAsync(request.ProjectId, cancellationToken);
+
         IEvaluator evaluator;
         switch (request.Kind)
         {
@@ -100,17 +107,11 @@ public class EvaluatorsController : ControllerBase
                     return BadRequest("Name is required for Custom evaluators.");
                 if (string.IsNullOrWhiteSpace(request.SystemMessage))
                     return BadRequest("SystemMessage is required for Custom evaluators.");
-                if (request.EndpointId is null)
-                    return BadRequest("EndpointId is required for Custom evaluators.");
-                if (!await modelEndpointRepository.ContainsAsync(request.EndpointId.Value, cancellationToken))
-                    return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                var endpoint = await modelEndpointRepository.GetAsync(request.EndpointId.Value, cancellationToken);
-                var sysMsg = Message.CreateSystemMessage(request.SystemMessage);
-                evaluator = createCustom(request.Name, sysMsg, endpoint);
+                evaluator = createCustom(createPromptTemplate(request.Name, request.SystemMessage), project);
                 break;
 
             case EvaluatorKind.ExactMatch:
-                evaluator = createExactMatch();
+                evaluator = createExactMatch(project);
                 break;
 
             case EvaluatorKind.NumericMatch:
@@ -118,46 +119,30 @@ public class EvaluatorsController : ControllerBase
                     return BadRequest("ExtractionPattern is required for NumericMatch evaluators.");
                 if (request.Tolerance is null)
                     return BadRequest("Tolerance is required for NumericMatch evaluators.");
-                evaluator = createNumericMatch(new Regex(request.ExtractionPattern), request.Tolerance.Value);
+                evaluator = createNumericMatch(new Regex(request.ExtractionPattern), request.Tolerance.Value, project);
                 break;
 
             case EvaluatorKind.JsonSchemaMatch:
                 if (string.IsNullOrWhiteSpace(request.JsonSchema))
                     return BadRequest("JsonSchema is required for JsonSchemaMatch evaluators.");
-                evaluator = createJsonSchemaMatch(request.JsonSchema);
+                evaluator = createJsonSchemaMatch(request.JsonSchema, project);
                 break;
 
             case EvaluatorKind.Helpfulness:
-            {
-                var preset = await CreatePresetEvaluatorAsync(request, ep => createHelpfulness(ep), cancellationToken);
-                if (preset is null) return BadRequest("EndpointId is required for Helpfulness evaluators.");
-                evaluator = preset;
+                evaluator = createHelpfulness(project);
                 break;
-            }
 
             case EvaluatorKind.Politeness:
-            {
-                var preset = await CreatePresetEvaluatorAsync(request, ep => createPoliteness(ep), cancellationToken);
-                if (preset is null) return BadRequest("EndpointId is required for Politeness evaluators.");
-                evaluator = preset;
+                evaluator = createPoliteness(project);
                 break;
-            }
 
             case EvaluatorKind.Safety:
-            {
-                var preset = await CreatePresetEvaluatorAsync(request, ep => createSafety(ep), cancellationToken);
-                if (preset is null) return BadRequest("EndpointId is required for Safety evaluators.");
-                evaluator = preset;
+                evaluator = createSafety(project);
                 break;
-            }
 
             case EvaluatorKind.ToolUsage:
-            {
-                var preset = await CreatePresetEvaluatorAsync(request, ep => createToolUsage(ep), cancellationToken);
-                if (preset is null) return BadRequest("EndpointId is required for ToolUsage evaluators.");
-                evaluator = preset;
+                evaluator = createToolUsage(project);
                 break;
-            }
 
             default:
                 return BadRequest($"Unsupported evaluator kind: {request.Kind}");
@@ -177,6 +162,7 @@ public class EvaluatorsController : ControllerBase
             return NotFound();
 
         var existing = await evaluatorRepository.GetAsync(id, cancellationToken);
+        var project = existing.Project;
 
         IEvaluator updated;
         switch (existing.Kind)
@@ -185,22 +171,17 @@ public class EvaluatorsController : ControllerBase
             {
                 var current = (ICustomEvaluator)existing;
                 var name = request.Name ?? current.Name;
-                var sysMsgText = request.SystemMessage
-                    ?? string.Concat(current.SystemMessage.Contents.Select(c => c.Text ?? ""));
+                var template = request.SystemMessage ?? current.SystemPrompt.Template;
                 if (string.IsNullOrWhiteSpace(name))
                     return BadRequest("Name cannot be empty.");
-                if (string.IsNullOrWhiteSpace(sysMsgText))
+                if (string.IsNullOrWhiteSpace(template))
                     return BadRequest("SystemMessage cannot be empty.");
-                var endpoint = request.EndpointId.HasValue
-                    ? await ResolveEndpointAsync(request.EndpointId.Value, cancellationToken)
-                    : current.Endpoint;
-                if (endpoint is null) return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                updated = createCustomExisting(name, Message.CreateSystemMessage(sysMsgText), endpoint, existing);
+                updated = createCustomExisting(createPromptTemplate(name, template), project, existing);
                 break;
             }
 
             case EvaluatorKind.ExactMatch:
-                updated = createExactMatchExisting(existing);
+                updated = createExactMatchExisting(project, existing);
                 break;
 
             case EvaluatorKind.NumericMatch:
@@ -210,7 +191,7 @@ public class EvaluatorsController : ControllerBase
                 var tolerance = request.Tolerance ?? current.Tolerance;
                 if (string.IsNullOrWhiteSpace(pattern))
                     return BadRequest("ExtractionPattern cannot be empty.");
-                updated = createNumericMatchExisting(new Regex(pattern), tolerance, existing);
+                updated = createNumericMatchExisting(new Regex(pattern), tolerance, project, existing);
                 break;
             }
 
@@ -220,53 +201,25 @@ public class EvaluatorsController : ControllerBase
                 var schema = request.JsonSchema ?? current.JsonSchema;
                 if (string.IsNullOrWhiteSpace(schema))
                     return BadRequest("JsonSchema cannot be empty.");
-                updated = createJsonSchemaMatchExisting(schema, existing);
+                updated = createJsonSchemaMatchExisting(schema, project, existing);
                 break;
             }
 
             case EvaluatorKind.Helpfulness:
-            {
-                var current = (IHelpfulnessEvaluator)existing;
-                var ep = request.EndpointId.HasValue
-                    ? await ResolveEndpointAsync(request.EndpointId.Value, cancellationToken)
-                    : current.Endpoint;
-                if (ep is null) return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                updated = createHelpfulnessExisting(ep, existing);
+                updated = createHelpfulnessExisting(project, existing);
                 break;
-            }
 
             case EvaluatorKind.Politeness:
-            {
-                var current = (IPolitenessEvaluator)existing;
-                var ep = request.EndpointId.HasValue
-                    ? await ResolveEndpointAsync(request.EndpointId.Value, cancellationToken)
-                    : current.Endpoint;
-                if (ep is null) return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                updated = createPolitenessExisting(ep, existing);
+                updated = createPolitenessExisting(project, existing);
                 break;
-            }
 
             case EvaluatorKind.Safety:
-            {
-                var current = (ISafetyClassifier)existing;
-                var ep = request.EndpointId.HasValue
-                    ? await ResolveEndpointAsync(request.EndpointId.Value, cancellationToken)
-                    : current.Endpoint;
-                if (ep is null) return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                updated = createSafetyExisting(ep, existing);
+                updated = createSafetyExisting(project, existing);
                 break;
-            }
 
             case EvaluatorKind.ToolUsage:
-            {
-                var current = (IToolUsageEvaluator)existing;
-                var ep = request.EndpointId.HasValue
-                    ? await ResolveEndpointAsync(request.EndpointId.Value, cancellationToken)
-                    : current.Endpoint;
-                if (ep is null) return BadRequest($"Model endpoint {request.EndpointId} not found.");
-                updated = createToolUsageExisting(ep, existing);
+                updated = createToolUsageExisting(project, existing);
                 break;
-            }
 
             default:
                 return BadRequest($"Unsupported evaluator kind: {existing.Kind}");
@@ -283,28 +236,9 @@ public class EvaluatorsController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
-    private async Task<IModelEndpoint?> ResolveEndpointAsync(Guid endpointId, CancellationToken cancellationToken)
-    {
-        if (!await modelEndpointRepository.ContainsAsync(endpointId, cancellationToken)) return null;
-        return await modelEndpointRepository.GetAsync(endpointId, cancellationToken);
-    }
-
-    private async Task<IEvaluator?> CreatePresetEvaluatorAsync(
-        CreateEvaluatorRequest request,
-        Func<IModelEndpoint, IEvaluator> factory,
-        CancellationToken cancellationToken)
-    {
-        if (request.EndpointId is null) return null;
-        if (!await modelEndpointRepository.ContainsAsync(request.EndpointId.Value, cancellationToken)) return null;
-        var ep = await modelEndpointRepository.GetAsync(request.EndpointId.Value, cancellationToken);
-        return factory(ep);
-    }
-
     internal static EvaluatorDetailDto ToDto(IEvaluator evaluator)
     {
         string? systemMessage = null;
-        Guid? endpointId = null;
-        string? endpointName = null;
         string? jsonSchema = null;
         string? extractionPattern = null;
         decimal? tolerance = null;
@@ -312,13 +246,7 @@ public class EvaluatorsController : ControllerBase
         switch (evaluator)
         {
             case ICustomEvaluator custom:
-                systemMessage = string.Concat(custom.SystemMessage.Contents.Select(c => c.Text ?? ""));
-                endpointId = custom.Endpoint.Id;
-                endpointName = custom.Endpoint.Model.Name;
-                break;
-            case IAgenticEvaluator agentic:
-                endpointId = agentic.Endpoint.Id;
-                endpointName = agentic.Endpoint.Model.Name;
+                systemMessage = custom.SystemPrompt.Template;
                 break;
             case IJsonSchemaMatchEvaluator jsonSchemaEval:
                 jsonSchema = jsonSchemaEval.JsonSchema;
@@ -329,13 +257,17 @@ public class EvaluatorsController : ControllerBase
                 break;
         }
 
+        var endpoint = evaluator.Project.SystemEndpoint;
+
         return new EvaluatorDetailDto(
             evaluator.Id,
             evaluator.Kind,
             GetName(evaluator),
             systemMessage,
-            endpointId,
-            endpointName,
+            evaluator.Project.Id,
+            evaluator.Project.Name,
+            endpoint.Id,
+            endpoint.Model.Name,
             jsonSchema,
             extractionPattern,
             tolerance,

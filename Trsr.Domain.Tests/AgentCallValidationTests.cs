@@ -3,6 +3,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
@@ -18,9 +19,12 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
+        var completionFactory = services.GetRequiredService<ICompletion.Create>();
         var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
+        var response = completionFactory(
+            new AssistantMessage([Content.FromText("Hello")], []),
+            new TokenUsage(100, 50),
+            TimeSpan.FromSeconds(1));
         var agent = await GetOrCreate<IAgent>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
@@ -30,8 +34,6 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             endpoint: endpoint,
             request: request,
             response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
             errorMessage: null,
@@ -55,21 +57,22 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
+        var completionFactory = services.GetRequiredService<ICompletion.Create>();
         var agent = await GetOrCreate<IAgent>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
-        
+        var response = completionFactory(
+            new AssistantMessage([Content.FromText("Hello")], []),
+            new TokenUsage(100, 50),
+            TimeSpan.FromSeconds(1));
+
         // Act
         var agentCall = factory(
             agent: agent,
             endpoint: endpoint,
             request: request,
             response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
             errorMessage: null,
@@ -85,8 +88,11 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
+        var completionFactory = services.GetRequiredService<ICompletion.Create>();
+        var response = completionFactory(
+            new AssistantMessage([Content.FromText("Hello")], []),
+            new TokenUsage(100, 50),
+            TimeSpan.FromSeconds(1));
         var agent = await GetOrCreate<IAgent>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
@@ -97,35 +103,6 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             endpoint: endpoint,
             request: null!,
             response: response,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
-            httpStatus: HttpStatusCode.OK,
-            finishReason: "stop",
-            errorMessage: null,
-            conversationId: null);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateNew_WithNullResponse_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var request = Conversation.Create();
-        var usage = new TokenUsage(100, 50);
-        var agent = await GetOrCreate<IAgent>(services);
-        var endpoint = await GetOrCreate<IModelEndpoint>(services);
-
-        // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(
-            agent: agent,
-            endpoint: endpoint,
-            request: request,
-            response: null!,
-            usage: usage,
-            duration: TimeSpan.FromSeconds(1),
             httpStatus: HttpStatusCode.OK,
             finishReason: "stop",
             errorMessage: null,
@@ -148,8 +125,6 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             existing.Endpoint,
             existing.Request,
             existing.Response,
-            existing.Usage,
-            existing.Duration,
             existing.HttpStatus,
             existing.FinishReason,
             existing.ErrorMessage,
@@ -171,15 +146,18 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgentCall.CreateNew>();
+        var completionFactory = services.GetRequiredService<ICompletion.Create>();
         var request = Conversation.Create();
-        var response = new AssistantMessage([Content.FromText("Hello")], []);
-        var usage = new TokenUsage(100, 50);
+        var response = completionFactory(
+            new AssistantMessage([Content.FromText("Hello")], []),
+            new TokenUsage(100, 50),
+            TimeSpan.FromSeconds(1));
         var agent = await GetOrCreate<IAgent>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
-        
+
         // Act
-        var agentCall1 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null, null);
-        var agentCall2 = factory(agent, endpoint, request, response, usage, TimeSpan.FromSeconds(1), HttpStatusCode.OK, "stop", null, null);
+        var agentCall1 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop", null, null);
+        var agentCall2 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop", null, null);
 
         // Assert
         agentCall1.Id.Should().NotBe(agentCall2.Id);

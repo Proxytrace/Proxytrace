@@ -7,6 +7,8 @@ public record EvaluatorDetailDto(
     EvaluatorKind Kind,
     string Name,
     string? SystemMessage,
+    Guid ProjectId,
+    string ProjectName,
     Guid? EndpointId,
     string? EndpointName,
     string? JsonSchema,
@@ -17,9 +19,9 @@ public record EvaluatorDetailDto(
 
 public record CreateEvaluatorRequest(
     EvaluatorKind Kind,
+    Guid ProjectId,
     string? Name,
     string? SystemMessage,
-    Guid? EndpointId,
     string? JsonSchema,
     string? ExtractionPattern,
     decimal? Tolerance);
@@ -27,7 +29,6 @@ public record CreateEvaluatorRequest(
 public record UpdateEvaluatorRequest(
     string? Name,
     string? SystemMessage,
-    Guid? EndpointId,
     string? JsonSchema,
     string? ExtractionPattern,
     decimal? Tolerance);

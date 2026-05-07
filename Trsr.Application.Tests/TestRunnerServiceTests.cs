@@ -59,7 +59,7 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         {
             IModelClient handler = Substitute.For<IModelClient>();
             var completionFactory = ct.Resolve<ICompletion.Create>();
-            handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
+            handler.CompleteAsync(Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<IReadOnlyDictionary<string, string>?>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(completionFactory(response, null, TimeSpan.FromMilliseconds(1000))));
             return handler;
         });

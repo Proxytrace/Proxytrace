@@ -40,7 +40,7 @@ public class StatisticsController : ControllerBase
     {
         var filter = new StatisticsFilter(from, to, projectId, agentId, endPointId);
         var results = await statistics.GetTokenUsageAsync(filter, cancellationToken);
-        return results.Select(r => new TokenUsageDto(r.Date, r.EndpointId, r.InputTokens, r.OutputTokens)).ToArray();
+        return results.Select(r => new TokenUsageDto(r.Date, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray();
     }
 
     [HttpGet("latency")]
@@ -96,7 +96,7 @@ public class StatisticsController : ControllerBase
     {
         var filter = new StatisticsFilter(from, to, projectId, agentId, endpointId);
         var results = await statistics.GetModelBreakdownAsync(filter, cancellationToken);
-        return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens, r.TotalOutputTokens, r.AvgDurationMs)).ToArray();
+        return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray();
     }
 
     [HttpGet("cost-estimate")]

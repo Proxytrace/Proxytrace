@@ -5,7 +5,6 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.AgentCall.Internal;
 
@@ -14,9 +13,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public IAgent Agent { get; }
     public IModelEndpoint Endpoint { get; }
     public Conversation Request { get; }
-    public ICompletion Response { get; }
-    public TokenUsage Usage { get; }
-    public TimeSpan Duration { get; }
+    public ICompletion? Response { get; }
     public HttpStatusCode HttpStatus { get; }
     public string? FinishReason { get; }
     public string? ErrorMessage { get; }
@@ -26,9 +23,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        ICompletion response,
-        TokenUsage usage,
-        TimeSpan duration,
+        ICompletion? response,
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
@@ -39,8 +34,6 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         Endpoint = endpoint;
         Request = request;
         Response = response;
-        Usage = usage;
-        Duration = duration;
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
@@ -51,9 +44,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IAgent agent,
         IModelEndpoint endpoint,
         Conversation request,
-        ICompletion response,
-        TokenUsage usage,
-        TimeSpan duration,
+        ICompletion? response,
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
@@ -65,8 +56,6 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         Endpoint = endpoint;
         Request = request;
         Response = response;
-        Usage = usage;
-        Duration = duration;
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
@@ -79,12 +68,12 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         {
             yield return result;
         }
-        
+
         foreach (var result in Agent.Validate(validationContext))
         {
             yield return result;
         }
-        
+
         foreach (var result in Endpoint.Validate(validationContext))
         {
             yield return result;
@@ -94,10 +83,13 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         {
             yield return result;
         }
-        
-        foreach (var result in Response.Validate(validationContext))
+
+        if (Response is not null)
         {
-            yield return result;
+            foreach (var result in Response.Validate(validationContext))
+            {
+                yield return result;
+            }
         }
     }
 }

@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
+using Trsr.Domain.Prompt;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Testing;
@@ -39,34 +39,30 @@ public sealed class EvaluatorPersistenceTests : BaseTest<Module>
 
     private async Task<IEvaluator> CreateForKind(EvaluatorKind kind, IServiceProvider services)
     {
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
-        IModelEndpoint? endpoint = null;
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
 
         return kind switch
         {
             EvaluatorKind.ExactMatch =>
-                services.GetRequiredService<IExactMatchEvaluator.CreateNew>()(),
+                services.GetRequiredService<IExactMatchEvaluator.CreateNew>()(project),
             EvaluatorKind.NumericMatch =>
-                services.GetRequiredService<INumericMatchEvaluator.CreateNew>()(new Regex(@"\d+(?:\.\d+)?"), 0.01m),
+                services.GetRequiredService<INumericMatchEvaluator.CreateNew>()(new Regex(@"\d+(?:\.\d+)?"), 0.01m, project),
             EvaluatorKind.JsonSchemaMatch =>
-                services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateNew>()("""{"type": "object"}"""),
+                services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateNew>()("""{"type": "object"}""", project),
             EvaluatorKind.Custom =>
                 services.GetRequiredService<ICustomEvaluator.CreateNew>()(
-                    "Test Evaluator",
-                    new SystemMessage([Content.FromText("Evaluate.")]),
-                    endpoint = await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+                    promptFactory("Test Evaluator", "Evaluate."),
+                    project),
             EvaluatorKind.Helpfulness =>
-                services.GetRequiredService<IHelpfulnessEvaluator.CreateNew>()(
-                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+                services.GetRequiredService<IHelpfulnessEvaluator.CreateNew>()(project),
             EvaluatorKind.Politeness =>
-                services.GetRequiredService<IPolitenessEvaluator.CreateNew>()(
-                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+                services.GetRequiredService<IPolitenessEvaluator.CreateNew>()(project),
             EvaluatorKind.Safety =>
-                services.GetRequiredService<ISafetyClassifier.CreateNew>()(
-                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+                services.GetRequiredService<ISafetyClassifier.CreateNew>()(project),
             EvaluatorKind.ToolUsage =>
-                services.GetRequiredService<IToolUsageEvaluator.CreateNew>()(
-                    endpoint ?? await endpointGenerator.GetOrCreateAsync(CancellationToken)),
+                services.GetRequiredService<IToolUsageEvaluator.CreateNew>()(project),
             _ => throw new NotSupportedException(
                 $"{kind} has no test data — add a case to {nameof(CreateForKind)}.")
         };
@@ -98,20 +94,20 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IRepository<IEvaluator>>();
         var factory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
-        var systemMessage = new SystemMessage([Content.FromText("Judge whether the response is correct.")]);
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
 
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var evaluator = factory("Test Evaluator", systemMessage, endpoint);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var systemPrompt = promptFactory("Test Evaluator", "Judge whether the response is correct.");
+        var evaluator = factory(systemPrompt, project);
         var added = await repository.AddAsync(evaluator, CancellationToken);
 
         var retrieved = await repository.GetAsync(added.Id, CancellationToken);
 
         retrieved.Id.Should().Be(added.Id);
         retrieved.Kind.Should().Be(EvaluatorKind.Custom);
-        var agentic = retrieved.Should().BeAssignableTo<ICustomEvaluator>().Subject;
-        agentic.SystemMessage.Contents.Should().HaveCount(1);
-        agentic.SystemMessage.Contents[0].Should().BeEquivalentTo(Content.FromText("Judge whether the response is correct."));
+        var custom = retrieved.Should().BeAssignableTo<ICustomEvaluator>().Subject;
+        custom.SystemPrompt.Template.Should().Be("Judge whether the response is correct.");
     }
 
     [TestMethod]
@@ -121,11 +117,12 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
         var repository = services.GetRequiredService<IRepository<IEvaluator>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
 
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var exact = exactFactory();
-        var agentic = agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Evaluate.")]), endpoint);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = exactFactory(project);
+        var agentic = agenticFactory(promptFactory("Test Evaluator", "Evaluate."), project);
         await repository.AddAsync(exact, CancellationToken);
         await repository.AddAsync(agentic, CancellationToken);
 
@@ -148,17 +145,18 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var evaluatorRepository = services.GetRequiredService<IRepository<IEvaluator>>();
         var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory(promptFactory("Test Evaluator", "Score it."), project), CancellationToken);
 
         var suite = suiteFactory("Multi-eval suite", agent, [exact, agentic], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
@@ -176,17 +174,18 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var evaluatorRepository = services.GetRequiredService<IRepository<IEvaluator>>();
         var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory(promptFactory("Test Evaluator", "Score it."), project), CancellationToken);
 
         var suite = suiteFactory("Get suite", agent, [exact, agentic], [testCase]);
         await suiteRepository.AddAsync(suite, CancellationToken);
@@ -209,18 +208,19 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var evaluatorRepository = services.GetRequiredService<IRepository<IEvaluator>>();
         var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
         var suiteExistingFactory = services.GetRequiredService<ITestSuite.CreateExisting>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory(promptFactory("Test Evaluator", "Score it."), project), CancellationToken);
 
         var suite = suiteFactory("Update suite", agent, [exact], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
@@ -244,18 +244,19 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var evaluatorRepository = services.GetRequiredService<IRepository<IEvaluator>>();
         var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
-        var endpointGenerator = services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var agenticFactory = services.GetRequiredService<ICustomEvaluator.CreateNew>();
+        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
         var suiteExistingFactory = services.GetRequiredService<ITestSuite.CreateExisting>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
-        var endpoint = await endpointGenerator.CreateAsync(CancellationToken);
-        var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
         var agentic = await evaluatorRepository.AddAsync(
-            agenticFactory("Test Evaluator", new SystemMessage([Content.FromText("Score it.")]), endpoint), CancellationToken);
+            agenticFactory(promptFactory("Test Evaluator", "Score it."), project), CancellationToken);
 
         var suite = suiteFactory("Remove eval suite", agent, [exact, agentic], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
@@ -280,12 +281,14 @@ public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
         var evaluatorRepository = services.GetRequiredService<IRepository<IEvaluator>>();
         var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
         var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
         var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
 
         var agent = await agentGenerator.CreateAsync(CancellationToken);
         var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
-        var exact = await evaluatorRepository.AddAsync(exactFactory(), CancellationToken);
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var exact = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
 
         var suite = suiteFactory("Single eval suite", agent, [exact], [testCase]);
         var added = await suiteRepository.AddAsync(suite, CancellationToken);
