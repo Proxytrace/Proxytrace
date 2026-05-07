@@ -24,23 +24,18 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         var evaluator = await UpsertEvaluatorAsync(new Guid("00000000-0000-0000-0000-000000000004"), cancellationToken);
 
         var openAi = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000001"), "OpenAI", new Uri("https://api.openai.com/v1"), ModelProviderKind.OpenAi, org, cancellationToken);
-        var anthropic = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000002"), "Anthropic", new Uri("https://api.anthropic.com/v1"), ModelProviderKind.Anthropic, org, cancellationToken);
 
         var gpt4o = await UpsertModelAsync(new Guid("f0000000-0000-0000-0000-000000000010"), "gpt-4o", cancellationToken);
-        var claudeSonnet = await UpsertModelAsync(new Guid("f0000000-0000-0000-0000-000000000011"), "claude-sonnet-4-6", cancellationToken);
         var gpt4oMini = await UpsertModelAsync(new Guid("f0000000-0000-0000-0000-000000000012"), "gpt-4o-mini", cancellationToken);
 
         var endpointGpt4o = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000020"), gpt4o, openAi, 0.0000025m, 0.000010m, cancellationToken);
-        var endpointClaude = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000021"), claudeSonnet, anthropic, 0.000003m, 0.000015m, cancellationToken);
         var endpointGpt4oMini = await UpsertModelEndpointAsync(new Guid("f0000000-0000-0000-0000-000000000022"), gpt4oMini, openAi, 0.00000015m, 0.0000006m, cancellationToken);
 
         await UpsertApiKeyAsync(new Guid("a0000000-0000-0000-0000-000000000001"), "Demo OpenAI Key", "trsr-demo-openai", project, openAi, cancellationToken);
-        await UpsertApiKeyAsync(new Guid("a0000000-0000-0000-0000-000000000002"), "Demo Anthropic Key", "trsr-demo-anthropic", project, anthropic, cancellationToken);
 
         return new FoundationData(project, evaluator, new Dictionary<Guid, IModelEndpoint>
         {
             [endpointGpt4o.Id] = endpointGpt4o,
-            [endpointClaude.Id] = endpointClaude,
             [endpointGpt4oMini.Id] = endpointGpt4oMini,
         });
     }

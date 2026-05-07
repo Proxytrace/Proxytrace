@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
+import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
-import type { AgentDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
+import type { AgentDto, ModelEndpointDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { TrashIcon } from '../../components/icons';
@@ -84,13 +85,83 @@ function ToolRow({ tool, last }: { tool: ToolSpecDto; last: boolean }) {
   );
 }
 
+function EndpointSelector({ agent }: { agent: AgentDto }) {
+  const qc = useQueryClient();
+  const { show: toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { data: endpoints = [] } = useQuery({
+    queryKey: ['all-endpoints'],
+    queryFn: () => providersApi.getAllModels(),
+    enabled: open,
+  });
+
+  const mutation = useMutation({
+    mutationFn: (endpointId: string) => agentsApi.updateEndpoint(agent.id, endpointId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents });
+      setOpen(false);
+      toast('Endpoint updated', 'success');
+    },
+    onError: (err) => toast((err as Error).message || 'Failed to update endpoint', 'error'),
+  });
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-[6px] px-[10px] py-[5px] rounded-lg text-[11.5px] font-medium transition-[background] duration-100"
+        style={{ background: 'rgba(99,102,241,0.1)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.2)', cursor: 'pointer' }}
+      >
+        <span className="font-mono truncate max-w-[200px]">{agent.endpointName}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ flexShrink: 0, opacity: 0.7 }}>
+          <path d="M5 7L1 3h8L5 7z" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute z-50 mt-1 rounded-xl overflow-hidden"
+          style={{ top: '100%', left: 0, minWidth: 220, background: 'var(--bg-card-2)', boxShadow: 'var(--shadow-float)', border: '1px solid var(--border-hairline)' }}
+        >
+          {endpoints.length === 0 && (
+            <div className="px-4 py-3 text-[12px] text-muted">Loading…</div>
+          )}
+          {endpoints.map((ep: ModelEndpointDto) => {
+            const isCurrent = ep.id === agent.endpointId;
+            return (
+              <button
+                key={ep.id}
+                onClick={() => !isCurrent && mutation.mutate(ep.id)}
+                disabled={mutation.isPending}
+                className="w-full text-left px-4 py-[10px] flex flex-col gap-[2px] transition-[background] duration-100"
+                style={{
+                  background: isCurrent ? 'rgba(99,102,241,0.1)' : 'transparent',
+                  cursor: isCurrent ? 'default' : 'pointer',
+                  border: 'none',
+                  borderBottom: '1px solid var(--border-hairline)',
+                }}
+                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-card-hover, rgba(255,255,255,0.04))'; }}
+                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span className="text-[12.5px] font-semibold" style={{ color: isCurrent ? '#a5b4fc' : 'var(--text-primary)' }}>{ep.modelName}</span>
+                <span className="text-[11px] text-muted">{ep.providerName}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => void }) {
   const c = agentColor(agent.id);
   return (
     <div className="fade-up flex flex-col gap-[14px]" style={{ animationDelay: '60ms' }}>
       {/* Header card */}
-      <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <div style={{ height: 4, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+      <div className="bg-card rounded-2xl" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ height: 4, background: `linear-gradient(90deg, ${c}, ${c}44)`, borderRadius: '16px 16px 0 0' }} />
         <div className="px-5 py-[18px] flex items-start gap-4">
           <div style={{ width: 52, height: 52, borderRadius: 14, background: c + '22', border: `2px solid ${c}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 24px ${c}33` }}>
             <span className="text-xl font-[800] font-mono" style={{ color: c }}>{agent.name[0]}</span>
@@ -104,6 +175,10 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
               <span className="text-[11px] text-muted">Created {fmtDate(agent.createdAt)}</span>
               <span className="text-[11px] text-muted">Last used {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
             </div>
+            <div className="flex items-center gap-[8px] mt-[10px]">
+              <span className="text-[11px] text-muted">Endpoint</span>
+              <EndpointSelector agent={agent} />
+            </div>
           </div>
           <div className="flex gap-[10px] shrink-0 items-center">
             {[
@@ -116,9 +191,11 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
             ))}
             <button
               onClick={onDelete}
-              style={{ padding: '7px 10px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(239,68,68,0.08)', border: 'none', cursor: 'pointer' }}
+              className="flex items-center gap-[5px]"
+              style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer' }}
             >
-              <TrashIcon size={13} /> Delete
+              <TrashIcon size={13} />
+              Delete
             </button>
           </div>
         </div>
@@ -197,7 +274,7 @@ export default function Agents() {
       {isLoading && <div className="text-center p-[40px] text-muted text-[13px]">Loading…</div>}
 
       {/* Agent selector cards */}
-      <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+      <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', padding: '4px 4px 8px' }}>
         {agents.map(a => {
           const isActive = selected?.id === a.id;
           const c = agentColor(a.id);
@@ -205,12 +282,12 @@ export default function Agents() {
             <button
               key={a.id}
               onClick={() => setSelectedId(a.id)}
-              className="overflow-hidden border-none cursor-pointer"
+              className="border-none cursor-pointer"
               style={{ textAlign: 'left', background: 'var(--bg-card)', borderRadius: 16, padding: 16, boxShadow: isActive ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}66, 0 10px 32px -10px ${c}55` : 'var(--shadow-card)', position: 'relative', transition: 'box-shadow 0.18s' }}
               onMouseEnter={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-float)'; }}
               onMouseLeave={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
             >
-              <div style={{ height: 3, position: 'absolute', top: 0, left: 0, right: 0, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+              <div style={{ height: 3, position: 'absolute', top: 0, left: 0, right: 0, background: `linear-gradient(90deg, ${c}, ${c}44)`, borderRadius: '16px 16px 0 0' }} />
               <div className="flex items-start gap-[10px] mt-[6px]">
                 <div style={{ width: 38, height: 38, borderRadius: 11, background: c + '1e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${c}33` }}>
                   <span style={{ fontSize: 16, color: c, fontWeight: 800 }}>{a.name[0]}</span>

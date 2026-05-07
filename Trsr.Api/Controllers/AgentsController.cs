@@ -8,6 +8,7 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Api.Controllers;
@@ -23,15 +24,18 @@ public class AgentsController : ControllerBase
     };
 
     private readonly IAgentRepository repository;
+    private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
 
     public AgentsController(
         IAgentRepository repository,
+        IRepository<IModelEndpoint> endpoints,
         IAgentCallRepository agentCallRepository,
         IProposalBroadcaster proposalBroadcaster)
     {
         this.repository = repository;
+        this.endpoints = endpoints;
         this.agentCallRepository = agentCallRepository;
         this.proposalBroadcaster = proposalBroadcaster;
     }
@@ -101,6 +105,18 @@ public class AgentsController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
+    [HttpPatch("{id:guid}/endpoint")]
+    public async Task<IActionResult> UpdateEndpoint(
+        Guid id, 
+        [FromBody] UpdateAgentEndpointRequest request,
+        CancellationToken cancellationToken)
+    {
+        IAgent agent = await repository.GetAsync(id, cancellationToken);
+        IModelEndpoint endpoint = await endpoints.GetAsync(request.EndpointId, cancellationToken);
+        await agent.ChangeEndpoint(endpoint, cancellationToken);
+        return NoContent();
+    }
+
     private static AgentDto ToDto(IAgent a, DateTimeOffset? lastUsedAt) => new(
         a.Id,
         a.Project.Id,
@@ -112,6 +128,8 @@ public class AgentsController : ControllerBase
             t.Description,
             t.Arguments.Arguments.Select(ToArgumentDto).ToArray()
         )).ToArray(),
+        a.Endpoint.Id,
+        $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
         a.CreatedAt,
         a.UpdatedAt,
         lastUsedAt);
@@ -129,7 +147,11 @@ public class AgentsController : ControllerBase
             if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
                 enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
+
         return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
 

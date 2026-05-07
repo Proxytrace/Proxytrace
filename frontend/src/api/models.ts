@@ -86,6 +86,8 @@ export interface AgentDto {
   name: string;
   systemMessage: string;
   tools: ToolSpecDto[];
+  endpointId: string;
+  endpointName: string;
   createdAt: string;
   updatedAt: string;
   lastUsedAt: string | null;

@@ -7,9 +7,13 @@ public record AgentDto(
     string Name,
     string SystemMessage,
     IReadOnlyList<ToolSpecificationDto> Tools,
+    Guid EndpointId,
+    string EndpointName,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastUsedAt);
+
+public record UpdateAgentEndpointRequest(Guid EndpointId);
 
 public record ToolSpecificationDto(
     string Name,
