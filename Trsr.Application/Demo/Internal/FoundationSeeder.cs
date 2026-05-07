@@ -5,7 +5,6 @@ using Trsr.Domain.Evaluator;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
-using Trsr.Domain.Organization;
 using Trsr.Domain.Project;
 using Trsr.Domain.User;
 // ReSharper disable InconsistentNaming
@@ -19,12 +18,11 @@ internal sealed class FoundationSeeder(IServiceProvider services)
     public async Task<FoundationData> SeedAsync(CancellationToken cancellationToken)
     {
         var user = await UpsertUserAsync(new Guid("00000000-0000-0000-0000-000000000002"), "demo-admin", cancellationToken);
-        var org = await UpsertOrganizationAsync(new Guid("00000000-0000-0000-0000-000000000001"), "TechShop Demo", [user], cancellationToken);
-        var project = await UpsertProjectAsync(new Guid("00000000-0000-0000-0000-000000000003"), "Production AI", org, cancellationToken);
+        var project = await UpsertProjectAsync(new Guid("00000000-0000-0000-0000-000000000003"), "Production AI", cancellationToken);
         var evaluator = await UpsertEvaluatorAsync(new Guid("00000000-0000-0000-0000-000000000004"), cancellationToken);
 
-        var openAi = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000001"), "OpenAI", new Uri("https://api.openai.com/v1"), ModelProviderKind.OpenAi, org, cancellationToken);
-        var anthropic = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000002"), "Anthropic", new Uri("https://api.anthropic.com/v1"), ModelProviderKind.Anthropic, org, cancellationToken);
+        var openAi = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000001"), "OpenAI", new Uri("https://api.openai.com/v1"), ModelProviderKind.OpenAi, cancellationToken);
+        var anthropic = await UpsertModelProviderAsync(new Guid("f0000000-0000-0000-0000-000000000002"), "Anthropic", new Uri("https://api.anthropic.com/v1"), ModelProviderKind.Anthropic, cancellationToken);
 
         var gpt4o = await UpsertModelAsync(new Guid("f0000000-0000-0000-0000-000000000010"), "gpt-4o", cancellationToken);
         var claudeSonnet = await UpsertModelAsync(new Guid("f0000000-0000-0000-0000-000000000011"), "claude-sonnet-4-6", cancellationToken);
@@ -54,18 +52,11 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         return await repo.UpsertAsync(factory(name, At(id)), ct);
     }
 
-    private async Task<IOrganization> UpsertOrganizationAsync(Guid id, string name, IReadOnlyCollection<IUser> users, CancellationToken ct)
-    {
-        var factory = services.GetRequiredService<IOrganization.CreateExisting>();
-        var repo = services.GetRequiredService<IRepository<IOrganization>>();
-        return await repo.UpsertAsync(factory(name, users, At(id)), ct);
-    }
-
-    private async Task<IProject> UpsertProjectAsync(Guid id, string name, IOrganization org, CancellationToken ct)
+    private async Task<IProject> UpsertProjectAsync(Guid id, string name, CancellationToken ct)
     {
         var factory = services.GetRequiredService<IProject.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IProject>>();
-        return await repo.UpsertAsync(factory(name, org, At(id)), ct);
+        return await repo.UpsertAsync(factory(name, At(id)), ct);
     }
 
     private async Task<IEvaluator> UpsertEvaluatorAsync(Guid id, CancellationToken ct)
@@ -75,11 +66,11 @@ internal sealed class FoundationSeeder(IServiceProvider services)
         return await repo.UpsertAsync(factory(At(id)), ct);
     }
 
-    private async Task<IModelProvider> UpsertModelProviderAsync(Guid id, string name, Uri endpoint, ModelProviderKind kind, IOrganization org, CancellationToken ct)
+    private async Task<IModelProvider> UpsertModelProviderAsync(Guid id, string name, Uri endpoint, ModelProviderKind kind, CancellationToken ct)
     {
         var factory = services.GetRequiredService<IModelProvider.CreateExisting>();
         var repo = services.GetRequiredService<IRepository<IModelProvider>>();
-        return await repo.UpsertAsync(factory(name, endpoint, "demo-key", kind, org, At(id)), ct);
+        return await repo.UpsertAsync(factory(name, endpoint, "demo-key", kind, At(id)), ct);
     }
 
     private async Task<IModel> UpsertModelAsync(Guid id, string name, CancellationToken ct)

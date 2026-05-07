@@ -1,10 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { setupApi } from './api/setup';
 
+const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
 const Traces = lazy(() => import('./features/traces/Traces'));
 const Agents = lazy(() => import('./features/agents/Agents'));
@@ -25,24 +27,54 @@ function PageLoader() {
   );
 }
 
+function AppRoutes() {
+  const { data: setupStatus } = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: setupApi.getStatus,
+    staleTime: Infinity,
+  });
+
+  // Still loading setup status — show nothing to avoid flash
+  if (setupStatus === undefined) return <PageLoader />;
+
+  const wrap = (el: React.ReactNode) => (
+    <ErrorBoundary><Suspense fallback={<PageLoader />}>{el}</Suspense></ErrorBoundary>
+  );
+
+  return (
+    <Routes>
+      <Route
+        path="/setup"
+        element={
+          setupStatus.isConfigured
+            ? <Navigate to="/dashboard" replace />
+            : wrap(<Setup />)
+        }
+      />
+      <Route
+        path="/"
+        element={setupStatus.isConfigured ? <Shell /> : <Navigate to="/setup" replace />}
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={wrap(<Dashboard />)} />
+        <Route path="traces" element={wrap(<Traces />)} />
+        <Route path="agents" element={wrap(<Agents />)} />
+        <Route path="suites" element={wrap(<Suites />)} />
+        <Route path="evaluators" element={wrap(<Evaluators />)} />
+        <Route path="runs" element={wrap(<Runs />)} />
+        <Route path="providers" element={wrap(<Providers />)} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Shell />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Dashboard /></Suspense></ErrorBoundary>} />
-              <Route path="traces" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Traces /></Suspense></ErrorBoundary>} />
-              <Route path="agents" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Agents /></Suspense></ErrorBoundary>} />
-              <Route path="suites" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Suites /></Suspense></ErrorBoundary>} />
-              <Route path="evaluators" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Evaluators /></Suspense></ErrorBoundary>} />
-              <Route path="runs" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Runs /></Suspense></ErrorBoundary>} />
-              <Route path="providers" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Providers /></Suspense></ErrorBoundary>} />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Route>
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>
