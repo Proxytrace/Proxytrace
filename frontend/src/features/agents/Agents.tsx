@@ -1,13 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
 import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
-import type { AgentDto, ModelEndpointDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
+import type { AgentDto, ToolSpecDto, ToolArgumentDto } from '../../api/models';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
-import { TrashIcon } from '../../components/icons';
+import { ChevronDownIcon, TrashIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -91,6 +91,15 @@ function EndpointSelector({ agent }: { agent: AgentDto }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
   const { data: endpoints = [] } = useQuery({
     queryKey: ['all-endpoints'],
     queryFn: () => providersApi.getAllModels(),
@@ -115,9 +124,7 @@ function EndpointSelector({ agent }: { agent: AgentDto }) {
         style={{ background: 'rgba(99,102,241,0.1)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.2)', cursor: 'pointer' }}
       >
         <span className="font-mono truncate max-w-[200px]">{agent.endpointName}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ flexShrink: 0, opacity: 0.7 }}>
-          <path d="M5 7L1 3h8L5 7z" />
-        </svg>
+        <ChevronDownIcon size={10} />
       </button>
       {open && (
         <div
@@ -127,22 +134,20 @@ function EndpointSelector({ agent }: { agent: AgentDto }) {
           {endpoints.length === 0 && (
             <div className="px-4 py-3 text-[12px] text-muted">Loading…</div>
           )}
-          {endpoints.map((ep: ModelEndpointDto) => {
+          {endpoints.map(ep => {
             const isCurrent = ep.id === agent.endpointId;
             return (
               <button
                 key={ep.id}
                 onClick={() => !isCurrent && mutation.mutate(ep.id)}
                 disabled={mutation.isPending}
-                className="w-full text-left px-4 py-[10px] flex flex-col gap-[2px] transition-[background] duration-100"
+                className={`w-full text-left px-4 py-[10px] flex flex-col gap-[2px] transition-[background] duration-100${!isCurrent ? ' hover:bg-[var(--bg-card-hover,rgba(255,255,255,0.04))]' : ''}`}
                 style={{
                   background: isCurrent ? 'rgba(99,102,241,0.1)' : 'transparent',
                   cursor: isCurrent ? 'default' : 'pointer',
                   border: 'none',
                   borderBottom: '1px solid var(--border-hairline)',
                 }}
-                onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-card-hover, rgba(255,255,255,0.04))'; }}
-                onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
               >
                 <span className="text-[12.5px] font-semibold" style={{ color: isCurrent ? '#a5b4fc' : 'var(--text-primary)' }}>{ep.modelName}</span>
                 <span className="text-[11px] text-muted">{ep.providerName}</span>
@@ -160,68 +165,55 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
   return (
     <div className="fade-up flex flex-col gap-[14px]" style={{ animationDelay: '60ms' }}>
       {/* Header card */}
-      <div className="bg-card rounded-2xl" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <div style={{ height: 4, background: `linear-gradient(90deg, ${c}, ${c}44)`, borderRadius: '16px 16px 0 0' }} />
+      <div className="bg-card rounded-2xl relative" style={{ boxShadow: 'var(--shadow-card)', borderTop: `3px solid ${c}` }}>
+        <button
+          onClick={onDelete}
+          className="absolute top-3 right-3 flex items-center gap-[5px] btn-icon btn-icon-danger"
+          title="Delete agent"
+        >
+          <TrashIcon size={14} />
+        </button>
         <div className="px-5 py-[18px] flex items-start gap-4">
           <div style={{ width: 52, height: 52, borderRadius: 14, background: c + '22', border: `2px solid ${c}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 0 24px ${c}33` }}>
             <span className="text-xl font-[800] font-mono" style={{ color: c }}>{agent.name[0]}</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-[10px] mb-[6px]">
-              <h2 className="text-xl font-bold tracking-[-0.02em] m-0">{agent.name}</h2>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex-1 min-w-0 pr-8">
+            <h2 className="text-xl font-bold tracking-[-0.02em] m-0 mb-[8px]">{agent.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap mb-[10px]">
               <span className="px-2 py-[2px] bg-card-2 text-muted rounded-md text-[11px]">{agent.projectName}</span>
+              <span className="px-[7px] py-[2px] rounded-md text-[11px] font-semibold" style={{ background: `${c}1a`, color: c }}>
+                {agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}
+              </span>
               <span className="text-[11px] text-muted">Created {fmtDate(agent.createdAt)}</span>
+              <span className="text-[11px] text-muted">·</span>
               <span className="text-[11px] text-muted">Last used {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
             </div>
-            <div className="flex items-center gap-[8px] mt-[10px]">
+            <div className="flex items-center gap-[8px]">
               <span className="text-[11px] text-muted">Endpoint</span>
               <EndpointSelector agent={agent} />
             </div>
-          </div>
-          <div className="flex gap-[10px] shrink-0 items-center">
-            {[
-              { label: 'Tools', value: String(agent.tools.length) },
-            ].map(s => (
-              <div key={s.label} className="px-[14px] py-[10px] bg-card-2 rounded-[10px] text-center min-w-[72px]">
-                <div className="text-[18px] font-bold tracking-[-0.02em]">{s.value}</div>
-                <div className="text-[10.5px] text-muted mt-[2px]">{s.label}</div>
-              </div>
-            ))}
-            <button
-              onClick={onDelete}
-              className="flex items-center gap-[5px]"
-              style={{ padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, color: 'var(--danger)', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer' }}
-            >
-              <TrashIcon size={13} />
-              Delete
-            </button>
           </div>
         </div>
       </div>
 
       {/* System prompt */}
-      <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+      <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="px-4 py-3 flex items-center border-b border-hairline">
-          <span className="text-[12.5px] font-semibold flex-1">
-            System Prompt — <span className="font-mono" style={{ color: c }}>current</span>
-          </span>
+          <span className="text-[12.5px] font-semibold">System Prompt</span>
         </div>
         <div className="px-4 py-[14px] max-h-[400px] overflow-y-auto">
           <div className="font-mono text-[11.5px] leading-[1.7] text-primary whitespace-pre-wrap">
-            {agent.systemMessage || '(no system prompt)'}
+            {agent.systemMessage || <span className="text-muted italic">(no system prompt)</span>}
           </div>
         </div>
       </div>
 
       {/* Tools */}
       {agent.tools.length > 0 && (
-        <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="px-4 py-3 flex items-center gap-2 border-b border-hairline">
-            <span className="text-[12.5px] font-semibold flex-1">
-              Tools <span className="font-mono text-[11px]" style={{ color: '#10b981' }}>({agent.tools.length})</span>
-            </span>
+            <span className="text-[12.5px] font-semibold">Tools</span>
+            <span className="px-[7px] py-[1px] rounded-full text-[10.5px] font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>{agent.tools.length}</span>
           </div>
           <div className="flex flex-col">
             {agent.tools.map((tool, ti) => (
@@ -282,12 +274,10 @@ export default function Agents() {
             <button
               key={a.id}
               onClick={() => setSelectedId(a.id)}
-              className="border-none cursor-pointer"
-              style={{ textAlign: 'left', background: 'var(--bg-card)', borderRadius: 16, padding: 16, boxShadow: isActive ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}66, 0 10px 32px -10px ${c}55` : 'var(--shadow-card)', position: 'relative', transition: 'box-shadow 0.18s' }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-float)'; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.boxShadow = 'var(--shadow-card)'; }}
+              className={`border-none cursor-pointer${!isActive ? ' hover:shadow-[var(--shadow-float)]' : ''}`}
+              style={{ textAlign: 'left', background: 'var(--bg-card)', borderRadius: 16, padding: 16, boxShadow: isActive ? `0 0 0 1.5px ${c}88, 0 8px 28px -8px ${c}44` : 'var(--shadow-card)', position: 'relative', overflow: 'hidden', transition: 'box-shadow 0.18s' }}
             >
-              <div style={{ height: 3, position: 'absolute', top: 0, left: 0, right: 0, background: `linear-gradient(90deg, ${c}, ${c}44)`, borderRadius: '16px 16px 0 0' }} />
+              {isActive && <div style={{ height: 3, position: 'absolute', top: 0, left: 0, right: 0, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />}
               <div className="flex items-start gap-[10px] mt-[6px]">
                 <div style={{ width: 38, height: 38, borderRadius: 11, background: c + '1e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${c}33` }}>
                   <span style={{ fontSize: 16, color: c, fontWeight: 800 }}>{a.name[0]}</span>
