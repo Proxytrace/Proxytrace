@@ -18,6 +18,12 @@ internal class Module : Autofac.Module
         builder.RegisterType<SwitchModelOptimizer>()
             .As<IOptimizerImplementation>();
 
+        builder.RegisterType<UpdateSystemPromptOptimizer>()
+            .As<IOptimizerImplementation>();
+
+        builder.RegisterType<UpdateToolDefinitionOptimizer>()
+            .As<IOptimizerImplementation>();
+
         builder.RegisterType<OptimizerService>()
             .As<IOptimizerService>()
             .AsImplementedInterfaces()
