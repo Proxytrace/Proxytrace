@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.User;
 
 namespace Trsr.Domain.Project.Internal;
 
@@ -9,24 +10,29 @@ internal record Project : DomainEntity<IProject>, IProject
 {
     public string Name { get; }
     public IModelEndpoint SystemEndpoint { get; }
+    public IReadOnlyCollection<IUser> Members { get; }
 
     public Project(
         string name,
         IModelEndpoint systemEndpoint,
+        IReadOnlyCollection<IUser> members,
         IRepository<IProject> repository) : base(repository)
     {
         Name = name;
         SystemEndpoint = systemEndpoint;
+        Members = members.ToArray();
     }
 
     public Project(
         string name,
         IModelEndpoint systemEndpoint,
+        IReadOnlyCollection<IUser> members,
         IDomainEntityData existing,
         IRepository<IProject> repository) : base(existing, repository)
     {
         Name = name;
         SystemEndpoint = systemEndpoint;
+        Members = members.ToArray();
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -40,8 +46,13 @@ internal record Project : DomainEntity<IProject>, IProject
         {
             yield return Validation.NotNullOrWhiteSpace(Name);
         }
-        
+
         foreach (var result in SystemEndpoint.Validate(validationContext))
+        {
+            yield return result;
+        }
+
+        foreach (var result in Members.SelectMany(m => m.Validate(validationContext)))
         {
             yield return result;
         }

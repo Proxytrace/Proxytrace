@@ -137,6 +137,6 @@ public sealed class AgentValidationTests : DomainTest<Module>
     {
         var projectFactory = services.GetRequiredService<IProject.CreateNew>();
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
-        return projectFactory("Test Project", endpoint);
+        return projectFactory("Test Project", endpoint, []);
     }
 }

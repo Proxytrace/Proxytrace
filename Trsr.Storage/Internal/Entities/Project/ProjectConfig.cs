@@ -4,6 +4,7 @@ using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.User;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 
 namespace Trsr.Storage.Internal.Entities.Project;
@@ -12,13 +13,19 @@ internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapp
 {
     private readonly IProject.CreateExisting factory;
     private readonly IRepository<IModelEndpoint> endpoints;
+    private readonly IRepository<IUser> users;
+    private readonly Func<StorageDbContext> contextFactory;
 
     public ProjectConfig(
         IProject.CreateExisting factory,
-        IRepository<IModelEndpoint> endpoints)
+        IRepository<IModelEndpoint> endpoints,
+        IRepository<IUser> users,
+        Func<StorageDbContext> contextFactory)
     {
         this.factory = factory;
         this.endpoints = endpoints;
+        this.users = users;
+        this.contextFactory = contextFactory;
     }
 
     public override void Configure(EntityTypeBuilder<ProjectEntity> builder)
@@ -34,8 +41,20 @@ internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapp
 
     public async Task<IProject> Map(ProjectEntity stored, CancellationToken cancellationToken = default)
     {
-        IModelEndpoint endpoint = await endpoints.GetAsync(stored.SystemEndpoint, cancellationToken);
-        return factory(stored.Name, endpoint, stored);
+        var endpoint = await endpoints.GetAsync(stored.SystemEndpoint, cancellationToken);
+
+        var memberIds = await contextFactory()
+            .Set<ProjectUserEntity>()
+            .AsNoTracking()
+            .Where(j => j.ProjectId == stored.Id)
+            .Select(j => j.UserId)
+            .ToListAsync(cancellationToken);
+
+        IReadOnlyCollection<IUser> members = memberIds.Count > 0
+            ? await users.GetManyAsync(memberIds, cancellationToken)
+            : Array.Empty<IUser>();
+
+        return factory(stored.Name, endpoint, members, stored);
     }
 
     public Task<ProjectEntity> Map(IProject domain, CancellationToken cancellationToken = default)
@@ -46,5 +65,8 @@ internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapp
             SystemEndpoint = domain.SystemEndpoint.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
+            ProjectUsers = domain.Members
+                .Select(u => new ProjectUserEntity { ProjectId = domain.Id, UserId = u.Id })
+                .ToList()
         }.ToTaskResult();
 }

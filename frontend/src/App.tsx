@@ -15,6 +15,7 @@ const Evaluators = lazy(() => import('./features/evaluators/Evaluators'));
 const Runs = lazy(() => import('./features/runs/Runs'));
 const Providers = lazy(() => import('./features/providers/Providers'));
 const Proposals = lazy(() => import('./features/proposals/Proposals'));
+const Settings = lazy(() => import('./features/settings/Settings'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, throwOnError: true } },
@@ -64,6 +65,7 @@ function AppRoutes() {
         <Route path="evaluators" element={wrap(<Evaluators />)} />
         <Route path="runs" element={wrap(<Runs />)} />
         <Route path="providers" element={wrap(<Providers />)} />
+        <Route path="settings" element={wrap(<Settings />)} />
           <Route path="proposals" element={<ErrorBoundary><Suspense fallback={<PageLoader />}><Proposals /></Suspense></ErrorBoundary>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

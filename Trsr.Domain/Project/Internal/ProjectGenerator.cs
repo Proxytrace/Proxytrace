@@ -1,6 +1,7 @@
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.User;
 
 namespace Trsr.Domain.Project.Internal;
 
@@ -24,6 +25,7 @@ internal class ProjectGenerator : DomainEntityGenerator<IProject>
         var endpoint = await endpointGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
             name: random.String(),
-            systemEndpoint: endpoint);
+            systemEndpoint: endpoint,
+            members: Array.Empty<IUser>());
     }
 }

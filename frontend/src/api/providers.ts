@@ -1,8 +1,9 @@
 import { api, qs } from './client';
+import { projectsApi } from './projects';
 import type {
   ApiKeyDto, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
   ModelEndpointDto, ModelProviderKind, PagedResult,
-  ProjectDto, ProviderDto, UpdateModelEndpointPricingRequest,
+  ProviderDto, UpdateModelEndpointPricingRequest,
 } from './models';
 
 export const providersApi = {
@@ -27,5 +28,5 @@ export const providersApi = {
   deleteKey: (providerId: string, keyId: string) =>
     api.del(`/api/providers/${providerId}/keys/${keyId}`),
 
-  getProjects: () => api.get<PagedResult<ProjectDto>>('/api/projects'),
+  getProjects: () => projectsApi.list(),
 };

@@ -51,15 +51,15 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
 
       {/* Navigation */}
       <div className="flex justify-between items-center">
-        <button className="btn-ghost" onClick={onBack} disabled={currentStep === 0}>
+        <button type="button" className="btn-ghost" onClick={onBack} disabled={currentStep === 0}>
           ← Back
         </button>
         {isLast ? (
-          <button className="btn-primary" onClick={onSubmit} disabled={!canAdvance || loading}>
+          <button type="button" className="btn-primary" onClick={onSubmit} disabled={!canAdvance || loading}>
             {loading ? 'Creating…' : submitLabel}
           </button>
         ) : (
-          <button className="btn-primary" onClick={onNext} disabled={!canAdvance}>
+          <button type="button" className="btn-primary" onClick={onNext} disabled={!canAdvance}>
             Next →
           </button>
         )}

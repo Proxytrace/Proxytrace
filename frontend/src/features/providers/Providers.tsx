@@ -70,17 +70,18 @@ export default function Providers() {
 
   const providers = providersData?.items ?? [];
   const selected = providers.find(p => p.id === selectedId) ?? (providers.length > 0 && !selectedId ? providers[0] : null);
+  const activeId = selected?.id ?? null;
   const projects = projectsData?.items ?? [];
 
   const { data: models = [], isLoading: modelsLoading } = useQuery({
-    queryKey: QUERY_KEYS.providerModels(selectedId),
-    queryFn: () => providersApi.getModels(selectedId!),
-    enabled: !!selectedId,
+    queryKey: QUERY_KEYS.providerModels(activeId),
+    queryFn: () => providersApi.getModels(activeId!),
+    enabled: !!activeId,
   });
   const { data: keys = [], isLoading: keysLoading } = useQuery({
-    queryKey: QUERY_KEYS.providerKeys(selectedId),
-    queryFn: () => providersApi.getKeys(selectedId!),
-    enabled: !!selectedId,
+    queryKey: QUERY_KEYS.providerKeys(activeId),
+    queryFn: () => providersApi.getKeys(activeId!),
+    enabled: !!activeId,
   });
 
   const createProvider = useMutation({
@@ -100,10 +101,10 @@ export default function Providers() {
   });
 
   const delProvider = useMutation({
-    mutationFn: () => providersApi.delete(selectedId!),
+    mutationFn: () => providersApi.delete(activeId!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providers });
-      const remaining = providers.filter(p => p.id !== selectedId);
+      const remaining = providers.filter(p => p.id !== activeId);
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteProvider(false);
     },
@@ -111,33 +112,33 @@ export default function Providers() {
   });
 
   const createModel = useMutation({
-    mutationFn: () => providersApi.createModel(selectedId!, {
+    mutationFn: () => providersApi.createModel(activeId!, {
       modelName: newModel.modelName,
       inputTokenCost: newModel.inputTokenCost ? parseFloat(newModel.inputTokenCost) : null,
       outputTokenCost: newModel.outputTokenCost ? parseFloat(newModel.outputTokenCost) : null,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
     onError: (err) => toast((err as Error).message || 'Failed to create model', 'error'),
   });
 
   const updatePricing = useMutation({
-    mutationFn: () => providersApi.updateModelPricing(selectedId!, editingModel!.id, {
+    mutationFn: () => providersApi.updateModelPricing(activeId!, editingModel!.id, {
       inputTokenCost: editPricing.inputTokenCost ? parseFloat(editPricing.inputTokenCost) : null,
       outputTokenCost: editPricing.outputTokenCost ? parseFloat(editPricing.outputTokenCost) : null,
     }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(selectedId) }); setEditingModel(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setEditingModel(null); },
     onError: (err) => toast((err as Error).message || 'Failed to update pricing', 'error'),
   });
 
   const createKey = useMutation({
-    mutationFn: () => providersApi.createKey(selectedId!, { name: newKey.name, projectId: newKey.projectId }),
-    onSuccess: (k) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setShowNewKey(false); setNewlyCreatedKey(k); },
+    mutationFn: () => providersApi.createKey(activeId!, { name: newKey.name, projectId: newKey.projectId }),
+    onSuccess: (k) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(activeId) }); setShowNewKey(false); setNewlyCreatedKey(k); },
     onError: (err) => toast((err as Error).message || 'Failed to create API key', 'error'),
   });
 
   const delKey = useMutation({
-    mutationFn: () => providersApi.deleteKey(selectedId!, deleteKey!.id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(selectedId) }); setDeleteKey(null); },
+    mutationFn: () => providersApi.deleteKey(activeId!, deleteKey!.id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(activeId) }); setDeleteKey(null); },
     onError: (err) => toast((err as Error).message || 'Failed to delete API key', 'error'),
   });
 

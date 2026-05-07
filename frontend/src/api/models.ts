@@ -254,7 +254,19 @@ export interface ApiKeyDto {
   providerName: string;
   createdAt: string;
 }
+export interface ProjectMemberDto {
+  id: string;
+  name: string;
+}
 export interface ProjectDto {
+  id: string;
+  name: string;
+  systemEndpointId: string;
+  members: ProjectMemberDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+export interface UserDto {
   id: string;
   name: string;
   createdAt: string;

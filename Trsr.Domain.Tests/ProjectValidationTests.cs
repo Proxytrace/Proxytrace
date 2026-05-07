@@ -19,7 +19,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory(name, endpoint);
+        var project = factory(name, endpoint, []);
 
         // Assert
         project.Should().NotBeNull();
@@ -39,7 +39,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, endpoint);
+        var action = () => factory(null!, endpoint, []);
         action.Should().Throw<Exception>();
     }
 
@@ -52,7 +52,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory(string.Empty, endpoint);
+        var action = () => factory(string.Empty, endpoint, []);
         action.Should().Throw<Exception>();
     }
 
@@ -65,7 +65,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory("   ", endpoint);
+        var action = () => factory("   ", endpoint, []);
         action.Should().Throw<Exception>();
     }
 
@@ -78,7 +78,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        var action = () => factory("\t\t\t", endpoint);
+        var action = () => factory("\t\t\t", endpoint, []);
         action.Should().Throw<Exception>();
     }
 
@@ -92,7 +92,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act
-        var project = createExisting(existingProject.Name, existingProject.SystemEndpoint, existingProject);
+        var project = createExisting(existingProject.Name, existingProject.SystemEndpoint, [], existingProject);
 
         // Assert
         project.Should().NotBeNull();
@@ -112,7 +112,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var existingProject = await generator.CreateAsync(CancellationToken);
 
         // Act & Assert
-        var action = () => createExisting(string.Empty, existingProject.SystemEndpoint, existingProject);
+        var action = () => createExisting(string.Empty, existingProject.SystemEndpoint, [], existingProject);
         action.Should().Throw<Exception>();
     }
 
@@ -125,8 +125,8 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project1 = factory("Project 1", endpoint);
-        var project2 = factory("Project 2", endpoint);
+        var project1 = factory("Project 1", endpoint, []);
+        var project2 = factory("Project 2", endpoint, []);
 
         // Assert
         project1.Id.Should().NotBe(project2.Id);
@@ -141,7 +141,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory(new string('A', 1000), endpoint);
+        var project = factory(new string('A', 1000), endpoint, []);
 
         // Assert
         project.Should().NotBeNull();
@@ -157,7 +157,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory("Project @#$% 123 !&*()", endpoint);
+        var project = factory("Project @#$% 123 !&*()", endpoint, []);
 
         // Assert
         project.Should().NotBeNull();
@@ -173,7 +173,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act
-        var project = factory("项目 José Müller", endpoint);
+        var project = factory("项目 José Müller", endpoint, []);
 
         // Assert
         project.Should().NotBeNull();

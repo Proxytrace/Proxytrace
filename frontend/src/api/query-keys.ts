@@ -13,6 +13,8 @@ export const QUERY_KEYS = {
 
   providers: ['providers'] as const,
   projects: ['projects'] as const,
+  project: (id: string) => ['project', id] as const,
+  users: ['users'] as const,
   providerModels: (providerId: string | null) => ['provider-models', providerId] as const,
   providerKeys: (providerId: string | null) => ['provider-keys', providerId] as const,
 
