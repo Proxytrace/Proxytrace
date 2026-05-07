@@ -14,7 +14,11 @@ internal class ResourcesPromptRepository : IPromptTemplateRepository
     {
         this.resources = resources;
     }
-    
+
+    /// <inheritdoc />
+    public async Task<IPromptTemplate> GetAsync(string name, CancellationToken cancellationToken = default)
+        => await FindAsync(name, cancellationToken) ?? throw new PromptNotFoundException(name);
+
     /// <inheritdoc />
     public Task<IPromptTemplate?> FindAsync(string name, CancellationToken cancellationToken = default)
     {

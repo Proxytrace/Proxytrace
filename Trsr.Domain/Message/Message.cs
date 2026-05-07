@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
+using Trsr.Domain.Prompt;
 
 namespace Trsr.Domain.Message;
 
@@ -47,8 +48,14 @@ public abstract record Message : IDomainObject
     /// <summary>
     /// Creates a new <see cref="Domain.Message.Role.System"/> message with the <paramref name="content"/>
     /// </summary>
+    /// TODO: Remove this overload
     public static SystemMessage CreateSystemMessage(string systemPrompt)
         => new(systemPrompt);
+    
+    public static SystemMessage CreateSystemMessage(
+        IPromptTemplate template, 
+        IReadOnlyDictionary<string, string>? variables = null)
+        => new(template.Render(variables).ToPromptString());
     
     /// <summary>
     /// Creates a new <see cref="Internal.Role.User"/> message with the <paramref name="content"/>

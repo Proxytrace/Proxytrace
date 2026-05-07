@@ -88,5 +88,7 @@ public sealed class Module : Autofac.Module
                 services.AddHostedService<DemoDataSeeder>();
             });
         }
+
+        builder.RegisterInstance(Prompts.ResourceManager);
     }
 }

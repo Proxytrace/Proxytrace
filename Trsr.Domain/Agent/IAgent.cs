@@ -67,5 +67,5 @@ public interface IAgent : IDomainEntity
         IModelEndpoint modelEndpoint, 
         CancellationToken cancellationToken = default);
 
-    SystemMessage RenderSystemMessage(IReadOnlyDictionary<string, string>? variables = null);
+    SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null);
 }

@@ -10,30 +10,31 @@ namespace Trsr.Application.Agent;
 [UsedImplicitly]
 internal sealed class AgentNameGenerator : IAgentNameGenerator
 {
+    private const string PromptName = "agent_name_generator";
+
+    private readonly IPromptTemplateRepository prompts;
     private readonly ILogger<AgentNameGenerator> logger;
 
-    public AgentNameGenerator(ILogger<AgentNameGenerator> logger)
+    public AgentNameGenerator(
+        IPromptTemplateRepository prompts,
+        ILogger<AgentNameGenerator> logger)
     {
+        this.prompts = prompts;
         this.logger = logger;
     }
-
-    private const string Prompt =
-        """
-        You are a naming assistant. Given an AI agent's system message, respond with a short, descriptive name 
-        (2-4 words, title case) that captures the agent's main purpose. Reply with the name only — no explanation, no punctuation, no quotes.
-        """; 
 
     public async Task<string> GenerateNameAsync(
         IPromptTemplate promptTemplate,
         IModelEndpoint endpoint,
         CancellationToken cancellationToken = default)
     {
+        IPromptTemplate generatorPrompt = await prompts.GetAsync(PromptName, cancellationToken);
         try
         {
             var client = endpoint.CreateClient();
 
             var conversation = Conversation.Create();
-            conversation.AddSystemMessage(Message.CreateSystemMessage(Prompt));
+            conversation.AddSystemMessage(Message.CreateSystemMessage(generatorPrompt));
             conversation.Add(Message.CreateUserMessage(promptTemplate.Template));
             
             var result = await client.CompleteAsync(conversation, cancellationToken: cancellationToken);

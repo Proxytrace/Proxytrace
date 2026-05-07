@@ -67,7 +67,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IReadOnlyDictionary<string, string>? variables = null,
         CancellationToken cancellationToken = default)
     {
-        SystemMessage systemMessage = RenderSystemMessage(variables);
+        SystemMessage systemMessage = CreateSystemMessage(variables);
         conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
         return endpoint.CreateClient().CompleteAsync(
             conversation,
@@ -97,11 +97,8 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         return await update.UpdateAsync(cancellationToken);
     }
 
-    public SystemMessage RenderSystemMessage(IReadOnlyDictionary<string, string>? variables = null)
-    {
-        IPrompt prompt = SystemPrompt.Render(variables);
-        return Message.Message.CreateSystemMessage(prompt.ToPromptString());
-    }
+    public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null) 
+        => Message.Message.CreateSystemMessage(SystemPrompt, variables);
 
     /// <inheritdoc />
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
