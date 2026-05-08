@@ -18,12 +18,12 @@ internal sealed class EntityCache<TDomainEntity> : IEntityCache<TDomainEntity>
     private readonly ConcurrentDictionary<Guid, Entry> entries = new();
     private Snapshot? allSnapshot;
 
-    public EntityCache() : this(DefaultTtl, TimeProvider.System) { }
-
-    public EntityCache(TimeSpan ttl, TimeProvider clock)
+    // Single ctor so Autofac never has to choose. Defaults to the system clock and the
+    // module-default TTL; tests construct directly with a fake TimeProvider/short TTL.
+    public EntityCache(TimeProvider? clock = null, TimeSpan? ttl = null)
     {
-        this.ttl = ttl;
-        this.clock = clock;
+        this.clock = clock ?? TimeProvider.System;
+        this.ttl = ttl ?? DefaultTtl;
     }
 
     public TDomainEntity? TryGet(Guid id)

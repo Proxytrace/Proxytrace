@@ -186,7 +186,7 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
     {
         // Direct unit test of the cache itself with a fake clock.
         var clock = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        var cache = new EntityCache<IModel>(TimeSpan.FromMinutes(1), clock);
+        var cache = new EntityCache<IModel>(clock, TimeSpan.FromMinutes(1));
         var model = new StubModel(Guid.NewGuid(), "m1");
 
         cache.Set(model);
