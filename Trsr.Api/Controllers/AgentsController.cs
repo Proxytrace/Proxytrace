@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Agents;
+using Trsr.Api.Dto.Inference;
 using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
@@ -129,6 +130,7 @@ public class AgentsController : ControllerBase
         )).ToArray(),
         a.Endpoint.Id,
         $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
+        ModelParametersDto.FromDomain(a.ModelParameters),
         a.CreatedAt,
         a.UpdatedAt,
         lastUsedAt);

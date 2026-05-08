@@ -16,6 +16,7 @@ import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { ModelParametersGrid } from '../../components/ui/ModelParametersGrid';
 
 const TYPE_COLORS: Record<string, string> = {
   string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
@@ -216,24 +217,32 @@ function AgentDetail({ agent, onDelete, highlightTool }: { agent: AgentDto; onDe
 
       {/* System prompt */}
       <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <div className="px-4 py-3 flex items-center border-b border-hairline">
-          <span className="text-[12.5px] font-semibold">System Prompt</span>
-        </div>
-        <div className="px-4 py-[14px] max-h-[400px] overflow-y-auto">
+        <Collapsible
+          defaultOpen
+          headerClassName="px-4 py-3"
+          contentClassName="px-4 py-[14px] max-h-[400px] overflow-y-auto border-t border-hairline"
+          title={<span className="text-[12.5px] font-semibold">System Prompt</span>}
+        >
           <div className="font-mono text-[11.5px] leading-[1.7] text-primary whitespace-pre-wrap">
             {agent.systemMessage || <span className="text-muted italic">(no system prompt)</span>}
           </div>
-        </div>
+        </Collapsible>
       </div>
 
       {/* Tools */}
       {agent.tools.length > 0 && (
         <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <div className="px-4 py-3 flex items-center gap-2 border-b border-hairline">
-            <span className="text-[12.5px] font-semibold">Tools</span>
-            <span className="px-[7px] py-[1px] rounded-full text-[10.5px] font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>{agent.tools.length}</span>
-          </div>
-          <div className="flex flex-col">
+          <Collapsible
+            defaultOpen={!!highlightTool}
+            headerClassName="px-4 py-3 gap-2"
+            contentClassName="flex flex-col border-t border-hairline"
+            title={
+              <>
+                <span className="text-[12.5px] font-semibold">Tools</span>
+                <span className="px-[7px] py-[1px] rounded-full text-[10.5px] font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>{agent.tools.length}</span>
+              </>
+            }
+          >
             {agent.tools.map((tool, ti) => (
               <ToolRow
                 key={tool.name}
@@ -243,9 +252,20 @@ function AgentDetail({ agent, onDelete, highlightTool }: { agent: AgentDto; onDe
                 highlight={highlightTool === tool.name}
               />
             ))}
-          </div>
+          </Collapsible>
         </div>
       )}
+
+      {/* Model parameters */}
+      <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <Collapsible
+          headerClassName="px-4 py-3"
+          contentClassName="px-4 py-[14px] border-t border-hairline"
+          title={<span className="text-[12.5px] font-semibold">Model Parameters</span>}
+        >
+          <ModelParametersGrid params={agent.modelParameters} />
+        </Collapsible>
+      </div>
     </div>
   );
 }

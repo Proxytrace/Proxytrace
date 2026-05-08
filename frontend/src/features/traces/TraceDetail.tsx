@@ -10,6 +10,7 @@ import { MessageBubble } from '../../components/ui/MessageBubble';
 import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
 import { PromoteModal } from './PromoteModal';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { ModelParametersGrid } from '../../components/ui/ModelParametersGrid';
 
 // ─── ToolResultBlock (fallback for orphan tool messages) ──────────────────────
 
@@ -339,27 +340,31 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           )}
 
           {tab === 'Metadata' && (
-            <div className="grid grid-cols-2 gap-[10px]">
-              {([
-                ['trace.id', trace.id],
-                ['provider', trace.provider],
-                ['model', trace.model],
-                ['agent', trace.agentName ?? '—'],
-                ['http_status', String(trace.httpStatus)],
-                ['finish_reason', trace.finishReason ?? '—'],
-                ['duration_ms', String(trace.durationMs)],
-                ['input_tokens', String(trace.inputTokens)],
-                ['output_tokens', String(trace.outputTokens)],
-                ['cost_eur', trace.costEur != null ? trace.costEur.toFixed(6) : '—'],
-                ['created_at', fmtDate(trace.createdAt)],
-                ['updated_at', fmtDate(trace.updatedAt)],
-              ] as [string, string][]).map(([k, v]) => (
-                <div key={k} className="px-3 py-[10px] bg-card-2 rounded-[8px]">
-                  <div className="text-[10px] text-muted uppercase tracking-[0.06em] mb-[3px]">{k}</div>
-                  <div className="text-[12px] font-mono text-primary break-all">{v}</div>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-[10px]">
+                {([
+                  ['trace.id', trace.id],
+                  ['provider', trace.provider],
+                  ['model', trace.model],
+                  ['agent', trace.agentName ?? '—'],
+                  ['http_status', String(trace.httpStatus)],
+                  ['finish_reason', trace.finishReason ?? '—'],
+                  ['duration_ms', String(trace.durationMs)],
+                  ['input_tokens', String(trace.inputTokens)],
+                  ['output_tokens', String(trace.outputTokens)],
+                  ['cost_eur', trace.costEur != null ? trace.costEur.toFixed(6) : '—'],
+                  ['created_at', fmtDate(trace.createdAt)],
+                  ['updated_at', fmtDate(trace.updatedAt)],
+                ] as [string, string][]).map(([k, v]) => (
+                  <div key={k} className="px-3 py-[10px] bg-card-2 rounded-[8px]">
+                    <div className="text-[10px] text-muted uppercase tracking-[0.06em] mb-[3px]">{k}</div>
+                    <div className="text-[12px] font-mono text-primary break-all">{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-[10px] text-muted uppercase tracking-[0.08em] font-semibold mt-[6px]">Model parameters</div>
+              <ModelParametersGrid params={trace.modelParameters} />
+            </>
           )}
         </div>
       </div>

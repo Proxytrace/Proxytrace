@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
 using Trsr.Api.Dto.Agents;
+using Trsr.Api.Dto.Inference;
 using Trsr.Application.Streaming;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
@@ -98,6 +99,7 @@ public class AgentCallsController : ControllerBase
         c.FinishReason,
         c.ErrorMessage,
         ComputeCost(c),
+        ModelParametersDto.FromDomain(c.ModelParameters),
         c.CreatedAt,
         c.UpdatedAt,
         c.ConversationId);
