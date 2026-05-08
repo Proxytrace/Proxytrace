@@ -10,11 +10,19 @@
 
 <header>
   <div class="header-top">
-    <h1>Trsr Sample Chatbot</h1>
-    <span class="badge">
-      <span class="badge-dot"></span>
-      Routed through Trsr proxy &mdash; every message is captured in your traces
-    </span>
+    <div class="header-text">
+      <h1>Trsr Sample Chatbot</h1>
+      <span class="badge">
+        <span class="badge-dot"></span>
+        Routed through Trsr proxy &mdash; every message is captured in your traces
+      </span>
+    </div>
+    <button id="settings-btn" title="Model parameters" aria-label="Model parameters">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
   </div>
   <nav id="agent-tabs" aria-label="Select agent">
     <!-- Agent tabs are injected here by script.js -->
@@ -56,6 +64,66 @@
     <a href="https://github.com/jabbakadabra/trsr" target="_blank">Trsr on GitHub</a>
   </p>
 </footer>
+
+<div id="settings-modal" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-labelledby="settings-title" aria-modal="true">
+    <div class="modal-header">
+      <h2 id="settings-title">Model Parameters</h2>
+      <button id="settings-close" class="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-hint">Applied to every request. Saved in your browser.</p>
+
+    <div class="param-row">
+      <div class="param-label">
+        <label for="param-temperature">temperature</label>
+        <span class="param-value" id="param-temperature-value">1.00</span>
+      </div>
+      <input type="range" id="param-temperature" min="0" max="2" step="0.01" value="1" />
+      <div class="param-hint">0 = deterministic, 2 = creative</div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">
+        <label for="param-top-p">top_p</label>
+        <span class="param-value" id="param-top-p-value">1.00</span>
+      </div>
+      <input type="range" id="param-top-p" min="0" max="1" step="0.01" value="1" />
+      <div class="param-hint">Nucleus sampling (0&ndash;1)</div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">
+        <label for="param-max-tokens">max_tokens</label>
+        <span class="param-value">&nbsp;</span>
+      </div>
+      <input type="number" id="param-max-tokens" min="1" step="1" placeholder="default" />
+      <div class="param-hint">Leave blank for model default</div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">
+        <label for="param-frequency-penalty">frequency_penalty</label>
+        <span class="param-value" id="param-frequency-penalty-value">0.00</span>
+      </div>
+      <input type="range" id="param-frequency-penalty" min="-2" max="2" step="0.01" value="0" />
+      <div class="param-hint">Penalize repeated tokens (-2 to 2)</div>
+    </div>
+
+    <div class="param-row">
+      <div class="param-label">
+        <label for="param-presence-penalty">presence_penalty</label>
+        <span class="param-value" id="param-presence-penalty-value">0.00</span>
+      </div>
+      <input type="range" id="param-presence-penalty" min="-2" max="2" step="0.01" value="0" />
+      <div class="param-hint">Encourage new topics (-2 to 2)</div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="settings-reset" class="btn-secondary">Reset to defaults</button>
+      <button id="settings-done" class="btn-primary">Done</button>
+    </div>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>

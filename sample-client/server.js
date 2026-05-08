@@ -516,13 +516,28 @@ app.get("/agents", (_req, res) => {
 //   { toolCall: { name, arguments } }       — model is invoking a tool
 //   { toolResult: { name, result } }        — tool execution result
 //   { error: "..." }                        — error message
+// Whitelist of OpenAI completion params accepted from the client.
+const ALLOWED_PARAMS = ["temperature", "top_p", "max_tokens", "frequency_penalty", "presence_penalty"];
+
+function sanitizeModelParams(raw) {
+  if (!raw || typeof raw !== "object") return {};
+  const out = {};
+  for (const key of ALLOWED_PARAMS) {
+    const v = raw[key];
+    if (typeof v !== "number" || !Number.isFinite(v)) continue;
+    out[key] = v;
+  }
+  return out;
+}
+
 app.post("/chat", async (req, res) => {
-  const { messages, agentId, sessionId } = req.body;
+  const { messages, agentId, sessionId, modelParams } = req.body;
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array is required" });
   }
 
   const agent = AGENTS[agentId] ?? AGENTS.travel;
+  const params = sanitizeModelParams(modelParams);
 
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -533,7 +548,8 @@ app.post("/chat", async (req, res) => {
   try {
     const fullMessages = [{ role: "system", content: agent.systemPrompt }, ...messages];
     const sessionHeaders = sessionId ? { "x-trsr-session-id": sessionId } : {};
-    console.log(`[chat] agent=${agent.id} session=${sessionId ?? "none"} → ${MODEL}  messages=${fullMessages.length}`);
+    const paramSummary = Object.keys(params).length ? ` params=${JSON.stringify(params)}` : "";
+    console.log(`[chat] agent=${agent.id} session=${sessionId ?? "none"} → ${MODEL}  messages=${fullMessages.length}${paramSummary}`);
 
     // Turn 1: non-streaming with tools so tool_calls can be detected
     const turn1 = await openai.chat.completions.create({
@@ -541,6 +557,7 @@ app.post("/chat", async (req, res) => {
       messages: fullMessages,
       tools: agent.tools,
       stream: false,
+      ...params,
     }, { headers: sessionHeaders });
 
     const choice = turn1.choices[0];
@@ -570,6 +587,7 @@ app.post("/chat", async (req, res) => {
         messages: [...fullMessages, ...toolMessages],
         tools: agent.tools,
         stream: true,
+        ...params,
       }, { headers: sessionHeaders });
 
       for await (const chunk of stream) {

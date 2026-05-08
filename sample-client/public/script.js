@@ -5,6 +5,11 @@ const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send-btn");
 const agentTabsEl = document.getElementById("agent-tabs");
 const shortcutsListEl = document.getElementById("shortcuts-list");
+const settingsBtn = document.getElementById("settings-btn");
+const settingsModal = document.getElementById("settings-modal");
+const settingsCloseBtn = document.getElementById("settings-close");
+const settingsDoneBtn = document.getElementById("settings-done");
+const settingsResetBtn = document.getElementById("settings-reset");
 
 // Per-agent conversation history: agentId → message[]
 const histories = {};
@@ -13,6 +18,86 @@ const sessionIds = {};
 let agents = [];
 let activeAgentId = null;
 let streaming = false;
+
+// ─── Model parameters ──────────────────────────────────────────────────────
+
+const PARAM_DEFAULTS = {
+  temperature: 1,
+  top_p: 1,
+  max_tokens: null,
+  frequency_penalty: 0,
+  presence_penalty: 0,
+};
+const PARAM_STORAGE_KEY = "trsr-sample-model-params";
+
+function loadModelParams() {
+  try {
+    const raw = localStorage.getItem(PARAM_STORAGE_KEY);
+    if (!raw) return { ...PARAM_DEFAULTS };
+    const parsed = JSON.parse(raw);
+    return { ...PARAM_DEFAULTS, ...parsed };
+  } catch {
+    return { ...PARAM_DEFAULTS };
+  }
+}
+
+function saveModelParams(params) {
+  try { localStorage.setItem(PARAM_STORAGE_KEY, JSON.stringify(params)); } catch {}
+}
+
+let modelParams = loadModelParams();
+
+const PARAM_INPUTS = [
+  { key: "temperature",       inputId: "param-temperature",       valueId: "param-temperature-value",       parse: parseFloat, format: (v) => v.toFixed(2) },
+  { key: "top_p",             inputId: "param-top-p",             valueId: "param-top-p-value",             parse: parseFloat, format: (v) => v.toFixed(2) },
+  { key: "max_tokens",        inputId: "param-max-tokens",        valueId: null,                            parse: (s) => s === "" ? null : parseInt(s, 10), format: null },
+  { key: "frequency_penalty", inputId: "param-frequency-penalty", valueId: "param-frequency-penalty-value", parse: parseFloat, format: (v) => v.toFixed(2) },
+  { key: "presence_penalty",  inputId: "param-presence-penalty",  valueId: "param-presence-penalty-value",  parse: parseFloat, format: (v) => v.toFixed(2) },
+];
+
+function syncParamInputs() {
+  for (const p of PARAM_INPUTS) {
+    const input = document.getElementById(p.inputId);
+    const value = modelParams[p.key];
+    input.value = value == null ? "" : value;
+    if (p.valueId) {
+      const display = document.getElementById(p.valueId);
+      display.textContent = p.format(typeof value === "number" ? value : 0);
+    }
+  }
+}
+
+function bindParamInputs() {
+  for (const p of PARAM_INPUTS) {
+    const input = document.getElementById(p.inputId);
+    input.addEventListener("input", () => {
+      const parsed = p.parse(input.value);
+      modelParams[p.key] = Number.isNaN(parsed) ? null : parsed;
+      if (p.valueId && typeof modelParams[p.key] === "number") {
+        document.getElementById(p.valueId).textContent = p.format(modelParams[p.key]);
+      }
+      saveModelParams(modelParams);
+    });
+  }
+}
+
+function openSettings() { settingsModal.hidden = false; }
+function closeSettings() { settingsModal.hidden = true; }
+function resetSettings() {
+  modelParams = { ...PARAM_DEFAULTS };
+  saveModelParams(modelParams);
+  syncParamInputs();
+}
+
+function buildParamPayload() {
+  const out = {};
+  for (const p of PARAM_INPUTS) {
+    const v = modelParams[p.key];
+    if (v == null || Number.isNaN(v)) continue;
+    out[p.key] = v;
+  }
+  return out;
+}
 
 // ─── Agent management ──────────────────────────────────────────────────────
 
@@ -224,7 +309,7 @@ async function send() {
     const res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history, agentId: activeAgentId, sessionId: sessionIds[activeAgentId] }),
+      body: JSON.stringify({ messages: history, agentId: activeAgentId, sessionId: sessionIds[activeAgentId], modelParams: buildParamPayload() }),
     });
 
     if (!res.ok) {
@@ -296,6 +381,17 @@ inputEl.addEventListener("keydown", (e) => {
 inputEl.addEventListener("input", autoResize);
 sendBtn.addEventListener("click", send);
 
+settingsBtn.addEventListener("click", openSettings);
+settingsCloseBtn.addEventListener("click", closeSettings);
+settingsDoneBtn.addEventListener("click", closeSettings);
+settingsResetBtn.addEventListener("click", resetSettings);
+settingsModal.addEventListener("click", (e) => { if (e.target === settingsModal) closeSettings(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !settingsModal.hidden) closeSettings();
+});
+
 // ─── Boot ──────────────────────────────────────────────────────────────────
 
+syncParamInputs();
+bindParamInputs();
 loadAgents();
