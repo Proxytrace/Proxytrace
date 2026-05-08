@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testSuitesApi } from '../../api/test-suites';
 import { testRunGroupsApi } from '../../api/test-run-groups';
-import { TrashIcon, XIcon, EditIcon } from '../../components/icons';
+import { TrashIcon, EditIcon } from '../../components/icons';
 import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
-import { agentCallsApi } from '../../api/agent-calls';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
-import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
+import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
-import { ModalFooter } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
@@ -19,6 +17,7 @@ import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
+import { EditSuiteDialog } from './EditSuiteDialog';
 import { useToast } from '../../components/ui/Toast';
 import { useFilter } from '../../hooks/useFilter';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, LIST_PAGE_SIZE } from '../../lib/constants';
@@ -162,7 +161,6 @@ export default function Suites() {
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
   const [runDone, setRunDone] = useState(false);
   const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
-  const [editTab, setEditTab] = useState<'cases' | 'evaluators'>('cases');
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createStep, setCreateStep] = useState(0);
@@ -170,7 +168,6 @@ export default function Suites() {
   const [createName, setCreateName] = useState('');
   const [selectedCalls, setSelectedCalls] = useState<Set<string>>(new Set());
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
-  const [addedTraceIds, setAddedTraceIds] = useState<Set<string>>(new Set());
 
   const { data: suitesData, isLoading } = useQuery({
     queryKey: QUERY_KEYS.testSuites(undefined, projectId),
@@ -187,15 +184,9 @@ export default function Suites() {
     queryFn: () => evaluatorsApi.list({ projectId }),
     enabled,
   });
-  const { data: editTracesData } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteEdit(editSuite?.agentId),
-    queryFn: () => agentCallsApi.list({ agentId: editSuite?.agentId, pageSize: 50 }),
-    enabled: !!editSuite && editTab === 'cases',
-  });
 
   const suites = suitesData?.items ?? [];
   const agents = agentsData?.items ?? [];
-  const editTraces = editTracesData?.items ?? [];
 
   const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(
     suites,
@@ -222,31 +213,6 @@ export default function Suites() {
     onError: (err) => toast((err as Error).message || 'Failed to delete suite', 'error'),
   });
 
-  const addCase = useMutation({
-    mutationFn: (callId: string) => testSuitesApi.addTestCase(editSuite!.id, callId),
-    onSuccess: (updatedSuite, callId) => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      setEditSuite(updatedSuite);
-      setAddedTraceIds(prev => new Set([...prev, callId]));
-    },
-    onError: (err) => toast((err as Error).message || 'Failed to add test case', 'error'),
-  });
-
-  const removeCase = useMutation({
-    mutationFn: (caseId: string) => testSuitesApi.removeTestCase(editSuite!.id, caseId),
-    onSuccess: (_, caseId) => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      setEditSuite(prev => prev ? { ...prev, testCases: prev.testCases.filter(tc => tc.id !== caseId) } : prev);
-    },
-    onError: (err) => toast((err as Error).message || 'Failed to remove test case', 'error'),
-  });
-
-  const saveEvaluators = useMutation({
-    mutationFn: () => testSuitesApi.updateEvaluators(editSuite!.id, Array.from(selectedEvaluatorIds)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setEditSuite(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to save evaluators', 'error'),
-  });
-
   const createSuite = useMutation({
     mutationFn: () => testSuitesApi.create({ name: createName, agentId: createAgentId, agentCallIds: Array.from(selectedCalls), evaluatorIds: Array.from(selectedEvaluatorIds) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setCreateOpen(false); resetCreate(); },
@@ -254,13 +220,6 @@ export default function Suites() {
   });
 
   function resetCreate() { setCreateStep(0); setCreateAgentId(''); setCreateName(''); setSelectedCalls(new Set()); setSelectedEvaluatorIds(new Set()); }
-
-  function openEdit(suite: TestSuiteDto) {
-    setEditSuite(suite);
-    setEditTab('cases');
-    setSelectedEvaluatorIds(new Set(suite.evaluators.map(e => e.id)));
-    setAddedTraceIds(new Set());
-  }
 
   function closeRunModal() { setRunSuite(null); setRunDone(false); }
 
@@ -371,7 +330,7 @@ export default function Suites() {
             key={suite.id}
             suite={suite}
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
-            onEdit={() => openEdit(suite)}
+            onEdit={() => setEditSuite(suite)}
             onDelete={() => setDeleteSuite(suite)}
           />
         ))}
@@ -393,141 +352,13 @@ export default function Suites() {
         />
       )}
 
-      {/* Edit modal */}
+      {/* Edit dialog */}
       {editSuite && (
-        <Modal
-          title={`Edit "${editSuite.name}"`}
+        <EditSuiteDialog
+          suite={editSuite}
+          projectId={projectId}
           onClose={() => setEditSuite(null)}
-          maxWidth={600}
-          footer={
-            editTab === 'evaluators' ? (
-              <ModalFooter
-                onCancel={() => setEditSuite(null)}
-                onSubmit={() => saveEvaluators.mutate()}
-                submitLabel={saveEvaluators.isPending ? 'Saving…' : 'Save evaluators'}
-                loading={saveEvaluators.isPending}
-              />
-            ) : (
-              <button className="btn-ghost" onClick={() => setEditSuite(null)}>Close</button>
-            )
-          }
-        >
-          <div className="flex border-b border-hairline mb-4 -mb-px">
-            {(['cases', 'evaluators'] as const).map(t => (
-              <button key={t} onClick={() => setEditTab(t)} className={`px-4 py-2 text-[13px] font-semibold border-none cursor-pointer bg-transparent -mb-px ${editTab === t ? 'text-accent border-b-2 border-b-accent' : 'text-muted border-b-2 border-b-transparent'}`}>
-                {t === 'cases' ? `Test Cases (${editSuite.testCases.length})` : 'Evaluators'}
-              </button>
-            ))}
-          </div>
-          {editTab === 'cases' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Current test cases */}
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                  {editSuite.testCases.length} test case{editSuite.testCases.length !== 1 ? 's' : ''}
-                </div>
-                {editSuite.testCases.length === 0 ? (
-                  <div style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
-                    No test cases yet — add traces below to get started.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {editSuite.testCases.map(tc => {
-                      const preview = [...tc.input].reverse().find(m => m.role === 'user')?.content ?? tc.input[tc.input.length - 1]?.content;
-                      const isRemoving = removeCase.isPending && removeCase.variables === tc.id;
-                      return (
-                        <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)', opacity: isRemoving ? 0.5 : 1, transition: 'opacity 0.15s' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {preview?.slice(0, 80) || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No user message</span>}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {tc.input.length} message{tc.input.length !== 1 ? 's' : ''}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeCase.mutate(tc.id)}
-                            disabled={isRemoving}
-                            className="btn-icon btn-icon-danger"
-                            title="Remove test case"
-                          >
-                            <XIcon size={13} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--hairline)' }} />
-
-              {/* Add from traces */}
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                  Add from traces
-                </div>
-                {editTracesData === undefined ? (
-                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>Loading traces…</div>
-                ) : (() => {
-                  const available = editTraces.filter((t: AgentCallDto) => !addedTraceIds.has(t.id));
-                  if (available.length === 0) {
-                    return (
-                      <div style={{ textAlign: 'center', padding: '14px 16px', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
-                        {editTraces.length === 0 ? 'No traces found for this agent.' : 'All available traces have been added.'}
-                      </div>
-                    );
-                  }
-                  return (
-                    <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {available.map((t: AgentCallDto) => {
-                        const lastMsg = [...t.request].reverse().find(m => m.role === 'user');
-                        const isAdding = addCase.isPending && addCase.variables === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            onClick={() => addCase.mutate(t.id)}
-                            disabled={isAdding}
-                            style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', cursor: isAdding ? 'default' : 'pointer', opacity: isAdding ? 0.65 : 1, transition: 'border-color 0.15s, background 0.15s' }}
-                            onMouseEnter={e => { if (!isAdding) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.background = 'var(--accent-subtle)'; } }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
-                          >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                <span style={{ fontSize: 12, fontWeight: 600 }}>{t.model}</span>
-                                <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(t.createdAt)}</span>
-                              </div>
-                              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {lastMsg?.content?.slice(0, 60) ?? <span className="mono" style={{ fontSize: 10.5 }}>{t.id.slice(0, 12)}…</span>}
-                              </div>
-                            </div>
-                            <span style={{ fontSize: 11.5, fontWeight: 600, color: isAdding ? 'var(--text-muted)' : 'var(--accent)', flexShrink: 0 }}>
-                              {isAdding ? '…' : '+ Add'}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-          {editTab === 'evaluators' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(evaluators as EvaluatorDetailDto[]).map(e => {
-                const c = EVALUATOR_KIND_COLOR[e.kind];
-                return (
-                  <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card-2)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                    <ColoredBadge color={c} label={e.kind} />
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-        </Modal>
+        />
       )}
 
       {/* Create wizard */}
