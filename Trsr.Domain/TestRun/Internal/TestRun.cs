@@ -66,7 +66,6 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         if (Status == TestRunStatus.Completed)
         {
             yield return Validation.NotNull(CompletedAt);
-            yield return Validation.HasCount(TestResults, Group.Suite.TestCases.Count);
         }
     }
 

@@ -60,6 +60,37 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         dto!.Evaluators.Should().ContainSingle(e => e.Kind == EvaluatorKind.ExactMatch);
     }
 
+    [TestMethod]
+    public async Task AddTestCase_AfterPromote_DoesNotDuplicateEvaluatorJunctionRows()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var generator = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        var firstCall = await generator.CreateAsync(CancellationToken);
+        var secondCall = await generator.CreateAsync(CancellationToken);
+        var helpfulness = await services.GetRequiredService<IDomainEntityGenerator<IHelpfulnessEvaluator>>().CreateAsync(CancellationToken);
+
+        var promoteResult = await controller.PromoteFromTraces(
+            new PromoteTracesRequest(
+                Name: "Suite under test",
+                AgentId: firstCall.Agent.Id,
+                AgentCallIds: [firstCall.Id],
+                EvaluatorIds: [helpfulness.Id]),
+            CancellationToken);
+        var suiteId = (Guid)((CreatedAtActionResult)promoteResult.Result!).RouteValues!["id"]!;
+
+        var addResult = await controller.AddTestCase(
+            suiteId,
+            new AddTestCaseRequest(FromAgentCallId: secondCall.Id, Input: null, ExpectedOutput: null),
+            CancellationToken);
+
+        var dto = ((ActionResult<TestSuiteDto>)addResult).Value;
+        dto.Should().NotBeNull();
+        dto!.TestCases.Should().HaveCount(2);
+        dto.Evaluators.Should().ContainSingle(e => e.Id == helpfulness.Id);
+    }
+
     private static TestSuitesController ResolveController(IServiceProvider services) =>
         new(
             services.GetRequiredService<ITestSuiteRepository>(),

@@ -12,7 +12,7 @@ internal class TestSuiteEvaluatorConfig : AbstractEntityConfiguration<TestSuiteE
 
         builder
             .HasOne<TestSuiteEntity>()
-            .WithMany()
+            .WithMany(e => e.TestSuiteEvaluators)
             .HasForeignKey(e => e.TestSuiteId)
             .OnDelete(DeleteBehavior.Cascade);
 
