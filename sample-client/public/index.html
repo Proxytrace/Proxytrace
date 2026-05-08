@@ -57,6 +57,15 @@
     <div id="shortcuts-list">
       <!-- Shortcut chips are injected here by script.js -->
     </div>
+    <button id="play-btn" class="play-btn" title="Run every shortcut for this agent">
+      <svg id="play-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      <svg id="stop-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden>
+        <rect x="6" y="6" width="12" height="12" rx="1"/>
+      </svg>
+      <span id="play-label">Play all</span>
+    </button>
   </div>
   <p class="hint">
     Traces visible at <a href="http://localhost:4201" target="_blank">localhost:4201</a>

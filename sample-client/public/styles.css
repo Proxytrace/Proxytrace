@@ -380,6 +380,46 @@ footer {
   color: var(--accent);
 }
 
+.play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.play-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+
+.play-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.play-btn.playing {
+  background: var(--accent);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.agent-tab.disabled,
+.agent-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ─── Settings modal ───────────────────────────────────────────────────────── */
 
 .modal-backdrop {

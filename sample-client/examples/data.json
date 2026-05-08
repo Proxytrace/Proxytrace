@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Q1 2024 sales performance",
+    "prompt": "Give me a breakdown of sales performance for Q1 2024 — total revenue, top products, and month-over-month growth."
+  },
+  {
+    "label": "Detect revenue anomalies",
+    "prompt": "Are there any anomalies or unexpected spikes/dips in last month's daily revenue data?"
+  },
+  {
+    "label": "Forecast next quarter",
+    "prompt": "Based on the last 4 quarters of sales data, forecast next quarter's revenue and highlight any seasonal trends."
+  },
+  {
+    "label": "Top products in April",
+    "prompt": "Pull daily revenue for April 2024 — I want to see which days drove the most sales."
+  },
+  {
+    "label": "Revenue stats summary",
+    "prompt": "Give me descriptive statistics for revenue over the last quarter: mean, median, std dev, and the 25/75 percentiles."
+  },
+  {
+    "label": "Q1 vs Q2 revenue compare",
+    "prompt": "Compare Q1 2024 to Q2 2024 quarterly revenue — what's the percent change and is Q2 within normal variance?"
+  },
+  {
+    "label": "Seasonality scan, high sensitivity",
+    "prompt": "Run a high-sensitivity anomaly scan on daily orders for the last 30 days. I'm trying to find weekday/weekend seasonality patterns."
+  },
+  {
+    "label": "Investigate a single-day dip",
+    "prompt": "Revenue cratered on March 28. Pull the anomaly data for that period and tell me what likely caused it."
+  },
+  {
+    "label": "90-day forecast, ARIMA",
+    "prompt": "Forecast revenue for the next 90 days using the ARIMA model. I want weekly granularity and a confidence band."
+  },
+  {
+    "label": "Refund-rate outliers last 30d",
+    "prompt": "Look at refund_rate over last_30_days with medium sensitivity. Are there any outliers I should escalate?"
+  }
+]

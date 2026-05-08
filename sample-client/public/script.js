@@ -5,6 +5,10 @@ const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send-btn");
 const agentTabsEl = document.getElementById("agent-tabs");
 const shortcutsListEl = document.getElementById("shortcuts-list");
+const playBtn = document.getElementById("play-btn");
+const playIcon = document.getElementById("play-icon");
+const stopIcon = document.getElementById("stop-icon");
+const playLabel = document.getElementById("play-label");
 const settingsBtn = document.getElementById("settings-btn");
 const settingsModal = document.getElementById("settings-modal");
 const settingsCloseBtn = document.getElementById("settings-close");
@@ -18,6 +22,11 @@ const sessionIds = {};
 let agents = [];
 let activeAgentId = null;
 let streaming = false;
+// Auto-play: when true, ignore manual sends and disable tab switching while
+// the playlist iterates the active agent's shortcuts.
+let playing = false;
+let stopRequested = false;
+const PLAYLIST_DELAY_MS = 800;
 
 // ─── Model parameters ──────────────────────────────────────────────────────
 
@@ -127,7 +136,7 @@ function renderAgentTabs() {
 }
 
 function selectAgent(id) {
-  if (activeAgentId === id) return;
+  if (playing || activeAgentId === id) return;
   activeAgentId = id;
 
   // Update tab active state
@@ -285,12 +294,12 @@ function resolveToolCard(card, resultJson) {
 
 // ─── Send message ──────────────────────────────────────────────────────────
 
-async function send() {
-  const text = inputEl.value.trim();
-  if (!text || streaming || !activeAgentId) return;
+// Posts one user turn to /chat and consumes the SSE stream until [DONE].
+// Resolves on success, rejects on transport / API errors. Used directly by
+// the manual Send button and by the auto-play playlist runner.
+async function sendPrompt(text) {
+  if (!text || !activeAgentId) return;
 
-  inputEl.value = "";
-  autoResize();
   streaming = true;
   sendBtn.disabled = true;
 
@@ -361,11 +370,91 @@ async function send() {
   } catch (err) {
     assistantBubble.closest(".message").remove();
     addError(err.message);
+    throw err;
   } finally {
     assistantBubble.classList.remove("cursor");
     streaming = false;
-    sendBtn.disabled = false;
+    if (!playing) sendBtn.disabled = false;
+  }
+}
+
+async function send() {
+  const text = inputEl.value.trim();
+  if (!text || streaming || playing || !activeAgentId) return;
+  inputEl.value = "";
+  autoResize();
+  try {
+    await sendPrompt(text);
+  } catch {
+    // sendPrompt already surfaced the error in the message list
+  } finally {
     inputEl.focus();
+  }
+}
+
+// ─── Auto-play playlist ────────────────────────────────────────────────────
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function setPlayingState(isPlaying, progress = "") {
+  playing = isPlaying;
+  inputEl.disabled = isPlaying;
+  sendBtn.disabled = isPlaying || streaming;
+  playIcon.hidden = isPlaying;
+  stopIcon.hidden = !isPlaying;
+  playLabel.textContent = isPlaying ? (progress || "Stop") : "Play all";
+  playBtn.classList.toggle("playing", isPlaying);
+  agentTabsEl.querySelectorAll(".agent-tab").forEach((btn) => {
+    btn.disabled = isPlaying;
+    btn.classList.toggle("disabled", isPlaying);
+  });
+}
+
+// Reset the active agent's transcript + session so playlist runs ingest as
+// fresh single-turn traces rather than stacking into one long conversation.
+function resetActiveAgent() {
+  histories[activeAgentId] = [];
+  sessionIds[activeAgentId] = null;
+  renderHistory();
+}
+
+async function playPlaylist() {
+  const agent = agents.find((a) => a.id === activeAgentId);
+  if (!agent || !agent.shortcuts?.length) return;
+
+  resetActiveAgent();
+  stopRequested = false;
+  setPlayingState(true, `Playing 0 / ${agent.shortcuts.length}…`);
+
+  try {
+    for (let i = 0; i < agent.shortcuts.length; i++) {
+      if (stopRequested) break;
+      setPlayingState(true, `Playing ${i + 1} / ${agent.shortcuts.length}…`);
+      // Each example gets its own session so traces appear as distinct
+      // conversations in the Trsr dashboard.
+      sessionIds[activeAgentId] = crypto.randomUUID();
+      try {
+        await sendPrompt(agent.shortcuts[i].prompt);
+      } catch {
+        // sendPrompt already rendered the error inline; keep going so a
+        // single failure doesn't abort the whole playlist.
+      }
+      if (stopRequested) break;
+      if (i < agent.shortcuts.length - 1) await sleep(PLAYLIST_DELAY_MS);
+    }
+  } finally {
+    setPlayingState(false);
+    stopRequested = false;
+    inputEl.focus();
+  }
+}
+
+function togglePlay() {
+  if (playing) {
+    stopRequested = true;
+    playLabel.textContent = "Stopping…";
+  } else {
+    playPlaylist();
   }
 }
 
@@ -380,6 +469,7 @@ inputEl.addEventListener("keydown", (e) => {
 
 inputEl.addEventListener("input", autoResize);
 sendBtn.addEventListener("click", send);
+playBtn.addEventListener("click", togglePlay);
 
 settingsBtn.addEventListener("click", openSettings);
 settingsCloseBtn.addEventListener("click", closeSettings);
