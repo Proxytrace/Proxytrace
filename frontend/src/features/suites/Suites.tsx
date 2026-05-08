@@ -7,6 +7,7 @@ import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
 import { agentCallsApi } from '../../api/agent-calls';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
 import { ModalFooter } from '../../components/overlays/Modal';
@@ -154,6 +155,9 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
 export default function Suites() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
+  const { currentProjectId } = useCurrentProject();
+  const projectId = currentProjectId ?? undefined;
+  const enabled = currentProjectId !== null;
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
   const [runDone, setRunDone] = useState(false);
   const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
@@ -167,9 +171,21 @@ export default function Suites() {
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
   const [addedTraceIds, setAddedTraceIds] = useState<Set<string>>(new Set());
 
-  const { data: suitesData, isLoading } = useQuery({ queryKey: QUERY_KEYS.testSuites(''), queryFn: () => testSuitesApi.list({ pageSize: LIST_PAGE_SIZE }) });
-  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }) });
-  const { data: evaluators = [] } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
+  const { data: suitesData, isLoading } = useQuery({
+    queryKey: QUERY_KEYS.testSuites(undefined, projectId),
+    queryFn: () => testSuitesApi.list({ projectId, pageSize: LIST_PAGE_SIZE }),
+    enabled,
+  });
+  const { data: agentsData } = useQuery({
+    queryKey: QUERY_KEYS.agents(projectId),
+    queryFn: () => agentsApi.list({ projectId, pageSize: LIST_PAGE_SIZE }),
+    enabled,
+  });
+  const { data: evaluators = [] } = useQuery({
+    queryKey: QUERY_KEYS.evaluators(projectId),
+    queryFn: () => evaluatorsApi.list({ projectId }),
+    enabled,
+  });
   const { data: tracesData } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteCreate(createAgentId),
     queryFn: () => agentCallsApi.list({ agentId: createAgentId, pageSize: 50 }),

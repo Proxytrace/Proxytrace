@@ -13,4 +13,7 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
         ITransaction transaction) : base(mapper, contextFactory, transaction)
     {
     }
+
+    public Task<IReadOnlyList<IEvaluator>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 }

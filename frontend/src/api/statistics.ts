@@ -15,13 +15,13 @@ import type { StatisticsBucket } from '../lib/time-range';
 type AgentRangeParams = { from: string; to: string; bucket: StatisticsBucket; [key: string]: string };
 
 export const statisticsApi = {
-  summary: (params?: { from?: string; to?: string }) =>
+  summary: (params?: { from?: string; to?: string; projectId?: string }) =>
     api.get<SummaryDto>(`/api/statistics/summary${qs(params ?? {})}`),
-  latency: (params?: { from?: string; to?: string; agentId?: string }) =>
+  latency: (params?: { from?: string; to?: string; agentId?: string; projectId?: string }) =>
     api.get<LatencyStatDto[]>(`/api/statistics/latency${qs(params ?? {})}`),
-  modelBreakdown: (params?: { from?: string; to?: string; agentId?: string }) =>
+  modelBreakdown: (params?: { from?: string; to?: string; agentId?: string; projectId?: string }) =>
     api.get<ModelBreakdownDto[]>(`/api/statistics/model-breakdown${qs(params ?? {})}`),
-  agentBreakdown: (params?: { from?: string; to?: string }) =>
+  agentBreakdown: (params?: { from?: string; to?: string; projectId?: string }) =>
     api.get<AgentBreakdownDto[]>(`/api/statistics/agent-breakdown${qs(params ?? {})}`),
 
   agentOverview: (agentId: string, params: AgentRangeParams) =>

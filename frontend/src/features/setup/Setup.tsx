@@ -116,6 +116,7 @@ export default function Setup() {
         case 3: {
           const project = await setupApi.createProject(projectName.trim(), ids.endpointId!);
           setIds(prev => ({ ...prev, projectId: project.id }));
+          try { localStorage.setItem('trsr:current-project-id', project.id); } catch { /* ignore */ }
           break;
         }
       }

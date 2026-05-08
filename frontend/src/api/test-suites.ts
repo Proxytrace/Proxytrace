@@ -9,7 +9,7 @@ export interface CreateTestSuitePayload {
 }
 
 export const testSuitesApi = {
-  list: (params?: { agentId?: string; page?: number; pageSize?: number }) =>
+  list: (params?: { agentId?: string; projectId?: string; page?: number; pageSize?: number }) =>
     api.get<PagedResult<TestSuiteDto>>(`/api/test-suites${qs(params ?? {})}`),
   get: (id: string) => api.get<TestSuiteDto>(`/api/test-suites/${id}`),
   create: (payload: CreateTestSuitePayload) =>

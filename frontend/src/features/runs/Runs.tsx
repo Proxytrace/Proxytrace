@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { TestRunStatus, EvaluatorKind, EvaluationScore, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
 
 const PASSING_SCORES = new Set<EvaluationScore>([EvaluationScore.Acceptable, EvaluationScore.Good, EvaluationScore.Excellent]);
@@ -457,16 +458,24 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
 export default function Runs() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
+  const { currentProjectId } = useCurrentProject();
+  const projectId = currentProjectId ?? undefined;
+  const enabled = currentProjectId !== null;
   const [agentFilter, setAgentFilter] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.testRunGroups(agentFilter),
-    queryFn: () => testRunGroupsApi.list({ agentId: agentFilter || undefined, pageSize: 100 }),
+    queryKey: QUERY_KEYS.testRunGroups(agentFilter, projectId),
+    queryFn: () => testRunGroupsApi.list({ agentId: agentFilter || undefined, projectId: agentFilter ? undefined : projectId, pageSize: 100 }),
     refetchInterval: REFETCH_INTERVAL_LIVE,
+    enabled,
   });
-  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }) });
+  const { data: agentsData } = useQuery({
+    queryKey: QUERY_KEYS.agents(projectId),
+    queryFn: () => agentsApi.list({ projectId, pageSize: LIST_PAGE_SIZE }),
+    enabled,
+  });
 
   const groups = data?.items ?? [];
   const agents = agentsData?.items ?? [];

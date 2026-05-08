@@ -5,6 +5,7 @@ import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { SparklesIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { KpiCard } from '../../components/ui/KpiCard';
@@ -41,35 +42,43 @@ const DASHBOARD_TRACE_COLUMNS: DataColumn<AgentCallDto>[] = [
 export default function Dashboard() {
   const [range, setRange] = useState<RangeKey>('24h');
   const from = rangeFrom(range);
+  const { currentProjectId } = useCurrentProject();
+  const projectId = currentProjectId ?? undefined;
+  const enabled = currentProjectId !== null;
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
-    queryKey: QUERY_KEYS.statisticsSummary(from),
-    queryFn: () => statisticsApi.summary({ from }),
+    queryKey: QUERY_KEYS.statisticsSummary(from, projectId),
+    queryFn: () => statisticsApi.summary({ from, projectId }),
     refetchInterval: REFETCH_INTERVAL_FAST,
+    enabled,
   });
 
   const { data: tracesData, isLoading: tracesLoading } = useQuery({
-    queryKey: QUERY_KEYS.agentCalls({ page: 1, pageSize: 7, from }),
-    queryFn: () => agentCallsApi.list({ page: 1, pageSize: 7, from }),
+    queryKey: QUERY_KEYS.agentCalls({ page: 1, pageSize: 7, from, projectId }),
+    queryFn: () => agentCallsApi.list({ page: 1, pageSize: 7, from, projectId }),
     refetchInterval: REFETCH_INTERVAL_FAST,
+    enabled,
   });
 
   const { data: agentsData, isLoading: agentsLoading } = useQuery({
-    queryKey: QUERY_KEYS.agents,
-    queryFn: () => agentsApi.list({ pageSize: 10 }),
+    queryKey: QUERY_KEYS.agents(projectId),
+    queryFn: () => agentsApi.list({ projectId, pageSize: 10 }),
     refetchInterval: REFETCH_INTERVAL_SLOW,
+    enabled,
   });
 
   const { data: latencyData } = useQuery({
-    queryKey: QUERY_KEYS.statisticsLatency(from),
-    queryFn: () => statisticsApi.latency({ from }),
+    queryKey: QUERY_KEYS.statisticsLatency(from, undefined, projectId),
+    queryFn: () => statisticsApi.latency({ from, projectId }),
     refetchInterval: REFETCH_INTERVAL_FAST,
+    enabled,
   });
 
   const { data: modelBreakdown, isLoading: modelLoading } = useQuery({
-    queryKey: QUERY_KEYS.statisticsModelBreakdown(from),
-    queryFn: () => statisticsApi.modelBreakdown({ from }),
+    queryKey: QUERY_KEYS.statisticsModelBreakdown(from, undefined, projectId),
+    queryFn: () => statisticsApi.modelBreakdown({ from, projectId }),
     refetchInterval: REFETCH_INTERVAL_FAST,
+    enabled,
   });
 
   const recentTraces = tracesData?.items ?? [];

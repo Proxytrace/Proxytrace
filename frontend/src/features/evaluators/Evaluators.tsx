@@ -4,6 +4,7 @@ import { evaluatorsApi } from '../../api/evaluators';
 import { testSuitesApi } from '../../api/test-suites';
 import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
@@ -640,6 +641,7 @@ type TypeFilter = 'all' | TypeCategory;
 export default function Evaluators() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
+  const { currentProjectId } = useCurrentProject();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [showNew, setShowNew] = useState(false);
@@ -650,8 +652,16 @@ export default function Evaluators() {
   const [editForm, setEditForm] = useState<EvaluatorFormState>(initForm());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const { data: evaluators = [], isLoading } = useQuery({ queryKey: QUERY_KEYS.evaluators, queryFn: evaluatorsApi.list });
-  const { data: suitesResult } = useQuery({ queryKey: QUERY_KEYS.testSuites(), queryFn: () => testSuitesApi.list() });
+  const { data: evaluators = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.evaluators(currentProjectId ?? undefined),
+    queryFn: () => evaluatorsApi.list(currentProjectId ? { projectId: currentProjectId } : undefined),
+    enabled: currentProjectId !== null,
+  });
+  const { data: suitesResult } = useQuery({
+    queryKey: QUERY_KEYS.testSuites(undefined, currentProjectId ?? undefined),
+    queryFn: () => testSuitesApi.list(currentProjectId ? { projectId: currentProjectId } : undefined),
+    enabled: currentProjectId !== null,
+  });
   const { data: endpoints = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
   const suites = suitesResult?.items ?? [];
 
@@ -677,14 +687,13 @@ export default function Evaluators() {
   const createEval = useMutation({
     mutationFn: () => {
       const k = pickedKind!;
-      const payload: CreateEvaluatorPayload = { kind: k };
-      if (k === EvaluatorKind.Custom) { payload.name = createForm.name; payload.systemMessage = createForm.systemMessage; payload.endpointId = createForm.endpointId || null; }
-      else if (META[k]?.requiresEndpoint) { payload.endpointId = createForm.endpointId || null; }
+      const payload: CreateEvaluatorPayload = { kind: k, projectId: currentProjectId! };
+      if (k === EvaluatorKind.Custom) { payload.name = createForm.name; payload.systemMessage = createForm.systemMessage; }
       else if (k === EvaluatorKind.JsonSchemaMatch) { payload.jsonSchema = createForm.jsonSchema; }
       else if (k === EvaluatorKind.NumericMatch) { payload.extractionPattern = createForm.extractionPattern; payload.tolerance = parseFloat(createForm.tolerance) || 0.01; }
       return evaluatorsApi.create(payload);
     },
-    onSuccess: (e) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setSelectedId(e.id); setShowNew(false); setPickedKind(null); setCreateForm(initForm()); },
+    onSuccess: (e) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(currentProjectId ?? undefined) }); setSelectedId(e.id); setShowNew(false); setPickedKind(null); setCreateForm(initForm()); },
     onError: (err) => toast((err as Error).message || 'Failed to create evaluator', 'error'),
   });
 
@@ -692,20 +701,19 @@ export default function Evaluators() {
     mutationFn: () => {
       const ev = editTarget!;
       const payload: Partial<CreateEvaluatorPayload> = {};
-      if (ev.kind === EvaluatorKind.Custom) { payload.name = editForm.name; payload.systemMessage = editForm.systemMessage; payload.endpointId = editForm.endpointId || null; }
-      else if (META[ev.kind]?.requiresEndpoint) { payload.endpointId = editForm.endpointId || null; }
+      if (ev.kind === EvaluatorKind.Custom) { payload.name = editForm.name; payload.systemMessage = editForm.systemMessage; }
       else if (ev.kind === EvaluatorKind.JsonSchemaMatch) { payload.jsonSchema = editForm.jsonSchema; }
       else if (ev.kind === EvaluatorKind.NumericMatch) { payload.extractionPattern = editForm.extractionPattern; payload.tolerance = parseFloat(editForm.tolerance) || 0.01; }
       return evaluatorsApi.update(ev.id, payload);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators }); setEditOpen(false); setEditTargetId(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(currentProjectId ?? undefined) }); setEditOpen(false); setEditTargetId(null); },
     onError: (err) => toast((err as Error).message || 'Failed to update evaluator', 'error'),
   });
 
   const deleteEval = useMutation({
     mutationFn: () => evaluatorsApi.delete(deleteTargetId!),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(currentProjectId ?? undefined) });
       if (selectedId === deleteTargetId) setSelectedId(null);
       setDeleteTargetId(null);
     },

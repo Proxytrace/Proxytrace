@@ -11,4 +11,8 @@ public interface IOptimizationProposalRepository : IRepository<IOptimizationProp
     Task<IReadOnlyList<IOptimizationProposal>> GetByAgentAsync(
         Guid agentId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<IOptimizationProposal>> GetByProjectAsync(
+        Guid projectId,
+        CancellationToken cancellationToken = default);
 }

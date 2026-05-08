@@ -32,4 +32,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
 
         return await Map(stored, cancellationToken);
     }
+
+    public Task<IReadOnlyList<ITestRunGroup>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 }

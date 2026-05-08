@@ -5,6 +5,8 @@ import {
   ChevronRightIcon, CheckboxIcon, ArrowUpRightIcon, CopyIcon,
 } from '../../components/icons';
 import { proposalsApi } from '../../api/proposals';
+import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import type { OptimizationProposalDto, ModelSwitchDetailsDto, SystemPromptDetailsDto, ToolDetailsDto } from '../../api/models';
 import { ProposalStatus as ApiProposalStatus } from '../../api/models';
 
@@ -677,13 +679,17 @@ type TypeFilter = 'all' | ProposalType;
 
 export default function Proposals() {
   const queryClient = useQueryClient();
+  const { currentProjectId } = useCurrentProject();
+  const projectId = currentProjectId ?? undefined;
+  const enabled = currentProjectId !== null;
   const [filter, setFilter]         = useState<StatusFilter>('open');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [selected, setSelected]     = useState<Proposal | null>(null);
 
   const { data: dtos = [], isLoading } = useQuery({
-    queryKey: ['proposals'],
-    queryFn: () => proposalsApi.getAll(),
+    queryKey: QUERY_KEYS.proposals(undefined, projectId),
+    queryFn: () => proposalsApi.getAll({ projectId }),
+    enabled,
   });
 
   const proposals: Proposal[] = dtos.map(dtoToProposal);
@@ -692,7 +698,7 @@ export default function Proposals() {
     mutationFn: ({ id, status }: { id: string; status: ApiProposalStatus }) =>
       proposalsApi.updateStatus(id, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ predicate: q => q.queryKey[0] === 'proposals' });
       setSelected(null);
     },
   });

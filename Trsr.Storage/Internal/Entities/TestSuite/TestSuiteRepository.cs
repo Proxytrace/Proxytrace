@@ -27,6 +27,9 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
         return await Map(stored, cancellationToken);
     }
 
+    public Task<IReadOnlyList<ITestSuite>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
     protected override async Task UpdateRelationsAsync(
         StorageDbContext context,
         TestSuiteEntity storedEntity,

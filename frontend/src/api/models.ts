@@ -266,6 +266,8 @@ export interface EvaluatorDetailDto {
   kind: EvaluatorKind;
   name: string;
   systemMessage: string | null;
+  projectId: string;
+  projectName: string;
   endpointId: string | null;
   endpointName: string | null;
   jsonSchema: string | null;
@@ -276,9 +278,9 @@ export interface EvaluatorDetailDto {
 }
 export interface CreateEvaluatorPayload {
   kind: EvaluatorKind;
+  projectId: string;
   name?: string | null;
   systemMessage?: string | null;
-  endpointId?: string | null;
   jsonSchema?: string | null;
   extractionPattern?: string | null;
   tolerance?: number | null;

@@ -30,4 +30,9 @@ internal class OptimizationProposalRepository :
 
         return await Map(stored, cancellationToken);
     }
+
+    public Task<IReadOnlyList<IOptimizationProposal>> GetByProjectAsync(
+        Guid projectId,
+        CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
 }
