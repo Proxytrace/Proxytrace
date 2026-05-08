@@ -165,8 +165,18 @@ public class TestSuitesController : ControllerBase
             return BadRequest("At least one agent call ID must be provided.");
         
         var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
-        var evaluator = createEvaluator(agent.Project);
-        var savedEvaluator = await evaluatorRepository.AddAsync(evaluator, cancellationToken);
+
+        IReadOnlyCollection<IEvaluator> evaluators;
+        if (request.EvaluatorIds is { Count: > 0 })
+        {
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+        }
+        else
+        {
+            var defaultEvaluator = createEvaluator(agent.Project);
+            var savedDefault = await evaluatorRepository.AddAsync(defaultEvaluator, cancellationToken);
+            evaluators = [savedDefault];
+        }
 
         var testCases = new List<ITestCase>();
         foreach (var callId in request.AgentCallIds)
@@ -185,7 +195,7 @@ public class TestSuitesController : ControllerBase
             testCases.Add(saved);
         }
 
-        var suite = createSuite(request.Name, agent, [savedEvaluator], testCases);
+        var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
     }
