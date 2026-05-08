@@ -3,6 +3,7 @@ using Trsr.Domain.Evaluator;
 namespace Trsr.Storage.Internal.Entities.Evaluator;
 
 [StoredDomainEntity(typeof(IEvaluator))]
+[Cacheable]
 internal record EvaluatorEntity : Entity
 {
     /// <summary>

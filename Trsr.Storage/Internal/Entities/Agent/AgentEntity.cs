@@ -9,6 +9,7 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 internal record SystemPromptData(string Name, string Template);
 
 [StoredDomainEntity(typeof(Trsr.Domain.Agent.IAgent))]
+[Cacheable]
 internal record AgentEntity : Entity
 {
     /// <summary>

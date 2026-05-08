@@ -1,4 +1,5 @@
-﻿using Autofac;
+﻿using System.Reflection;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -128,6 +129,14 @@ public sealed class Module : Autofac.Module
             foreach (Type interfaceType in repositoryType.GetInterfaces())
             {
                 builder.RegisterType(repositoryType).As(interfaceType);
+            }
+
+            // opt-in in-memory cache for slow-changing reference data
+            if (storedEntityType.GetCustomAttribute<CacheableAttribute>() != null)
+            {
+                Type cacheImpl = typeof(EntityCache<>).MakeGenericType(domainEntityType);
+                Type cacheInterface = typeof(IEntityCache<>).MakeGenericType(domainEntityType);
+                builder.RegisterType(cacheImpl).As(cacheInterface).SingleInstance();
             }
         }
     }
