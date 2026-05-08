@@ -26,7 +26,7 @@ internal class OptimizationProposalRepository :
             .Set<OptimizationProposalEntity>()
             .AsNoTracking()
             .Where(e => e.Agent == agentId)
-            .OrderByDescending(e => e.CreatedAt.UtcTicks)
+            .OrderByDescending(e => e.CreatedAt)
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);
@@ -45,7 +45,7 @@ internal class OptimizationProposalRepository :
                 a => a.Id,
                 (p, a) => new { Proposal = p, Agent = a })
             .Where(x => x.Agent.Project == projectId)
-            .OrderByDescending(x => x.Proposal.CreatedAt.UtcTicks)
+            .OrderByDescending(x => x.Proposal.CreatedAt)
             .Select(x => x.Proposal)
             .ToListAsync(cancellationToken);
 
