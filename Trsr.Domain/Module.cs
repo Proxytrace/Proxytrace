@@ -73,7 +73,10 @@ public sealed class Module : Autofac.Module
             .As<IStatisticsCalculator>()
             .SingleInstance();
         
-        builder.RegisterType<ResourcesPromptRepository>().As<IPromptTemplateRepository>();
+        builder.RegisterType<ResourcesPromptRepository>()
+            .As<IPromptTemplateRepository>();
+
+        builder.RegisterInstance(Prompts.ResourceManager);
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)

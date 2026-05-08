@@ -1,7 +1,7 @@
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
-  agentCallsForSuiteCreate: (agentId: string) => ['agent-calls', 'suite-create', agentId] as const,
+  agentCallsForSuiteCreate: (agentId: string, from?: string) => ['agent-calls', 'suite-create', agentId, from ?? null] as const,
   agentCallsForSuiteEdit: (agentId?: string) => ['agent-calls', 'suite-edit', agentId] as const,
 
   statisticsSummary: (from: string, projectId?: string) => ['statistics-summary', from, projectId ?? null] as const,

@@ -492,36 +492,8 @@ export default function Runs() {
 
   const deleteTarget = groups.find(g => g.id === deleteGroupId);
 
-  const totalRuns = groups.length;
-  const avgPassRate = groups.filter(g => g.status === TestRunStatus.Completed).length > 0
-    ? Math.round(groups.filter(g => g.status === TestRunStatus.Completed).reduce((n, g) => {
-        const total = g.runs.reduce((s, r) => s + r.totalCases, 0);
-        const passed = g.runs.reduce((s, r) => s + r.passedCases, 0);
-        return n + (total > 0 ? passed / total : 0);
-      }, 0) / groups.filter(g => g.status === TestRunStatus.Completed).length * 100)
-    : null;
-
   return (
-    <div className="w-full max-w-[1360px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto p-[4px_4px_24px]">
-      {/* Header */}
-      <div className="fade-up flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-[6px]">Test Runs</h1>
-          <p className="text-[13.5px] text-muted m-0">Evaluation results over time — per-case pass/fail, scores, and trends.</p>
-        </div>
-        <div className="flex gap-[10px]">
-          {[
-            { label: 'Total runs', value: String(totalRuns) },
-            { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—' },
-          ].map(s => (
-            <div key={s.label} className="px-4 py-[10px] bg-card rounded-xl text-center" style={{ boxShadow: 'var(--shadow-card)' }}>
-              <div className="text-[18px] font-bold tracking-[-0.02em]">{s.value}</div>
-              <div className="text-[11px] text-muted mt-[2px]">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto p-[4px_4px_24px]">
       {/* Master–detail */}
       <div className="fade-up grid gap-[14px] items-start" style={{ animationDelay: '40ms', gridTemplateColumns: '280px 1fr' }}>
         {/* Left: group list */}

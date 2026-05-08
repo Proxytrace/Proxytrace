@@ -55,4 +55,6 @@ public record PromoteTracesRequest(
     /// <summary>The agent whose traces are being promoted. Must match the agent that produced the traces.</summary>
     Guid AgentId,
     /// <summary>IDs of the <c>AgentCall</c> traces to promote into test cases.</summary>
-    IReadOnlyList<Guid> AgentCallIds);
+    IReadOnlyList<Guid> AgentCallIds,
+    /// <summary>Optional IDs of existing evaluators to attach to the suite. When omitted or empty, a default ExactMatch evaluator is created.</summary>
+    IReadOnlyList<Guid>? EvaluatorIds = null);

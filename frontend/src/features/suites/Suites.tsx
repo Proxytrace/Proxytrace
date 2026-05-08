@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { testSuitesApi } from '../../api/test-suites';
 import { testRunGroupsApi } from '../../api/test-run-groups';
-import { TrashIcon, XIcon, EditIcon } from '../../components/icons';
+import { TrashIcon, EditIcon } from '../../components/icons';
 import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
-import { agentCallsApi } from '../../api/agent-calls';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
-import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
+import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
-import { ModalFooter } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
@@ -19,9 +17,11 @@ import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
+import { EditSuiteDialog } from './EditSuiteDialog';
 import { useToast } from '../../components/ui/Toast';
 import { useFilter } from '../../hooks/useFilter';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, LIST_PAGE_SIZE } from '../../lib/constants';
+import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 
 // ─── SuiteCard ────────────────────────────────────────────────────────────────
 
@@ -161,7 +161,6 @@ export default function Suites() {
   const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
   const [runDone, setRunDone] = useState(false);
   const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
-  const [editTab, setEditTab] = useState<'cases' | 'evaluators'>('cases');
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createStep, setCreateStep] = useState(0);
@@ -169,7 +168,6 @@ export default function Suites() {
   const [createName, setCreateName] = useState('');
   const [selectedCalls, setSelectedCalls] = useState<Set<string>>(new Set());
   const [selectedEvaluatorIds, setSelectedEvaluatorIds] = useState<Set<string>>(new Set());
-  const [addedTraceIds, setAddedTraceIds] = useState<Set<string>>(new Set());
 
   const { data: suitesData, isLoading } = useQuery({
     queryKey: QUERY_KEYS.testSuites(undefined, projectId),
@@ -186,21 +184,9 @@ export default function Suites() {
     queryFn: () => evaluatorsApi.list({ projectId }),
     enabled,
   });
-  const { data: tracesData } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteCreate(createAgentId),
-    queryFn: () => agentCallsApi.list({ agentId: createAgentId, pageSize: 50 }),
-    enabled: !!createAgentId && createStep === 2,
-  });
-  const { data: editTracesData } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteEdit(editSuite?.agentId),
-    queryFn: () => agentCallsApi.list({ agentId: editSuite?.agentId, pageSize: 50 }),
-    enabled: !!editSuite && editTab === 'cases',
-  });
 
   const suites = suitesData?.items ?? [];
   const agents = agentsData?.items ?? [];
-  const traces = tracesData?.items ?? [];
-  const editTraces = editTracesData?.items ?? [];
 
   const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(
     suites,
@@ -227,31 +213,6 @@ export default function Suites() {
     onError: (err) => toast((err as Error).message || 'Failed to delete suite', 'error'),
   });
 
-  const addCase = useMutation({
-    mutationFn: (callId: string) => testSuitesApi.addTestCase(editSuite!.id, callId),
-    onSuccess: (updatedSuite, callId) => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      setEditSuite(updatedSuite);
-      setAddedTraceIds(prev => new Set([...prev, callId]));
-    },
-    onError: (err) => toast((err as Error).message || 'Failed to add test case', 'error'),
-  });
-
-  const removeCase = useMutation({
-    mutationFn: (caseId: string) => testSuitesApi.removeTestCase(editSuite!.id, caseId),
-    onSuccess: (_, caseId) => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      setEditSuite(prev => prev ? { ...prev, testCases: prev.testCases.filter(tc => tc.id !== caseId) } : prev);
-    },
-    onError: (err) => toast((err as Error).message || 'Failed to remove test case', 'error'),
-  });
-
-  const saveEvaluators = useMutation({
-    mutationFn: () => testSuitesApi.updateEvaluators(editSuite!.id, Array.from(selectedEvaluatorIds)),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setEditSuite(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to save evaluators', 'error'),
-  });
-
   const createSuite = useMutation({
     mutationFn: () => testSuitesApi.create({ name: createName, agentId: createAgentId, agentCallIds: Array.from(selectedCalls), evaluatorIds: Array.from(selectedEvaluatorIds) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setCreateOpen(false); resetCreate(); },
@@ -260,77 +221,54 @@ export default function Suites() {
 
   function resetCreate() { setCreateStep(0); setCreateAgentId(''); setCreateName(''); setSelectedCalls(new Set()); setSelectedEvaluatorIds(new Set()); }
 
-  function openEdit(suite: TestSuiteDto) {
-    setEditSuite(suite);
-    setEditTab('cases');
-    setSelectedEvaluatorIds(new Set(suite.evaluators.map(e => e.id)));
-    setAddedTraceIds(new Set());
-  }
-
   function closeRunModal() { setRunSuite(null); setRunDone(false); }
 
   // Agent filter tabs
   const agentList = [{ id: '', name: 'All', count: suites.length }, ...agents.map(a => ({ id: a.id, name: a.name, count: suites.filter(s => s.agentId === a.id).length }))];
 
+  function toggleSelectedCall(id: string) {
+    setSelectedCalls(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+  function toggleEvaluator(id: string) {
+    setSelectedEvaluatorIds(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+
   const wizardSteps = [
     {
       label: 'Select agent',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {agents.map(a => {
-            const c = agentColor(a.id);
-            return (
-              <button key={a.id} onClick={() => setCreateAgentId(a.id)} style={{ padding: '12px 14px', borderRadius: 10, textAlign: 'left', border: `1px solid ${createAgentId === a.id ? c : 'var(--border-color)'}`, background: createAgentId === a.id ? `${c}14` : 'var(--bg-card)', cursor: 'pointer' }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{a.projectName}</div>
-              </button>
-            );
-          })}
-        </div>
-      ),
+      content: <AgentStep agents={agents} value={createAgentId} onChange={setCreateAgentId} />,
     },
     {
       label: 'Name suite',
-      content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Suite name</label>
-          <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="My regression suite" autoFocus style={{ padding: '9px 12px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none' }} />
-        </div>
-      ),
+      content: <NameStep value={createName} onChange={setCreateName} />,
     },
     {
       label: 'Select traces',
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto' }}>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Select traces to use as test cases:</p>
-          {traces.map((t: AgentCallDto) => (
-            <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedCalls.has(t.id) ? 'var(--accent-subtle)' : 'var(--bg-card)', border: `1px solid ${selectedCalls.has(t.id) ? 'rgba(139,92,246,0.3)' : 'var(--border-color)'}`, cursor: 'pointer' }}>
-              <input type="checkbox" checked={selectedCalls.has(t.id)} onChange={e => { const s = new Set(selectedCalls); if (e.target.checked) s.add(t.id); else s.delete(t.id); setSelectedCalls(s); }} />
-              <span className="mono" style={{ fontSize: 11 }}>{t.id.slice(0, 12)}…</span>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.model}</span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>{fmtRelative(t.createdAt)}</span>
-            </label>
-          ))}
-          {traces.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>No traces found for this agent.</div>}
-        </div>
+        <TracesStep
+          agentId={createAgentId}
+          selected={selectedCalls}
+          onToggle={toggleSelectedCall}
+          onClear={() => setSelectedCalls(new Set())}
+        />
       ),
     },
     {
       label: 'Select evaluators',
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Attach evaluators (optional):</p>
-          {(evaluators as EvaluatorDetailDto[]).map(e => {
-            const c = EVALUATOR_KIND_COLOR[e.kind];
-            return (
-              <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
-                <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                <ColoredBadge color={c} label={e.kind} />
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
-              </label>
-            );
-          })}
-        </div>
+        <EvaluatorsStep
+          evaluators={evaluators as EvaluatorDetailDto[]}
+          selectedIds={selectedEvaluatorIds}
+          onToggle={toggleEvaluator}
+        />
       ),
     },
   ];
@@ -338,21 +276,7 @@ export default function Suites() {
   const canAdvanceCreate = ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
-      {/* Header */}
-      <div className="fade-up flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-[6px]">Test Suites</h1>
-          <p className="text-[13.5px] text-muted m-0">Agent-specific benchmark collections built from curated traces.</p>
-        </div>
-        <button
-          onClick={() => { setCreateOpen(true); resetCreate(); }}
-          style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
-        >
-          + New suite
-        </button>
-      </div>
-
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
       {/* KPI row */}
       <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {[
@@ -389,6 +313,12 @@ export default function Suites() {
           })}
         </div>
         <span className="text-[12px] text-muted">{visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}</span>
+        <button
+          onClick={() => { setCreateOpen(true); resetCreate(); }}
+          className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap ml-auto"
+        >
+          + New suite
+        </button>
       </div>
 
       {isLoading && <div className="text-center p-[60px] text-muted text-[13px]">Loading…</div>}
@@ -400,7 +330,7 @@ export default function Suites() {
             key={suite.id}
             suite={suite}
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
-            onEdit={() => openEdit(suite)}
+            onEdit={() => setEditSuite(suite)}
             onDelete={() => setDeleteSuite(suite)}
           />
         ))}
@@ -422,146 +352,18 @@ export default function Suites() {
         />
       )}
 
-      {/* Edit modal */}
+      {/* Edit dialog */}
       {editSuite && (
-        <Modal
-          title={`Edit "${editSuite.name}"`}
+        <EditSuiteDialog
+          suite={editSuite}
+          projectId={projectId}
           onClose={() => setEditSuite(null)}
-          maxWidth={600}
-          footer={
-            editTab === 'evaluators' ? (
-              <ModalFooter
-                onCancel={() => setEditSuite(null)}
-                onSubmit={() => saveEvaluators.mutate()}
-                submitLabel={saveEvaluators.isPending ? 'Saving…' : 'Save evaluators'}
-                loading={saveEvaluators.isPending}
-              />
-            ) : (
-              <button className="btn-ghost" onClick={() => setEditSuite(null)}>Close</button>
-            )
-          }
-        >
-          <div className="flex border-b border-hairline mb-4 -mb-px">
-            {(['cases', 'evaluators'] as const).map(t => (
-              <button key={t} onClick={() => setEditTab(t)} className={`px-4 py-2 text-[13px] font-semibold border-none cursor-pointer bg-transparent -mb-px ${editTab === t ? 'text-accent border-b-2 border-b-accent' : 'text-muted border-b-2 border-b-transparent'}`}>
-                {t === 'cases' ? `Test Cases (${editSuite.testCases.length})` : 'Evaluators'}
-              </button>
-            ))}
-          </div>
-          {editTab === 'cases' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Current test cases */}
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                  {editSuite.testCases.length} test case{editSuite.testCases.length !== 1 ? 's' : ''}
-                </div>
-                {editSuite.testCases.length === 0 ? (
-                  <div style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
-                    No test cases yet — add traces below to get started.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {editSuite.testCases.map(tc => {
-                      const preview = [...tc.input].reverse().find(m => m.role === 'user')?.content ?? tc.input[tc.input.length - 1]?.content;
-                      const isRemoving = removeCase.isPending && removeCase.variables === tc.id;
-                      return (
-                        <div key={tc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card-2)', border: '1px solid var(--border-color)', opacity: isRemoving ? 0.5 : 1, transition: 'opacity 0.15s' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {preview?.slice(0, 80) || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No user message</span>}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {tc.input.length} message{tc.input.length !== 1 ? 's' : ''}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeCase.mutate(tc.id)}
-                            disabled={isRemoving}
-                            className="btn-icon btn-icon-danger"
-                            title="Remove test case"
-                          >
-                            <XIcon size={13} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--hairline)' }} />
-
-              {/* Add from traces */}
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                  Add from traces
-                </div>
-                {editTracesData === undefined ? (
-                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>Loading traces…</div>
-                ) : (() => {
-                  const available = editTraces.filter((t: AgentCallDto) => !addedTraceIds.has(t.id));
-                  if (available.length === 0) {
-                    return (
-                      <div style={{ textAlign: 'center', padding: '14px 16px', color: 'var(--text-muted)', fontSize: 12.5, background: 'var(--bg-card-2)', borderRadius: 8, border: '1px dashed var(--border-color)' }}>
-                        {editTraces.length === 0 ? 'No traces found for this agent.' : 'All available traces have been added.'}
-                      </div>
-                    );
-                  }
-                  return (
-                    <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {available.map((t: AgentCallDto) => {
-                        const lastMsg = [...t.request].reverse().find(m => m.role === 'user');
-                        const isAdding = addCase.isPending && addCase.variables === t.id;
-                        return (
-                          <button
-                            key={t.id}
-                            onClick={() => addCase.mutate(t.id)}
-                            disabled={isAdding}
-                            style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '9px 12px', borderRadius: 8, background: 'var(--bg-card)', border: '1px solid var(--border-color)', cursor: isAdding ? 'default' : 'pointer', opacity: isAdding ? 0.65 : 1, transition: 'border-color 0.15s, background 0.15s' }}
-                            onMouseEnter={e => { if (!isAdding) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; e.currentTarget.style.background = 'var(--accent-subtle)'; } }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.background = 'var(--bg-card)'; }}
-                          >
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                                <span style={{ fontSize: 12, fontWeight: 600 }}>{t.model}</span>
-                                <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(t.createdAt)}</span>
-                              </div>
-                              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {lastMsg?.content?.slice(0, 60) ?? <span className="mono" style={{ fontSize: 10.5 }}>{t.id.slice(0, 12)}…</span>}
-                              </div>
-                            </div>
-                            <span style={{ fontSize: 11.5, fontWeight: 600, color: isAdding ? 'var(--text-muted)' : 'var(--accent)', flexShrink: 0 }}>
-                              {isAdding ? '…' : '+ Add'}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-          {editTab === 'evaluators' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(evaluators as EvaluatorDetailDto[]).map(e => {
-                const c = EVALUATOR_KIND_COLOR[e.kind];
-                return (
-                  <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card-2)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                    <ColoredBadge color={c} label={e.kind} />
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-        </Modal>
+        />
       )}
 
       {/* Create wizard */}
       {createOpen && (
-        <Modal title="Create Test Suite" onClose={() => { setCreateOpen(false); resetCreate(); }} maxWidth={600}>
+        <Modal title="Create Test Suite" onClose={() => { setCreateOpen(false); resetCreate(); }} size="xl">
           <StepWizard
             steps={wizardSteps}
             currentStep={createStep}
@@ -569,6 +371,7 @@ export default function Suites() {
             onBack={() => setCreateStep(s => s - 1)}
             onSubmit={() => createSuite.mutate()}
             canAdvance={canAdvanceCreate}
+            submitLabel="Create suite"
             loading={createSuite.isPending}
           />
         </Modal>

@@ -325,31 +325,7 @@ export default function Traces() {
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
-
-      {/* ── Header ── */}
-      <div className="fade-up flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-[10px] mb-[6px]">
-            <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0">Traces</h1>
-            <span className={`inline-flex items-center gap-[5px] text-[11px] font-semibold px-2 py-[3px] rounded-full ${isFetching ? 'text-accent bg-accent-subtle' : 'text-success bg-success-subtle'}`}>
-              <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${isFetching ? 'bg-accent' : 'bg-success'}`} style={{ animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite' }} />
-              {isFetching ? 'Refreshing…' : 'Live'}
-            </span>
-          </div>
-          <p className="text-[13.5px] text-muted m-0">Every LLM call captured by the proxy, grouped by agent.</p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <button className="px-3 py-2 bg-card rounded-[9px] text-[12.5px] font-medium text-secondary inline-flex items-center gap-[6px]" style={{ boxShadow: 'var(--shadow-pill)' }}>
-            <ExternalLinkIcon size={13} />
-            Export CSV
-          </button>
-          <button className="px-[14px] py-2 rounded-[9px] text-[12.5px] font-semibold text-white inline-flex items-center gap-[6px]" style={{ background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-            <PlusIcon size={13} strokeWidth={2.5} />
-            New Test Case
-          </button>
-        </div>
-      </div>
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
 
       {/* ── Agent filter cards ── */}
       {agents.length > 0 && (
@@ -396,6 +372,10 @@ export default function Traces() {
 
       {/* ── Search + filter chips ── */}
       <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap" style={{ animationDelay: '80ms' }}>
+        <span className={`inline-flex items-center gap-[5px] text-[11px] font-semibold px-2 py-[3px] rounded-full shrink-0 ${isFetching ? 'text-accent bg-accent-subtle' : 'text-success bg-success-subtle'}`}>
+          <span className={`w-[6px] h-[6px] rounded-full shrink-0 ${isFetching ? 'bg-accent' : 'bg-success'}`} style={{ animation: isFetching ? 'none' : 'pulse-dot 1.6s infinite' }} />
+          {isFetching ? 'Refreshing…' : 'Live'}
+        </span>
         <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-[13px] text-muted" style={{ boxShadow: 'var(--shadow-pill)' }}>
           <SearchIcon size={13} className="shrink-0" />
           <input
@@ -445,6 +425,16 @@ export default function Traces() {
           </span>
           System Traces
         </button>
+        <div className="flex gap-2 shrink-0 ml-auto">
+          <button className="px-3 py-2 bg-card rounded-[9px] text-[12.5px] font-medium text-secondary inline-flex items-center gap-[6px] cursor-pointer" style={{ boxShadow: 'var(--shadow-pill)' }}>
+            <ExternalLinkIcon size={13} />
+            Export CSV
+          </button>
+          <button className="px-[14px] py-2 rounded-[9px] text-[12.5px] font-semibold text-white inline-flex items-center gap-[6px] cursor-pointer" style={{ background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
+            <PlusIcon size={13} strokeWidth={2.5} />
+            New Test Case
+          </button>
+        </div>
       </div>
 
       {/* ── Grouped trace table ── */}

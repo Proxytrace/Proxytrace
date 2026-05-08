@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../api/models';
+import { testSuitesApi } from '../../api/test-suites';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
 import { PlusIcon, ChevronRightIcon, ClockIcon, CoinsIcon, ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon } from '../../components/icons';
@@ -115,6 +118,24 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, onPrev, onNext, promoting]);
 
+  const suitesQuery = useQuery({
+    queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
+    queryFn: () => testSuitesApi.list({ agentId: trace.agentId ?? undefined, pageSize: 200 }),
+    enabled: !!trace.agentId,
+  });
+  const suites = suitesQuery.data?.items ?? [];
+  const hasResponse = !!trace.response;
+  const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;
+  const promoteTooltip = !trace.agentId
+    ? 'This trace is not linked to an agent and cannot be promoted.'
+    : !hasResponse
+      ? 'This trace has no response and cannot be promoted.'
+      : suitesQuery.isLoading
+        ? 'Loading test suites…'
+        : suites.length === 0
+          ? 'No test suite for this agent yet.'
+          : '';
+
   const aColor = agentColor(trace.agentId ?? trace.id);
   const mColor = modelColor(trace.model);
   const statusOk = trace.httpStatus >= 200 && trace.httpStatus < 300;
@@ -202,9 +223,32 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
               <ChevronRightIcon size={14} strokeWidth={2.5} />
             </button>
           )}
-          <button onClick={() => setPromoting(true)} className="px-3 py-[7px] rounded-[8px] text-[12px] font-semibold text-white inline-flex items-center gap-[5px] shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', boxShadow: '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-            <PlusIcon strokeWidth={2.5} size={12} /> Promote to test case
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => !promoteDisabled && setPromoting(true)}
+              disabled={promoteDisabled}
+              title={promoteTooltip || undefined}
+              className="px-3 py-[7px] rounded-[8px] text-[12px] font-semibold inline-flex items-center gap-[5px] cursor-pointer disabled:cursor-not-allowed"
+              style={{
+                background: promoteDisabled ? 'var(--bg-card-2)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                color: promoteDisabled ? 'var(--text-muted)' : '#fff',
+                boxShadow: promoteDisabled ? 'none' : '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                opacity: promoteDisabled ? 0.7 : 1,
+              }}
+            >
+              <PlusIcon strokeWidth={2.5} size={12} /> Promote to test case
+            </button>
+            {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
+              <button
+                type="button"
+                onClick={() => { onClose(); navigate('/suites'); }}
+                title="Create a test suite for this agent"
+                className="inline-flex items-center gap-[3px] text-[11px] text-accent-primary cursor-pointer bg-transparent border-0 p-0 hover:underline"
+              >
+                Create suite →
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Stat band */}
@@ -369,7 +413,7 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
         </div>
       </div>
 
-      {promoting && <PromoteModal trace={trace} onClose={() => setPromoting(false)} />}
+      {promoting && <PromoteModal trace={trace} suites={suites} onClose={() => setPromoting(false)} />}
     </>
   );
 }

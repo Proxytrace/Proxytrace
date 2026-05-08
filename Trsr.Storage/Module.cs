@@ -136,7 +136,7 @@ public sealed class Module : Autofac.Module
             {
                 Type cacheImpl = typeof(EntityCache<>).MakeGenericType(domainEntityType);
                 Type cacheInterface = typeof(IEntityCache<>).MakeGenericType(domainEntityType);
-                builder.RegisterType(cacheImpl).As(cacheInterface).SingleInstance();
+                builder.RegisterType(cacheImpl).As(cacheInterface).InstancePerLifetimeScope();
             }
         }
     }

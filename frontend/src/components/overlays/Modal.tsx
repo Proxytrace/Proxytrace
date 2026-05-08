@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { XIcon } from '../icons';
+
+type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
+
+const SIZE_PX: Record<ModalSize, number> = { sm: 560, md: 720, lg: 960, xl: 1180 };
 
 interface ModalProps {
   title?: string;
@@ -7,18 +12,20 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: number;
+  size?: ModalSize;
 }
 
-export function Modal({ title, onClose, children, footer, maxWidth = 560 }: ModalProps) {
+export function Modal({ title, onClose, children, footer, maxWidth, size }: ModalProps) {
+  const resolvedMaxWidth = maxWidth ?? (size ? SIZE_PX[size] : SIZE_PX.sm);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal-panel fade-up" style={{ maxWidth }}>
+      <div className="modal-panel fade-up" style={{ maxWidth: `min(${resolvedMaxWidth}px, 94vw)`, width: '100%' }}>
         {title && (
           <div className="flex items-center justify-between mb-5">
             <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
@@ -32,7 +39,8 @@ export function Modal({ title, onClose, children, footer, maxWidth = 560 }: Moda
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
