@@ -267,6 +267,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                     Arg.Any<IModelEndpoint>(),
                     Arg.Any<string?>(),
                     Arg.Any<bool>(),
+                    Arg.Any<Trsr.Domain.Inference.IModelParameters?>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 

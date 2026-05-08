@@ -1,0 +1,85 @@
+import { useMemo, useState } from 'react';
+import { Highlight, type PrismTheme } from 'prism-react-renderer';
+import { CopyIcon, CheckIcon } from '../icons';
+
+const trsrJsonTheme: PrismTheme = {
+  plain: {
+    color: 'var(--text-primary)',
+    backgroundColor: 'transparent',
+  },
+  styles: [
+    { types: ['string'],                style: { color: '#86efac' } },
+    { types: ['number'],                style: { color: '#fbbf24' } },
+    { types: ['boolean'],               style: { color: '#f472b6' } },
+    { types: ['null', 'keyword'],       style: { color: '#f472b6' } },
+    { types: ['property', 'tag'],       style: { color: '#93c5fd' } },
+    { types: ['punctuation', 'operator'], style: { color: '#71717a' } },
+    { types: ['comment'],               style: { color: '#52525b', fontStyle: 'italic' } },
+  ],
+};
+
+interface Props {
+  value: unknown;
+  className?: string;
+  maxHeight?: number | string;
+  hideCopy?: boolean;
+  transparent?: boolean;
+}
+
+function format(value: unknown): string {
+  if (value === null || value === undefined) return 'null';
+  if (typeof value === 'string') {
+    try { return JSON.stringify(JSON.parse(value), null, 2); } catch { return value; }
+  }
+  try { return JSON.stringify(value, null, 2); } catch { return String(value); }
+}
+
+export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }: Props) {
+  const text = useMemo(() => format(value), [value]);
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => { /* ignore */ });
+  }
+
+  const containerClass = `relative rounded-[10px] overflow-auto px-4 py-[14px] ${transparent ? '' : 'bg-[rgba(0,0,0,0.28)]'} ${className ?? ''}`;
+  const containerStyle = maxHeight != null ? { maxHeight } : undefined;
+
+  return (
+    <div role="region" aria-label="JSON" className={containerClass} style={containerStyle}>
+      <Highlight code={text} language="json" theme={trsrJsonTheme}>
+        {({ tokens, getLineProps, getTokenProps }) => (
+          <pre className="m-0 font-mono text-[11.5px] leading-[1.55] whitespace-pre-wrap break-words">
+            {tokens.map((line, i) => {
+              const lineProps = getLineProps({ line });
+              return (
+                <div key={i} {...lineProps}>
+                  {line.map((token, j) => {
+                    const tokenProps = getTokenProps({ token });
+                    return <span key={j} {...tokenProps} />;
+                  })}
+                </div>
+              );
+            })}
+          </pre>
+        )}
+      </Highlight>
+
+      {!hideCopy && (
+        <button
+          type="button"
+          onClick={copy}
+          aria-label="Copy JSON"
+          title="Copy JSON"
+          className={`absolute top-2 right-2 inline-flex items-center gap-[4px] text-[10.5px] font-medium px-[7px] py-[3px] rounded-[6px] cursor-pointer transition-colors duration-150 bg-card-2 hover:bg-[rgba(255,255,255,0.06)] ${copied ? 'text-success' : 'text-muted'}`}
+        >
+          {copied ? <CheckIcon size={11} strokeWidth={2.5} /> : <CopyIcon size={11} strokeWidth={2} />}
+          <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
+        </button>
+      )}
+    </div>
+  );
+}

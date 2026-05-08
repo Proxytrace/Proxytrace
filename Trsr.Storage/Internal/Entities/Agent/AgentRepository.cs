@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
@@ -16,6 +17,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 {
     private readonly IAgent.CreateNew createNew;
     private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IModelParameters.Create modelParametersFactory;
     private readonly Lazy<IAgentNameGenerator> nameGenerator;
 
     public AgentRepository(
@@ -24,11 +26,13 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         ITransaction transaction,
         IAgent.CreateNew createNew,
         IPromptTemplate.Create promptTemplateFactory,
+        IModelParameters.Create modelParametersFactory,
         Lazy<IAgentNameGenerator> nameGenerator,
         IEntityCache<IAgent> cache) : base(mapper, contextFactory, transaction, cache)
     {
         this.createNew = createNew;
         this.promptTemplateFactory = promptTemplateFactory;
+        this.modelParametersFactory = modelParametersFactory;
         this.nameGenerator = nameGenerator;
     }
 
@@ -39,6 +43,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         IModelEndpoint endpoint,
         string? name = null,
         bool isSystemAgent = false,
+        IModelParameters? modelParameters = null,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemPrompt, tools);
@@ -61,7 +66,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             tools: tools,
             endpoint: endpoint,
             isSystemAgent: isSystemAgent,
-            project: project);
+            project: project,
+            modelParameters: modelParameters ?? modelParametersFactory());
         return await AddAsync(agent, cancellationToken);
     }
 

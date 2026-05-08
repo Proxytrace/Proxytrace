@@ -6,6 +6,7 @@ using Trsr.Domain.AgentCall;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.Tests;
@@ -128,6 +129,7 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
             existing.HttpStatus,
             existing.FinishReason,
             existing.ErrorMessage,
+            existing.ModelParameters,
             existing,
             conversationId: null);
 

@@ -164,6 +164,28 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetOrCreateAsync_DifferentModelParameters_ReturnsSameAgent()
+    {
+        var services = GetServices();
+        var repo     = services.GetRequiredService<IAgentRepository>();
+        var project  = await CreateProjectAsync(services, CancellationToken);
+        var endpoint = await CreateEndpointAsync(services, CancellationToken);
+        var msg      = MakePrompt(services, "You are a helpful assistant");
+
+        var paramsFactory = services.GetRequiredService<Trsr.Domain.Inference.IModelParameters.Create>();
+        var withTemp02 = paramsFactory(temperature: 0.2);
+        var withTemp07 = paramsFactory(temperature: 0.7);
+
+        var agent1 = await repo.GetOrCreateAsync(msg, [], project, endpoint,
+            modelParameters: withTemp02, cancellationToken: CancellationToken);
+        var agent2 = await repo.GetOrCreateAsync(msg, [], project, endpoint,
+            modelParameters: withTemp07, cancellationToken: CancellationToken);
+
+        agent1.Id.Should().Be(agent2.Id);
+        repo.GetAgentFingerprint(agent1).Should().Be(repo.GetAgentFingerprint(agent2));
+    }
+
+    [TestMethod]
     public async Task GetAgentFingerprint_OnAgent_MatchesComputedFingerprint()
     {
         var services = GetServices();

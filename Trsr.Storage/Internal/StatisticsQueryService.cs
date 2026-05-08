@@ -214,6 +214,20 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<AgentBreakdownStat>> GetAgentBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var rows = await ApplyCallFilter(context.Set<AgentCallEntity>().AsNoTracking(), filter, context)
+            .GroupBy(e => e.AgentId)
+            .Select(g => new { AgentId = g.Key, CallCount = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .Select(r => new AgentBreakdownStat(r.AgentId, r.CallCount))
+            .OrderByDescending(s => s.CallCount)
+            .ToArray();
+    }
+
     public async Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ModelBreakdownStat> breakdown = await GetModelBreakdownAsync(filter, cancellationToken);

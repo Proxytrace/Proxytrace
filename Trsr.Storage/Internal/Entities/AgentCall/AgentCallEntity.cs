@@ -1,4 +1,5 @@
 using Trsr.Domain.Message;
+using Trsr.Storage.Internal.Entities.Inference;
 
 namespace Trsr.Storage.Internal.Entities.AgentCall;
 
@@ -15,5 +16,6 @@ internal record AgentCallEntity : Entity
     public required int HttpStatus { get; init; }
     public required string? FinishReason { get; init; }
     public required string? ErrorMessage { get; init; }
+    public required ModelParametersData ModelParameters { get; init; }
     public required Guid? ConversationId { get; init; }
 }

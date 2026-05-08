@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Review a recursive function",
+    "prompt": "Review this Python function for bugs and performance issues:\n\ndef fib(n):\n    return fib(n-1) + fib(n-2)"
+  },
+  {
+    "label": "Explain a common JS error",
+    "prompt": "What does this JavaScript error mean and how do I fix it?\n\nTypeError: Cannot read properties of undefined (reading 'map')"
+  },
+  {
+    "label": "Compare lodash vs ramda",
+    "prompt": "Compare the 'lodash' and 'ramda' npm packages — downloads, bundle size, and which to choose for a React project."
+  },
+  {
+    "label": "Test stubs for a sum util",
+    "prompt": "Generate vitest test stubs for this function signature: `sum(numbers: number[]): number`. Include edge cases."
+  },
+  {
+    "label": "await inside forEach bug",
+    "prompt": "Spot the bug in this code and explain why awaits aren't working:\n\nasync function saveAll(users) {\n  users.forEach(async (u) => {\n    await db.save(u);\n  });\n  console.log('done');\n}"
+  },
+  {
+    "label": "Memory leak with setInterval",
+    "prompt": "This Node service slowly leaks memory. Anything jump out?\n\nfunction startPolling() {\n  setInterval(() => fetch('/health').then(r => r.json()), 1000);\n}"
+  },
+  {
+    "label": "Pick a date library",
+    "prompt": "I need date arithmetic + timezones in a small Next.js bundle. Look up dayjs, date-fns, luxon, and moment and tell me which to pick and why."
+  },
+  {
+    "label": "Stack overflow stack trace",
+    "prompt": "What does this Node error mean and how should I debug it?\n\nRangeError: Maximum call stack size exceeded\n    at walkTree (tree.js:14:18)\n    at walkTree (tree.js:16:7)"
+  },
+  {
+    "label": "Loose equality style review",
+    "prompt": "Review this JS for style issues:\n\nvar count = 0;\nif (input == null) { console.log('skip'); return; }\ncount++;"
+  },
+  {
+    "label": "Pytest stubs for a class method",
+    "prompt": "Generate pytest stubs for `Cart.add(item, quantity=1)`. I want one happy-path test and one that asserts a ValueError on negative quantity."
+  }
+]

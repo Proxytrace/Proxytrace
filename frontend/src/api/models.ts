@@ -57,6 +57,17 @@ export interface ToolSpecDto {
   description: string;
   arguments: ToolArgumentDto[];
 }
+export interface ModelParametersDto {
+  temperature: number | null;
+  topP: number | null;
+  reasoningEffort: string | null;
+  frequencyPenalty: number | null;
+  presencePenalty: number | null;
+  maxTokens: number | null;
+  seed: number | null;
+  stop: string[] | null;
+  n: number | null;
+}
 export interface AgentCallDto {
   id: string;
   agentId: string | null;
@@ -73,6 +84,7 @@ export interface AgentCallDto {
   finishReason: string | null;
   errorMessage: string | null;
   costEur: number | null;
+  modelParameters: ModelParametersDto;
   createdAt: string;
   updatedAt: string;
   conversationId: string | null;
@@ -88,6 +100,8 @@ export interface AgentDto {
   tools: ToolSpecDto[];
   endpointId: string;
   endpointName: string;
+  modelParameters: ModelParametersDto;
+  isSystemAgent: boolean;
   createdAt: string;
   updatedAt: string;
   lastUsedAt: string | null;
@@ -108,6 +122,10 @@ export interface ModelBreakdownDto {
   totalInputTokens: number;
   totalOutputTokens: number;
   avgDurationMs: number;
+}
+export interface AgentBreakdownDto {
+  agentId: string;
+  callCount: number;
 }
 export interface LatencyStatDto {
   endpointId: string;
@@ -395,6 +413,7 @@ export interface AgentCallFilter {
   from?: string;
   to?: string;
   httpStatus?: number;
+  includeSystemAgents?: boolean;
   page?: number;
   pageSize?: number;
 }

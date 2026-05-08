@@ -1,3 +1,4 @@
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
@@ -22,6 +23,7 @@ public interface IAgentRepository : IRepository<IAgent>
         IModelEndpoint endpoint,
         string? name = null,
         bool isSystemAgent = false,
+        IModelParameters? modelParameters = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

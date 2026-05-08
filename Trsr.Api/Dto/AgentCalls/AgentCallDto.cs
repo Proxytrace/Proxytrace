@@ -1,5 +1,6 @@
 using System.Net;
 using Trsr.Api.Dto.Agents;
+using Trsr.Api.Dto.Inference;
 
 namespace Trsr.Api.Dto.AgentCalls;
 
@@ -19,6 +20,7 @@ public record AgentCallDto(
     string? FinishReason,
     string? ErrorMessage,
     decimal? CostEur,
+    ModelParametersDto ModelParameters,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     Guid? ConversationId);

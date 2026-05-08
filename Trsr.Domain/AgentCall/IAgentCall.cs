@@ -1,6 +1,7 @@
 using System.Net;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 
@@ -13,7 +14,7 @@ public interface IAgentCall : IDomainEntity<IAgentCall>
 {
     /// <summary>The agent that initiated this call, if associated.</summary>
     IAgent Agent { get; }
-    
+
     IModelEndpoint Endpoint { get; }
 
     /// <summary>The conversation sent as the request.</summary>
@@ -32,6 +33,11 @@ public interface IAgentCall : IDomainEntity<IAgentCall>
     string? ErrorMessage { get; }
 
     /// <summary>
+    /// Sampling and decoding parameters extracted from this specific request.
+    /// </summary>
+    IModelParameters ModelParameters { get; }
+
+    /// <summary>
     /// Groups this call with other calls from the same conversation thread.
     /// Set from the <c>X-Trsr-Session-Id</c> header or detected via message-history matching.
     /// </summary>
@@ -45,8 +51,9 @@ public interface IAgentCall : IDomainEntity<IAgentCall>
         HttpStatusCode httpStatus = HttpStatusCode.OK,
         string? finishReason = null,
         string? errorMessage = null,
+        IModelParameters? modelParameters = null,
         Guid? conversationId = null);
-    
+
     public delegate IAgentCall CreateExisting(
         IAgent agent,
         IModelEndpoint endpoint,
@@ -55,6 +62,7 @@ public interface IAgentCall : IDomainEntity<IAgentCall>
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
+        IModelParameters modelParameters,
         IDomainEntityData existing,
         Guid? conversationId = null);
 }

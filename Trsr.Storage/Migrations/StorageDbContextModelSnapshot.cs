@@ -38,6 +38,10 @@ namespace Trsr.Storage.Migrations
                     b.Property<bool>("IsSystemAgent")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ModelParameters")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -64,6 +68,8 @@ namespace Trsr.Storage.Migrations
 
                     b.HasIndex("Fingerprint")
                         .IsUnique();
+
+                    b.HasIndex("IsSystemAgent");
 
                     b.HasIndex("Project");
 
@@ -105,6 +111,10 @@ namespace Trsr.Storage.Migrations
 
                     b.Property<double?>("LatencyMs")
                         .HasColumnType("REAL");
+
+                    b.Property<string>("ModelParameters")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<ulong?>("OutputTokens")
                         .HasColumnType("INTEGER");

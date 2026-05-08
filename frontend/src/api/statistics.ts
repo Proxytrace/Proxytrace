@@ -1,5 +1,6 @@
 import { api, qs } from './client';
 import type {
+  AgentBreakdownDto,
   AgentEntityCountsDto,
   AgentOverviewDto,
   AgentPassRatePointDto,
@@ -20,6 +21,8 @@ export const statisticsApi = {
     api.get<LatencyStatDto[]>(`/api/statistics/latency${qs(params ?? {})}`),
   modelBreakdown: (params?: { from?: string; to?: string; agentId?: string }) =>
     api.get<ModelBreakdownDto[]>(`/api/statistics/model-breakdown${qs(params ?? {})}`),
+  agentBreakdown: (params?: { from?: string; to?: string }) =>
+    api.get<AgentBreakdownDto[]>(`/api/statistics/agent-breakdown${qs(params ?? {})}`),
 
   agentOverview: (agentId: string, params: AgentRangeParams) =>
     api.get<AgentOverviewDto>(`/api/statistics/agents/${agentId}/overview${qs(params)}`),

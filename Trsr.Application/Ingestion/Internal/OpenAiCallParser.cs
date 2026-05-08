@@ -3,6 +3,7 @@ using System.Text.Json;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
@@ -13,13 +14,16 @@ internal class OpenAiCallParser : IOpenAiCallParser
 {
     private readonly ICompletion.Create completionFactory;
     private readonly IModelEndpointRepository endpointRepository;
+    private readonly IModelParameters.Create modelParametersFactory;
 
     public OpenAiCallParser(
         ICompletion.Create completionFactory,
-        IModelEndpointRepository endpointRepository)
+        IModelEndpointRepository endpointRepository,
+        IModelParameters.Create modelParametersFactory)
     {
         this.completionFactory = completionFactory;
         this.endpointRepository = endpointRepository;
+        this.modelParametersFactory = modelParametersFactory;
     }
     
     public async Task<ParseResult?> TryParse(IModelProvider provider,
@@ -52,6 +56,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
         }
         
         var tools = ParseTools(requestBody);
+        var modelParameters = ParseModelParameters(requestBody, modelParametersFactory);
 
         IModelEndpoint endpoint = await endpointRepository.GetOrCreateAsync(model, provider, cancellationToken);
         ICompletion? completion = agentMessage != null ? completionFactory(agentMessage, usage, duration) : null;
@@ -63,7 +68,90 @@ internal class OpenAiCallParser : IOpenAiCallParser
             FinishReason: finishReason,
             ErrorMessage: errorMessage,
             SystemMessage: systemMessage,
-            Tools: tools);
+            Tools: tools,
+            ModelParameters: modelParameters);
+    }
+
+    private static IModelParameters ParseModelParameters(string requestBody, IModelParameters.Create factory)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(requestBody);
+            var root = doc.RootElement;
+            return factory(
+                temperature: ReadDouble(root, "temperature"),
+                topP: ReadDouble(root, "top_p"),
+                reasoningEffort: ReadString(root, "reasoning_effort"),
+                frequencyPenalty: ReadDouble(root, "frequency_penalty"),
+                presencePenalty: ReadDouble(root, "presence_penalty"),
+                maxTokens: ReadInt(root, "max_tokens") ?? ReadInt(root, "max_completion_tokens"),
+                seed: ReadLong(root, "seed"),
+                stop: ReadStop(root),
+                n: ReadInt(root, "n"));
+        }
+        catch
+        {
+            return factory();
+        }
+    }
+
+    private static double? ReadDouble(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var el) || el.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        return el.ValueKind == JsonValueKind.Number && el.TryGetDouble(out var v) ? v : null;
+    }
+
+    private static int? ReadInt(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var el) || el.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        return el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var v) ? v : null;
+    }
+
+    private static long? ReadLong(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var el) || el.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        return el.ValueKind == JsonValueKind.Number && el.TryGetInt64(out var v) ? v : null;
+    }
+
+    private static string? ReadString(JsonElement root, string name)
+    {
+        if (!root.TryGetProperty(name, out var el) || el.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+        return el.ValueKind == JsonValueKind.String ? el.GetString() : null;
+    }
+
+    private static IReadOnlyList<string>? ReadStop(JsonElement root)
+    {
+        if (!root.TryGetProperty("stop", out var el) || el.ValueKind == JsonValueKind.Null)
+        {
+            return null;
+        }
+
+        if (el.ValueKind == JsonValueKind.String)
+        {
+            return [el.GetString() ?? string.Empty];
+        }
+
+        if (el.ValueKind == JsonValueKind.Array)
+        {
+            return el.EnumerateArray()
+                .Where(p => p.ValueKind == JsonValueKind.String)
+                .Select(p => p.GetString() ?? string.Empty)
+                .ToArray();
+        }
+
+        return null;
     }
 
     // ── OpenAI request → Conversation ────────────────────────────────────────
