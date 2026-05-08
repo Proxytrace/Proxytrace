@@ -10,7 +10,8 @@ internal class ModelProviderRepository : AbstractRepository<IModelProvider, Mode
     public ModelProviderRepository(
         IMapper<IModelProvider, ModelProviderEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityCache<IModelProvider> cache) : base(mapper, contextFactory, transaction, cache)
     {
     }
 }
