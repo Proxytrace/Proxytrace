@@ -46,10 +46,15 @@ function requiredParams(tool: ToolSpecDto) {
   return req.length ? `(${req.join(', ')})` : '()';
 }
 
-function ToolRow({ tool, last }: { tool: ToolSpecDto; last: boolean }) {
+function ToolRow({ tool, last, defaultOpen, highlight }: { tool: ToolSpecDto; last: boolean; defaultOpen?: boolean; highlight?: boolean }) {
   return (
-    <div className={last ? '' : 'border-b border-hairline'}>
+    <div
+      id={`tool-${tool.name}`}
+      className={`${last ? '' : 'border-b border-hairline'} transition-shadow duration-300`}
+      style={highlight ? { boxShadow: 'inset 0 0 0 2px rgba(16,185,129,0.5)' } : undefined}
+    >
       <Collapsible
+        defaultOpen={defaultOpen}
         headerClassName="gap-[10px] px-4 py-[11px] hover:bg-[rgba(16,185,129,0.04)] transition-[background] duration-100"
         contentClassName="px-4 pb-[14px] pl-[38px]"
         title={
@@ -160,8 +165,21 @@ function EndpointSelector({ agent }: { agent: AgentDto }) {
   );
 }
 
-function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => void }) {
+function AgentDetail({ agent, onDelete, highlightTool }: { agent: AgentDto; onDelete: () => void; highlightTool?: string | null }) {
   const c = agentColor(agent.id);
+
+  useEffect(() => {
+    if (!highlightTool) return;
+    const target = agent.tools.find(t => t.name === highlightTool);
+    if (!target) return;
+    const id = `tool-${target.name}`;
+    const handle = requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(handle);
+  }, [agent.id, highlightTool, agent.tools]);
+
   return (
     <div className="fade-up flex flex-col gap-[14px]" style={{ animationDelay: '60ms' }}>
       {/* Header card */}
@@ -217,7 +235,13 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
           </div>
           <div className="flex flex-col">
             {agent.tools.map((tool, ti) => (
-              <ToolRow key={tool.name} tool={tool} last={ti === agent.tools.length - 1} />
+              <ToolRow
+                key={tool.name}
+                tool={tool}
+                last={ti === agent.tools.length - 1}
+                defaultOpen={highlightTool === tool.name}
+                highlight={highlightTool === tool.name}
+              />
             ))}
           </div>
         </div>
@@ -231,6 +255,7 @@ export default function Agents() {
   const { show: toast } = useToast();
   const [searchParams] = useSearchParams();
   const preselect = searchParams.get('id');
+  const highlightTool = searchParams.get('tool');
 
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.agents,
@@ -301,6 +326,7 @@ export default function Agents() {
           key={selected.id}
           agent={selected}
           onDelete={() => setDeleteOpen(true)}
+          highlightTool={highlightTool}
         />
       )}
 

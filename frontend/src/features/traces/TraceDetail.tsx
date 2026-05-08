@@ -1,90 +1,17 @@
 import { useState, useEffect } from 'react';
-import type { AgentCallDto, MessageDto, ToolSpecDto } from '../../api/models';
+import { useNavigate } from 'react-router-dom';
+import type { AgentCallDto, MessageDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
 import { PlusIcon, ChevronRightIcon } from '../../components/icons';
 import { Collapsible } from '../../components/ui/Collapsible';
+import { JsonView } from '../../components/ui/JsonView';
+import { MessageBubble } from '../../components/ui/MessageBubble';
+import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
 import { PromoteModal } from './PromoteModal';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 
-// ─── JsonView ─────────────────────────────────────────────────────────────────
-
-function JsonView({ value, depth = 0 }: { value: unknown; depth?: number }) {
-  if (value === null || value === undefined) return <span style={{ color: '#a1a1aa' }}>null</span>;
-  if (typeof value === 'boolean') return <span style={{ color: '#f472b6' }}>{String(value)}</span>;
-  if (typeof value === 'number') return <span style={{ color: '#fbbf24' }}>{value}</span>;
-  if (typeof value === 'string') return <span style={{ color: '#86efac' }}>"{value}"</span>;
-  if (Array.isArray(value)) {
-    if (value.length === 0) return <span style={{ color: '#71717a' }}>[]</span>;
-    return (
-      <span>
-        <span style={{ color: '#71717a' }}>[</span>
-        {value.map((v, i) => (
-          <div key={i} style={{ paddingLeft: 14 }}>
-            <JsonView value={v} depth={depth + 1} />
-            {i < value.length - 1 && <span style={{ color: '#71717a' }}>,</span>}
-          </div>
-        ))}
-        <span style={{ color: '#71717a' }}>]</span>
-      </span>
-    );
-  }
-  const entries = Object.entries(value as Record<string, unknown>);
-  if (entries.length === 0) return <span style={{ color: '#71717a' }}>{'{}'}</span>;
-  return (
-    <span>
-      <span style={{ color: '#71717a' }}>{'{'}</span>
-      {entries.map(([k, v], i) => (
-        <div key={k} style={{ paddingLeft: 14 }}>
-          <span style={{ color: '#93c5fd' }}>"{k}"</span>
-          <span style={{ color: '#71717a' }}>: </span>
-          <JsonView value={v} depth={depth + 1} />
-          {i < entries.length - 1 && <span style={{ color: '#71717a' }}>,</span>}
-        </div>
-      ))}
-      <span style={{ color: '#71717a' }}>{'}'}</span>
-    </span>
-  );
-}
-
-// ─── ToolCallBlock ────────────────────────────────────────────────────────────
-
-function ToolCallBlock({ id, name, args }: { id: string; name: string; args: unknown }) {
-  return (
-    <div className="mt-[10px] rounded-[10px] overflow-hidden" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)' }}>
-      <Collapsible
-        defaultOpen
-        headerClassName="px-3 py-[9px] text-[11.5px] font-mono"
-        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]"
-        title={
-          <span className="flex items-center gap-2 flex-1 min-w-0" style={{ color: '#6ee7b7' }}>
-            <span className="font-bold tracking-[0.04em]" style={{ color: '#10b981' }}>TOOL</span>
-            <span className="font-semibold" style={{ color: '#d1fae5' }}>{name}</span>
-            <span style={{ color: '#71717a' }}>(</span>
-            {typeof args === 'object' && args !== null && Object.keys(args as object).slice(0, 2).map((k, i, arr) => (
-              <span key={k}>
-                <span style={{ color: '#93c5fd' }}>{k}</span>
-                <span style={{ color: '#71717a' }}>: </span>
-                <span style={{ color: '#fde68a' }}>{JSON.stringify((args as Record<string, unknown>)[k]).slice(0, 24)}</span>
-                {i < arr.length - 1 && <span style={{ color: '#71717a' }}>, </span>}
-              </span>
-            ))}
-            {typeof args === 'object' && args !== null && Object.keys(args as object).length > 2 && <span style={{ color: '#71717a' }}>, …</span>}
-            <span style={{ color: '#71717a' }}>)</span>
-            <span className="ml-auto text-[9.5px] uppercase tracking-[0.08em]" style={{ color: '#52525b' }}>{id}</span>
-          </span>
-        }
-      >
-        <div style={{ borderTop: '1px dashed rgba(16,185,129,0.18)' }}>
-          <div className="text-[9.5px] tracking-[0.08em] uppercase mb-1 mt-[10px]" style={{ color: '#52525b' }}>Arguments</div>
-          <JsonView value={args} />
-        </div>
-      </Collapsible>
-    </div>
-  );
-}
-
-// ─── ToolResultBlock ──────────────────────────────────────────────────────────
+// ─── ToolResultBlock (fallback for orphan tool messages) ──────────────────────
 
 function ToolResultBlock({ msg }: { msg: MessageDto }) {
   let parsed: unknown = msg.content;
@@ -114,59 +41,6 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
   );
 }
 
-// ─── MessageBlock ─────────────────────────────────────────────────────────────
-
-function MessageBlock({ msg }: { msg: MessageDto }) {
-  const styleMap: Record<string, { bg: string; fg: string; label: string }> = {
-    system:    { bg: 'rgba(107,107,117,0.12)', fg: '#a1a1aa', label: 'System' },
-    user:      { bg: 'rgba(6,182,212,0.14)',   fg: '#67e8f9', label: 'User' },
-    assistant: { bg: 'rgba(139,92,246,0.14)',  fg: '#c4b5fd', label: 'Assistant' },
-  };
-  const s = styleMap[msg.role] ?? styleMap.assistant;
-  const content = msg.content;
-  if (!content && !msg.toolRequests?.length) return null;
-  return (
-    <div className="bg-card-2 rounded-xl px-[14px] py-3" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
-      <div className="mb-2">
-        <span className="px-2 py-[2px] rounded-full text-[10.5px] font-semibold tracking-[0.02em]" style={{ background: s.bg, color: s.fg }}>{s.label}</span>
-      </div>
-      {content && (
-        <div className={`text-[13px] leading-[1.65] whitespace-pre-wrap ${msg.role === 'system' ? 'text-secondary italic' : 'text-primary'}`}>
-          {content}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── ToolSpec ─────────────────────────────────────────────────────────────────
-
-function ToolSpecBlock({ tool }: { tool: ToolSpecDto }) {
-  return (
-    <div className="bg-card-2 rounded-xl px-[14px] py-3">
-      <div className="flex items-center gap-2 mb-[6px]">
-        <span className="px-2 py-[2px] rounded-[6px] text-[10.5px] font-bold tracking-[0.04em] font-mono" style={{ background: 'rgba(16,185,129,0.14)', color: '#6ee7b7' }}>FUNCTION</span>
-        <span className="font-mono text-[13px] font-semibold">{tool.name}</span>
-      </div>
-      {tool.description && (
-        <div className="text-[12.5px] text-secondary mb-2 leading-[1.5]">{tool.description}</div>
-      )}
-      {tool.arguments.length > 0 && (
-        <div className="font-mono text-[11px] rounded-[6px] px-[10px] py-2" style={{ background: 'rgba(0,0,0,0.25)' }}>
-          {tool.arguments.map(arg => (
-            <div key={arg.name}>
-              <span style={{ color: '#93c5fd' }}>{arg.name}</span>
-              <span style={{ color: '#71717a' }}>: </span>
-              <span style={{ color: '#fde68a' }}>{arg.type}{arg.isRequired ? '' : '?'}</span>
-              {arg.description && <span style={{ color: '#71717a' }}> — {arg.description}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── DrawerStat ───────────────────────────────────────────────────────────────
 
 function DrawerStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
@@ -191,6 +65,7 @@ interface Props {
 type Tab = 'Messages' | 'Tools' | 'Raw JSON' | 'Metadata';
 
 export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('Messages');
   const [promoting, setPromoting] = useState(false);
 
@@ -222,9 +97,24 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
   const toolCallCount = allMessages.reduce((n, m) => n + (m.toolRequests?.length ?? 0), 0);
   const msgCount = allMessages.length;
 
+  const toolResultByCallId = new Map<string, MessageDto>();
+  for (const m of allMessages) {
+    if (m.role === 'tool' && m.toolCallId) toolResultByCallId.set(m.toolCallId, m);
+  }
+  const invocations = allMessages.flatMap(m =>
+    (m.toolRequests ?? []).map(req => ({ req, result: toolResultByCallId.get(req.id) }))
+  );
+  const absorbedCallIds = new Set(invocations.map(i => i.req.id));
+
+  const jumpToDefinition = (toolName: string) => {
+    if (!trace.agentId) return;
+    onClose();
+    navigate(`/agents?id=${trace.agentId}&tool=${encodeURIComponent(toolName)}`);
+  };
+
   const TABS: [Tab, number | null][] = [
     ['Messages', msgCount],
-    ['Tools', trace.tools.length],
+    ['Tools', invocations.length],
     ['Raw JSON', null],
     ['Metadata', null],
   ];
@@ -258,8 +148,15 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
               </span>
             </div>
             <div className="mt-[6px] flex items-center gap-2 flex-wrap">
-              {trace.agentName && (
-                <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
+              {trace.agentName && trace.agentId && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); navigate(`/agents?id=${trace.agentId}`); }}
+                  title="Open agent"
+                  className="cursor-pointer bg-transparent border-0 p-0 inline-flex rounded-full transition-opacity duration-150 hover:opacity-80"
+                >
+                  <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
+                </button>
               )}
               <ColoredBadge color={mColor} label={trace.model} dot size="md" />
               <span className="text-[11px] text-muted">· {fmtRelative(trace.createdAt)} · {msgCount} msg{msgCount !== 1 ? 's' : ''} · {toolCallCount} tool call{toolCallCount !== 1 ? 's' : ''}</span>
@@ -286,7 +183,24 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           <DrawerStat label="Input"  value={fmtTokens(trace.inputTokens)}  sub="tokens" />
           <DrawerStat label="Output" value={fmtTokens(trace.outputTokens)} sub="tokens" />
           <DrawerStat label="Total"  value={fmtTokens(tokTotal)}            sub="tokens" />
-          <DrawerStat label="Cost"   value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'} sub={trace.costEur != null ? 'EUR' : undefined} />
+          <div>
+            <div className="text-[10.5px] text-muted font-medium tracking-[0.05em] uppercase">Cost</div>
+            <div className="text-[15px] font-bold mt-[3px] font-mono">
+              {trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
+            </div>
+            {trace.costEur != null
+              ? <div className="text-[10px] text-muted mt-[1px]">EUR</div>
+              : (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); navigate('/providers'); }}
+                  className="mt-[1px] inline-flex items-center gap-[3px] text-[10px] text-accent-primary cursor-pointer bg-transparent border-0 p-0 hover:underline"
+                  title="Configure pricing for this model endpoint"
+                >
+                  Set price →
+                </button>
+              )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -302,21 +216,27 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Tab body */}
-        <div className="flex-1 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0">
           {tab === 'Messages' && (
             <>
-              {allMessages.map((msg, i) => {
-                if (msg.role === 'tool') return <ToolResultBlock key={i} msg={msg} />;
-                return (
-                  <div key={i}>
-                    <MessageBlock msg={msg} />
-                    {msg.toolRequests?.map(call => {
-                      let args: unknown = call.arguments;
-                      try { args = JSON.parse(call.arguments); } catch { /* leave as string */ }
-                      return <ToolCallBlock key={call.id} id={call.id} name={call.name} args={args} />;
-                    })}
-                  </div>
-                );
+              {allMessages.flatMap((msg, i) => {
+                if (msg.role === 'tool') {
+                  if (msg.toolCallId && absorbedCallIds.has(msg.toolCallId)) return [];
+                  return [<ToolResultBlock key={`m${i}`} msg={msg} />];
+                }
+                const blocks: React.ReactNode[] = [];
+                if (msg.content?.trim()) blocks.push(<MessageBubble key={`m${i}`} msg={msg} />);
+                msg.toolRequests?.forEach(req => {
+                  blocks.push(
+                    <ToolMessageBubble
+                      key={`t${req.id}`}
+                      request={req}
+                      result={toolResultByCallId.get(req.id)}
+                      onJumpToDefinition={trace.agentId ? () => jumpToDefinition(req.name) : undefined}
+                    />
+                  );
+                });
+                return blocks;
               })}
               {trace.finishReason && (
                 <div className="mt-1 px-3 py-2 bg-card-2 rounded-[8px] text-[11px] text-muted font-mono flex items-center gap-2">
@@ -329,9 +249,16 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           )}
 
           {tab === 'Tools' && (
-            trace.tools.length === 0
-              ? <div className="px-5 py-[40px] text-center text-muted text-[13px]">No tools were declared for this call.</div>
-              : trace.tools.map(tool => <ToolSpecBlock key={tool.name} tool={tool} />)
+            invocations.length === 0
+              ? <div className="px-5 py-[40px] text-center text-muted text-[13px]">No tools were invoked in this trace.</div>
+              : invocations.map(({ req, result }, i) => (
+                  <ToolMessageBubble
+                    key={`${req.id}-${i}`}
+                    request={req}
+                    result={result}
+                    onJumpToDefinition={trace.agentId ? () => jumpToDefinition(req.name) : undefined}
+                  />
+                ))
           )}
 
           {tab === 'Raw JSON' && (
