@@ -99,6 +99,18 @@ public class StatisticsController : ControllerBase
         return results.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray();
     }
 
+    [HttpGet("agent-breakdown")]
+    public async Task<IReadOnlyList<AgentBreakdownDto>> GetAgentBreakdown(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new StatisticsFilter(from, to, projectId);
+        var results = await statistics.GetAgentBreakdownAsync(filter, cancellationToken);
+        return results.Select(r => new AgentBreakdownDto(r.AgentId, r.CallCount)).ToArray();
+    }
+
     [HttpGet("cost-estimate")]
     public async Task<IReadOnlyList<CostEstimateDto>> GetCostEstimate(
         [FromQuery] DateTimeOffset? from = null,

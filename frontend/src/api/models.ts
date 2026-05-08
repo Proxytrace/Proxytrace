@@ -109,6 +109,10 @@ export interface ModelBreakdownDto {
   totalOutputTokens: number;
   avgDurationMs: number;
 }
+export interface AgentBreakdownDto {
+  agentId: string;
+  callCount: number;
+}
 export interface LatencyStatDto {
   endpointId: string;
   p50Ms: number;

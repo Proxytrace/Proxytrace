@@ -7,6 +7,7 @@ export const QUERY_KEYS = {
   statisticsSummary: (from: string) => ['statistics-summary', from] as const,
   statisticsLatency: (from?: string, agentId?: string) => ['statistics-latency', from, agentId] as const,
   statisticsModelBreakdown: (from?: string, agentId?: string) => ['statistics-model-breakdown', from, agentId] as const,
+  statisticsAgentBreakdown: (from?: string) => ['statistics-agent-breakdown', from] as const,
 
   evaluators: ['evaluators'] as const,
   modelEndpoints: ['model-endpoints'] as const,

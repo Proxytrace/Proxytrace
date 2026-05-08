@@ -25,6 +25,9 @@ public interface IStatisticsQueryService
     /// <summary>Returns call volume and token breakdown by model for the given <paramref name="filter"/>.</summary>
     Task<IReadOnlyList<ModelBreakdownStat>> GetModelBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
+    /// <summary>Returns call volume grouped by agent for the given <paramref name="filter"/>.</summary>
+    Task<IReadOnlyList<AgentBreakdownStat>> GetAgentBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
     /// <summary>Returns estimated USD cost per model for the given <paramref name="filter"/>.</summary>
     Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
@@ -87,6 +90,10 @@ public record ModelBreakdownStat(
     long? TotalInputTokens,
     long? TotalOutputTokens,
     double? AvgDurationMs);
+
+public record AgentBreakdownStat(
+    Guid AgentId,
+    int CallCount);
 
 public record CostEstimateStat(
     Guid EndpointId,
