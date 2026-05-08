@@ -11,7 +11,7 @@ internal sealed class EntityCache<TDomainEntity> : IEntityCache<TDomainEntity>
     // Background safety net against missed invalidations from out-of-band writes
     // (e.g. a SQL migration, another process). Write-through invalidation is the
     // primary correctness mechanism; TTL just bounds staleness if that ever fails.
-    private static readonly TimeSpan DefaultTtl = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan defaultTtl = TimeSpan.FromMinutes(5);
 
     private readonly TimeSpan ttl;
     private readonly TimeProvider clock;
@@ -23,7 +23,7 @@ internal sealed class EntityCache<TDomainEntity> : IEntityCache<TDomainEntity>
     public EntityCache(TimeProvider? clock = null, TimeSpan? ttl = null)
     {
         this.clock = clock ?? TimeProvider.System;
-        this.ttl = ttl ?? DefaultTtl;
+        this.ttl = ttl ?? defaultTtl;
     }
 
     public TDomainEntity? TryGet(Guid id)
@@ -78,7 +78,8 @@ internal sealed class EntityCache<TDomainEntity> : IEntityCache<TDomainEntity>
         Volatile.Write(ref allSnapshot, new Snapshot(entities, now));
     }
 
-    public void InvalidateAll() => Volatile.Write(ref allSnapshot, null);
+    public void InvalidateAll() 
+        => Volatile.Write(ref allSnapshot, null);
 
     private bool IsExpired(DateTimeOffset cachedAt)
         => clock.GetUtcNow() - cachedAt > ttl;

@@ -1,6 +1,7 @@
 namespace Trsr.Storage.Internal.Entities.User;
 
 [StoredDomainEntity(typeof(Trsr.Domain.User.IUser))]
+[Cacheable]
 internal record UserEntity : Entity
 {
     /// <summary>

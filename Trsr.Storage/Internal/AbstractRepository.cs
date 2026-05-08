@@ -10,7 +10,7 @@ using Trsr.Storage.Internal.Entities;
 namespace Trsr.Storage.Internal;
 
 internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepository<TDomainEntity>
-    where TDomainEntity : IDomainEntity
+    where TDomainEntity : class, IDomainEntity
     where TStoredEntity : class, IEntity
 {
     protected readonly Func<StorageDbContext> contextFactory;
@@ -34,14 +34,15 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     // values read inside a transaction can reflect uncommitted writes, and populating from a
     // transaction that later rolls back would leave phantom data in the cache. Invalidation is
     // always safe and is performed unconditionally on writes.
-    private bool CanUseCache => cache is not null && System.Transactions.Transaction.Current is null;
+    private bool CanUseCache 
+        => cache is not null && System.Transactions.Transaction.Current is null;
 
     /// <inheritdoc />
     public async Task<TDomainEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
     {
         if (CanUseCache)
         {
-            TDomainEntity? cached = cache!.TryGet(id);
+            TDomainEntity? cached = cache?.TryGet(id);
             if (cached is not null)
             {
                 return cached;
@@ -51,13 +52,13 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         TStoredEntity? stored = await FindAsync(contextFactory(), id, cancellationToken);
         if (stored is null)
         {
-            return default;
+            return null;
         }
 
         TDomainEntity domain = await mapper.Map(stored, cancellationToken);
         if (CanUseCache)
         {
-            cache!.Set(domain);
+            cache?.Set(domain);
         }
         return domain;
     }
@@ -89,7 +90,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        if (CanUseCache && cache!.TryGetAll() is { } snapshot)
+        if (CanUseCache && cache?.TryGetAll() is { } snapshot)
         {
             return snapshot;
         }
@@ -102,7 +103,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
         if (CanUseCache)
         {
-            cache!.SetAll(mapped);
+            cache?.SetAll(mapped);
         }
         return mapped;
     }
@@ -117,7 +118,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             var misses = new List<Guid>();
             foreach (Guid id in primaryKeys)
             {
-                TDomainEntity? cached = cache!.TryGet(id);
+                TDomainEntity? cached = cache?.TryGet(id);
                 if (cached is not null)
                 {
                     hits.Add(cached);
@@ -337,7 +338,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// Maps to the domain entity
     /// </summary>
     protected async Task<TDomainEntity?> Map(TStoredEntity? stored, CancellationToken cancellationToken = default)
-        => stored is not null ? await mapper.Map(stored, cancellationToken) : default;
+        => stored is not null ? await mapper.Map(stored, cancellationToken) : null;
     
     /// <summary>
     /// Maps to the domain entity

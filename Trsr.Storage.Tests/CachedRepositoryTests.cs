@@ -3,6 +3,7 @@ using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Model;
 using Trsr.Domain.User;
 using Trsr.Storage.Internal;
@@ -151,7 +152,7 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         // Cache registration is opt-in via [Cacheable]. Sanity-check that non-cacheable
         // domain types resolve no IEntityCache<T> binding.
         IServiceProvider services = GetServices();
-        services.GetService<IEntityCache<IUser>>().Should().BeNull();
+        services.GetService<IEntityCache<IAgentCall>>().Should().BeNull();
         services.GetService<IEntityCache<IModel>>().Should().NotBeNull();
     }
 
