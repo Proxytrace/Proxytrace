@@ -253,15 +253,17 @@ export default function Traces() {
   const [range, setRange] = useState('24h');
   const [agentFilter, setAgentFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
 
   const from = useMemo(() => rangeFrom(range), [range]);
   const filter = useMemo(() => ({
     page, pageSize: PAGE_SIZE,
+    includeSystemAgents: showSystem,
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
-  }), [page, agentFilter, from]);
+  }), [page, agentFilter, from, showSystem]);
 
   const { data, isFetching } = useQuery({
     queryKey: QUERY_KEYS.agentCalls(filter),
@@ -281,7 +283,11 @@ export default function Traces() {
 
   const traces = data?.items ?? [];
   const total = data?.total ?? 0;
-  const agents = agentsData?.items ?? [];
+  const allAgents = agentsData?.items ?? [];
+  const agents = useMemo(
+    () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
+    [allAgents, showSystem],
+  );
   const p95 = latencyStats[0]?.p95Ms ?? null;
 
   const rows = useMemo(() => buildRows(traces), [traces]);
@@ -407,6 +413,26 @@ export default function Traces() {
           onChange={(key) => { setRange(key); setPage(1); }}
           width={140}
         />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showSystem}
+          onClick={() => { setShowSystem(v => !v); setPage(1); }}
+          title={showSystem ? 'Hide traces from system agents' : 'Show traces from system agents'}
+          className={`inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none ${showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card'}`}
+          style={{ boxShadow: showSystem ? '0 0 0 1px var(--accent-primary), var(--shadow-pill)' : 'var(--shadow-pill)' }}
+        >
+          <span
+            className={`w-7 h-4 rounded-full relative transition-colors duration-200 ${showSystem ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]'}`}
+            aria-hidden="true"
+          >
+            <span
+              className="absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200"
+              style={{ left: showSystem ? '14px' : '2px' }}
+            />
+          </span>
+          System Traces
+        </button>
       </div>
 
       {/* ── Grouped trace table ── */}

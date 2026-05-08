@@ -46,6 +46,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
     {
         builder.HasIndex(e => e.Fingerprint).IsUnique();
+        builder.HasIndex(e => e.IsSystemAgent);
         builder.Property(e => e.Fingerprint).HasMaxLength(64);
         builder.Property(e => e.Name).HasMaxLength(200);
 

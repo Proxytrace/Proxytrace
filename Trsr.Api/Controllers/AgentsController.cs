@@ -131,6 +131,7 @@ public class AgentsController : ControllerBase
         a.Endpoint.Id,
         $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
         ModelParametersDto.FromDomain(a.ModelParameters),
+        a.IsSystemAgent,
         a.CreatedAt,
         a.UpdatedAt,
         lastUsedAt);

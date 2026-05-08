@@ -101,6 +101,7 @@ export interface AgentDto {
   endpointId: string;
   endpointName: string;
   modelParameters: ModelParametersDto;
+  isSystemAgent: boolean;
   createdAt: string;
   updatedAt: string;
   lastUsedAt: string | null;
@@ -370,6 +371,7 @@ export interface AgentCallFilter {
   from?: string;
   to?: string;
   httpStatus?: number;
+  includeSystemAgents?: boolean;
   page?: number;
   pageSize?: number;
 }

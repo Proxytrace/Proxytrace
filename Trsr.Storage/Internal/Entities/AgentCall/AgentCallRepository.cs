@@ -73,6 +73,14 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.HttpStatus == filter.HttpStatus.Value);
         }
 
+        if (!filter.IncludeSystemAgents)
+        {
+            var nonSystemAgentIds = context.Set<AgentEntity>()
+                .Where(a => !a.IsSystemAgent)
+                .Select(a => a.Id);
+            query = query.Where(e => nonSystemAgentIds.Contains(e.AgentId));
+        }
+
         var total = await query.CountAsync(cancellationToken);
 
         var stored = await query
