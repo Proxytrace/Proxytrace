@@ -4,6 +4,7 @@ import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
@@ -249,6 +250,9 @@ function ConversationGroupRow({
 
 export default function Traces() {
   const qc = useQueryClient();
+  const { currentProjectId } = useCurrentProject();
+  const projectId = currentProjectId ?? undefined;
+  const enabled = currentProjectId !== null;
   const [page, setPage] = useState(1);
   const [range, setRange] = useState('24h');
   const [agentFilter, setAgentFilter] = useState('');
@@ -261,24 +265,32 @@ export default function Traces() {
   const filter = useMemo(() => ({
     page, pageSize: PAGE_SIZE,
     includeSystemAgents: showSystem,
+    ...(projectId ? { projectId } : {}),
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
-  }), [page, agentFilter, from, showSystem]);
+  }), [page, agentFilter, from, showSystem, projectId]);
 
   const { data, isFetching } = useQuery({
     queryKey: QUERY_KEYS.agentCalls(filter),
     queryFn: () => agentCallsApi.list(filter),
     placeholderData: keepPreviousData,
+    enabled,
   });
 
-  const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
+  const { data: agentsData } = useQuery({
+    queryKey: QUERY_KEYS.agents(projectId),
+    queryFn: () => agentsApi.list({ projectId, pageSize: 200 }),
+    enabled,
+  });
   const { data: agentBreakdown = [] } = useQuery({
-    queryKey: QUERY_KEYS.statisticsAgentBreakdown(from),
-    queryFn: () => statisticsApi.agentBreakdown({ from }),
+    queryKey: QUERY_KEYS.statisticsAgentBreakdown(from, projectId),
+    queryFn: () => statisticsApi.agentBreakdown({ from, projectId }),
+    enabled,
   });
   const { data: latencyStats = [] } = useQuery({
-    queryKey: QUERY_KEYS.statisticsLatency(from, agentFilter || undefined),
-    queryFn: () => statisticsApi.latency({ from, agentId: agentFilter || undefined }),
+    queryKey: QUERY_KEYS.statisticsLatency(from, agentFilter || undefined, projectId),
+    queryFn: () => statisticsApi.latency({ from, agentId: agentFilter || undefined, projectId }),
+    enabled,
   });
 
   const traces = data?.items ?? [];

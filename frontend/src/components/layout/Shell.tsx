@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
+import { ProjectSelector } from './ProjectSelector';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { checkHealth } from '../../api/health';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
@@ -39,6 +41,7 @@ export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
   const [online, setOnline] = useState<boolean | null>(null);
   const location = useLocation();
+  const { currentProject } = useCurrentProject();
 
   useEffect(() => {
     let cancelled = false;
@@ -99,17 +102,7 @@ export function Shell() {
 
         {/* Project footer */}
         <div className={`border-t border-hairline ${collapsed ? 'p-2' : 'p-3'}`}>
-          <div
-            className={`flex items-center gap-[10px] cursor-pointer rounded-lg p-1 ${collapsed ? 'justify-center' : 'justify-start'}`}
-          >
-            <Avatar initials="DP" color="#6b9eaa" className="w-7 h-7 rounded-md text-xs font-semibold" />
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate">Default Project</div>
-                <div className="text-[11px] text-muted">3 members</div>
-              </div>
-            )}
-          </div>
+          <ProjectSelector collapsed={collapsed} />
         </div>
       </aside>
 
@@ -124,7 +117,7 @@ export function Shell() {
           </button>
 
           <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-muted">Default Project</span>
+            <span className="text-muted">{currentProject?.name ?? '—'}</span>
             <span className="text-muted">/</span>
             <span className="font-semibold">{pageLabel}</span>
           </div>

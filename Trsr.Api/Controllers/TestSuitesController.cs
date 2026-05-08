@@ -53,13 +53,18 @@ public class TestSuitesController : ControllerBase
     [HttpGet]
     public async Task<PagedResult<TestSuiteDto>> GetAll(
         [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = agentId.HasValue
-            ? await suiteRepository.GetByAgentAsync(agentId.Value, cancellationToken)
-            : await suiteRepository.GetAllAsync(cancellationToken);
+        IReadOnlyList<ITestSuite> all;
+        if (agentId.HasValue)
+            all = await suiteRepository.GetByAgentAsync(agentId.Value, cancellationToken);
+        else if (projectId.HasValue)
+            all = await suiteRepository.GetByProjectAsync(projectId.Value, cancellationToken);
+        else
+            all = await suiteRepository.GetAllAsync(cancellationToken);
         var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
         return new PagedResult<TestSuiteDto>(items, all.Count, page, pageSize);
     }

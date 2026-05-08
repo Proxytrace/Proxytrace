@@ -31,11 +31,16 @@ public class ProposalsController : ControllerBase
     [HttpGet]
     public async Task<IReadOnlyList<OptimizationProposalDto>> GetAll(
         [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? projectId = null,
         CancellationToken cancellationToken = default)
     {
-        var proposals = agentId.HasValue
-            ? await repository.GetByAgentAsync(agentId.Value, cancellationToken)
-            : await repository.GetAllAsync(cancellationToken);
+        IReadOnlyList<IOptimizationProposal> proposals;
+        if (agentId.HasValue)
+            proposals = await repository.GetByAgentAsync(agentId.Value, cancellationToken);
+        else if (projectId.HasValue)
+            proposals = await repository.GetByProjectAsync(projectId.Value, cancellationToken);
+        else
+            proposals = await repository.GetAllAsync(cancellationToken);
 
         var dtos = new List<OptimizationProposalDto>(proposals.Count);
         foreach (var p in proposals)

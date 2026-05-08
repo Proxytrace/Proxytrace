@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -13,13 +14,15 @@ import { AgentDetail } from './AgentDetail';
 export default function Agents() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
+  const { currentProjectId } = useCurrentProject();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselect = searchParams.get('id');
   const highlightTool = searchParams.get('tool');
 
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.agents,
-    queryFn: () => agentsApi.list({ pageSize: LIST_PAGE_SIZE }),
+    queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined),
+    queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
+    enabled: currentProjectId !== null,
   });
   const agents = data?.items ?? [];
 
@@ -45,7 +48,7 @@ export default function Agents() {
   const delAgent = useMutation({
     mutationFn: () => agentsApi.delete(selected!.id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined) });
       const remaining = agents.filter(a => a.id !== selected!.id);
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteOpen(false);

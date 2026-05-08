@@ -53,13 +53,18 @@ public class TestRunGroupsController : ControllerBase
     [HttpGet]
     public async Task<PagedResult<TestRunGroupDto>> GetAll(
         [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = agentId.HasValue
-            ? await groupRepository.GetByAgentAsync(agentId.Value, cancellationToken)
-            : await groupRepository.GetAllAsync(cancellationToken);
+        IReadOnlyList<ITestRunGroup> all;
+        if (agentId.HasValue)
+            all = await groupRepository.GetByAgentAsync(agentId.Value, cancellationToken);
+        else if (projectId.HasValue)
+            all = await groupRepository.GetByProjectAsync(projectId.Value, cancellationToken);
+        else
+            all = await groupRepository.GetAllAsync(cancellationToken);
 
         var groups = all
             .OrderByDescending(g => g.CreatedAt)

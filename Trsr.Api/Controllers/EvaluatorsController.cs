@@ -75,9 +75,13 @@ public class EvaluatorsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IReadOnlyList<EvaluatorDetailDto>> GetAll(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<EvaluatorDetailDto>> GetAll(
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
     {
-        var all = await evaluatorRepository.GetAllAsync(cancellationToken);
+        var all = projectId.HasValue
+            ? await evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
+            : await evaluatorRepository.GetAllAsync(cancellationToken);
         return all.Select(ToDto).ToArray();
     }
 

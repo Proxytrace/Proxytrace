@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { useCurrentProject } from '../../contexts/ProjectContext';
 import { ModelProviderKind, type ApiKeyDto, type ModelEndpointDto, type ProviderDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
@@ -43,6 +44,7 @@ function maskKey(k: string) {
 export default function Providers() {
   const qc = useQueryClient();
   const { show: toast } = useToast();
+  const { currentProjectId } = useCurrentProject();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<'models' | 'keys'>('models');
 
@@ -368,7 +370,7 @@ export default function Providers() {
                       <div className="text-[14px] font-bold mb-[2px]">Trsr API Keys</div>
                       <div className="text-[12px] text-muted">Keys that authenticate clients at the Trsr proxy.</div>
                     </div>
-                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
+                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: currentProjectId ?? projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
                       + Generate Key
                     </button>
                   </div>

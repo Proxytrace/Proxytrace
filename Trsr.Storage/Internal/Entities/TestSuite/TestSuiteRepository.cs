@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Exceptions;
 using Trsr.Domain.TestSuite;
+using Trsr.Storage.Internal.Entities.Agent;
 
 namespace Trsr.Storage.Internal.Entities.TestSuite;
 
@@ -22,6 +23,23 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
             .Set<TestSuiteEntity>()
             .AsNoTracking()
             .Where(e => e.Agent == agentId)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ITestSuite>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var stored = await context
+            .Set<TestSuiteEntity>()
+            .AsNoTracking()
+            .Join(context.Set<AgentEntity>(),
+                s => s.Agent,
+                a => a.Id,
+                (s, a) => new { Suite = s, Agent = a })
+            .Where(x => x.Agent.Project == projectId)
+            .Select(x => x.Suite)
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);

@@ -1,8 +1,9 @@
-import { api } from './client';
+import { api, qs } from './client';
 import type { CreateEvaluatorPayload, EvaluatorDetailDto } from './models';
 
 export const evaluatorsApi = {
-  list: () => api.get<EvaluatorDetailDto[]>('/api/evaluators'),
+  list: (params?: { projectId?: string }) =>
+    api.get<EvaluatorDetailDto[]>(`/api/evaluators${qs(params ?? {})}`),
   get: (id: string) => api.get<EvaluatorDetailDto>(`/api/evaluators/${id}`),
   create: (payload: CreateEvaluatorPayload) => api.post<EvaluatorDetailDto>('/api/evaluators', payload),
   update: (id: string, payload: Partial<CreateEvaluatorPayload>) =>

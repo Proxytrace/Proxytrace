@@ -4,6 +4,7 @@ import { lazy, Suspense } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ProjectProvider } from './contexts/ProjectContext';
 import { setupApi } from './api/setup';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
@@ -55,7 +56,7 @@ function AppRoutes() {
       />
       <Route
         path="/"
-        element={setupStatus.isConfigured ? <Shell /> : <Navigate to="/setup" replace />}
+        element={setupStatus.isConfigured ? <ProjectProvider><Shell /></ProjectProvider> : <Navigate to="/setup" replace />}
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={wrap(<Dashboard />)} />
