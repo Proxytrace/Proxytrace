@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Evaluator;
 
@@ -14,6 +15,14 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
     {
     }
 
-    public Task<IReadOnlyList<IEvaluator>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+    public async Task<IReadOnlyList<IEvaluator>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<EvaluatorEntity>()
+            .AsNoTracking()
+            .Where(e => e.Project == projectId)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
 }

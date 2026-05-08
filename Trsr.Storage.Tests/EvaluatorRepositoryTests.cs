@@ -111,6 +111,25 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetByProjectAsync_FiltersByProject()
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+
+        var projectA = await projectGenerator.CreateAsync(CancellationToken);
+        var projectB = await projectGenerator.CreateAsync(CancellationToken);
+        var inA = await repository.AddAsync(exactFactory(projectA), CancellationToken);
+        var inB = await repository.AddAsync(exactFactory(projectB), CancellationToken);
+
+        var resultsA = await repository.GetByProjectAsync(projectA.Id, CancellationToken);
+
+        resultsA.Should().Contain(e => e.Id == inA.Id);
+        resultsA.Should().NotContain(e => e.Id == inB.Id);
+    }
+
+    [TestMethod]
     public async Task GetAllAsync_ReturnsAllEvaluators()
     {
         IServiceProvider services = GetServices();
