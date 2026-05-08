@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { AgentCallDto, MessageDto } from '../../api/models';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
-import { PlusIcon, ChevronRightIcon } from '../../components/icons';
+import { PlusIcon, ChevronRightIcon, ClockIcon, CoinsIcon, ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon } from '../../components/icons';
 import { Collapsible } from '../../components/ui/Collapsible';
 import { JsonBlock } from '../../components/ui/JsonBlock';
 import { MessageBubble } from '../../components/ui/MessageBubble';
@@ -43,12 +43,41 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
 
 // ─── DrawerStat ───────────────────────────────────────────────────────────────
 
-function DrawerStat({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+function DrawerStat({
+  label,
+  value,
+  sub,
+  icon,
+  color,
+  valueColor,
+  children,
+}: {
+  label: string;
+  value?: string;
+  sub?: React.ReactNode;
+  icon: React.ReactNode;
+  color: string;
+  valueColor?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <div>
-      <div className="text-[10.5px] text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
-      <div className="text-[15px] font-bold mt-[3px] font-mono" style={{ color: color ?? 'var(--text-primary)' }}>{value}</div>
-      {sub && <div className="text-[10px] text-muted mt-[1px]">{sub}</div>}
+    <div className="min-w-0">
+      <div className="flex items-center gap-[10px]">
+        <div
+          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+          style={{ background: `${color}1f`, color, boxShadow: `inset 0 0 0 1px ${color}33` }}
+        >
+          {icon}
+        </div>
+        <div className="min-w-0 leading-tight">
+          <div className="text-[10.5px] text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
+          {value !== undefined && (
+            <div className="text-[15px] font-bold mt-[2px] font-mono" style={{ color: valueColor ?? 'var(--text-primary)' }}>{value}</div>
+          )}
+          {children}
+        </div>
+      </div>
+      {sub && <div className="text-[10px] text-muted mt-[4px] ml-[46px]">{sub}</div>}
     </div>
   );
 }
@@ -179,28 +208,49 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
 
         {/* Stat band */}
         <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }}>
-          <DrawerStat label="Latency" value={fmtLatency(trace.durationMs)} sub={trace.durationMs > 3000 ? 'slow' : 'normal'} color={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
-          <DrawerStat label="Input"  value={fmtTokens(trace.inputTokens)}  sub="tokens" />
-          <DrawerStat label="Output" value={fmtTokens(trace.outputTokens)} sub="tokens" />
-          <DrawerStat label="Total"  value={fmtTokens(tokTotal)}            sub="tokens" />
-          <div>
-            <div className="text-[10.5px] text-muted font-medium tracking-[0.05em] uppercase">Cost</div>
-            <div className="text-[15px] font-bold mt-[3px] font-mono">
-              {trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
-            </div>
-            {trace.costEur != null
-              ? <div className="text-[10px] text-muted mt-[1px]">EUR</div>
-              : (
+          <DrawerStat
+            label="Latency"
+            value={fmtLatency(trace.durationMs)}
+            icon={<ClockIcon size={15} strokeWidth={2.2} />}
+            color={trace.durationMs > 3000 ? '#f59e0b' : '#22d3ee'}
+            valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined}
+          />
+          <DrawerStat
+            label="Input"
+            value={fmtTokens(trace.inputTokens)}
+            icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />}
+            color="#3b82f6"
+          />
+          <DrawerStat
+            label="Output"
+            value={fmtTokens(trace.outputTokens)}
+            icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />}
+            color="#10b981"
+          />
+          <DrawerStat
+            label="Total"
+            value={fmtTokens(tokTotal)}
+            icon={<SigmaIcon size={15} strokeWidth={2.2} />}
+            color="#8b5cf6"
+          />
+          <DrawerStat
+            label="Cost"
+            value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
+            icon={<CoinsIcon size={15} strokeWidth={2.2} />}
+            color="#eab308"
+            sub={trace.costEur == null
+              ? (
                 <button
                   type="button"
                   onClick={() => { onClose(); navigate('/providers'); }}
-                  className="mt-[1px] inline-flex items-center gap-[3px] text-[10px] text-accent-primary cursor-pointer bg-transparent border-0 p-0 hover:underline"
+                  className="inline-flex items-center gap-[3px] text-[10px] text-accent-primary cursor-pointer bg-transparent border-0 p-0 hover:underline"
                   title="Configure pricing for this model endpoint"
                 >
                   Set price →
                 </button>
-              )}
-          </div>
+              )
+              : undefined}
+          />
         </div>
 
         {/* Tabs */}

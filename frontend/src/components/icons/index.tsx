@@ -258,3 +258,51 @@ export function EditIcon(props: IconProps) {
     </Svg>
   );
 }
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </Svg>
+  );
+}
+
+export function CoinsIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="8" cy="8" r="6"/>
+      <path d="M18.09 10.37A6 6 0 1 1 10.34 18"/>
+      <path d="M7 6h1v4"/>
+      <path d="M16.71 13.88l.7.71-2.82 2.82"/>
+    </Svg>
+  );
+}
+
+export function ArrowDownToLineIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 17V3"/>
+      <path d="m6 11 6 6 6-6"/>
+      <path d="M19 21H5"/>
+    </Svg>
+  );
+}
+
+export function ArrowUpFromLineIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 21V7"/>
+      <path d="m6 13 6-6 6 6"/>
+      <path d="M19 3H5"/>
+    </Svg>
+  );
+}
+
+export function SigmaIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 7V4H6l6 8-6 8h12v-3"/>
+    </Svg>
+  );
+}
