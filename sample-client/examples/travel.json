@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Vienna: weather + top sights",
+    "prompt": "What's the weather in Vienna right now, and what are the top 3 tourist attractions?"
+  },
+  {
+    "label": "3-day Tokyo trip under $2k",
+    "prompt": "Help me plan a 3-day trip to Tokyo. What's the weather like, what are the must-see attractions, and what would flights from New York roughly cost?"
+  },
+  {
+    "label": "Barcelona best season + costs",
+    "prompt": "What's the best time of year to visit Barcelona for good weather? Also convert €500 to USD so I know my budget."
+  },
+  {
+    "label": "Quick weather check: Reykjavik",
+    "prompt": "Is it cold in Reykjavik right now? Should I pack winter gear if I'm flying out tomorrow?"
+  },
+  {
+    "label": "Lisbon attractions only",
+    "prompt": "I'm in Lisbon for 24 hours. Give me the 5 most-loved attractions to hit — no weather, just the list."
+  },
+  {
+    "label": "Flight quote: LA → Sydney",
+    "prompt": "What's a typical round-trip economy fare from Los Angeles to Sydney? Business class too if you have it."
+  },
+  {
+    "label": "Convert ¥120,000 to USD",
+    "prompt": "Convert 120000 JPY to USD so I can budget my Tokyo hotel."
+  },
+  {
+    "label": "Paris vs. Rome for May",
+    "prompt": "I have one week in May. Compare Paris and Rome on weather, top attractions, and rough flight cost from New York. Which would you pick?"
+  },
+  {
+    "label": "Family-friendly Bangkok week",
+    "prompt": "Plan a family-friendly week in Bangkok. We need weather, a kid-appropriate attractions list (top 5), and flight estimates from London."
+  },
+  {
+    "label": "Cheap alt to Paris in spring",
+    "prompt": "Paris flights are too pricey. Suggest a cheaper European city with similar springtime vibes — check the weather there and give me a flight estimate from New York."
+  }
+]
