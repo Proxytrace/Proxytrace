@@ -36,6 +36,28 @@ public interface IStatisticsQueryService
 
     /// <summary>Aggregate test-run KPIs for all finalized runs matching the filter (used by the dashboard).</summary>
     Task<TestRunStatistics> GetStatisticsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>Combined per-agent rollup: summary KPIs, time-series, pass-rate trend, latest suite pass rates, and entity counts.</summary>
+    Task<AgentOverviewStat> GetAgentOverviewAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
+    /// <summary>Per-agent time-series of trace count, tokens, cost, and average latency, bucketed by <paramref name="bucket"/>.</summary>
+    Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
+    /// <summary>Per-agent pass-rate trend bucketed over completed test runs.</summary>
+    Task<IReadOnlyList<AgentPassRatePoint>> GetAgentPassRateTrendAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
+    /// <summary>Latest finalized run per suite for the given agent.</summary>
+    Task<IReadOnlyList<AgentSuitePassRate>> GetAgentLatestSuitePassRatesAsync(Guid agentId, CancellationToken cancellationToken = default);
+
+    /// <summary>Counts of suites, test cases, and proposals (open/total) for the given agent.</summary>
+    Task<AgentEntityCounts> GetAgentEntityCountsAsync(Guid agentId, CancellationToken cancellationToken = default);
+}
+
+public enum StatisticsBucket
+{
+    FiveMinutes,
+    Hourly,
+    Daily,
 }
 
 public record StatisticsFilter(
@@ -93,6 +115,46 @@ public record CostEstimateStat(
     decimal? InputCostEur,
     decimal? OutputCostEur,
     decimal? TotalCostEur);
+
+public record AgentTimeSeriesPoint(
+    DateTimeOffset BucketStart,
+    int TraceCount,
+    long InputTokens,
+    long OutputTokens,
+    decimal CostEur,
+    double AvgLatencyMs);
+
+public record AgentPassRatePoint(
+    DateTimeOffset BucketStart,
+    int Passed,
+    int TestCases);
+
+public record AgentSuitePassRate(
+    Guid SuiteId,
+    string SuiteName,
+    DateTimeOffset LatestRunAt,
+    int Passed,
+    int TestCases);
+
+public record AgentEntityCounts(
+    int SuiteCount,
+    int TestCaseCount,
+    int OpenProposalCount,
+    int TotalProposalCount);
+
+public record AgentTimeSummary(
+    int TotalTraces,
+    long TotalInputTokens,
+    long TotalOutputTokens,
+    decimal TotalCostEur,
+    double AvgLatencyMs);
+
+public record AgentOverviewStat(
+    AgentTimeSummary Summary,
+    IReadOnlyList<AgentTimeSeriesPoint> TimeSeries,
+    IReadOnlyList<AgentPassRatePoint> PassRateTrend,
+    IReadOnlyList<AgentSuitePassRate> SuitePassRates,
+    AgentEntityCounts Counts);
 
 public record TestRunStatistics(
     int TestCases,

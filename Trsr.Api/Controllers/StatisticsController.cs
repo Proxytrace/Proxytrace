@@ -112,4 +112,87 @@ public class StatisticsController : ControllerBase
         var results = await statistics.GetCostEstimateAsync(filter, cancellationToken);
         return results.Select(r => new CostEstimateDto(r.EndpointId, r.InputCostEur, r.OutputCostEur, r.TotalCostEur)).ToArray();
     }
+
+    [HttpGet("agents/{agentId:guid}/overview")]
+    public async Task<ActionResult<AgentOverviewDto>> GetAgentOverview(
+        Guid agentId,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+
+        var result = await statistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
+        return new AgentOverviewDto(
+            Summary: ToDto(result.Summary),
+            TimeSeries: result.TimeSeries.Select(ToDto).ToArray(),
+            PassRateTrend: result.PassRateTrend.Select(ToDto).ToArray(),
+            SuitePassRates: result.SuitePassRates.Select(ToDto).ToArray(),
+            Counts: ToDto(result.Counts));
+    }
+
+    [HttpGet("agents/{agentId:guid}/time-series")]
+    public async Task<ActionResult<IReadOnlyList<AgentTimeSeriesPointDto>>> GetAgentTimeSeries(
+        Guid agentId,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+
+        var result = await statistics.GetAgentTimeSeriesAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
+        return result.Select(ToDto).ToArray();
+    }
+
+    [HttpGet("agents/{agentId:guid}/pass-rate-trend")]
+    public async Task<ActionResult<IReadOnlyList<AgentPassRatePointDto>>> GetAgentPassRateTrend(
+        Guid agentId,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+
+        var result = await statistics.GetAgentPassRateTrendAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
+        return result.Select(ToDto).ToArray();
+    }
+
+    [HttpGet("agents/{agentId:guid}/suite-pass-rates")]
+    public async Task<IReadOnlyList<AgentSuitePassRateDto>> GetAgentSuitePassRates(
+        Guid agentId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await statistics.GetAgentLatestSuitePassRatesAsync(agentId, cancellationToken);
+        return result.Select(ToDto).ToArray();
+    }
+
+    [HttpGet("agents/{agentId:guid}/counts")]
+    public async Task<AgentEntityCountsDto> GetAgentCounts(
+        Guid agentId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await statistics.GetAgentEntityCountsAsync(agentId, cancellationToken);
+        return ToDto(result);
+    }
+
+    private static AgentTimeSummaryDto ToDto(AgentTimeSummary s) =>
+        new(s.TotalTraces, s.TotalInputTokens, s.TotalOutputTokens, s.TotalCostEur, s.AvgLatencyMs);
+
+    private static AgentTimeSeriesPointDto ToDto(AgentTimeSeriesPoint p) =>
+        new(p.BucketStart, p.TraceCount, p.InputTokens, p.OutputTokens, p.CostEur, p.AvgLatencyMs);
+
+    private static AgentPassRatePointDto ToDto(AgentPassRatePoint p) =>
+        new(p.BucketStart, p.Passed, p.TestCases);
+
+    private static AgentSuitePassRateDto ToDto(AgentSuitePassRate s) =>
+        new(s.SuiteId, s.SuiteName, s.LatestRunAt, s.Passed, s.TestCases);
+
+    private static AgentEntityCountsDto ToDto(AgentEntityCounts c) =>
+        new(c.SuiteCount, c.TestCaseCount, c.OpenProposalCount, c.TotalProposalCount);
 }

@@ -16,6 +16,7 @@ import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { agentColor } from '../../lib/colors';
 import { fmtDate, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { AgentStatistics } from './AgentStatistics';
 
 const TYPE_COLORS: Record<string, string> = {
   string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
@@ -195,6 +196,9 @@ function AgentDetail({ agent, onDelete }: { agent: AgentDto; onDelete: () => voi
           </div>
         </div>
       </div>
+
+      {/* Statistics */}
+      <AgentStatistics agentId={agent.id} />
 
       {/* System prompt */}
       <div className="bg-card rounded-2xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
