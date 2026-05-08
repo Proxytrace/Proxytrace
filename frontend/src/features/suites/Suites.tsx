@@ -317,21 +317,7 @@ export default function Suites() {
   const canAdvanceCreate = ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
-      {/* Header */}
-      <div className="fade-up flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-[6px]">Test Suites</h1>
-          <p className="text-[13.5px] text-muted m-0">Agent-specific benchmark collections built from curated traces.</p>
-        </div>
-        <button
-          onClick={() => { setCreateOpen(true); resetCreate(); }}
-          className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap"
-        >
-          + New suite
-        </button>
-      </div>
-
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
       {/* KPI row */}
       <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {[
@@ -368,6 +354,12 @@ export default function Suites() {
           })}
         </div>
         <span className="text-[12px] text-muted">{visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}</span>
+        <button
+          onClick={() => { setCreateOpen(true); resetCreate(); }}
+          className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap ml-auto"
+        >
+          + New suite
+        </button>
       </div>
 
       {isLoading && <div className="text-center p-[60px] text-muted text-[13px]">Loading…</div>}

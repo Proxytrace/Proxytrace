@@ -736,31 +736,7 @@ export default function Evaluators() {
 
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
-      <div style={{ maxWidth: 1320, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
-        {/* Header */}
-        <div className="fade-up" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6 }}>Evaluators</h1>
-            <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: 0 }}>
-              Score agent responses with LLM judges, rules, code, embeddings, classifiers and numeric checks.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button
-              className="btn-ghost"
-              style={{ padding: '9px 14px', borderRadius: 10, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 7 }}
-            >
-              <WandIcon size={13} /> Library
-            </button>
-            <button
-              onClick={() => { setShowNew(true); setPickedKind(null); setCreateForm(initForm()); }}
-              style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #c9944a, #a07434)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', cursor: 'pointer' }}
-            >
-              <PlusIcon size={13} /> New evaluator
-            </button>
-          </div>
-        </div>
-
+      <div style={{ maxWidth: 1480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
         {/* KPIs */}
         <div className="fade-up" style={{ animationDelay: '30ms', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {[
@@ -812,6 +788,20 @@ export default function Evaluators() {
           <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)' }}>
             {visible.length} evaluator{visible.length !== 1 ? 's' : ''}
           </span>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button
+              className="btn-ghost"
+              style={{ padding: '9px 14px', borderRadius: 10, fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 7 }}
+            >
+              <WandIcon size={13} /> Library
+            </button>
+            <button
+              onClick={() => { setShowNew(true); setPickedKind(null); setCreateForm(initForm()); }}
+              style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #c9944a, #a07434)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap', cursor: 'pointer' }}
+            >
+              <PlusIcon size={13} /> New evaluator
+            </button>
+          </div>
         </div>
 
         {/* Card grid */}

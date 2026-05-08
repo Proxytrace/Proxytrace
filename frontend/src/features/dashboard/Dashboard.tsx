@@ -112,29 +112,7 @@ export default function Dashboard() {
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-4 pb-6">
-
-      {/* Title row */}
-      <div className="fade-up flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Dashboard</h1>
-          <p className="text-sm text-muted m-0">Overview of your agent tracing and evaluation activity.</p>
-        </div>
-        <div className="flex gap-1 p-1 bg-card rounded-[10px] shrink-0">
-          {(['1h', '24h', '7d', '30d'] as const).map(r => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              style={{
-                boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
-              }}
-              className={`px-3 py-[6px] text-xs font-medium rounded-[7px] cursor-pointer ${
-                range === r ? 'bg-card-2 text-primary' : 'bg-transparent text-muted'
-              }`}
-            >{r}</button>
-          ))}
-        </div>
-      </div>
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-4 overflow-y-auto pb-6">
 
       {/* KPI Row */}
       <div className="fade-up grid gap-3" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
@@ -145,7 +123,6 @@ export default function Dashboard() {
           trend={{ direction: 'up', pct: '+24%', positive: true }}
           sparkline={VOLUME_RAW}
           sparklineColor="#c9944a"
-          accent
         />
         <KpiCard
           title="Total Tokens"
@@ -179,11 +156,25 @@ export default function Dashboard() {
           <div className="card-header">
             <div className="min-w-0 flex-1">
               <h3>Trace Volume</h3>
-              <p>{rangeLabel(range)}</p>
+              <p className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: '#c9944a' }} />
+                Traces · {rangeLabel(range)}
+              </p>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted shrink-0">
-              <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: '#c9944a' }} />
-              Traces
+            <div className="flex gap-1 p-1 bg-card-2 rounded-[9px] shrink-0" role="group" aria-label="Time range">
+              {(['1h', '24h', '7d', '30d'] as const).map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  aria-pressed={range === r}
+                  style={{
+                    boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
+                  }}
+                  className={`px-[10px] py-[4px] text-[11px] font-medium rounded-[6px] cursor-pointer transition-colors duration-150 ${
+                    range === r ? 'bg-card text-primary' : 'bg-transparent text-muted hover:text-secondary'
+                  }`}
+                >{r}</button>
+              ))}
             </div>
           </div>
           <div className="card-body px-[18px] pb-[18px] pt-0">
