@@ -182,6 +182,25 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public void EntityCache_TtlExpiry_EvictsStaleEntriesAndSnapshots()
+    {
+        // Direct unit test of the cache itself with a fake clock.
+        var clock = new FakeTimeProvider(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        var cache = new EntityCache<IModel>(TimeSpan.FromMinutes(1), clock);
+        var model = new StubModel(Guid.NewGuid(), "m1");
+
+        cache.Set(model);
+        cache.SetAll(new IModel[] { model });
+        cache.TryGet(model.Id).Should().NotBeNull();
+        cache.TryGetAll().Should().NotBeNull();
+
+        clock.Advance(TimeSpan.FromMinutes(2));
+
+        cache.TryGet(model.Id).Should().BeNull("entry exceeds TTL");
+        cache.TryGetAll().Should().BeNull("snapshot exceeds TTL");
+    }
+
+    [TestMethod]
     public async Task UpdateAsync_InvalidatesCacheUnconditionally()
     {
         // Writes always invalidate (even though they run inside transaction.InvokeAsync's
@@ -200,5 +219,21 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         await repository.UpdateAsync(createExisting("after-update", created), CancellationToken);
 
         cache.TryGet(created.Id).Should().BeNull("the write must invalidate the cache entry");
+    }
+
+    private sealed class FakeTimeProvider : TimeProvider
+    {
+        private DateTimeOffset now;
+        public FakeTimeProvider(DateTimeOffset start) => now = start;
+        public override DateTimeOffset GetUtcNow() => now;
+        public void Advance(TimeSpan by) => now = now.Add(by);
+    }
+
+    private sealed record StubModel(Guid Id, string Name) : IModel
+    {
+        public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow.AddMinutes(-1);
+        public DateTimeOffset UpdatedAt { get; } = DateTimeOffset.UtcNow.AddMinutes(-1);
+        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(
+            System.ComponentModel.DataAnnotations.ValidationContext validationContext) => [];
     }
 }

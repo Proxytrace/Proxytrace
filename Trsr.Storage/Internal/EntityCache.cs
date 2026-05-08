@@ -8,31 +8,81 @@ namespace Trsr.Storage.Internal;
 internal sealed class EntityCache<TDomainEntity> : IEntityCache<TDomainEntity>
     where TDomainEntity : IDomainEntity
 {
-    private readonly ConcurrentDictionary<Guid, TDomainEntity> entries = new();
-    private volatile IReadOnlyList<TDomainEntity>? allSnapshot;
+    // Background safety net against missed invalidations from out-of-band writes
+    // (e.g. a SQL migration, another process). Write-through invalidation is the
+    // primary correctness mechanism; TTL just bounds staleness if that ever fails.
+    private static readonly TimeSpan DefaultTtl = TimeSpan.FromMinutes(5);
+
+    private readonly TimeSpan ttl;
+    private readonly TimeProvider clock;
+    private readonly ConcurrentDictionary<Guid, Entry> entries = new();
+    private Snapshot? allSnapshot;
+
+    public EntityCache() : this(DefaultTtl, TimeProvider.System) { }
+
+    public EntityCache(TimeSpan ttl, TimeProvider clock)
+    {
+        this.ttl = ttl;
+        this.clock = clock;
+    }
 
     public TDomainEntity? TryGet(Guid id)
-        => entries.TryGetValue(id, out var entity) ? entity : default;
+    {
+        if (!entries.TryGetValue(id, out Entry? entry))
+        {
+            return default;
+        }
+
+        if (IsExpired(entry.CachedAt))
+        {
+            entries.TryRemove(id, out _);
+            return default;
+        }
+
+        return entry.Entity;
+    }
 
     public void Set(TDomainEntity entity)
-        => entries[entity.Id] = entity;
+        => entries[entity.Id] = new Entry(entity, clock.GetUtcNow());
 
     public void Invalidate(Guid id)
     {
         entries.TryRemove(id, out _);
-        allSnapshot = null;
+        Volatile.Write(ref allSnapshot, null);
     }
 
-    public IReadOnlyList<TDomainEntity>? TryGetAll() => allSnapshot;
+    public IReadOnlyList<TDomainEntity>? TryGetAll()
+    {
+        Snapshot? snap = Volatile.Read(ref allSnapshot);
+        if (snap is null)
+        {
+            return null;
+        }
+
+        if (IsExpired(snap.CachedAt))
+        {
+            Volatile.Write(ref allSnapshot, null);
+            return null;
+        }
+
+        return snap.Entities;
+    }
 
     public void SetAll(IReadOnlyList<TDomainEntity> entities)
     {
-        foreach (var entity in entities)
+        DateTimeOffset now = clock.GetUtcNow();
+        foreach (TDomainEntity entity in entities)
         {
-            entries[entity.Id] = entity;
+            entries[entity.Id] = new Entry(entity, now);
         }
-        allSnapshot = entities;
+        Volatile.Write(ref allSnapshot, new Snapshot(entities, now));
     }
 
-    public void InvalidateAll() => allSnapshot = null;
+    public void InvalidateAll() => Volatile.Write(ref allSnapshot, null);
+
+    private bool IsExpired(DateTimeOffset cachedAt)
+        => clock.GetUtcNow() - cachedAt > ttl;
+
+    private sealed record Entry(TDomainEntity Entity, DateTimeOffset CachedAt);
+    private sealed record Snapshot(IReadOnlyList<TDomainEntity> Entities, DateTimeOffset CachedAt);
 }

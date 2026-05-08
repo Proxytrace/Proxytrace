@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -35,7 +34,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     // values read inside a transaction can reflect uncommitted writes, and populating from a
     // transaction that later rolls back would leave phantom data in the cache. Invalidation is
     // always safe and is performed unconditionally on writes.
-    private bool CanUseCache => cache is not null && Transaction.Current is null;
+    private bool CanUseCache => cache is not null && System.Transactions.Transaction.Current is null;
 
     /// <inheritdoc />
     public async Task<TDomainEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
