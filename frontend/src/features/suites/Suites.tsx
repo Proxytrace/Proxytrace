@@ -22,6 +22,7 @@ import { RunConfirmModal } from './RunConfirmModal';
 import { useToast } from '../../components/ui/Toast';
 import { useFilter } from '../../hooks/useFilter';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, LIST_PAGE_SIZE } from '../../lib/constants';
+import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 
 // ─── SuiteCard ────────────────────────────────────────────────────────────────
 
@@ -186,11 +187,6 @@ export default function Suites() {
     queryFn: () => evaluatorsApi.list({ projectId }),
     enabled,
   });
-  const { data: tracesData } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteCreate(createAgentId),
-    queryFn: () => agentCallsApi.list({ agentId: createAgentId, pageSize: 50 }),
-    enabled: !!createAgentId && createStep === 2,
-  });
   const { data: editTracesData } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteEdit(editSuite?.agentId),
     queryFn: () => agentCallsApi.list({ agentId: editSuite?.agentId, pageSize: 50 }),
@@ -199,7 +195,6 @@ export default function Suites() {
 
   const suites = suitesData?.items ?? [];
   const agents = agentsData?.items ?? [];
-  const traces = tracesData?.items ?? [];
   const editTraces = editTracesData?.items ?? [];
 
   const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(
@@ -272,65 +267,49 @@ export default function Suites() {
   // Agent filter tabs
   const agentList = [{ id: '', name: 'All', count: suites.length }, ...agents.map(a => ({ id: a.id, name: a.name, count: suites.filter(s => s.agentId === a.id).length }))];
 
+  function toggleSelectedCall(id: string) {
+    setSelectedCalls(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+  function toggleEvaluator(id: string) {
+    setSelectedEvaluatorIds(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+
   const wizardSteps = [
     {
       label: 'Select agent',
-      content: (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {agents.map(a => {
-            const c = agentColor(a.id);
-            return (
-              <button key={a.id} onClick={() => setCreateAgentId(a.id)} style={{ padding: '12px 14px', borderRadius: 10, textAlign: 'left', border: `1px solid ${createAgentId === a.id ? c : 'var(--border-color)'}`, background: createAgentId === a.id ? `${c}14` : 'var(--bg-card)', cursor: 'pointer' }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{a.projectName}</div>
-              </button>
-            );
-          })}
-        </div>
-      ),
+      content: <AgentStep agents={agents} value={createAgentId} onChange={setCreateAgentId} />,
     },
     {
       label: 'Name suite',
-      content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Suite name</label>
-          <input value={createName} onChange={e => setCreateName(e.target.value)} placeholder="My regression suite" autoFocus style={{ padding: '9px 12px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit', outline: 'none' }} />
-        </div>
-      ),
+      content: <NameStep value={createName} onChange={setCreateName} />,
     },
     {
       label: 'Select traces',
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto' }}>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Select traces to use as test cases:</p>
-          {traces.map((t: AgentCallDto) => (
-            <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedCalls.has(t.id) ? 'var(--accent-subtle)' : 'var(--bg-card)', border: `1px solid ${selectedCalls.has(t.id) ? 'rgba(139,92,246,0.3)' : 'var(--border-color)'}`, cursor: 'pointer' }}>
-              <input type="checkbox" checked={selectedCalls.has(t.id)} onChange={e => { const s = new Set(selectedCalls); if (e.target.checked) s.add(t.id); else s.delete(t.id); setSelectedCalls(s); }} />
-              <span className="mono" style={{ fontSize: 11 }}>{t.id.slice(0, 12)}…</span>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t.model}</span>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>{fmtRelative(t.createdAt)}</span>
-            </label>
-          ))}
-          {traces.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>No traces found for this agent.</div>}
-        </div>
+        <TracesStep
+          agentId={createAgentId}
+          selected={selectedCalls}
+          onToggle={toggleSelectedCall}
+          onClear={() => setSelectedCalls(new Set())}
+        />
       ),
     },
     {
       label: 'Select evaluators',
       content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Attach evaluators (optional):</p>
-          {(evaluators as EvaluatorDetailDto[]).map(e => {
-            const c = EVALUATOR_KIND_COLOR[e.kind];
-            return (
-              <label key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: selectedEvaluatorIds.has(e.id) ? `${c}14` : 'var(--bg-card)', border: `1px solid ${selectedEvaluatorIds.has(e.id) ? `${c}44` : 'var(--border-color)'}`, cursor: 'pointer' }}>
-                <input type="checkbox" checked={selectedEvaluatorIds.has(e.id)} onChange={ev => { const s = new Set(selectedEvaluatorIds); if (ev.target.checked) s.add(e.id); else s.delete(e.id); setSelectedEvaluatorIds(s); }} />
-                <ColoredBadge color={c} label={e.kind} />
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{e.name}</span>
-              </label>
-            );
-          })}
-        </div>
+        <EvaluatorsStep
+          evaluators={evaluators as EvaluatorDetailDto[]}
+          selectedIds={selectedEvaluatorIds}
+          onToggle={toggleEvaluator}
+        />
       ),
     },
   ];
@@ -347,7 +326,7 @@ export default function Suites() {
         </div>
         <button
           onClick={() => { setCreateOpen(true); resetCreate(); }}
-          style={{ padding: '9px 16px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
+          className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap"
         >
           + New suite
         </button>
@@ -561,7 +540,7 @@ export default function Suites() {
 
       {/* Create wizard */}
       {createOpen && (
-        <Modal title="Create Test Suite" onClose={() => { setCreateOpen(false); resetCreate(); }} maxWidth={600}>
+        <Modal title="Create Test Suite" onClose={() => { setCreateOpen(false); resetCreate(); }} size="xl">
           <StepWizard
             steps={wizardSteps}
             currentStep={createStep}
@@ -569,6 +548,7 @@ export default function Suites() {
             onBack={() => setCreateStep(s => s - 1)}
             onSubmit={() => createSuite.mutate()}
             canAdvance={canAdvanceCreate}
+            submitLabel="Create suite"
             loading={createSuite.isPending}
           />
         </Modal>
