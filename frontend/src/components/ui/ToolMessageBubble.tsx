@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import type { MessageDto, ToolRequestDto } from '../../api/models';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
-import { JsonView } from './JsonView';
+import { JsonBlock } from './JsonBlock';
 
 const EMERALD = 'rgba(16,185,129,1)';
 const EMERALD_BG = 'rgba(16,185,129,0.07)';
 const EMERALD_BORDER = 'rgba(16,185,129,0.22)';
 const CYAN = 'rgba(6,182,212,1)';
 const CYAN_BG = 'rgba(6,182,212,0.07)';
-const CYAN_BORDER = 'rgba(6,182,212,0.22)';
 
 function safeParse(s: string | null | undefined): unknown {
   if (s == null || s === '') return s ?? null;
@@ -118,9 +117,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
               <span aria-hidden className="w-[4px] h-[4px] rounded-full" style={{ background: EMERALD }} />
               <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase" style={{ color: EMERALD }}>Input</span>
             </div>
-            <div className="font-mono text-[11.5px] leading-[1.55]">
-              <JsonView value={args} />
-            </div>
+            <JsonBlock value={args} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
           </div>
 
           {/* Output panel */}
@@ -131,9 +128,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
                 <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase" style={{ color: CYAN }}>Output</span>
                 <span className="ml-auto font-mono text-[10px]" style={{ color: '#52525b' }}>{resultBytes} B</span>
               </div>
-              <div className="font-mono text-[11.5px] leading-[1.55]">
-                <JsonView value={resultParsed} />
-              </div>
+              <JsonBlock value={resultParsed} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
             </div>
           ) : (
             <div

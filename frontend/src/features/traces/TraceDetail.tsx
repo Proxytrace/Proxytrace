@@ -5,7 +5,7 @@ import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtDate, fmtRelative } from '../../lib/format';
 import { PlusIcon, ChevronRightIcon } from '../../components/icons';
 import { Collapsible } from '../../components/ui/Collapsible';
-import { JsonView } from '../../components/ui/JsonView';
+import { JsonBlock } from '../../components/ui/JsonBlock';
 import { MessageBubble } from '../../components/ui/MessageBubble';
 import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
 import { PromoteModal } from './PromoteModal';
@@ -33,7 +33,7 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
       >
         <div style={{ borderTop: '1px dashed rgba(6,182,212,0.18)' }}>
           <div className="mt-[10px]">
-            <JsonView value={parsed} />
+            <JsonBlock value={parsed} hideCopy transparent className="!px-0 !py-0" />
           </div>
         </div>
       </Collapsible>
@@ -224,7 +224,7 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
                   if (msg.toolCallId && absorbedCallIds.has(msg.toolCallId)) return [];
                   return [<ToolResultBlock key={`m${i}`} msg={msg} />];
                 }
-                const blocks: React.ReactNode[] = [];
+                const blocks: React.ReactElement[] = [];
                 if (msg.content?.trim()) blocks.push(<MessageBubble key={`m${i}`} msg={msg} />);
                 msg.toolRequests?.forEach(req => {
                   blocks.push(
@@ -262,25 +262,30 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
           )}
 
           {tab === 'Raw JSON' && (
-            <div className="rounded-[10px] px-4 py-[14px] font-mono text-[11.5px] leading-[1.55] overflow-auto" style={{ background: 'rgba(0,0,0,0.28)' }}>
-              <JsonView value={{
-                id: trace.id,
-                object: 'chat.completion',
-                model: trace.model,
-                provider: trace.provider,
-                agentId: trace.agentId,
-                agentName: trace.agentName,
-                usage: {
-                  prompt_tokens: trace.inputTokens,
-                  completion_tokens: trace.outputTokens,
-                  total_tokens: tokTotal,
-                },
-                finish_reason: trace.finishReason,
-                http_status: trace.httpStatus,
-                duration_ms: trace.durationMs,
-                created_at: trace.createdAt,
-              }} />
-            </div>
+            <JsonBlock value={{
+              id: trace.id,
+              object: 'chat.completion',
+              model: trace.model,
+              provider: trace.provider,
+              agent_id: trace.agentId,
+              agent_name: trace.agentName,
+              conversation_id: trace.conversationId,
+              messages: trace.request,
+              response: trace.response,
+              tools: trace.tools,
+              usage: {
+                prompt_tokens: trace.inputTokens,
+                completion_tokens: trace.outputTokens,
+                total_tokens: tokTotal,
+              },
+              finish_reason: trace.finishReason,
+              error_message: trace.errorMessage,
+              http_status: trace.httpStatus,
+              duration_ms: trace.durationMs,
+              cost_eur: trace.costEur,
+              created_at: trace.createdAt,
+              updated_at: trace.updatedAt,
+            }} />
           )}
 
           {tab === 'Metadata' && (
