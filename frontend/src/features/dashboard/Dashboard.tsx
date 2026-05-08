@@ -13,123 +13,17 @@ import { StatusDot } from '../../components/ui/StatusDot';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
+import { AreaChart, Histogram, BarChart } from '../../components/charts';
+import { rangeFrom, rangeLabel, type RangeKey } from '../../lib/time-range';
 import { modelColor } from '../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../lib/format';
 import { REFETCH_INTERVAL_FAST, REFETCH_INTERVAL_SLOW } from '../../lib/constants';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface GridLine { y: number; val: string; isDashed: boolean; }
-interface AreaChartData {
-  linePath: string; areaPath: string;
-  solidGridPath: string; dashedGridPath: string;
-  grid: GridLine[];
-  xLabels: { x: number; label: string }[];
-  endX: number; endY: number;
-}
-interface SparklineData { path: string; endX: number; endY: number; }
-interface HistRect { x: number; y: number; w: number; h: number; label: string; labelX: number; }
-interface HistData { rects: HistRect[]; barsPath: string; baselineY: number; }
-
-// ── Chart computation ─────────────────────────────────────────────────────────
-
-function computeSparkline(data: number[], width: number, height: number): SparklineData {
-  const max = Math.max(...data), min = Math.min(...data);
-  const range = max - min || 1;
-  const stepX = width / (data.length - 1);
-  const pts = data.map((v, i) => [i * stepX, height - ((v - min) / range) * height]);
-  const path = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-  return { path, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
-}
-
-function buildGridPaths(grid: GridLine[], x1: number, x2: number) {
-  const solid = grid.filter(g => !g.isDashed).map(g => `M ${x1} ${g.y.toFixed(1)} L ${x2} ${g.y.toFixed(1)}`).join(' ');
-  const dashed = grid.filter(g => g.isDashed).map(g => `M ${x1} ${g.y.toFixed(1)} L ${x2} ${g.y.toFixed(1)}`).join(' ');
-  return { solidGridPath: solid, dashedGridPath: dashed };
-}
-
-function computeAreaChart(
-  data: number[], width: number, height: number,
-  padL: number, padR: number, padT: number, padB: number,
-  showAxis: boolean,
-): AreaChartData {
-  const w = width - padL - padR, h = height - padT - padB;
-  const max = Math.max(...data) * 1.15;
-  const stepX = w / (data.length - 1);
-  const pts = data.map((v, i) => [padL + i * stepX, padT + h - (v / max) * h]);
-  const linePts = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-  const areaPath = `${linePts} L ${(padL + w).toFixed(1)} ${(padT + h).toFixed(1)} L ${padL} ${(padT + h).toFixed(1)} Z`;
-  const yTicks = 4;
-  const grid: GridLine[] = showAxis ? Array.from({ length: yTicks }, (_, i) => ({
-    y: padT + (i / (yTicks - 1)) * h,
-    val: String(Math.round(max * (1 - i / (yTicks - 1)))),
-    isDashed: i !== yTicks - 1,
-  })) : [];
-  const xLabels = showAxis ? [0, 6, 12, 18, 23].map(i => ({
-    x: padL + i * stepX, label: `${24 - i}h`,
-  })) : [];
-  const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
-  return { linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
-}
-
-function computeHistogram(data: number[], width: number, height: number): HistData {
-  const padL = 38, padR = 10, padT = 10, padB = 24;
-  const w = width - padL - padR, h = height - padT - padB;
-  const max = Math.max(...data) * 1.1;
-  const bw = w / data.length * 0.86, gap = w / data.length * 0.14;
-  const labels = ['0', '.5s', '1s', '1.5s', '2s', '2.5s', '3s', '3.5s', '4s', '5s+'];
-  const rects: HistRect[] = data.map((v, i) => ({
-    x: padL + i * (bw + gap) + gap / 2, w: bw,
-    y: padT + h - (v / max) * h, h: (v / max) * h,
-    label: labels[i], labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
-  }));
-  const barsPath = rects.map(r =>
-    `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
-  ).join(' ');
-  return { rects, barsPath, baselineY: padT + h };
-}
-
-function computeModelBars(data: { label: string; value: number }[], width: number, height: number): HistData {
-  if (data.length === 0) return { rects: [], barsPath: '', baselineY: height - 36 };
-  const padL = 38, padR = 10, padT = 10, padB = 36;
-  const w = width - padL - padR, h = height - padT - padB;
-  const max = Math.max(...data.map(d => d.value)) * 1.1 || 1;
-  const bw = w / data.length * 0.7, gap = w / data.length * 0.3;
-  const rects: HistRect[] = data.map((d, i) => ({
-    x: padL + i * (bw + gap) + gap / 2, w: bw,
-    y: padT + h - (d.value / max) * h, h: (d.value / max) * h,
-    label: d.label.length > 10 ? d.label.slice(0, 9) + '…' : d.label,
-    labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
-  }));
-  const barsPath = rects.map(r =>
-    `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
-  ).join(' ');
-  return { rects, barsPath, baselineY: padT + h };
-}
 
 // ── Static fallback data (no time-series API exists yet) ──────────────────────
 
 const VOLUME_RAW = [2, 4, 3, 1, 0, 2, 5, 8, 12, 18, 14, 22, 28, 34, 29, 36, 40, 32, 26, 20, 14, 18, 22, 15];
 const LATENCY_HIST_RAW = [3, 8, 22, 45, 38, 28, 15, 9, 4, 2];
 const PASS_RATE_RAW = [42, 55, 61, 68, 72, 78, 82, 85];
-
-// ── Range helpers ─────────────────────────────────────────────────────────────
-
-function rangeFrom(key: string): string {
-  const now = new Date();
-  if (key === '1h') now.setHours(now.getHours() - 1);
-  else if (key === '24h') now.setHours(now.getHours() - 24);
-  else if (key === '7d') now.setDate(now.getDate() - 7);
-  else now.setDate(now.getDate() - 30);
-  return now.toISOString();
-}
-
-function rangeLabel(r: string): string {
-  if (r === '1h') return 'Last hour · 5-minute buckets';
-  if (r === '24h') return 'Last 24 hours · hourly buckets';
-  if (r === '7d') return 'Last 7 days · daily buckets';
-  return 'Last 30 days · daily buckets';
-}
 
 // ── Recent trace columns ──────────────────────────────────────────────────────
 
@@ -145,7 +39,7 @@ const DASHBOARD_TRACE_COLUMNS: DataColumn<AgentCallDto>[] = [
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [range, setRange] = useState('24h');
+  const [range, setRange] = useState<RangeKey>('24h');
   const from = rangeFrom(range);
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -191,25 +85,20 @@ export default function Dashboard() {
     };
   }, [latencyData]);
 
-  const charts = useMemo(() => {
-    const volumeArea = computeAreaChart(VOLUME_RAW, 820, 240, 38, 10, 14, 24, true);
-    const passRateArea = computeAreaChart(PASS_RATE_RAW, 360, 120, 4, 4, 4, 4, false);
-    const histData = computeHistogram(LATENCY_HIST_RAW, 360, 200);
-    const kpiSparklines = {
-      traces: computeSparkline(VOLUME_RAW, 72, 24),
-      passRate: computeSparkline(PASS_RATE_RAW, 72, 24),
-    };
-    const modelBarItems = (modelBreakdown ?? []).map(m => ({
+  const modelBarItems = useMemo(
+    () => (modelBreakdown ?? []).map(m => ({
       label: m.modelName,
       value: m.totalInputTokens + m.totalOutputTokens,
-    }));
-    const modelBarsData = computeModelBars(modelBarItems, 820, 220);
+    })),
+    [modelBreakdown],
+  );
+
+  const passRateRing = useMemo(() => {
     const r = 37;
     const circumference = 2 * Math.PI * r;
     const passRate = summary?.overallPassRate ?? 0;
-    const dashoffset = circumference - passRate * circumference;
-    return { volumeArea, passRateArea, histData, kpiSparklines, modelBarsData, circumference, dashoffset };
-  }, [summary?.overallPassRate, modelBreakdown]);
+    return { circumference, dashoffset: circumference - passRate * circumference };
+  }, [summary?.overallPassRate]);
 
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
 
@@ -289,27 +178,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="card-body px-[18px] pb-[18px] pt-0">
-            <svg viewBox="0 0 820 240" width="100%" height="240" style={{ display: 'block', overflow: 'visible' }} preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="volGrad" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#c9944a" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#c9944a" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={charts.volumeArea.solidGridPath} stroke="#343438" strokeWidth="1" fill="none" />
-              <path d={charts.volumeArea.dashedGridPath} stroke="#343438" strokeWidth="1" strokeDasharray="3 4" fill="none" />
-              {charts.volumeArea.grid.map((g, i) => (
-                <text key={i} x="30" y={g.y + 4} textAnchor="end" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{g.val}</text>
-              ))}
-              <path d={charts.volumeArea.areaPath} fill="url(#volGrad)" />
-              <path d={charts.volumeArea.linePath} fill="none" stroke="#c9944a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx={charts.volumeArea.endX} cy={charts.volumeArea.endY} r="8" fill="#c9944a" opacity="0.15" />
-              <circle cx={charts.volumeArea.endX} cy={charts.volumeArea.endY} r="4" fill="#c9944a" />
-              <circle cx={charts.volumeArea.endX} cy={charts.volumeArea.endY} r="2" fill="var(--bg-card)" />
-              {charts.volumeArea.xLabels.map((l, i) => (
-                <text key={i} x={l.x} y="234" textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{l.label}</text>
-              ))}
-            </svg>
+            <AreaChart
+              data={VOLUME_RAW}
+              width={820}
+              height={240}
+              color="#c9944a"
+              gradientId="volGrad"
+            />
           </div>
         </div>
 
@@ -322,13 +197,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="card-body">
-            <svg viewBox="0 0 360 200" width="100%" height="200" style={{ display: 'block' }} preserveAspectRatio="none">
-              <line x1="38" x2="350" y1={charts.histData.baselineY} y2={charts.histData.baselineY} stroke="#343438" />
-              <path d={charts.histData.barsPath} fill="#6b9eaa" opacity="0.85" />
-              {charts.histData.rects.map((r, i) => (
-                <text key={i} x={r.labelX} y="192" textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
-              ))}
-            </svg>
+            <Histogram data={LATENCY_HIST_RAW} width={360} height={200} color="#6b9eaa" />
             <div className="flex gap-4 mt-3 pt-3 border-t border-border-subtle">
               {(latencyStats
                 ? [['p50', fmtLatency(latencyStats.p50)], ['p95', fmtLatency(latencyStats.p95)], ['p99', fmtLatency(latencyStats.p99)]]
@@ -359,17 +228,11 @@ export default function Dashboard() {
             {modelLoading && (
               <div className="h-[220px] flex items-center justify-center text-xs text-muted">Loading…</div>
             )}
-            {!modelLoading && charts.modelBarsData.rects.length === 0 && (
+            {!modelLoading && modelBarItems.length === 0 && (
               <EmptyState title="No data yet" description="Token usage will appear once traces are captured." />
             )}
-            {!modelLoading && charts.modelBarsData.rects.length > 0 && (
-              <svg viewBox="0 0 820 220" width="100%" height="220" style={{ display: 'block' }} preserveAspectRatio="none">
-                <line x1="38" x2="810" y1={charts.modelBarsData.baselineY} y2={charts.modelBarsData.baselineY} stroke="#343438" />
-                <path d={charts.modelBarsData.barsPath} fill="#c9944a" opacity="0.85" />
-                {charts.modelBarsData.rects.map((r, i) => (
-                  <text key={i} x={r.labelX} y={charts.modelBarsData.baselineY + 14} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
-                ))}
-              </svg>
+            {!modelLoading && modelBarItems.length > 0 && (
+              <BarChart data={modelBarItems} width={820} height={220} color="#c9944a" />
             )}
           </div>
         </div>
@@ -389,8 +252,8 @@ export default function Dashboard() {
                 <circle
                   cx="40" cy="40" r="37" fill="none" stroke="#3daa6f" strokeWidth="6"
                   strokeLinecap="round"
-                  strokeDasharray={charts.circumference}
-                  strokeDashoffset={charts.dashoffset}
+                  strokeDasharray={passRateRing.circumference}
+                  strokeDashoffset={passRateRing.dashoffset}
                   style={{ transition: 'stroke-dashoffset 0.6s ease' }}
                 />
               </svg>
@@ -401,18 +264,14 @@ export default function Dashboard() {
                 <div className="text-xs text-muted">last run · +7pt vs prev</div>
               </div>
             </div>
-            <svg viewBox="0 0 360 120" width="100%" height="120" style={{ display: 'block' }} preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="passGrad" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#3daa6f" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#3daa6f" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={charts.passRateArea.areaPath} fill="url(#passGrad)" />
-              <path d={charts.passRateArea.linePath} fill="none" stroke="#3daa6f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx={charts.passRateArea.endX} cy={charts.passRateArea.endY} r="4" fill="#3daa6f" />
-              <circle cx={charts.passRateArea.endX} cy={charts.passRateArea.endY} r="2" fill="var(--bg-card)" />
-            </svg>
+            <AreaChart
+              data={PASS_RATE_RAW}
+              width={360}
+              height={120}
+              color="#3daa6f"
+              gradientId="passGrad"
+              showAxis={false}
+            />
             <div className="flex justify-between text-[10px] text-muted mt-1 font-mono">
               <span>Run 1</span><span>Run 4</span><span>Run 8</span>
             </div>

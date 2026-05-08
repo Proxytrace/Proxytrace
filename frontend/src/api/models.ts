@@ -137,6 +137,48 @@ export interface LatencyStatDto {
   sampleCount: number;
 }
 
+/* ── Agent Statistics ── */
+export interface AgentTimeSeriesPointDto {
+  bucketStart: string;
+  traceCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  costEur: number;
+  avgLatencyMs: number;
+}
+export interface AgentPassRatePointDto {
+  bucketStart: string;
+  passed: number;
+  testCases: number;
+}
+export interface AgentSuitePassRateDto {
+  suiteId: string;
+  suiteName: string;
+  latestRunAt: string;
+  passed: number;
+  testCases: number;
+}
+export interface AgentEntityCountsDto {
+  suiteCount: number;
+  testCaseCount: number;
+  openProposalCount: number;
+  totalProposalCount: number;
+}
+export interface AgentTimeSummaryDto {
+  totalTraces: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCostEur: number;
+  avgLatencyMs: number;
+}
+export interface AgentOverviewDto {
+  summary: AgentTimeSummaryDto;
+  timeSeries: AgentTimeSeriesPointDto[];
+  passRateTrend: AgentPassRatePointDto[];
+  suitePassRates: AgentSuitePassRateDto[];
+  counts: AgentEntityCountsDto;
+}
+
 /* ── Test Suites ── */
 export interface TestSuiteMessageDto { role: string; content: string; }
 export interface TestCaseDto {

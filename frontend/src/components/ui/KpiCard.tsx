@@ -1,4 +1,4 @@
-import { sparklinePath } from '../../lib/charts';
+import { Sparkline } from '../charts';
 import { ArrowUpIcon, ArrowDownIcon } from '../icons';
 
 interface KpiCardProps {
@@ -13,22 +13,6 @@ interface KpiCardProps {
   sparkline?: number[];
   sparklineColor?: string;
   accent?: boolean;
-}
-
-function Sparkline({ data, color, width = 80, height = 36 }: { data: number[]; color: string; width?: number; height?: number }) {
-  return (
-    <svg width={width} height={height} className="shrink-0">
-      <path
-        d={sparklinePath(data, width, height)}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.8"
-      />
-    </svg>
-  );
 }
 
 export function KpiCard({

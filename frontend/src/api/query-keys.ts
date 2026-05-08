@@ -9,6 +9,10 @@ export const QUERY_KEYS = {
   statisticsModelBreakdown: (from?: string, agentId?: string) => ['statistics-model-breakdown', from, agentId] as const,
   statisticsAgentBreakdown: (from?: string) => ['statistics-agent-breakdown', from] as const,
 
+  agentStatsOverview: (agentId: string, rangeKey: string) => ['agent-stats-overview', agentId, rangeKey] as const,
+  agentSuitePassRates: (agentId: string) => ['agent-suite-pass-rates', agentId] as const,
+  agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
+
   evaluators: ['evaluators'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 

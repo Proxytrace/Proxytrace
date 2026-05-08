@@ -1,0 +1,36 @@
+import { useMemo } from 'react';
+import { computeHistogram } from './chart-math';
+
+interface HistogramProps {
+  data: number[];
+  width?: number;
+  height?: number;
+  color: string;
+  labels?: string[];
+}
+
+export function Histogram({
+  data,
+  width = 360,
+  height = 200,
+  color,
+  labels,
+}: HistogramProps) {
+  const hist = useMemo(() => computeHistogram(data, width, height, labels), [data, width, height, labels]);
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      width="100%"
+      height={height}
+      style={{ display: 'block' }}
+      preserveAspectRatio="none"
+    >
+      <line x1="38" x2={width - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="#343438" />
+      <path d={hist.barsPath} fill={color} opacity="0.85" />
+      {hist.rects.map((r, i) => (
+        <text key={i} x={r.labelX} y={height - 8} textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+      ))}
+    </svg>
+  );
+}

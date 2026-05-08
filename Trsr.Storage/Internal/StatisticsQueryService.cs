@@ -3,11 +3,14 @@ using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.OptimizationProposal;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
+using Trsr.Storage.Internal.Entities.OptimizationProposal;
 using Trsr.Storage.Internal.Entities.TestRun;
 using Trsr.Storage.Internal.Entities.TestResult;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
@@ -382,5 +385,286 @@ internal class StatisticsQueryService : IStatisticsQueryService
         var upper = Math.Min(lower + 1, sorted.Length - 1);
         var fraction = index - lower;
         return sorted[lower] + fraction * (sorted[upper] - sorted[lower]);
+    }
+
+    public async Task<AgentOverviewStat> GetAgentOverviewAsync(
+        Guid agentId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        StatisticsBucket bucket,
+        CancellationToken cancellationToken = default)
+    {
+        var (calls, endpointMap) = await LoadAgentCallsAsync(agentId, from, to, cancellationToken);
+        var timeSeries = BucketCalls(calls, endpointMap, from, to, bucket);
+        var summary = SummarizeCalls(calls, endpointMap);
+
+        var passRateTask = GetAgentPassRateTrendAsync(agentId, from, to, bucket, cancellationToken);
+        var suitePassRatesTask = GetAgentLatestSuitePassRatesAsync(agentId, cancellationToken);
+        var countsTask = GetAgentEntityCountsAsync(agentId, cancellationToken);
+
+        await Task.WhenAll(passRateTask, suitePassRatesTask, countsTask);
+
+        return new AgentOverviewStat(
+            Summary: summary,
+            TimeSeries: timeSeries,
+            PassRateTrend: passRateTask.Result,
+            SuitePassRates: suitePassRatesTask.Result,
+            Counts: countsTask.Result);
+    }
+
+    public async Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(
+        Guid agentId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        StatisticsBucket bucket,
+        CancellationToken cancellationToken = default)
+    {
+        var (calls, endpointMap) = await LoadAgentCallsAsync(agentId, from, to, cancellationToken);
+        return BucketCalls(calls, endpointMap, from, to, bucket);
+    }
+
+    public async Task<IReadOnlyList<AgentPassRatePoint>> GetAgentPassRateTrendAsync(
+        Guid agentId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        StatisticsBucket bucket,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        var rows = await context.Set<TestRunEntity>().AsNoTracking()
+            .Join(context.Set<TestRunGroupEntity>(),
+                r => r.Group,
+                g => g.Id,
+                (r, g) => new { Run = r, GroupSuite = g.Suite })
+            .Join(context.Set<TestSuiteEntity>(),
+                x => x.GroupSuite,
+                s => s.Id,
+                (x, s) => new { x.Run, SuiteAgent = s.Agent })
+            .Where(x => x.SuiteAgent == agentId)
+            .Where(x => x.Run.Status == TestRunStatus.Completed)
+            .Where(x => x.Run.CompletedAt != null)
+            .Select(x => new { x.Run.CompletedAt, x.Run.StatTestCases, x.Run.StatPassed })
+            .ToListAsync(cancellationToken);
+
+        var inRange = rows
+            .Where(r => r.CompletedAt!.Value >= from && r.CompletedAt!.Value <= to)
+            .ToList();
+
+        var grouped = inRange
+            .GroupBy(r => BucketKey(r.CompletedAt!.Value, bucket))
+            .ToDictionary(
+                g => g.Key,
+                g => (Passed: g.Sum(x => x.StatPassed), TestCases: g.Sum(x => x.StatTestCases)));
+
+        return EnumerateBuckets(from, to, bucket)
+            .Select(b => grouped.TryGetValue(b, out var v)
+                ? new AgentPassRatePoint(b, v.Passed, v.TestCases)
+                : new AgentPassRatePoint(b, 0, 0))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<AgentSuitePassRate>> GetAgentLatestSuitePassRatesAsync(
+        Guid agentId,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        var suites = await context.Set<TestSuiteEntity>().AsNoTracking()
+            .Where(s => s.Agent == agentId)
+            .Select(s => new { s.Id, s.Name })
+            .ToListAsync(cancellationToken);
+
+        if (suites.Count == 0)
+            return Array.Empty<AgentSuitePassRate>();
+
+        var suiteIds = suites.Select(s => s.Id).ToList();
+
+        var runs = await context.Set<TestRunEntity>().AsNoTracking()
+            .Join(context.Set<TestRunGroupEntity>(),
+                r => r.Group,
+                g => g.Id,
+                (r, g) => new { Run = r, GroupSuite = g.Suite })
+            .Where(x => suiteIds.Contains(x.GroupSuite))
+            .Where(x => x.Run.Status == TestRunStatus.Completed)
+            .Where(x => x.Run.CompletedAt != null)
+            .Select(x => new { x.GroupSuite, x.Run.CompletedAt, x.Run.StatPassed, x.Run.StatTestCases })
+            .ToListAsync(cancellationToken);
+
+        var latestPerSuite = runs
+            .GroupBy(r => r.GroupSuite)
+            .Select(g => g.OrderByDescending(r => r.CompletedAt).First())
+            .ToDictionary(r => r.GroupSuite);
+
+        return suites
+            .Where(s => latestPerSuite.ContainsKey(s.Id))
+            .Select(s =>
+            {
+                var run = latestPerSuite[s.Id];
+                return new AgentSuitePassRate(
+                    SuiteId: s.Id,
+                    SuiteName: s.Name,
+                    LatestRunAt: run.CompletedAt!.Value,
+                    Passed: run.StatPassed,
+                    TestCases: run.StatTestCases);
+            })
+            .OrderByDescending(s => s.LatestRunAt)
+            .ToArray();
+    }
+
+    public async Task<AgentEntityCounts> GetAgentEntityCountsAsync(
+        Guid agentId,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+
+        var suites = await context.Set<TestSuiteEntity>().AsNoTracking()
+            .Where(s => s.Agent == agentId)
+            .Select(s => s.TestCases)
+            .ToListAsync(cancellationToken);
+
+        var suiteCount = suites.Count;
+        var testCaseCount = suites.Sum(c => c.Count);
+
+        var proposals = await context.Set<OptimizationProposalEntity>().AsNoTracking()
+            .Where(p => p.Agent == agentId)
+            .Select(p => p.Status)
+            .ToListAsync(cancellationToken);
+
+        var totalProposals = proposals.Count;
+        var openProposals = proposals.Count(s => s == ProposalStatus.Draft);
+
+        return new AgentEntityCounts(
+            SuiteCount: suiteCount,
+            TestCaseCount: testCaseCount,
+            OpenProposalCount: openProposals,
+            TotalProposalCount: totalProposals);
+    }
+
+    private async Task<(List<AgentCallEntity> Calls, IReadOnlyDictionary<Guid, IModelEndpoint> Endpoints)> LoadAgentCallsAsync(
+        Guid agentId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        CancellationToken cancellationToken)
+    {
+        var context = contextFactory();
+
+        var calls = await context.Set<AgentCallEntity>().AsNoTracking()
+            .Where(e => e.AgentId == agentId)
+            .Where(e => e.CreatedAt >= from)
+            .Where(e => e.CreatedAt <= to)
+            .ToListAsync(cancellationToken);
+
+        var endpointIds = calls.Select(c => c.EndpointId).Distinct().ToList();
+        var endpointMap = new Dictionary<Guid, IModelEndpoint>();
+        foreach (var id in endpointIds)
+        {
+            var endpoint = await endpoints.FindAsync(id, cancellationToken);
+            if (endpoint is not null)
+                endpointMap[id] = endpoint;
+        }
+
+        return (calls, endpointMap);
+    }
+
+    private static IReadOnlyList<AgentTimeSeriesPoint> BucketCalls(
+        IReadOnlyList<AgentCallEntity> calls,
+        IReadOnlyDictionary<Guid, IModelEndpoint> endpointMap,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        StatisticsBucket bucket)
+    {
+        var grouped = calls
+            .GroupBy(c => BucketKey(c.CreatedAt, bucket))
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var list = g.ToList();
+                    var traceCount = list.Count;
+                    var inputTokens = list.Sum(c => (long)(c.InputTokens ?? 0));
+                    var outputTokens = list.Sum(c => (long)(c.OutputTokens ?? 0));
+                    var avgLatencyMs = list.Any(c => c.LatencyMs.HasValue)
+                        ? list.Where(c => c.LatencyMs.HasValue).Average(c => c.LatencyMs!.Value)
+                        : 0d;
+                    var costEur = 0m;
+                    foreach (var c in list)
+                    {
+                        if (!endpointMap.TryGetValue(c.EndpointId, out var endpoint))
+                            continue;
+                        var usage = new TokenUsage(c.InputTokens ?? 0, c.OutputTokens ?? 0);
+                        costEur += endpoint.CalculateCost(usage) ?? 0m;
+                    }
+                    return (TraceCount: traceCount, InputTokens: inputTokens, OutputTokens: outputTokens, CostEur: costEur, AvgLatencyMs: avgLatencyMs);
+                });
+
+        return EnumerateBuckets(from, to, bucket)
+            .Select(b => grouped.TryGetValue(b, out var v)
+                ? new AgentTimeSeriesPoint(b, v.TraceCount, v.InputTokens, v.OutputTokens, Math.Round(v.CostEur, 6), v.AvgLatencyMs)
+                : new AgentTimeSeriesPoint(b, 0, 0, 0, 0m, 0d))
+            .ToArray();
+    }
+
+    private static AgentTimeSummary SummarizeCalls(
+        IReadOnlyList<AgentCallEntity> calls,
+        IReadOnlyDictionary<Guid, IModelEndpoint> endpointMap)
+    {
+        if (calls.Count == 0)
+            return new AgentTimeSummary(0, 0, 0, 0m, 0d);
+
+        var inputTokens = calls.Sum(c => (long)(c.InputTokens ?? 0));
+        var outputTokens = calls.Sum(c => (long)(c.OutputTokens ?? 0));
+        var latencies = calls.Where(c => c.LatencyMs.HasValue).Select(c => c.LatencyMs!.Value).ToList();
+        var avgLatency = latencies.Count > 0 ? latencies.Average() : 0d;
+
+        var totalCost = 0m;
+        foreach (var c in calls)
+        {
+            if (!endpointMap.TryGetValue(c.EndpointId, out var endpoint))
+                continue;
+            var usage = new TokenUsage(c.InputTokens ?? 0, c.OutputTokens ?? 0);
+            totalCost += endpoint.CalculateCost(usage) ?? 0m;
+        }
+
+        return new AgentTimeSummary(
+            TotalTraces: calls.Count,
+            TotalInputTokens: inputTokens,
+            TotalOutputTokens: outputTokens,
+            TotalCostEur: Math.Round(totalCost, 6),
+            AvgLatencyMs: avgLatency);
+    }
+
+    private static DateTimeOffset BucketKey(DateTimeOffset ts, StatisticsBucket bucket)
+    {
+        var utc = ts.ToUniversalTime();
+        return bucket switch
+        {
+            StatisticsBucket.FiveMinutes => new DateTimeOffset(
+                utc.Year, utc.Month, utc.Day, utc.Hour, utc.Minute - (utc.Minute % 5), 0, TimeSpan.Zero),
+            StatisticsBucket.Hourly => new DateTimeOffset(
+                utc.Year, utc.Month, utc.Day, utc.Hour, 0, 0, TimeSpan.Zero),
+            StatisticsBucket.Daily => new DateTimeOffset(
+                utc.Year, utc.Month, utc.Day, 0, 0, 0, TimeSpan.Zero),
+            _ => throw new ArgumentOutOfRangeException(nameof(bucket), bucket, null),
+        };
+    }
+
+    private static IEnumerable<DateTimeOffset> EnumerateBuckets(DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket)
+    {
+        var step = bucket switch
+        {
+            StatisticsBucket.FiveMinutes => TimeSpan.FromMinutes(5),
+            StatisticsBucket.Hourly => TimeSpan.FromHours(1),
+            StatisticsBucket.Daily => TimeSpan.FromDays(1),
+            _ => throw new ArgumentOutOfRangeException(nameof(bucket), bucket, null),
+        };
+
+        var current = BucketKey(from, bucket);
+        var end = BucketKey(to, bucket);
+        while (current <= end)
+        {
+            yield return current;
+            current = current.Add(step);
+        }
     }
 }
