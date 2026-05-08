@@ -48,8 +48,8 @@ public interface IAgent : IDomainEntity
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         IProject project,
-        bool isSystemAgent = false,
-        IModelParameters? modelParameters = null);
+        IModelParameters modelParameters,
+        bool isSystemAgent = false);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(

@@ -17,6 +17,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 {
     private readonly IAgent.CreateNew createNew;
     private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IModelParameters.Create modelParametersFactory;
     private readonly Lazy<IAgentNameGenerator> nameGenerator;
 
     public AgentRepository(
@@ -25,10 +26,12 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         ITransaction transaction,
         IAgent.CreateNew createNew,
         IPromptTemplate.Create promptTemplateFactory,
+        IModelParameters.Create modelParametersFactory,
         Lazy<IAgentNameGenerator> nameGenerator) : base(mapper, contextFactory, transaction)
     {
         this.createNew = createNew;
         this.promptTemplateFactory = promptTemplateFactory;
+        this.modelParametersFactory = modelParametersFactory;
         this.nameGenerator = nameGenerator;
     }
 
@@ -63,7 +66,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             endpoint: endpoint,
             isSystemAgent: isSystemAgent,
             project: project,
-            modelParameters: modelParameters);
+            modelParameters: modelParameters ?? modelParametersFactory());
         return await AddAsync(agent, cancellationToken);
     }
 

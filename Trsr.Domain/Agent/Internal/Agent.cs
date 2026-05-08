@@ -30,8 +30,8 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         IProject project,
+        IModelParameters modelParameters,
         bool isSystemAgent,
-        IModelParameters? modelParameters,
         IRepository<IAgent> repository,
         IModelClient.Factory modelClientFactory,
         ILogger<IAgent> logger) : base(repository)
@@ -44,7 +44,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         Project = project;
         Tools = tools;
         Endpoint = endpoint;
-        ModelParameters = modelParameters ?? Inference.Internal.ModelParameters.Empty;
+        ModelParameters = modelParameters;
         IsSystemAgent = isSystemAgent;
     }
 
