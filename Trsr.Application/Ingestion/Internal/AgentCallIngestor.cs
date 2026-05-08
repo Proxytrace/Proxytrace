@@ -123,11 +123,17 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                     parsed.Tools,
                     job.Project,
                     parsed.Endpoint,
+                    modelParameters: parsed.ModelParameters,
                     cancellationToken: cancellationToken);
 
             if (agent.Endpoint.Id != parsed.Endpoint.Id)
             {
                 agent = await agent.ChangeEndpoint(parsed.Endpoint, cancellationToken);
+            }
+
+            if (!agent.ModelParameters.Equals(parsed.ModelParameters))
+            {
+                agent = await agent.ChangeModelParameters(parsed.ModelParameters, cancellationToken);
             }
 
             var call = createNewCall(
@@ -138,6 +144,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
                 httpStatus: parsed.HttpStatus,
                 finishReason: parsed.FinishReason,
                 errorMessage: parsed.ErrorMessage,
+                modelParameters: parsed.ModelParameters,
                 conversationId: conversationId);
 
             call = await agentCallRepository.AddAsync(call, cancellationToken);

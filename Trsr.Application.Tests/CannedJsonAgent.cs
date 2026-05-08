@@ -1,6 +1,7 @@
 using NSubstitute;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
@@ -29,12 +30,16 @@ internal sealed class CannedJsonAgent : IAgent
     public IProject Project { get; } = Substitute.For<IProject>();
     public IPromptTemplate SystemPrompt { get; } = Substitute.For<IPromptTemplate>();
     public IReadOnlyList<ToolSpecification> Tools => [];
+    public IModelParameters ModelParameters { get; } = Substitute.For<IModelParameters>();
     public bool IsSystemAgent => true;
 
     public IModelClient CreateClient(IModelEndpoint? customEndpoint = null)
         => new CannedJsonClient(cannedResponse, outputFormatFactory);
 
     public Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint, CancellationToken cancellationToken = default)
+        => Task.FromResult<IAgent>(this);
+
+    public Task<IAgent> ChangeModelParameters(IModelParameters modelParameters, CancellationToken cancellationToken = default)
         => Task.FromResult<IAgent>(this);
 
     public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null)

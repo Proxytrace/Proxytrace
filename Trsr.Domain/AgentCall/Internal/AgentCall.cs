@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -17,6 +18,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public HttpStatusCode HttpStatus { get; }
     public string? FinishReason { get; }
     public string? ErrorMessage { get; }
+    public IModelParameters ModelParameters { get; }
     public Guid? ConversationId { get; }
 
     public AgentCall(
@@ -27,6 +29,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
+        IModelParameters? modelParameters,
         Guid? conversationId,
         IRepository<IAgentCall> repository) : base(repository)
     {
@@ -37,6 +40,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
+        ModelParameters = modelParameters ?? Inference.Internal.ModelParameters.Empty;
         ConversationId = conversationId;
     }
 
@@ -48,6 +52,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatusCode httpStatus,
         string? finishReason,
         string? errorMessage,
+        IModelParameters modelParameters,
         IDomainEntityData existing,
         Guid? conversationId,
         IRepository<IAgentCall> repository) : base(existing, repository)
@@ -59,6 +64,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         HttpStatus = httpStatus;
         FinishReason = finishReason;
         ErrorMessage = errorMessage;
+        ModelParameters = modelParameters;
         ConversationId = conversationId;
     }
 

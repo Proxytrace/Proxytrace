@@ -4,10 +4,12 @@ using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
+using Trsr.Storage.Internal.Entities.Inference;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 using Trsr.Storage.Internal.Entities.Project;
 
@@ -17,6 +19,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
 {
     private readonly IAgent.CreateExisting factory;
     private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IModelParameters.Create modelParametersFactory;
     private readonly ISerializer serializer;
     private readonly Lazy<IAgentRepository> repository;
     private readonly IRepository<IProject> projects;
@@ -25,6 +28,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public AgentConfig(
         IAgent.CreateExisting factory,
         IPromptTemplate.Create promptTemplateFactory,
+        IModelParameters.Create modelParametersFactory,
         ISerializer serializer,
         Lazy<IAgentRepository> repository,
         IRepository<IProject> projects,
@@ -32,6 +36,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     {
         this.factory = factory;
         this.promptTemplateFactory = promptTemplateFactory;
+        this.modelParametersFactory = modelParametersFactory;
         this.serializer = serializer;
         this.repository = repository;
         this.projects = projects;
@@ -41,6 +46,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
     {
         builder.HasIndex(e => e.Fingerprint).IsUnique();
+        builder.HasIndex(e => e.IsSystemAgent);
         builder.Property(e => e.Fingerprint).HasMaxLength(64);
         builder.Property(e => e.Name).HasMaxLength(200);
 
@@ -69,6 +75,13 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
                 v => serializer.Serialize(v),
                 v => serializer.Deserialize<IReadOnlyList<ToolSpecification>>(v) ?? Array.Empty<ToolSpecification>()
             );
+
+        builder
+            .Property(e => e.ModelParameters)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<ModelParametersData>(v) ?? ModelParametersData.Empty
+            );
     }
 
     public async Task<IAgent> Map(AgentEntity stored, CancellationToken cancellationToken = default)
@@ -76,13 +89,15 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
         var systemPrompt = promptTemplateFactory(stored.SystemPrompt.Name, stored.SystemPrompt.Template);
+        var modelParameters = ToDomain(stored.ModelParameters, modelParametersFactory);
         return factory(
             name: stored.Name,
-            project: project, 
+            project: project,
             systemPrompt: systemPrompt,
             tools: stored.Tools,
             endpoint: endpoint,
             isSystemAgent: stored.IsSystemAgent,
+            modelParameters: modelParameters,
             existing: stored);
     }
 
@@ -97,9 +112,34 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
                 Name: domain.SystemPrompt.Name,
                 Template: domain.SystemPrompt.Template),
             Tools = domain.Tools,
+            ModelParameters = ToData(domain.ModelParameters),
             Endpoint = domain.Endpoint.Id,
             IsSystemAgent = domain.IsSystemAgent,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
+
+    internal static ModelParametersData ToData(IModelParameters domain)
+        => new(
+            domain.Temperature,
+            domain.TopP,
+            domain.ReasoningEffort,
+            domain.FrequencyPenalty,
+            domain.PresencePenalty,
+            domain.MaxTokens,
+            domain.Seed,
+            domain.Stop,
+            domain.N);
+
+    internal static IModelParameters ToDomain(ModelParametersData data, IModelParameters.Create factory)
+        => factory(
+            temperature: data.Temperature,
+            topP: data.TopP,
+            reasoningEffort: data.ReasoningEffort,
+            frequencyPenalty: data.FrequencyPenalty,
+            presencePenalty: data.PresencePenalty,
+            maxTokens: data.MaxTokens,
+            seed: data.Seed,
+            stop: data.Stop,
+            n: data.N);
 }

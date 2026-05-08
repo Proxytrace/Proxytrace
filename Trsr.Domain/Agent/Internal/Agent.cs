@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Logging;
 using Trsr.Common.Validation;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -20,6 +21,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     public IProject Project { get; }
     public IPromptTemplate SystemPrompt { get; }
     public IReadOnlyList<ToolSpecification> Tools { get; }
+    public IModelParameters ModelParameters { get; }
     public bool IsSystemAgent { get; }
 
     public Agent(
@@ -28,6 +30,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         IProject project,
+        IModelParameters modelParameters,
         bool isSystemAgent,
         IRepository<IAgent> repository,
         IModelClient.Factory modelClientFactory,
@@ -35,12 +38,13 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     {
         this.modelClientFactory = modelClientFactory;
         this.logger = logger;
-        
+
         Name = name;
         SystemPrompt = systemPrompt;
         Project = project;
         Tools = tools;
         Endpoint = endpoint;
+        ModelParameters = modelParameters;
         IsSystemAgent = isSystemAgent;
     }
 
@@ -51,6 +55,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         bool isSystemAgent,
+        IModelParameters modelParameters,
         IDomainEntityData existing,
         IRepository<IAgent> repository,
         IModelClient.Factory modelClientFactory,
@@ -58,16 +63,17 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     {
         this.modelClientFactory = modelClientFactory;
         this.logger = logger;
-        
+
         Name = name;
         Project = project;
         SystemPrompt = systemPrompt;
         Tools = tools;
         Endpoint = endpoint;
+        ModelParameters = modelParameters;
         IsSystemAgent = isSystemAgent;
     }
 
-    public IModelClient CreateClient(IModelEndpoint? customEndpoint = null) 
+    public IModelClient CreateClient(IModelEndpoint? customEndpoint = null)
         => modelClientFactory(this, customEndpoint);
 
     public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
@@ -88,6 +94,32 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             endpoint: modelEndpoint,
             project: Project,
             isSystemAgent: IsSystemAgent,
+            modelParameters: ModelParameters,
+            existing: this,
+            repository: repository,
+            modelClientFactory: modelClientFactory,
+            logger: logger);
+
+        return await update.UpdateAsync(cancellationToken);
+    }
+
+    public async Task<IAgent> ChangeModelParameters(
+        IModelParameters modelParameters,
+        CancellationToken cancellationToken = default)
+    {
+        if (ModelParameters.Equals(modelParameters))
+        {
+            return this;
+        }
+
+        var update = new Agent(
+            name: Name,
+            systemPrompt: SystemPrompt,
+            tools: Tools,
+            endpoint: Endpoint,
+            project: Project,
+            isSystemAgent: IsSystemAgent,
+            modelParameters: modelParameters,
             existing: this,
             repository: repository,
             modelClientFactory: modelClientFactory,

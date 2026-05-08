@@ -1,3 +1,5 @@
+using Trsr.Api.Dto.Inference;
+
 namespace Trsr.Api.Dto.Agents;
 
 public record AgentDto(
@@ -9,6 +11,8 @@ public record AgentDto(
     IReadOnlyList<ToolSpecificationDto> Tools,
     Guid EndpointId,
     string EndpointName,
+    ModelParametersDto ModelParameters,
+    bool IsSystemAgent,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastUsedAt);

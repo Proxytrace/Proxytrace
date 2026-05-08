@@ -13,7 +13,7 @@ import { useTraceStream } from '../../api/event-stream';
 import { agentColor, modelColor } from '../../lib/colors';
 import { fmtLatency, fmtRelative, fmtTokens } from '../../lib/format';
 import { TraceDetail } from './TraceDetail';
-import { FilterChip } from '../../components/ui/FilterChip';
+import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { DEFAULT_PAGE_SIZE } from '../../lib/constants';
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
@@ -253,15 +253,17 @@ export default function Traces() {
   const [range, setRange] = useState('24h');
   const [agentFilter, setAgentFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
 
   const from = useMemo(() => rangeFrom(range), [range]);
   const filter = useMemo(() => ({
     page, pageSize: PAGE_SIZE,
+    includeSystemAgents: showSystem,
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
-  }), [page, agentFilter, from]);
+  }), [page, agentFilter, from, showSystem]);
 
   const { data, isFetching } = useQuery({
     queryKey: QUERY_KEYS.agentCalls(filter),
@@ -270,9 +272,9 @@ export default function Traces() {
   });
 
   const { data: agentsData } = useQuery({ queryKey: QUERY_KEYS.agents, queryFn: () => agentsApi.list({ pageSize: 200 }) });
-  const { data: modelBreakdown = [] } = useQuery({
-    queryKey: QUERY_KEYS.statisticsModelBreakdown(from, agentFilter || undefined),
-    queryFn: () => statisticsApi.modelBreakdown({ from, agentId: agentFilter || undefined }),
+  const { data: agentBreakdown = [] } = useQuery({
+    queryKey: QUERY_KEYS.statisticsAgentBreakdown(from),
+    queryFn: () => statisticsApi.agentBreakdown({ from }),
   });
   const { data: latencyStats = [] } = useQuery({
     queryKey: QUERY_KEYS.statisticsLatency(from, agentFilter || undefined),
@@ -281,14 +283,18 @@ export default function Traces() {
 
   const traces = data?.items ?? [];
   const total = data?.total ?? 0;
-  const agents = agentsData?.items ?? [];
+  const allAgents = agentsData?.items ?? [];
+  const agents = useMemo(
+    () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
+    [allAgents, showSystem],
+  );
   const p95 = latencyStats[0]?.p95Ms ?? null;
 
   const rows = useMemo(() => buildRows(traces), [traces]);
 
   useTraceStream(useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
-    qc.invalidateQueries({ queryKey: ['statistics-model-breakdown'] });
+    qc.invalidateQueries({ queryKey: ['statistics-agent-breakdown'] });
   }, [qc]));
 
   function toggleConv(id: string) {
@@ -307,7 +313,7 @@ export default function Traces() {
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
+    <div className="w-full max-w-[1320px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
 
       {/* ── Header ── */}
       <div className="fade-up flex items-start justify-between gap-4">
@@ -345,8 +351,7 @@ export default function Traces() {
           {agents.map(a => {
             const c = agentColor(a.id);
             const isActive = agentFilter === a.id;
-            const callCount = (modelBreakdown as { agentId?: string; callCount: number }[])
-              .reduce((n, m) => m.agentId === a.id ? n + m.callCount : n, 0);
+            const callCount = agentBreakdown.find(b => b.agentId === a.id)?.callCount ?? 0;
             return (
               <button
                 key={a.id}
@@ -378,7 +383,7 @@ export default function Traces() {
       )}
 
       {/* ── Search + filter chips ── */}
-      <div className="fade-up flex items-center gap-[10px] flex-wrap" style={{ animationDelay: '80ms' }}>
+      <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap" style={{ animationDelay: '80ms' }}>
         <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-[13px] text-muted" style={{ boxShadow: 'var(--shadow-pill)' }}>
           <SearchIcon size={13} className="shrink-0" />
           <input
@@ -388,24 +393,46 @@ export default function Traces() {
             className="flex-1 bg-transparent border-none outline-none text-primary text-[13px] font-[inherit]"
           />
         </div>
-        <FilterChip
+        <FilterDropdown
           label="Agent:"
-          value={agentFilter ? (agents.find(a => a.id === agentFilter)?.name ?? 'Agent') : 'All agents'}
+          value={agentFilter || '__all'}
           active={!!agentFilter}
           accent={agentFilter ? agentColor(agentFilter) : undefined}
-          onClick={() => setAgentFilter('')}
+          options={[
+            { key: '__all', label: 'All agents' },
+            ...agents.map(a => ({ key: a.id, label: a.name, accent: agentColor(a.id) })),
+          ]}
+          onChange={(key) => { setAgentFilter(key === '__all' ? '' : key); setPage(1); }}
+          width={220}
         />
-        <FilterChip
+        <FilterDropdown
           label="Range:"
-          value={RANGES.find(r => r.key === range)?.label ?? range}
+          value={range}
           active
-          onClick={() => {
-            const idx = RANGES.findIndex(r => r.key === range);
-            const next = RANGES[(idx + 1) % RANGES.length];
-            setRange(next.key);
-            setPage(1);
-          }}
+          options={RANGES.map(r => ({ key: r.key, label: r.label }))}
+          onChange={(key) => { setRange(key); setPage(1); }}
+          width={140}
         />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showSystem}
+          onClick={() => { setShowSystem(v => !v); setPage(1); }}
+          title={showSystem ? 'Hide traces from system agents' : 'Show traces from system agents'}
+          className={`inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none ${showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card'}`}
+          style={{ boxShadow: showSystem ? '0 0 0 1px var(--accent-primary), var(--shadow-pill)' : 'var(--shadow-pill)' }}
+        >
+          <span
+            className={`w-7 h-4 rounded-full relative transition-colors duration-200 ${showSystem ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]'}`}
+            aria-hidden="true"
+          >
+            <span
+              className="absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200"
+              style={{ left: showSystem ? '14px' : '2px' }}
+            />
+          </span>
+          System Traces
+        </button>
       </div>
 
       {/* ── Grouped trace table ── */}

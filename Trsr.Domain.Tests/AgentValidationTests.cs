@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
@@ -17,6 +18,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        var modelParametersFactory = services.GetRequiredService<IModelParameters.Create>();
         var systemPrompt = promptTemplateFactory("Test Agent", "You are a helpful assistant");
         var project = await CreateTestProjectAsync(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
@@ -27,7 +29,8 @@ public sealed class AgentValidationTests : DomainTest<Module>
             systemPrompt,
             [],
             endpoint,
-            project);
+            project,
+            modelParametersFactory());
 
         // Assert
         agent.Should().NotBeNull();
@@ -45,12 +48,13 @@ public sealed class AgentValidationTests : DomainTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
+        var modelParametersFactory = services.GetRequiredService<IModelParameters.Create>();
         var project = await CreateTestProjectAsync(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", null!, [], endpoint, project);
+        var action = () => factory("Test Agent", null!, [], endpoint, project, modelParametersFactory());
         action.Should().Throw<Exception>();
     }
 
@@ -61,12 +65,13 @@ public sealed class AgentValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        var modelParametersFactory = services.GetRequiredService<IModelParameters.Create>();
         var systemPrompt = promptTemplateFactory("Test Agent", "You are a helpful assistant");
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", systemPrompt, [], endpoint, null!);
+        var action = () => factory("Test Agent", systemPrompt, [], endpoint, null!, modelParametersFactory());
         action.Should().Throw<Exception>();
     }
 
@@ -87,6 +92,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
             existingAgent.Tools,
             existingAgent.Endpoint,
             existingAgent.IsSystemAgent,
+            existingAgent.ModelParameters,
             existingAgent);
 
         // Assert
@@ -110,7 +116,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent);
+        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent);
         action.Should().Throw<Exception>();
     }
 
@@ -121,13 +127,14 @@ public sealed class AgentValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IAgent.CreateNew>();
         var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+        var modelParametersFactory = services.GetRequiredService<IModelParameters.Create>();
         var systemPrompt = promptTemplateFactory("Test Agent", "You are a helpful assistant");
         var project = await CreateTestProjectAsync(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agent1 = factory("Agent One", systemPrompt, [], endpoint, project);
-        var agent2 = factory("Agent Two", systemPrompt, [], endpoint, project);
+        var agent1 = factory("Agent One", systemPrompt, [], endpoint, project, modelParametersFactory());
+        var agent2 = factory("Agent Two", systemPrompt, [], endpoint, project, modelParametersFactory());
 
         // Assert
         agent1.Id.Should().NotBe(agent2.Id);
