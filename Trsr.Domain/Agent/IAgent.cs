@@ -1,4 +1,5 @@
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
@@ -15,7 +16,7 @@ public interface IAgent : IDomainEntity
 {
     /// <summary>Short human-readable name generated from the system message at creation time.</summary>
     string Name { get; }
-    
+
     /// <summary>
     /// The endpoint the agent completes against
     /// </summary>
@@ -29,7 +30,12 @@ public interface IAgent : IDomainEntity
 
     /// <summary>The tools available to this agent.</summary>
     IReadOnlyList<ToolSpecification> Tools { get; }
-    
+
+    /// <summary>
+    /// Sampling and decoding parameters last seen for this agent. Not part of the fingerprint.
+    /// </summary>
+    IModelParameters ModelParameters { get; }
+
     /// <summary>
     /// Whether the agent is a built-in agent (e.g. for prompt optimization)
     /// </summary>
@@ -42,7 +48,8 @@ public interface IAgent : IDomainEntity
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         IProject project,
-        bool isSystemAgent = false);
+        bool isSystemAgent = false,
+        IModelParameters? modelParameters = null);
 
     /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(
@@ -52,15 +59,20 @@ public interface IAgent : IDomainEntity
         IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         bool isSystemAgent,
+        IModelParameters modelParameters,
         IDomainEntityData existing);
-    
+
     /// <summary>
-    /// Gets an chat client instance 
+    /// Gets an chat client instance
     /// </summary>
     IModelClient CreateClient(IModelEndpoint? customEndpoint = null);
-    
+
     Task<IAgent> ChangeEndpoint(
-        IModelEndpoint modelEndpoint, 
+        IModelEndpoint modelEndpoint,
+        CancellationToken cancellationToken = default);
+
+    Task<IAgent> ChangeModelParameters(
+        IModelParameters modelParameters,
         CancellationToken cancellationToken = default);
 
     SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null);

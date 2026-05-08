@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
@@ -38,6 +39,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         IModelEndpoint endpoint,
         string? name = null,
         bool isSystemAgent = false,
+        IModelParameters? modelParameters = null,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemPrompt, tools);
@@ -60,7 +62,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             tools: tools,
             endpoint: endpoint,
             isSystemAgent: isSystemAgent,
-            project: project);
+            project: project,
+            modelParameters: modelParameters);
         return await AddAsync(agent, cancellationToken);
     }
 

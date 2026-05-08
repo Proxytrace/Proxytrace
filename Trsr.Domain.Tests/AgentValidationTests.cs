@@ -87,6 +87,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
             existingAgent.Tools,
             existingAgent.Endpoint,
             existingAgent.IsSystemAgent,
+            existingAgent.ModelParameters,
             existingAgent);
 
         // Assert
@@ -110,7 +111,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
 
         // Act & Assert
         // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent);
+        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent);
         action.Should().Throw<Exception>();
     }
 

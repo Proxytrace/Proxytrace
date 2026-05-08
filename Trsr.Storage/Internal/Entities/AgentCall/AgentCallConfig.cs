@@ -7,10 +7,12 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.Agent;
+using Trsr.Storage.Internal.Entities.Inference;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
 
 namespace Trsr.Storage.Internal.Entities.AgentCall;
@@ -18,6 +20,7 @@ namespace Trsr.Storage.Internal.Entities.AgentCall;
 internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, IMapper<IAgentCall, AgentCallEntity>
 {
     private readonly IAgentCall.CreateExisting factory;
+    private readonly IModelParameters.Create modelParametersFactory;
     private readonly ISerializer serializer;
     private readonly IRepository<IAgent> agents;
     private readonly ICompletion.Create completionFactory;
@@ -25,12 +28,14 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
 
     public AgentCallConfig(
         IAgentCall.CreateExisting factory,
+        IModelParameters.Create modelParametersFactory,
         ISerializer serializer,
         IRepository<IAgent> agents,
         ICompletion.Create completionFactory,
         IRepository<IModelEndpoint> endpoints)
     {
         this.factory = factory;
+        this.modelParametersFactory = modelParametersFactory;
         this.serializer = serializer;
         this.agents = agents;
         this.completionFactory = completionFactory;
@@ -67,6 +72,13 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             );
 
         builder
+            .Property(e => e.ModelParameters)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<ModelParametersData>(v) ?? ModelParametersData.Empty
+            );
+
+        builder
             .HasOne<ModelEndpointEntity>()
             .WithMany()
             .HasForeignKey(e => e.EndpointId)
@@ -84,6 +96,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
                     usage: TokenUsage.Create(stored.InputTokens, stored.OutputTokens),
                     latency: TimeSpan.FromMilliseconds(stored.LatencyMs ?? 0))
                 : null;
+        var modelParameters = AgentConfig.ToDomain(stored.ModelParameters, modelParametersFactory);
         return factory(
             agent: agent,
             endpoint: endpoint,
@@ -92,6 +105,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             httpStatus: (HttpStatusCode)stored.HttpStatus,
             finishReason: stored.FinishReason,
             errorMessage: stored.ErrorMessage,
+            modelParameters: modelParameters,
             existing: stored,
             conversationId: stored.ConversationId);
     }
@@ -110,6 +124,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             HttpStatus = (int)domain.HttpStatus,
             FinishReason = domain.FinishReason,
             ErrorMessage = domain.ErrorMessage,
+            ModelParameters = AgentConfig.ToData(domain.ModelParameters),
             ConversationId = domain.ConversationId,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

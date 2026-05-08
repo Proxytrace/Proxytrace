@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Ingestion.Internal;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Testing;
@@ -308,6 +309,193 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         var calls = (await callRepo.GetFilteredAsync(
             new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
         calls[0].Agent.Id.Should().Be(calls[1].Agent.Id);
+    }
+
+    private const string RequestWithModelParameters = $$"""
+                                                        {
+                                                            "model": "{{Model}}",
+                                                            "messages": [
+                                                                {"role": "system", "content": "{{SystemPrompt}}"},
+                                                                {"role": "user", "content": "{{UserPrompt}}"}
+                                                            ],
+                                                            "tools": [{
+                                                                "type": "function",
+                                                                "function": {
+                                                                    "name": "{{ToolName}}",
+                                                                    "description": "Get current weather",
+                                                                    "parameters": {"type": "object", "properties": "{}"}
+                                                                }
+                                                            }],
+                                                            "temperature": 0.2,
+                                                            "top_p": 0.9,
+                                                            "reasoning_effort": "high",
+                                                            "frequency_penalty": 0.1,
+                                                            "presence_penalty": 0.2,
+                                                            "max_tokens": 512,
+                                                            "seed": 42,
+                                                            "stop": ["END"],
+                                                            "n": 1
+                                                        }
+                                                        """;
+
+    private const string RequestWithDifferentTemperature = $$"""
+                                                             {
+                                                                 "model": "{{Model}}",
+                                                                 "messages": [
+                                                                     {"role": "system", "content": "{{SystemPrompt}}"},
+                                                                     {"role": "user", "content": "{{UserPrompt}}"}
+                                                                 ],
+                                                                 "tools": [{
+                                                                     "type": "function",
+                                                                     "function": {
+                                                                         "name": "{{ToolName}}",
+                                                                         "description": "Get current weather",
+                                                                         "parameters": {"type": "object", "properties": "{}"}
+                                                                     }
+                                                                 }],
+                                                                 "temperature": 0.7,
+                                                                 "top_p": 0.9,
+                                                                 "reasoning_effort": "high",
+                                                                 "frequency_penalty": 0.1,
+                                                                 "presence_penalty": 0.2,
+                                                                 "max_tokens": 512,
+                                                                 "seed": 42,
+                                                                 "stop": ["END"],
+                                                                 "n": 1
+                                                             }
+                                                             """;
+
+    [TestMethod]
+    public async Task IngestAsync_WithModelParameters_StoresParametersOnAgentAndCall()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: RequestWithModelParameters,
+                ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+
+        calls.Should().HaveCount(1);
+        var call = calls[0];
+
+        call.ModelParameters.Temperature.Should().Be(0.2);
+        call.ModelParameters.TopP.Should().Be(0.9);
+        call.ModelParameters.ReasoningEffort.Should().Be("high");
+        call.ModelParameters.FrequencyPenalty.Should().Be(0.1);
+        call.ModelParameters.PresencePenalty.Should().Be(0.2);
+        call.ModelParameters.MaxTokens.Should().Be(512);
+        call.ModelParameters.Seed.Should().Be(42);
+        call.ModelParameters.Stop.Should().BeEquivalentTo(new[] { "END" });
+        call.ModelParameters.N.Should().Be(1);
+
+        call.Agent.ModelParameters.Temperature.Should().Be(0.2);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenParametersChange_UpdatesAgentParameters_ButFingerprintUnchanged()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var agentRepo = services.GetRequiredService<Trsr.Domain.Agent.IAgentRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: RequestWithModelParameters,
+                ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: RequestWithDifferentTemperature,
+                ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        (await agentRepo.CountAsync(CancellationToken)).Should().Be(1);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+
+        calls.Should().HaveCount(2);
+        calls[0].Agent.Id.Should().Be(calls[1].Agent.Id);
+
+        var fpFirst = agentRepo.GetAgentFingerprint(calls[0].Agent);
+        var fpSecond = agentRepo.GetAgentFingerprint(calls[1].Agent);
+        fpFirst.Should().Be(fpSecond);
+
+        var perCallTemps = calls.Select(c => c.ModelParameters.Temperature).ToHashSet();
+        perCallTemps.Should().BeEquivalentTo(new double?[] { 0.2, 0.7 });
+
+        var refreshed = await agentRepo.GetAsync(calls[0].Agent.Id, CancellationToken);
+        refreshed.ModelParameters.Temperature.Should().Be(0.7);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenParametersUnchanged_DoesNotUpdateAgent()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var agentRepo = services.GetRequiredService<Trsr.Domain.Agent.IAgentRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, RequestWithModelParameters, FirstResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        var afterFirst = (await agentRepo.GetAllAsync(CancellationToken)).Single();
+        var firstUpdatedAt = afterFirst.UpdatedAt;
+
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, RequestWithModelParameters, FirstResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        var afterSecond = (await agentRepo.GetAllAsync(CancellationToken)).Single();
+        afterSecond.UpdatedAt.Should().Be(firstUpdatedAt);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenParametersAbsent_AgentParametersAreEmpty()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, FirstRequestBody, FirstResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+
+        calls.Should().HaveCount(1);
+        calls[0].ModelParameters.Temperature.Should().BeNull();
+        calls[0].ModelParameters.TopP.Should().BeNull();
+        calls[0].ModelParameters.MaxTokens.Should().BeNull();
+        calls[0].Agent.ModelParameters.Temperature.Should().BeNull();
     }
 
     [TestMethod]

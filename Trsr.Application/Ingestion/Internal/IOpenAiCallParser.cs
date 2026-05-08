@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Trsr.Domain.Completion;
+using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Tools;
-using Trsr.Domain.Usage;
 
 namespace Trsr.Application.Ingestion.Internal;
 
@@ -17,7 +16,8 @@ internal sealed record ParseResult(
     string? FinishReason,
     string? ErrorMessage,
     SystemMessage SystemMessage,
-    IReadOnlyList<ToolSpecification> Tools);
+    IReadOnlyList<ToolSpecification> Tools,
+    IModelParameters ModelParameters);
 
 
 internal interface IOpenAiCallParser

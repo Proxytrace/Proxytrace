@@ -2,6 +2,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
+using Trsr.Storage.Internal.Entities.Inference;
 
 namespace Trsr.Storage.Internal.Entities.Agent;
 
@@ -19,7 +20,7 @@ internal record AgentEntity : Entity
     /// <see cref="Trsr.Domain.Agent.IAgent.Project"/>
     /// </summary>
     public required Guid Project { get; init; }
-    
+
     public required Guid Endpoint { get; init; }
 
     /// <summary>
@@ -31,7 +32,7 @@ internal record AgentEntity : Entity
     /// <see cref="IAgent.SystemPrompt"/> - stored as JSON in the database
     /// </summary>
     public required SystemPromptData SystemPrompt { get; init; }
-    
+
     /// <summary>
     /// <see cref="IAgent.IsSystemAgent"/>
     /// </summary>
@@ -41,4 +42,9 @@ internal record AgentEntity : Entity
     /// <see cref="Trsr.Domain.Agent.IAgent.Tools"/> - stored as JSON in the database
     /// </summary>
     public required IReadOnlyList<ToolSpecification> Tools { get; init; }
+
+    /// <summary>
+    /// <see cref="IAgent.ModelParameters"/> - stored as JSON in the database
+    /// </summary>
+    public required ModelParametersData ModelParameters { get; init; }
 }
