@@ -56,6 +56,7 @@
   &lt;Solution /&gt;
 &lt;/SessionState&gt;</s:String>
 	
+	
 	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Translogica_002EAI_002EAgents_002EPrompting_002ETests_002FPrompts/@EntryIndexedValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/ResxEditorPersonal/CheckedGroups/=Translogica_002EAI_002EAgents_002EPrompting_002ETests_002FPrompts/@EntryIndexRemoved">True</s:Boolean>
 	
