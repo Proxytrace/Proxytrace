@@ -1,6 +1,7 @@
 namespace Trsr.Storage.Internal.Entities.Project;
 
 [StoredDomainEntity(typeof(Trsr.Domain.Project.IProject))]
+[Cacheable]
 internal record ProjectEntity : Entity
 {
     /// <summary>

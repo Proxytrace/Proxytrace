@@ -24,7 +24,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         ITransaction transaction,
         IAgent.CreateNew createNew,
         IPromptTemplate.Create promptTemplateFactory,
-        Lazy<IAgentNameGenerator> nameGenerator) : base(mapper, contextFactory, transaction)
+        Lazy<IAgentNameGenerator> nameGenerator,
+        IEntityCache<IAgent> cache) : base(mapper, contextFactory, transaction, cache)
     {
         this.createNew = createNew;
         this.promptTemplateFactory = promptTemplateFactory;

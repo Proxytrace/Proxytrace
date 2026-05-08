@@ -21,7 +21,8 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         ITransaction transaction,
         IModel.CreateNew createNewModel,
         IModelEndpoint.CreateNew createNewEndpoint,
-        IRepository<IModel> modelRepository) : base(mapper, contextFactory, transaction)
+        IRepository<IModel> modelRepository,
+        IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, cache)
     {
         this.createNewModel = createNewModel;
         this.createNewEndpoint = createNewEndpoint;
