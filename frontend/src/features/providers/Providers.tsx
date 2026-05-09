@@ -58,6 +58,7 @@ export default function Providers() {
   const [newModel, setNewModel] = useState({ modelName: '', inputTokenCost: '', outputTokenCost: '' });
   const [editingModel, setEditingModel] = useState<ModelEndpointDto | null>(null);
   const [editPricing, setEditPricing] = useState({ inputTokenCost: '', outputTokenCost: '' });
+  const [deleteModel, setDeleteModel] = useState<ModelEndpointDto | null>(null);
   const [showNewKey, setShowNewKey] = useState(false);
   const [newKey, setNewKey] = useState({ name: '', projectId: '' });
   const [deleteKey, setDeleteKey] = useState<ApiKeyDto | null>(null);
@@ -80,6 +81,14 @@ export default function Providers() {
     queryFn: () => providersApi.getModels(activeId!),
     enabled: !!activeId,
   });
+  const { data: availableModels, isLoading: availableLoading, error: availableError } = useQuery({
+    queryKey: QUERY_KEYS.providerAvailableModels(activeId),
+    queryFn: () => providersApi.getAvailableModels(activeId!),
+    enabled: !!activeId && showNewModel,
+    retry: false,
+  });
+  const existingModelNames = new Set(models.map(m => m.modelName));
+  const selectableModels = (availableModels ?? []).filter(n => !existingModelNames.has(n));
   const { data: keys = [], isLoading: keysLoading } = useQuery({
     queryKey: QUERY_KEYS.providerKeys(activeId),
     queryFn: () => providersApi.getKeys(activeId!),
@@ -121,6 +130,12 @@ export default function Providers() {
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
     onError: (err) => toast((err as Error).message || 'Failed to create model', 'error'),
+  });
+
+  const delModel = useMutation({
+    mutationFn: () => providersApi.deleteModel(deleteModel!.id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setDeleteModel(null); },
+    onError: (err) => toast((err as Error).message || 'Failed to delete model', 'error'),
   });
 
   const updatePricing = useMutation({
@@ -304,8 +319,24 @@ export default function Providers() {
                   {showNewModel && (
                     <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
                       <div className="text-[13px] font-semibold">Add Model</div>
-                      <FormField label="Model name">
-                        <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
+                      <FormField label="Model">
+                        {availableLoading ? (
+                          <div className="text-[12px] text-muted py-2">Discovering available models…</div>
+                        ) : availableError ? (
+                          <div className="flex flex-col gap-[6px]">
+                            <div className="text-[12px] text-danger">Could not discover models from endpoint. Enter manually:</div>
+                            <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
+                          </div>
+                        ) : selectableModels.length === 0 ? (
+                          <div className="text-[12px] text-muted py-2">All discovered models are already added.</div>
+                        ) : (
+                          <select value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className={`${formInputCls} font-mono`}>
+                            <option value="">Select a model…</option>
+                            {selectableModels.map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        )}
                       </FormField>
                       <div className="grid grid-cols-2 gap-[10px]">
                         <FormField label="Input cost / 1M tokens (€)">
@@ -337,7 +368,10 @@ export default function Providers() {
                             <span className="mono text-[12px]">{m.modelName}</span>
                             <span className="text-[12px] text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
                             <span className="text-[12px] text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
-                            <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="btn-icon"><EditIcon size={13} /></button>
+                            <div className="flex items-center gap-[4px]">
+                              <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="btn-icon" aria-label="Edit pricing"><EditIcon size={13} /></button>
+                              <button onClick={() => setDeleteModel(m)} className="btn-icon btn-icon-danger" aria-label="Delete model"><TrashIcon size={13} /></button>
+                            </div>
                           </div>
                           {editingModel?.id === m.id && (
                             <div className="p-[12px_16px_14px] bg-card border-t border-hairline flex flex-col gap-[10px]">
@@ -465,6 +499,11 @@ export default function Providers() {
       {/* Delete Key */}
       {deleteKey && (
         <ConfirmDialog entityName={deleteKey.name} onConfirm={() => delKey.mutate()} onCancel={() => setDeleteKey(null)} loading={delKey.isPending} />
+      )}
+
+      {/* Delete Model */}
+      {deleteModel && (
+        <ConfirmDialog entityName={deleteModel.modelName} onConfirm={() => delModel.mutate()} onCancel={() => setDeleteModel(null)} loading={delModel.isPending} />
       )}
     </div>
   );

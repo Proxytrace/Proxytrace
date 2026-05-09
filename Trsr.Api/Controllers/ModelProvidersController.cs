@@ -111,6 +111,15 @@ public class ModelProvidersController : ControllerBase
 
     // ── Models ────────────────────────────────────────────────────────────────
 
+    [HttpGet("{providerId:guid}/available-models")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetAvailableModels(Guid providerId, CancellationToken cancellationToken)
+    {
+        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
+        var client = provider.CreateClient();
+        var models = await client.GetModelsAsync(cancellationToken);
+        return models.Select(m => m.Name).OrderBy(n => n).ToArray();
+    }
+
     [HttpGet("{providerId:guid}/models")]
     public async Task<ActionResult<IReadOnlyList<ModelEndpointDto>>> GetModels(Guid providerId, CancellationToken cancellationToken)
     {
@@ -141,6 +150,13 @@ public class ModelProvidersController : ControllerBase
         var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
         return CreatedAtAction(nameof(GetModels), new { providerId }, ToEndpointDto(saved));
+    }
+
+    [HttpDelete("endpoints/{endpointId:guid}")]
+    public async Task<IActionResult> DeleteModel(Guid endpointId, CancellationToken cancellationToken)
+    {
+        var removed = await endpointRepository.RemoveAsync(endpointId, cancellationToken);
+        return removed ? NoContent() : NotFound();
     }
 
     [HttpPut("{providerId:guid}/models/{endpointId:guid}")]

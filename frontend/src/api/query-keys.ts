@@ -21,6 +21,7 @@ export const QUERY_KEYS = {
   project: (id: string) => ['project', id] as const,
   users: ['users'] as const,
   providerModels: (providerId: string | null) => ['provider-models', providerId] as const,
+  providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
   providerKeys: (providerId: string | null) => ['provider-keys', providerId] as const,
 
   testRunGroups: (agentFilter?: string, projectId?: string) => ['test-run-groups', agentFilter, projectId ?? null] as const,

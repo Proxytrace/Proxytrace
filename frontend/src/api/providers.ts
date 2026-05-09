@@ -17,10 +17,13 @@ export const providersApi = {
 
   getAllModels: () => api.get<ModelEndpointDto[]>('/api/model-endpoints'),
   getModels: (providerId: string) => api.get<ModelEndpointDto[]>(`/api/providers/${providerId}/models`),
+  getAvailableModels: (providerId: string) => api.get<string[]>(`/api/providers/${providerId}/available-models`),
   createModel: (providerId: string, req: CreateModelEndpointRequest) =>
     api.post<ModelEndpointDto>(`/api/providers/${providerId}/models`, req),
   updateModelPricing: (providerId: string, endpointId: string, req: UpdateModelEndpointPricingRequest) =>
     api.put<ModelEndpointDto>(`/api/providers/${providerId}/models/${endpointId}`, req),
+  deleteModel: (endpointId: string) =>
+    api.del(`/api/providers/endpoints/${endpointId}`),
 
   getKeys: (providerId: string) => api.get<ApiKeyDto[]>(`/api/providers/${providerId}/keys`),
   createKey: (providerId: string, req: CreateApiKeyRequest) =>
