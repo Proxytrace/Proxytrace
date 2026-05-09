@@ -263,6 +263,7 @@ export default function Traces() {
   const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
 
@@ -272,6 +273,7 @@ export default function Traces() {
     agentCallsApi.get(focusId).then(trace => {
       if (cancelled) return;
       setSelectedTrace(trace);
+      setPendingScrollId(trace.id);
       setRange('all');
       setAgentFilter('');
       setSearch('');
@@ -338,14 +340,16 @@ export default function Traces() {
   const rows = useMemo(() => buildRows(traces), [traces]);
 
   useEffect(() => {
-    if (!selectedTrace) return;
-    const id = selectedTrace.id;
+    if (!pendingScrollId) return;
     const t = setTimeout(() => {
-      const el = document.querySelector(`[data-trace-id="${id}"]`);
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const el = document.querySelector(`[data-trace-id="${pendingScrollId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setPendingScrollId(null);
+      }
     }, 50);
     return () => clearTimeout(t);
-  }, [selectedTrace, rows, expandedConvs]);
+  }, [pendingScrollId, rows, expandedConvs]);
 
   useTraceStream(useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
