@@ -42,7 +42,7 @@ export default function Setup() {
   const [userName, setUserName] = useState('');
 
   // Step 2 — Provider
-  const [providerName, setProviderName] = useState('');
+  const [providerName, setProviderName] = useState('Anthropic');
   const [providerEndpoint, setProviderEndpoint] = useState('https://api.anthropic.com/v1');
   const [providerApiKey, setProviderApiKey] = useState('');
   const [providerKind, setProviderKind] = useState<ModelProviderKind>(ModelProviderKind.Anthropic);
@@ -113,8 +113,13 @@ export default function Setup() {
   }
 
   function handleKindChange(kind: ModelProviderKind) {
+    const prevLabel = PROVIDER_KIND_OPTIONS.find(o => o.kind === providerKind)?.label ?? '';
+    const nextLabel = PROVIDER_KIND_OPTIONS.find(o => o.kind === kind)?.label ?? '';
     setProviderKind(kind);
     setProviderEndpoint(PROVIDER_ENDPOINTS[kind]);
+    if (providerName.trim() === '' || providerName === prevLabel) {
+      setProviderName(nextLabel);
+    }
   }
 
   const canAdvance = done ? true : (stepValid[currentStep] ?? false) && !loading;
@@ -144,24 +149,28 @@ export default function Setup() {
     // Step 2 — Provider
     <div key="step-2" className="flex flex-col gap-4">
       <FormField label="Provider type">
-        <div className="grid grid-cols-3 gap-2">
-          {PROVIDER_KIND_OPTIONS.map(opt => {
-            const active = providerKind === opt.kind;
-            return (
-              <button
-                key={opt.kind}
-                type="button"
-                onClick={() => handleKindChange(opt.kind)}
-                className={`cursor-pointer text-[12px] font-medium px-3 py-[9px] rounded-[9px] border transition-colors duration-150 ${
-                  active
-                    ? 'bg-accent-subtle border-[color:var(--accent-primary)] text-primary'
-                    : 'bg-card-2 border-border text-secondary hover:text-primary hover:border-[color:var(--hairline)]'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        <div className="relative">
+          <select
+            className={`${formInputCls} appearance-none pr-9 cursor-pointer`}
+            value={providerKind}
+            onChange={e => handleKindChange(e.target.value as ModelProviderKind)}
+          >
+            {PROVIDER_KIND_OPTIONS.map(opt => (
+              <option key={opt.kind} value={opt.kind}>{opt.label}</option>
+            ))}
+          </select>
+          <svg
+            aria-hidden
+            viewBox="0 0 16 16"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 6l4 4 4-4" />
+          </svg>
         </div>
       </FormField>
       <FormField label="Provider name">
