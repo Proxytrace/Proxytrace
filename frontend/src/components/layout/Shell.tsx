@@ -13,7 +13,7 @@ import {
   LayoutSidebarIcon, BellIcon, PlusIcon,
 } from '../icons';
 
-const navItems = [
+const primaryNavItems = [
   { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
   { label: 'Traces', icon: 'activity', to: '/traces', badge: '60' },
   { label: 'Agents', icon: 'users', to: '/agents' },
@@ -21,9 +21,14 @@ const navItems = [
   { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
   { label: 'Test Runs', icon: 'play', to: '/runs' },
   { label: 'Proposals', icon: 'sparkles', to: '/proposals', badge: '2', badgeAccent: true },
+] as const;
+
+const systemNavItems = [
   { label: 'Providers', icon: 'server', to: '/providers' },
   { label: 'Settings', icon: 'settings', to: '/settings' },
 ] as const;
+
+const navItems = [...primaryNavItems, ...systemNavItems] as const;
 
 type NavIconName = typeof navItems[number]['icon'];
 
@@ -92,7 +97,7 @@ export function Shell() {
         <nav
           className={`flex-1 flex flex-col gap-[2px] overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-1.5'}`}
         >
-          {navItems.map(item => (
+          {primaryNavItems.map(item => (
             <NavItem
               key={item.to}
               label={item.label}
@@ -100,6 +105,24 @@ export function Shell() {
               to={item.to}
               badge={'badge' in item ? item.badge : undefined}
               badgeAccent={'badgeAccent' in item ? item.badgeAccent : undefined}
+              collapsed={collapsed}
+            />
+          ))}
+
+          <div className={`my-2 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
+
+          {!collapsed && (
+            <div className="px-[6px] pt-1 pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
+              System
+            </div>
+          )}
+
+          {systemNavItems.map(item => (
+            <NavItem
+              key={item.to}
+              label={item.label}
+              icon={NAV_ICONS[item.icon]}
+              to={item.to}
               collapsed={collapsed}
             />
           ))}
