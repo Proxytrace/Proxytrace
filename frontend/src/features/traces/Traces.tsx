@@ -372,7 +372,7 @@ export default function Traces() {
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] pb-2">
 
       {/* ── Agent filter cards ── */}
       {agents.length > 0 && (
@@ -485,10 +485,10 @@ export default function Traces() {
       </div>
 
       {/* ── Grouped trace table ── */}
-      <div className="fade-up bg-card rounded-[14px] overflow-hidden" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
+      <div className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
         {/* Table header */}
         <div
-          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)]"
+          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] shrink-0"
           style={{ gridTemplateColumns: GRID }}
         >
           {['Trace ID', 'Agent', 'Model', 'Status', 'Tokens', 'Latency', 'Time'].map((label, i) => (
@@ -499,6 +499,7 @@ export default function Traces() {
         </div>
 
         {/* Rows */}
+        <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
         {rows.length === 0 ? (
           <div className="py-12 text-center text-muted text-[13px]">
             {isFetching ? 'Loading…' : 'No traces found.'}
@@ -524,6 +525,7 @@ export default function Traces() {
             )
           )
         )}
+        </div>
       </div>
 
       {/* ── Pagination ── */}
