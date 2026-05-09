@@ -14,6 +14,7 @@ export const QUERY_KEYS = {
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 
   evaluators: (projectId?: string) => ['evaluators', projectId ?? null] as const,
+  agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 
   providers: ['providers'] as const,

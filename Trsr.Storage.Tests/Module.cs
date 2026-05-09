@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 using Trsr.Testing;
 
 namespace Trsr.Storage.Tests;
@@ -16,5 +17,6 @@ public class Module : Autofac.Module
     {
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
         builder.RegisterStub<IModelClient>();
+        builder.RegisterStub<IProviderClient>();
     }
 }

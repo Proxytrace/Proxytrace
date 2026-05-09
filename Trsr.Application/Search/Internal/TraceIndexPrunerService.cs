@@ -43,7 +43,7 @@ internal sealed class TraceIndexPrunerService : BackgroundService
         }
     }
 
-    public void PruneOnce()
+    private void PruneOnce()
     {
         long cutoff = DateTimeOffset.UtcNow.AddDays(-configuration.TraceRetentionDays).UtcTicks;
         var query = new BooleanQuery

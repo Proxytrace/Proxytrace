@@ -1,7 +1,14 @@
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Prompt;
+using Trsr.Domain.Agent;
 
 namespace Trsr.Domain.Evaluator;
 
-public interface IAgenticEvaluator : IEvaluator;
+public interface IAgenticEvaluator : IEvaluator
+{
+    public IAgent Agent { get; }
+    
+    public delegate IAgenticEvaluator CreateNew(IAgent agent);
+    
+    public delegate IAgenticEvaluator CreateExisting(
+        IAgent agent,
+        IDomainEntityData existing);
+}

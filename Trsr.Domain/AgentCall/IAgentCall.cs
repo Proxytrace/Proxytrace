@@ -4,13 +4,14 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Search;
 
 namespace Trsr.Domain.AgentCall;
 
 /// <summary>
 /// Records a single LLM call made by an agent, including request, response, token usage, and latency.
 /// </summary>
-public interface IAgentCall : IDomainEntity<IAgentCall>
+public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
 {
     /// <summary>The agent that initiated this call, if associated.</summary>
     IAgent Agent { get; }
@@ -42,6 +43,8 @@ public interface IAgentCall : IDomainEntity<IAgentCall>
     /// Set from the <c>X-Trsr-Session-Id</c> header or detected via message-history matching.
     /// </summary>
     Guid? ConversationId { get; }
+    
+    SearchKind ISearchable.SearchKind => SearchKind.AgentCall;
 
     public delegate IAgentCall CreateNew(
         IAgent agent,

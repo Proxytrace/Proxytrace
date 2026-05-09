@@ -22,7 +22,7 @@ internal sealed class LuceneSearchService : ISearchService
     {
         if (string.IsNullOrWhiteSpace(query))
         {
-            return Task.FromResult(new SearchResults(Array.Empty<SearchHit>()));
+            return Task.FromResult(new SearchResults([]));
         }
 
         using var analyzer = new StandardAnalyzer(LuceneIndexWriter.Version);
@@ -48,7 +48,7 @@ internal sealed class LuceneSearchService : ISearchService
             }
             catch (ParseException)
             {
-                return Task.FromResult(new SearchResults(Array.Empty<SearchHit>()));
+                return Task.FromResult(new SearchResults([]));
             }
         }
 
@@ -83,7 +83,7 @@ internal sealed class LuceneSearchService : ISearchService
 
             if (!grouped.TryGetValue(kind, out var bucket))
             {
-                bucket = new List<SearchHit>();
+                bucket = [];
                 grouped[kind] = bucket;
             }
             if (bucket.Count >= configuration.HitsPerKind)

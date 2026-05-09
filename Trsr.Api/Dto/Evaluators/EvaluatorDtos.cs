@@ -32,3 +32,5 @@ public record UpdateEvaluatorRequest(
     string? JsonSchema,
     string? ExtractionPattern,
     decimal? Tolerance);
+
+public record AgenticEvaluatorPresetDto(string Key, string Name, string SystemPrompt);

@@ -33,7 +33,7 @@ internal sealed class CannedJsonAgent : IAgent
     public IModelParameters ModelParameters { get; } = Substitute.For<IModelParameters>();
     public bool IsSystemAgent => true;
 
-    public IModelClient CreateClient(IModelEndpoint? customEndpoint = null)
+    public IModelClient CreateClient(IModelEndpoint? customEndpoint = null, bool skipIngestion = false)
         => new CannedJsonClient(cannedResponse, outputFormatFactory);
 
     public Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint, CancellationToken cancellationToken = default)
@@ -81,5 +81,30 @@ internal sealed class CannedJsonAgent : IAgent
                 return default;
             }
         }
+    }
+
+    public Task<IAgent> ReloadAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IAgent> AddAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IAgent> UpdateAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IAgent> UpsertAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RemoveAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -62,5 +62,29 @@ namespace Trsr.Application {
                 return ResourceManager.GetString("update_tool_definition_optimizer", resourceCulture);
             }
         }
+
+        internal static string politeness_evaluator {
+            get {
+                return ResourceManager.GetString("politeness_evaluator", resourceCulture);
+            }
+        }
+
+        internal static string safety_classifier {
+            get {
+                return ResourceManager.GetString("safety_classifier", resourceCulture);
+            }
+        }
+
+        internal static string tool_usage_evaluator {
+            get {
+                return ResourceManager.GetString("tool_usage_evaluator", resourceCulture);
+            }
+        }
+
+        internal static string helpfulness_evaluator {
+            get {
+                return ResourceManager.GetString("helpfulness_evaluator", resourceCulture);
+            }
+        }
     }
 }

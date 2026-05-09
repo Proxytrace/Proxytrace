@@ -11,6 +11,9 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
 {
     private readonly IEvaluation.Create evaluationFactory;
 
+    public string Name 
+        => "Exact Match";
+
     public EvaluatorKind Kind
         => EvaluatorKind.ExactMatch;
 

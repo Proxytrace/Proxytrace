@@ -157,6 +157,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 async (testRun, ct) => await RunTestRun(testRun, ct));
             
             group = await group.ReloadAsync(cancellationToken);
+            group = await group.SetCompleted(cancellationToken);
             broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
 
             await optimizer.EnqueueAsync(group, cancellationToken);
@@ -245,7 +246,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             new EvaluationEventData(
                 evaluator.Id,
                 evaluator.Kind,
-                TestResultArrivedEvent.GetEvaluatorName(evaluator),
+                evaluator.Name,
                 evaluation.Score,
                 evaluation.Reasoning)));
     }

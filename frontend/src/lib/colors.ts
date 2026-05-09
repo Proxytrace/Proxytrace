@@ -31,22 +31,14 @@ export function modelColor(name: string): string {
 }
 
 export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
-  [EvaluatorKind.Custom]: '#c9944a',
+  [EvaluatorKind.Agentic]: '#c9944a',
   [EvaluatorKind.ExactMatch]: '#6b9eaa',
   [EvaluatorKind.NumericMatch]: '#6b9eaa',
   [EvaluatorKind.JsonSchemaMatch]: '#6b9eaa',
-  [EvaluatorKind.Helpfulness]: '#3daa6f',
-  [EvaluatorKind.Politeness]: '#3daa6f',
-  [EvaluatorKind.Safety]: '#d95555',
-  [EvaluatorKind.ToolUsage]: '#3daa6f',
 };
 
 export const EVALUATOR_KIND_CATEGORY: Record<EvaluatorKind, 'llm' | 'rule'> = {
-  [EvaluatorKind.Custom]: 'llm',
-  [EvaluatorKind.Helpfulness]: 'llm',
-  [EvaluatorKind.Politeness]: 'llm',
-  [EvaluatorKind.Safety]: 'llm',
-  [EvaluatorKind.ToolUsage]: 'llm',
+  [EvaluatorKind.Agentic]: 'llm',
   [EvaluatorKind.ExactMatch]: 'rule',
   [EvaluatorKind.NumericMatch]: 'rule',
   [EvaluatorKind.JsonSchemaMatch]: 'rule',

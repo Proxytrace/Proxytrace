@@ -3,6 +3,7 @@ using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Internal;
+using Trsr.Domain.Project;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestSuite.Internal;
@@ -13,6 +14,7 @@ internal record TestSuite : DomainEntity<ITestSuite>, ITestSuite
     public IAgent Agent { get; }
     public IReadOnlyCollection<IEvaluator> Evaluators { get; }
     public IReadOnlyCollection<ITestCase> TestCases { get; }
+    public IProject Project => Agent.Project;
 
     public TestSuite(
         string name,

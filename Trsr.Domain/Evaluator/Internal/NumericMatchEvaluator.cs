@@ -14,6 +14,9 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
 {
     private readonly IEvaluation.Create evaluationFactory;
 
+    public string Name
+        => "Numeric Match";
+
     public EvaluatorKind Kind
         => EvaluatorKind.NumericMatch;
 

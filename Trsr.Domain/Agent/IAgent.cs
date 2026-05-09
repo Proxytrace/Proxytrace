@@ -4,6 +4,7 @@ using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.Search;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Agent;
@@ -12,7 +13,7 @@ namespace Trsr.Domain.Agent;
 /// Represents an AI agent defined by a system message, tools, model endpoint, and project.
 /// The combination of these fields forms a stable fingerprint that uniquely identifies an agent version.
 /// </summary>
-public interface IAgent : IDomainEntity
+public interface IAgent : IDomainEntity<IAgent>, ISearchable
 {
     /// <summary>Short human-readable name generated from the system message at creation time.</summary>
     string Name { get; }
@@ -21,9 +22,6 @@ public interface IAgent : IDomainEntity
     /// The endpoint the agent completes against
     /// </summary>
     IModelEndpoint Endpoint { get; }
-
-    /// <summary>The project this agent belongs to.</summary>
-    IProject Project { get; }
 
     /// <summary>The system message that defines this agent's behaviour.</summary>
     IPromptTemplate SystemPrompt { get; }
@@ -40,6 +38,8 @@ public interface IAgent : IDomainEntity
     /// Whether the agent is a built-in agent (e.g. for prompt optimization)
     /// </summary>
     bool IsSystemAgent { get; }
+    
+    SearchKind ISearchable.SearchKind => SearchKind.Agent;
 
     /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
@@ -77,5 +77,6 @@ public interface IAgent : IDomainEntity
         IModelParameters modelParameters,
         CancellationToken cancellationToken = default);
 
-    SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null);
+    SystemMessage CreateSystemMessage(
+        IReadOnlyDictionary<string, string>? variables = null);
 }

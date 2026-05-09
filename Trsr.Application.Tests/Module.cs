@@ -6,6 +6,7 @@ using Trsr.Application.TestRun;
 using Trsr.Application.TestRun.Internal;
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Storage;
@@ -23,6 +24,7 @@ public class Module : Autofac.Module
         builder.RegisterModule<Trsr.Serialization.Module>();
 
         builder.RegisterStub<IModelClient>();
+        builder.RegisterStub<IProviderClient>();
 
         builder.RegisterStub<IAgentNameGenerator>(stub =>
             stub.GenerateNameAsync(Arg.Any<IPromptTemplate>(), Arg.Any<IProject>(), Arg.Any<CancellationToken>())

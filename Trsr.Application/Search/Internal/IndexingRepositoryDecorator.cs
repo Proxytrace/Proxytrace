@@ -3,32 +3,18 @@ using Trsr.Domain.Search;
 
 namespace Trsr.Application.Search.Internal;
 
-internal sealed class ProjectIdResolver<TDomain>
-    where TDomain : IDomainEntity
-{
-    private readonly Func<TDomain, Guid> resolver;
-    public ProjectIdResolver(Func<TDomain, Guid> resolver) => this.resolver = resolver;
-    public Guid Resolve(TDomain entity) => resolver(entity);
-}
-
 internal sealed class IndexingRepositoryDecorator<TDomain> : IRepository<TDomain>
-    where TDomain : class, IDomainEntity
+    where TDomain : class, IDomainEntity, ISearchable
 {
     private readonly IRepository<TDomain> inner;
     private readonly Lazy<ISearchIndexer> indexer;
-    private readonly SearchKind kind;
-    private readonly ProjectIdResolver<TDomain> projectIdResolver;
 
     public IndexingRepositoryDecorator(
         IRepository<TDomain> inner,
-        Lazy<ISearchIndexer> indexer,
-        SearchKind kind,
-        ProjectIdResolver<TDomain> projectIdResolver)
+        Lazy<ISearchIndexer> indexer)
     {
         this.inner = inner;
         this.indexer = indexer;
-        this.kind = kind;
-        this.projectIdResolver = projectIdResolver;
     }
 
     public Task<TDomain?> FindAsync(Guid id, CancellationToken cancellationToken = default) => inner.FindAsync(id, cancellationToken);
@@ -41,30 +27,31 @@ internal sealed class IndexingRepositoryDecorator<TDomain> : IRepository<TDomain
     public async Task<TDomain> AddAsync(TDomain entity, CancellationToken cancellationToken = default)
     {
         var result = await inner.AddAsync(entity, cancellationToken);
-        await indexer.Value.IndexAsync(kind, projectIdResolver.Resolve(result), result.Id, cancellationToken);
+        await indexer.Value.IndexAsync(entity.SearchKind, result.Project.Id, result.Id, cancellationToken);
         return result;
     }
 
     public async Task<TDomain> UpdateAsync(TDomain entity, CancellationToken cancellationToken = default)
     {
         var result = await inner.UpdateAsync(entity, cancellationToken);
-        await indexer.Value.IndexAsync(kind, projectIdResolver.Resolve(result), result.Id, cancellationToken);
+        await indexer.Value.IndexAsync(entity.SearchKind, result.Project.Id, result.Id, cancellationToken);
         return result;
     }
 
     public async Task<TDomain> UpsertAsync(TDomain entity, CancellationToken cancellationToken = default)
     {
         var result = await inner.UpsertAsync(entity, cancellationToken);
-        await indexer.Value.IndexAsync(kind, projectIdResolver.Resolve(result), result.Id, cancellationToken);
+        await indexer.Value.IndexAsync(entity.SearchKind, result.Project.Id, result.Id, cancellationToken);
         return result;
     }
 
     public async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        var existing  = await inner.FindAsync(id, cancellationToken);
         var removed = await inner.RemoveAsync(id, cancellationToken);
-        if (removed)
+        if (existing != null && removed)
         {
-            await indexer.Value.RemoveAsync(kind, id, cancellationToken);
+            await indexer.Value.RemoveAsync(existing.SearchKind, id, cancellationToken);
         }
         return removed;
     }

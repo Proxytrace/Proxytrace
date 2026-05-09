@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
 using Trsr.Application.Cleanup;
 using Trsr.Application.Cleanup.Internal;
+using Trsr.Application.Evaluator;
+using Trsr.Application.Evaluator.Internal;
 using Trsr.Application.Setup;
 using Trsr.Application.Setup.Internal;
 using Trsr.Application.Ingestion.Internal;
@@ -99,5 +101,9 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);
+
+        builder.RegisterType<AgenticEvaluatorPresets>()
+            .As<IAgenticEvaluatorPresets>()
+            .SingleInstance();
     }
 }
