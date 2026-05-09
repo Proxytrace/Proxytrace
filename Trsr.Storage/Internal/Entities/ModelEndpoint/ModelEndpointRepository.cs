@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
@@ -13,6 +14,7 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
     IModelEndpointRepository
 {
     private readonly IModelRepository models;
+    private readonly IAsyncLock locker;
     private readonly IModelEndpoint.CreateNew createNewEndpoint;
 
     public ModelEndpointRepository(
@@ -20,10 +22,12 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IModelRepository models,
+        IAsyncLock locker,
         IModelEndpoint.CreateNew createNewEndpoint,
         IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, cache)
     {
         this.models = models;
+        this.locker = locker;
         this.createNewEndpoint = createNewEndpoint;
     }
 
@@ -32,11 +36,11 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         IModelProvider provider,
         CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
 
         IModel modelEntity = await models.GetOrCreateAsync(modelName, cancellationToken);
 
-        var endpointEntity = await context.Set<ModelEndpointEntity>()
+        using IDisposable lockObj = await locker.LockAsync(provider.Id, cancellationToken);
+        var endpointEntity = await contextFactory().Set<ModelEndpointEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Model == modelEntity.Id && e.Provider == provider.Id, cancellationToken);
 
