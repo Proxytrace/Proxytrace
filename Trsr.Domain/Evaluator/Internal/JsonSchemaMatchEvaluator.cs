@@ -15,6 +15,9 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
 {
     private readonly IEvaluation.Create evaluationFactory;
 
+    public string Name
+        => "Json Schema Match";
+
     public EvaluatorKind Kind
         => EvaluatorKind.JsonSchemaMatch;
 

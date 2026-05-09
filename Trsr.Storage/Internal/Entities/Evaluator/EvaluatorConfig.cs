@@ -3,50 +3,38 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
+using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
-using Trsr.Domain.Prompt;
 
 namespace Trsr.Storage.Internal.Entities.Evaluator;
 
 internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, IMapper<IEvaluator, EvaluatorEntity>
 {
     private readonly IExactMatchEvaluator.CreateExisting createExactMatch;
-    private readonly ICustomEvaluator.CreateExisting createCustom;
-    private readonly IHelpfulnessEvaluator.CreateExisting createHelpfulness;
-    private readonly IPolitenessEvaluator.CreateExisting createPoliteness;
-    private readonly ISafetyClassifier.CreateExisting createSafety;
-    private readonly IToolUsageEvaluator.CreateExisting createToolUsage;
+    private readonly IAgenticEvaluator.CreateExisting createAgentic;
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatch;
     private readonly INumericMatchEvaluator.CreateExisting createNumericMatch;
-    private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IRepository<IAgent> agents;
     private readonly IRepository<IProject> projects;
     private readonly ISerializer serializer;
 
     public EvaluatorConfig(
         IExactMatchEvaluator.CreateExisting createExactMatch,
-        ICustomEvaluator.CreateExisting createCustom,
-        IHelpfulnessEvaluator.CreateExisting createHelpfulness,
-        IPolitenessEvaluator.CreateExisting createPoliteness,
-        ISafetyClassifier.CreateExisting createSafety,
-        IToolUsageEvaluator.CreateExisting createToolUsage,
+        IAgenticEvaluator.CreateExisting createAgentic,
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatch,
         INumericMatchEvaluator.CreateExisting createNumericMatch,
-        IPromptTemplate.Create promptTemplateFactory,
         IRepository<IModelEndpoint> modelEndpoints,
+        IRepository<IAgent> agents,
         IRepository<IProject> projects,
         ISerializer serializer)
     {
         this.createExactMatch = createExactMatch;
-        this.createCustom = createCustom;
-        this.createHelpfulness = createHelpfulness;
-        this.createPoliteness = createPoliteness;
-        this.createSafety = createSafety;
-        this.createToolUsage = createToolUsage;
+        this.createAgentic = createAgentic;
         this.createJsonSchemaMatch = createJsonSchemaMatch;
         this.createNumericMatch = createNumericMatch;
-        this.promptTemplateFactory = promptTemplateFactory;
+        this.agents = agents;
         this.projects = projects;
         this.serializer = serializer;
     }
@@ -62,22 +50,18 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
         return stored.Kind switch
         {
             EvaluatorKind.ExactMatch => createExactMatch(project, stored),
-            EvaluatorKind.Custom => MapCustom(stored, project),
-            EvaluatorKind.Helpfulness => createHelpfulness(project, stored),
-            EvaluatorKind.Politeness => createPoliteness(project, stored),
-            EvaluatorKind.Safety => createSafety(project, stored),
-            EvaluatorKind.ToolUsage => createToolUsage(project, stored),
+            EvaluatorKind.Agentic => await MapAgentic(stored, cancellationToken),
             EvaluatorKind.JsonSchemaMatch => MapJsonSchemaMatch(stored, project),
             EvaluatorKind.NumericMatch => MapNumericMatch(stored, project),
             _ => throw new InvalidOperationException($"Unknown evaluator kind: {stored.Kind}")
         };
     }
     
-    private ICustomEvaluator MapCustom(EvaluatorEntity stored, IProject project)
+    private async Task<IAgenticEvaluator> MapAgentic(EvaluatorEntity stored, CancellationToken cancellationToken)
     {
-        var data = serializer.DeserializeRequired<CustomEvaluatorData>(stored.Data);
-        var promptTemplate = promptTemplateFactory(data.Name, data.SystemPrompt);
-        return createCustom(promptTemplate, project, stored);
+        var data = serializer.DeserializeRequired<AgenticEvaluatorData>(stored.Data);
+        var agent = await agents.GetAsync(data.AgentId, cancellationToken);
+        return createAgentic(agent, stored);
     }
 
     private IJsonSchemaMatchEvaluator MapJsonSchemaMatch(EvaluatorEntity stored, IProject project)
@@ -96,10 +80,8 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     {
         string data = domain switch
         {
-            ICustomEvaluator agentic =>
-                serializer.Serialize(new CustomEvaluatorData(agentic.SystemPrompt.Name, agentic.SystemPrompt.Template)),
-            IAgenticEvaluator =>
-                serializer.Serialize(new AgenticEvaluatorData()),
+            IAgenticEvaluator agentic =>
+                serializer.Serialize(new AgenticEvaluatorData(agentic.Agent.Id)),
             IExactMatchEvaluator =>
                 serializer.Serialize(new ExactMatchEvaluatorData()),
             IJsonSchemaMatchEvaluator jsonSchema =>

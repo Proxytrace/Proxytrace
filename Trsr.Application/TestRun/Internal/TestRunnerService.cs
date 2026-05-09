@@ -245,7 +245,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             new EvaluationEventData(
                 evaluator.Id,
                 evaluator.Kind,
-                TestResultArrivedEvent.GetEvaluatorName(evaluator),
+                evaluator.Name,
                 evaluation.Score,
                 evaluation.Reasoning)));
     }

@@ -67,7 +67,7 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterType<EvaluatorGenerator>()
-            .As<IDomainEntityGenerator<IEvaluator>>();
+            .AsImplementedInterfaces();
 
         builder.RegisterType<StatisticsCalculator>()
             .As<IStatisticsCalculator>()

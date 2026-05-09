@@ -49,26 +49,10 @@ public record TestResultArrivedEvent(
             result.Evaluations.Select(e => new EvaluationEventData(
                 e.Evaluator.Id,
                 e.Evaluator.Kind,
-                GetEvaluatorName(e.Evaluator),
+                e.Evaluator.Name,
                 e.Score,
                 e.Reasoning)).ToArray(),
             (long)result.Statistics.Latency.TotalMilliseconds);
-
-    internal static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
-    {
-        ICustomEvaluator custom => custom.Name,
-        _ => evaluator.Kind switch
-        {
-            EvaluatorKind.ExactMatch => "Exact Match",
-            EvaluatorKind.NumericMatch => "Numeric Match",
-            EvaluatorKind.Helpfulness => "Helpfulness",
-            EvaluatorKind.Politeness => "Politeness",
-            EvaluatorKind.JsonSchemaMatch => "JSON Schema Match",
-            EvaluatorKind.Safety => "Safety Classifier",
-            EvaluatorKind.ToolUsage => "Tool Usage",
-            _ => evaluator.Kind.ToString()
-        }
-    };
 }
 
 public record RunCompleteEvent(

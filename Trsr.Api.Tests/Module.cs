@@ -2,6 +2,7 @@ using Autofac;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 using Trsr.Storage;
@@ -31,6 +32,7 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
         builder.RegisterStub<IModelClient>();
+        builder.RegisterStub<IProviderClient>();
 
         builder.RegisterInstance<IAgentNameGenerator>(new StubAgentNameGenerator())
             .SingleInstance();

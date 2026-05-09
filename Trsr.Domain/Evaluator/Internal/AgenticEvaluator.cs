@@ -1,55 +1,53 @@
 using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
+using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
-using Trsr.Domain.Prompt;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluator.Internal;
 
-internal abstract record AbstractAgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEvaluator
+[UsedImplicitly]
+internal sealed record AgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEvaluator
 {
     private readonly IEvaluation.Create evaluationFactory;
-    private readonly IAgentRepository agentRepository;
+    
+    public IAgent Agent { get; }
 
-    [UsedImplicitly]
-    private record AgenticEvaluatorResult(EvaluationScore Score, string? Reasoning);
+    public string Name => Agent.Name;
 
-    public abstract EvaluatorKind Kind { get; }
-    public IProject Project { get; }
+    public EvaluatorKind Kind 
+        => EvaluatorKind.Agentic;
 
-    protected AbstractAgenticEvaluator(
-        IProject project,
+    public IProject Project
+        => Agent.Project;
+
+    public AgenticEvaluator(
+        IAgent agent,
         IEvaluation.Create evaluationFactory,
-        IAgentRepository agentRepository,
         IRepository<IEvaluator> repository) : base(repository)
     {
-        Project = project;
-        this.agentRepository = agentRepository;
+        Agent = agent;
         this.evaluationFactory = evaluationFactory;
     }
 
-    protected AbstractAgenticEvaluator(
-        IProject project,
+    public AgenticEvaluator(
+        IAgent agent,
         IDomainEntityData existing,
         IEvaluation.Create evaluationFactory,
-        IAgentRepository agentRepository,
         IRepository<IEvaluator> repository) : base(existing, repository)
     {
-        Project = project;
+        Agent = agent;
         this.evaluationFactory = evaluationFactory;
-        this.agentRepository = agentRepository;
     }
 
     public async Task<IEvaluation?> EvaluateAsync(ITestResult testResult, CancellationToken cancellationToken = default)
     {
-        IAgent agent = await GetEvaluationAgent(cancellationToken);
-
-        AgenticEvaluatorResult? result = await agent
+        AgenticEvaluatorResult? result = await Agent
             .CreateClient()
             .CompleteAsync<AgenticEvaluatorResult>(
                 BuildEvaluationMessage(testResult),
@@ -75,21 +73,6 @@ internal abstract record AbstractAgenticEvaluator : DomainEntity<IEvaluator>, IA
 
         return Message.Message.CreateUserMessage(content);
     }
-    
-    protected async Task<IAgent> GetEvaluationAgent(CancellationToken cancellationToken = default)
-    {
-        IPromptTemplate prompt = await GetSystemPrompt(cancellationToken);
-        IAgent agent = await agentRepository.GetOrCreateAsync(
-            prompt,
-            tools: [],
-            project: Project,
-            endpoint: Project.SystemEndpoint,
-            isSystemAgent: true,
-            cancellationToken: cancellationToken);
-        return agent;
-    }
-
-    protected abstract Task<IPromptTemplate> GetSystemPrompt(CancellationToken cancellationToken = default);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -97,5 +80,17 @@ internal abstract record AbstractAgenticEvaluator : DomainEntity<IEvaluator>, IA
         {
             yield return validationResult;
         }
+        
+        foreach (var validationResult in Agent.Validate(validationContext))
+        {
+            yield return validationResult;
+        }
+
+        yield return Validation.True(Agent.IsSystemAgent);
     }
+    
+    [UsedImplicitly]
+    private record AgenticEvaluatorResult(
+        EvaluationScore Score, 
+        string? Reasoning);
 }

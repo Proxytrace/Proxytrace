@@ -12,7 +12,7 @@ namespace Trsr.Domain.Agent;
 /// Represents an AI agent defined by a system message, tools, model endpoint, and project.
 /// The combination of these fields forms a stable fingerprint that uniquely identifies an agent version.
 /// </summary>
-public interface IAgent : IDomainEntity
+public interface IAgent : IDomainEntity<IAgent>
 {
     /// <summary>Short human-readable name generated from the system message at creation time.</summary>
     string Name { get; }
@@ -77,5 +77,6 @@ public interface IAgent : IDomainEntity
         IModelParameters modelParameters,
         CancellationToken cancellationToken = default);
 
-    SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null);
+    SystemMessage CreateSystemMessage(
+        IReadOnlyDictionary<string, string>? variables = null);
 }

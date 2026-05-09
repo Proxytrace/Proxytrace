@@ -4,14 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
 using Trsr.Application.Streaming;
-using Trsr.Application.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
-using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRun;
-using Trsr.Domain.TestSuite;
 
 namespace Trsr.Api.Controllers;
 
@@ -26,22 +22,13 @@ public class TestRunsController : ControllerBase
     };
 
     private readonly ITestRunRepository repository;
-    private readonly ITestSuiteRepository suiteRepository;
-    private readonly IRepository<IModelEndpoint> endpoints;
-    private readonly ITestRunnerService runner;
     private readonly ITestResultBroadcaster broadcaster;
 
     public TestRunsController(
         ITestRunRepository repository,
-        ITestSuiteRepository suiteRepository,
-        IRepository<IModelEndpoint> endpoints,
-        ITestRunnerService runner,
         ITestResultBroadcaster broadcaster)
     {
         this.repository = repository;
-        this.suiteRepository = suiteRepository;
-        this.endpoints = endpoints;
-        this.runner = runner;
         this.broadcaster = broadcaster;
     }
 
@@ -163,7 +150,7 @@ public class TestRunsController : ControllerBase
             PassedCases: passed,
             FailedCases: total - passed,
             PassRate: passRate,
-            Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, GetEvaluatorName(e))).ToArray(),
+            Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, e.Name)).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
@@ -176,7 +163,7 @@ public class TestRunsController : ControllerBase
                 res.Evaluations.Select(e => new EvaluationResultDto(
                     e.Evaluator.Id,
                     e.Evaluator.Kind,
-                    GetEvaluatorName(e.Evaluator),
+                    e.Evaluator.Name,
                     e.Score,
                     e.Reasoning)).ToArray(),
                 (long)res.Statistics.Latency.TotalMilliseconds
@@ -184,23 +171,7 @@ public class TestRunsController : ControllerBase
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
     }
-
-    private static string GetEvaluatorName(IEvaluator evaluator) => evaluator switch
-    {
-        ICustomEvaluator custom => custom.Name,
-        _ => evaluator.Kind switch
-        {
-            EvaluatorKind.ExactMatch => "Exact Match",
-            EvaluatorKind.NumericMatch => "Numeric Match",
-            EvaluatorKind.Helpfulness => "Helpfulness",
-            EvaluatorKind.Politeness => "Politeness",
-            EvaluatorKind.JsonSchemaMatch => "JSON Schema Match",
-            EvaluatorKind.Safety => "Safety Classifier",
-            EvaluatorKind.ToolUsage => "Tool Usage",
-            _ => evaluator.Kind.ToString()
-        }
-    };
-
+    
     private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
     {
         var firstUserMessage = tc.Input.Messages
@@ -250,17 +221,15 @@ public class TestRunsController : ControllerBase
         return new OutputValueDto("message", text.Length > 0 ? text : null, toolInfo, null, null);
     }
 
-    private static EvaluatorFixtureResultDto[] MapEvaluators(IReadOnlyCollection<Domain.Evaluation.IEvaluation> evaluations)
+    private static EvaluatorFixtureResultDto[] MapEvaluators(IReadOnlyCollection<IEvaluation> evaluations)
         => evaluations.Select(eval => new EvaluatorFixtureResultDto(
             EvaluatorId: eval.Evaluator.Id.ToString(),
             EvaluatorKind: eval.Evaluator.Kind.ToString(),
-            EvaluatorName: GetEvaluatorName(eval.Evaluator),
-            Color: EvaluatorColor(eval.Evaluator.Kind),
-            Desc: EvaluatorDesc(eval.Evaluator.Kind),
+            EvaluatorName: eval.Evaluator.Name,
             Score: EvaluationScoreToFloat(eval.Score),
             Pass: eval.Score >= EvaluationScore.Acceptable,
             Breakdown: [],
-            Note: eval.Reasoning ?? ""
+            Note: eval.Reasoning ?? string.Empty
         )).ToArray();
 
     private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)
@@ -287,29 +256,7 @@ public class TestRunsController : ControllerBase
             )
         ];
 
-    private static double EvaluationScoreToFloat(EvaluationScore score) => (double)(int)score;
-
-    private static string EvaluatorColor(EvaluatorKind kind) => kind switch
-    {
-        EvaluatorKind.ExactMatch      => "#6b9eaa",
-        EvaluatorKind.NumericMatch    => "#8dbecb",
-        EvaluatorKind.JsonSchemaMatch => "#6b9eaa",
-        EvaluatorKind.Safety          => "#d95555",
-        EvaluatorKind.ToolUsage       => "#3daa6f",
-        _                             => "#c9944a",
-    };
-
-    private static string EvaluatorDesc(EvaluatorKind kind) => kind switch
-    {
-        EvaluatorKind.ExactMatch      => "Checks for an exact string match",
-        EvaluatorKind.NumericMatch    => "Compares numeric values within tolerance",
-        EvaluatorKind.JsonSchemaMatch => "Validates against a JSON schema",
-        EvaluatorKind.Helpfulness     => "Rates helpfulness of the response",
-        EvaluatorKind.Politeness      => "Rates politeness and tone",
-        EvaluatorKind.Safety          => "Checks for unsafe or harmful content",
-        EvaluatorKind.ToolUsage       => "Verifies correct tool invocation",
-        _                             => "Custom evaluation logic",
-    };
+    private static double EvaluationScoreToFloat(EvaluationScore score) => (int)score;
 
     private static string EndpointColor(string providerName)
     {

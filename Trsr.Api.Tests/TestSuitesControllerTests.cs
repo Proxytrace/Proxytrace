@@ -23,7 +23,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         var controller = ResolveController(services);
 
         var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
-        var helpfulness = await services.GetRequiredService<IDomainEntityGenerator<IHelpfulnessEvaluator>>().CreateAsync(CancellationToken);
+        var helpfulness = await services.GetRequiredService<IDomainEntityGenerator<IAgenticEvaluator>>().CreateAsync(CancellationToken);
 
         var request = new PromoteTracesRequest(
             Name: "From-traces helpfulness suite",
@@ -38,7 +38,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             ?? throw new InvalidOperationException("Expected TestSuiteDto value.");
         dto.Evaluators.Should().HaveCount(1);
         dto.Evaluators.Single().Id.Should().Be(helpfulness.Id);
-        dto.Evaluators.Single().Kind.Should().Be(EvaluatorKind.Helpfulness);
+        dto.Evaluators.Single().Kind.Should().Be(EvaluatorKind.Agentic);
     }
 
     [TestMethod]
@@ -71,7 +71,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
         var firstCall = await generator.CreateAsync(CancellationToken);
         var secondCall = await generator.CreateAsync(CancellationToken);
-        var helpfulness = await services.GetRequiredService<IDomainEntityGenerator<IHelpfulnessEvaluator>>().CreateAsync(CancellationToken);
+        var helpfulness = await services.GetRequiredService<IDomainEntityGenerator<IAgenticEvaluator>>().CreateAsync(CancellationToken);
 
         var promoteResult = await controller.PromoteFromTraces(
             new PromoteTracesRequest(
@@ -89,7 +89,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             new AddTestCaseRequest(FromAgentCallId: secondCall.Id, Input: null, ExpectedOutput: null),
             CancellationToken);
 
-        var dto = ((ActionResult<TestSuiteDto>)addResult).Value
+        var dto = addResult.Value
             ?? throw new InvalidOperationException("Expected non-null Value.");
         dto.TestCases.Should().HaveCount(2);
         dto.Evaluators.Should().ContainSingle(e => e.Id == helpfulness.Id);

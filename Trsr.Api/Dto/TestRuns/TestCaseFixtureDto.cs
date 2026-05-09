@@ -27,8 +27,6 @@ public record EvaluatorFixtureResultDto(
     string EvaluatorId,
     string EvaluatorKind,
     string EvaluatorName,
-    string Color,
-    string Desc,
     double Score,
     bool Pass,
     BreakdownItemDto[] Breakdown,

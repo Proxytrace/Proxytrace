@@ -20,28 +20,28 @@ internal sealed class EvaluatorDocumentMapper : IDocumentMapper
     public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
     {
         IEvaluator? evaluator = await repository.FindAsync(entityId, cancellationToken);
-        return evaluator is ICustomEvaluator custom ? Build(custom) : null;
+        return evaluator is IAgenticEvaluator custom ? Build(custom) : null;
     }
 
     public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
     {
         var all = await repository.GetAllAsync(cancellationToken);
         return all
-            .OfType<ICustomEvaluator>()
+            .OfType<IAgenticEvaluator>()
             .Where(e => e.Project.Id == projectId)
             .Select(Build)
             .ToList();
     }
 
-    private static Document Build(ICustomEvaluator evaluator)
+    private static Document Build(IAgenticEvaluator evaluator)
     {
         var body = new StringBuilder()
-            .Append(evaluator.SystemPrompt.Name).Append('\n')
-            .Append(evaluator.SystemPrompt.Template);
+            .Append(evaluator.Agent.SystemPrompt.Name).Append('\n')
+            .Append(evaluator.Agent.SystemPrompt.Template);
 
         var title = !string.IsNullOrEmpty(evaluator.Name)
             ? evaluator.Name
-            : evaluator.SystemPrompt.Name ?? "Custom Evaluator";
+            : evaluator.Agent.SystemPrompt.Name;
 
         return DocumentBuilder.Build(
             kind: SearchKind.Evaluator,
