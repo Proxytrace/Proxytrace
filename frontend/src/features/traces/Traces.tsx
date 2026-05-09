@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
@@ -117,6 +118,7 @@ function FlatTraceRow({ trace, selected, onClick }: { trace: AgentCallDto; selec
   return (
     <div
       role="row"
+      data-trace-id={trace.id}
       onClick={onClick}
       className={`grid items-center px-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] ${selected ? 'bg-[rgba(255,255,255,0.04)]' : ''}`}
       style={{ gridTemplateColumns: GRID, minHeight: 44 }}
@@ -220,6 +222,7 @@ function ConversationGroupRow({
         <div
           key={turn.id}
           role="row"
+          data-trace-id={turn.id}
           onClick={() => onSelectTrace(turn)}
           className={`grid items-center pl-8 pr-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] ${turn.id === selectedId ? 'bg-[rgba(255,255,255,0.04)]' : ''}`}
           style={{ gridTemplateColumns: GRID, minHeight: 44, borderLeft: `2px solid ${c}55` }}
@@ -260,6 +263,36 @@ export default function Traces() {
   const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+
+  useEffect(() => {
+    if (!focusId) return;
+    let cancelled = false;
+    agentCallsApi.get(focusId).then(trace => {
+      if (cancelled) return;
+      setSelectedTrace(trace);
+      setRange('all');
+      setAgentFilter('');
+      setSearch('');
+      setShowSystem(true);
+      setPage(1);
+      if (trace.conversationId) {
+        const cid = trace.conversationId;
+        setExpandedConvs(prev => {
+          const next = new Set(prev);
+          next.add(cid);
+          return next;
+        });
+      }
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('focus');
+        return next;
+      }, { replace: true });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [focusId, setSearchParams]);
 
   const from = useMemo(() => rangeFrom(range), [range]);
   const filter = useMemo(() => ({
@@ -303,6 +336,16 @@ export default function Traces() {
   const p95 = latencyStats[0]?.p95Ms ?? null;
 
   const rows = useMemo(() => buildRows(traces), [traces]);
+
+  useEffect(() => {
+    if (!selectedTrace) return;
+    const id = selectedTrace.id;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-trace-id="${id}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [selectedTrace, rows, expandedConvs]);
 
   useTraceStream(useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
