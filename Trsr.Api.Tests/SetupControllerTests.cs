@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Controllers;
 using Trsr.Application.Cleanup;
+using Trsr.Application.Setup;
 using Trsr.Domain;
 using Trsr.Domain.User;
 using Trsr.Testing;
@@ -15,7 +16,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
     public async Task GetStatus_WhenNoUsersExist_ReturnsNotConfigured()
     {
         IServiceProvider services = GetServices();
-        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>());
+        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>(), services.GetRequiredService<ISetupService>());
 
         var result = await controller.GetStatus(CancellationToken);
 
@@ -29,7 +30,7 @@ public sealed class SetupControllerTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
         await generator.CreateAsync(CancellationToken);
 
-        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>());
+        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>(), services.GetRequiredService<ISetupService>());
 
         var result = await controller.GetStatus(CancellationToken);
 

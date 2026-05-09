@@ -1,19 +1,34 @@
 import { api } from './client';
-import type { ProjectDto } from './models';
-
-interface UserDto {
-  id: string;
-  name: string;
-}
+import { ModelProviderKind } from './models';
 
 export interface SetupStatusDto {
   isConfigured: boolean;
 }
 
+export interface CompleteSetupRequest {
+  userName: string;
+  providerName: string;
+  providerEndpoint: string;
+  providerUpstreamApiKey: string;
+  providerKind: ModelProviderKind;
+  modelName: string;
+  inputTokenCost: number | null;
+  outputTokenCost: number | null;
+  projectName: string;
+  apiKeyName: string;
+}
+
+export interface CompleteSetupResponse {
+  userId: string;
+  providerId: string;
+  endpointId: string;
+  projectId: string;
+  apiKeyValue: string;
+}
+
 export const setupApi = {
   getStatus: () => api.get<SetupStatusDto>('/api/setup/status'),
-  createUser: (name: string) => api.post<UserDto>('/api/users', { name }),
-  createProject: (name: string, systemEndpointId: string) =>
-    api.post<ProjectDto>('/api/projects', { name, systemEndpointId }),
+  complete: (req: CompleteSetupRequest) =>
+    api.post<CompleteSetupResponse>('/api/setup/complete', req),
   cleanupNonModelData: () => api.post<void>('/api/setup/cleanup'),
 };

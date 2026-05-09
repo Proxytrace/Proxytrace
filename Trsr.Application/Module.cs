@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
 using Trsr.Application.Cleanup;
 using Trsr.Application.Cleanup.Internal;
+using Trsr.Application.Setup;
+using Trsr.Application.Setup.Internal;
 using Trsr.Application.Ingestion.Internal;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
@@ -83,6 +85,10 @@ public sealed class Module : Autofac.Module
         
         builder.RegisterType<DataCleanupService>()
             .As<IDataCleanupService>()
+            .SingleInstance();
+
+        builder.RegisterType<SetupService>()
+            .As<ISetupService>()
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);

@@ -5,16 +5,7 @@ import { FormField, formInputCls } from '../../components/ui/FormField';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import { useToast } from '../../components/ui/Toast';
 import { setupApi } from '../../api/setup';
-import { providersApi } from '../../api/providers';
 import { ModelProviderKind } from '../../api/models';
-
-interface SetupIds {
-  userId: string | null;
-  providerId: string | null;
-  endpointId: string | null;
-  projectId: string | null;
-  apiKeyValue: string | null;
-}
 
 const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
   [ModelProviderKind.Anthropic]: 'https://api.anthropic.com/v1',
@@ -45,14 +36,7 @@ export default function Setup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-
-  const [ids, setIds] = useState<SetupIds>({
-    userId: null,
-    providerId: null,
-    endpointId: null,
-    projectId: null,
-    apiKeyValue: null,
-  });
+  const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
 
   // Step 1 — Admin User
   const [userName, setUserName] = useState('');
@@ -74,16 +58,6 @@ export default function Setup() {
   // Step 5 — API Key
   const [keyName, setKeyName] = useState('default');
 
-  function isStepAlreadyDone(s: number): boolean {
-    switch (s) {
-      case 0: return ids.userId !== null;
-      case 1: return ids.providerId !== null;
-      case 2: return ids.endpointId !== null;
-      case 3: return ids.projectId !== null;
-      default: return false;
-    }
-  }
-
   const stepValid = [
     userName.trim().length > 0,
     providerName.trim().length > 0 && providerEndpoint.trim().length > 0 && providerApiKey.trim().length > 0,
@@ -92,56 +66,9 @@ export default function Setup() {
     keyName.trim().length > 0,
   ];
 
-  async function handleNext() {
+  function handleNext() {
     setError(null);
-
-    if (isStepAlreadyDone(currentStep)) {
-      setCurrentStep(s => s + 1);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      switch (currentStep) {
-        case 0: {
-          const user = await setupApi.createUser(userName.trim());
-          setIds(prev => ({ ...prev, userId: user.id }));
-          break;
-        }
-        case 1: {
-          const provider = await providersApi.create({
-            name: providerName.trim(),
-            endpoint: providerEndpoint.trim(),
-            upstreamApiKey: providerApiKey.trim(),
-            kind: providerKind,
-          });
-          setIds(prev => ({ ...prev, providerId: provider.id }));
-          break;
-        }
-        case 2: {
-          const endpoint = await providersApi.createModel(ids.providerId!, {
-            modelName: modelName.trim(),
-            inputTokenCost: inputCost ? parseFloat(inputCost) : null,
-            outputTokenCost: outputCost ? parseFloat(outputCost) : null,
-          });
-          setIds(prev => ({ ...prev, endpointId: endpoint.id }));
-          break;
-        }
-        case 3: {
-          const project = await setupApi.createProject(projectName.trim(), ids.endpointId!);
-          setIds(prev => ({ ...prev, projectId: project.id }));
-          try { localStorage.setItem('trsr:current-project-id', project.id); } catch { /* ignore */ }
-          break;
-        }
-      }
-      setCurrentStep(s => s + 1);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'An unexpected error occurred.';
-      setError(msg);
-      toast.show(msg, 'error');
-    } finally {
-      setLoading(false);
-    }
+    setCurrentStep(s => s + 1);
   }
 
   async function handleSubmit() {
@@ -154,11 +81,20 @@ export default function Setup() {
     setError(null);
     setLoading(true);
     try {
-      const key = await providersApi.createKey(ids.providerId!, {
-        name: keyName.trim(),
-        projectId: ids.projectId!,
+      const result = await setupApi.complete({
+        userName: userName.trim(),
+        providerName: providerName.trim(),
+        providerEndpoint: providerEndpoint.trim(),
+        providerUpstreamApiKey: providerApiKey.trim(),
+        providerKind,
+        modelName: modelName.trim(),
+        inputTokenCost: inputCost ? parseFloat(inputCost) : null,
+        outputTokenCost: outputCost ? parseFloat(outputCost) : null,
+        projectName: projectName.trim(),
+        apiKeyName: keyName.trim(),
       });
-      setIds(prev => ({ ...prev, apiKeyValue: key.keyValue }));
+      try { localStorage.setItem('trsr:current-project-id', result.projectId); } catch { /* ignore */ }
+      setApiKeyValue(result.apiKeyValue);
       setDone(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'An unexpected error occurred.';
@@ -327,7 +263,7 @@ export default function Setup() {
 
     // Step 5 — API Key
     <div key="step-5">
-      {done && ids.apiKeyValue ? (
+      {done && apiKeyValue ? (
         <div className="flex flex-col gap-5">
           <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--success-subtle)] border border-[color:var(--success)]/30">
             <div className="w-8 h-8 rounded-full bg-success flex items-center justify-center shrink-0 mt-px">
@@ -344,12 +280,12 @@ export default function Setup() {
           </div>
           <CodeBlock
             heading="Your Trsr API key"
-            content={ids.apiKeyValue}
+            content={apiKeyValue}
             maxLines={1}
           />
           <CodeBlock
             heading="Proxy endpoint usage"
-            content={`POST http://localhost:5001/openai/v1/chat/completions\nAuthorization: Bearer ${ids.apiKeyValue}\nContent-Type: application/json`}
+            content={`POST http://localhost:5001/openai/v1/chat/completions\nAuthorization: Bearer ${apiKeyValue}\nContent-Type: application/json`}
             maxLines={5}
           />
         </div>
