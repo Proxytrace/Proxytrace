@@ -7,6 +7,7 @@ using Trsr.Application.Cleanup.Internal;
 using Trsr.Application.Setup;
 using Trsr.Application.Setup.Internal;
 using Trsr.Application.Ingestion.Internal;
+using Trsr.Application.Search;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
 using Trsr.Application.TestRun;
@@ -48,6 +49,12 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterModule<Optimization.Module>();
+
+        builder.RegisterModule(new Search.SearchModule(cb =>
+        {
+            var config = this.configuration?.GetSection("Search").Get<SearchConfiguration>();
+            return config ?? new SearchConfiguration();            
+        }));
 
         builder.RegisterType<AgentNameGenerator>()
             .As<IAgentNameGenerator>()

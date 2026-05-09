@@ -28,4 +28,6 @@ export const QUERY_KEYS = {
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
+
+  search: (projectId: string, q: string) => ['search', projectId, q] as const,
 };

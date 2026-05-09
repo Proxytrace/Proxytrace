@@ -2228,3 +2228,7 @@ sample-client/node_modules/whatwg-url/lib/URL.js
 sample-client/node_modules/whatwg-url/lib/utils.js
 sample-client/.env
 sample-client/package-lock.json
+
+# Lucene full-text search index
+searchindex/
+**/searchindex/

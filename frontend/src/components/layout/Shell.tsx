@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { checkHealth } from '../../api/health';
+import { SearchPalette } from '../search/SearchPalette';
+import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
   SettingsIcon,
@@ -40,8 +42,11 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
   const [online, setOnline] = useState<boolean | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
   const { currentProject } = useCurrentProject();
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  useGlobalShortcut('k', openPalette);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,8 +127,10 @@ export function Shell() {
             <span className="font-semibold">{pageLabel}</span>
           </div>
 
-          <div
-            className="flex-1 max-w-[460px] mx-auto flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] text-muted bg-white/[.03] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)]"
+          <button
+            type="button"
+            onClick={openPalette}
+            className="flex-1 max-w-[460px] mx-auto flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] text-muted bg-white/[.03] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)] cursor-pointer hover:bg-white/[.06] text-left"
           >
             <SearchIcon size={14} />
             <span>Search traces, agents, suites…</span>
@@ -131,7 +138,7 @@ export function Shell() {
               <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">⌘</kbd>
               <kbd className="px-[6px] py-[1px] bg-card-2 rounded text-[10px] font-mono">K</kbd>
             </span>
-          </div>
+          </button>
 
           <div
             style={{
@@ -168,6 +175,10 @@ export function Shell() {
           <Outlet />
         </main>
       </div>
+
+      {paletteOpen && currentProject?.id && (
+        <SearchPalette projectId={currentProject.id} onClose={() => setPaletteOpen(false)} />
+      )}
     </div>
   );
 }

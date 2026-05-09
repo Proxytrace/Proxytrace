@@ -1,0 +1,84 @@
+using System.Text;
+using System.Text.Json;
+using Lucene.Net.Documents;
+using Trsr.Domain;
+using Trsr.Domain.AgentCall;
+using Trsr.Domain.Search;
+
+namespace Trsr.Application.Search.Internal.Mappers;
+
+internal sealed class AgentCallDocumentMapper : IDocumentMapper
+{
+    private readonly IRepository<IAgentCall> repository;
+
+    public AgentCallDocumentMapper(IRepository<IAgentCall> repository)
+    {
+        this.repository = repository;
+    }
+
+    public SearchKind Kind => SearchKind.AgentCall;
+
+    public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
+    {
+        IAgentCall? call = await repository.FindAsync(entityId, cancellationToken);
+        return call is null ? null : Build(call);
+    }
+
+    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
+    {
+        var all = await repository.GetAllAsync(cancellationToken);
+        return all
+            .Where(c => c.Agent.Project.Id == projectId)
+            .Select(Build)
+            .ToList();
+    }
+
+    private static Document Build(IAgentCall call)
+    {
+        var body = new StringBuilder();
+
+        foreach (var msg in call.Request.Messages)
+        {
+            foreach (var content in msg.Contents)
+            {
+                if (!string.IsNullOrEmpty(content.Text))
+                {
+                    body.Append(content.Text).Append('\n');
+                }
+            }
+        }
+        if (call.Response is not null)
+        {
+            foreach (var content in call.Response.Response.Contents)
+            {
+                if (!string.IsNullOrEmpty(content.Text))
+                {
+                    body.Append(content.Text).Append('\n');
+                }
+            }
+        }
+        if (!string.IsNullOrEmpty(call.ErrorMessage))
+        {
+            body.Append(call.ErrorMessage);
+        }
+
+        var shortId = call.Id.ToString("N").Substring(0, 8);
+        var title = $"Trace {shortId} · {call.Agent.Name} · {call.CreatedAt:yyyy-MM-dd HH:mm}";
+
+        var metadata = JsonSerializer.Serialize(new Dictionary<string, string>
+        {
+            ["agentId"] = call.Agent.Id.ToString(),
+            ["timestamp"] = call.CreatedAt.ToString("O"),
+        });
+
+        return DocumentBuilder.Build(
+            kind: SearchKind.AgentCall,
+            entityId: call.Id,
+            projectId: call.Agent.Project.Id,
+            createdAt: call.CreatedAt,
+            title: title,
+            body: body.ToString(),
+            boostedBody: call.Agent.Name,
+            metadataJson: metadata);
+    }
+}
