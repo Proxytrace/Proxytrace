@@ -187,7 +187,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     public Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
         => AddAsync(contextFactory(), entity, cancellationToken);
 
-    private Task<TDomainEntity> AddAsync(
+    protected Task<TDomainEntity> AddAsync(
         StorageDbContext context,
         TDomainEntity entity,
         CancellationToken cancellationToken = default)

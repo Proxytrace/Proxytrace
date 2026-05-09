@@ -12,13 +12,12 @@ internal class SetupService : ISetupService
 {
     private readonly IRepository<IUser> users;
     private readonly IRepository<IModelProvider> providers;
-    private readonly IRepository<IModel> models;
+    private readonly IModelRepository models;
     private readonly IModelEndpointRepository endpoints;
     private readonly IProjectRepository projects;
     private readonly IApiKeyRepository apiKeys;
     private readonly IUser.CreateNew createUser;
     private readonly IModelProvider.CreateNew createProvider;
-    private readonly IModel.CreateNew createModel;
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IProject.CreateNew createProject;
     private readonly IApiKey.CreateNew createApiKey;
@@ -27,13 +26,12 @@ internal class SetupService : ISetupService
     public SetupService(
         IRepository<IUser> users,
         IRepository<IModelProvider> providers,
-        IRepository<IModel> models,
+        IModelRepository models,
         IModelEndpointRepository endpoints,
         IProjectRepository projects,
         IApiKeyRepository apiKeys,
         IUser.CreateNew createUser,
         IModelProvider.CreateNew createProvider,
-        IModel.CreateNew createModel,
         IModelEndpoint.CreateNew createEndpoint,
         IProject.CreateNew createProject,
         IApiKey.CreateNew createApiKey,
@@ -47,7 +45,6 @@ internal class SetupService : ISetupService
         this.apiKeys = apiKeys;
         this.createUser = createUser;
         this.createProvider = createProvider;
-        this.createModel = createModel;
         this.createEndpoint = createEndpoint;
         this.createProject = createProject;
         this.createApiKey = createApiKey;
@@ -68,7 +65,7 @@ internal class SetupService : ISetupService
 
             var allModels = await models.GetAllAsync(cancellationToken);
             IModel model = allModels.FirstOrDefault(m => m.Name == input.ModelName)
-                ?? await models.AddAsync(createModel(input.ModelName), cancellationToken);
+                ?? await models.GetOrCreateAsync(input.ModelName, cancellationToken);
 
             var endpoint = await endpoints.AddAsync(
                 createEndpoint(model, provider, input.InputTokenCost, input.OutputTokenCost),

@@ -6,6 +6,7 @@ namespace Trsr.Domain.ModelProvider.Internal;
 
 internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
 {
+    private readonly IProviderClient.Factory clientFactory;
     public string Name { get; }
     public Uri Endpoint { get; }
     public string ApiKey { get; }
@@ -16,8 +17,10 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
         Uri endpoint,
         string apiKey,
         ModelProviderKind kind,
+        IProviderClient.Factory clientFactory,
         IRepository<IModelProvider> repository) : base(repository)
     {
+        this.clientFactory = clientFactory;
         Name = name;
         Endpoint = endpoint;
         ApiKey = apiKey;
@@ -30,13 +33,18 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
         string apiKey,
         ModelProviderKind kind,
         IDomainEntityData existing,
+        IProviderClient.Factory clientFactory,
         IRepository<IModelProvider> repository) : base(existing, repository)
     {
+        this.clientFactory = clientFactory;
         Name = name;
         Endpoint = endpoint;
         ApiKey = apiKey;
         Kind = kind;
     }
+    
+    public IProviderClient CreateClient()
+        => clientFactory(this);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

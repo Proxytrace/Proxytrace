@@ -33,7 +33,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.PromoteFromTraces(request, CancellationToken);
 
-        var dto = ((CreatedAtActionResult)result.Result!).Value as TestSuiteDto;
+        var dto = ((CreatedAtActionResult)result.Result).Value as TestSuiteDto;
         dto.Should().NotBeNull();
         dto!.Evaluators.Should().HaveCount(1);
         dto.Evaluators.Single().Id.Should().Be(helpfulness.Id);

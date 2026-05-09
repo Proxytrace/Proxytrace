@@ -19,11 +19,10 @@ public class ModelProvidersController : ControllerBase
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly IProjectRepository projectRepository;
     private readonly IModelEndpointRepository endpointRepository;
-    private readonly IRepository<IModel> modelRepository;
+    private readonly IModelRepository modelRepository;
     private readonly IModelProvider.CreateNew createProvider;
     private readonly IModelProvider.CreateExisting updateProvider;
     private readonly IApiKey.CreateNew createApiKey;
-    private readonly IModel.CreateNew createModel;
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IModelEndpoint.CreateExisting updateEndpoint;
 
@@ -32,11 +31,10 @@ public class ModelProvidersController : ControllerBase
         IApiKeyRepository apiKeyRepository,
         IProjectRepository projectRepository,
         IModelEndpointRepository endpointRepository,
-        IRepository<IModel> modelRepository,
         IModelProvider.CreateNew createProvider,
         IModelProvider.CreateExisting updateProvider,
         IApiKey.CreateNew createApiKey,
-        IModel.CreateNew createModel,
+        IModelRepository modelRepository,
         IModelEndpoint.CreateNew createEndpoint,
         IModelEndpoint.CreateExisting updateEndpoint)
     {
@@ -48,7 +46,6 @@ public class ModelProvidersController : ControllerBase
         this.createProvider = createProvider;
         this.updateProvider = updateProvider;
         this.createApiKey = createApiKey;
-        this.createModel = createModel;
         this.createEndpoint = createEndpoint;
         this.updateEndpoint = updateEndpoint;
     }
@@ -139,7 +136,7 @@ public class ModelProvidersController : ControllerBase
 
         var allModels = await modelRepository.GetAllAsync(cancellationToken);
         IModel model = allModels.FirstOrDefault(m => m.Name == request.ModelName)
-            ?? await modelRepository.AddAsync(createModel(request.ModelName), cancellationToken);
+            ?? await modelRepository.GetOrCreateAsync(request.ModelName, cancellationToken);
 
         var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);

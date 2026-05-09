@@ -9,52 +9,43 @@ using Trsr.Storage.Internal.Entities.Model;
 namespace Trsr.Storage.Internal.Entities.ModelEndpoint;
 
 [UsedImplicitly]
-internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, ModelEndpointEntity>, IModelEndpointRepository
+internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, ModelEndpointEntity>,
+    IModelEndpointRepository
 {
-    private readonly IModel.CreateNew createNewModel;
+    private readonly IModelRepository models;
     private readonly IModelEndpoint.CreateNew createNewEndpoint;
-    private readonly IRepository<IModel> modelRepository;
 
     public ModelEndpointRepository(
         IMapper<IModelEndpoint, ModelEndpointEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IModel.CreateNew createNewModel,
+        IModelRepository models,
         IModelEndpoint.CreateNew createNewEndpoint,
-        IRepository<IModel> modelRepository,
         IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, cache)
     {
-        this.createNewModel = createNewModel;
+        this.models = models;
         this.createNewEndpoint = createNewEndpoint;
-        this.modelRepository = modelRepository;
     }
 
-    public async Task<IModelEndpoint> GetOrCreateAsync(string modelName, IModelProvider provider, CancellationToken cancellationToken = default)
+    public async Task<IModelEndpoint> GetOrCreateAsync(
+        string modelName,
+        IModelProvider provider,
+        CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
 
-        var modelEntity = await context.Set<ModelEntity>()
+        IModel modelEntity = await models.GetOrCreateAsync(modelName, cancellationToken);
+
+        var endpointEntity = await context.Set<ModelEndpointEntity>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(m => m.Name == modelName, cancellationToken);
+            .FirstOrDefaultAsync(e => e.Model == modelEntity.Id && e.Provider == provider.Id, cancellationToken);
 
-        if (modelEntity is not null)
+        if (endpointEntity is not null)
         {
-            var endpointEntity = await context.Set<ModelEndpointEntity>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Model == modelEntity.Id && e.Provider == provider.Id, cancellationToken);
-
-            if (endpointEntity is not null)
-            {
-                return await mapper.Map(endpointEntity, cancellationToken);
-            }
+            return await mapper.Map(endpointEntity, cancellationToken);
         }
 
-        IModel model = modelEntity is not null
-            ? await modelRepository.GetAsync(modelEntity.Id, cancellationToken)
-            : await modelRepository.AddAsync(createNewModel(modelName), cancellationToken);
-
-        var endpoint = createNewEndpoint(model, provider, null, null);
+        var endpoint = createNewEndpoint(modelEntity, provider, null, null);
         return await AddAsync(endpoint, cancellationToken);
     }
 }
-
