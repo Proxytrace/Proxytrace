@@ -64,6 +64,7 @@ function AppRoutes() {
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />
         <Route path="evaluators" element={wrap(<Evaluators />)} />
+        <Route path="evaluators/:id" element={wrap(<Evaluators />)} />
         <Route path="runs" element={wrap(<Runs />)} />
         <Route path="providers" element={wrap(<Providers />)} />
         <Route path="settings" element={wrap(<Settings />)} />
