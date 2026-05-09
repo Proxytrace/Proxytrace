@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Setup;
+using Trsr.Application.Cleanup;
 using Trsr.Domain;
 using Trsr.Domain.User;
 
@@ -10,10 +11,12 @@ namespace Trsr.Api.Controllers;
 public class SetupController : ControllerBase
 {
     private readonly IRepository<IUser> _users;
+    private readonly IDataCleanupService _cleanup;
 
-    public SetupController(IRepository<IUser> users)
+    public SetupController(IRepository<IUser> users, IDataCleanupService cleanup)
     {
         _users = users;
+        _cleanup = cleanup;
     }
 
     [HttpGet("status")]
@@ -24,6 +27,9 @@ public class SetupController : ControllerBase
     }
 
     [HttpPost("cleanup")]
-    public Task CleanupNonModelData(CancellationToken cancellationToken)
-        => throw new NotImplementedException();
+    public async Task<IActionResult> CleanupNonModelData(CancellationToken cancellationToken)
+    {
+        await _cleanup.DeleteAllNonModelDataAsync(cancellationToken);
+        return NoContent();
+    }
 }
