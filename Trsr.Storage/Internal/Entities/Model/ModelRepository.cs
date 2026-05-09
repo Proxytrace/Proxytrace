@@ -23,10 +23,11 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
     public async Task<IModel> GetOrCreateAsync(string name, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
+        var lowered = name.ToLowerInvariant();
         var existing = await context
             .Set<ModelEntity>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Name.ToLowerInvariant() == name.ToLowerInvariant(), cancellationToken);
+            .FirstOrDefaultAsync(e => e.Name.ToLower() == lowered, cancellationToken);
 
         if (existing is not null)
         {
