@@ -29,13 +29,12 @@ public sealed class ValidationTests
         string? nullString = null;
 
         // Act
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(nullString!);
+        var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(nullString);
 
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be empty");
+        result?.ErrorMessage.Should().Contain("cannot be empty");
     }
 
     [TestMethod]
@@ -50,7 +49,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be empty");
+        result?.ErrorMessage.Should().Contain("cannot be empty");
     }
 
     [TestMethod]
@@ -65,7 +64,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be empty");
+        result?.ErrorMessage.Should().Contain("cannot be empty");
     }
 
     [TestMethod]
@@ -116,7 +115,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.NotNullOrEmpty(null);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be null or empty");
+        result?.ErrorMessage.Should().Contain("cannot be null or empty");
     }
 
     [TestMethod]
@@ -124,7 +123,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.NotNullOrEmpty(string.Empty);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be null or empty");
+        result?.ErrorMessage.Should().Contain("cannot be null or empty");
     }
 
     [TestMethod]
@@ -152,7 +151,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be default");
+        result?.ErrorMessage.Should().Contain("cannot be default");
     }
 
     [TestMethod]
@@ -180,7 +179,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be default");
+        result?.ErrorMessage.Should().Contain("cannot be default");
     }
 
     [TestMethod]
@@ -235,7 +234,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be in the past");
+        result?.ErrorMessage.Should().Contain("must be in the past");
     }
 
     [TestMethod]
@@ -266,14 +265,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.InFuture(DateTimeOffset.UtcNow.AddDays(-1));
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be in the future");
+        result?.ErrorMessage.Should().Contain("must be in the future");
     }
 
     [TestMethod]
     public void InFuture_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.InFuture(DateTimeOffset.UtcNow.AddDays(-1));
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -303,7 +302,7 @@ public sealed class ValidationTests
         // Assert
         result.Should().NotBeNull();
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be before");
+        result?.ErrorMessage.Should().Contain("cannot be before");
     }
 
     [TestMethod]
@@ -344,7 +343,7 @@ public sealed class ValidationTests
         var testDate = DateTimeOffset.UtcNow.AddDays(5);
         var result = global::Trsr.Common.Validation.Validation.NotAfter(testDate, maxValue);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("cannot be after");
+        result?.ErrorMessage.Should().Contain("cannot be after");
     }
 
     [TestMethod]
@@ -352,7 +351,7 @@ public sealed class ValidationTests
     {
         var maxValue = DateTimeOffset.UtcNow.AddDays(1);
         var result = global::Trsr.Common.Validation.Validation.NotAfter(DateTimeOffset.UtcNow.AddDays(5), maxValue);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -367,7 +366,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.Positive(0m);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be positive");
+        result?.ErrorMessage.Should().Contain("must be positive");
     }
 
     [TestMethod]
@@ -381,7 +380,7 @@ public sealed class ValidationTests
     public void Positive_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.Positive(0m);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -403,14 +402,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.LessThan(15m, 10m);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be less than");
+        result?.ErrorMessage.Should().Contain("must be less than");
     }
 
     [TestMethod]
     public void LessThan_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.LessThan(15m, 10m);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -432,14 +431,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.LessThanOrEqual(15m, 10m);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be less than or equal to");
+        result?.ErrorMessage.Should().Contain("must be less than or equal to");
     }
 
     [TestMethod]
     public void LessThanOrEqual_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.LessThanOrEqual(15m, 10m);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -461,14 +460,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.GreaterThan(3m, 5m);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be greater than");
+        result?.ErrorMessage.Should().Contain("must be greater than");
     }
 
     [TestMethod]
     public void GreaterThan_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.GreaterThan(3m, 5m);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -490,14 +489,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.GreaterThanOrEqual(3m, 5m);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be greater than or equal to");
+        result?.ErrorMessage.Should().Contain("must be greater than or equal to");
     }
 
     [TestMethod]
     public void GreaterThanOrEqual_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.GreaterThanOrEqual(3m, 5m);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -512,7 +511,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.ExactLength("ab", 3);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be exactly 3 characters");
+        result?.ErrorMessage.Should().Contain("must be exactly 3 characters");
     }
 
     [TestMethod]
@@ -533,7 +532,7 @@ public sealed class ValidationTests
     public void ExactLength_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.ExactLength("ab", 3);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -548,7 +547,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.Matches("hello!", @"^[a-z0-9]+$");
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("does not match the required pattern");
+        result?.ErrorMessage.Should().Contain("does not match the required pattern");
     }
 
     [TestMethod]
@@ -562,7 +561,7 @@ public sealed class ValidationTests
     public void Matches_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.Matches("hello!", @"^[a-z0-9]+$");
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -584,7 +583,7 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.ValidUri("/relative/path");
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("must be a valid absolute URI");
+        result?.ErrorMessage.Should().Contain("must be a valid absolute URI");
     }
 
     [TestMethod]
@@ -605,7 +604,7 @@ public sealed class ValidationTests
     public void ValidUri_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.ValidUri(null);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -620,14 +619,14 @@ public sealed class ValidationTests
     {
         var result = global::Trsr.Common.Validation.Validation.Defined((DayOfWeek)999);
         result.Should().NotBe(ValidationResult.Success);
-        result.ErrorMessage.Should().Contain("has an undefined value");
+        result?.ErrorMessage.Should().Contain("has an undefined value");
     }
 
     [TestMethod]
     public void Defined_IncludesMemberName()
     {
         var result = global::Trsr.Common.Validation.Validation.Defined((DayOfWeek)999);
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
     }
 
     [TestMethod]
@@ -637,9 +636,9 @@ public sealed class ValidationTests
         var result = global::Trsr.Common.Validation.Validation.NotNullOrWhiteSpace(string.Empty);
 
         // Assert
-        result.MemberNames.Should().NotBeEmpty();
+        result?.MemberNames.Should().NotBeEmpty();
         // CallerArgumentExpression captures the argument expression at the call site
-        result.MemberNames.Should().Contain("string.Empty");
+        result?.MemberNames.Should().Contain("string.Empty");
     }
 
     [TestMethod]

@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
+using Trsr.Domain.User;
 using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
@@ -38,8 +39,7 @@ public sealed class ProjectValidationTests : BaseTest<Module>
         var endpoint = await GetEndpointAsync(services);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, endpoint, []);
+        var action = () => factory.DynamicInvoke(null, endpoint, Array.Empty<IUser>());
         action.Should().Throw<Exception>();
     }
 

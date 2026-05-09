@@ -25,8 +25,9 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         IModel created = await generator.CreateAsync(CancellationToken);
 
         // First read — populates the cache.
-        IModel? first = await repository.FindAsync(created.Id, CancellationToken);
-        first!.Name.Should().Be(created.Name);
+        IModel first = await repository.FindAsync(created.Id, CancellationToken)
+            ?? throw new InvalidOperationException("Expected first FindAsync to return entity.");
+        first.Name.Should().Be(created.Name);
 
         // Mutate the underlying row directly via a fresh DbContext, bypassing the cache.
         await using (var ctx = services.GetRequiredService<StorageDbContext>())
@@ -37,8 +38,9 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         }
 
         // Second read — must come from the cache (proves the cache is actually serving reads).
-        IModel? second = await repository.FindAsync(created.Id, CancellationToken);
-        second!.Name.Should().Be(created.Name);
+        IModel second = await repository.FindAsync(created.Id, CancellationToken)
+            ?? throw new InvalidOperationException("Expected second FindAsync to return cached entity.");
+        second.Name.Should().Be(created.Name);
     }
 
     [TestMethod]
@@ -56,8 +58,9 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         IModel updated = createExisting("renamed", created);
         await repository.UpdateAsync(updated, CancellationToken);
 
-        IModel? after = await repository.FindAsync(created.Id, CancellationToken);
-        after!.Name.Should().Be("renamed");
+        IModel after = await repository.FindAsync(created.Id, CancellationToken)
+            ?? throw new InvalidOperationException("Expected FindAsync after update to return entity.");
+        after.Name.Should().Be("renamed");
     }
 
     [TestMethod]
@@ -135,12 +138,14 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         var createExisting = services.GetRequiredService<IUser.CreateExisting>();
 
         IUser created = await generator.CreateAsync(CancellationToken);
-        IUser? loaded = await repository.FindAsync(created.Id, CancellationToken);
-        loaded!.Name.Should().Be(created.Name);
+        IUser loaded = await repository.FindAsync(created.Id, CancellationToken)
+            ?? throw new InvalidOperationException("Expected FindAsync to return user.");
+        loaded.Name.Should().Be(created.Name);
 
         await repository.UpdateAsync(createExisting("renamed", created), CancellationToken);
-        IUser? updated = await repository.FindAsync(created.Id, CancellationToken);
-        updated!.Name.Should().Be("renamed");
+        IUser updated = await repository.FindAsync(created.Id, CancellationToken)
+            ?? throw new InvalidOperationException("Expected FindAsync after update to return user.");
+        updated.Name.Should().Be("renamed");
 
         await repository.RemoveAsync(created.Id, CancellationToken);
         (await repository.FindAsync(created.Id, CancellationToken)).Should().BeNull();

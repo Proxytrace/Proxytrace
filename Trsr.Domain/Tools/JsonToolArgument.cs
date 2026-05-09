@@ -48,8 +48,8 @@ internal sealed record JsonToolArgument : IToolArgument
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield return Validation.NotNullOrWhiteSpace(Name);
-        yield return Validation.NotNullOrWhiteSpace(JsonSchema);
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
+        foreach (var __r in Validation.NotNullOrWhiteSpace(JsonSchema).AsEnumerable()) yield return __r;
         JsonDocument.Parse(JsonSchema).Dispose();
     }
 }

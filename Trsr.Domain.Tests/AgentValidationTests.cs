@@ -5,6 +5,7 @@ using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.Tests;
 
@@ -53,8 +54,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", null!, [], endpoint, project, modelParametersFactory());
+        var action = () => factory.DynamicInvoke("Test Agent", null, Array.Empty<ToolSpecification>(), endpoint, project, modelParametersFactory(), false);
         action.Should().Throw<Exception>();
     }
 
@@ -70,8 +70,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Agent", systemPrompt, [], endpoint, null!, modelParametersFactory());
+        var action = () => factory.DynamicInvoke("Test Agent", systemPrompt, Array.Empty<ToolSpecification>(), endpoint, null, modelParametersFactory(), false);
         action.Should().Throw<Exception>();
     }
 
@@ -115,8 +114,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => createExisting(existingAgent.Name, null!, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent);
+        var action = () => createExisting.DynamicInvoke(existingAgent.Name, null, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent);
         action.Should().Throw<Exception>();
     }
 

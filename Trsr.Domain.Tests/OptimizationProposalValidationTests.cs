@@ -85,8 +85,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, Priority.Low, "rationale", new SystemPromptDetails("msg"), []);
+        var action = () => factory.DynamicInvoke(null, Priority.Low, "rationale", new SystemPromptDetails("msg"), Array.Empty<Guid>());
         action.Should().Throw<Exception>();
     }
 
@@ -97,8 +96,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(agent, Priority.Low, null!, new SystemPromptDetails("msg"), []);
+        var action = () => factory.DynamicInvoke(agent, Priority.Low, null, new SystemPromptDetails("msg"), Array.Empty<Guid>());
         action.Should().Throw<Exception>();
     }
 

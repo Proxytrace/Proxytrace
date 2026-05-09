@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { FormField, formInputCls } from '../../components/ui/FormField';
@@ -47,10 +47,17 @@ export default function Setup() {
   const [providerApiKey, setProviderApiKey] = useState('');
   const [providerKind, setProviderKind] = useState<ModelProviderKind>(ModelProviderKind.Anthropic);
 
+  // Step 2 — connection test
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   // Step 3 — Model
   const [modelName, setModelName] = useState('');
   const [inputCost, setInputCost] = useState('');
   const [outputCost, setOutputCost] = useState('');
+  const [models, setModels] = useState<string[] | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState<string | null>(null);
 
   // Step 4 — Project
   const [projectName, setProjectName] = useState('');
@@ -120,7 +127,68 @@ export default function Setup() {
     if (providerName.trim() === '' || providerName === prevLabel) {
       setProviderName(nextLabel);
     }
+    setTestResult(null);
+    setModels(null);
+    setModelsError(null);
   }
+
+  const providerFilled =
+    providerName.trim().length > 0 &&
+    providerEndpoint.trim().length > 0 &&
+    providerApiKey.trim().length > 0;
+
+  async function handleTestConnection() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await setupApi.testConnection({
+        providerName: providerName.trim(),
+        providerEndpoint: providerEndpoint.trim(),
+        providerUpstreamApiKey: providerApiKey.trim(),
+        providerKind,
+      });
+      setTestResult({
+        ok: res.success,
+        message: res.success ? 'Connection successful.' : (res.error ?? 'Connection failed.'),
+      });
+    } catch (e) {
+      setTestResult({
+        ok: false,
+        message: e instanceof Error ? e.message : 'Connection failed.',
+      });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  async function loadModels() {
+    setModelsLoading(true);
+    setModelsError(null);
+    try {
+      const res = await setupApi.listModels({
+        providerName: providerName.trim(),
+        providerEndpoint: providerEndpoint.trim(),
+        providerUpstreamApiKey: providerApiKey.trim(),
+        providerKind,
+      });
+      setModels(res.models);
+      if (res.models.length > 0 && !res.models.includes(modelName)) {
+        setModelName(res.models[0]);
+      }
+    } catch (e) {
+      setModels([]);
+      setModelsError(e instanceof Error ? e.message : 'Failed to load models.');
+    } finally {
+      setModelsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (currentStep === 2 && models === null && !modelsLoading && providerFilled) {
+      loadModels();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep]);
 
   const canAdvance = done ? true : (stepValid[currentStep] ?? false) && !loading;
 
@@ -178,7 +246,7 @@ export default function Setup() {
           className={formInputCls}
           placeholder="e.g. Anthropic Production"
           value={providerName}
-          onChange={e => setProviderName(e.target.value)}
+          onChange={e => { setProviderName(e.target.value); setTestResult(null); setModels(null); }}
           onKeyDown={handleEnter}
         />
       </FormField>
@@ -187,7 +255,7 @@ export default function Setup() {
           className={formInputCls}
           placeholder="https://api.anthropic.com/v1"
           value={providerEndpoint}
-          onChange={e => setProviderEndpoint(e.target.value)}
+          onChange={e => { setProviderEndpoint(e.target.value); setTestResult(null); setModels(null); }}
           onKeyDown={handleEnter}
         />
       </FormField>
@@ -197,11 +265,28 @@ export default function Setup() {
           type="password"
           placeholder="sk-..."
           value={providerApiKey}
-          onChange={e => setProviderApiKey(e.target.value)}
+          onChange={e => { setProviderApiKey(e.target.value); setTestResult(null); setModels(null); }}
           onKeyDown={handleEnter}
           autoComplete="off"
         />
       </FormField>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleTestConnection}
+          disabled={!providerFilled || testing}
+          className="cursor-pointer text-[12px] font-medium px-3 py-[9px] rounded-[9px] border border-border bg-card-2 text-secondary hover:text-primary hover:border-[color:var(--hairline)] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {testing ? 'Testing…' : 'Test connection'}
+        </button>
+        {testResult && (
+          <span
+            className={`text-[12px] ${testResult.ok ? 'text-success' : 'text-[color:var(--danger,#dc2626)]'}`}
+          >
+            {testResult.message}
+          </span>
+        )}
+      </div>
       <p className="text-[11px] text-muted leading-relaxed">
         Stored encrypted. Used only to forward proxied requests upstream.
       </p>
@@ -209,15 +294,72 @@ export default function Setup() {
 
     // Step 3 — Model
     <div key="step-3" className="flex flex-col gap-4">
-      <FormField label="Model name" error={currentStep === 2 ? error ?? undefined : undefined}>
-        <input
-          className={formInputCls}
-          placeholder="e.g. claude-sonnet-4-5"
-          value={modelName}
-          onChange={e => setModelName(e.target.value)}
-          onKeyDown={handleEnter}
-          autoFocus
-        />
+      <FormField label="Model" error={currentStep === 2 ? error ?? undefined : undefined}>
+        {modelsLoading ? (
+          <input
+            className={formInputCls}
+            value="Loading models…"
+            disabled
+            readOnly
+          />
+        ) : models && models.length > 0 ? (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <select
+                className={`${formInputCls} appearance-none pr-9 cursor-pointer`}
+                value={modelName}
+                onChange={e => setModelName(e.target.value)}
+                autoFocus
+              >
+                {models.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <svg
+                aria-hidden
+                viewBox="0 0 16 16"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+            </div>
+            <button
+              type="button"
+              onClick={loadModels}
+              className="cursor-pointer text-[12px] font-medium px-3 py-[9px] rounded-[9px] border border-border bg-card-2 text-secondary hover:text-primary hover:border-[color:var(--hairline)] transition-colors duration-150"
+            >
+              Refresh
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <input
+              className={formInputCls}
+              placeholder="e.g. claude-sonnet-4-5"
+              value={modelName}
+              onChange={e => setModelName(e.target.value)}
+              onKeyDown={handleEnter}
+              autoFocus
+            />
+            {modelsError && (
+              <span className="text-[11px] text-[color:var(--danger,#dc2626)]">
+                Could not list models from provider: {modelsError}. Enter the model name manually.
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={loadModels}
+              className="self-start cursor-pointer text-[11px] font-medium px-2 py-1 rounded-md border border-border bg-card-2 text-secondary hover:text-primary transition-colors duration-150"
+            >
+              Retry loading models
+            </button>
+          </div>
+        )}
       </FormField>
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Input cost / 1M tokens">

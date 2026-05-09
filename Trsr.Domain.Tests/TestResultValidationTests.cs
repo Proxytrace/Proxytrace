@@ -45,8 +45,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
             var factory = services.GetRequiredService<ITestResult.CreateNew>();
             var completion =  CreateCompletion("Result", services);
 
-            // ReSharper disable once NullableWarningSuppressionIsUsed
-            Func<ITestResult> action = () => factory(null!, completion, []);
+            var action = () => factory.DynamicInvoke(null, completion, Array.Empty<IEvaluation>());
             action.Should().Throw<Exception>();
             return Task.CompletedTask;
         }
@@ -63,8 +62,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestResult.CreateNew>();
         var testCase = await CreateTestCaseAsync(services);
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(testCase, null!, []);
+        var action = () => factory.DynamicInvoke(testCase, null, Array.Empty<IEvaluation>());
         action.Should().Throw<Exception>();
     }
 

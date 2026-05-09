@@ -35,8 +35,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!);
+        var action = () => factory.DynamicInvoke(new object?[] { null });
         action.Should().Throw<Exception>();
     }
 

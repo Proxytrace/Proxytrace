@@ -27,7 +27,7 @@ internal record User : DomainEntity<IUser>, IUser
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhiteSpace(Name);
+            foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
         }
     }
 }

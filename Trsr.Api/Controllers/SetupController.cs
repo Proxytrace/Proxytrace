@@ -61,6 +61,41 @@ public class SetupController : ControllerBase
             result.ApiKeyValue);
     }
 
+    [HttpPost("test-connection")]
+    public async Task<TestConnectionResponse> TestConnection(
+        [FromBody] TestConnectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var input = new ProviderConnectionInput(
+                request.ProviderName,
+                new Uri(request.ProviderEndpoint),
+                request.ProviderUpstreamApiKey,
+                request.ProviderKind);
+            var ok = await _setup.TestProviderConnectionAsync(input, cancellationToken);
+            return new TestConnectionResponse(ok, ok ? null : "Connection failed.");
+        }
+        catch (Exception ex)
+        {
+            return new TestConnectionResponse(false, ex.Message);
+        }
+    }
+
+    [HttpPost("list-models")]
+    public async Task<ListModelsResponse> ListModels(
+        [FromBody] ListModelsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var input = new ProviderConnectionInput(
+            request.ProviderName,
+            new Uri(request.ProviderEndpoint),
+            request.ProviderUpstreamApiKey,
+            request.ProviderKind);
+        var models = await _setup.ListProviderModelsAsync(input, cancellationToken);
+        return new ListModelsResponse(models);
+    }
+
     [HttpPost("cleanup")]
     public async Task<IActionResult> CleanupNonModelData(CancellationToken cancellationToken)
     {

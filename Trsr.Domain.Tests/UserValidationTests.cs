@@ -41,11 +41,9 @@ public sealed class UserValidationTests : BaseTest<Module>
         // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
-        string? nullName = null;
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(nullName!);
+        var action = () => factory.DynamicInvoke(new object?[] { null });
         action.Should().Throw<Exception>();
     }
 

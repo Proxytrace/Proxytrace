@@ -82,4 +82,24 @@ internal class SetupService : ISetupService
 
             return new SetupResult(user.Id, provider.Id, endpoint.Id, project.Id, apiKey.ApiKey);
         });
+
+    public Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default) 
+        => CreateProvider(input)
+            .CreateClient()
+            .VerifyConnectionAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<string>> ListProviderModelsAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
+    {
+        IModelProvider provider = CreateProvider(input);
+        var client = provider.CreateClient();
+        var availableModels = await client.GetModelsAsync(cancellationToken);
+        return availableModels.Select(m => m.Name).ToArray();
+    }
+
+    private IModelProvider CreateProvider(ProviderConnectionInput input) 
+        => createProvider(
+            name: input.ProviderName, 
+            endpoint: input.ProviderEndpoint, 
+            apiKey: input.ProviderUpstreamApiKey,
+            kind: input.ProviderKind);
 }

@@ -55,12 +55,12 @@ internal record ModelProvider : DomainEntity<IModelProvider>, IModelProvider
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            yield return Validation.NotNullOrWhiteSpace(Name);
+            foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
         }
 
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
-            yield return Validation.NotNullOrWhiteSpace(ApiKey);
+            foreach (var __r in Validation.NotNullOrWhiteSpace(ApiKey).AsEnumerable()) yield return __r;
         }
     }
 }

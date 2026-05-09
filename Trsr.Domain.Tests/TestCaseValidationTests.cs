@@ -39,8 +39,7 @@ public sealed class TestCaseValidationTests : BaseTest<Module>
         var expectedOutput = new AssistantMessage([Content.FromText("Hello")], []);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(null!, expectedOutput);
+        var action = () => factory.DynamicInvoke(null, expectedOutput);
         action.Should().Throw<Exception>();
     }
 
@@ -53,8 +52,7 @@ public sealed class TestCaseValidationTests : BaseTest<Module>
         var input = Conversation.Create();
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(input, null!);
+        var action = () => factory.DynamicInvoke(input, null);
         action.Should().Throw<Exception>();
     }
 

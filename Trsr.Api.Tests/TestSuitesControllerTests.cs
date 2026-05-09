@@ -33,9 +33,10 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.PromoteFromTraces(request, CancellationToken);
 
-        var dto = ((CreatedAtActionResult)result.Result).Value as TestSuiteDto;
-        dto.Should().NotBeNull();
-        dto!.Evaluators.Should().HaveCount(1);
+        var actionResult = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var dto = actionResult.Value as TestSuiteDto
+            ?? throw new InvalidOperationException("Expected TestSuiteDto value.");
+        dto.Evaluators.Should().HaveCount(1);
         dto.Evaluators.Single().Id.Should().Be(helpfulness.Id);
         dto.Evaluators.Single().Kind.Should().Be(EvaluatorKind.Helpfulness);
     }
@@ -55,9 +56,10 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.PromoteFromTraces(request, CancellationToken);
 
-        var dto = ((CreatedAtActionResult)result.Result!).Value as TestSuiteDto;
-        dto.Should().NotBeNull();
-        dto!.Evaluators.Should().ContainSingle(e => e.Kind == EvaluatorKind.ExactMatch);
+        var actionResult = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var dto = actionResult.Value as TestSuiteDto
+            ?? throw new InvalidOperationException("Expected TestSuiteDto value.");
+        dto.Evaluators.Should().ContainSingle(e => e.Kind == EvaluatorKind.ExactMatch);
     }
 
     [TestMethod]
@@ -78,16 +80,18 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
                 AgentCallIds: [firstCall.Id],
                 EvaluatorIds: [helpfulness.Id]),
             CancellationToken);
-        var suiteId = (Guid)((CreatedAtActionResult)promoteResult.Result!).RouteValues!["id"]!;
+        var promoteAction = (CreatedAtActionResult)(promoteResult.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var routeValues = promoteAction.RouteValues ?? throw new InvalidOperationException("Expected non-null RouteValues.");
+        var suiteId = (Guid)(routeValues["id"] ?? throw new InvalidOperationException("Expected 'id' route value."));
 
         var addResult = await controller.AddTestCase(
             suiteId,
             new AddTestCaseRequest(FromAgentCallId: secondCall.Id, Input: null, ExpectedOutput: null),
             CancellationToken);
 
-        var dto = ((ActionResult<TestSuiteDto>)addResult).Value;
-        dto.Should().NotBeNull();
-        dto!.TestCases.Should().HaveCount(2);
+        var dto = ((ActionResult<TestSuiteDto>)addResult).Value
+            ?? throw new InvalidOperationException("Expected non-null Value.");
+        dto.TestCases.Should().HaveCount(2);
         dto.Evaluators.Should().ContainSingle(e => e.Id == helpfulness.Id);
     }
 
