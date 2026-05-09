@@ -65,7 +65,9 @@ public interface IAgent : IDomainEntity
     /// <summary>
     /// Gets an chat client instance
     /// </summary>
-    IModelClient CreateClient(IModelEndpoint? customEndpoint = null);
+    IModelClient CreateClient(
+        IModelEndpoint? customEndpoint = null,
+        bool skipIngestion = false);
 
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint,

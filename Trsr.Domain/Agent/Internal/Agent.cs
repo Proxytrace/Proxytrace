@@ -73,8 +73,10 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IsSystemAgent = isSystemAgent;
     }
 
-    public IModelClient CreateClient(IModelEndpoint? customEndpoint = null)
-        => modelClientFactory(this, customEndpoint);
+    public IModelClient CreateClient(
+        IModelEndpoint? customEndpoint = null,
+        bool skipIngestion = false)
+        => modelClientFactory(this, customEndpoint, skipIngestion: skipIngestion);
 
     public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
         CancellationToken cancellationToken = default)

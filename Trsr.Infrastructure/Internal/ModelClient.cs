@@ -18,6 +18,7 @@ namespace Trsr.Infrastructure.Internal;
 internal class ModelClient : IModelClient
 {
     private readonly IAgent agent;
+    private readonly bool skipIngestion;
     private readonly ICompletion.Create completionFactory;
     private readonly IAgentCall.CreateNew agentCallFactory;
     private readonly IModelEndpoint endpoint;
@@ -27,12 +28,14 @@ internal class ModelClient : IModelClient
     public ModelClient(
         IAgent agent,
         IModelEndpoint? customEndpoint,
+        bool skipIngestion,
         ICompletion.Create completionFactory,
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory)
     {
         this.endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
+        this.skipIngestion = skipIngestion;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
@@ -83,7 +86,7 @@ internal class ModelClient : IModelClient
 
         ICompletion completion = await CompleteAsync(
             systemMessage,
-            conversation, 
+            conversation,
             options,
             cancellationToken);
 
@@ -91,7 +94,7 @@ internal class ModelClient : IModelClient
             completion.Response.GetTextResponse(),
             cancellationToken);
     }
-    
+
     private async Task<ICompletion> CompleteAsync(
         SystemMessage systemMessage,
         Conversation conversation,
@@ -146,17 +149,21 @@ internal class ModelClient : IModelClient
             error = ex;
         }
 
-        HttpStatusCode statusCode = error != null ? HttpStatusCode.InternalServerError : HttpStatusCode.OK;
-        IAgentCall agentCall = agentCallFactory(agent, endpoint, conversation, completion, statusCode);
-        await agentCall.AddAsync(cancellationToken);
+        if (!skipIngestion)
+        {
+            HttpStatusCode statusCode = error != null ? HttpStatusCode.InternalServerError : HttpStatusCode.OK;
+            IAgentCall agentCall = agentCallFactory(agent, endpoint, conversation, completion, statusCode);
+            await agentCall.AddAsync(cancellationToken);
+        }
 
         if (error is not null)
         {
             throw error;
         }
 
-        return completion 
-               ?? throw new InvalidOperationException("Completion is null after successful response. This should not happen.");
+        return completion
+               ?? throw new InvalidOperationException(
+                   "Completion is null after successful response. This should not happen.");
     }
 
     private static IChatClient CreateChatClient(IModelEndpoint endpoint)
