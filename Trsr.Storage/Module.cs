@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -174,7 +175,7 @@ public sealed class Module : Autofac.Module
                         npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
             case SqliteConfiguration sqlite:
-                options.UseSqlite(sqlite.ConnectionString,
+                options.UseSqlite(NormalizeSqliteConnectionString(sqlite.ConnectionString),
                     sqliteOptions =>
                         sqliteOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
@@ -185,5 +186,18 @@ public sealed class Module : Autofac.Module
                 throw new NotSupportedException(
                     $"Storage configuration of type {configuration.GetType().Name} is not supported");
         }
+    }
+
+    // Sets a 30s busy_timeout via DefaultTimeout so concurrent writers wait for the
+    // page lock instead of failing immediately with SQLITE_BUSY ("database is locked").
+    // WAL journal_mode is set once at init in DatabaseInitializationService.
+    private static string NormalizeSqliteConnectionString(string connectionString)
+    {
+        var builder = new SqliteConnectionStringBuilder(connectionString)
+        {
+            DefaultTimeout = 30,
+            Pooling = true,
+        };
+        return builder.ToString();
     }
 }

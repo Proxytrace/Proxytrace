@@ -36,12 +36,23 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         if (configuration is SqliteConfiguration)
         {
             await ResetLegacySqliteDatabaseAsync(context, cancellationToken);
+            await EnableSqliteWalAsync(context, cancellationToken);
         }
 
         logger.LogInformation("Ensuring database is created and up to date via migrations...");
         await context.Database.MigrateAsync(cancellationToken);
 
         logger.LogInformation("Database initialization completed successfully");
+    }
+
+    // Enable WAL journal mode so readers do not block writers and concurrent writers
+    // (combined with busy_timeout from the connection string) wait for the lock instead
+    // of failing immediately with SQLITE_BUSY. journal_mode=WAL is persisted in the DB
+    // header; synchronous=NORMAL is per-connection but safe and standard for WAL.
+    private async Task EnableSqliteWalAsync(StorageDbContext context, CancellationToken cancellationToken)
+    {
+        await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
+        await context.Database.ExecuteSqlRawAsync("PRAGMA synchronous=NORMAL;", cancellationToken);
     }
 
     /// <summary>
