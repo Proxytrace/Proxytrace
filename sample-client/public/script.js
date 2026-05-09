@@ -422,7 +422,6 @@ async function playPlaylist() {
   const agent = agents.find((a) => a.id === activeAgentId);
   if (!agent || !agent.shortcuts?.length) return;
 
-  resetActiveAgent();
   stopRequested = false;
   setPlayingState(true, `Playing 0 / ${agent.shortcuts.length}…`);
 
@@ -430,9 +429,10 @@ async function playPlaylist() {
     for (let i = 0; i < agent.shortcuts.length; i++) {
       if (stopRequested) break;
       setPlayingState(true, `Playing ${i + 1} / ${agent.shortcuts.length}…`);
-      // Each example gets its own session so traces appear as distinct
-      // conversations in the Trsr dashboard.
-      sessionIds[activeAgentId] = crypto.randomUUID();
+      // Each example starts with a clean transcript + fresh session so traces
+      // appear as distinct conversations in the Trsr dashboard. sendPrompt
+      // assigns a new sessionId on the first turn after the reset.
+      resetActiveAgent();
       try {
         await sendPrompt(agent.shortcuts[i].prompt);
       } catch {
