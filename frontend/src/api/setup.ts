@@ -15,4 +15,5 @@ export const setupApi = {
   createUser: (name: string) => api.post<UserDto>('/api/users', { name }),
   createProject: (name: string, systemEndpointId: string) =>
     api.post<ProjectDto>('/api/projects', { name, systemEndpointId }),
+  cleanupNonModelData: () => api.post<void>('/api/setup/cleanup'),
 };

@@ -6,16 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Trsr is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
-## Development Workflow
-
-All work follows an issue-based flow. Adhere to these steps in order:
-
-1. **Start from a GitHub issue.** If the user names a specific issue, use it. If not, search existing issues with `gh issue list` for a matching one. If none exists, create one with `gh issue create` before doing any work.
-2. **Clarify ambiguities before coding.** Read the issue in full. If anything is unclear — scope, expected behaviour, edge cases, design decisions — ask the user before writing any code. Do not make assumptions and discover them wrong mid-implementation.
-3. **Develop on the feature branch.** Make all commits there; never commit directly to `master`.
-   - **Never commit automatically.** Always present changes for review and wait for the user to explicitly ask for a commit before running `git commit`.
-4. (Backend Only) **Write tests.** For any new feature or bug fix, write a failing test that captures the expected behaviour before implementing the code to make it pass. This ensures correctness and prevents regressions.
-
 ## Working on UI
 
 When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
@@ -31,7 +21,7 @@ dotnet test Trsr.Domain.Tests    # Run a single test project
 cd Trsr.Api && dotnet run        # Start API on http://localhost:5001
 ```
 
-Swagger UI is available at `http://localhost:5001/swagger` in Development mode.
+Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 
 #### Code Style
 - Do not use primary constructors. Use constructor injection with DI and `this(...)` chaining for domain entities.

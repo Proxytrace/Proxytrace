@@ -22,4 +22,8 @@ public class SetupController : ControllerBase
         var count = await _users.CountAsync(cancellationToken);
         return new SetupStatusDto { IsConfigured = count > 0 };
     }
+
+    [HttpPost("cleanup")]
+    public Task CleanupNonModelData(CancellationToken cancellationToken)
+        => throw new NotImplementedException();
 }

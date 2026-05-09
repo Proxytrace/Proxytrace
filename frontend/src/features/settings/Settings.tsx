@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ProjectsTab } from './ProjectsTab';
+import { DangerZoneTab } from './DangerZoneTab';
 
 const TABS = [
   { id: 'projects', label: 'Projects', render: () => <ProjectsTab /> },
+  { id: 'danger', label: 'Danger zone', render: () => <DangerZoneTab /> },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
