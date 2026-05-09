@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
@@ -117,6 +118,7 @@ function FlatTraceRow({ trace, selected, onClick }: { trace: AgentCallDto; selec
   return (
     <div
       role="row"
+      data-trace-id={trace.id}
       onClick={onClick}
       className={`grid items-center px-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] ${selected ? 'bg-[rgba(255,255,255,0.04)]' : ''}`}
       style={{ gridTemplateColumns: GRID, minHeight: 44 }}
@@ -220,6 +222,7 @@ function ConversationGroupRow({
         <div
           key={turn.id}
           role="row"
+          data-trace-id={turn.id}
           onClick={() => onSelectTrace(turn)}
           className={`grid items-center pl-8 pr-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] ${turn.id === selectedId ? 'bg-[rgba(255,255,255,0.04)]' : ''}`}
           style={{ gridTemplateColumns: GRID, minHeight: 44, borderLeft: `2px solid ${c}55` }}
@@ -260,6 +263,38 @@ export default function Traces() {
   const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+
+  useEffect(() => {
+    if (!focusId) return;
+    let cancelled = false;
+    agentCallsApi.get(focusId).then(trace => {
+      if (cancelled) return;
+      setSelectedTrace(trace);
+      setPendingScrollId(trace.id);
+      setRange('all');
+      setAgentFilter('');
+      setSearch('');
+      setShowSystem(true);
+      setPage(1);
+      if (trace.conversationId) {
+        const cid = trace.conversationId;
+        setExpandedConvs(prev => {
+          const next = new Set(prev);
+          next.add(cid);
+          return next;
+        });
+      }
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('focus');
+        return next;
+      }, { replace: true });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [focusId, setSearchParams]);
 
   const from = useMemo(() => rangeFrom(range), [range]);
   const filter = useMemo(() => ({
@@ -304,6 +339,18 @@ export default function Traces() {
 
   const rows = useMemo(() => buildRows(traces), [traces]);
 
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-trace-id="${pendingScrollId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setPendingScrollId(null);
+      }
+    }, 50);
+    return () => clearTimeout(t);
+  }, [pendingScrollId, rows, expandedConvs]);
+
   useTraceStream(useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
     qc.invalidateQueries({ queryKey: ['statistics-agent-breakdown'] });
@@ -325,7 +372,7 @@ export default function Traces() {
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] overflow-y-auto pb-6" style={{ scrollbarGutter: 'stable' }}>
+    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] pb-2">
 
       {/* ── Agent filter cards ── */}
       {agents.length > 0 && (
@@ -438,10 +485,10 @@ export default function Traces() {
       </div>
 
       {/* ── Grouped trace table ── */}
-      <div className="fade-up bg-card rounded-[14px] overflow-hidden" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
+      <div className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
         {/* Table header */}
         <div
-          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)]"
+          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] shrink-0"
           style={{ gridTemplateColumns: GRID }}
         >
           {['Trace ID', 'Agent', 'Model', 'Status', 'Tokens', 'Latency', 'Time'].map((label, i) => (
@@ -452,6 +499,7 @@ export default function Traces() {
         </div>
 
         {/* Rows */}
+        <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
         {rows.length === 0 ? (
           <div className="py-12 text-center text-muted text-[13px]">
             {isFetching ? 'Loading…' : 'No traces found.'}
@@ -477,6 +525,7 @@ export default function Traces() {
             )
           )
         )}
+        </div>
       </div>
 
       {/* ── Pagination ── */}

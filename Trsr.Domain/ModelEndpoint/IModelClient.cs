@@ -27,7 +27,8 @@ public interface IModelClient
 {
     public delegate IModelClient Factory(
         IAgent agent,
-        IModelEndpoint? customEndpoint = null);
+        IModelEndpoint? customEndpoint = null,
+        bool skipIngestion = false);
 
     Task<ICompletion> CompleteAsync(
         Conversation conversation,
