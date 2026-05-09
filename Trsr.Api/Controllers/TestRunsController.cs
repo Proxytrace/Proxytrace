@@ -130,8 +130,9 @@ public class TestRunsController : ControllerBase
     internal static TestRunDto ToDto(ITestRun r)
     {
         var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
-        var total = r.TestResults.Count;
-        var passRate = total > 0 ? Math.Round((double)passed / total * 100) : 0;
+        var completed = r.TestResults.Count;
+        var total = r.Group.Suite.TestCases.Count;
+        var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
         long? durationMs = r.CompletedAt.HasValue
             ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
             : null;
@@ -148,7 +149,7 @@ public class TestRunsController : ControllerBase
             Status: r.Status,
             TotalCases: total,
             PassedCases: passed,
-            FailedCases: total - passed,
+            FailedCases: completed - passed,
             PassRate: passRate,
             Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, e.Name)).ToArray(),
             StartedAt: r.CreatedAt,
