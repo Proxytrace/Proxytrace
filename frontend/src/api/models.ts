@@ -9,14 +9,16 @@ export enum TestRunStatus {
 export enum EvaluationScore { Terrible = 'Terrible', Bad = 'Bad', Acceptable = 'Acceptable', Good = 'Good', Excellent = 'Excellent' }
 
 export enum EvaluatorKind {
-  Custom = 'Custom',
+  Agentic = 'Agentic',
   ExactMatch = 'ExactMatch',
   NumericMatch = 'NumericMatch',
-  Helpfulness = 'Helpfulness',
-  Politeness = 'Politeness',
   JsonSchemaMatch = 'JsonSchemaMatch',
-  Safety = 'Safety',
-  ToolUsage = 'ToolUsage',
+}
+
+export interface AgenticEvaluatorPresetDto {
+  key: string;
+  name: string;
+  systemPrompt: string;
 }
 
 export enum ModelProviderKind {

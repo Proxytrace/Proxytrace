@@ -1,5 +1,5 @@
 import { api, qs } from './client';
-import type { CreateEvaluatorPayload, EvaluatorDetailDto } from './models';
+import type { AgenticEvaluatorPresetDto, CreateEvaluatorPayload, EvaluatorDetailDto } from './models';
 
 export const evaluatorsApi = {
   list: (params?: { projectId?: string }) =>
@@ -9,4 +9,5 @@ export const evaluatorsApi = {
   update: (id: string, payload: Partial<CreateEvaluatorPayload>) =>
     api.put<EvaluatorDetailDto>(`/api/evaluators/${id}`, payload),
   delete: (id: string) => api.del(`/api/evaluators/${id}`),
+  getAgenticPresets: () => api.get<AgenticEvaluatorPresetDto[]>('/api/evaluators/agentic-presets'),
 };

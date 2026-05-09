@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { evaluatorsApi } from '../../api/evaluators';
 import { testSuitesApi } from '../../api/test-suites';
-import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
@@ -13,14 +12,10 @@ import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } fr
 
 // ── Type categories ──────────────────────────────────────────────────────────
 
-type TypeCategory = 'llm' | 'classifier' | 'rule' | 'numeric';
+type TypeCategory = 'llm' | 'rule' | 'numeric';
 
 const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
-  [EvaluatorKind.Custom]: 'llm',
-  [EvaluatorKind.Helpfulness]: 'llm',
-  [EvaluatorKind.Politeness]: 'llm',
-  [EvaluatorKind.ToolUsage]: 'llm',
-  [EvaluatorKind.Safety]: 'classifier',
+  [EvaluatorKind.Agentic]: 'llm',
   [EvaluatorKind.ExactMatch]: 'rule',
   [EvaluatorKind.JsonSchemaMatch]: 'rule',
   [EvaluatorKind.NumericMatch]: 'numeric',
@@ -28,7 +23,6 @@ const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
 
 const TYPE_META: Record<TypeCategory, { label: string; short: string; color: string; icon: React.ReactNode }> = {
   llm:        { label: 'LLM-as-judge',    short: 'LLM judge',   color: '#c9944a', icon: <BeakerIcon /> },
-  classifier: { label: 'Classifier',      short: 'Classifier',  color: '#d95555', icon: <ShieldIcon /> },
   rule:       { label: 'Rule-based',      short: 'Rule',        color: '#6b9eaa', icon: <FilterIcon /> },
   numeric:    { label: 'Numeric extract', short: 'Numeric',     color: '#8ec0cc', icon: <HashIcon /> },
 };
@@ -40,14 +34,6 @@ function BeakerIcon({ size = 14 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 3h6M8 3v8l-4 9h16l-4-9V3"/>
       <path d="M6 17h12"/>
-    </svg>
-  );
-}
-
-function ShieldIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
     </svg>
   );
 }
@@ -140,7 +126,7 @@ function EvaluatorTypeIcon({ kind, size = 14 }: { kind: EvaluatorKind; size?: nu
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       flexShrink: 0,
     }}>
-      {cat === 'llm' ? <BeakerIcon size={size} /> : cat === 'classifier' ? <ShieldIcon size={size} /> : cat === 'rule' ? <FilterIcon size={size} /> : <HashIcon size={size} />}
+      {cat === 'llm' ? <BeakerIcon size={size} /> : cat === 'rule' ? <FilterIcon size={size} /> : <HashIcon size={size} />}
     </span>
   );
 }
@@ -373,7 +359,7 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, onEdit, onDelete }: {
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
           flexShrink: 0,
         }}>
-          {cat === 'llm' ? <BeakerIcon size={22} /> : cat === 'classifier' ? <ShieldIcon size={22} /> : cat === 'rule' ? <FilterIcon size={22} /> : <HashIcon size={22} />}
+          {cat === 'llm' ? <BeakerIcon size={22} /> : cat === 'rule' ? <FilterIcon size={22} /> : <HashIcon size={22} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -521,12 +507,12 @@ function EditPencilIcon({ size = 11 }: { size?: number }) {
 
 // ── NewEvaluatorModal ────────────────────────────────────────────────────────
 
-function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, endpoints, onClose, onSubmit, loading }: {
+function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, onClose, onSubmit, loading }: {
   pickedKind: EvaluatorKind | null;
   setPickedKind: (k: EvaluatorKind | null) => void;
   form: EvaluatorFormState;
   setForm: (f: EvaluatorFormState) => void;
-  endpoints: import('../../api/models').ModelEndpointDto[];
+  presets: import('../../api/models').AgenticEvaluatorPresetDto[];
   onClose: () => void;
   onSubmit: () => void;
   loading: boolean;
@@ -582,7 +568,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, endpoints
                     onMouseLeave={ev => { ev.currentTarget.style.background = 'var(--bg-card-2)'; ev.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: m.color + '22', color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {cat === 'llm' ? <BeakerIcon size={16} /> : cat === 'classifier' ? <ShieldIcon size={16} /> : cat === 'rule' ? <FilterIcon size={16} /> : <HashIcon size={16} />}
+                      {cat === 'llm' ? <BeakerIcon size={16} /> : cat === 'rule' ? <FilterIcon size={16} /> : <HashIcon size={16} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>{meta.label}</div>
@@ -604,7 +590,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, endpoints
                 </span>
                 <button onClick={() => setPickedKind(null)} style={{ fontSize: 11, color: 'var(--text-muted)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer' }}>← Change</button>
               </div>
-              <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} endpoints={endpoints} />
+              <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} presets={presets} />
             </div>
           )}
         </div>
@@ -662,7 +648,7 @@ export default function Evaluators() {
     queryFn: () => testSuitesApi.list(currentProjectId ? { projectId: currentProjectId } : undefined),
     enabled: currentProjectId !== null,
   });
-  const { data: endpoints = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
+  const { data: presets = [] } = useQuery({ queryKey: QUERY_KEYS.agenticEvaluatorPresets, queryFn: evaluatorsApi.getAgenticPresets });
   const suites = suitesResult?.items ?? [];
 
   const visible = evaluators.filter(e => {
@@ -682,13 +668,12 @@ export default function Evaluators() {
   const llmCount = evaluators.filter(e => KIND_CATEGORY[e.kind] === 'llm').length;
   const ruleCount = evaluators.filter(e => KIND_CATEGORY[e.kind] === 'rule').length;
   const numericCount = evaluators.filter(e => KIND_CATEGORY[e.kind] === 'numeric').length;
-  const classCount = evaluators.filter(e => KIND_CATEGORY[e.kind] === 'classifier').length;
 
   const createEval = useMutation({
     mutationFn: () => {
       const k = pickedKind!;
       const payload: CreateEvaluatorPayload = { kind: k, projectId: currentProjectId! };
-      if (k === EvaluatorKind.Custom) { payload.name = createForm.name; payload.systemMessage = createForm.systemMessage; }
+      if (k === EvaluatorKind.Agentic) { payload.name = createForm.name; payload.systemMessage = createForm.systemMessage; }
       else if (k === EvaluatorKind.JsonSchemaMatch) { payload.jsonSchema = createForm.jsonSchema; }
       else if (k === EvaluatorKind.NumericMatch) { payload.extractionPattern = createForm.extractionPattern; payload.tolerance = parseFloat(createForm.tolerance) || 0.01; }
       return evaluatorsApi.create(payload);
@@ -701,7 +686,7 @@ export default function Evaluators() {
     mutationFn: () => {
       const ev = editTarget!;
       const payload: Partial<CreateEvaluatorPayload> = {};
-      if (ev.kind === EvaluatorKind.Custom) { payload.name = editForm.name; payload.systemMessage = editForm.systemMessage; }
+      if (ev.kind === EvaluatorKind.Agentic) { payload.name = editForm.name; payload.systemMessage = editForm.systemMessage; }
       else if (ev.kind === EvaluatorKind.JsonSchemaMatch) { payload.jsonSchema = editForm.jsonSchema; }
       else if (ev.kind === EvaluatorKind.NumericMatch) { payload.extractionPattern = editForm.extractionPattern; payload.tolerance = parseFloat(editForm.tolerance) || 0.01; }
       return evaluatorsApi.update(ev.id, payload);
@@ -722,7 +707,7 @@ export default function Evaluators() {
 
   function openEdit(e: EvaluatorDetailDto) {
     setEditTargetId(e.id);
-    setEditForm({ name: e.name, systemMessage: e.systemMessage ?? '', endpointId: e.endpointId ?? '', jsonSchema: e.jsonSchema ?? '', extractionPattern: e.extractionPattern ?? '', tolerance: String(e.tolerance ?? 0.01) });
+    setEditForm({ name: e.name, systemMessage: e.systemMessage ?? '', presetKey: '', jsonSchema: e.jsonSchema ?? '', extractionPattern: e.extractionPattern ?? '', tolerance: String(e.tolerance ?? 0.01) });
     setEditOpen(true);
   }
 
@@ -731,19 +716,17 @@ export default function Evaluators() {
     ['llm', 'LLM judge', '#c9944a'],
     ['rule', 'Rule', '#6b9eaa'],
     ['numeric', 'Numeric', '#8ec0cc'],
-    ['classifier', 'Classifier', '#d95555'],
   ];
 
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
       <div style={{ maxWidth: 1480, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
         {/* KPIs */}
-        <div className="fade-up" style={{ animationDelay: '30ms', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div className="fade-up" style={{ animationDelay: '30ms', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {[
             { label: 'Total evaluators', value: evaluators.length, sub: 'configured', color: '#3daa6f' },
             { label: 'LLM judges',       value: llmCount,          sub: 'grading with models', color: '#c9944a' },
             { label: 'Rule-based',       value: ruleCount + numericCount, sub: 'deterministic checks', color: '#6b9eaa' },
-            { label: 'Classifiers',      value: classCount,        sub: 'safety · PII · tone', color: '#d95555' },
           ].map(k => (
             <div key={k.label} style={{ background: 'var(--bg-card)', borderRadius: 14, padding: '16px 18px', boxShadow: 'var(--shadow-card)', display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: 11, background: k.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -842,7 +825,7 @@ export default function Evaluators() {
           setPickedKind={setPickedKind}
           form={createForm}
           setForm={setCreateForm}
-          endpoints={endpoints}
+          presets={presets}
           onClose={() => setShowNew(false)}
           onSubmit={() => createEval.mutate()}
           loading={createEval.isPending}
@@ -864,7 +847,7 @@ export default function Evaluators() {
             />
           }
         >
-          <EvaluatorForm form={editForm} setForm={setEditForm} kind={editTarget.kind} endpoints={endpoints} />
+          <EvaluatorForm form={editForm} setForm={setEditForm} kind={editTarget.kind} presets={presets} showPresetPicker={false} />
         </Modal>
       )}
 

@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Evaluators;
+using Trsr.Application.Evaluator;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
@@ -28,6 +29,7 @@ public class EvaluatorsController : ControllerBase
     private readonly INumericMatchEvaluator.CreateExisting createNumericMatchExisting;
     private readonly IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch;
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting;
+    private readonly IAgenticEvaluatorPresets agenticPresets;
     private readonly ITransaction transaction;
 
     public EvaluatorsController(
@@ -45,6 +47,7 @@ public class EvaluatorsController : ControllerBase
         INumericMatchEvaluator.CreateExisting createNumericMatchExisting,
         IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch,
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting,
+        IAgenticEvaluatorPresets agenticPresets,
         ITransaction transaction)
     {
         this.createAgent = createAgent;
@@ -61,8 +64,15 @@ public class EvaluatorsController : ControllerBase
         this.createNumericMatchExisting = createNumericMatchExisting;
         this.createJsonSchemaMatch = createJsonSchemaMatch;
         this.createJsonSchemaMatchExisting = createJsonSchemaMatchExisting;
+        this.agenticPresets = agenticPresets;
         this.transaction = transaction;
     }
+
+    [HttpGet("agentic-presets")]
+    public IReadOnlyList<AgenticEvaluatorPresetDto> GetAgenticPresets()
+        => agenticPresets.GetAll()
+            .Select(p => new AgenticEvaluatorPresetDto(p.Key, p.Name, p.SystemPrompt))
+            .ToArray();
 
     [HttpGet]
     public async Task<IReadOnlyList<EvaluatorDetailDto>> GetAll(

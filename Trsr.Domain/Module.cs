@@ -75,8 +75,6 @@ public sealed class Module : Autofac.Module
         
         builder.RegisterType<ResourcesPromptRepository>()
             .As<IPromptTemplateRepository>();
-
-        builder.RegisterInstance(Prompts.ResourceManager);
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)

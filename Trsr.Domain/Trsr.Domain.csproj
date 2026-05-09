@@ -31,19 +31,4 @@
         <PackageReference Include="System.Memory.Data" Version="10.0.7" />
     </ItemGroup>
 
-    <ItemGroup>
-      <EmbeddedResource Update="Prompts.resx">
-        <Generator>ResXFileCodeGenerator</Generator>
-        <LastGenOutput>Prompts.Designer.cs</LastGenOutput>
-      </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Update="Prompts.Designer.cs">
-        <DesignTime>True</DesignTime>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>Prompts.resx</DependentUpon>
-      </Compile>
-    </ItemGroup>
-
 </Project>

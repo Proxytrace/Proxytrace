@@ -1,63 +1,69 @@
-import { EvaluatorKind, type ModelEndpointDto } from '../../api/models';
+import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../api/models';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 
-export interface EvaluatorMeta { label: string; short: string; desc: string; requiresEndpoint: boolean; }
+export interface EvaluatorMeta { label: string; short: string; desc: string; }
 
 export const META: Record<EvaluatorKind, EvaluatorMeta> = {
-  [EvaluatorKind.Custom]: { label: 'Custom LLM Judge', short: 'LLM judge', desc: 'A grader model scores responses against a custom rubric prompt.', requiresEndpoint: true },
-  [EvaluatorKind.Helpfulness]: { label: 'Helpfulness', short: 'LLM judge', desc: 'Preset LLM judge that rates responses for helpfulness on a 1–5 scale.', requiresEndpoint: true },
-  [EvaluatorKind.Politeness]: { label: 'Politeness', short: 'LLM judge', desc: 'Preset LLM judge that rates responses for politeness and tone.', requiresEndpoint: true },
-  [EvaluatorKind.Safety]: { label: 'Safety Classifier', short: 'Classifier', desc: 'Preset LLM classifier that checks for harmful or policy-violating content.', requiresEndpoint: true },
-  [EvaluatorKind.ExactMatch]: { label: 'Exact Match', short: 'Rule', desc: 'Passes when the agent response exactly matches the expected output.', requiresEndpoint: false },
-  [EvaluatorKind.JsonSchemaMatch]: { label: 'JSON Schema Match', short: 'Rule', desc: 'Validates the agent response against a JSON Schema definition.', requiresEndpoint: false },
-  [EvaluatorKind.NumericMatch]: { label: 'Numeric Match', short: 'Numeric', desc: 'Extract a number from the response and check it within a tolerance.', requiresEndpoint: false },
-  [EvaluatorKind.ToolUsage]: { label: 'Tool Usage', short: 'Tool', desc: 'Preset LLM judge that checks whether the agent made the correct tool calls.', requiresEndpoint: true },
+  [EvaluatorKind.Agentic]: { label: 'LLM Judge', short: 'LLM judge', desc: 'A grader model scores responses against a rubric prompt. Pick a preset or write your own.' },
+  [EvaluatorKind.ExactMatch]: { label: 'Exact Match', short: 'Rule', desc: 'Passes when the agent response exactly matches the expected output.' },
+  [EvaluatorKind.JsonSchemaMatch]: { label: 'JSON Schema Match', short: 'Rule', desc: 'Validates the agent response against a JSON Schema definition.' },
+  [EvaluatorKind.NumericMatch]: { label: 'Numeric Match', short: 'Numeric', desc: 'Extract a number from the response and check it within a tolerance.' },
 };
 
 export const KIND_ORDER: EvaluatorKind[] = [
-  EvaluatorKind.Custom, EvaluatorKind.ExactMatch, EvaluatorKind.NumericMatch,
-  EvaluatorKind.Helpfulness, EvaluatorKind.Politeness, EvaluatorKind.JsonSchemaMatch,
-  EvaluatorKind.Safety, EvaluatorKind.ToolUsage,
+  EvaluatorKind.Agentic, EvaluatorKind.ExactMatch, EvaluatorKind.NumericMatch, EvaluatorKind.JsonSchemaMatch,
 ];
 
 export type EvaluatorFormState = {
   name: string;
   systemMessage: string;
-  endpointId: string;
+  presetKey: string;
   jsonSchema: string;
   extractionPattern: string;
   tolerance: string;
 };
 
 export function initForm(): EvaluatorFormState {
-  return { name: '', systemMessage: '', endpointId: '', jsonSchema: '', extractionPattern: '', tolerance: '0.01' };
+  return { name: '', systemMessage: '', presetKey: '', jsonSchema: '', extractionPattern: '', tolerance: '0.01' };
 }
 
-export function EvaluatorForm({ form, setForm, kind, endpoints }: {
+export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker = true }: {
   form: EvaluatorFormState;
   setForm: (f: EvaluatorFormState) => void;
   kind: EvaluatorKind | null;
-  endpoints: ModelEndpointDto[];
+  presets: AgenticEvaluatorPresetDto[];
+  showPresetPicker?: boolean;
 }) {
   if (!kind) return null;
-  const meta = META[kind];
+
+  function applyPreset(key: string) {
+    if (!key) {
+      setForm({ ...form, presetKey: '' });
+      return;
+    }
+    const p = presets.find(x => x.key === key);
+    if (!p) return;
+    setForm({ ...form, presetKey: key, name: p.name, systemMessage: p.systemPrompt });
+  }
+
   return (
     <div className="flex flex-col gap-3">
-      {kind === EvaluatorKind.Custom && (
-        <FormField label="Evaluator name">
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My custom judge" className={formInputCls} />
-        </FormField>
-      )}
-      {kind === EvaluatorKind.Custom && (
-        <FormField label="System message (rubric prompt)">
-          <textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader…" rows={5} className={`${formInputCls} resize-y`} />
-        </FormField>
-      )}
-      {meta.requiresEndpoint && (
-        <FormField label="Judge model endpoint">
-          <select value={form.endpointId} onChange={e => setForm({ ...form, endpointId: e.target.value })} className={formInputCls}>
-            {endpoints.map(ep => <option key={ep.id} value={ep.id}>{ep.providerName} · {ep.modelName}</option>)}
+      {kind === EvaluatorKind.Agentic && showPresetPicker && (
+        <FormField label="Preset">
+          <select value={form.presetKey} onChange={e => applyPreset(e.target.value)} className={formInputCls}>
+            <option value="">Custom (write your own)</option>
+            {presets.map(p => <option key={p.key} value={p.key}>{p.name}</option>)}
           </select>
+        </FormField>
+      )}
+      {kind === EvaluatorKind.Agentic && (
+        <FormField label="Evaluator name">
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My judge" className={formInputCls} />
+        </FormField>
+      )}
+      {kind === EvaluatorKind.Agentic && (
+        <FormField label="System message (rubric prompt)">
+          <textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader…" rows={8} className={`${formInputCls} resize-y`} />
         </FormField>
       )}
       {kind === EvaluatorKind.JsonSchemaMatch && (
