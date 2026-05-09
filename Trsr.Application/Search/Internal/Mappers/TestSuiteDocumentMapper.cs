@@ -6,33 +6,15 @@ using Trsr.Domain.TestSuite;
 
 namespace Trsr.Application.Search.Internal.Mappers;
 
-internal sealed class TestSuiteDocumentMapper : IDocumentMapper
+internal sealed class TestSuiteDocumentMapper : AbstractDocumentMapper<ITestSuite>
 {
-    private readonly IRepository<ITestSuite> repository;
-
-    public TestSuiteDocumentMapper(IRepository<ITestSuite> repository)
+    public override SearchKind Kind => SearchKind.TestSuite;
+    
+    public TestSuiteDocumentMapper(IRepository<ITestSuite> repository) : base(repository)
     {
-        this.repository = repository;
     }
-
-    public SearchKind Kind => SearchKind.TestSuite;
-
-    public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
-    {
-        ITestSuite? suite = await repository.FindAsync(entityId, cancellationToken);
-        return suite is null ? null : Build(suite);
-    }
-
-    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
-    {
-        var all = await repository.GetAllAsync(cancellationToken);
-        return all
-            .Where(s => s.Agent.Project.Id == projectId)
-            .Select(Build)
-            .ToList();
-    }
-
-    private static Document Build(ITestSuite suite)
+    
+    protected override Document GetDocument(ITestSuite suite)
     {
         var body = new StringBuilder();
         foreach (var tc in suite.TestCases)

@@ -6,6 +6,7 @@ using Trsr.Domain.Inference;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Project;
 
 namespace Trsr.Domain.AgentCall.Internal;
 
@@ -20,6 +21,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
     public string? ErrorMessage { get; }
     public IModelParameters ModelParameters { get; }
     public Guid? ConversationId { get; }
+    public IProject Project => Agent.Project;
 
     public AgentCall(
         IAgent agent,

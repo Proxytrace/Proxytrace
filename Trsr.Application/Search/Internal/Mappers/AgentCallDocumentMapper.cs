@@ -7,33 +7,15 @@ using Trsr.Domain.Search;
 
 namespace Trsr.Application.Search.Internal.Mappers;
 
-internal sealed class AgentCallDocumentMapper : IDocumentMapper
+internal sealed class AgentCallDocumentMapper : AbstractDocumentMapper<IAgentCall>
 {
-    private readonly IRepository<IAgentCall> repository;
-
-    public AgentCallDocumentMapper(IRepository<IAgentCall> repository)
+    public override SearchKind Kind => SearchKind.AgentCall;
+    
+    public AgentCallDocumentMapper(IRepository<IAgentCall> repository) : base(repository)
     {
-        this.repository = repository;
     }
 
-    public SearchKind Kind => SearchKind.AgentCall;
-
-    public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
-    {
-        IAgentCall? call = await repository.FindAsync(entityId, cancellationToken);
-        return call is null ? null : Build(call);
-    }
-
-    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
-    {
-        var all = await repository.GetAllAsync(cancellationToken);
-        return all
-            .Where(c => c.Agent.Project.Id == projectId)
-            .Select(Build)
-            .ToList();
-    }
-
-    private static Document Build(IAgentCall call)
+    protected override Document GetDocument(IAgentCall call)
     {
         var body = new StringBuilder();
 

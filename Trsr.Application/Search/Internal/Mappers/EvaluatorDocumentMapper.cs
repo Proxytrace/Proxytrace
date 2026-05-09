@@ -6,48 +6,34 @@ using Trsr.Domain.Search;
 
 namespace Trsr.Application.Search.Internal.Mappers;
 
-internal sealed class EvaluatorDocumentMapper : IDocumentMapper
+internal sealed class EvaluatorDocumentMapper : AbstractDocumentMapper<IEvaluator>
 {
-    private readonly IRepository<IEvaluator> repository;
+    public override SearchKind Kind => SearchKind.Evaluator;
 
-    public EvaluatorDocumentMapper(IRepository<IEvaluator> repository)
+    public EvaluatorDocumentMapper(IRepository<IEvaluator> repository) : base(repository)
     {
-        this.repository = repository;
     }
 
-    public SearchKind Kind => SearchKind.Evaluator;
-
-    public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
+    protected override Document? GetDocument(IEvaluator evaluator)
     {
-        IEvaluator? evaluator = await repository.FindAsync(entityId, cancellationToken);
-        return evaluator is IAgenticEvaluator custom ? Build(custom) : null;
-    }
-
-    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
-    {
-        var all = await repository.GetAllAsync(cancellationToken);
-        return all
-            .OfType<IAgenticEvaluator>()
-            .Where(e => e.Project.Id == projectId)
-            .Select(Build)
-            .ToList();
-    }
-
-    private static Document Build(IAgenticEvaluator evaluator)
-    {
+        if (evaluator is not IAgenticEvaluator agenticEvaluator)
+        {
+            return null;
+        }
+        
         var body = new StringBuilder()
-            .Append(evaluator.Agent.SystemPrompt.Name).Append('\n')
-            .Append(evaluator.Agent.SystemPrompt.Template);
+            .Append(agenticEvaluator.Agent.SystemPrompt.Name).Append('\n')
+            .Append(agenticEvaluator.Agent.SystemPrompt.Template);
 
         var title = !string.IsNullOrEmpty(evaluator.Name)
-            ? evaluator.Name
-            : evaluator.Agent.SystemPrompt.Name;
+            ? agenticEvaluator.Name
+            : agenticEvaluator.Agent.SystemPrompt.Name;
 
         return DocumentBuilder.Build(
             kind: SearchKind.Evaluator,
-            entityId: evaluator.Id,
-            projectId: evaluator.Project.Id,
-            createdAt: evaluator.CreatedAt,
+            entityId: agenticEvaluator.Id,
+            projectId: agenticEvaluator.Project.Id,
+            createdAt: agenticEvaluator.CreatedAt,
             title: title,
             body: body.ToString(),
             boostedBody: title);

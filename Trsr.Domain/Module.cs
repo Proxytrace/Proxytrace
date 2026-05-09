@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
+using Trsr.Common.DependencyInjection;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Message.Internal;
@@ -80,12 +81,7 @@ public sealed class Module : Autofac.Module
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
     {
         // find implementation of domainInterfaceType
-        var domainObjectTypes = typeof(Module).Assembly
-            .GetTypes()
-            .Where(t => domainInterfaceType.IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
-            .ToArray();
-
-        foreach (var domainObjectType in domainObjectTypes)
+        foreach (var domainObjectType in domainInterfaceType.GetImplementations())
         {
             // find closes domainInterfaceType
             // e.g. IEvaluator -> IAgenticEvaluator -> IPolitenessEvaluator should pick IPolitenessEvaluator

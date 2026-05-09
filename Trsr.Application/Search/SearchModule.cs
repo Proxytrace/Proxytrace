@@ -44,10 +44,10 @@ internal sealed class SearchModule : Autofac.Module
             .AsSelf()
             .SingleInstance();
 
-        builder.RegisterType<AgentDocumentMapper>().As<IDocumentMapper>().SingleInstance();
-        builder.RegisterType<TestSuiteDocumentMapper>().As<IDocumentMapper>().SingleInstance();
-        builder.RegisterType<AgentCallDocumentMapper>().As<IDocumentMapper>().SingleInstance();
-        builder.RegisterType<EvaluatorDocumentMapper>().As<IDocumentMapper>().SingleInstance();
+        foreach (var mapperType in typeof(IDocumentMapper).GetImplementations())
+        {
+            builder.RegisterType(mapperType).As<IDocumentMapper>().SingleInstance();
+        }
 
         builder.RegisterType<LuceneSearchIndexer>()
             .As<ISearchIndexer>()
@@ -57,16 +57,12 @@ internal sealed class SearchModule : Autofac.Module
             .As<ISearchService>()
             .SingleInstance();
 
-        builder.RegisterInstance(new ProjectIdResolver<IAgent>(a => a.Project.Id)).SingleInstance();
-        builder.RegisterInstance(new ProjectIdResolver<ITestSuite>(s => s.Agent.Project.Id)).SingleInstance();
-        builder.RegisterInstance(new ProjectIdResolver<IAgentCall>(c => c.Agent.Project.Id)).SingleInstance();
-        builder.RegisterInstance(new ProjectIdResolver<IEvaluator>(e => e.Project.Id)).SingleInstance();
-
-        RegisterDecorator<IAgent>(builder, SearchKind.Agent);
-        RegisterDecorator<ITestSuite>(builder, SearchKind.TestSuite);
-        RegisterDecorator<IAgentCall>(builder, SearchKind.AgentCall);
-        RegisterDecorator<IEvaluator>(builder, SearchKind.Evaluator);
-
+        // discover implementations of ISearchable
+        foreach (var searchableType in typeof(ISearchable).GetImplementations())
+        {
+            RegisterDecorator(searchableType, builder);
+        }
+        
         builder.RegisterType<TraceIndexPrunerService>()
             .AsSelf()
             .SingleInstance();
@@ -74,14 +70,12 @@ internal sealed class SearchModule : Autofac.Module
             services.AddHostedService(sc => sc.GetRequiredService<TraceIndexPrunerService>()));
     }
 
-    private static void RegisterDecorator<TDomain>(ContainerBuilder builder, SearchKind kind)
-        where TDomain : class, IDomainEntity
+    private static void RegisterDecorator(Type searchableType, ContainerBuilder builder)
     {
-        builder.RegisterDecorator<IRepository<TDomain>>((ctx, _, inner) =>
-            new IndexingRepositoryDecorator<TDomain>(
-                inner,
-                ctx.Resolve<Lazy<ISearchIndexer>>(),
-                kind,
-                ctx.Resolve<ProjectIdResolver<TDomain>>()));
+        var domainInterfaceType = searchableType.GetInterfaces()
+            .Last(i => !i.IsGenericType && i != typeof(IDomainEntity) && i.IsAssignableTo(typeof(IDomainEntity)));
+        var repositoryType = typeof(IRepository<>).MakeGenericType(domainInterfaceType);
+        var decoratorType = typeof(IndexingRepositoryDecorator<>).MakeGenericType(domainInterfaceType);
+        builder.RegisterDecorator(decoratorType, repositoryType);
     }
 }

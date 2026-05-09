@@ -1,5 +1,6 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Search;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestSuite;
@@ -7,7 +8,7 @@ namespace Trsr.Domain.TestSuite;
 /// <summary>
 /// Represents a suite of test cases associated with an agent and an evaluator strategy.
 /// </summary>
-public interface ITestSuite : IDomainEntity
+public interface ITestSuite : IDomainEntity<ITestSuite>, ISearchable
 {
     /// <summary>Factory delegate for creating a new test suite.</summary>
     public delegate ITestSuite CreateNew(
@@ -35,4 +36,6 @@ public interface ITestSuite : IDomainEntity
 
     /// <summary>The test cases included in this suite.</summary>
     public IReadOnlyCollection<ITestCase> TestCases { get; }
+    
+    SearchKind ISearchable.SearchKind => SearchKind.TestSuite;
 }

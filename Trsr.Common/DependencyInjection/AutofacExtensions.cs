@@ -15,4 +15,15 @@ public static class AutofacExtensions
         config(services);
         builder.Populate(services);
     }
+    
+    public static IReadOnlyCollection<Type> GetImplementations(
+        this Type type, 
+        Assembly? assembly = null)
+    {
+        assembly ??= type.Assembly;
+        return assembly
+            .GetTypes()
+            .Where(t => type.IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false })
+            .ToArray();
+    }
 }
