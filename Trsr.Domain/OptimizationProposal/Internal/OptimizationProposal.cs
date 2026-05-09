@@ -65,6 +65,6 @@ internal record OptimizationProposal : DomainEntity<IOptimizationProposal>, IOpt
             yield return result;
 
         if (string.IsNullOrWhiteSpace(Rationale))
-            yield return Validation.NotNullOrWhiteSpace(Rationale, nameof(Rationale));
+            foreach (var __r in Validation.NotNullOrWhiteSpace(Rationale, nameof(Rationale)).AsEnumerable()) yield return __r;
     }
 }

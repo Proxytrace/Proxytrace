@@ -98,16 +98,16 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act & Assert
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory(
-            agent: agent,
-            endpoint: endpoint,
-            request: null!,
-            response: response,
-            httpStatus: HttpStatusCode.OK,
-            finishReason: "stop",
-            errorMessage: null,
-            conversationId: null);
+        var action = () => factory.DynamicInvoke(
+            agent,
+            endpoint,
+            null,
+            response,
+            HttpStatusCode.OK,
+            "stop",
+            null,
+            null,
+            null);
         action.Should().Throw<Exception>();
     }
 

@@ -46,7 +46,7 @@ internal record Prompt : IPrompt
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield return Validation.NotNullOrWhiteSpace(Name);
-        yield return Validation.NotNullOrWhiteSpace(promptString);
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
+        foreach (var __r in Validation.NotNullOrWhiteSpace(promptString).AsEnumerable()) yield return __r;
     }
 }

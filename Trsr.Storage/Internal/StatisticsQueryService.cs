@@ -448,11 +448,11 @@ internal class StatisticsQueryService : IStatisticsQueryService
             .ToListAsync(cancellationToken);
 
         var inRange = rows
-            .Where(r => r.CompletedAt!.Value >= from && r.CompletedAt!.Value <= to)
+            .Where(r => r.CompletedAt.GetValueOrDefault() >= from && r.CompletedAt.GetValueOrDefault() <= to)
             .ToList();
 
         var grouped = inRange
-            .GroupBy(r => BucketKey(r.CompletedAt!.Value, bucket))
+            .GroupBy(r => BucketKey(r.CompletedAt.GetValueOrDefault(), bucket))
             .ToDictionary(
                 g => g.Key,
                 g => (Passed: g.Sum(x => x.StatPassed), TestCases: g.Sum(x => x.StatTestCases)));
@@ -504,7 +504,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
                 return new AgentSuitePassRate(
                     SuiteId: s.Id,
                     SuiteName: s.Name,
-                    LatestRunAt: run.CompletedAt!.Value,
+                    LatestRunAt: run.CompletedAt.GetValueOrDefault(),
                     Passed: run.StatPassed,
                     TestCases: run.StatTestCases);
             })
@@ -585,7 +585,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
                     var inputTokens = list.Sum(c => (long)(c.InputTokens ?? 0));
                     var outputTokens = list.Sum(c => (long)(c.OutputTokens ?? 0));
                     var avgLatencyMs = list.Any(c => c.LatencyMs.HasValue)
-                        ? list.Where(c => c.LatencyMs.HasValue).Average(c => c.LatencyMs!.Value)
+                        ? list.Where(c => c.LatencyMs.HasValue).Average(c => c.LatencyMs.GetValueOrDefault())
                         : 0d;
                     var costEur = 0m;
                     foreach (var c in list)
@@ -614,7 +614,7 @@ internal class StatisticsQueryService : IStatisticsQueryService
 
         var inputTokens = calls.Sum(c => (long)(c.InputTokens ?? 0));
         var outputTokens = calls.Sum(c => (long)(c.OutputTokens ?? 0));
-        var latencies = calls.Where(c => c.LatencyMs.HasValue).Select(c => c.LatencyMs!.Value).ToList();
+        var latencies = calls.Where(c => c.LatencyMs.HasValue).Select(c => c.LatencyMs.GetValueOrDefault()).ToList();
         var avgLatency = latencies.Count > 0 ? latencies.Average() : 0d;
 
         var totalCost = 0m;

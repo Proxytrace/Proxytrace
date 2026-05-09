@@ -425,8 +425,9 @@ public sealed class ModelClientTests : BaseTest<Module>
         await client.CompleteAsync(conversation, cancellationToken: CancellationToken);
 
         capturedMessages.Should().HaveCount(2);
-        capturedMessages!.First().Role.Should().Be(ChatRole.System);
-        capturedMessages!.Last().Role.Should().Be(ChatRole.User);
+        var messages = capturedMessages ?? throw new InvalidOperationException("Expected captured messages.");
+        messages.First().Role.Should().Be(ChatRole.System);
+        messages.Last().Role.Should().Be(ChatRole.User);
     }
 
     // ── CompleteAsync<TOutput> (generic) ─────────────────────────────────────

@@ -137,7 +137,8 @@ public class PromptTests : BaseTest<Module>
     {
         // Act & Assert
         var services = GetServices();
-        FluentActions.Invoking(() => CreatePrompt(null!, "Content", services))
+        var factory = services.GetRequiredService<IPromptTemplate.Create>();
+        FluentActions.Invoking(() => factory.DynamicInvoke(null, "Content"))
             .Should()
             .Throw<Exception>();
     }
@@ -167,7 +168,8 @@ public class PromptTests : BaseTest<Module>
     {
         // Act & Assert
         var services = GetServices();
-        FluentActions.Invoking(() => CreatePrompt("Name", null!, services))
+        var factory = services.GetRequiredService<IPromptTemplate.Create>();
+        FluentActions.Invoking(() => factory.DynamicInvoke("Name", null))
             .Should()
             .Throw<Exception>();
     }

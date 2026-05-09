@@ -39,8 +39,8 @@ public class JsonOutputParserTests : BaseTest<Module>
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            yield return Validation.NotNullOrWhiteSpace(RequiredField, nameof(RequiredField));
-            yield return Validation.InRange(Age, 1, 100, nameof(Age));
+            foreach (var __r in Validation.NotNullOrWhiteSpace(RequiredField, nameof(RequiredField)).AsEnumerable()) yield return __r;
+            foreach (var __r in Validation.InRange(Age, 1, 100, nameof(Age)).AsEnumerable()) yield return __r;
         }
     }
 

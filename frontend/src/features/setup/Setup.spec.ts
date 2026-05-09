@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setupApi } from '../../api/setup';
+import { ModelProviderKind } from '../../api/models';
 
 function mockFetch(body: unknown, status = 200) {
   return vi.fn().mockResolvedValue({
@@ -37,31 +38,36 @@ describe('setupApi', () => {
     });
   });
 
-  describe('createUser', () => {
-    it('posts to /api/users with the given name', async () => {
-      const fetch = mockFetch({ id: 'user-1', name: 'Alice' });
+  describe('complete', () => {
+    it('posts the full setup payload to /api/setup/complete', async () => {
+      const response = {
+        userId: 'u1',
+        providerId: 'p1',
+        endpointId: 'e1',
+        projectId: 'pr1',
+        apiKeyValue: 'trsr-abc',
+      };
+      const fetch = mockFetch(response);
       vi.stubGlobal('fetch', fetch);
-      const result = await setupApi.createUser('Alice');
-      expect(result.id).toBe('user-1');
-      expect(fetch).toHaveBeenCalledWith(
-        '/api/users',
-        expect.objectContaining({ method: 'POST', body: JSON.stringify({ name: 'Alice' }) }),
-      );
-    });
-  });
 
-  describe('createProject', () => {
-    it('posts to /api/projects with name and systemEndpointId', async () => {
-      const fetch = mockFetch({ id: 'proj-1', name: 'My App' });
-      vi.stubGlobal('fetch', fetch);
-      const result = await setupApi.createProject('My App', 'endpoint-1');
-      expect(result.id).toBe('proj-1');
+      const req = {
+        userName: 'Alice',
+        providerName: 'Anthropic',
+        providerEndpoint: 'https://api.anthropic.com/v1',
+        providerUpstreamApiKey: 'sk-x',
+        providerKind: ModelProviderKind.Anthropic,
+        modelName: 'claude-sonnet-4-5',
+        inputTokenCost: 3,
+        outputTokenCost: 15,
+        projectName: 'My App',
+        apiKeyName: 'default',
+      };
+      const result = await setupApi.complete(req);
+
+      expect(result.apiKeyValue).toBe('trsr-abc');
       expect(fetch).toHaveBeenCalledWith(
-        '/api/projects',
-        expect.objectContaining({
-          method: 'POST',
-          body: JSON.stringify({ name: 'My App', systemEndpointId: 'endpoint-1' }),
-        }),
+        '/api/setup/complete',
+        expect.objectContaining({ method: 'POST', body: JSON.stringify(req) }),
       );
     });
   });

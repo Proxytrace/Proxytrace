@@ -1,5 +1,6 @@
 using Autofac;
 using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.ModelProvider;
 using Trsr.Infrastructure.Internal;
 
 namespace Trsr.Infrastructure;
@@ -14,6 +15,9 @@ public class Module : Autofac.Module
 
         builder.RegisterType<ModelClient>()
             .As<IModelClient>();
+        
+        builder.RegisterType<ProviderClient>()
+            .As<IProviderClient>();
 
     }
 }

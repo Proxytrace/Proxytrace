@@ -53,8 +53,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var evaluator = await CreateTestEvaluatorAsync(services);
         var testCase = await CreateTestCaseAsync(services);
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Suite", null!, [evaluator], [testCase]);
+        var action = () => factory.DynamicInvoke("Test Suite", null, new[] { evaluator }, new[] { testCase });
         action.Should().Throw<Exception>();
     }
 
@@ -66,8 +65,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var agent = await CreateTestAgentAsync(services);
         var testCase = await CreateTestCaseAsync(services);
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Suite", agent, null!, [testCase]);
+        var action = () => factory.DynamicInvoke("Test Suite", agent, null, new[] { testCase });
         action.Should().Throw<Exception>();
     }
 
@@ -79,8 +77,7 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
         var agent = await CreateTestAgentAsync(services);
         var evaluator = await CreateTestEvaluatorAsync(services);
 
-        // ReSharper disable once NullableWarningSuppressionIsUsed
-        var action = () => factory("Test Suite", agent, [evaluator], null!);
+        var action = () => factory.DynamicInvoke("Test Suite", agent, new[] { evaluator }, null);
         action.Should().Throw<Exception>();
     }
 

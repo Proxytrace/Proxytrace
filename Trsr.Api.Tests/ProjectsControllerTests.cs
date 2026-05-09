@@ -26,9 +26,10 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
             new CreateProjectRequest("New project", endpoint.Id, new[] { user.Id }),
             CancellationToken);
 
-        var created = ((CreatedAtActionResult)result.Result!).Value as ProjectDto;
-        created.Should().NotBeNull();
-        created!.Members.Should().HaveCount(1);
+        var actionResult = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException("Expected non-null Result."));
+        var created = actionResult.Value as ProjectDto
+            ?? throw new InvalidOperationException("Expected ProjectDto value.");
+        created.Members.Should().HaveCount(1);
         created.Members.Single().Id.Should().Be(user.Id);
     }
 
@@ -41,7 +42,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
 
         var result = await controller.AddMember(project.Id, user.Id, CancellationToken);
 
-        var dto = result.Value!;
+        var dto = result.Value ?? throw new InvalidOperationException("Expected non-null Value.");
         dto.Members.Should().ContainSingle(m => m.Id == user.Id);
     }
 
@@ -55,7 +56,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
         await controller.AddMember(project.Id, user.Id, CancellationToken);
         var second = await controller.AddMember(project.Id, user.Id, CancellationToken);
 
-        second.Value!.Members.Should().HaveCount(1);
+        (second.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().HaveCount(1);
     }
 
     [TestMethod]
@@ -68,7 +69,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
 
         var result = await controller.RemoveMember(project.Id, user.Id, CancellationToken);
 
-        result.Value!.Members.Should().BeEmpty();
+        (result.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -108,7 +109,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
         var update = new UpdateProjectRequest(project.Name, project.SystemEndpoint.Id, new[] { userB.Id });
         var result = await controller.Update(project.Id, update, CancellationToken);
 
-        result.Value!.Members.Should().ContainSingle(m => m.Id == userB.Id);
+        (result.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().ContainSingle(m => m.Id == userB.Id);
     }
 
     private static ProjectsController ResolveController(IServiceProvider services) =>

@@ -90,7 +90,7 @@ public sealed record ToolMessage : Message
             yield return result;
         }
         
-        yield return Validation.HasCount(Contents, 2);
-        yield return Validation.NotNullOrWhiteSpace(Contents[0].Text);
+        foreach (var __r in Validation.HasCount(Contents, 2).AsEnumerable()) yield return __r;
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Contents[0].Text).AsEnumerable()) yield return __r;
     }
 }

@@ -40,4 +40,6 @@ public interface IModelProvider : IDomainEntity
         string apiKey,
         ModelProviderKind kind,
         IDomainEntityData existing);
+
+    IProviderClient CreateClient();
 }

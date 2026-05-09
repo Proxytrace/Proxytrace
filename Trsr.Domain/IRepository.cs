@@ -73,4 +73,9 @@ public interface IRepository<TDomainEntity>
     Task<bool> RemoveAsync(
         Guid id, 
         CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Removes all entities of type <typeparamref name="TDomainEntity"/> from the repository
+    /// </summary>
+    Task RemoveAllAsync(CancellationToken cancellationToken = default);
 }

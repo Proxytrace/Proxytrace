@@ -87,8 +87,8 @@ internal record JsonOutputFormat : IOutputFormat
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield return Validation.NotNullOrWhiteSpace(Schema, nameof(Schema));
-        yield return Validation.Json(Schema);
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Schema, nameof(Schema)).AsEnumerable()) yield return __r;
+        foreach (var __r in Validation.Json(Schema).AsEnumerable()) yield return __r;
     }
     
     private string? TrimArtifacts(string? output)

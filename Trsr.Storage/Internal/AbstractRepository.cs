@@ -150,7 +150,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             IReadOnlyList<TDomainEntity> missingMapped = await Map(missingStored, cancellationToken);
             foreach (TDomainEntity entity in missingMapped)
             {
-                cache!.Set(entity);
+                cache?.Set(entity);
             }
 
             hits.AddRange(missingMapped);
@@ -187,7 +187,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     public Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
         => AddAsync(contextFactory(), entity, cancellationToken);
 
-    private Task<TDomainEntity> AddAsync(
+    protected Task<TDomainEntity> AddAsync(
         StorageDbContext context,
         TDomainEntity entity,
         CancellationToken cancellationToken = default)
@@ -291,6 +291,15 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             await context.SaveChangesAsync(cancellationToken);
             cache?.Invalidate(id);
             return true;
+        });
+
+    public Task RemoveAllAsync(CancellationToken cancellationToken = default)
+        => transaction.InvokeAsync(() =>
+        {
+            StorageDbContext context = contextFactory();
+            context.Set<TStoredEntity>().RemoveRange(context.Set<TStoredEntity>());
+            cache?.InvalidateAll();
+            return Task.CompletedTask;
         });
 
     /// <summary>

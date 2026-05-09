@@ -9,12 +9,12 @@ import { TestRunStatus, EvaluatorKind, EvaluationScore, type TestRunDto, type Te
 const PASSING_SCORES = new Set<EvaluationScore>([EvaluationScore.Acceptable, EvaluationScore.Good, EvaluationScore.Excellent]);
 const isPass = (score: EvaluationScore) => PASSING_SCORES.has(score);
 import { GridIcon, TableIcon, TrashIcon } from '../../components/icons';
-import { ProgressBar } from '../../components/ui/ProgressBar';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useTestRunGroupStream } from '../../api/event-stream';
 import { agentColor, modelColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
+import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { FixtureDrawer } from './FixtureDrawer';
@@ -25,63 +25,7 @@ import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER, REFETCH_INT
 type CaseFilter = 'all' | 'passed' | 'failed';
 type ViewMode = 'table' | 'grid';
 
-// ─── CaseCard (grid view) ─────────────────────────────────────────────────────
-
-function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: boolean; onClick: () => void }) {
-  const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
-  const passCount = r.evaluations.filter(e => isPass(e.score)).length;
-  const score = r.evaluations.length > 0 ? passCount / r.evaluations.length : null;
-  const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
-  const dotColor = pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
-  const primaryEval = r.evaluations[0];
-  const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
-
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        textAlign: 'left', padding: '14px 16px 0', cursor: 'pointer', width: '100%',
-        background: isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)',
-        border: `1px solid ${isSelected ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`,
-        borderRadius: 12,
-        display: 'flex', flexDirection: 'column',
-        transition: 'background 0.1s, border-color 0.1s',
-        overflow: 'hidden',
-      }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'var(--bg-card-2)'; }}
-    >
-      {/* Row 1: dot + id | score */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0, boxShadow: pass !== null ? `0 0 6px ${dotColor}cc` : 'none' }} />
-          <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{r.testCaseId.slice(0, 7)}</span>
-        </div>
-        <span className="mono" style={{ fontSize: 20, fontWeight: 700, color: scoreColor, letterSpacing: '-0.03em' }}>
-          {score !== null ? score.toFixed(2) : '—'}
-        </span>
-      </div>
-      {/* Row 2: case name */}
-      <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 10 }}>
-        {r.testCaseSummary}
-      </div>
-      {/* Row 3: evaluator pill + latency */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        {evalColor
-          ? <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" />
-          : <span />
-        }
-        <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>{fmtDuration(r.durationMs)}</span>
-      </div>
-      {/* Row 4: progress bar flush to card bottom */}
-      <div style={{ height: 3, background: 'rgba(255,255,255,0.05)', marginLeft: -16, marginRight: -16 }}>
-        {score !== null && (
-          <div style={{ height: '100%', width: `${Math.round(score * 100)}%`, background: scoreColor }} />
-        )}
-      </div>
-    </button>
-  );
-}
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
 function statusColor(s: TestRunStatus) {
   if (s === TestRunStatus.Completed) return 'var(--success)';
@@ -95,33 +39,268 @@ function isActive(s: TestRunStatus) {
   return s === TestRunStatus.Running || s === TestRunStatus.Pending;
 }
 
-// ─── RunDetail ────────────────────────────────────────────────────────────────
+function passColorOf(rate: number) {
+  return rate >= PASS_RATE_WARN ? 'var(--success)' : rate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)';
+}
 
-function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: TestRunGroupDto; activeCaseIds?: Set<string> }) {
+function resultPass(r: TestResultDto): boolean | null {
+  if (r.evaluations.length === 0) return null;
+  return r.evaluations.every(e => isPass(e.score));
+}
+
+function resultScore(r: TestResultDto): number | null {
+  if (r.evaluations.length === 0) return null;
+  const passed = r.evaluations.filter(e => isPass(e.score)).length;
+  return passed / r.evaluations.length;
+}
+
+function avgLatency(run: TestRunDto): number | null {
+  if (run.results.length === 0) return null;
+  return run.results.reduce((s, r) => s + r.durationMs, 0) / run.results.length;
+}
+
+// ─── Minimap (case squares) ──────────────────────────────────────────────────
+
+function Minimap({
+  run, activeCaseIds, selectedCaseId, onPick, size = 18,
+}: {
+  run: TestRunDto;
+  activeCaseIds?: Set<string>;
+  selectedCaseId?: string | null;
+  onPick?: (r: TestResultDto, idx: number) => void;
+  size?: number;
+}) {
+  const completedIds = new Set(run.results.map(r => r.testCaseId));
+  const pending = run.testCases.filter(tc => !completedIds.has(tc.id));
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+      {run.results.map((r, i) => {
+        const pass = resultPass(r);
+        const selected = selectedCaseId === r.testCaseId;
+        const fill = pass === true ? 'rgba(16,185,129,0.28)' : pass === false ? 'rgba(239,68,68,0.28)' : 'rgba(255,255,255,0.07)';
+        const border = selected ? '#fff' : pass === true ? 'rgba(16,185,129,0.55)' : pass === false ? 'rgba(239,68,68,0.55)' : 'var(--border-color)';
+        return (
+          <button
+            key={r.id}
+            onClick={onPick ? () => onPick(r, i) : undefined}
+            title={r.testCaseSummary}
+            style={{
+              width: size, height: size, borderRadius: 4, flexShrink: 0,
+              background: fill, border: `1.5px solid ${border}`,
+              cursor: onPick ? 'pointer' : 'default',
+              transition: 'transform 0.1s',
+            }}
+            onMouseEnter={e => onPick && (e.currentTarget.style.transform = 'scale(1.2)')}
+            onMouseLeave={e => onPick && (e.currentTarget.style.transform = 'scale(1)')}
+          />
+        );
+      })}
+      {pending.map(tc => {
+        const running = activeCaseIds?.has(tc.id) ?? false;
+        return (
+          <span
+            key={tc.id}
+            title={`${tc.summary} — ${running ? 'running…' : 'pending'}`}
+            className={running ? 'pulse-dot' : undefined}
+            style={{
+              width: size, height: size, borderRadius: 4, flexShrink: 0,
+              background: running ? 'rgba(201,148,74,0.18)' : 'transparent',
+              border: `1.5px dashed ${running ? 'rgba(201,148,74,0.55)' : 'var(--hairline)'}`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── CaseCard (grid view, failure-first) ─────────────────────────────────────
+
+function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: boolean; onClick: () => void }) {
+  const pass = resultPass(r);
+  const score = resultScore(r);
+  const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
+  const reasoning = r.evaluations.find(e => !isPass(e.score) && e.reasoning)?.reasoning;
+  const tint = pass === false
+    ? (isSelected ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.05)')
+    : (isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)');
+  const borderColor = isSelected
+    ? (pass === false ? 'rgba(239,68,68,0.45)' : 'rgba(201,148,74,0.35)')
+    : pass === false ? 'rgba(239,68,68,0.22)' : 'var(--hairline)';
+
+  return (
+    <button
+      onClick={onClick}
+      className="cursor-pointer"
+      style={{
+        textAlign: 'left', padding: '12px 14px', width: '100%',
+        background: tint,
+        border: `1px solid ${borderColor}`,
+        borderLeft: `3px solid ${scoreColor}`,
+        borderRadius: 10,
+        display: 'flex', flexDirection: 'column', gap: 6,
+        transition: 'background 0.1s, border-color 0.1s',
+        overflow: 'hidden', position: 'relative',
+      }}
+    >
+      {/* Top: case id + score (only when imperfect) + latency */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-[6px] min-w-0">
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', flexShrink: 0 }} />
+          <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{r.testCaseId.slice(0, 7)}</span>
+          {score !== null && score < 1 && (
+            <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: scoreColor }}>{score.toFixed(2)}</span>
+          )}
+        </div>
+        <span className="mono" style={{ fontSize: 10.5, color: 'var(--text-muted)', flexShrink: 0 }}>{fmtDuration(r.durationMs)}</span>
+      </div>
+
+      {/* Headline */}
+      <div
+        className="overflow-hidden"
+        style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+      >
+        {r.testCaseSummary}
+      </div>
+
+      {/* Failure reasoning excerpt */}
+      {pass === false && reasoning && (
+        <div
+          className="overflow-hidden"
+          style={{ fontSize: 11, color: '#fca5a5', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+        >
+          {reasoning}
+        </div>
+      )}
+
+      {/* Evaluator pills */}
+      {r.evaluations.length > 0 && (
+        <div className="flex flex-wrap gap-[4px]">
+          {r.evaluations.map((e, i) => {
+            const c = EVALUATOR_KIND_COLOR[e.evaluatorKind as EvaluatorKind] ?? '#888';
+            const evalPass = isPass(e.score);
+            return (
+              <span
+                key={i}
+                title={`${e.evaluatorName}: ${e.score}`}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '2px 7px', borderRadius: 100,
+                  background: evalPass ? `${c}1a` : 'rgba(239,68,68,0.14)',
+                  color: evalPass ? c : '#fca5a5',
+                  fontSize: 10, fontWeight: 600,
+                  opacity: evalPass ? 0.85 : 1,
+                }}
+              >
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: evalPass ? c : '#d95555' }} />
+                {e.evaluatorName}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ─── EndpointCompareCard ─────────────────────────────────────────────────────
+
+function EndpointCompareCard({
+  run, isSelected, onSelect, activeCaseIds,
+}: {
+  run: TestRunDto;
+  isSelected: boolean;
+  onSelect: () => void;
+  activeCaseIds?: Set<string>;
+}) {
+  const mc = modelColor(run.endpointName);
+  const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : null;
+  const pc = passRate !== null ? passColorOf(passRate) : 'var(--text-muted)';
+  const active = isActive(run.status);
+  const avg = avgLatency(run);
+
+  return (
+    <button
+      onClick={onSelect}
+      className="cursor-pointer text-left flex flex-col gap-[10px] overflow-hidden"
+      style={{
+        flex: '1 1 220px', minWidth: 220,
+        padding: '12px 14px',
+        background: 'var(--bg-card)',
+        borderRadius: 12,
+        border: `1.5px solid ${isSelected ? mc : 'transparent'}`,
+        boxShadow: isSelected ? `0 0 0 3px ${mc}22, var(--shadow-card)` : 'var(--shadow-card)',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+      }}
+    >
+      {/* Row 1: model + status */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-[6px] min-w-0">
+          <span style={{ width: 8, height: 8, borderRadius: 2, background: mc, flexShrink: 0 }} />
+          <span className="mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 12, fontWeight: 600 }}>
+            {run.endpointName}
+          </span>
+        </div>
+        {active && (
+          <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', flexShrink: 0 }} />
+        )}
+      </div>
+
+      {/* Row 2: pass rate big + counts + avg latency */}
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="flex items-baseline gap-[6px]">
+          <span className="mono" style={{ fontSize: 22, fontWeight: 700, color: pc, letterSpacing: '-0.02em', lineHeight: 1 }}>
+            {passRate !== null ? `${passRate}%` : '—'}
+          </span>
+          <span className="mono" style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+            {run.passedCases}/{run.totalCases}
+          </span>
+        </div>
+        {avg !== null && (
+          <span className="mono" style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+            ~{fmtDuration(avg)}
+          </span>
+        )}
+      </div>
+
+      {/* Row 3: mini minimap */}
+      <Minimap run={run} activeCaseIds={activeCaseIds} size={10} />
+    </button>
+  );
+}
+
+// ─── RunDetail ───────────────────────────────────────────────────────────────
+
+function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Set<string> }) {
   const [selectedCase, setSelectedCase] = useState<{ runId: string; caseId: string; summary: string; idx: number } | null>(null);
-  const [caseFilter, setCaseFilter] = useState<CaseFilter>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  const passed = run.results.filter(r => r.evaluations.length > 0 && r.evaluations.every(e => isPass(e.score))).length;
-  const failed = run.results.filter(r => r.evaluations.some(e => !isPass(e.score))).length;
+  const passed = run.results.filter(r => resultPass(r) === true).length;
+  const failed = run.results.filter(r => resultPass(r) === false).length;
   const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : 0;
-  const passColor = passRate >= PASS_RATE_WARN ? 'var(--success)' : passRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)';
+  const pc = passColorOf(passRate);
+  const active = isActive(run.status);
+  const avg = avgLatency(run);
+
+  // Initial filter: "failed" if any failures, else "all". Component is keyed on run.id
+  // so this re-initialises whenever the user switches endpoint.
+  const [caseFilter, setCaseFilter] = useState<CaseFilter>(() => (failed > 0 ? 'failed' : 'all'));
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   const filteredResults = run.results.filter(r => {
     if (caseFilter === 'all') return true;
-    const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
+    const pass = resultPass(r);
     if (caseFilter === 'passed') return pass === true;
     if (caseFilter === 'failed') return pass === false;
     return true;
   });
 
-  const RESULT_GRID_COLS = '20px 2fr 1fr 0.8fr 0.7fr 1.4fr';
   const tableColumns: DataColumn<TestResultDto>[] = [
     {
       key: 'dot', label: '', width: '20px',
       render: r => {
-        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
-        return <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block', boxShadow: pass !== null ? `0 0 5px ${pass ? 'rgba(61,170,111,0.5)' : 'rgba(217,85,85,0.5)'}` : 'none' }} />;
+        const pass = resultPass(r);
+        return <span style={{ width: 8, height: 8, borderRadius: '50%', background: pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)', display: 'inline-block' }} />;
       },
     },
     {
@@ -131,18 +310,17 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
     {
       key: 'evaluator', label: 'Evaluator', width: '1fr',
       render: r => {
-        const primaryEval = r.evaluations[0];
-        const evalColor = primaryEval ? (EVALUATOR_KIND_COLOR[primaryEval.evaluatorKind as EvaluatorKind] ?? '#888') : null;
-        return evalColor ? <ColoredBadge color={evalColor} label={primaryEval.evaluatorName} shape="rounded" /> : <span />;
+        const primary = r.evaluations[0];
+        const c = primary ? (EVALUATOR_KIND_COLOR[primary.evaluatorKind as EvaluatorKind] ?? '#888') : null;
+        return c ? <ColoredBadge color={c} label={primary.evaluatorName} shape="rounded" /> : <span />;
       },
     },
     {
       key: 'score', label: 'Score', width: '0.8fr',
       render: r => {
-        const tPassCount = r.evaluations.filter(e => isPass(e.score)).length;
-        const score = r.evaluations.length > 0 ? tPassCount / r.evaluations.length : null;
-        const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
-        return <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: scoreColor }}>{score !== null ? score.toFixed(2) : '—'}</span>;
+        const score = resultScore(r);
+        const sc = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
+        return <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: sc }}>{score !== null ? score.toFixed(2) : '—'}</span>;
       },
     },
     {
@@ -152,107 +330,81 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
     {
       key: 'note', label: 'Note', width: '1.4fr',
       render: r => {
-        const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
-        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? r.evaluations.find(e => !isPass(e.score))?.score ?? '';
+        const pass = resultPass(r);
+        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? '';
         return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5' }}>{note}</span>;
       },
     },
   ];
 
+  const evalNames = run.evaluators.map(e => e.name).join(', ') || '—';
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Run header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap mb-[6px]">
-            <span className="mono text-[12px] text-muted">{run.id.slice(0, 12)}…</span>
-            {run.status === TestRunStatus.Completed && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: passRate >= PASS_RATE_WARN ? 'var(--success-subtle)' : passRate >= PASS_RATE_DANGER ? 'var(--warn-subtle)' : 'var(--danger-subtle)', color: passColor, fontSize: 10.5, fontWeight: 600 }}>
-                {run.passedCases}/{run.totalCases} passed
-              </span>
-            )}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 100, background: `${statusColor(run.status)}18`, color: statusColor(run.status), fontSize: 10.5, fontWeight: 600 }}>
-              {run.status}
+      {/* KPI + minimap band */}
+      <div className="bg-card rounded-xl p-[14px_16px] flex items-stretch gap-4 flex-wrap" style={{ boxShadow: 'var(--shadow-card)' }}>
+        {/* Pass rate */}
+        <div className="flex flex-col" style={{ minWidth: 110 }}>
+          <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">Pass rate</div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: run.status === TestRunStatus.Completed || run.results.length > 0 ? pc : 'var(--text-muted)', lineHeight: 1 }}>
+            {run.results.length > 0 ? `${passRate}%` : '—'}
+          </div>
+          <div className="text-[10.5px] text-muted mt-[3px] mono">{run.passedCases}/{run.totalCases}</div>
+        </div>
+
+        {/* Duration / progress */}
+        <div className="flex flex-col" style={{ minWidth: 100 }}>
+          <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">
+            {active ? 'Progress' : 'Duration'}
+          </div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+            {active ? `${run.results.length}/${run.totalCases}` : fmtDuration(run.durationMs)}
+          </div>
+          <div className="text-[10.5px] text-muted mt-[3px]">
+            {active
+              ? <span className="inline-flex items-center gap-[5px]"><span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block' }} />executing</span>
+              : 'wall time'
+            }
+          </div>
+        </div>
+
+        {/* Avg latency */}
+        <div className="flex flex-col" style={{ minWidth: 100 }}>
+          <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">Avg latency</div>
+          <div className="mono" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+            {avg !== null ? fmtDuration(avg) : '—'}
+          </div>
+          <div className="text-[10.5px] text-muted mt-[3px]">per case</div>
+        </div>
+
+        {/* Minimap */}
+        <div className="flex-1" style={{ minWidth: 220 }}>
+          <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-[6px] flex justify-between">
+            <span>Cases</span>
+            <span className="mono" style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500 }}>
+              <span className="text-success">{passed} passed</span>
+              {failed > 0 && <> · <span className="text-danger">{failed} failed</span></>}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-[17px] font-bold tracking-[-0.01em] m-0">{group.suiteName}</h2>
-            <span className="text-muted">·</span>
-            <span className="px-2 py-[2px] rounded-full text-[11px] font-semibold" style={{ background: agentColor(group.agentId) + '20', color: agentColor(group.agentId) }}>{group.agentName}</span>
-          </div>
-          <div className="text-[12px] text-muted mt-1">{fmtRelative(group.createdAt)} · {run.endpointName}</div>
+          <Minimap
+            run={run}
+            activeCaseIds={activeCaseIds}
+            selectedCaseId={selectedCase?.caseId ?? null}
+            onPick={(r, i) => setSelectedCase(selectedCase?.caseId === r.testCaseId ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
+            size={18}
+          />
         </div>
       </div>
-
-      {/* Stats band */}
-      <div className="grid gap-[10px]" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-        {[
-          { label: 'Pass rate',  value: run.status === TestRunStatus.Completed ? `${passRate}%` : '—', color: run.status === TestRunStatus.Completed ? passColor : 'var(--text-muted)', sub: `${run.passedCases} of ${run.totalCases}` },
-          { label: 'Passed',     value: String(run.passedCases), color: 'var(--success)', sub: 'test cases' },
-          { label: 'Failed',     value: String(run.failedCases), color: 'var(--danger)', sub: 'need attention' },
-          { label: 'Duration',   value: fmtDuration(run.durationMs), color: 'var(--text-primary)', sub: 'wall time' },
-          { label: 'Evaluators', value: String(run.evaluators.length), color: 'var(--text-primary)', sub: run.evaluators.map(e => e.name).join(', ') || '—' },
-        ].map(s => (
-          <div key={s.label} className="px-[14px] py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
-            <div className="text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">{s.label}</div>
-            <div className="text-[20px] font-bold tracking-[-0.02em]" style={{ color: s.color }}>{s.value}</div>
-            <div className="text-[10.5px] text-muted mt-[2px] overflow-hidden text-ellipsis whitespace-nowrap">{s.sub}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Execution progress (shown while running) */}
-      {isActive(run.status) && (
-        <div className="px-4 py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-[7px]">
-              <span className="pulse-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block' }} />
-              <span className="text-[12px] font-semibold">Executing</span>
-            </div>
-            <span className="mono text-[11px] text-muted">{run.results.length} / {run.totalCases} complete</span>
-          </div>
-          <ProgressBar value={run.results.length} max={run.totalCases} color="var(--accent-primary)" height={6} />
-        </div>
-      )}
-
-      {/* Minimap */}
-      {run.results.length > 0 && (
-        <div className="px-4 py-3 bg-card rounded-xl" style={{ boxShadow: 'var(--shadow-card)' }}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[12px] font-semibold">Results at a glance</span>
-            <span className="mono text-[11px] text-muted">{passed} passed · {failed} failed</span>
-          </div>
-          <ProgressBar value={run.passedCases} max={run.totalCases} height={7} />
-          <div style={{ display: 'flex', gap: 4, marginTop: 10, flexWrap: 'wrap' }}>
-            {run.results.map((r, i) => {
-              const pass = r.evaluations.length === 0 ? null : r.evaluations.every(e => isPass(e.score));
-              const isSelected = selectedCase?.caseId === r.testCaseId;
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => setSelectedCase(isSelected ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
-                  title={r.testCaseSummary}
-                  style={{ width: 20, height: 20, borderRadius: 5, flexShrink: 0, background: pass === true ? 'rgba(16,185,129,0.22)' : pass === false ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.07)', border: `1.5px solid ${isSelected ? '#fff' : pass === true ? 'rgba(16,185,129,0.5)' : pass === false ? 'rgba(239,68,68,0.4)' : 'var(--border-color)'}`, transition: 'transform 0.1s', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.25)')}
-                  onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Case results explorer */}
       {run.results.length > 0 && (
         <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-[10px_14px] border-b border-hairline">
-            <div className="flex items-center gap-[10px]">
+          <div className="flex items-center justify-between p-[10px_14px] border-b border-hairline gap-3 flex-wrap">
+            <div className="flex items-center gap-[10px] min-w-0">
               <span className="text-[12.5px] font-semibold">Test case results</span>
-              <span className="text-[11px] text-muted">
-                <span className="text-success font-semibold">{passed} passed</span>
-                {' · '}
-                <span className={`font-semibold ${failed > 0 ? 'text-danger' : 'text-muted'}`}>{failed} failed</span>
+              <span className="text-[11px] text-muted overflow-hidden text-ellipsis whitespace-nowrap">
+                Evaluators: <span className="text-secondary">{evalNames}</span>
               </span>
             </div>
             <div className="flex items-center gap-[6px]">
@@ -276,9 +428,9 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
             </div>
           </div>
 
-          {/* Grid view — rounded cards with gap */}
+          {/* Grid view */}
           {viewMode === 'grid' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, padding: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, padding: 12 }}>
               {filteredResults.map((r, i) => {
                 const isSelected = selectedCase?.caseId === r.testCaseId;
                 return (
@@ -290,18 +442,18 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
                   />
                 );
               })}
-              {run.testCases
+              {caseFilter === 'all' && run.testCases
                 .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
                 .map(tc => {
                   const running = activeCaseIds?.has(tc.id) ?? false;
                   return (
-                    <div key={tc.id} style={{ padding: '14px 16px 14px', border: `1px solid ${running ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`, borderRadius: 12, background: running ? 'rgba(201,148,74,0.04)' : 'var(--bg-card-2)', opacity: running ? 0.85 : 0.4 }}>
+                    <div key={tc.id} style={{ padding: '12px 14px', border: `1px dashed ${running ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`, borderRadius: 10, background: running ? 'rgba(201,148,74,0.04)' : 'transparent', opacity: running ? 0.85 : 0.45 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-                        <span className={running ? 'pulse-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0, boxShadow: running ? '0 0 6px rgba(201,148,74,0.5)' : 'none', display: 'inline-block' }} />
+                        <span className={running ? 'pulse-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0, display: 'inline-block' }} />
                         <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
                       </div>
-                      <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, color: running ? 'var(--text-primary)' : 'var(--text-muted)', marginBottom: 6 }}>{tc.summary}</div>
-                      <div style={{ fontSize: 11, color: running ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{running ? 'running…' : 'pending…'}</div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, color: running ? 'var(--text-primary)' : 'var(--text-muted)', marginBottom: 4 }}>{tc.summary}</div>
+                      <div style={{ fontSize: 11, color: running ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{running ? 'running…' : 'pending'}</div>
                     </div>
                   );
                 })
@@ -319,29 +471,11 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
                 onRowClick={(r, i) => setSelectedCase(selectedCase?.caseId === r.testCaseId ? null : { runId: run.id, caseId: r.testCaseId, summary: r.testCaseSummary, idx: i })}
                 isSelected={r => selectedCase?.caseId === r.testCaseId}
               />
-              {/* Pending cases */}
-              {run.testCases
-                .filter(tc => !run.results.some(r => r.testCaseId === tc.id))
-                .map(tc => {
-                  const running = activeCaseIds?.has(tc.id) ?? false;
-                  return (
-                    <div key={tc.id} className="grid px-4 py-[11px] items-center border-b border-hairline" style={{ gridTemplateColumns: RESULT_GRID_COLS, opacity: running ? 1 : 0.5 }}>
-                      <span className={running ? 'pulse-dot' : undefined} style={{ width: 8, height: 8, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', display: 'inline-block', boxShadow: running ? '0 0 6px rgba(201,148,74,0.5)' : 'none' }} />
-                      <span style={{ fontSize: 12.5, fontWeight: 500, color: running ? 'var(--text-primary)' : 'var(--text-muted)' }}>{tc.summary}</span>
-                      <span />
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>
-                      <span style={{ fontSize: 11, color: running ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{running ? 'running…' : 'pending…'}</span>
-                      <span />
-                    </div>
-                  );
-                })
-              }
             </div>
           )}
         </div>
       )}
 
-      {/* Selected case drawer */}
       {selectedCase && (
         <FixtureDrawer
           runId={selectedCase.runId}
@@ -364,9 +498,9 @@ function RunDetail({ run, group, activeCaseIds }: { run: TestRunDto; group: Test
   );
 }
 
-// ─── GroupDetail ──────────────────────────────────────────────────────────────
+// ─── GroupDetail ─────────────────────────────────────────────────────────────
 
-function GroupDetail({ group }: { group: TestRunGroupDto }) {
+function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: () => void }) {
   const qc = useQueryClient();
   const { show: toast } = useToast();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(group.runs[0]?.id ?? null);
@@ -394,11 +528,7 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
     qc.invalidateQueries({ queryKey: ['test-run-groups'] });
   }, [qc]);
 
-  useTestRunGroupStream(
-    active ? group.id : null,
-    handleStreamEvent,
-    handleStreamDone,
-  );
+  useTestRunGroupStream(active ? group.id : null, handleStreamEvent, handleStreamDone);
 
   useEffect(() => {
     if (!active) return;
@@ -407,53 +537,65 @@ function GroupDetail({ group }: { group: TestRunGroupDto }) {
   }, [active, qc]);
 
   const selectedRun = group.runs.find(r => r.id === selectedRunId) ?? group.runs[0] ?? null;
+  const multipleRuns = group.runs.length > 1;
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Group header */}
+      {/* Unified header */}
       <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
-        <div className="px-[18px] py-[14px] flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[15px] font-bold">{group.suiteName}</span>
-              <span className="px-2 py-[2px] rounded-full text-[10.5px] font-semibold" style={{ background: c + '20', color: c }}>{group.agentName}</span>
-              <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold" style={{ background: `${statusColor(group.status)}18`, color: statusColor(group.status) }}>{group.status}</span>
+        <div className="px-[18px] py-[12px] flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-[3px] min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-[17px] font-bold tracking-[-0.01em] m-0 overflow-hidden text-ellipsis whitespace-nowrap">{group.suiteName}</h2>
+              <span className="px-2 py-[2px] rounded-full text-[11px] font-semibold shrink-0" style={{ background: c + '20', color: c }}>{group.agentName}</span>
+              <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold shrink-0" style={{ background: `${statusColor(group.status)}18`, color: statusColor(group.status) }}>{group.status}</span>
+              {active && (
+                <span className="inline-flex items-center gap-[5px] text-[10.5px] text-muted shrink-0">
+                  <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block' }} />
+                  live
+                </span>
+              )}
             </div>
-            <span className="text-[11.5px] text-muted">{fmtRelative(group.createdAt)} · {group.runs.length} run{group.runs.length !== 1 ? 's' : ''}</span>
+            <div className="flex items-center gap-2 text-[11.5px] text-muted">
+              <span className="mono">{group.id.slice(0, 8)}</span>
+              <span>·</span>
+              <span>{fmtRelative(group.createdAt)}</span>
+              <span>·</span>
+              <span>{group.runs.length} run{group.runs.length !== 1 ? 's' : ''}</span>
+            </div>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="flex gap-2 shrink-0">
             {active && (
               <button onClick={() => cancelGroup.mutate()} className="text-[12px] px-[10px] py-[5px] rounded-[7px] border border-border bg-transparent text-secondary cursor-pointer">Cancel</button>
             )}
+            <button onClick={onDelete} className="btn-icon btn-icon-danger" title="Delete run group"><TrashIcon size={14} /></button>
           </div>
         </div>
       </div>
 
-      {/* Run tabs (if multiple) */}
-      {group.runs.length > 1 && (
-        <div className="flex gap-1 p-1 bg-card rounded-[10px] flex-wrap" style={{ boxShadow: 'var(--shadow-pill)' }}>
-          {group.runs.map(run => {
-            const isActive = selectedRunId === run.id;
-            const mc = modelColor(run.endpointName);
-            const rPassRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : null;
-            return (
-              <button key={run.id} onClick={() => setSelectedRunId(run.id)} style={{ flex: '1 1 auto', padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 500, background: isActive ? 'var(--bg-card-2)' : 'transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: isActive ? 'var(--shadow-pill)' : 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 6, height: 6, borderRadius: 2, background: mc }} />
-                {run.endpointName}
-                {rPassRate !== null && <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: rPassRate >= PASS_RATE_WARN ? 'var(--success)' : rPassRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)', fontWeight: 700 }}>{rPassRate}%</span>}
-              </button>
-            );
-          })}
+      {/* Endpoint comparison strip (only when multiple runs) */}
+      {multipleRuns && (
+        <div className="flex gap-[10px] flex-wrap">
+          {group.runs.map(run => (
+            <EndpointCompareCard
+              key={run.id}
+              run={run}
+              isSelected={selectedRunId === run.id}
+              onSelect={() => setSelectedRunId(run.id)}
+              activeCaseIds={selectedRunId === run.id ? activeCaseIds : undefined}
+            />
+          ))}
         </div>
       )}
 
-      {selectedRun && <RunDetail run={selectedRun} group={group} activeCaseIds={activeCaseIds} />}
+      {/* Selected run detail */}
+      {selectedRun && <RunDetail key={selectedRun.id} run={selectedRun} activeCaseIds={activeCaseIds} />}
     </div>
   );
 }
 
-// ─── Runs ─────────────────────────────────────────────────────────────────────
+// ─── Runs (page) ─────────────────────────────────────────────────────────────
 
 export default function Runs() {
   const qc = useQueryClient();
@@ -481,8 +623,10 @@ export default function Runs() {
   const agents = agentsData?.items ?? [];
 
   const selectedGroup = groups.find(g => g.id === selectedGroupId) ?? groups[0] ?? null;
-  const agentList = ['All', ...agents.map(a => a.name)];
-  const agentIds = ['', ...agents.map(a => a.id)];
+  const agentOptions = [
+    { key: '', label: 'All agents' },
+    ...agents.map(a => ({ key: a.id, label: a.name, accent: agentColor(a.id) })),
+  ];
 
   const delGroup = useMutation({
     mutationFn: () => testRunGroupsApi.delete(deleteGroupId!),
@@ -494,17 +638,20 @@ export default function Runs() {
 
   return (
     <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto p-[4px_4px_24px]">
-      {/* Master–detail */}
       <div className="fade-up grid gap-[14px] items-start" style={{ animationDelay: '40ms', gridTemplateColumns: '280px 1fr' }}>
         {/* Left: group list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* Agent filter */}
-          <div className="flex gap-[3px] p-[3px] bg-card rounded-[10px] flex-wrap" style={{ boxShadow: 'var(--shadow-pill)' }}>
-            {agentList.map((a, i) => (
-              <button key={a} onClick={() => setAgentFilter(agentIds[i])} className={`flex-[1_1_auto] px-2 py-[5px] rounded-[7px] text-[10.5px] font-medium whitespace-nowrap ${agentFilter === agentIds[i] ? 'bg-card-2 text-primary' : 'bg-transparent text-muted'}`} style={{ boxShadow: agentFilter === agentIds[i] ? 'var(--shadow-pill)' : 'none' }}>
-                {a}
-              </button>
-            ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+          {/* Agent filter — dropdown */}
+          <div className="flex">
+            <FilterDropdown
+              label="Agent"
+              value={agentFilter}
+              options={agentOptions}
+              onChange={setAgentFilter}
+              active={agentFilter !== ''}
+              accent={agentFilter ? agentColor(agentFilter) : undefined}
+              width={240}
+            />
           </div>
 
           {isLoading && <div className="text-center p-5 text-muted text-[13px]">Loading…</div>}
@@ -516,40 +663,46 @@ export default function Runs() {
             const totalCases = group.runs.reduce((s, r) => s + r.totalCases, 0);
             const passedCases = group.runs.reduce((s, r) => s + r.passedCases, 0);
             const passRate = totalCases > 0 ? Math.round((passedCases / totalCases) * 100) : null;
-            const passColor = passRate !== null ? (passRate >= PASS_RATE_WARN ? 'var(--success)' : passRate >= PASS_RATE_DANGER ? 'var(--warn)' : 'var(--danger)') : 'var(--text-muted)';
+            const pc = passRate !== null ? passColorOf(passRate) : 'var(--text-muted)';
+            const runCount = group.runs.length;
             return (
               <button
                 key={group.id}
                 onClick={() => setSelectedGroupId(group.id)}
                 className="overflow-hidden border-none cursor-pointer"
-                style={{ textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 13, padding: '12px 14px 12px 17px', boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}55, 0 8px 24px -8px ${c}44` : 'var(--shadow-card)', transition: 'box-shadow 0.15s', position: 'relative' }}
+                style={{
+                  textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 13,
+                  padding: '12px 14px 12px 17px',
+                  boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}55, 0 8px 24px -8px ${c}44` : 'var(--shadow-card)',
+                  transition: 'box-shadow 0.15s', position: 'relative',
+                }}
               >
                 <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: c, borderRadius: '13px 0 0 13px' }} />
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span className="mono" style={{ fontSize: 10.5, color: isSelected ? 'var(--accent-hover)' : 'var(--text-muted)', fontWeight: 600 }}>{group.id.slice(0, 8)}…</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(group.createdAt)}</span>
+                <div className="flex items-center justify-between mb-[6px]">
+                  {runCount > 1
+                    ? <span className="px-[6px] py-[1px] rounded text-[9.5px] font-semibold mono" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>{runCount} models</span>
+                    : <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(group.createdAt)}</span>
+                  }
+                  <div className="flex items-center gap-[6px]">
+                    {runCount > 1 && <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{fmtRelative(group.createdAt)}</span>}
                     <button
                       onClick={e => { e.stopPropagation(); setDeleteGroupId(group.id); }}
                       className="btn-icon btn-icon-danger"
                     ><TrashIcon size={13} /></button>
                   </div>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{group.suiteName}</div>
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{group.suiteName}</div>
                 <div style={{ marginBottom: 8 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 100, background: c + '20', color: c, fontSize: 10, fontWeight: 600 }}>{group.agentName}</span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 100, background: c + '20', color: c, fontSize: 10, fontWeight: 600, maxWidth: '100%' }}>{group.agentName}</span>
                 </div>
                 {group.status === TestRunStatus.Completed && passRate !== null ? (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 17, fontWeight: 700, color: passColor }}>{passRate}%</span>
-                      <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{passedCases}/{totalCases}</span>
-                    </div>
-                    <ProgressBar value={passedCases} max={totalCases} height={5} />
-                  </>
+                  <div className="flex items-center justify-between">
+                    <span className="mono" style={{ fontSize: 17, fontWeight: 700, color: pc }}>{passRate}%</span>
+                    <span style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{passedCases}/{totalCases}</span>
+                  </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(group.status), flexShrink: 0 }} />
+                  <div className="flex items-center gap-[6px]">
+                    <span className={isActive(group.status) ? 'pulse-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(group.status), flexShrink: 0, display: 'inline-block' }} />
                     <span style={{ fontSize: 11.5, color: statusColor(group.status), fontWeight: 600 }}>{group.status}</span>
                   </div>
                 )}
@@ -563,9 +716,9 @@ export default function Runs() {
         </div>
 
         {/* Right: detail */}
-        <div>
+        <div style={{ minWidth: 0 }}>
           {selectedGroup
-            ? <GroupDetail key={selectedGroup.id} group={selectedGroup} />
+            ? <GroupDetail key={selectedGroup.id} group={selectedGroup} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
             : <div className="p-[60px] text-center text-muted text-[13px] bg-card rounded-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>Select a run to see details.</div>
           }
         </div>

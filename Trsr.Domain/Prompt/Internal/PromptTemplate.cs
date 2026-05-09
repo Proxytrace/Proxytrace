@@ -62,13 +62,13 @@ internal record PromptTemplate : IPromptTemplate
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        yield return Validation.NotNullOrWhiteSpace(Name);
-        yield return Validation.NotNullOrWhiteSpace(Template);
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
+        foreach (var __r in Validation.NotNullOrWhiteSpace(Template).AsEnumerable()) yield return __r;
         foreach (var variable in Variables)
         {
-            yield return Validation.NotNullOrWhiteSpace(variable);
+            foreach (var __r in Validation.NotNullOrWhiteSpace(variable).AsEnumerable()) yield return __r;
             var letterCount = variable.Count(char.IsLetter);
-            yield return Validation.GreaterThan(letterCount, 1);
+            foreach (var __r in Validation.GreaterThan(letterCount, 1).AsEnumerable()) yield return __r;
         }
     }
 }

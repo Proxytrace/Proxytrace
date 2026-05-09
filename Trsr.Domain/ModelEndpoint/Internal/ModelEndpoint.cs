@@ -60,13 +60,13 @@ internal record ModelEndpoint : DomainEntity<IModelEndpoint>, IModelEndpoint
             yield return result;
 
         if (InputTokenCost.HasValue)
-            yield return Validation.Positive(InputTokenCost.Value, nameof(InputTokenCost));
+            foreach (var __r in Validation.Positive(InputTokenCost.Value, nameof(InputTokenCost)).AsEnumerable()) yield return __r;
 
         if (OutputTokenCost.HasValue)
-            yield return Validation.Positive(OutputTokenCost.Value, nameof(OutputTokenCost));
+            foreach (var __r in Validation.Positive(OutputTokenCost.Value, nameof(OutputTokenCost)).AsEnumerable()) yield return __r;
 
         if (InputTokenCost.HasValue && OutputTokenCost.HasValue)
-            yield return Validation.LessThanOrEqual(InputTokenCost.Value, OutputTokenCost.Value, nameof(InputTokenCost));
+            foreach (var __r in Validation.LessThanOrEqual(InputTokenCost.Value, OutputTokenCost.Value, nameof(InputTokenCost)).AsEnumerable()) yield return __r;
     }
 }
 
