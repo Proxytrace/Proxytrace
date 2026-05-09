@@ -35,7 +35,7 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
 
         if (configuration is SqliteConfiguration)
         {
-            await BootstrapLegacySqliteHistoryAsync(context, cancellationToken);
+            await ResetLegacySqliteDatabaseAsync(context, cancellationToken);
         }
 
         logger.LogInformation("Ensuring database is created and up to date via migrations...");
@@ -46,11 +46,11 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
 
     /// <summary>
     /// Legacy SQLite databases were created via <c>EnsureCreatedAsync</c> and have no
-    /// <c>__EFMigrationsHistory</c> table. Detect that case and seed history with all known
-    /// migration IDs so that <c>MigrateAsync</c> applies only future migrations instead of
-    /// re-running everything from scratch (which would fail because the tables already exist).
+    /// <c>__EFMigrationsHistory</c> table. Their schema reflects whatever model existed at
+    /// creation time, which cannot be mapped reliably to a known migration ID. Drop all user
+    /// tables so <c>MigrateAsync</c> can rebuild the schema from scratch.
     /// </summary>
-    private async Task BootstrapLegacySqliteHistoryAsync(StorageDbContext context, CancellationToken cancellationToken)
+    private async Task ResetLegacySqliteDatabaseAsync(StorageDbContext context, CancellationToken cancellationToken)
     {
         var historyRepo = context.GetService<IHistoryRepository>();
 
@@ -59,39 +59,47 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
             return;
         }
 
-        // History table missing. Check whether this is a fresh DB (no user tables) or a legacy
-        // EnsureCreated DB (user tables present but never tracked migrations).
         var connection = context.Database.GetDbConnection();
         if (connection.State != System.Data.ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
         }
 
+        var tables = new List<string>();
         await using (var cmd = connection.CreateCommand())
         {
-            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' LIMIT 1";
-            var anyTable = await cmd.ExecuteScalarAsync(cancellationToken);
-            if (anyTable is null)
+            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
             {
-                // Fresh DB — let MigrateAsync handle everything.
-                return;
+                tables.Add(reader.GetString(0));
             }
         }
 
-        logger.LogInformation("Legacy SQLite database detected (no migrations history). Seeding history with all known migrations...");
-
-        await context.Database.ExecuteSqlRawAsync(historyRepo.GetCreateScript(), cancellationToken);
-
-        var migrationsAssembly = context.GetService<IMigrationsAssembly>();
-        var productVersion = typeof(DbContext).Assembly.GetName().Version?.ToString() ?? "0.0.0";
-
-        foreach (var migrationId in migrationsAssembly.Migrations.Keys)
+        if (tables.Count == 0)
         {
-            var insertSql = historyRepo.GetInsertScript(new HistoryRow(migrationId, productVersion));
-            await context.Database.ExecuteSqlRawAsync(insertSql, cancellationToken);
+            // Fresh DB — let MigrateAsync handle everything.
+            return;
         }
 
-        logger.LogInformation("Seeded {Count} migration(s) into history.", migrationsAssembly.Migrations.Count);
+        logger.LogWarning(
+            "Legacy SQLite database detected (no migrations history). Dropping {Count} table(s) so migrations can rebuild the schema. Local data will be lost.",
+            tables.Count);
+
+        await context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = OFF", cancellationToken);
+        try
+        {
+            foreach (var table in tables)
+            {
+                var quoted = "\"" + table.Replace("\"", "\"\"") + "\"";
+                var sql = "DROP TABLE IF EXISTS " + quoted;
+                await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+            }
+        }
+        finally
+        {
+            await context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON", cancellationToken);
+        }
     }
 
     /// <inheritdoc />
