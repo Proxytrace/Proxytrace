@@ -11,42 +11,8 @@ namespace Trsr.Storage.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_ModelProviderEntity_OrganizationEntity_Organization",
-                table: "ModelProviderEntity");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_ProjectEntity_OrganizationEntity_Organization",
-                table: "ProjectEntity");
-
             migrationBuilder.DropTable(
                 name: "AgentToolCallEntity");
-
-            migrationBuilder.DropTable(
-                name: "OrganizationUserEntity");
-
-            migrationBuilder.DropTable(
-                name: "OrganizationEntity");
-
-            migrationBuilder.DropIndex(
-                name: "IX_ProjectEntity_Name_Organization",
-                table: "ProjectEntity");
-
-            migrationBuilder.DropIndex(
-                name: "IX_ProjectEntity_Organization",
-                table: "ProjectEntity");
-
-            migrationBuilder.DropIndex(
-                name: "IX_ModelProviderEntity_Organization",
-                table: "ModelProviderEntity");
-
-            migrationBuilder.DropColumn(
-                name: "Organization",
-                table: "ProjectEntity");
-
-            migrationBuilder.DropColumn(
-                name: "Organization",
-                table: "ModelProviderEntity");
 
             migrationBuilder.DropColumn(
                 name: "DurationMs",
@@ -88,12 +54,6 @@ namespace Trsr.Storage.Migrations
                 table: "AgentCallEntity",
                 type: "REAL",
                 nullable: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ProjectEntity_Name",
-                table: "ProjectEntity",
-                column: "Name",
-                unique: true);
         }
 
         /// <inheritdoc />
