@@ -16,37 +16,34 @@ export function IdentityWidget({ agent, onDelete, className }: Props) {
 
   return (
     <div
-      className={`bg-card rounded-2xl relative ${className ?? ''}`}
-      style={{ boxShadow: 'var(--shadow-card)', borderTop: `2px solid ${c}` }}
+      className={`bg-card rounded-lg relative shadow-[var(--shadow-card)] ${className ?? ''}`}
+      style={{ borderTop: `2px solid ${c}` }}
     >
-      <div className="px-4 py-[10px] flex items-center gap-3">
+      <div className="px-4 py-3 flex items-center gap-3">
         <div
-          className="flex items-center justify-center shrink-0"
+          className="flex items-center justify-center shrink-0 w-9 h-9 rounded-md"
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 'var(--radius-md)',
             background: `color-mix(in srgb, ${c} 14%, transparent)`,
-            border: `1.5px solid color-mix(in srgb, ${c} 28%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${c} 30%, transparent)`,
           }}
         >
-          <span className="text-[15px] font-[800] font-mono" style={{ color: c }}>{initial}</span>
+          <span className="text-h2 font-bold font-mono" style={{ color: c }}>{initial}</span>
         </div>
 
         <div className="flex flex-col min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
-            <h2 className="text-[15px] font-bold tracking-[-0.01em] m-0 truncate">{agent.name}</h2>
-            <span className="px-[6px] py-[1px] bg-card-2 text-muted rounded-md text-[10.5px] shrink-0">{agent.projectName}</span>
+            <h2 className="text-h1 font-semibold tracking-[-0.01em] m-0 truncate">{agent.name}</h2>
+            <span className="px-1.5 py-px bg-card-2 text-secondary rounded-sm text-body-sm shrink-0">{agent.projectName}</span>
             <span
-              className="px-[6px] py-[1px] rounded-md text-[10.5px] font-semibold shrink-0"
-              style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}
+              className="px-1.5 py-px rounded-sm text-body-sm font-semibold shrink-0"
+              style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
             >
               {agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[10.5px] text-muted mt-[2px] flex-wrap">
+          <div className="flex items-center gap-2 text-body-sm text-muted mt-0.5 flex-wrap">
             <span>Created {fmtDate(agent.createdAt)}</span>
-            <span>·</span>
+            <span className="text-border">·</span>
             <span>Last used {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
           </div>
         </div>

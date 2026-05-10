@@ -22,7 +22,7 @@ const TYPE_COLORS: Record<string, string> = {
 const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
   {
     key: 'name', label: 'Name', width: '1.2fr',
-    render: p => <span className="font-mono text-[12px] font-semibold" style={{ color: '#93c5fd' }}>{p.name}</span>,
+    render: p => <span className="font-mono text-body font-semibold" style={{ color: TYPE_COLORS.string }}>{p.name}</span>,
   },
   {
     key: 'type', label: 'Type', width: '0.8fr',
@@ -30,11 +30,11 @@ const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
   },
   {
     key: 'req', label: 'Req', width: '0.4fr',
-    render: p => <span className={`text-[12px] font-bold ${p.isRequired ? 'text-danger' : 'text-muted'}`}>{p.isRequired ? '✓' : '—'}</span>,
+    render: p => <span className={`text-body font-semibold ${p.isRequired ? 'text-danger' : 'text-muted'}`}>{p.isRequired ? '✓' : '—'}</span>,
   },
   {
     key: 'desc', label: 'Description', width: '2.5fr',
-    render: p => <span className="text-[12px] text-secondary leading-[1.55]">{p.description ?? '—'}</span>,
+    render: p => <span className="text-body text-secondary leading-snug">{p.description ?? '—'}</span>,
   },
 ];
 
@@ -47,34 +47,30 @@ function ToolDetailBody({ tool }: { tool: ToolSpecDto }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="font-mono text-[14px] font-bold" style={{ color: '#6ee7b7' }}>{tool.name}</span>
-        <span className="font-mono text-[11px] text-muted">{requiredParams(tool)}</span>
+        <span className="font-mono text-h2 font-semibold text-teal">{tool.name}</span>
+        <span className="font-mono text-body-sm text-muted">{requiredParams(tool)}</span>
       </div>
       {tool.description && (
-        <div
-          className="text-[12.5px] text-secondary leading-relaxed px-3 py-2 rounded-lg"
-          style={{ background: 'rgba(16,185,129,0.05)', borderLeft: '2px solid rgba(16,185,129,0.3)' }}
-        >
+        <div className="text-body text-secondary leading-relaxed px-3 py-2 rounded-md bg-card-2 border-l-2 border-teal/40">
           {tool.description}
         </div>
       )}
       {tool.arguments.length > 0 ? (
         <>
-          <div className="text-[10px] font-semibold text-muted tracking-[0.08em] uppercase">Parameters</div>
-          <div className="overflow-hidden rounded-lg" style={{ background: 'rgba(0,0,0,0.22)' }}>
+          <div className="text-caption font-semibold text-muted tracking-[0.08em] uppercase">Parameters</div>
+          <div className="overflow-hidden rounded-md bg-surface">
             <DataTable columns={TOOL_ARG_COLUMNS} rows={tool.arguments} rowKey={p => p.name} />
           </div>
           {tool.arguments.some(a => a.enumValues?.length) && (
             <div className="flex flex-col gap-2">
-              <div className="text-[10px] font-semibold text-muted tracking-[0.08em] uppercase">Enum values</div>
+              <div className="text-caption font-semibold text-muted tracking-[0.08em] uppercase">Enum values</div>
               <div className="flex gap-1 flex-wrap">
                 {tool.arguments
                   .filter(a => a.enumValues?.length)
                   .flatMap(a => (a.enumValues ?? []).map(v => (
                     <span
                       key={`${a.name}-${v}`}
-                      className="font-mono text-[10px] px-[6px] py-[2px] rounded-[4px]"
-                      style={{ background: 'rgba(110,231,183,0.1)', color: '#6ee7b7' }}
+                      className="font-mono text-caption px-1.5 py-0.5 rounded-sm bg-teal/10 text-teal"
                     >
                       {a.name}={v}
                     </span>
@@ -84,7 +80,7 @@ function ToolDetailBody({ tool }: { tool: ToolSpecDto }) {
           )}
         </>
       ) : (
-        <div className="text-[12px] text-muted italic">No parameters</div>
+        <div className="text-body text-muted italic">No parameters</div>
       )}
     </div>
   );
@@ -103,7 +99,7 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
   if (tools.length === 0) {
     return (
       <Widget title="Tools" className={className}>
-        <div className="text-[12px] text-muted italic">No tools defined</div>
+        <div className="text-body text-muted italic">No tools defined</div>
       </Widget>
     );
   }
@@ -114,10 +110,7 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
     <Widget
       title="Tools"
       right={
-        <span
-          className="px-[7px] py-[1px] rounded-full text-[10.5px] font-semibold"
-          style={{ background: 'var(--success-subtle)', color: 'var(--success)' }}
-        >
+        <span className="px-1.5 py-px rounded-full text-body-sm font-semibold bg-teal/15 text-teal">
           {tools.length}
         </span>
       }
@@ -129,17 +122,14 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
           <button
             key={tool.name}
             onClick={() => setOpenTool(tool.name)}
-            className={`flex items-center gap-2 px-4 py-[10px] text-left cursor-pointer hover:bg-[rgba(16,185,129,0.04)] transition-colors duration-100 ${ti === tools.length - 1 ? '' : 'border-b border-hairline'}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-left cursor-pointer hover:bg-[var(--bg-wash-hover)] transition-colors duration-100 ${ti === tools.length - 1 ? '' : 'border-b border-hairline'}`}
           >
-            <span className="font-mono text-[13px] font-bold" style={{ color: '#6ee7b7' }}>{tool.name}</span>
-            <span className="font-mono text-[11px] text-muted">{requiredParams(tool)}</span>
+            <span className="font-mono text-title font-semibold text-teal">{tool.name}</span>
+            <span className="font-mono text-body-sm text-muted">{requiredParams(tool)}</span>
             {tool.description && (
-              <span className="text-[11px] text-muted truncate flex-1">{tool.description}</span>
+              <span className="text-body-sm text-muted truncate flex-1">{tool.description}</span>
             )}
-            <span
-              className="ml-auto shrink-0 px-[6px] py-[1px] rounded-full text-[10px] font-semibold"
-              style={{ background: 'rgba(110,231,183,0.1)', color: '#6ee7b7' }}
-            >
+            <span className="ml-auto shrink-0 px-1.5 py-px rounded-full text-caption font-semibold bg-teal/10 text-teal">
               {tool.arguments.length} arg{tool.arguments.length !== 1 ? 's' : ''}
             </span>
             <ChevronRightIcon size={12} className="text-muted" />

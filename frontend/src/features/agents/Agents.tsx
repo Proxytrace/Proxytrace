@@ -85,7 +85,7 @@ export default function Agents() {
                 highlightTool={highlightTool}
               />
             ) : !isLoading ? (
-              <div className="text-center py-12 text-[12.5px] text-muted">Select an agent to view details.</div>
+              <div className="text-center py-12 text-body text-muted">Select an agent to view details.</div>
             ) : null}
           </main>
         </div>

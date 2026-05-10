@@ -36,11 +36,8 @@ export function Widget({
 
   return (
     <div
-      className={`bg-card rounded-lg overflow-hidden flex flex-col ${className ?? ''}`}
-      style={{
-        boxShadow: 'var(--shadow-card)',
-        ...(accent ? { borderTop: `3px solid ${accent}` } : {}),
-      }}
+      className={`bg-card rounded-lg overflow-hidden flex flex-col shadow-[var(--shadow-card)] ${className ?? ''}`}
+      style={accent ? { borderTop: `3px solid ${accent}` } : undefined}
     >
       {showHeader && (
         <div
