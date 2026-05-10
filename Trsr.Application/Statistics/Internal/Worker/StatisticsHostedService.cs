@@ -34,7 +34,6 @@ internal class StatisticsHostedService : BackgroundService
         }
 
         ChannelReader<EntityChangedEvent> reader = entityEvents.Subscribe(stoppingToken);
-
         Dictionary<(Type, Guid), EntityChangedEvent> pending = new();
 
         while (!stoppingToken.IsCancellationRequested)
@@ -43,17 +42,18 @@ internal class StatisticsHostedService : BackgroundService
             {
                 if (!await reader.WaitToReadAsync(stoppingToken))
                 {
-                    break;
+                    return;
                 }
+
+                // Debounce: wait briefly to coalesce a burst, then drain everything queued.
+                await Task.Delay(FlushInterval, stoppingToken);
 
                 while (reader.TryRead(out EntityChangedEvent? evt))
                 {
-                    if (!projectorsByType.ContainsKey(evt.EntityType))
+                    if (projectorsByType.ContainsKey(evt.EntityType))
                     {
-                        continue;
+                        pending[(evt.EntityType, evt.EntityId)] = evt;
                     }
-
-                    pending[(evt.EntityType, evt.EntityId)] = evt;
                 }
 
                 if (pending.Count == 0)
@@ -61,28 +61,13 @@ internal class StatisticsHostedService : BackgroundService
                     continue;
                 }
 
-                await Task.Delay(FlushInterval, stoppingToken);
-
-                while (reader.TryRead(out EntityChangedEvent? evt))
-                {
-                    if (!projectorsByType.ContainsKey(evt.EntityType))
-                    {
-                        continue;
-                    }
-
-                    pending[(evt.EntityType, evt.EntityId)] = evt;
-                }
-
-                EntityChangedEvent[] batch = pending.Values.ToArray();
-                pending.Clear();
-
-                foreach (EntityChangedEvent evt in batch)
+                foreach (EntityChangedEvent evt in pending.Values)
                 {
                     foreach (IStatsProjector projector in projectorsByType[evt.EntityType])
                     {
                         try
                         {
-                            await projector.ProjectAsync(evt.EntityId, evt.ChangeType, stoppingToken);
+                            await projector.ProjectAsync(evt.EntityId, stoppingToken);
                         }
                         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                         {
@@ -96,6 +81,8 @@ internal class StatisticsHostedService : BackgroundService
                         }
                     }
                 }
+
+                pending.Clear();
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

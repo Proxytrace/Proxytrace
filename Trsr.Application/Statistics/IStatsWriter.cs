@@ -1,6 +1,6 @@
 namespace Trsr.Application.Statistics;
 
-public interface IStatsWriter<TStats> where TStats : IStats
+public interface IStatsWriter<TStats>
 {
     Task UpsertAsync(TStats stats, CancellationToken cancellationToken = default);
 

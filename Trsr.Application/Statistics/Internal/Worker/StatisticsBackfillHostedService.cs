@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain;
-using Trsr.Domain.Events;
 using Trsr.Domain.TestRun;
 
 namespace Trsr.Application.Statistics.Internal.Worker;
@@ -9,6 +9,7 @@ namespace Trsr.Application.Statistics.Internal.Worker;
 internal class StatisticsBackfillHostedService : IHostedService
 {
     private readonly IRepository<ITestRun> testRuns;
+    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStatsReader;
     private readonly IEnumerable<IStatsProjector> projectors;
     private readonly ILogger<StatisticsBackfillHostedService> logger;
 
@@ -17,10 +18,12 @@ internal class StatisticsBackfillHostedService : IHostedService
 
     public StatisticsBackfillHostedService(
         IRepository<ITestRun> testRuns,
+        IStatsReader<TestRunStats, TestRunStats.Filter> runStatsReader,
         IEnumerable<IStatsProjector> projectors,
         ILogger<StatisticsBackfillHostedService> logger)
     {
         this.testRuns = testRuns;
+        this.runStatsReader = runStatsReader;
         this.projectors = projectors;
         this.logger = logger;
     }
@@ -63,7 +66,7 @@ internal class StatisticsBackfillHostedService : IHostedService
         try
         {
             IReadOnlyList<ITestRun> runs = await testRuns.GetAllAsync(cancellationToken);
-            int finalized = 0;
+            int projected = 0;
 
             foreach (ITestRun run in runs)
             {
@@ -77,11 +80,19 @@ internal class StatisticsBackfillHostedService : IHostedService
                     continue;
                 }
 
+                // Skip runs already projected — avoids racing the live drainer when a run finalizes
+                // during backfill, and is a cheap no-op on warm restarts.
+                TestRunStats? existing = await runStatsReader.FindAsync(run.Id, cancellationToken);
+                if (existing is not null)
+                {
+                    continue;
+                }
+
                 foreach (IStatsProjector projector in testRunProjectors)
                 {
                     try
                     {
-                        await projector.ProjectAsync(run.Id, EntityChangeType.Updated, cancellationToken);
+                        await projector.ProjectAsync(run.Id, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -89,10 +100,10 @@ internal class StatisticsBackfillHostedService : IHostedService
                     }
                 }
 
-                finalized++;
+                projected++;
             }
 
-            logger.LogInformation("Statistics backfill scanned {Total} runs, projected {Finalized} finalized.", runs.Count, finalized);
+            logger.LogInformation("Statistics backfill scanned {Total} runs, projected {Projected} missing.", runs.Count, projected);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)

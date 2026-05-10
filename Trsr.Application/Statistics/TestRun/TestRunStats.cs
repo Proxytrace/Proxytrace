@@ -16,7 +16,7 @@ public record TestRunStats(
     TimeSpan? TotalDuration,
     TokenUsage? Usage,
     decimal? Cost,
-    DateTimeOffset RunCompletedAt) : IStats
+    DateTimeOffset RunCompletedAt)
 {
     public int Failed => TestCases - Passed;
 
@@ -25,6 +25,7 @@ public record TestRunStats(
     
     public record Filter(
         Guid? AgentId = null,
+        IReadOnlyCollection<Guid>? AgentIds = null,
         Guid? EndpointId = null,
         Guid? GroupId = null,
         Guid? SuiteId = null,

@@ -2,13 +2,6 @@ using Trsr.Domain.Usage;
 
 namespace Trsr.Application.Statistics;
 
-public enum StatisticsBucket
-{
-    FiveMinutes,
-    Hourly,
-    Daily,
-}
-
 public record StatisticsFilter(
     DateTimeOffset? From = null,
     DateTimeOffset? To = null,
@@ -21,7 +14,7 @@ public record StatisticsSummary(
     long TotalInputTokens,
     long TotalOutputTokens,
     double AvgLatencyMs,
-    double OverallPassRate);
+    double? OverallPassRate);
 
 public record TokenUsageStat(
     DateOnly Date,
@@ -42,8 +35,7 @@ public record PassRateStat(
     Guid SuiteId,
     DateTimeOffset RunTimestamp,
     int PassCount,
-    int FailCount,
-    int UndecidedCount);
+    int FailCount);
 
 public record ErrorRateStat(
     Guid EndpointId,

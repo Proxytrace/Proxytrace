@@ -1,6 +1,8 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Application.Statistics;
+using Trsr.Domain.ModelEndpoint;
+using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.AgentCall;
 using Trsr.Storage.Internal.Entities.Model;
@@ -12,46 +14,64 @@ namespace Trsr.Storage.Internal.Statistics;
 internal class AgentCallStatsQueries : IAgentCallStatsReader
 {
     private readonly Func<StorageDbContext> contextFactory;
+    private readonly IMapper<IModelEndpoint, ModelEndpointEntity> endpointMapper;
 
-    public AgentCallStatsQueries(Func<StorageDbContext> contextFactory)
+    public AgentCallStatsQueries(
+        Func<StorageDbContext> contextFactory,
+        IMapper<IModelEndpoint, ModelEndpointEntity> endpointMapper)
     {
         this.contextFactory = contextFactory;
+        this.endpointMapper = endpointMapper;
     }
 
     public async Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
-        List<AgentCallEntity> rows = await q.ToListAsync(cancellationToken);
-
-        long totalCalls = rows.Count;
-        long totalInput = rows.Sum(r => (long?)r.InputTokens ?? 0L);
-        long totalOutput = rows.Sum(r => (long?)r.OutputTokens ?? 0L);
-        double avgLatency = rows.Count == 0 ? 0d : rows.Average(r => r.LatencyMs ?? 0d);
+        var agg = await q
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Count = (long)g.Count(),
+                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
         return new StatisticsSummary(
-            TotalCalls: totalCalls,
-            TotalInputTokens: totalInput,
-            TotalOutputTokens: totalOutput,
-            AvgLatencyMs: avgLatency,
-            OverallPassRate: 0d);
+            TotalCalls: agg?.Count ?? 0L,
+            TotalInputTokens: agg?.Input ?? 0L,
+            TotalOutputTokens: agg?.Output ?? 0L,
+            AvgLatencyMs: agg?.AvgLatency ?? 0d,
+            OverallPassRate: null);
     }
 
     public async Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
-        List<AgentCallEntity> rows = await q.ToListAsync(cancellationToken);
+        var rows = await q
+            .GroupBy(c => new { c.CreatedAt.Year, c.CreatedAt.Month, c.CreatedAt.Day, c.EndpointId })
+            .Select(g => new
+            {
+                g.Key.Year,
+                g.Key.Month,
+                g.Key.Day,
+                g.Key.EndpointId,
+                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+            })
+            .ToListAsync(cancellationToken);
 
         return rows
-            .GroupBy(r => new { Date = DateOnly.FromDateTime(r.CreatedAt.UtcDateTime), r.EndpointId })
-            .Select(g => new TokenUsageStat(
-                Date: g.Key.Date,
-                EndpointId: g.Key.EndpointId,
-                InputTokens: g.Sum(r => (long?)r.InputTokens ?? 0L),
-                OutputTokens: g.Sum(r => (long?)r.OutputTokens ?? 0L)))
+            .Select(r => new TokenUsageStat(
+                Date: new DateOnly(r.Year, r.Month, r.Day),
+                EndpointId: r.EndpointId,
+                InputTokens: r.Input,
+                OutputTokens: r.Output))
             .OrderBy(s => s.Date)
             .ThenBy(s => s.EndpointId)
             .ToArray();
@@ -60,7 +80,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var samples = await q
             .Where(c => c.LatencyMs != null)
@@ -88,7 +108,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<ErrorRateStat>> GetErrorRatesAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var rows = await q
             .GroupBy(c => c.EndpointId)
@@ -113,7 +133,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<ModelBreakdownStat>> GetModelBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var rows = await q
             .GroupBy(c => c.EndpointId)
@@ -121,42 +141,23 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             {
                 EndpointId = g.Key,
                 CallCount = g.Count(),
-                TotalInput = g.Sum(c => (long?)(long?)c.InputTokens ?? 0L),
-                TotalOutput = g.Sum(c => (long?)(long?)c.OutputTokens ?? 0L),
+                TotalInput = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                TotalOutput = g.Sum(c => (long?)c.OutputTokens ?? 0L),
                 AvgLatency = g.Average(c => c.LatencyMs ?? 0d),
             })
             .ToListAsync(cancellationToken);
 
-        Guid[] endpointIds = rows.Select(r => r.EndpointId).Distinct().ToArray();
-        Dictionary<Guid, ModelEndpointEntity> endpoints = await context.Set<ModelEndpointEntity>()
-            .AsNoTracking()
-            .Where(e => endpointIds.Contains(e.Id))
-            .ToDictionaryAsync(e => e.Id, cancellationToken);
-
-        Guid[] modelIds = endpoints.Values.Select(e => e.Model).Distinct().ToArray();
-        Dictionary<Guid, ModelEntity> models = await context.Set<ModelEntity>()
-            .AsNoTracking()
-            .Where(m => modelIds.Contains(m.Id))
-            .ToDictionaryAsync(m => m.Id, cancellationToken);
+        Guid[] endpointIds = rows.Select(r => r.EndpointId).ToArray();
+        Dictionary<Guid, string> modelNames = await LoadModelNamesAsync(context, endpointIds, cancellationToken);
 
         return rows
-            .Select(r =>
-            {
-                string modelName = "(unknown)";
-                if (endpoints.TryGetValue(r.EndpointId, out ModelEndpointEntity? endpoint)
-                    && models.TryGetValue(endpoint.Model, out ModelEntity? model))
-                {
-                    modelName = model.Name;
-                }
-
-                return new ModelBreakdownStat(
-                    EndpointId: r.EndpointId,
-                    ModelName: modelName,
-                    CallCount: r.CallCount,
-                    TotalInputTokens: r.TotalInput,
-                    TotalOutputTokens: r.TotalOutput,
-                    AvgDurationMs: r.AvgLatency);
-            })
+            .Select(r => new ModelBreakdownStat(
+                EndpointId: r.EndpointId,
+                ModelName: modelNames.GetValueOrDefault(r.EndpointId, "(unknown)"),
+                CallCount: r.CallCount,
+                TotalInputTokens: r.TotalInput,
+                TotalOutputTokens: r.TotalOutput,
+                AvgDurationMs: r.AvgLatency))
             .OrderBy(s => s.ModelName)
             .ToArray();
     }
@@ -164,7 +165,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<AgentBreakdownStat>> GetAgentBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var rows = await q
             .GroupBy(c => c.AgentId)
@@ -177,48 +178,51 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = ApplyFilter(context, context.Set<AgentCallEntity>().AsNoTracking(), filter);
+        IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var rows = await q
             .GroupBy(c => c.EndpointId)
             .Select(g => new
             {
                 EndpointId = g.Key,
-                TotalInput = g.Sum(c => (long?)(long?)c.InputTokens ?? 0L),
-                TotalOutput = g.Sum(c => (long?)(long?)c.OutputTokens ?? 0L),
+                TotalInput = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                TotalOutput = g.Sum(c => (long?)c.OutputTokens ?? 0L),
             })
             .ToListAsync(cancellationToken);
 
-        Guid[] endpointIds = rows.Select(r => r.EndpointId).Distinct().ToArray();
-        Dictionary<Guid, ModelEndpointEntity> endpoints = await context.Set<ModelEndpointEntity>()
-            .AsNoTracking()
-            .Where(e => endpointIds.Contains(e.Id))
-            .ToDictionaryAsync(e => e.Id, cancellationToken);
+        Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
+            context, rows.Select(r => r.EndpointId).ToArray(), cancellationToken);
 
         return rows
             .Select(r =>
             {
-                endpoints.TryGetValue(r.EndpointId, out ModelEndpointEntity? endpoint);
-                decimal? inputCost = endpoint?.InputTokenCost is { } ic ? ic * r.TotalInput : null;
-                decimal? outputCost = endpoint?.OutputTokenCost is { } oc ? oc * r.TotalOutput : null;
-                decimal? totalCost = inputCost.HasValue || outputCost.HasValue
-                    ? (inputCost ?? 0m) + (outputCost ?? 0m)
-                    : null;
+                IModelEndpoint? endpoint = endpoints.GetValueOrDefault(r.EndpointId);
                 if (endpoint?.InputTokenCost is null && endpoint?.OutputTokenCost is null)
                 {
-                    totalCost = null;
+                    return new CostEstimateStat(r.EndpointId, null, null, null);
                 }
-                return new CostEstimateStat(
-                    EndpointId: r.EndpointId,
-                    InputCostEur: inputCost,
-                    OutputCostEur: outputCost,
-                    TotalCostEur: totalCost);
+
+                decimal? input = endpoint.InputTokenCost is { } ic ? ic * r.TotalInput : null;
+                decimal? output = endpoint.OutputTokenCost is { } oc ? oc * r.TotalOutput : null;
+                decimal? total = (input ?? 0m) + (output ?? 0m);
+                return new CostEstimateStat(r.EndpointId, input, output, total);
             })
             .OrderBy(s => s.EndpointId)
             .ToArray();
     }
 
     public async Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(
+        Guid agentId,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        StatisticsBucket bucket,
+        CancellationToken cancellationToken = default)
+    {
+        (IReadOnlyList<AgentTimeSeriesPoint> series, _) = await GetAgentWindowAsync(agentId, from, to, bucket, cancellationToken);
+        return series;
+    }
+
+    public async Task<(IReadOnlyList<AgentTimeSeriesPoint> Series, AgentTimeSummary Summary)> GetAgentWindowAsync(
         Guid agentId,
         DateTimeOffset from,
         DateTimeOffset to,
@@ -232,128 +236,124 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .Where(c => c.AgentId == agentId && c.CreatedAt >= from && c.CreatedAt <= to)
             .ToListAsync(cancellationToken);
 
-        Guid[] endpointIds = rows.Select(r => r.EndpointId).Distinct().ToArray();
-        Dictionary<Guid, ModelEndpointEntity> endpoints = await context.Set<ModelEndpointEntity>()
-            .AsNoTracking()
-            .Where(e => endpointIds.Contains(e.Id))
-            .ToDictionaryAsync(e => e.Id, cancellationToken);
+        Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
+            context, rows.Select(r => r.EndpointId).Distinct().ToArray(), cancellationToken);
 
-        return rows
-            .GroupBy(r => BucketStart(r.CreatedAt, bucket))
-            .Select(g =>
-            {
-                long inputTokens = g.Sum(r => (long?)r.InputTokens ?? 0L);
-                long outputTokens = g.Sum(r => (long?)r.OutputTokens ?? 0L);
-                double avgLatency = g.Average(r => r.LatencyMs ?? 0d);
-                decimal cost = 0m;
-                foreach (AgentCallEntity call in g)
-                {
-                    if (!endpoints.TryGetValue(call.EndpointId, out ModelEndpointEntity? endpoint))
-                    {
-                        continue;
-                    }
-                    if (endpoint.InputTokenCost is { } ic && call.InputTokens.HasValue)
-                    {
-                        cost += ic * (long)call.InputTokens.Value;
-                    }
-                    if (endpoint.OutputTokenCost is { } oc && call.OutputTokens.HasValue)
-                    {
-                        cost += oc * (long)call.OutputTokens.Value;
-                    }
-                }
-
-                return new AgentTimeSeriesPoint(
-                    BucketStart: g.Key,
-                    TraceCount: g.Count(),
-                    InputTokens: inputTokens,
-                    OutputTokens: outputTokens,
-                    CostEur: cost,
-                    AvgLatencyMs: avgLatency);
-            })
-            .OrderBy(p => p.BucketStart)
+        AgentTimeSeriesPoint[] series = rows
+            .GroupBy(r => bucket.BucketStart(r.CreatedAt))
+            .OrderBy(g => g.Key)
+            .Select(g => new AgentTimeSeriesPoint(
+                BucketStart: g.Key,
+                TraceCount: g.Count(),
+                InputTokens: g.Sum(r => (long?)r.InputTokens ?? 0L),
+                OutputTokens: g.Sum(r => (long?)r.OutputTokens ?? 0L),
+                CostEur: SumCost(g, endpoints),
+                AvgLatencyMs: g.Average(r => r.LatencyMs ?? 0d)))
             .ToArray();
-    }
-
-    public async Task<AgentTimeSummary> GetAgentTimeSummaryAsync(
-        Guid agentId,
-        DateTimeOffset from,
-        DateTimeOffset to,
-        CancellationToken cancellationToken = default)
-    {
-        StorageDbContext context = contextFactory();
-
-        List<AgentCallEntity> rows = await context.Set<AgentCallEntity>()
-            .AsNoTracking()
-            .Where(c => c.AgentId == agentId && c.CreatedAt >= from && c.CreatedAt <= to)
-            .ToListAsync(cancellationToken);
-
-        Guid[] endpointIds = rows.Select(r => r.EndpointId).Distinct().ToArray();
-        Dictionary<Guid, ModelEndpointEntity> endpoints = await context.Set<ModelEndpointEntity>()
-            .AsNoTracking()
-            .Where(e => endpointIds.Contains(e.Id))
-            .ToDictionaryAsync(e => e.Id, cancellationToken);
 
         long totalInput = rows.Sum(r => (long?)r.InputTokens ?? 0L);
         long totalOutput = rows.Sum(r => (long?)r.OutputTokens ?? 0L);
         double avgLatency = rows.Count == 0 ? 0d : rows.Average(r => r.LatencyMs ?? 0d);
+        decimal totalCost = SumCost(rows, endpoints);
 
-        decimal totalCost = 0m;
-        foreach (AgentCallEntity call in rows)
-        {
-            if (!endpoints.TryGetValue(call.EndpointId, out ModelEndpointEntity? endpoint))
-            {
-                continue;
-            }
-            if (endpoint.InputTokenCost is { } ic && call.InputTokens.HasValue)
-            {
-                totalCost += ic * (long)call.InputTokens.Value;
-            }
-            if (endpoint.OutputTokenCost is { } oc && call.OutputTokens.HasValue)
-            {
-                totalCost += oc * (long)call.OutputTokens.Value;
-            }
-        }
-
-        return new AgentTimeSummary(
+        AgentTimeSummary summary = new(
             TotalTraces: rows.Count,
             TotalInputTokens: totalInput,
             TotalOutputTokens: totalOutput,
             TotalCostEur: totalCost,
             AvgLatencyMs: avgLatency);
+
+        return (series, summary);
     }
 
-    private static IQueryable<AgentCallEntity> ApplyFilter(
-        StorageDbContext context,
-        IQueryable<AgentCallEntity> query,
-        StatisticsFilter filter)
+    private async Task<Dictionary<Guid, IModelEndpoint>> LoadEndpointsAsync(
+        StorageDbContext context, IReadOnlyCollection<Guid> endpointIds, CancellationToken cancellationToken)
     {
-        if (filter.AgentId.HasValue)
+        if (endpointIds.Count == 0)
         {
-            Guid agentId = filter.AgentId.Value;
+            return new Dictionary<Guid, IModelEndpoint>();
+        }
+
+        List<ModelEndpointEntity> entities = await context.Set<ModelEndpointEntity>()
+            .AsNoTracking()
+            .Where(e => endpointIds.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        var result = new Dictionary<Guid, IModelEndpoint>(entities.Count);
+        foreach (ModelEndpointEntity entity in entities)
+        {
+            result[entity.Id] = await endpointMapper.Map(entity, cancellationToken);
+        }
+        return result;
+    }
+
+    private static async Task<Dictionary<Guid, string>> LoadModelNamesAsync(
+        StorageDbContext context, IReadOnlyCollection<Guid> endpointIds, CancellationToken cancellationToken)
+    {
+        if (endpointIds.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        var pairs = await context.Set<ModelEndpointEntity>()
+            .AsNoTracking()
+            .Where(e => endpointIds.Contains(e.Id))
+            .Join(context.Set<ModelEntity>().AsNoTracking(),
+                e => e.Model,
+                m => m.Id,
+                (e, m) => new { EndpointId = e.Id, m.Name })
+            .ToListAsync(cancellationToken);
+
+        return pairs.ToDictionary(p => p.EndpointId, p => p.Name);
+    }
+
+    private static decimal SumCost(IEnumerable<AgentCallEntity> calls, IReadOnlyDictionary<Guid, IModelEndpoint> endpoints)
+    {
+        decimal total = 0m;
+        foreach (AgentCallEntity call in calls)
+        {
+            if (!endpoints.TryGetValue(call.EndpointId, out IModelEndpoint? endpoint)
+                || !call.InputTokens.HasValue
+                || !call.OutputTokens.HasValue)
+            {
+                continue;
+            }
+            TokenUsage usage = new(call.InputTokens.Value, call.OutputTokens.Value);
+            decimal? cost = endpoint.CalculateCost(usage);
+            if (cost.HasValue)
+            {
+                total += cost.Value;
+            }
+        }
+        return total;
+    }
+
+    private static IQueryable<AgentCallEntity> Query(StorageDbContext context, StatisticsFilter filter)
+    {
+        IQueryable<AgentCallEntity> query = context.Set<AgentCallEntity>().AsNoTracking();
+
+        if (filter.AgentId is { } agentId)
+        {
             query = query.Where(c => c.AgentId == agentId);
         }
-        if (filter.EndpointId.HasValue)
+        if (filter.EndpointId is { } endpointId)
         {
-            Guid endpointId = filter.EndpointId.Value;
             query = query.Where(c => c.EndpointId == endpointId);
         }
-        if (filter.ProjectId.HasValue)
+        if (filter.ProjectId is { } projectId)
         {
-            Guid projectId = filter.ProjectId.Value;
             IQueryable<Guid> agentIds = context.Set<AgentEntity>()
                 .AsNoTracking()
                 .Where(a => a.Project == projectId)
                 .Select(a => a.Id);
             query = query.Where(c => agentIds.Contains(c.AgentId));
         }
-        if (filter.From.HasValue)
+        if (filter.From is { } from)
         {
-            DateTimeOffset from = filter.From.Value;
             query = query.Where(c => c.CreatedAt >= from);
         }
-        if (filter.To.HasValue)
+        if (filter.To is { } to)
         {
-            DateTimeOffset to = filter.To.Value;
             query = query.Where(c => c.CreatedAt <= to);
         }
         return query;
@@ -379,17 +379,4 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         double weight = rank - lower;
         return sorted[lower] * (1 - weight) + sorted[upper] * weight;
     }
-
-    private static DateTimeOffset BucketStart(DateTimeOffset timestamp, StatisticsBucket bucket) => bucket switch
-    {
-        StatisticsBucket.FiveMinutes => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day,
-            timestamp.Hour, (timestamp.Minute / 5) * 5, 0, timestamp.Offset),
-        StatisticsBucket.Hourly => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day,
-            timestamp.Hour, 0, 0, timestamp.Offset),
-        StatisticsBucket.Daily => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day, 0, 0, 0, timestamp.Offset),
-        _ => timestamp,
-    };
 }

@@ -1,5 +1,6 @@
 using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain;
+using Trsr.Domain.Agent;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.TestSuite;
 
@@ -9,23 +10,36 @@ internal class StatisticsService : IStatisticsService
 {
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly IAgentCallStatsReader callStats;
+    private readonly IRepository<IAgent> agents;
     private readonly IRepository<ITestSuite> testSuites;
     private readonly IRepository<IOptimizationProposal> proposals;
 
     public StatisticsService(
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         IAgentCallStatsReader callStats,
+        IRepository<IAgent> agents,
         IRepository<ITestSuite> testSuites,
         IRepository<IOptimizationProposal> proposals)
     {
         this.runStats = runStats;
         this.callStats = callStats;
+        this.agents = agents;
         this.testSuites = testSuites;
         this.proposals = proposals;
     }
 
-    public Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
-        => callStats.GetSummaryAsync(filter, cancellationToken);
+    public async Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        StatisticsSummary callSummary = await callStats.GetSummaryAsync(filter, cancellationToken);
+        TestRunStats.Filter runFilter = await ToRunFilterAsync(filter, cancellationToken);
+        IReadOnlyList<TestRunStats> runs = await runStats.QueryAsync(runFilter, cancellationToken);
+
+        int totalCases = runs.Sum(r => r.TestCases);
+        int totalPassed = runs.Sum(r => r.Passed);
+        double? passRate = totalCases > 0 ? totalPassed / (double)totalCases : null;
+
+        return callSummary with { OverallPassRate = passRate };
+    }
 
     public Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
         => callStats.GetTokenUsageAsync(filter, cancellationToken);
@@ -50,7 +64,8 @@ internal class StatisticsService : IStatisticsService
 
     public async Task<IReadOnlyList<PassRateStat>> GetPassRatesAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<TestRunStats> rows = await runStats.QueryAsync(ToRunFilter(filter), cancellationToken);
+        TestRunStats.Filter runFilter = await ToRunFilterAsync(filter, cancellationToken);
+        IReadOnlyList<TestRunStats> rows = await runStats.QueryAsync(runFilter, cancellationToken);
 
         return rows
             .OrderByDescending(r => r.RunCompletedAt)
@@ -58,24 +73,25 @@ internal class StatisticsService : IStatisticsService
                 SuiteId: r.SuiteId,
                 RunTimestamp: r.RunCompletedAt,
                 PassCount: r.Passed,
-                FailCount: r.Failed,
-                UndecidedCount: 0))
+                FailCount: r.Failed))
             .ToArray();
     }
 
     public async Task<AgentOverviewStat> GetAgentOverviewAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
     {
-        Task<AgentTimeSummary> summaryTask = callStats.GetAgentTimeSummaryAsync(agentId, from, to, cancellationToken);
-        Task<IReadOnlyList<AgentTimeSeriesPoint>> timeSeriesTask = callStats.GetAgentTimeSeriesAsync(agentId, from, to, bucket, cancellationToken);
+        Task<(IReadOnlyList<AgentTimeSeriesPoint> Series, AgentTimeSummary Summary)> windowTask
+            = callStats.GetAgentWindowAsync(agentId, from, to, bucket, cancellationToken);
         Task<IReadOnlyList<AgentPassRatePoint>> passRateTask = GetAgentPassRateTrendAsync(agentId, from, to, bucket, cancellationToken);
         Task<IReadOnlyList<AgentSuitePassRate>> suitesTask = GetAgentLatestSuitePassRatesAsync(agentId, cancellationToken);
         Task<AgentEntityCounts> countsTask = GetAgentEntityCountsAsync(agentId, cancellationToken);
 
-        await Task.WhenAll(summaryTask, timeSeriesTask, passRateTask, suitesTask, countsTask);
+        await Task.WhenAll(windowTask, passRateTask, suitesTask, countsTask);
+
+        (IReadOnlyList<AgentTimeSeriesPoint> series, AgentTimeSummary summary) = windowTask.Result;
 
         return new AgentOverviewStat(
-            Summary: summaryTask.Result,
-            TimeSeries: timeSeriesTask.Result,
+            Summary: summary,
+            TimeSeries: series,
             PassRateTrend: passRateTask.Result,
             SuitePassRates: suitesTask.Result,
             Counts: countsTask.Result);
@@ -88,7 +104,7 @@ internal class StatisticsService : IStatisticsService
             cancellationToken);
 
         return rows
-            .GroupBy(r => BucketStart(r.RunCompletedAt, bucket))
+            .GroupBy(r => bucket.BucketStart(r.RunCompletedAt))
             .OrderBy(g => g.Key)
             .Select(g => new AgentPassRatePoint(
                 BucketStart: g.Key,
@@ -101,64 +117,85 @@ internal class StatisticsService : IStatisticsService
     {
         IReadOnlyList<TestRunStats> rows = await runStats.QueryAsync(new TestRunStats.Filter(AgentId: agentId), cancellationToken);
 
-        var latestPerSuite = rows
+        TestRunStats[] latestPerSuite = rows
             .GroupBy(r => r.SuiteId)
             .Select(g => g.OrderByDescending(r => r.RunCompletedAt).First())
             .ToArray();
 
-        var result = new List<AgentSuitePassRate>(latestPerSuite.Length);
-        foreach (TestRunStats row in latestPerSuite)
+        if (latestPerSuite.Length == 0)
         {
-            ITestSuite? suite = await testSuites.FindAsync(row.SuiteId, cancellationToken);
-            if (suite is null)
-            {
-                continue;
-            }
-
-            result.Add(new AgentSuitePassRate(
-                SuiteId: suite.Id,
-                SuiteName: suite.Name,
-                LatestRunAt: row.RunCompletedAt,
-                Passed: row.Passed,
-                TestCases: row.TestCases));
+            return [];
         }
 
-        return result;
+        Guid[] suiteIds = latestPerSuite.Select(r => r.SuiteId).ToArray();
+        IReadOnlyList<ITestSuite> suites;
+        try
+        {
+            suites = await testSuites.GetManyAsync(suiteIds, cancellationToken);
+        }
+        catch (Domain.Exceptions.EntitiesNotFoundException)
+        {
+            // Some suites were deleted after the run finalized — fall back to a per-id lookup.
+            var found = new List<ITestSuite>(suiteIds.Length);
+            foreach (Guid id in suiteIds)
+            {
+                ITestSuite? suite = await testSuites.FindAsync(id, cancellationToken);
+                if (suite is not null)
+                {
+                    found.Add(suite);
+                }
+            }
+            suites = found;
+        }
+
+        Dictionary<Guid, ITestSuite> suiteById = suites.ToDictionary(s => s.Id);
+
+        return latestPerSuite
+            .Where(r => suiteById.ContainsKey(r.SuiteId))
+            .Select(r =>
+            {
+                ITestSuite suite = suiteById[r.SuiteId];
+                return new AgentSuitePassRate(
+                    SuiteId: suite.Id,
+                    SuiteName: suite.Name,
+                    LatestRunAt: r.RunCompletedAt,
+                    Passed: r.Passed,
+                    TestCases: r.TestCases);
+            })
+            .ToArray();
     }
 
     public async Task<AgentEntityCounts> GetAgentEntityCountsAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
+        // Repositories don't expose filtered queries; load and filter. Suite/proposal volumes
+        // per project are typically small, but if this becomes hot, push filters into the repo layer.
         IReadOnlyList<ITestSuite> allSuites = await testSuites.GetAllAsync(cancellationToken);
         ITestSuite[] agentSuites = allSuites.Where(s => s.Agent.Id == agentId).ToArray();
 
-        int suiteCount = agentSuites.Length;
-        int testCaseCount = agentSuites.Sum(s => s.TestCases.Count);
-
         IReadOnlyList<IOptimizationProposal> allProposals = await proposals.GetAllAsync(cancellationToken);
         IOptimizationProposal[] agentProposals = allProposals.Where(p => p.Agent.Id == agentId).ToArray();
-        int totalProposals = agentProposals.Length;
-        int openProposals = agentProposals.Count(p => p.Status == ProposalStatus.Draft);
 
-        return new AgentEntityCounts(suiteCount, testCaseCount, openProposals, totalProposals);
+        return new AgentEntityCounts(
+            SuiteCount: agentSuites.Length,
+            TestCaseCount: agentSuites.Sum(s => s.TestCases.Count),
+            OpenProposalCount: agentProposals.Count(p => p.Status == ProposalStatus.Draft),
+            TotalProposalCount: agentProposals.Length);
     }
 
-    private static TestRunStats.Filter ToRunFilter(StatisticsFilter filter)
-        => new(
+    private async Task<TestRunStats.Filter> ToRunFilterAsync(StatisticsFilter filter, CancellationToken cancellationToken)
+    {
+        IReadOnlyCollection<Guid>? agentIds = null;
+        if (filter.ProjectId is { } projectId)
+        {
+            IReadOnlyList<IAgent> all = await agents.GetAllAsync(cancellationToken);
+            agentIds = all.Where(a => a.Project.Id == projectId).Select(a => a.Id).ToArray();
+        }
+
+        return new TestRunStats.Filter(
             AgentId: filter.AgentId,
+            AgentIds: agentIds,
             EndpointId: filter.EndpointId,
             From: filter.From,
             To: filter.To);
-
-    private static DateTimeOffset BucketStart(DateTimeOffset timestamp, StatisticsBucket bucket) => bucket switch
-    {
-        StatisticsBucket.FiveMinutes => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day,
-            timestamp.Hour, (timestamp.Minute / 5) * 5, 0, timestamp.Offset),
-        StatisticsBucket.Hourly => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day,
-            timestamp.Hour, 0, 0, timestamp.Offset),
-        StatisticsBucket.Daily => new DateTimeOffset(
-            timestamp.Year, timestamp.Month, timestamp.Day, 0, 0, 0, timestamp.Offset),
-        _ => timestamp,
-    };
+    }
 }

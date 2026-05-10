@@ -115,7 +115,7 @@ export interface SummaryDto {
   totalInputTokens: number;
   totalOutputTokens: number;
   avgLatencyMs: number;
-  overallPassRate: number;
+  overallPassRate: number | null;
 }
 export interface ModelBreakdownDto {
   endpointId: string;
