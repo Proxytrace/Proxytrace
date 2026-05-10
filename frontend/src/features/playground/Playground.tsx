@@ -99,16 +99,6 @@ export default function Playground() {
     startStream(next.slice(0, -1), placeholder.localId);
   }, [state.messages, dispatch, startStream]);
 
-  const onReroll = useCallback((localId: string) => {
-    const idx = state.messages.findIndex(m => m.localId === localId);
-    if (idx < 0) return;
-    const truncated = state.messages.slice(0, idx + 1);
-    const placeholder = makeMessage('assistant', '');
-    const next = [...truncated, placeholder];
-    dispatch({ type: 'setMessages', messages: next });
-    startStream(truncated, placeholder.localId);
-  }, [state.messages, dispatch, startStream]);
-
   const onToolResult = useCallback((result: { content: string; success: boolean; error?: string }) => {
     const pending = state.pendingToolRequest;
     if (!pending) return;
@@ -118,6 +108,27 @@ export default function Playground() {
       toolError: result.error,
     });
     const next = [...state.messages, toolMsg];
+
+    // Find next unresolved tool_call from the most recent assistant message with tool_calls.
+    let nextPending: PlaygroundToolRequest | null = null;
+    for (let i = next.length - 1; i >= 0; i--) {
+      const m = next[i];
+      if (m.role === 'assistant' && m.toolRequests && m.toolRequests.length > 0) {
+        const respondedIds = new Set(
+          next.slice(i + 1).filter(x => x.role === 'tool' && x.toolCallId).map(x => x.toolCallId!),
+        );
+        nextPending = m.toolRequests.find(tr => !respondedIds.has(tr.id)) ?? null;
+        break;
+      }
+      if (m.role === 'user') break;
+    }
+
+    if (nextPending) {
+      dispatch({ type: 'setMessages', messages: next });
+      dispatch({ type: 'setPendingTool', request: nextPending });
+      return;
+    }
+
     const placeholder = makeMessage('assistant', '');
     const withPlaceholder = [...next, placeholder];
     dispatch({ type: 'setPendingTool', request: null });
@@ -128,6 +139,17 @@ export default function Playground() {
   const onInsert = useCallback((atIndex: number, role: PlaygroundRole) => {
     dispatch({ type: 'insertAt', index: atIndex, message: makeMessage(role, '') });
   }, [dispatch]);
+
+  const onMove = useCallback((fromId: string, toIndex: number) => {
+    const from = state.messages.findIndex(m => m.localId === fromId);
+    if (from < 0) return;
+    if (toIndex === from || toIndex === from + 1) return;
+    const next = state.messages.slice();
+    const [moved] = next.splice(from, 1);
+    const insertAt = toIndex > from ? toIndex - 1 : toIndex;
+    next.splice(insertAt, 0, moved);
+    dispatch({ type: 'reorderMessages', messages: next });
+  }, [state.messages, dispatch]);
 
   const onNewSession = useCallback(() => {
     abortRef.current?.abort();
@@ -225,7 +247,7 @@ export default function Playground() {
           onEdit={(localId, content) => dispatch({ type: 'updateMessage', localId, patch: { content } })}
           onDelete={localId => dispatch({ type: 'deleteMessage', localId })}
           onInsert={onInsert}
-          onReroll={onReroll}
+          onMove={onMove}
         />
 
         {state.pendingToolRequest ? (

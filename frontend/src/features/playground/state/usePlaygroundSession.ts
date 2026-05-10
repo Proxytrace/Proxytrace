@@ -83,7 +83,8 @@ type Action =
   | { type: 'finishStreaming'; stats: PlaygroundStats | null }
   | { type: 'setError'; message: string }
   | { type: 'setPendingTool'; request: PlaygroundToolRequest | null }
-  | { type: 'attachToolRequests'; localId: string; toolRequests: PlaygroundToolRequest[] };
+  | { type: 'attachToolRequests'; localId: string; toolRequests: PlaygroundToolRequest[] }
+  | { type: 'reorderMessages'; messages: PlaygroundMessage[] };
 
 function reducer(state: PlaygroundSession, action: Action): PlaygroundSession {
   switch (action.type) {
@@ -133,6 +134,8 @@ function reducer(state: PlaygroundSession, action: Action): PlaygroundSession {
       return { ...state, isStreaming: false, error: action.message };
     case 'setPendingTool':
       return { ...state, pendingToolRequest: action.request };
+    case 'reorderMessages':
+      return { ...state, messages: action.messages };
     case 'attachToolRequests':
       return {
         ...state,

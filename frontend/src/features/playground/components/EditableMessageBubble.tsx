@@ -2,8 +2,6 @@ import { useState } from 'react';
 import {
   CopyIcon,
   EditIcon,
-  PlayIcon,
-  PlusIcon,
   TrashIcon,
 } from '../../../components/icons';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
@@ -57,20 +55,26 @@ const ROLE_STYLE: Record<PlaygroundRole, RoleStyle> = {
 interface Props {
   message: PlaygroundMessage;
   turnIndex: number;
-  canReroll: boolean;
   isStreaming: boolean;
+  isDragging?: boolean;
   onEdit: (content: string) => void;
   onDelete: () => void;
-  onInsertAbove: () => void;
-  onInsertBelow: () => void;
-  onReroll: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  onDragOverBubble?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }
 
 export function EditableMessageBubble(props: Props) {
-  const { message, turnIndex, canReroll, isStreaming, onEdit, onDelete, onInsertAbove, onInsertBelow, onReroll } = props;
+  const {
+    message, turnIndex, isStreaming, isDragging,
+    onEdit, onDelete,
+    onDragStart, onDragEnd, onDragOverBubble, onDrop,
+  } = props;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(message.content);
   const style = ROLE_STYLE[message.role];
+  const draggable = !editing && !isStreaming && !!onDragStart;
 
   const beginEdit = () => { setDraft(message.content); setEditing(true); };
   const saveEdit = () => { onEdit(draft); setEditing(false); };
@@ -85,15 +89,39 @@ export function EditableMessageBubble(props: Props) {
 
   return (
     <div
-      className="group rounded-[14px] overflow-hidden focus-within:outline focus-within:outline-1"
+      draggable={draggable}
+      onDragStart={e => {
+        if (!draggable) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', message.localId);
+        onDragStart?.();
+      }}
+      onDragEnd={() => onDragEnd?.()}
+      onDragOver={e => onDragOverBubble?.(e)}
+      onDrop={e => onDrop?.(e)}
+      className={`group rounded-[14px] overflow-hidden focus-within:outline focus-within:outline-1${isStreaming ? ' streaming-border' : ''}`}
       style={{
         background: style.bg,
         border: `1px solid ${style.border}`,
         boxShadow: 'var(--shadow-card)',
         outlineColor: style.border,
+        opacity: isDragging ? 0.4 : 1,
+        cursor: draggable ? 'grab' : 'default',
+        transition: 'opacity 0.15s',
+        ['--streaming-color' as string]: style.accent,
       }}
     >
       <div className="flex items-center gap-[8px] px-[12px] pt-[10px] pb-[8px]">
+        {draggable && (
+          <span
+            aria-hidden
+            title="Drag to reorder"
+            className="text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            style={{ cursor: 'grab' }}
+          >
+            <GripIcon />
+          </span>
+        )}
         <span
           aria-hidden
           className="inline-flex items-center justify-center size-[24px] rounded-full text-[11px] font-bold shrink-0"
@@ -115,23 +143,12 @@ export function EditableMessageBubble(props: Props) {
           <span className="text-[10px] text-danger mono uppercase tracking-[0.05em]">error</span>
         )}
         <div className="ml-auto flex items-center gap-[2px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-          <button type="button" className="btn-icon" title="Insert above" onClick={onInsertAbove} aria-label="Insert above">
-            <PlusIcon size={12} strokeWidth={2.4} />
-          </button>
-          <button type="button" className="btn-icon" title="Insert below" onClick={onInsertBelow} aria-label="Insert below">
-            <PlusIcon size={12} strokeWidth={2.4} />
-          </button>
           <button type="button" className="btn-icon" title="Edit" onClick={beginEdit} aria-label="Edit">
             <EditIcon size={12} strokeWidth={2.2} />
           </button>
-          <button type="button" className="btn-icon" title="Copy" onClick={copyContent} aria-label="Copy">
+          <button type="button" className="btn-icon" title="Copy to clipboard" onClick={copyContent} aria-label="Copy to clipboard">
             <CopyIcon size={12} strokeWidth={2.2} />
           </button>
-          {canReroll && (
-            <button type="button" className="btn-icon" title="Re-roll from here" onClick={onReroll} aria-label="Re-roll">
-              <PlayIcon size={12} strokeWidth={2.2} />
-            </button>
-          )}
           <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={onDelete} aria-label="Delete">
             <TrashIcon size={12} strokeWidth={2.2} />
           </button>
@@ -215,5 +232,18 @@ export function EditableMessageBubble(props: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+function GripIcon() {
+  return (
+    <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <circle cx="9" cy="6" r="1.5" />
+      <circle cx="15" cy="6" r="1.5" />
+      <circle cx="9" cy="12" r="1.5" />
+      <circle cx="15" cy="12" r="1.5" />
+      <circle cx="9" cy="18" r="1.5" />
+      <circle cx="15" cy="18" r="1.5" />
+    </svg>
   );
 }

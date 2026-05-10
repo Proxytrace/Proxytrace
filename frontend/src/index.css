@@ -128,6 +128,38 @@ a { text-decoration: none; color: inherit; }
   100% { background-position: 200% 0; }
 }
 
+@property --streaming-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes streaming-border-spin {
+  to { --streaming-angle: 360deg; }
+}
+.streaming-border { position: relative; }
+.streaming-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--streaming-angle),
+    transparent 0deg,
+    var(--streaming-color, #a78bfa) 80deg,
+    transparent 200deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  animation: streaming-border-spin 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .streaming-border::before { animation: none; }
+}
+
 .fade-up { animation: fade-up 0.2s ease both; }
 
 .pulse-dot {
