@@ -1,6 +1,6 @@
 import { api } from './client';
 
-export type SearchKind = 'agent' | 'testSuite' | 'agentCall' | 'evaluator';
+export type SearchKind = 'agent' | 'testSuite' | 'agentCall' | 'evaluator' | 'testCase';
 
 export interface SearchHit {
   kind: SearchKind;

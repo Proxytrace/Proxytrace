@@ -52,6 +52,7 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterModule<Optimization.Module>();
         builder.RegisterModule<Statistics.Module>();
+        builder.RegisterModule<Playground.PlaygroundModule>();
 
         builder.RegisterModule(new Search.SearchModule(cb =>
         {

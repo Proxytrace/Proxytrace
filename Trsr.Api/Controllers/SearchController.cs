@@ -60,6 +60,7 @@ public class SearchController : ControllerBase
         SearchKind.TestSuite => "testSuite",
         SearchKind.AgentCall => "agentCall",
         SearchKind.Evaluator => "evaluator",
+        SearchKind.TestCase => "testCase",
         _ => kind.ToString().ToLowerInvariant(),
     };
 }
