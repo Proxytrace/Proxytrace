@@ -83,6 +83,10 @@ public sealed class Module : Autofac.Module
             .As<IAgentCallStatsReader>()
             .InstancePerDependency();
 
+        builder.RegisterType<EvaluatorStatsQueries>()
+            .As<IEvaluatorStatsReader>()
+            .InstancePerDependency();
+
         builder
             .Register(context => new AutofacServiceProvider(context.Resolve<ILifetimeScope>()))
             .InstancePerLifetimeScope()

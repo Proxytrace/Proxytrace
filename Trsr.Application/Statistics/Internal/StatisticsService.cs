@@ -10,6 +10,7 @@ internal class StatisticsService : IStatisticsService
 {
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly IAgentCallStatsReader callStats;
+    private readonly IEvaluatorStatsReader evaluatorStats;
     private readonly IRepository<IAgent> agents;
     private readonly IRepository<ITestSuite> testSuites;
     private readonly IRepository<IOptimizationProposal> proposals;
@@ -17,12 +18,14 @@ internal class StatisticsService : IStatisticsService
     public StatisticsService(
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         IAgentCallStatsReader callStats,
+        IEvaluatorStatsReader evaluatorStats,
         IRepository<IAgent> agents,
         IRepository<ITestSuite> testSuites,
         IRepository<IOptimizationProposal> proposals)
     {
         this.runStats = runStats;
         this.callStats = callStats;
+        this.evaluatorStats = evaluatorStats;
         this.agents = agents;
         this.testSuites = testSuites;
         this.proposals = proposals;
@@ -183,10 +186,10 @@ internal class StatisticsService : IStatisticsService
     }
 
     public Task<EvaluatorOverviewStat> GetEvaluatorOverviewAsync(Guid evaluatorId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => evaluatorStats.GetOverviewAsync(evaluatorId, from, to, bucket, cancellationToken);
 
     public Task<IReadOnlyList<EvaluatorSparklineStat>> GetEvaluatorSparklinesAsync(Guid projectId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
-        => throw new NotImplementedException();
+        => evaluatorStats.GetSparklinesAsync(projectId, from, to, bucket, cancellationToken);
 
     private async Task<TestRunStats.Filter> ToRunFilterAsync(StatisticsFilter filter, CancellationToken cancellationToken)
     {
