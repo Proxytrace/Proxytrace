@@ -53,25 +53,17 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
-        var rows = await q
-            .GroupBy(c => new { c.CreatedAt.Year, c.CreatedAt.Month, c.CreatedAt.Day, c.EndpointId })
-            .Select(g => new
-            {
-                g.Key.Year,
-                g.Key.Month,
-                g.Key.Day,
-                g.Key.EndpointId,
-                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
-                Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
-            })
+        var raw = await q
+            .Select(c => new { c.CreatedAt, c.EndpointId, c.InputTokens, c.OutputTokens })
             .ToListAsync(cancellationToken);
 
-        return rows
-            .Select(r => new TokenUsageStat(
-                Date: new DateOnly(r.Year, r.Month, r.Day),
-                EndpointId: r.EndpointId,
-                InputTokens: r.Input,
-                OutputTokens: r.Output))
+        return raw
+            .GroupBy(c => new { Date = DateOnly.FromDateTime(c.CreatedAt.UtcDateTime), c.EndpointId })
+            .Select(g => new TokenUsageStat(
+                Date: g.Key.Date,
+                EndpointId: g.Key.EndpointId,
+                InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
+                OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
             .OrderBy(s => s.Date)
             .ThenBy(s => s.EndpointId)
             .ToArray();

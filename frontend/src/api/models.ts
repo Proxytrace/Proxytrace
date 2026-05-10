@@ -138,6 +138,30 @@ export interface LatencyStatDto {
   maxMs: number;
   sampleCount: number;
 }
+export interface TokenUsageDto {
+  date: string;
+  endPointId: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+export interface PassRateDto {
+  suiteId: string;
+  runTimestamp: string;
+  passCount: number;
+  failCount: number;
+}
+export interface ErrorRateDto {
+  endpointId: string;
+  totalCalls: number;
+  errorCalls: number;
+  errorRate: number;
+}
+export interface CostEstimateDto {
+  endpointId: string;
+  inputCostEur: number | null;
+  outputCostEur: number | null;
+  totalCostEur: number | null;
+}
 
 /* ── Agent Statistics ── */
 export interface AgentTimeSeriesPointDto {
