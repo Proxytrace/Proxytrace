@@ -60,3 +60,29 @@ public record AgentOverviewDto(
     IReadOnlyList<AgentPassRatePointDto> PassRateTrend,
     IReadOnlyList<AgentSuitePassRateDto> SuitePassRates,
     AgentEntityCountsDto Counts);
+
+public record EvaluatorSummaryDto(
+    int TotalEvaluations,
+    double? AvgScore,
+    double? OverallPassRate,
+    long? InputTokens,
+    long? OutputTokens,
+    decimal? TotalCostEur);
+
+public record EvaluatorPassRatePointDto(
+    DateTimeOffset BucketStart,
+    int Passed,
+    int Total);
+
+public record EvaluatorScoreBucketDto(
+    string Score,
+    int Count);
+
+public record EvaluatorOverviewDto(
+    EvaluatorSummaryDto Summary,
+    IReadOnlyList<EvaluatorPassRatePointDto> PassRateTrend,
+    IReadOnlyList<EvaluatorScoreBucketDto> ScoreDistribution);
+
+public record EvaluatorSparklineDto(
+    Guid EvaluatorId,
+    IReadOnlyList<EvaluatorPassRatePointDto> Points);

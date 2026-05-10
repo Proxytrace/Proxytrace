@@ -101,6 +101,32 @@ public record AgentOverviewStat(
     IReadOnlyList<AgentSuitePassRate> SuitePassRates,
     AgentEntityCounts Counts);
 
+public record EvaluatorSummary(
+    int TotalEvaluations,
+    double? AvgScore,
+    double? OverallPassRate,
+    long? InputTokens,
+    long? OutputTokens,
+    decimal? TotalCostEur);
+
+public record EvaluatorPassRatePoint(
+    DateTimeOffset BucketStart,
+    int Passed,
+    int Total);
+
+public record EvaluatorScoreBucket(
+    string Score,
+    int Count);
+
+public record EvaluatorOverviewStat(
+    EvaluatorSummary Summary,
+    IReadOnlyList<EvaluatorPassRatePoint> PassRateTrend,
+    IReadOnlyList<EvaluatorScoreBucket> ScoreDistribution);
+
+public record EvaluatorSparklineStat(
+    Guid EvaluatorId,
+    IReadOnlyList<EvaluatorPassRatePoint> Points);
+
 
 
 /// <summary>

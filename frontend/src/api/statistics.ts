@@ -8,6 +8,8 @@ import type {
   AgentTimeSeriesPointDto,
   CostEstimateDto,
   ErrorRateDto,
+  EvaluatorOverviewDto,
+  EvaluatorSparklineDto,
   LatencyStatDto,
   ModelBreakdownDto,
   PassRateDto,
@@ -46,4 +48,9 @@ export const statisticsApi = {
     api.get<AgentSuitePassRateDto[]>(`/api/statistics/agents/${agentId}/suite-pass-rates`),
   agentCounts: (agentId: string) =>
     api.get<AgentEntityCountsDto>(`/api/statistics/agents/${agentId}/counts`),
+
+  evaluatorOverview: (evaluatorId: string, params: AgentRangeParams) =>
+    api.get<EvaluatorOverviewDto>(`/api/statistics/evaluators/${evaluatorId}/overview${qs(params)}`),
+  evaluatorSparklines: (params: { projectId: string; from: string; to: string; bucket: StatisticsBucket; [key: string]: string }) =>
+    api.get<EvaluatorSparklineDto[]>(`/api/statistics/evaluators/sparklines${qs(params)}`),
 };

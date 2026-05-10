@@ -30,4 +30,8 @@ public interface IStatisticsService
     Task<IReadOnlyList<AgentSuitePassRate>> GetAgentLatestSuitePassRatesAsync(Guid agentId, CancellationToken cancellationToken = default);
 
     Task<AgentEntityCounts> GetAgentEntityCountsAsync(Guid agentId, CancellationToken cancellationToken = default);
+
+    Task<EvaluatorOverviewStat> GetEvaluatorOverviewAsync(Guid evaluatorId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<EvaluatorSparklineStat>> GetEvaluatorSparklinesAsync(Guid projectId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default);
 }

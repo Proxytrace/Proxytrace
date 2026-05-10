@@ -18,6 +18,8 @@ export const QUERY_KEYS = {
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 
   evaluators: (projectId?: string) => ['evaluators', projectId ?? null] as const,
+  statisticsEvaluatorOverview: (evaluatorId: string, rangeKey: string) => ['statistics-evaluator-overview', evaluatorId, rangeKey] as const,
+  statisticsEvaluatorSparklines: (projectId: string, rangeKey: string) => ['statistics-evaluator-sparklines', projectId, rangeKey] as const,
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 

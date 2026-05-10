@@ -182,6 +182,12 @@ internal class StatisticsService : IStatisticsService
             TotalProposalCount: agentProposals.Length);
     }
 
+    public Task<EvaluatorOverviewStat> GetEvaluatorOverviewAsync(Guid evaluatorId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
+    public Task<IReadOnlyList<EvaluatorSparklineStat>> GetEvaluatorSparklinesAsync(Guid projectId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+        => throw new NotImplementedException();
+
     private async Task<TestRunStats.Filter> ToRunFilterAsync(StatisticsFilter filter, CancellationToken cancellationToken)
     {
         IReadOnlyCollection<Guid>? agentIds = null;

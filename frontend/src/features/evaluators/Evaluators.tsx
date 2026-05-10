@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { evaluatorsApi } from '../../api/evaluators';
 import { testSuitesApi } from '../../api/test-suites';
+import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { fmtRelative } from '../../lib/format';
+import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
+import { Sparkline } from '../../components/charts';
 import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
+import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
 
 // ── Type categories ──────────────────────────────────────────────────────────
 
@@ -113,42 +117,13 @@ function TypeIcon({ kind, size = 14 }: { kind: EvaluatorKind; size?: number }) {
   );
 }
 
-// ── Skeleton placeholders (awaiting backend metrics) ─────────────────────────
-
-function SparkSkeleton({ width, height = 48, color = '#c9944a' }: { width?: number | string; height?: number; color?: string }) {
-  return (
-    <div style={{
-      width: width ?? '100%', height, borderRadius: 8,
-      border: '1px dashed var(--border-color)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: 'var(--text-muted)', fontSize: 10.5,
-      background: `linear-gradient(180deg, ${color}06, transparent)`,
-    }}>
-      awaiting data
-    </div>
-  );
-}
-
-function DistributionSkeleton({ height = 36, color = '#c9944a' }: { height?: number; color?: string }) {
-  return (
-    <div style={{
-      height, borderRadius: 8,
-      border: '1px dashed var(--border-color)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: 'var(--text-muted)', fontSize: 10.5,
-      background: `linear-gradient(90deg, ${color}06, transparent)`,
-    }}>
-      awaiting data
-    </div>
-  );
-}
-
 // ── Left rail row ────────────────────────────────────────────────────────────
 
-function EvaluatorRow({ evaluator: e, isSelected, onSelect }: {
+function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline }: {
   evaluator: EvaluatorDetailDto;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  sparkline?: number[];
 }) {
   const m = TYPE_META[KIND_CATEGORY[e.kind]];
   return (
@@ -183,6 +158,9 @@ function EvaluatorRow({ evaluator: e, isSelected, onSelect }: {
           <span>{fmtRelative(e.updatedAt)}</span>
         </div>
       </div>
+      {sparkline && sparkline.length >= 2 && (
+        <Sparkline data={sparkline} color={m.color} width={48} height={20} strokeWidth={1.25} />
+      )}
     </button>
   );
 }
@@ -260,9 +238,10 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
 
 // ── Detail pane ──────────────────────────────────────────────────────────────
 
-function EvaluatorDetail({ evaluator: e, attachedSuites, onEdit, onDelete }: {
+function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete }: {
   evaluator: EvaluatorDetailDto;
   attachedSuites: { id: string; name: string; agentName: string }[];
+  range: RangeKey;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -342,23 +321,8 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, onEdit, onDelete }: {
       {/* Configuration */}
       <ConfigPanel evaluator={e} onEdit={onEdit}/>
 
-      {/* Metrics row (skeletons) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Avg score · 7d</div>
-            <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>— runs</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: 30, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '-0.03em', color: 'var(--text-muted)' }}>—</span>
-          </div>
-          <SparkSkeleton height={56} color={m.color}/>
-        </section>
-        <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>Score distribution</div>
-          <DistributionSkeleton height={56} color={m.color}/>
-        </section>
-      </div>
+      {/* Metrics block */}
+      <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
 
       {/* Attached to */}
       <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
@@ -564,6 +528,7 @@ export default function Evaluators() {
   const { currentProjectId } = useCurrentProject();
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [range, setRange] = useState<RangeKey>('7d');
   const [showNew, setShowNew] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
   const [createForm, setCreateForm] = useState<EvaluatorFormState>(initForm());
@@ -584,6 +549,31 @@ export default function Evaluators() {
   });
   const { data: presets = [] } = useQuery({ queryKey: QUERY_KEYS.agenticEvaluatorPresets, queryFn: evaluatorsApi.getAgenticPresets });
   const suites = suitesResult?.items ?? [];
+
+  const sparklineParams = useMemo(() => {
+    if (!currentProjectId) return null;
+    return {
+      projectId: currentProjectId,
+      from: rangeFrom(range),
+      to: new Date().toISOString(),
+      bucket: bucketFor(range),
+    };
+  }, [currentProjectId, range]);
+
+  const { data: sparklineRows } = useQuery({
+    queryKey: QUERY_KEYS.statisticsEvaluatorSparklines(currentProjectId ?? '', range),
+    queryFn: () => statisticsApi.evaluatorSparklines(sparklineParams!),
+    enabled: sparklineParams !== null,
+    retry: false,
+  });
+
+  const sparklineById = useMemo(() => {
+    const m = new Map<string, number[]>();
+    for (const row of sparklineRows ?? []) {
+      m.set(row.evaluatorId, row.points.map(p => (p.total > 0 ? p.passed / p.total : 0)));
+    }
+    return m;
+  }, [sparklineRows]);
 
   const visible = evaluators.filter(e => typeFilter === 'all' || KIND_CATEGORY[e.kind] === typeFilter);
   const selected = routeId ? evaluators.find(e => e.id === routeId) ?? null : null;
@@ -672,7 +662,23 @@ export default function Evaluators() {
             </button>
           </div>
 
-          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
+          <div style={{ padding: '10px 12px 6px' }}>
+            <div className="flex gap-1 p-1 bg-card-2 rounded-[9px]" role="group" aria-label="Time range">
+              {(['1h', '24h', '7d', '30d'] as const).map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  aria-pressed={range === r}
+                  style={{ boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none' }}
+                  className={`flex-1 px-[8px] py-[3px] text-[11px] font-medium rounded-[6px] cursor-pointer transition-colors duration-150 ${
+                    range === r ? 'bg-card text-primary' : 'bg-transparent text-muted hover:text-secondary'
+                  }`}
+                >{r}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: '6px 12px 10px', borderBottom: '1px solid var(--hairline)' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {typeFilterOptions.map(([k, label, color]) => {
                 const isActive = typeFilter === k;
@@ -715,6 +721,7 @@ export default function Evaluators() {
                     evaluator={e}
                     isSelected={e.id === routeId}
                     onSelect={(id) => navigate(`/evaluators/${id}`)}
+                    sparkline={sparklineById.get(e.id)}
                   />
                 ))}
               </div>
@@ -728,6 +735,7 @@ export default function Evaluators() {
             <EvaluatorDetail
               evaluator={selected}
               attachedSuites={attachedSuites}
+              range={range}
               onEdit={() => openEdit(selected)}
               onDelete={() => setDeleteTargetId(selected.id)}
             />

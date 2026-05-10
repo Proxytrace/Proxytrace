@@ -233,6 +233,37 @@ export interface TestSuiteDto {
 }
 
 /* ── Test Runs ── */
+export interface EvaluatorSummaryDto {
+  totalEvaluations: number;
+  avgScore: number | null;
+  overallPassRate: number | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalCostEur: number | null;
+}
+
+export interface EvaluatorPassRatePointDto {
+  bucketStart: string;
+  passed: number;
+  total: number;
+}
+
+export interface EvaluatorScoreBucketDto {
+  score: EvaluationScore;
+  count: number;
+}
+
+export interface EvaluatorOverviewDto {
+  summary: EvaluatorSummaryDto;
+  passRateTrend: EvaluatorPassRatePointDto[];
+  scoreDistribution: EvaluatorScoreBucketDto[];
+}
+
+export interface EvaluatorSparklineDto {
+  evaluatorId: string;
+  points: EvaluatorPassRatePointDto[];
+}
+
 export interface EvaluationResultDto {
   evaluatorId: string;
   evaluatorKind: EvaluatorKind;

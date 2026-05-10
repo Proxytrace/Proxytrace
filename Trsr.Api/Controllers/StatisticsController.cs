@@ -207,4 +207,46 @@ public class StatisticsController : ControllerBase
 
     private static AgentEntityCountsDto ToDto(AgentEntityCounts c) =>
         new(c.SuiteCount, c.TestCaseCount, c.OpenProposalCount, c.TotalProposalCount);
+
+    [HttpGet("evaluators/{evaluatorId:guid}/overview")]
+    public async Task<ActionResult<EvaluatorOverviewDto>> GetEvaluatorOverview(
+        Guid evaluatorId,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+
+        var result = await statistics.GetEvaluatorOverviewAsync(evaluatorId, from.Value, to.Value, bucket, cancellationToken);
+        return new EvaluatorOverviewDto(
+            Summary: ToDto(result.Summary),
+            PassRateTrend: result.PassRateTrend.Select(ToDto).ToArray(),
+            ScoreDistribution: result.ScoreDistribution.Select(ToDto).ToArray());
+    }
+
+    [HttpGet("evaluators/sparklines")]
+    public async Task<ActionResult<IReadOnlyList<EvaluatorSparklineDto>>> GetEvaluatorSparklines(
+        [FromQuery] Guid? projectId = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        if (projectId is null || from is null || to is null)
+            return BadRequest("Query parameters 'projectId', 'from' and 'to' are required.");
+
+        var result = await statistics.GetEvaluatorSparklinesAsync(projectId.Value, from.Value, to.Value, bucket, cancellationToken);
+        return result.Select(s => new EvaluatorSparklineDto(s.EvaluatorId, s.Points.Select(ToDto).ToArray())).ToArray();
+    }
+
+    private static EvaluatorSummaryDto ToDto(EvaluatorSummary s) =>
+        new(s.TotalEvaluations, s.AvgScore, s.OverallPassRate, s.InputTokens, s.OutputTokens, s.TotalCostEur);
+
+    private static EvaluatorPassRatePointDto ToDto(EvaluatorPassRatePoint p) =>
+        new(p.BucketStart, p.Passed, p.Total);
+
+    private static EvaluatorScoreBucketDto ToDto(EvaluatorScoreBucket b) =>
+        new(b.Score, b.Count);
 }
