@@ -22,7 +22,7 @@ export function EvaluatorPreview({ evaluator, attached }: Props) {
   return (
     <div className="h-full min-h-0 overflow-y-auto px-5 py-4 flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-[10px] shrink-0 flex items-center justify-center" style={{ background: `${c}1f`, border: `1px solid ${c}33` }}>
+        <div className="w-10 h-10 rounded-md shrink-0 flex items-center justify-center" style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 32%, transparent)` }}>
           <span className="text-[14px] font-bold" style={{ color: c }}>{evaluator.kind.charAt(0)}</span>
         </div>
         <div className="flex-1 min-w-0">

@@ -106,9 +106,9 @@ export function ConversationView({
                     key={t.name}
                     className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[11px] mono"
                     style={{
-                      background: 'rgba(16,185,129,0.08)',
-                      border: '1px solid rgba(16,185,129,0.22)',
-                      color: '#86efac',
+                      background: 'var(--success-subtle)',
+                      border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)',
+                      color: 'var(--success)',
                     }}
                     title={t.description}
                   >

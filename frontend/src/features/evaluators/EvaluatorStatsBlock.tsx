@@ -56,8 +56,8 @@ export function EvaluatorStatsBlock({ evaluatorId, kind, range, color }: Props) 
 function StatsBlockShell({ children, color }: { children: React.ReactNode; color: string }) {
   return (
     <section style={{
-      background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)',
-      padding: '16px 18px', borderTop: `2px solid ${color}33`,
+      background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',
+      padding: '16px 18px', borderTop: `2px solid color-mix(in srgb, ${color} 22%, transparent)`,
     }}>
       {children}
     </section>
@@ -95,7 +95,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* KPI row */}
-      <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
+      <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
           Performance
         </div>
@@ -108,7 +108,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
 
       {/* Charts row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
+        <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
             Pass rate trend
           </div>
@@ -126,7 +126,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
             />
           ) : <EmptyChart label="Not enough data"/>}
         </section>
-        <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
+        <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
             Score distribution
           </div>
@@ -145,7 +145,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
 
       {/* Cost row (Agentic only) */}
       {showCost && (
-        <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
+        <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
             Cost (LLM judge)
           </div>
@@ -162,7 +162,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
 
 function Kpi({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ background: 'var(--bg-card-2)', borderRadius: 10, padding: '12px 14px', borderLeft: `2px solid ${color}55` }}>
+    <div style={{ background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', padding: '12px 14px', borderLeft: `2px solid color-mix(in srgb, ${color} 38%, transparent)` }}>
       <div style={{ fontSize: 10.5, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>{value}</div>
     </div>

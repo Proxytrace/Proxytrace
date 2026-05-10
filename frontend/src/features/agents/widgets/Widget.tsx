@@ -36,7 +36,7 @@ export function Widget({
 
   return (
     <div
-      className={`bg-card rounded-2xl overflow-hidden flex flex-col ${className ?? ''}`}
+      className={`bg-card rounded-lg overflow-hidden flex flex-col ${className ?? ''}`}
       style={{
         boxShadow: 'var(--shadow-card)',
         ...(accent ? { borderTop: `3px solid ${accent}` } : {}),
@@ -45,7 +45,7 @@ export function Widget({
       {showHeader && (
         <div
           className={`flex items-center gap-2 px-4 py-3 ${collapsed ? '' : 'border-b border-hairline'}${
-            collapsible ? ' cursor-pointer hover:bg-[var(--bg-card-hover,rgba(255,255,255,0.03))] transition-colors duration-100' : ''
+            collapsible ? ' cursor-pointer hover:bg-[var(--bg-wash-hover)] transition-colors duration-100' : ''
           }`}
           onClick={collapsible ? () => setCollapsed(c => !c) : undefined}
           role={collapsible ? 'button' : undefined}
@@ -67,7 +67,7 @@ export function Widget({
               className={`text-muted transition-transform duration-150 ${collapsed ? '-rotate-90' : ''}`}
             />
           )}
-          {title && <span className="text-[12.5px] font-semibold tracking-[-0.005em]">{title}</span>}
+          {title && <span className="text-h2 font-semibold tracking-[-0.005em]">{title}</span>}
           <div className="ml-auto flex items-center gap-2" onClick={e => e.stopPropagation()}>
             {right}
             {hasExpand && (

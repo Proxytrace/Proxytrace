@@ -42,11 +42,11 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
 
   return (
     <div
-      style={{ background: 'var(--bg-card)', borderRadius: 16, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', transition: 'box-shadow 0.18s' }}
-      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px ${c}40`)}
+      style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', transition: 'box-shadow 0.18s' }}
+      onMouseEnter={e => (e.currentTarget.style.boxShadow = `0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, ${c} 25%, transparent)`)}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-card)')}
     >
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 28%, transparent))` }} />
       <div style={{ padding: '16px 18px', flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* Top row */}
@@ -58,14 +58,14 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
                 <span style={{ padding: '2px 7px', background: 'var(--warn-subtle)', color: 'var(--warn)', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>No runs yet</span>
               )}
             </div>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 100, background: c + '20', color: c, fontSize: 10.5, fontWeight: 600, boxShadow: 'var(--shadow-pill)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 100, background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, fontSize: 10.5, fontWeight: 600, boxShadow: 'var(--shadow-pill)', border: `1px solid color-mix(in srgb, ${c} 32%, transparent)` }}>
               {suite.agentName}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
               onClick={onRun}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, fontSize: 12.5, fontWeight: 600, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', color: '#fff', boxShadow: '0 4px 14px -6px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.15)', whiteSpace: 'nowrap' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 600, background: 'var(--grad-accent)', color: '#fff', boxShadow: 'var(--shadow-btn)', whiteSpace: 'nowrap' }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
@@ -84,7 +84,7 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
         {/* Stats grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
           {/* Pass rate */}
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Pass rate</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontSize: 22, fontWeight: 700, color: passColor, letterSpacing: '-0.02em' }}>
@@ -104,14 +104,14 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
           </div>
 
           {/* Test cases */}
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Test cases</div>
             <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{suite.testCases.length}</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{suite.totalRuns} run{suite.totalRuns !== 1 ? 's' : ''} total</div>
           </div>
 
           {/* Last run */}
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 10, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 4 }}>Last run</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: hasRuns ? 'var(--text-primary)' : 'var(--text-muted)', marginTop: 2 }}>
               {suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'Never'}
@@ -280,9 +280,9 @@ export default function Suites() {
       {/* KPI row */}
       <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {[
-          { label: 'Total suites',  value: suites.length,                                          sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: '#8b5cf6' },
-          { label: 'Total cases',   value: totalCases,                                             sub: 'test case inputs',                                           color: '#06b6d4' },
-          { label: 'Total runs',    value: totalRuns,                                              sub: 'evaluations run',                                            color: '#10b981' },
+          { label: 'Total suites',  value: suites.length,                                          sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: 'var(--accent-primary)' },
+          { label: 'Total cases',   value: totalCases,                                             sub: 'test case inputs',                                           color: 'var(--teal)' },
+          { label: 'Total runs',    value: totalRuns,                                              sub: 'evaluations run',                                            color: 'var(--success)' },
           { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—',         sub: 'across all suites',                                          color: '#f59e0b' },
         ].map(k => (
           <div key={k.label} className="bg-card rounded-[14px] px-[18px] py-4 flex items-center gap-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>
@@ -307,7 +307,7 @@ export default function Suites() {
               <button key={a.id} onClick={() => setAgentFilter(a.id)} style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 7, background: isActive ? 'var(--bg-card-2)' : 'transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)', boxShadow: isActive ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none' }}>
                 {c && <span style={{ width: 7, height: 7, borderRadius: 2, background: c, opacity: isActive ? 1 : 0.5 }} />}
                 {a.name}
-                <span style={{ padding: '1px 6px', background: isActive ? 'rgba(139,92,246,0.18)' : 'var(--bg-card)', color: isActive ? '#c4b5fd' : 'var(--text-muted)', borderRadius: 100, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{a.count}</span>
+                <span style={{ padding: '1px 6px', background: isActive ? 'var(--accent-subtle)' : 'var(--bg-card)', color: isActive ? 'var(--accent-hover)' : 'var(--text-muted)', borderRadius: 100, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>{a.count}</span>
               </button>
             );
           })}

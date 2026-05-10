@@ -14,6 +14,7 @@ import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
 import { PromoteModal } from './PromoteModal';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { ModelParametersGrid } from '../../components/ui/ModelParametersGrid';
+import { Button } from '../../components/ui/Button';
 
 // ─── ToolResultBlock (fallback for orphan tool messages) ──────────────────────
 
@@ -22,20 +23,20 @@ function ToolResultBlock({ msg }: { msg: MessageDto }) {
   try { parsed = JSON.parse(msg.content); } catch { /* leave as string */ }
   const sizeB = msg.content?.length ?? 0;
   return (
-    <div className="rounded-[10px] overflow-hidden" style={{ background: 'rgba(8,145,178,0.06)', border: '1px solid rgba(6,182,212,0.22)' }}>
+    <div className="rounded-md overflow-hidden" style={{ background: 'color-mix(in srgb, var(--teal) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--teal) 28%, transparent)' }}>
       <Collapsible
         defaultOpen
-        headerClassName="px-3 py-[9px] text-[11.5px] font-mono"
-        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-[11.5px] leading-[1.55]"
+        headerClassName="px-3 py-[9px] text-body-sm font-mono"
+        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-body-sm leading-[1.55]"
         title={
-          <span className="flex items-center gap-2 flex-1" style={{ color: '#67e8f9' }}>
-            <span className="font-bold tracking-[0.04em]" style={{ color: '#06b6d4' }}>RESULT</span>
-            <span className="font-semibold" style={{ color: '#cffafe' }}>{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
-            <span className="ml-auto text-[10px] font-mono" style={{ color: '#52525b' }}>{sizeB} B</span>
+          <span className="flex items-center gap-2 flex-1 text-secondary">
+            <span className="font-bold tracking-[0.04em]" style={{ color: 'var(--teal)' }}>RESULT</span>
+            <span className="font-semibold text-primary">{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
+            <span className="ml-auto text-caption font-mono text-muted">{sizeB} B</span>
           </span>
         }
       >
-        <div style={{ borderTop: '1px dashed rgba(6,182,212,0.18)' }}>
+        <div style={{ borderTop: '1px dashed color-mix(in srgb, var(--teal) 22%, transparent)' }}>
           <div className="mt-[10px]">
             <JsonBlock value={parsed} hideCopy transparent className="!px-0 !py-0" />
           </div>
@@ -69,7 +70,7 @@ function DrawerStat({
       <div className="flex items-center gap-[10px]">
         <div
           className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
-          style={{ background: `${color}1f`, color, boxShadow: `inset 0 0 0 1px ${color}33` }}
+          style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color, boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 32%, transparent)` }}
         >
           {icon}
         </div>
@@ -224,20 +225,16 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
             </button>
           )}
           <div className="flex items-center gap-2 shrink-0">
-            <button
+            <Button
               onClick={() => !promoteDisabled && setPromoting(true)}
               disabled={promoteDisabled}
               title={promoteTooltip || undefined}
-              className="px-3 py-[7px] rounded-[8px] text-[12px] font-semibold inline-flex items-center gap-[5px] cursor-pointer disabled:cursor-not-allowed"
-              style={{
-                background: promoteDisabled ? 'var(--bg-card-2)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                color: promoteDisabled ? 'var(--text-muted)' : '#fff',
-                boxShadow: promoteDisabled ? 'none' : '0 4px 12px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
-                opacity: promoteDisabled ? 0.7 : 1,
-              }}
+              variant="primary"
+              size="sm"
+              leftIcon={<PlusIcon strokeWidth={2.5} size={12} />}
             >
-              <PlusIcon strokeWidth={2.5} size={12} /> Promote to test case
-            </button>
+              Promote to test case
+            </Button>
             {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
               <button
                 type="button"
@@ -257,32 +254,32 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
             label="Latency"
             value={fmtLatency(trace.durationMs)}
             icon={<ClockIcon size={15} strokeWidth={2.2} />}
-            color={trace.durationMs > 3000 ? '#f59e0b' : '#22d3ee'}
+            color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'}
             valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined}
           />
           <DrawerStat
             label="Input"
             value={fmtTokens(trace.inputTokens)}
             icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />}
-            color="#3b82f6"
+            color="var(--teal)"
           />
           <DrawerStat
             label="Output"
             value={fmtTokens(trace.outputTokens)}
             icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />}
-            color="#10b981"
+            color="var(--success)"
           />
           <DrawerStat
             label="Total"
             value={fmtTokens(tokTotal)}
             icon={<SigmaIcon size={15} strokeWidth={2.2} />}
-            color="#8b5cf6"
+            color="var(--accent-primary)"
           />
           <DrawerStat
             label="Cost"
             value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
-            color="#eab308"
+            color="var(--warn)"
             sub={trace.costEur == null
               ? (
                 <button
@@ -301,10 +298,10 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
         {/* Tabs */}
         <div className="px-5 pt-[14px] flex gap-1 border-b border-hairline shrink-0">
           {TABS.map(([t, count]) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-[12.5px] font-medium bg-transparent -mb-px inline-flex items-center gap-[6px] transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-[#8b5cf6]' : 'text-muted border-b-transparent'}`}>
+            <button key={t} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-body font-medium bg-transparent -mb-px inline-flex items-center gap-1.5 transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-accent' : 'text-muted border-b-transparent'}`}>
               {t}
               {count !== null && (
-                <span className="px-[6px] py-[1px] rounded-full text-[10px] font-mono font-semibold" style={{ background: tab === t ? 'rgba(139,92,246,0.18)' : 'var(--bg-card-2)', color: tab === t ? '#c4b5fd' : 'var(--text-muted)' }}>{count}</span>
+                <span className="px-1.5 py-px rounded-full text-caption font-mono font-semibold" style={{ background: tab === t ? 'var(--accent-subtle)' : 'var(--bg-card-2)', color: tab === t ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{count}</span>
               )}
             </button>
           ))}

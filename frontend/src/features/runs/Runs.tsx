@@ -127,7 +127,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
     : (isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)');
   const borderColor = isSelected
     ? (pass === false ? 'rgba(239,68,68,0.45)' : 'rgba(201,148,74,0.35)')
-    : pass === false ? 'rgba(239,68,68,0.22)' : 'var(--hairline)';
+    : pass === false ? 'color-mix(in srgb, var(--danger) 28%, transparent)' : 'var(--hairline)';
 
   return (
     <button
@@ -138,7 +138,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
         background: tint,
         border: `1px solid ${borderColor}`,
         borderLeft: `3px solid ${scoreColor}`,
-        borderRadius: 10,
+        borderRadius: 'var(--radius-md)',
         display: 'flex', flexDirection: 'column', gap: 6,
         transition: 'background 0.1s, border-color 0.1s',
         overflow: 'hidden', position: 'relative',
@@ -168,7 +168,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
       {pass === false && reasoning && (
         <div
           className="overflow-hidden"
-          style={{ fontSize: 11, color: '#fca5a5', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+          style={{ fontSize: 11, color: 'var(--danger)', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
         >
           {reasoning}
         </div>
@@ -178,7 +178,7 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
       {r.evaluations.length > 0 && (
         <div className="flex flex-wrap gap-[4px]">
           {r.evaluations.map((e, i) => {
-            const c = EVALUATOR_KIND_COLOR[e.evaluatorKind as EvaluatorKind] ?? '#888';
+            const c = EVALUATOR_KIND_COLOR[e.evaluatorKind as EvaluatorKind] ?? 'var(--text-muted)';
             const evalPass = isPass(e.score);
             return (
               <span
@@ -187,13 +187,13 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '2px 7px', borderRadius: 100,
-                  background: evalPass ? `${c}1a` : 'rgba(239,68,68,0.14)',
-                  color: evalPass ? c : '#fca5a5',
+                  background: evalPass ? `color-mix(in srgb, ${c} 14%, transparent)` : 'color-mix(in srgb, var(--danger) 18%, transparent)',
+                  color: evalPass ? c : 'var(--danger)',
                   fontSize: 10, fontWeight: 600,
                   opacity: evalPass ? 0.85 : 1,
                 }}
               >
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: evalPass ? c : '#d95555' }} />
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: evalPass ? c : 'var(--danger)' }} />
                 {e.evaluatorName}
               </span>
             );
@@ -228,9 +228,9 @@ function EndpointCompareCard({
         flex: '1 1 220px', minWidth: 220,
         padding: '12px 14px',
         background: 'var(--bg-card)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
         border: `1.5px solid ${isSelected ? mc : 'transparent'}`,
-        boxShadow: isSelected ? `0 0 0 3px ${mc}22, var(--shadow-card)` : 'var(--shadow-card)',
+        boxShadow: isSelected ? `0 0 0 3px color-mix(in srgb, ${mc} 14%, transparent), var(--shadow-card)` : 'var(--shadow-card)',
         transition: 'border-color 0.15s, box-shadow 0.15s',
       }}
     >
@@ -332,7 +332,7 @@ function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Se
       render: r => {
         const pass = resultPass(r);
         const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? '';
-        return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : '#fca5a5' }}>{note}</span>;
+        return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : 'var(--danger)' }}>{note}</span>;
       },
     },
   ];
@@ -447,7 +447,7 @@ function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Se
                 .map(tc => {
                   const running = activeCaseIds?.has(tc.id) ?? false;
                   return (
-                    <div key={tc.id} style={{ padding: '12px 14px', border: `1px dashed ${running ? 'rgba(201,148,74,0.35)' : 'var(--hairline)'}`, borderRadius: 10, background: running ? 'rgba(201,148,74,0.04)' : 'transparent', opacity: running ? 0.85 : 0.45 }}>
+                    <div key={tc.id} style={{ padding: '12px 14px', border: `1px dashed ${running ? 'color-mix(in srgb, var(--accent-primary) 38%, transparent)' : 'var(--hairline)'}`, borderRadius: 'var(--radius-md)', background: running ? 'color-mix(in srgb, var(--accent-primary) 5%, transparent)' : 'transparent', opacity: running ? 0.85 : 0.45 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
                         <span className={running ? 'pulse-dot' : undefined} style={{ width: 7, height: 7, borderRadius: '50%', background: running ? 'var(--accent-primary)' : 'var(--text-muted)', flexShrink: 0, display: 'inline-block' }} />
                         <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>{tc.id.slice(0, 7)}</span>
@@ -543,12 +543,12 @@ function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: ()
     <div className="flex flex-col gap-3">
       {/* Unified header */}
       <div className="bg-card rounded-[14px] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
-        <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 28%, transparent))` }} />
         <div className="px-[18px] py-[12px] flex items-center gap-3 flex-wrap">
           <div className="flex flex-col gap-[3px] min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-[17px] font-bold tracking-[-0.01em] m-0 overflow-hidden text-ellipsis whitespace-nowrap">{group.suiteName}</h2>
-              <span className="px-2 py-[2px] rounded-full text-[11px] font-semibold shrink-0" style={{ background: c + '20', color: c }}>{group.agentName}</span>
+              <span className="px-2 py-[2px] rounded-full text-body-sm font-semibold shrink-0" style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, border: `1px solid color-mix(in srgb, ${c} 32%, transparent)` }}>{group.agentName}</span>
               <span className="px-[7px] py-[2px] rounded-full text-[10px] font-semibold shrink-0" style={{ background: `${statusColor(group.status)}18`, color: statusColor(group.status) }}>{group.status}</span>
               {active && (
                 <span className="inline-flex items-center gap-[5px] text-[10.5px] text-muted shrink-0">
@@ -671,13 +671,13 @@ export default function Runs() {
                 onClick={() => setSelectedGroupId(group.id)}
                 className="overflow-hidden border-none cursor-pointer"
                 style={{
-                  textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 13,
+                  textAlign: 'left', width: '100%', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)',
                   padding: '12px 14px 12px 17px',
-                  boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${c}55, 0 8px 24px -8px ${c}44` : 'var(--shadow-card)',
+                  boxShadow: isSelected ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px color-mix(in srgb, ${c} 38%, transparent), 0 8px 24px -8px color-mix(in srgb, ${c} 28%, transparent)` : 'var(--shadow-card)',
                   transition: 'box-shadow 0.15s', position: 'relative',
                 }}
               >
-                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: c, borderRadius: '13px 0 0 13px' }} />
+                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: c, borderRadius: 'var(--radius-lg) 0 0 var(--radius-lg)' }} />
                 <div className="flex items-center justify-between mb-[6px]">
                   {runCount > 1
                     ? <span className="px-[6px] py-[1px] rounded text-[9.5px] font-semibold mono" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>{runCount} models</span>
@@ -693,7 +693,7 @@ export default function Runs() {
                 </div>
                 <div className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{group.suiteName}</div>
                 <div style={{ marginBottom: 8 }}>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 100, background: c + '20', color: c, fontSize: 10, fontWeight: 600, maxWidth: '100%' }}>{group.agentName}</span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 100, background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c, fontSize: 10, fontWeight: 600, maxWidth: '100%', border: `1px solid color-mix(in srgb, ${c} 32%, transparent)` }}>{group.agentName}</span>
                 </div>
                 {group.status === TestRunStatus.Completed && passRate !== null ? (
                   <div className="flex items-center justify-between">

@@ -13,6 +13,7 @@ interface Props {
   className?: string;
 }
 
+// Syntax-highlight palette for JSON-Schema type tags (intentional, not brand colors).
 const TYPE_COLORS: Record<string, string> = {
   string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
   boolean: '#f472b6', enum: '#6ee7b7', object: '#f9a8d4', array: '#86efac',
@@ -115,7 +116,7 @@ export function ToolsWidget({ tools, highlightTool, className }: Props) {
       right={
         <span
           className="px-[7px] py-[1px] rounded-full text-[10.5px] font-semibold"
-          style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}
+          style={{ background: 'var(--success-subtle)', color: 'var(--success)' }}
         >
           {tools.length}
         </span>

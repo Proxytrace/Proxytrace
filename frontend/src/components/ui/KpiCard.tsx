@@ -50,17 +50,18 @@ export function KpiCard({
     <div
       style={{
         background: accent
-          ? 'linear-gradient(155deg, rgba(201, 148, 74, 0.10), transparent 60%), var(--bg-card)'
+          ? 'linear-gradient(155deg, var(--accent-subtle), transparent 60%), var(--bg-card)'
           : 'var(--bg-card)',
         boxShadow: accent
-          ? '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 32px -12px rgba(201, 148, 74, 0.25)'
+          ? '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 32px -12px var(--accent-glow)'
           : 'var(--shadow-card)',
       }}
-      className="rounded-2xl p-[18px] relative overflow-hidden"
+      className="rounded-xl p-5 relative overflow-hidden"
     >
       {accent && (
         <div
-          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none bg-[radial-gradient(circle,rgba(201,148,74,0.16),transparent_70%)]"
+          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, var(--accent-glow), transparent 70%)' }}
         />
       )}
 
@@ -68,16 +69,16 @@ export function KpiCard({
         <div className="flex items-center gap-2">
           {icon && (
             <div
-              className={`w-7 h-7 rounded-[7px] flex items-center justify-center ${
+              className={`w-7 h-7 rounded-sm flex items-center justify-center ${
                 accent ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-secondary'
               }`}
             >{icon}</div>
           )}
-          <span className="text-xs text-secondary font-medium">{displayLabel}</span>
+          <span className="text-body-sm text-secondary font-medium">{displayLabel}</span>
         </div>
         {trendText && (
           <div
-            className={`flex items-center gap-0.5 text-[11px] font-semibold px-[6px] py-[2px] rounded-[5px] ${
+            className={`flex items-center gap-0.5 text-body-sm font-semibold px-1.5 py-[2px] rounded-sm ${
               trendDirection === 'up'
                 ? 'text-success bg-success-subtle'
                 : 'text-danger bg-danger-subtle'
@@ -95,9 +96,9 @@ export function KpiCard({
 
       <div className="flex items-end justify-between relative">
         <div>
-          <div className="text-[28px] font-bold tracking-[-0.025em] leading-none">{value}</div>
+          <div className="text-display font-bold tracking-[-0.025em] leading-none">{value}</div>
           {displaySub && (
-            <div className="text-[11.5px] text-muted mt-[6px]">{displaySub}</div>
+            <div className="text-body-sm text-muted mt-1.5">{displaySub}</div>
           )}
         </div>
         {sparkline && sparkline.length > 1 && (

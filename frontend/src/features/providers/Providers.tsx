@@ -211,7 +211,7 @@ export default function Providers() {
               onClick={() => selectProvider(p)}
               className="w-full text-left p-[12px_14px] rounded-[10px] relative border-none cursor-pointer"
               style={{
-                background: selectedId === p.id ? 'rgba(201,148,74,0.08)' : 'transparent',
+                background: selectedId === p.id ? 'var(--accent-subtle)' : 'transparent',
               }}
             >
               <div className="flex items-center gap-[10px]">
@@ -242,7 +242,7 @@ export default function Providers() {
                       <button
                         onClick={() => { setEditKindValue(selected.kind); setEditingKind(true); }}
                         className="px-2 py-[2px] rounded-full text-[11px] font-semibold border-none cursor-pointer"
-                        style={{ background: `${kindColor(selected.kind)}22`, color: kindColor(selected.kind) }}
+                        style={{ background: `color-mix(in srgb, ${kindColor(selected.kind)} 14%, transparent)`, color: kindColor(selected.kind), border: `1px solid color-mix(in srgb, ${kindColor(selected.kind)} 28%, transparent)` }}
                       >
                         {kindLabel(selected.kind)}
                       </button>
@@ -252,7 +252,7 @@ export default function Providers() {
                           value={editKindValue}
                           onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
                           className="px-2 py-[2px] rounded-full text-[11px] font-semibold outline-none cursor-pointer"
-                          style={{ background: `${kindColor(editKindValue)}22`, color: kindColor(editKindValue), border: 'none' }}
+                          style={{ background: `color-mix(in srgb, ${kindColor(editKindValue)} 14%, transparent)`, color: kindColor(editKindValue), border: 'none' }}
                         >
                           {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{o.label}</option>)}
                         </select>
@@ -263,7 +263,7 @@ export default function Providers() {
                   </div>
                   <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
                 </div>
-                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-lg text-[12px] font-medium text-danger inline-flex items-center gap-[5px] shrink-0 border-none cursor-pointer" style={{ background: 'rgba(217,85,85,0.08)' }}>
+                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-md text-body font-medium text-danger inline-flex items-center gap-1.5 shrink-0 border-none cursor-pointer" style={{ background: 'var(--danger-subtle)' }}>
                   <TrashIcon size={13} /> Delete provider
                 </button>
               </div>
@@ -410,12 +410,12 @@ export default function Providers() {
                   </div>
 
                   {newlyCreatedKey && (
-                    <div className="p-[12px_16px] rounded-[11px] flex items-center gap-3" style={{ background: 'rgba(61,170,111,0.08)', border: '1px solid rgba(61,170,111,0.2)' }}>
+                    <div className="p-[12px_16px] rounded-md flex items-center gap-3" style={{ background: 'var(--success-subtle)', border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)' }}>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-semibold mb-1" style={{ color: '#3daa6f' }}>Key "{newlyCreatedKey.name}" created — copy it now</div>
-                        <code className="text-[12px]" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
+                        <div className="text-body font-semibold mb-1 text-success">Key "{newlyCreatedKey.name}" created — copy it now</div>
+                        <code className="text-body" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-[6px] rounded-[7px] text-[12px] font-semibold text-white whitespace-nowrap border-none cursor-pointer" style={{ background: '#3daa6f' }}>Copy</button>
+                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-1.5 rounded-md text-body font-semibold text-white whitespace-nowrap border-none cursor-pointer" style={{ background: 'var(--success)' }}>Copy</button>
                       <button onClick={() => setNewlyCreatedKey(null)} className="btn-icon"><XIcon size={14} /></button>
                     </div>
                   )}

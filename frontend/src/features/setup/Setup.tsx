@@ -483,7 +483,7 @@ export default function Setup() {
         {/* Brand header */}
         <div className="flex items-center justify-between mb-7">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base bg-[linear-gradient(135deg,#deb073,#a57038)] shadow-[0_6px_20px_-6px_rgba(201,148,74,0.6)]">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base bg-[image:var(--grad-accent-hover)] shadow-[var(--shadow-btn)]">
               T
             </div>
             <div>

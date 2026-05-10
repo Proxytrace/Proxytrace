@@ -174,7 +174,7 @@ function ConversationGroupRow({
         <span className="flex items-center gap-2 min-w-0">
           <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
           <span className="mono text-[11px] text-accent-primary">{conversationId.slice(0, 8)}…</span>
-          <span className="inline-flex items-center gap-[3px] text-[10px] font-semibold px-[5px] py-[1px] rounded-full" style={{ background: `${c}22`, color: c }}>
+          <span className="inline-flex items-center gap-[3px] text-[10px] font-semibold px-[5px] py-[1px] rounded-full" style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}>
             {turns.length} turns
             <svg
               width="8" height="8" viewBox="0 0 8 8" fill="none"
@@ -225,7 +225,7 @@ function ConversationGroupRow({
           data-trace-id={turn.id}
           onClick={() => onSelectTrace(turn)}
           className={`grid items-center pl-8 pr-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] ${turn.id === selectedId ? 'bg-[rgba(255,255,255,0.04)]' : ''}`}
-          style={{ gridTemplateColumns: GRID, minHeight: 44, borderLeft: `2px solid ${c}55` }}
+          style={{ gridTemplateColumns: GRID, minHeight: 44, borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
         >
           {/* ID column: turn label */}
           <span className="flex items-center gap-2 min-w-0">
@@ -392,9 +392,9 @@ export default function Traces() {
                 key={a.id}
                 onClick={() => setAgentFilter(isActive ? '' : a.id)}
                 className="text-left bg-card rounded-xl px-[14px] py-3 relative overflow-hidden transition-[box-shadow] duration-[150ms] border-none cursor-pointer"
-                style={{ boxShadow: isActive ? `0 0 0 1.5px ${c}88, 0 4px 16px -6px ${c}55` : 'var(--shadow-card)' }}
+                style={{ boxShadow: isActive ? `0 0 0 1.5px color-mix(in srgb, ${c} 53%, transparent), 0 4px 16px -6px color-mix(in srgb, ${c} 38%, transparent)` : 'var(--shadow-card)' }}
               >
-                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${c}, ${c}44)` }} />
+                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 28%, transparent))` }} />
                 <div className="text-[11.5px] font-semibold mb-[6px] overflow-hidden text-ellipsis whitespace-nowrap pr-1">
                   {a.name}
                 </div>

@@ -32,6 +32,29 @@
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
   --color-teal: var(--teal);
+
+  /* Radii (overrides Tailwind defaults intentionally) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Type scale (font-size utilities: text-caption / text-body-sm / …) */
+  --text-caption: 10px;
+  --text-body-sm: 11px;
+  --text-body: 12px;
+  --text-title: 13px;
+  --text-h2: 14px;
+  --text-h1: 18px;
+  --text-display: 28px;
+
+  /* Shadow utilities */
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --shadow-pill: var(--shadow-pill);
+  --shadow-btn: var(--shadow-btn);
+  --shadow-btn-success: var(--shadow-btn-success);
+  --shadow-btn-danger: var(--shadow-btn-danger);
 }
 
 :root {
@@ -73,6 +96,55 @@
   --shadow-pill: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25);
   --shadow-sidebar: 2px 0 20px -6px rgba(0,0,0,0.4);
   --shadow-topbar: 0 1px 0 rgba(255,255,255,0.025), 0 4px 16px -8px rgba(0,0,0,0.4);
+
+  /* Button shadows (gradient buttons + danger variant) */
+  --shadow-btn: 0 4px 14px -4px rgba(201,148,74,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-success: 0 4px 14px -4px rgba(61,170,111,0.40), inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-danger: 0 4px 14px -4px rgba(217,85,85,0.40), inset 0 1px 0 rgba(255,255,255,0.10);
+
+  /* Radii (collapsed scale — sm/md/lg/xl) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Spacing scale (for runtime-computed inline values; prefer Tailwind p-N/gap-N) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Type scale */
+  --text-caption: 10px;
+  --text-body-sm: 11px;
+  --text-body: 12px;
+  --text-title: 13px;
+  --text-h2: 14px;
+  --text-h1: 18px;
+  --text-display: 28px;
+
+  /* Border-tint percentages (used with color-mix) */
+  --border-tint-weak: 0.14;
+  --border-tint-strong: 0.32;
+
+  /* Neutral wash (hover/active backgrounds) */
+  --bg-wash-hover: rgba(255,255,255,0.04);
+  --bg-wash-active: rgba(255,255,255,0.07);
+
+  /* Branded gradients */
+  --grad-accent: linear-gradient(135deg, var(--accent-primary), #a57038);
+  --grad-accent-hover: linear-gradient(135deg, var(--accent-hover), #b88254);
+  --grad-success: linear-gradient(135deg, var(--success), #2c8f5a);
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 280ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 html, body, #root {
@@ -146,7 +218,7 @@ a { text-decoration: none; color: inherit; }
   background: conic-gradient(
     from var(--streaming-angle),
     transparent 0deg,
-    var(--streaming-color, #a78bfa) 80deg,
+    var(--streaming-color, var(--accent-primary)) 80deg,
     transparent 200deg,
     transparent 360deg
   );

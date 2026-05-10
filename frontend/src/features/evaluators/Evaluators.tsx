@@ -28,8 +28,8 @@ const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
 };
 
 const TYPE_META: Record<TypeCategory, { label: string; short: string; color: string }> = {
-  llm:     { label: 'LLM-as-judge',    short: 'LLM judge', color: '#c9944a' },
-  rule:    { label: 'Rule-based',      short: 'Rule',      color: '#6b9eaa' },
+  llm:     { label: 'LLM-as-judge',    short: 'LLM judge', color: 'var(--accent-primary)' },
+  rule:    { label: 'Rule-based',      short: 'Rule',      color: 'var(--teal)' },
   numeric: { label: 'Numeric extract', short: 'Numeric',   color: '#8ec0cc' },
 };
 
@@ -108,7 +108,7 @@ function TypeIcon({ kind, size = 14 }: { kind: EvaluatorKind; size?: number }) {
   const box = size + 14;
   return (
     <span style={{
-      width: box, height: box, borderRadius: 8,
+      width: box, height: box, borderRadius: 'var(--radius-md)',
       background: m.color + '1a', color: m.color,
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
@@ -133,7 +133,7 @@ function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline }: {
         textAlign: 'left',
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 12px',
-        borderRadius: 10,
+        borderRadius: 'var(--radius-md)',
         background: isSelected ? `${m.color}10` : 'transparent',
         borderLeft: isSelected ? `3px solid ${m.color}` : '3px solid transparent',
         cursor: 'pointer',
@@ -186,13 +186,13 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
     body = (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {e.extractionPattern && (
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8, gridColumn: '1 / -1' }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>extract pattern</div>
             <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#8ec0cc' }}>{e.extractionPattern}</code>
           </div>
         )}
         {e.tolerance != null && (
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8 }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>tolerance</div>
             <div style={{ fontSize: 12.5, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)' }}>± {e.tolerance}</div>
           </div>
@@ -207,7 +207,7 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
     );
   }
   return (
-    <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
       <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <CodeIcon size={13}/>
@@ -261,8 +261,8 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
         display: 'flex', alignItems: 'flex-start', gap: 16,
       }}>
         <div style={{
-          width: 52, height: 52, borderRadius: 12,
-          background: m.color + '22', color: m.color,
+          width: 52, height: 52, borderRadius: 'var(--radius-lg)',
+          background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
           flexShrink: 0,
@@ -272,8 +272,8 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>{e.name}</h2>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: 'rgba(61,170,111,0.1)', color: '#5cc98a', fontSize: 10.5, fontWeight: 600 }}>
-              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: '#3daa6f' }}/>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: 'var(--success-subtle)', color: '#5cc98a', fontSize: 10.5, fontWeight: 600 }}>
+              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>
               Active
             </span>
             <span style={{ padding: '2px 8px', borderRadius: 6, background: m.color + '14', color: m.color, fontSize: 10.5, fontWeight: 600 }}>{m.label}</span>
@@ -305,13 +305,13 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             onClick={onDelete}
-            style={{ padding: '8px 12px', borderRadius: 8, fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(217,85,85,0.2)', background: 'rgba(217,85,85,0.06)', cursor: 'pointer' }}
+            style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)', background: 'var(--danger-subtle)', cursor: 'pointer' }}
           >
             Delete
           </button>
           <button
             onClick={onEdit}
-            style={{ padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #c9944a, #a07434)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+            style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600, color: '#fff', background: 'var(--grad-accent)', boxShadow: 'var(--shadow-btn)', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
             <EditPencilIcon size={11}/> Edit
           </button>
@@ -325,7 +325,7 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
       <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
 
       {/* Attached to */}
-      <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
+      <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>Attached to</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div>
@@ -346,7 +346,7 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                 {agentNames.map(a => (
                   <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: 'var(--bg-card-2)', borderRadius: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: 2, background: '#c9944a' }}/>
+                    <span style={{ width: 6, height: 6, borderRadius: 2, background: 'var(--accent-primary)' }}/>
                     {a}
                   </span>
                 ))}
@@ -357,7 +357,7 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
       </section>
 
       {/* Recent evaluations */}
-      <section style={{ background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+      <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
         <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <ActivityIcon size={13}/>
           <span style={{ fontSize: 12.5, fontWeight: 600 }}>Recent evaluations</span>
@@ -398,9 +398,9 @@ function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => vo
         onClick={onCreate}
         style={{
           marginTop: 4, padding: '9px 16px',
-          background: 'linear-gradient(135deg, #c9944a, #a07434)',
-          borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
-          boxShadow: '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+          background: 'var(--grad-accent)',
+          borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 600, color: '#fff',
+          boxShadow: 'var(--shadow-btn)',
           display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
         }}
       >
@@ -434,7 +434,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
       <div
         onClick={ev => ev.stopPropagation()}
         style={{
-          background: 'var(--bg-card)', borderRadius: 16,
+          background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)',
           width: 'min(720px, 100%)', maxHeight: '88vh', overflow: 'auto',
           boxShadow: 'var(--shadow-float)', border: '1px solid var(--border-subtle)',
         }}
@@ -458,14 +458,14 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
                 const meta = META[k];
                 return (
                   <button key={k} onClick={() => setPickedKind(k)} style={{
-                    textAlign: 'left', padding: 14, borderRadius: 12,
+                    textAlign: 'left', padding: 14, borderRadius: 'var(--radius-lg)',
                     background: 'var(--bg-card-2)', border: '1px solid var(--border-subtle)',
                     display: 'flex', gap: 12, cursor: 'pointer', transition: 'all 0.15s',
                   }}
                     onMouseEnter={ev => { ev.currentTarget.style.background = m.color + '10'; ev.currentTarget.style.borderColor = m.color + '44'; }}
                     onMouseLeave={ev => { ev.currentTarget.style.background = 'var(--bg-card-2)'; ev.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
                   >
-                    <div style={{ width: 36, height: 36, borderRadius: 9, background: m.color + '22', color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       {cat === 'llm' ? <BeakerIcon size={16}/> : cat === 'rule' ? <FilterIcon size={16}/> : <HashIcon size={16}/>}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -496,15 +496,15 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
         <div style={{ padding: '14px 20px', borderTop: '1px solid var(--hairline)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>You can change the configuration later from the evaluator's settings.</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
             <button
               onClick={onSubmit}
               disabled={!pickedKind || loading}
               style={{
-                padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                padding: '8px 16px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600,
                 color: pickedKind ? '#fff' : 'var(--text-muted)',
-                background: pickedKind ? 'linear-gradient(135deg, #c9944a, #a07434)' : 'var(--bg-card-2)',
-                boxShadow: pickedKind ? '0 4px 14px -4px rgba(201,148,74,0.5)' : 'none',
+                background: pickedKind ? 'var(--grad-accent)' : 'var(--bg-card-2)',
+                boxShadow: pickedKind ? 'var(--shadow-btn)' : 'none',
                 cursor: pickedKind ? 'pointer' : 'not-allowed',
                 opacity: loading ? 0.6 : 1,
               }}
@@ -634,8 +634,8 @@ export default function Evaluators() {
 
   const typeFilterOptions: [TypeFilter, string, string | null][] = [
     ['all', 'All', null],
-    ['llm', 'LLM judge', '#c9944a'],
-    ['rule', 'Rule', '#6b9eaa'],
+    ['llm', 'LLM judge', 'var(--accent-primary)'],
+    ['rule', 'Rule', 'var(--teal)'],
     ['numeric', 'Numeric', '#8ec0cc'],
   ];
 
@@ -644,7 +644,7 @@ export default function Evaluators() {
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0, padding: '0 0 14px' }}>
         {/* Left rail */}
         <aside style={{
-          background: 'var(--bg-card)', borderRadius: 14, boxShadow: 'var(--shadow-card)',
+          background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',
           display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
         }}>
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--hairline)' }}>
@@ -652,9 +652,9 @@ export default function Evaluators() {
               onClick={openNew}
               style={{
                 width: '100%', padding: '9px 14px',
-                background: 'linear-gradient(135deg, #c9944a, #a07434)',
-                borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff',
-                boxShadow: '0 4px 14px -4px rgba(201,148,74,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                background: 'var(--grad-accent)',
+                borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 600, color: '#fff',
+                boxShadow: 'var(--shadow-btn)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer',
               }}
             >
@@ -697,7 +697,7 @@ export default function Evaluators() {
                   >
                     {color && <span style={{ width: 6, height: 6, borderRadius: 2, background: color, opacity: isActive ? 1 : 0.5 }}/>}
                     {label}
-                    <span style={{ padding: '0 5px', background: isActive ? 'rgba(201,148,74,0.18)' : 'var(--bg-card)', color: isActive ? '#e8c99a' : 'var(--text-muted)', borderRadius: 100, fontSize: 9.5, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
+                    <span style={{ padding: '0 5px', background: isActive ? 'var(--accent-subtle)' : 'var(--bg-card)', color: isActive ? '#e8c99a' : 'var(--text-muted)', borderRadius: 100, fontSize: 9.5, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
                       {count}
                     </span>
                   </button>

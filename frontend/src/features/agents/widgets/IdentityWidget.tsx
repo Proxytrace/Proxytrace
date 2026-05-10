@@ -25,9 +25,9 @@ export function IdentityWidget({ agent, onDelete, className }: Props) {
           style={{
             width: 36,
             height: 36,
-            borderRadius: 10,
-            background: `${c}22`,
-            border: `1.5px solid ${c}44`,
+            borderRadius: 'var(--radius-md)',
+            background: `color-mix(in srgb, ${c} 14%, transparent)`,
+            border: `1.5px solid color-mix(in srgb, ${c} 28%, transparent)`,
           }}
         >
           <span className="text-[15px] font-[800] font-mono" style={{ color: c }}>{initial}</span>
@@ -39,7 +39,7 @@ export function IdentityWidget({ agent, onDelete, className }: Props) {
             <span className="px-[6px] py-[1px] bg-card-2 text-muted rounded-md text-[10.5px] shrink-0">{agent.projectName}</span>
             <span
               className="px-[6px] py-[1px] rounded-md text-[10.5px] font-semibold shrink-0"
-              style={{ background: `${c}1a`, color: c }}
+              style={{ background: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}
             >
               {agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}
             </span>

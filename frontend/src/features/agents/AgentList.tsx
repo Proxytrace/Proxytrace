@@ -81,8 +81,8 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
       onClick={onClick}
       className="text-left rounded-xl relative overflow-hidden cursor-pointer transition-shadow duration-150"
       style={{
-        background: selected ? `linear-gradient(120deg, ${c}1a, transparent 70%), var(--bg-card)` : 'var(--bg-card)',
-        boxShadow: selected ? `0 0 0 1.5px ${c}88, 0 8px 28px -10px ${c}55` : 'var(--shadow-card)',
+        background: selected ? `linear-gradient(120deg, color-mix(in srgb, ${c} 12%, transparent), transparent 70%), var(--bg-card)` : 'var(--bg-card)',
+        boxShadow: selected ? `0 0 0 1.5px color-mix(in srgb, ${c} 53%, transparent), 0 8px 28px -10px color-mix(in srgb, ${c} 38%, transparent)` : 'var(--shadow-card)',
         border: 'none',
         padding: '10px 12px 10px 14px',
       }}
@@ -102,8 +102,8 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
         <div
           className="flex items-center justify-center shrink-0"
           style={{
-            width: 30, height: 30, borderRadius: 9,
-            background: `${c}1e`, border: `1px solid ${c}33`,
+            width: 30, height: 30, borderRadius: 'var(--radius-md)',
+            background: `color-mix(in srgb, ${c} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 32%, transparent)`,
           }}
         >
           <span className="text-[13px] font-bold font-mono" style={{ color: c }}>{initial}</span>
