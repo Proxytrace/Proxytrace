@@ -416,6 +416,45 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("ProjectUserEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ProjectSearchSettings.ProjectSearchSettingsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("AutoReindexOnChange")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("IndexedKinds")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Project")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SnippetLength")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Project")
+                        .IsUnique();
+
+                    b.ToTable("ProjectSearchSettingsEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Statistics.TestRunStatsEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -784,6 +823,15 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.User.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.ProjectSearchSettings.ProjectSearchSettingsEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.Project.ProjectEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Project")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

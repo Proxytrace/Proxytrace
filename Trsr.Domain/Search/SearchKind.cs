@@ -6,4 +6,5 @@ public enum SearchKind
     TestSuite = 1,
     AgentCall = 2,
     Evaluator = 3,
+    TestCase = 4,
 }

@@ -25,6 +25,7 @@ const kindMeta: Record<SearchKind, { label: string; accent: string; icon: (s: nu
   testSuite: { label: 'Test Suite', accent: '#3daa6f', icon: s => <CheckboxIcon size={s} /> },
   agentCall: { label: 'Trace',      accent: '#c9944a', icon: s => <ActivityIcon size={s} /> },
   evaluator: { label: 'Evaluator',  accent: '#b97aff', icon: s => <ScaleIcon size={s} /> },
+  testCase:  { label: 'Test Case',  accent: '#3daa6f', icon: s => <CheckboxIcon size={s} /> },
 };
 
 export function SearchBar({ projectId, inputRef }: Props) {

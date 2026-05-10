@@ -10,17 +10,23 @@ internal sealed class LuceneSearchIndexer : ISearchIndexer
 {
     private readonly LuceneIndexWriter writer;
     private readonly IReadOnlyDictionary<SearchKind, IDocumentMapper> mappers;
+    private readonly IReindexStateTracker reindexTracker;
+    private readonly IProjectSearchSettingsResolver settingsResolver;
     private readonly ILogger<LuceneSearchIndexer> logger;
 
     public LuceneSearchIndexer(
         LuceneIndexWriter writer,
         IEnumerable<IDocumentMapper> mappers,
+        IReindexStateTracker reindexTracker,
+        IProjectSearchSettingsResolver settingsResolver,
         ILogger<LuceneSearchIndexer> logger)
     {
         this.writer = writer;
         this.mappers = mappers
             .GroupBy(m => m.Kind)
             .ToDictionary(g => g.Key, g => g.First());
+        this.reindexTracker = reindexTracker;
+        this.settingsResolver = settingsResolver;
         this.logger = logger;
     }
 
@@ -61,11 +67,20 @@ internal sealed class LuceneSearchIndexer : ISearchIndexer
 
     public async Task ReindexProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
+        using var _ = reindexTracker.BeginReindex(projectId);
+
+        var settings = await settingsResolver.GetOrDefaultsAsync(projectId, cancellationToken);
+        var allowed = settings.IndexedKinds.ToHashSet();
+
         var projectFilter = new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString()));
         writer.DeleteByQuery(projectFilter);
 
-        foreach (var mapper in mappers.Values)
+        foreach (var (kind, mapper) in mappers)
         {
+            if (!allowed.Contains(kind))
+            {
+                continue;
+            }
             var docs = await mapper.BuildAllForProjectAsync(projectId, cancellationToken);
             foreach (var doc in docs)
             {

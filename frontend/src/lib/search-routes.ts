@@ -7,5 +7,6 @@ export function searchHitToHref(hit: SearchHit): string {
     case 'testSuite': return `/suites?focus=${id}`;
     case 'agentCall': return `/traces?focus=${id}`;
     case 'evaluator': return `/evaluators?focus=${id}`;
+    case 'testCase': return `/suites?testCase=${id}`;
   }
 }

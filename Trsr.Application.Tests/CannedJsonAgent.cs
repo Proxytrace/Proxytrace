@@ -81,6 +81,16 @@ internal sealed class CannedJsonAgent : IAgent
                 return default;
             }
         }
+
+        public async IAsyncEnumerable<ModelStreamUpdate> StreamAsync(
+            SystemMessage systemMessage,
+            Conversation conversation,
+            ModelOptions? options = null,
+            [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
     }
 
     public Task<IAgent> ReloadAsync(CancellationToken cancellationToken = default)

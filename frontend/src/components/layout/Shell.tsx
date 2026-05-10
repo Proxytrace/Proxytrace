@@ -9,7 +9,7 @@ import { SearchBar } from '../search/SearchBar';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon,
+  SettingsIcon, BeakerIcon,
   LayoutSidebarIcon, BellIcon, PlusIcon,
 } from '../icons';
 
@@ -20,6 +20,7 @@ const primaryNavItems = [
   { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
   { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
   { label: 'Test Runs', icon: 'play', to: '/runs' },
+  { label: 'Playground', icon: 'beaker', to: '/playground' },
   { label: 'Proposals', icon: 'sparkles', to: '/proposals', badge: '2', badgeAccent: true },
 ] as const;
 
@@ -39,6 +40,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   checkbox: <CheckboxIcon size={16} />,
   scale: <ScaleIcon size={16} />,
   play: <PlayIcon size={16} />,
+  beaker: <BeakerIcon size={16} />,
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,

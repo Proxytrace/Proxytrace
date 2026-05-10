@@ -57,6 +57,18 @@ internal sealed class SearchModule : Autofac.Module
             .As<ISearchService>()
             .SingleInstance();
 
+        builder.RegisterType<ProjectSearchSettingsResolver>()
+            .As<IProjectSearchSettingsResolver>()
+            .SingleInstance();
+
+        builder.RegisterType<ReindexStateTracker>()
+            .As<IReindexStateTracker>()
+            .SingleInstance();
+
+        builder.RegisterType<LuceneSearchIndexStatistics>()
+            .As<ISearchIndexStatistics>()
+            .SingleInstance();
+
         // discover implementations of ISearchable
         foreach (var searchableType in typeof(ISearchable).GetImplementations())
         {

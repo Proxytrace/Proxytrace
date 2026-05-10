@@ -1,6 +1,7 @@
 using System.ClientModel;
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -10,6 +11,7 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
+using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 using Trsr.Serialization;
 
@@ -164,6 +166,58 @@ internal class ModelClient : IModelClient
         return completion
                ?? throw new InvalidOperationException(
                    "Completion is null after successful response. This should not happen.");
+    }
+
+    public async IAsyncEnumerable<ModelStreamUpdate> StreamAsync(
+        SystemMessage systemMessage,
+        Conversation conversation,
+        ModelOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options ??= ModelOptions.FromModel(endpoint.Model);
+        conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
+
+        Stopwatch sw = Stopwatch.StartNew();
+        TokenUsage? usage = null;
+        string? finishReason = null;
+        var emittedToolCallIds = new HashSet<string>();
+
+        IAsyncEnumerable<ChatResponseUpdate> stream = chatClient.GetStreamingResponseAsync(
+            conversation.ToChatMessages(),
+            options.ToChatOptions(),
+            cancellationToken);
+
+        await foreach (ChatResponseUpdate update in stream.WithCancellation(cancellationToken))
+        {
+            foreach (AIContent content in update.Contents)
+            {
+                if (content is TextContent text && !string.IsNullOrEmpty(text.Text))
+                {
+                    yield return new TextDelta(text.Text);
+                }
+                else if (content is FunctionCallContent fc)
+                {
+                    if (string.IsNullOrEmpty(fc.CallId) || !emittedToolCallIds.Add(fc.CallId))
+                        continue;
+
+                    var args = fc.Arguments is not null ? JsonSerializer.Serialize(fc.Arguments) : "{}";
+                    yield return new ToolRequested(new ToolRequest(fc.CallId, fc.Name, args));
+                }
+                else if (content is UsageContent uc && uc.Details is { InputTokenCount: not null, OutputTokenCount: not null })
+                {
+                    usage = new TokenUsage(
+                        (ulong)uc.Details.InputTokenCount.Value,
+                        (ulong)uc.Details.OutputTokenCount.Value);
+                }
+            }
+
+            if (update.FinishReason is { } reason)
+            {
+                finishReason = reason.Value;
+            }
+        }
+
+        yield return new Completed(usage, sw.Elapsed, finishReason);
     }
 
     private static IChatClient CreateChatClient(IModelEndpoint endpoint)
