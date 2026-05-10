@@ -22,8 +22,6 @@ public record TestRunStats(
 
     public double? PassRate
         => TestCases > 0 ? Passed / (double)TestCases : null;
-
-    public Guid Id => TestRunId;
     
     public record Filter(
         Guid? AgentId = null,

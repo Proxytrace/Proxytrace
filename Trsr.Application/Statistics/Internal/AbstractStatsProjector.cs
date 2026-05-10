@@ -1,7 +1,7 @@
 using Trsr.Domain;
 using Trsr.Domain.Events;
 
-namespace Trsr.Application.Statistics.Internal.Projection;
+namespace Trsr.Application.Statistics.Internal;
 
 internal abstract class AbstractStatsProjector<TDomainEntity, TStats> : IStatsProjector 
     where TDomainEntity : IDomainEntity
