@@ -24,9 +24,6 @@ public interface ITestRun : IDomainEntity<ITestRun>
     /// <summary>The ordered list of results for each test case executed during this run.</summary>
     IReadOnlyList<ITestResult> TestResults { get; }
 
-    /// <summary>Aggregate statistics snapshot, populated by the TestRunner after all evaluations complete. Null until finalized.</summary>
-    TestRunStatistics Statistics { get; }
-
     /// <summary>Factory delegate for creating a new test run.</summary>
     public delegate ITestRun CreateNew(
         ITestRunGroup group,
@@ -39,7 +36,6 @@ public interface ITestRun : IDomainEntity<ITestRun>
         TestRunStatus status,
         DateTimeOffset? completedAt,
         IReadOnlyList<ITestResult> testResults,
-        TestRunStatistics statistics,
         IDomainEntityData existing);
 
     /// <summary>

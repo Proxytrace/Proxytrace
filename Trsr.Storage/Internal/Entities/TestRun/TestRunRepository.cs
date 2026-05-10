@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.TestRun;
 using Trsr.Storage.Internal.Entities.TestRunGroup;
 using Trsr.Storage.Internal.Entities.TestSuite;
@@ -13,7 +14,8 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
     public TestRunRepository(
         IMapper<ITestRun, TestRunEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

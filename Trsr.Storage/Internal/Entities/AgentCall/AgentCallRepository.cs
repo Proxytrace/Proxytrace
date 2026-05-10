@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
+using Trsr.Domain.Events;
 using Trsr.Domain.Project;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
@@ -15,7 +16,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
     public AgentCallRepository(
         IMapper<IAgentCall, AgentCallEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

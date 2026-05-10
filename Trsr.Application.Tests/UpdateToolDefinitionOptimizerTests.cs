@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Trsr.Application.Optimization.Internal;
 using Trsr.Application.Optimization.Internal.Evidence;
+using Trsr.Application.Statistics;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -20,7 +21,6 @@ using Trsr.Domain.TestSuite;
 using Trsr.Domain.Tools;
 using Trsr.Serialization;
 using Trsr.Testing;
-using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Application.Tests;
 
@@ -209,6 +209,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
         public required UpdateToolDefinitionOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
         public required Guid AgentEndpointId { get; init; }
+        public required IStatisticsService Statistics { get; init; }
 
         public ITestRun CreateRun(
             Guid endpointId,
@@ -220,16 +221,27 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             endpoint.Id.Returns(endpointId);
 
             var run = Substitute.For<ITestRun>();
-            run.Id.Returns(Guid.NewGuid());
+            Guid runId = Guid.NewGuid();
+            run.Id.Returns(runId);
             run.Endpoint.Returns(endpoint);
             run.TestResults.Returns(results);
             run.Group.Returns(Group);
-            run.Statistics.Returns(new TestRunStatistics(
+
+            Guid groupId = Group.Id;
+            TestRunStats stats = new(
+                TestRunId: runId,
+                AgentId: Guid.Empty,
+                EndpointId: endpointId,
+                GroupId: groupId,
+                SuiteId: Guid.Empty,
                 TestCases: total,
                 Passed: total - failed,
+                TotalDuration: null,
                 Usage: null,
-                Latency: null,
-                Cost: null));
+                Cost: null,
+                RunCompletedAt: DateTimeOffset.UtcNow);
+            Statistics.GetTestRunStatsAsync(runId, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<TestRunStats?>(stats));
             return run;
         }
 
@@ -322,11 +334,14 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 
+            var statistics = Substitute.For<IStatisticsService>();
+
             var optimizer = new UpdateToolDefinitionOptimizer(
                 proposalFactory,
                 prompts,
                 agents,
                 new OptimizerEvidenceBuilder(),
+                statistics,
                 NullLogger<UpdateToolDefinitionOptimizer>.Instance);
 
             return new OptimizerFixture
@@ -334,6 +349,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
                 Optimizer = optimizer,
                 Group = group,
                 AgentEndpointId = agentEndpointId,
+                Statistics = statistics,
             };
         }
     }

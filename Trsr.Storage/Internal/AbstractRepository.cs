@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.Exceptions;
 using Trsr.Storage.Internal.Entities;
 
@@ -17,18 +18,24 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     private readonly ITransaction transaction;
     protected readonly IMapper<TDomainEntity, TStoredEntity> mapper;
     private readonly IEntityCache<TDomainEntity>? cache;
+    private readonly IEntityEventService entityEvents;
 
     protected AbstractRepository(
         IMapper<TDomainEntity, TStoredEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
+        IEntityEventService entityEvents,
         IEntityCache<TDomainEntity>? cache = null)
     {
         this.mapper = mapper;
         this.contextFactory = contextFactory;
         this.transaction = transaction;
+        this.entityEvents = entityEvents;
         this.cache = cache;
     }
+
+    private void Notify(Guid id, EntityChangeType change)
+        => entityEvents.Notify(new EntityChangedEvent(id, typeof(TDomainEntity), change));
 
     // The cache must never be read from or populated while an ambient transaction is active:
     // values read inside a transaction can reflect uncommitted writes, and populating from a
@@ -184,8 +191,12 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
-        => AddAsync(contextFactory(), entity, cancellationToken);
+    public async Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
+    {
+        TDomainEntity result = await AddAsync(contextFactory(), entity, cancellationToken);
+        Notify(result.Id, EntityChangeType.Added);
+        return result;
+    }
 
     protected Task<TDomainEntity> AddAsync(
         StorageDbContext context,
@@ -209,23 +220,31 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         });
 
     /// <inheritdoc />
-    public Task<TDomainEntity> UpsertAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync(async () =>
+    public async Task<TDomainEntity> UpsertAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
+    {
+        (TDomainEntity result, EntityChangeType change) = await transaction.InvokeAsync(async () =>
         {
             Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
             var context = contextFactory();
 
-            // Find the existing entity with tracking enabled
             TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
 
             return existing is null
-                ? await AddAsync(context, entity, cancellationToken)
-                : await UpdateAsync(context, entity, cancellationToken);
+                ? (await AddAsync(context, entity, cancellationToken), EntityChangeType.Added)
+                : (await UpdateAsync(context, entity, cancellationToken), EntityChangeType.Updated);
         });
 
+        Notify(result.Id, change);
+        return result;
+    }
+
     /// <inheritdoc />
-    public Task<TDomainEntity> UpdateAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
-        => UpdateAsync(contextFactory(), entity, cancellationToken);
+    public async Task<TDomainEntity> UpdateAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
+    {
+        TDomainEntity result = await UpdateAsync(contextFactory(), entity, cancellationToken);
+        Notify(result.Id, EntityChangeType.Updated);
+        return result;
+    }
 
     private Task<TDomainEntity> UpdateAsync(
         StorageDbContext context,
@@ -279,8 +298,9 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync(async () =>
+    public async Task<bool> RemoveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        bool removed = await transaction.InvokeAsync(async () =>
         {
             StorageDbContext context = contextFactory();
             TStoredEntity? existing = await FindAsync(context, id, cancellationToken);
@@ -295,14 +315,31 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             return true;
         });
 
-    public Task RemoveAllAsync(CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync(() =>
+        if (removed)
+        {
+            Notify(id, EntityChangeType.Removed);
+        }
+        return removed;
+    }
+
+    public async Task RemoveAllAsync(CancellationToken cancellationToken = default)
+    {
+        Guid[] removedIds = await transaction.InvokeAsync(async () =>
         {
             StorageDbContext context = contextFactory();
-            context.Set<TStoredEntity>().RemoveRange(context.Set<TStoredEntity>());
+            DbSet<TStoredEntity> set = context.Set<TStoredEntity>();
+            Guid[] ids = await set.AsNoTracking().Select(e => e.Id).ToArrayAsync(cancellationToken);
+            set.RemoveRange(set);
+            await context.SaveChangesAsync(cancellationToken);
             cache?.InvalidateAll();
-            return Task.CompletedTask;
+            return ids;
         });
+
+        foreach (Guid id in removedIds)
+        {
+            Notify(id, EntityChangeType.Removed);
+        }
+    }
 
     /// <summary>
     /// Updates owned entities manually since SetValues doesn't handle them properly

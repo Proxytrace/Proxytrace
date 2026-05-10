@@ -3,8 +3,8 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.TestResult.Internal;
 
@@ -14,7 +14,8 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
     public AssistantMessage ActualResponse { get; init; }
     public bool Passed => Evaluations.All(x => x.Passed);
     public IReadOnlyCollection<IEvaluation> Evaluations { get; init; }
-    public TestResultStatistics Statistics { get; init; }
+    public TimeSpan Latency { get; init; }
+    public TokenUsage? Usage { get; init; }
     public EvaluationScore? OverallScore => Evaluations.CombineScores();
 
     public TestResult(
@@ -26,21 +27,24 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
         TestCase = testCase;
         ActualResponse = completion.Response;
         Evaluations = evaluations;
-        Statistics = TestResultStatistics.FromCompletion(completion);
+        Latency = completion.Latency;
+        Usage = completion.Usage;
     }
 
     public TestResult(
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
+        TimeSpan latency,
+        TokenUsage? usage,
         IDomainEntityData existing,
-        TestResultStatistics statistics,
         IRepository<ITestResult> repository) : base(existing, repository)
     {
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;
-        Statistics = statistics;
+        Latency = latency;
+        Usage = usage;
     }
 
     public Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)

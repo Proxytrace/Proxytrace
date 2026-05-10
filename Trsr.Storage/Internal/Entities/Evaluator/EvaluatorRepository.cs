@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Events;
 
 namespace Trsr.Storage.Internal.Entities.Evaluator;
 
@@ -11,7 +12,8 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
     public EvaluatorRepository(
         IMapper<IEvaluator, EvaluatorEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

@@ -2,6 +2,7 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.TestResult;
 
@@ -15,12 +16,12 @@ public interface ITestResult : IDomainEntity<ITestResult>
 
     /// <summary>The actual assistant response produced during the test run.</summary>
     AssistantMessage ActualResponse { get; }
-    
+
     /// <summary>
     /// The overall score from combining all evaluations
     /// </summary>
     EvaluationScore? OverallScore { get; }
-    
+
     /// <summary>
     /// Whether the test has passed
     /// </summary>
@@ -29,8 +30,11 @@ public interface ITestResult : IDomainEntity<ITestResult>
     /// <summary>The evaluation verdict comparing the actual response against the expected output.</summary>
     IReadOnlyCollection<IEvaluation> Evaluations { get; }
 
-    /// <summary>Token usage and latency statistics for this test result.</summary>
-    TestResultStatistics Statistics { get; }
+    /// <summary>Wall-clock latency of the LLM call that produced this result.</summary>
+    TimeSpan Latency { get; }
+
+    /// <summary>Token usage of the LLM call that produced this result, if reported by the provider.</summary>
+    TokenUsage? Usage { get; }
 
     /// <summary>Factory delegate for creating a new test result.</summary>
     public delegate ITestResult CreateNew(
@@ -43,8 +47,9 @@ public interface ITestResult : IDomainEntity<ITestResult>
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
-        IDomainEntityData existing,
-        TestResultStatistics statistics);
+        TimeSpan latency,
+        TokenUsage? usage,
+        IDomainEntityData existing);
 
     /// <summary>
     /// Adds the evaluation to the test result

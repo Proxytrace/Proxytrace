@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Statistics;
-using Trsr.Domain;
+using Trsr.Application.Statistics;
 
 namespace Trsr.Api.Controllers;
 
@@ -8,9 +8,9 @@ namespace Trsr.Api.Controllers;
 [Route("api/statistics")]
 public class StatisticsController : ControllerBase
 {
-    private readonly IStatisticsQueryService statistics;
+    private readonly IStatisticsService statistics;
 
-    public StatisticsController(IStatisticsQueryService statistics)
+    public StatisticsController(IStatisticsService statistics)
     {
         this.statistics = statistics;
     }

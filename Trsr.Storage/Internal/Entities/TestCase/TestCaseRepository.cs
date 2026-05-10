@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Storage.Internal.Entities.TestCase;
@@ -10,7 +11,8 @@ internal class TestCaseRepository : AbstractRepository<ITestCase, TestCaseEntity
     public TestCaseRepository(
         IMapper<ITestCase, TestCaseEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 }

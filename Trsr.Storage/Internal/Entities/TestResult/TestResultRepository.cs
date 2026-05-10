@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.TestResult;
 
 namespace Trsr.Storage.Internal.Entities.TestResult;
@@ -10,7 +11,8 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
     public TestResultRepository(
         IMapper<ITestResult, TestResultEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 }
