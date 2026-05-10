@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
@@ -34,6 +34,7 @@ const DASHBOARD_TRACE_COLUMNS: DataColumn<AgentCallDto>[] = [
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [range, setRange] = useState<RangeKey>('24h');
   const from = useMemo(() => rangeFrom(range), [range]);
   const { currentProjectId } = useCurrentProject();
@@ -110,16 +111,16 @@ export default function Dashboard() {
     [modelBreakdown],
   );
 
-  const tokenVolumeSeries = useMemo(() => {
-    if (!tokenUsageData) return [];
+  const tokenVolume = useMemo(() => {
+    if (!tokenUsageData) return { values: [] as number[], dates: [] as string[] };
     const byDate = new Map<string, number>();
     for (const r of tokenUsageData) {
       byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.inputTokens + r.outputTokens);
     }
-    return [...byDate.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, v]) => v);
+    const sorted = [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b));
+    return { values: sorted.map(([, v]) => v), dates: sorted.map(([d]) => d) };
   }, [tokenUsageData]);
+  const tokenVolumeSeries = tokenVolume.values;
 
   const endpointNameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -225,6 +226,8 @@ export default function Dashboard() {
                 height={200}
                 color="#c9944a"
                 gradientId="volGrad"
+                formatValue={v => `${fmtTokens(v)} tokens`}
+                tooltipLabelFn={i => tokenVolume.dates[i] ?? ''}
               />
             )}
           </div>
@@ -255,7 +258,7 @@ export default function Dashboard() {
                 <EmptyState title="No samples" description="Latency stats appear after traces arrive." />
               </div>
             ) : (
-              <BarChart data={latencyBarItems} width={360} height={200} color="#6b9eaa" />
+              <BarChart data={latencyBarItems} width={360} height={200} color="#6b9eaa" formatValue={v => `p95 ${fmtLatency(v)}`} />
             )}
           </div>
         </div>
@@ -282,7 +285,7 @@ export default function Dashboard() {
               </div>
             )}
             {!modelLoading && modelBarItems.length > 0 && (
-              <BarChart data={modelBarItems} width={820} height={200} color="#c9944a" />
+              <BarChart data={modelBarItems} width={820} height={200} color="#c9944a" formatValue={v => `${fmtTokens(v)} tokens`} />
             )}
           </div>
         </div>
@@ -327,6 +330,8 @@ export default function Dashboard() {
                   color="#3daa6f"
                   gradientId="passGrad"
                   showAxis={false}
+                  formatValue={v => `${v.toFixed(1)}% pass`}
+                  tooltipLabelFn={i => fmtRelative(passRateRuns[i]?.timestamp ?? '')}
                 />
                 <div className="flex justify-between text-[10px] text-muted mt-1 font-mono">
                   <span>{fmtRelative(passRateRuns[0].timestamp)}</span>
@@ -356,6 +361,7 @@ export default function Dashboard() {
                 columns={DASHBOARD_TRACE_COLUMNS}
                 rows={recentTraces}
                 rowKey={t => t.id}
+                onRowClick={t => navigate(`/traces?focus=${t.id}`)}
                 emptySlot={
                   <div className="py-10 px-[18px] text-center">
                     <p className="text-[13px] text-secondary m-0 mb-1">No traces yet</p>
@@ -386,7 +392,12 @@ export default function Dashboard() {
               />
             )}
             {agents.map(agent => (
-              <div key={agent.id} className="grid p-3 bg-card-2 rounded-xl items-center gap-3" style={{ gridTemplateColumns: '1fr auto', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}>
+              <Link
+                key={agent.id}
+                to={`/agents?id=${agent.id}`}
+                className="grid p-3 bg-card-2 rounded-xl items-center gap-3 cursor-pointer no-underline text-inherit transition-colors duration-150 hover:bg-[rgba(255,255,255,0.05)]"
+                style={{ gridTemplateColumns: '1fr auto', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' }}
+              >
                 <div className="min-w-0">
                   <span className="text-[13px] font-semibold truncate block">{agent.name}</span>
                   <div className="mt-[5px] flex gap-1.5 items-center flex-wrap">
@@ -399,7 +410,7 @@ export default function Dashboard() {
                 <div className="text-right text-[11px] text-muted whitespace-nowrap shrink-0">
                   {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}
                 </div>
-              </div>
+              </Link>
             ))}
 
             {/* Proposals teaser */}
