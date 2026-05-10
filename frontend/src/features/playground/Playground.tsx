@@ -15,7 +15,7 @@ import { ComposeBox } from './components/ComposeBox';
 import { ToolRequestPrompt } from './components/ToolRequestPrompt';
 import { SeedFromSearchModal } from './components/SeedFromSearchModal';
 import { CompletionStats } from './components/CompletionStats';
-import { ArrowDownToLineIcon, PlusIcon } from '../../components/icons';
+import { ArrowDownToLineIcon, PlayIcon, PlusIcon } from '../../components/icons';
 import { makeMessage, overridesFromAgent, usePlaygroundSession } from './state/usePlaygroundSession';
 import type { PlaygroundMessage, PlaygroundRole, PlaygroundToolRequest } from './state/types';
 
@@ -136,6 +136,19 @@ export default function Playground() {
     startStream(next, placeholder.localId);
   }, [state.pendingToolRequest, state.messages, dispatch, startStream]);
 
+  const onRunCompletion = useCallback(() => {
+    const placeholder = makeMessage('assistant', '');
+    const next = [...state.messages, placeholder];
+    dispatch({ type: 'setMessages', messages: next });
+    startStream(state.messages, placeholder.localId);
+  }, [state.messages, dispatch, startStream]);
+
+  const canRunCompletion =
+    !!state.agentId &&
+    !state.isStreaming &&
+    !state.pendingToolRequest &&
+    state.messages.length > 0;
+
   const onInsert = useCallback((atIndex: number, role: PlaygroundRole) => {
     dispatch({ type: 'insertAt', index: atIndex, message: makeMessage(role, '') });
   }, [dispatch]);
@@ -218,6 +231,16 @@ export default function Playground() {
             aria-label="Load from trace"
           >
             <ArrowDownToLineIcon size={13} strokeWidth={2.2} />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onRunCompletion}
+            disabled={!canRunCompletion}
+            title="Run completion on current conversation"
+            aria-label="Run completion on current conversation"
+          >
+            <PlayIcon size={13} strokeWidth={2.4} />
           </button>
           <div className="ml-auto">
             <CompletionStats stats={state.lastStats} streaming={state.isStreaming} />
