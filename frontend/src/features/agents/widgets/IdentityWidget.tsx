@@ -1,5 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import type { AgentDto } from '../../../api/models';
-import { TrashIcon } from '../../../components/icons';
+import { PlayIcon, TrashIcon } from '../../../components/icons';
 import { agentColor } from '../../../lib/colors';
 import { fmtDate, fmtRelative } from '../../../lib/format';
 import { EndpointSelector } from '../EndpointSelector';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function IdentityWidget({ agent, onDelete, className }: Props) {
+  const navigate = useNavigate();
   const c = agentColor(agent.id);
   const initial = agent.name[0]?.toUpperCase() ?? '?';
 
@@ -49,6 +51,15 @@ export function IdentityWidget({ agent, onDelete, className }: Props) {
         </div>
 
         <EndpointSelector agent={agent} />
+
+        <button
+          onClick={() => navigate(`/playground?agentId=${agent.id}`)}
+          className="btn-icon shrink-0"
+          title="Open in playground"
+          aria-label="Open in playground"
+        >
+          <PlayIcon size={14} />
+        </button>
 
         <button
           onClick={onDelete}

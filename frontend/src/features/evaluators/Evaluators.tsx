@@ -93,6 +93,13 @@ function PlusIcon({ size = 13 }: { size?: number }) {
     </svg>
   );
 }
+function PlayIcon({ size = 11 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/>
+    </svg>
+  );
+}
 function EditPencilIcon({ size = 11 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -238,12 +245,13 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
 
 // ── Detail pane ──────────────────────────────────────────────────────────────
 
-function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete }: {
+function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete, onOpenInPlayground }: {
   evaluator: EvaluatorDetailDto;
   attachedSuites: { id: string; name: string; agentName: string }[];
   range: RangeKey;
   onEdit: () => void;
   onDelete: () => void;
+  onOpenInPlayground: () => void;
 }) {
   const cat = KIND_CATEGORY[e.kind];
   const m = TYPE_META[cat];
@@ -303,6 +311,15 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {e.kind === EvaluatorKind.Agentic && e.agentId && (
+            <button
+              onClick={onOpenInPlayground}
+              title="Load this evaluator's agent in the playground"
+              style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-card-2)', cursor: 'pointer' }}
+            >
+              <PlayIcon size={11}/> Open in playground
+            </button>
+          )}
           <button
             onClick={onDelete}
             style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)', background: 'var(--danger-subtle)', cursor: 'pointer' }}
@@ -738,6 +755,7 @@ export default function Evaluators() {
               range={range}
               onEdit={() => openEdit(selected)}
               onDelete={() => setDeleteTargetId(selected.id)}
+              onOpenInPlayground={() => selected.agentId && navigate(`/playground?agentId=${selected.agentId}`)}
             />
           ) : (
             <EmptyDetail hasAny={evaluators.length > 0} onCreate={openNew}/>
