@@ -9,12 +9,13 @@ import {
   type PlaygroundStreamEvent,
 } from '../../api/playground';
 import { AgentPicker } from './components/AgentPicker';
-import { OverridesPanel } from './components/OverridesPanel';
+import { RightRail } from './components/RightRail';
 import { ConversationView } from './components/ConversationView';
 import { ComposeBox } from './components/ComposeBox';
 import { ToolRequestPrompt } from './components/ToolRequestPrompt';
 import { SeedFromSearchModal } from './components/SeedFromSearchModal';
 import { CompletionStats } from './components/CompletionStats';
+import { ArrowDownToLineIcon, PlusIcon } from '../../components/icons';
 import { makeMessage, overridesFromAgent, usePlaygroundSession } from './state/usePlaygroundSession';
 import type { PlaygroundMessage, PlaygroundRole, PlaygroundToolRequest } from './state/types';
 
@@ -22,6 +23,7 @@ export default function Playground() {
   const { currentProject } = useCurrentProject();
   const { state, dispatch } = usePlaygroundSession();
   const [showSeedModal, setShowSeedModal] = useState(false);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const abortRef = useRef<{ abort: () => void } | null>(null);
 
   const { data: agent } = useQuery({
@@ -54,6 +56,7 @@ export default function Playground() {
   const startStream = useCallback((messagesForBackend: PlaygroundMessage[], placeholderId: string) => {
     const payload = buildPayload(messagesForBackend);
     if (!payload) return;
+    setStreamingId(placeholderId);
     dispatch({ type: 'startStreaming' });
     let collectedTools: PlaygroundToolRequest[] = [];
     let firstPending: PlaygroundToolRequest | null = null;
@@ -78,10 +81,12 @@ export default function Playground() {
             finishReason: e.finishReason,
           },
         });
+        setStreamingId(null);
         if (firstPending) dispatch({ type: 'setPendingTool', request: firstPending });
       } else if (e.type === 'error') {
         dispatch({ type: 'updateMessage', localId: placeholderId, patch: { errored: true } });
         dispatch({ type: 'setError', message: e.message });
+        setStreamingId(null);
       }
     });
   }, [buildPayload, dispatch]);
@@ -124,8 +129,9 @@ export default function Playground() {
     dispatch({ type: 'insertAt', index: atIndex, message: makeMessage(role, '') });
   }, [dispatch]);
 
-  const onResetSession = useCallback(() => {
+  const onNewSession = useCallback(() => {
     abortRef.current?.abort();
+    setStreamingId(null);
     dispatch({ type: 'reset' });
   }, [dispatch]);
 
@@ -135,53 +141,87 @@ export default function Playground() {
 
   const defaultEndpointId = agent?.endpointId;
 
+  const composerDisabledReason = !state.agentId
+    ? 'Pick an agent on the left to start a conversation.'
+    : state.isStreaming
+    ? 'Waiting for the model to finish streaming…'
+    : null;
+
   if (!currentProject) {
-    return <div className="flex-1 flex items-center justify-center text-muted text-[13px]">Pick a project first.</div>;
+    return (
+      <div className="flex-1 flex items-center justify-center text-muted text-[13px]">
+        Pick a project first.
+      </div>
+    );
   }
 
   return (
-    <div className="flex-1 flex gap-[10px] overflow-hidden">
-      {/* Left rail */}
-      <div className="w-[260px] shrink-0 bg-card-2 rounded-[12px] border border-border p-[14px] flex flex-col gap-[12px] overflow-y-auto">
-        <AgentPicker
-          projectId={currentProject.id}
-          selectedAgentId={state.agentId}
-          onPick={a => dispatch({ type: 'pickAgent', agent: a })}
-        />
-        <button
-          className="btn-ghost w-full"
-          onClick={() => setShowSeedModal(true)}
-          disabled={!state.agentId}
-        >
-          Load from search…
-        </button>
-        <button className="btn-ghost w-full" onClick={onResetSession}>
-          New session
-        </button>
-        {agent && state.overrides && (
-          <button
-            className="btn-ghost w-full text-[11px]"
-            onClick={() => dispatch({ type: 'setOverrides', overrides: overridesFromAgent(agent) })}
-          >
-            Reset overrides to agent defaults
-          </button>
-        )}
-        {state.error && (
-          <div className="text-[11px] text-danger break-words">{state.error}</div>
-        )}
-      </div>
-
+    <div className="flex-1 flex gap-[12px] overflow-hidden p-[2px]">
       {/* Center conversation */}
-      <div className="flex-1 bg-card-2 rounded-[12px] border border-border flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-[14px] py-[10px] border-b border-border">
-          <div className="text-[12.5px] font-semibold">
-            {agent ? agent.name : 'No agent selected'}
+      <section
+        className="flex-1 rounded-[14px] flex flex-col overflow-hidden min-w-0"
+        style={{
+          background: 'var(--bg-card-2)',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <header
+          className="flex items-center gap-[8px] px-[12px] py-[10px] flex-wrap"
+          style={{ borderBottom: '1px solid var(--border-color)' }}
+        >
+          <AgentPicker
+            projectId={currentProject.id}
+            selectedAgentId={state.agentId}
+            selectedAgent={agent ?? null}
+            onPick={a => dispatch({ type: 'pickAgent', agent: a })}
+            compact
+          />
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={onNewSession}
+            disabled={!state.agentId}
+            title="New session"
+            aria-label="New session"
+          >
+            <PlusIcon size={13} strokeWidth={2.4} />
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() => setShowSeedModal(true)}
+            disabled={!state.agentId}
+            title="Load from trace"
+            aria-label="Load from trace"
+          >
+            <ArrowDownToLineIcon size={13} strokeWidth={2.2} />
+          </button>
+          <div className="ml-auto">
+            <CompletionStats stats={state.lastStats} streaming={state.isStreaming} />
           </div>
-          <CompletionStats stats={state.lastStats} streaming={state.isStreaming} />
-        </div>
+        </header>
+
+        {state.error && (
+          <div
+            className="px-[14px] py-[6px] text-[11.5px] mono"
+            style={{
+              background: 'var(--danger-subtle)',
+              borderBottom: '1px solid rgba(217,85,85,0.28)',
+              color: 'var(--danger)',
+            }}
+          >
+            {state.error}
+          </div>
+        )}
 
         <ConversationView
           messages={state.messages}
+          systemPrompt={state.overrides?.systemPrompt}
+          agentName={agent?.name}
+          tools={state.overrides?.tools}
+          isStreaming={state.isStreaming}
+          streamingId={streamingId}
           onEdit={(localId, content) => dispatch({ type: 'updateMessage', localId, patch: { content } })}
           onDelete={localId => dispatch({ type: 'deleteMessage', localId })}
           onInsert={onInsert}
@@ -189,7 +229,7 @@ export default function Playground() {
         />
 
         {state.pendingToolRequest ? (
-          <div className="p-[12px] border-t border-border">
+          <div className="p-[12px]" style={{ borderTop: '1px solid var(--border-color)' }}>
             <ToolRequestPrompt
               request={state.pendingToolRequest}
               onSubmit={onToolResult}
@@ -199,23 +239,29 @@ export default function Playground() {
         ) : (
           <ComposeBox
             disabled={!state.agentId || state.isStreaming}
+            disabledReason={composerDisabledReason}
+            endpointId={state.overrides?.endpointId ?? null}
+            defaultEndpointId={defaultEndpointId ?? null}
+            onEndpointChange={state.overrides ? (endpointId) => dispatch({
+              type: 'setOverrides',
+              overrides: { ...state.overrides!, endpointId },
+            }) : undefined}
             onSend={sendUserMessage}
           />
         )}
-      </div>
+      </section>
 
-      {/* Right rail */}
-      <div className="w-[340px] shrink-0 bg-card-2 rounded-[12px] border border-border flex flex-col overflow-hidden">
-        {state.overrides ? (
-          <OverridesPanel
-            overrides={state.overrides}
-            defaultEndpointId={defaultEndpointId}
-            onChange={overrides => dispatch({ type: 'setOverrides', overrides })}
-          />
-        ) : (
-          <div className="p-[14px] text-[12px] text-muted italic">Pick an agent to configure overrides.</div>
-        )}
-      </div>
+      {/* Right icon-drawer */}
+      {state.overrides && (
+        <RightRail
+          overrides={state.overrides}
+          defaultSystemPrompt={agent?.systemMessage}
+          defaultParameters={agent?.modelParameters ?? null}
+          hasAgentDefaults={!!agent}
+          onChange={overrides => dispatch({ type: 'setOverrides', overrides })}
+          onResetAll={() => agent && dispatch({ type: 'setOverrides', overrides: overridesFromAgent(agent) })}
+        />
+      )}
 
       {showSeedModal && (
         <SeedFromSearchModal
