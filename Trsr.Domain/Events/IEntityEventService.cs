@@ -2,6 +2,13 @@ using System.Threading.Channels;
 
 namespace Trsr.Domain.Events;
 
+public interface IEntityEventService
+{
+    void Notify(EntityChangedEvent evt);
+
+    ChannelReader<EntityChangedEvent> Subscribe(CancellationToken cancellationToken, Type? entityType = null);
+}
+
 public enum EntityChangeType
 {
     Added,
@@ -9,11 +16,7 @@ public enum EntityChangeType
     Removed
 }
 
-public record EntityChangedEvent(Guid EntityId, Type EntityType, EntityChangeType ChangeType);
-
-public interface IEntityEventService
-{
-    void Notify(EntityChangedEvent evt);
-
-    ChannelReader<EntityChangedEvent> Subscribe(CancellationToken cancellationToken, Type? entityType = null);
-}
+public record EntityChangedEvent(
+    Guid EntityId,
+    Type EntityType,
+    EntityChangeType ChangeType);

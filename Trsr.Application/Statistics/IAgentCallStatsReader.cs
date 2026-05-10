@@ -1,11 +1,11 @@
 namespace Trsr.Application.Statistics;
 
 /// <summary>
-/// Read-only queries that aggregate over <c>AgentCallEntity</c> rows directly.
-/// AgentCalls are insert-only and aggregate cheaply at read time, so no projection table is required.
-/// Implementation lives in <c>Trsr.Storage</c>.
+/// Read-only aggregations over <c>AgentCallEntity</c> rows.
+/// Insert-only call data aggregates cheaply at read time, so no projection table is required.
+/// Consumed only by <see cref="IStatisticsService"/>; not part of the public read API.
 /// </summary>
-public interface IAgentCallStatsQueries
+public interface IAgentCallStatsReader
 {
     Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 

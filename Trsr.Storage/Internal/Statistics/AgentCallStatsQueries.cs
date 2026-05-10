@@ -9,7 +9,7 @@ using Trsr.Storage.Internal.Entities.ModelEndpoint;
 namespace Trsr.Storage.Internal.Statistics;
 
 [UsedImplicitly]
-internal class AgentCallStatsQueries : IAgentCallStatsQueries
+internal class AgentCallStatsQueries : IAgentCallStatsReader
 {
     private readonly Func<StorageDbContext> contextFactory;
 

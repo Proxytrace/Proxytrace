@@ -1,4 +1,5 @@
 using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.Proposal;
 
 namespace Trsr.Application.Optimization.Internal;

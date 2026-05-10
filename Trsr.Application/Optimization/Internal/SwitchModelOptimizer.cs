@@ -1,4 +1,5 @@
 using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Proposal;
 using Trsr.Domain.TestRun;
@@ -9,14 +10,14 @@ namespace Trsr.Application.Optimization.Internal;
 internal sealed class SwitchModelOptimizer : IOptimizerImplementation
 {
     private readonly IOptimizationProposal.CreateNew factory;
-    private readonly IStatisticsService statistics;
+    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public SwitchModelOptimizer(
         IOptimizationProposal.CreateNew factory,
-        IStatisticsService statistics)
+        IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
     {
         this.factory = factory;
-        this.statistics = statistics;
+        this.runStats = runStats;
     }
 
     public async Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
@@ -34,7 +35,8 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             return [];
         }
 
-        IReadOnlyList<TestRunStats> groupStats = await statistics.GetTestRunStatsByGroupAsync(testRunGroup.Id, cancellationToken);
+        IReadOnlyList<TestRunStats> groupStats = await runStats.QueryAsync(
+            new TestRunStats.Filter(GroupId: testRunGroup.Id), cancellationToken);
         Dictionary<Guid, TestRunStats> statsByRun = groupStats.ToDictionary(s => s.TestRunId);
 
         if (!statsByRun.TryGetValue(currentRun.Id, out TestRunStats? currentStats))

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trsr.Domain.Events;
 
-namespace Trsr.Application.Statistics.Internal;
+namespace Trsr.Application.Statistics.Internal.Worker;
 
 internal class StatisticsHostedService : BackgroundService
 {

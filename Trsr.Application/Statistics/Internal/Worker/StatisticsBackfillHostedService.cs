@@ -4,7 +4,7 @@ using Trsr.Domain;
 using Trsr.Domain.Events;
 using Trsr.Domain.TestRun;
 
-namespace Trsr.Application.Statistics.Internal;
+namespace Trsr.Application.Statistics.Internal.Worker;
 
 internal class StatisticsBackfillHostedService : IHostedService
 {

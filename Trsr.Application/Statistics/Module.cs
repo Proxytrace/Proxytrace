@@ -1,6 +1,8 @@
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Statistics.Internal;
+using Trsr.Application.Statistics.Internal.Worker;
+using Trsr.Application.Statistics.TestRun.Internal;
 using Trsr.Common.DependencyInjection;
 
 namespace Trsr.Application.Statistics;

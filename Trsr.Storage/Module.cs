@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Demo;
 using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;
@@ -75,11 +76,11 @@ public sealed class Module : Autofac.Module
             .As<ITransaction>();
 
         builder.RegisterType<TestRunStatsStore>()
-            .As<ITestRunStatsStore>()
+            .AsImplementedInterfaces()
             .InstancePerDependency();
 
         builder.RegisterType<AgentCallStatsQueries>()
-            .As<IAgentCallStatsQueries>()
+            .As<IAgentCallStatsReader>()
             .InstancePerDependency();
 
         builder

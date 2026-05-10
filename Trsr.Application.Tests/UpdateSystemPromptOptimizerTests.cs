@@ -4,6 +4,7 @@ using NSubstitute;
 using Trsr.Application.Optimization.Internal;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -165,7 +166,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
         public required UpdateSystemPromptOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
         public required Guid AgentEndpointId { get; init; }
-        public required IStatisticsService Statistics { get; init; }
+        public required IStatsReader<TestRunStats, TestRunStats.Filter> Statistics { get; init; }
 
         public ITestRun CreateRun(
             Guid endpointId,
@@ -196,7 +197,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                 Usage: null,
                 Cost: null,
                 RunCompletedAt: DateTimeOffset.UtcNow);
-            Statistics.GetTestRunStatsAsync(runId, Arg.Any<CancellationToken>())
+            Statistics.FindAsync(runId, Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<TestRunStats?>(stats));
             return run;
         }
@@ -283,7 +284,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 
-            var statistics = Substitute.For<IStatisticsService>();
+            var statistics = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
 
             var optimizer = new UpdateSystemPromptOptimizer(
                 proposalFactory,

@@ -109,27 +109,7 @@ public record AgentOverviewStat(
     IReadOnlyList<AgentSuitePassRate> SuitePassRates,
     AgentEntityCounts Counts);
 
-/// <summary>
-/// Per-run projection. One row per finalized <c>ITestRun</c>.
-/// </summary>
-public record TestRunStats(
-    Guid TestRunId,
-    Guid AgentId,
-    Guid EndpointId,
-    Guid GroupId,
-    Guid SuiteId,
-    int TestCases,
-    int Passed,
-    TimeSpan? TotalDuration,
-    TokenUsage? Usage,
-    decimal? Cost,
-    DateTimeOffset RunCompletedAt)
-{
-    public int Failed => TestCases - Passed;
 
-    public double? PassRate
-        => TestCases > 0 ? Passed / (double)TestCases : null;
-}
 
 /// <summary>
 /// Aggregate KPI rollup across multiple test runs.
@@ -163,11 +143,3 @@ public record TestRunStatsAggregate(
             Usage: a.Usage != null && b.Usage != null ? a.Usage - b.Usage : null,
             Cost: a.Cost.HasValue && b.Cost.HasValue ? a.Cost.Value - b.Cost.Value : null);
 }
-
-public record TestRunStatsFilter(
-    Guid? AgentId = null,
-    Guid? EndpointId = null,
-    Guid? GroupId = null,
-    Guid? SuiteId = null,
-    DateTimeOffset? From = null,
-    DateTimeOffset? To = null);

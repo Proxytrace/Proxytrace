@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain;
 using Trsr.Domain.Usage;
 using Trsr.Storage.Internal.Entities.Statistics;
@@ -8,7 +9,7 @@ using Trsr.Storage.Internal.Entities.Statistics;
 namespace Trsr.Storage.Internal.Statistics;
 
 [UsedImplicitly]
-internal class TestRunStatsStore : ITestRunStatsStore
+internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filter>, IStatsWriter<TestRunStats>
 {
     private readonly Func<StorageDbContext> contextFactory;
     private readonly ITransaction transaction;
@@ -44,7 +45,7 @@ internal class TestRunStatsStore : ITestRunStatsStore
             await context.SaveChangesAsync(cancellationToken);
         });
 
-    public Task DeleteAsync(Guid testRunId, CancellationToken cancellationToken = default)
+    public Task RemoveAsync(Guid testRunId, CancellationToken cancellationToken = default)
         => transaction.InvokeAsync(async () =>
         {
             StorageDbContext context = contextFactory();
@@ -59,7 +60,7 @@ internal class TestRunStatsStore : ITestRunStatsStore
             await context.SaveChangesAsync(cancellationToken);
         });
 
-    public async Task<TestRunStats?> GetByTestRunIdAsync(Guid testRunId, CancellationToken cancellationToken = default)
+    public async Task<TestRunStats?> FindAsync(Guid testRunId, CancellationToken cancellationToken = default)
     {
         TestRunStatsEntity? entity = await contextFactory()
             .Set<TestRunStatsEntity>()
@@ -68,7 +69,7 @@ internal class TestRunStatsStore : ITestRunStatsStore
         return entity is null ? null : ToDto(entity);
     }
 
-    public async Task<IReadOnlyList<TestRunStats>> QueryAsync(TestRunStatsFilter filter, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TestRunStats>> QueryAsync(TestRunStats.Filter filter, CancellationToken cancellationToken = default)
     {
         IQueryable<TestRunStatsEntity> q = contextFactory()
             .Set<TestRunStatsEntity>()
