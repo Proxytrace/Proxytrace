@@ -17,11 +17,11 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     private readonly ILogger<IAgent> logger;
 
     public string Name { get; }
-    public IModelEndpoint Endpoint { get; }
+    public IModelEndpoint Endpoint { get; private init; }
     public IProject Project { get; }
     public IPromptTemplate SystemPrompt { get; }
     public IReadOnlyList<ToolSpecification> Tools { get; }
-    public IModelParameters ModelParameters { get; }
+    public IModelParameters ModelParameters { get; private init; }
     public bool IsSystemAgent { get; }
 
     public Agent(
@@ -78,7 +78,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         bool skipIngestion = false)
         => modelClientFactory(this, customEndpoint, skipIngestion: skipIngestion);
 
-    public async Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
+    public Task<IAgent> ChangeEndpoint(IModelEndpoint modelEndpoint,
         CancellationToken cancellationToken = default)
     {
         if (modelEndpoint.Id == Endpoint.Id)
@@ -86,49 +86,18 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             logger.LogWarning(
                 "Attempted to change agent endpoint to the same endpoint (AgentId: {AgentId}, EndpointId: {EndpointId})",
                 Id, modelEndpoint.Id);
-            return this;
+            return Task.FromResult<IAgent>(this);
         }
 
-        var update = new Agent(
-            name: Name,
-            systemPrompt: SystemPrompt,
-            tools: Tools,
-            endpoint: modelEndpoint,
-            project: Project,
-            isSystemAgent: IsSystemAgent,
-            modelParameters: ModelParameters,
-            existing: this,
-            repository: repository,
-            modelClientFactory: modelClientFactory,
-            logger: logger);
-
-        return await update.UpdateAsync(cancellationToken);
+        return ApplyAsync(this with { Endpoint = modelEndpoint }, cancellationToken);
     }
 
-    public async Task<IAgent> ChangeModelParameters(
+    public Task<IAgent> ChangeModelParameters(
         IModelParameters modelParameters,
-        CancellationToken cancellationToken = default)
-    {
-        if (ModelParameters.Equals(modelParameters))
-        {
-            return this;
-        }
-
-        var update = new Agent(
-            name: Name,
-            systemPrompt: SystemPrompt,
-            tools: Tools,
-            endpoint: Endpoint,
-            project: Project,
-            isSystemAgent: IsSystemAgent,
-            modelParameters: modelParameters,
-            existing: this,
-            repository: repository,
-            modelClientFactory: modelClientFactory,
-            logger: logger);
-
-        return await update.UpdateAsync(cancellationToken);
-    }
+        CancellationToken cancellationToken = default) 
+        => ModelParameters.Equals(modelParameters)
+            ? Task.FromResult<IAgent>(this)
+            : ApplyAsync(this with { ModelParameters = modelParameters }, cancellationToken);
 
     public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null)
         => Message.Message.CreateSystemMessage(SystemPrompt, variables);

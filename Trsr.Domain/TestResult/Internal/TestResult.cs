@@ -10,12 +10,12 @@ namespace Trsr.Domain.TestResult.Internal;
 
 internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
-    public ITestCase TestCase { get; }
-    public AssistantMessage ActualResponse { get; }
+    public ITestCase TestCase { get; init; }
+    public AssistantMessage ActualResponse { get; init; }
     public bool Passed => Evaluations.All(x => x.Passed);
-    public IReadOnlyCollection<IEvaluation> Evaluations { get; }
-    public TestResultStatistics Statistics { get; }
-    public EvaluationScore? OverallScore { get; }
+    public IReadOnlyCollection<IEvaluation> Evaluations { get; init; }
+    public TestResultStatistics Statistics { get; init; }
+    public EvaluationScore? OverallScore => Evaluations.CombineScores();
 
     public TestResult(
         ITestCase testCase,
@@ -27,7 +27,6 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
         ActualResponse = completion.Response;
         Evaluations = evaluations;
         Statistics = TestResultStatistics.FromCompletion(completion);
-        OverallScore = evaluations.CombineScores();
     }
 
     public TestResult(
@@ -42,10 +41,9 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
         ActualResponse = actualResponse;
         Evaluations = evaluations;
         Statistics = statistics;
-        OverallScore = evaluations.CombineScores();
     }
 
-    public async Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
+    public Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<IEvaluation> updatedEvaluations =
         [
@@ -53,14 +51,7 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
             evaluation
         ];
 
-        var updatedResults = new TestResult(
-            TestCase,
-            ActualResponse,
-            updatedEvaluations,
-            this,
-            Statistics,
-            repository);
-        return await repository.UpdateAsync(updatedResults, cancellationToken);
+        return ApplyAsync(this with { Evaluations = updatedEvaluations }, cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

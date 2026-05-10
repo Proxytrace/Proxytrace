@@ -12,10 +12,10 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
     private readonly IStatisticsCalculator statisticsCalculator;
     public ITestRunGroup Group { get; }
     public IModelEndpoint Endpoint { get; }
-    public TestRunStatus Status { get; }
-    public DateTimeOffset? CompletedAt { get; }
-    public IReadOnlyList<ITestResult> TestResults { get; }
-    public TestRunStatistics Statistics { get; }
+    public TestRunStatus Status { get; private init; }
+    public DateTimeOffset? CompletedAt { get; private init; }
+    public IReadOnlyList<ITestResult> TestResults { get; private init; }
+    public TestRunStatistics Statistics { get; private init; }
 
     public TestRun(
         ITestRunGroup group,
@@ -69,7 +69,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         }
     }
 
-    public async Task<ITestRun> SetTestResult(ITestResult testResult, CancellationToken cancellationToken = default)
+    public Task<ITestRun> SetTestResult(ITestResult testResult, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<ITestResult> updatedResults =
         [
@@ -83,17 +83,13 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
         
         TestRunStatistics statistics = statisticsCalculator.CalculateStatistics(this);
 
-        var updatedRun = new TestRun(
-            Group,
-            Endpoint,
-            status,
-            completedAt,
-            updatedResults,
-            statistics,
-            this,
-            repository,
-            statisticsCalculator);
-        return await repository.UpdateAsync(updatedRun, cancellationToken);
+        return ApplyAsync(this with
+        {
+            Status = status,
+            CompletedAt = completedAt,
+            TestResults = updatedResults,
+            Statistics = statistics,
+        }, cancellationToken);
     }
 
     public Task<ITestRun> SetRunning(CancellationToken cancellationToken = default)
@@ -128,17 +124,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
             completedAt = DateTimeOffset.UtcNow;
         }
 
-        var updatedRun = new TestRun(
-            Group,
-            Endpoint,
-            state,
-            completedAt,
-            TestResults,
-            Statistics,
-            this,
-            repository,
-            statisticsCalculator);
-        return repository.UpdateAsync(updatedRun, cancellationToken);
+        return ApplyAsync(this with { Status = state, CompletedAt = completedAt }, cancellationToken);
     }
 
     private static bool IsTerminalState(TestRunStatus status)

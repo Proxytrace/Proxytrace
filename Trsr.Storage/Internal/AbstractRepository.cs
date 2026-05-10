@@ -11,7 +11,7 @@ namespace Trsr.Storage.Internal;
 
 internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepository<TDomainEntity>
     where TDomainEntity : class, IDomainEntity
-    where TStoredEntity : class, IEntity
+    where TStoredEntity : Entity
 {
     protected readonly Func<StorageDbContext> contextFactory;
     private readonly ITransaction transaction;
@@ -249,8 +249,10 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
                 throw new OptimisticConcurrencyException(entity.Id, typeof(TDomainEntity));
             }
 
-            // Map the updated domain entity to storage entity
-            TStoredEntity updated = await mapper.Map(entity, cancellationToken);
+            // Map the updated domain entity to storage entity, then stamp UpdatedAt centrally
+            // so callers don't have to bump it (and don't fight the concurrency check above).
+            TStoredEntity mapped = await mapper.Map(entity, cancellationToken);
+            TStoredEntity updated = (TStoredEntity)(mapped with { UpdatedAt = DateTimeOffset.UtcNow });
 
             // Update the tracked entity using EF Core's proper update mechanism
             EntityEntry<TStoredEntity> entry = context.Entry(existing);

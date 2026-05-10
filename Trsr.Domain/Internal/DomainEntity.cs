@@ -9,7 +9,7 @@ internal abstract record DomainEntity<TSelf> :
     IDomainEntity<TSelf> 
     where TSelf : class, IDomainEntity
 {
-    protected readonly IRepository<TSelf> repository;
+    private readonly IRepository<TSelf> repository;
 
     /// <inheritdoc />
     public Guid Id { get; }
@@ -61,6 +61,16 @@ internal abstract record DomainEntity<TSelf> :
 
     public Task<TSelf> UpdateAsync(CancellationToken cancellationToken = default)
         => repository.UpdateAsync(this.As<TSelf>(), cancellationToken);
+
+    /// <summary>
+    /// Validates the mutated copy and persists it. Use with `with` expressions:
+    /// <code>return ApplyAsync(this with { Endpoint = newEndpoint }, cancellationToken);</code>
+    /// </summary>
+    protected Task<TSelf> ApplyAsync(TSelf updated, CancellationToken cancellationToken = default)
+    {
+        Validator.ValidateObject(updated, new ValidationContext(updated), validateAllProperties: true);
+        return repository.UpdateAsync(updated, cancellationToken);
+    }
 
     public Task<TSelf> UpsertAsync(CancellationToken cancellationToken = default)
         => repository.UpsertAsync(this.As<TSelf>(), cancellationToken);
