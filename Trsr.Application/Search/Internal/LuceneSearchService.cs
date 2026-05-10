@@ -11,18 +11,29 @@ internal sealed class LuceneSearchService : ISearchService
 {
     private readonly LuceneIndexWriter writer;
     private readonly SearchConfiguration configuration;
+    private readonly IProjectSearchSettingsResolver settingsResolver;
 
-    public LuceneSearchService(LuceneIndexWriter writer, SearchConfiguration configuration)
+    public LuceneSearchService(
+        LuceneIndexWriter writer,
+        SearchConfiguration configuration,
+        IProjectSearchSettingsResolver settingsResolver)
     {
         this.writer = writer;
         this.configuration = configuration;
+        this.settingsResolver = settingsResolver;
     }
 
-    public Task<SearchResults> SearchAsync(Guid projectId, string query, CancellationToken cancellationToken = default)
+    public async Task<SearchResults> SearchAsync(Guid projectId, string query, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
-            return Task.FromResult(new SearchResults([]));
+            return new SearchResults([]);
+        }
+
+        var settings = await settingsResolver.GetOrDefaultsAsync(projectId, cancellationToken);
+        if (!settings.Enabled || settings.IndexedKinds.Count == 0)
+        {
+            return new SearchResults([]);
         }
 
         using var analyzer = new StandardAnalyzer(LuceneIndexWriter.Version);
@@ -48,7 +59,7 @@ internal sealed class LuceneSearchService : ISearchService
             }
             catch (ParseException)
             {
-                return Task.FromResult(new SearchResults([]));
+                return new SearchResults([]);
             }
         }
 
@@ -58,17 +69,25 @@ internal sealed class LuceneSearchService : ISearchService
             { new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString())), Occur.MUST },
         };
 
+        var kindFilter = new BooleanQuery();
+        foreach (var kind in settings.IndexedKinds)
+        {
+            kindFilter.Add(new TermQuery(new Term(SearchConstants.FieldKind, kind.ToString())), Occur.SHOULD);
+        }
+        combined.Add(kindFilter, Occur.MUST);
+
         using var reader = writer.AcquireReader();
         var searcher = reader.Searcher;
 
-        int top = Math.Max(20, configuration.HitsPerKind * Enum.GetValues<SearchKind>().Length * 4);
+        int top = Math.Max(20, configuration.HitsPerKind * settings.IndexedKinds.Count * 4);
         var topDocs = searcher.Search(combined, top);
 
+        int snippetMax = settings.SnippetLength;
         var formatter = new SimpleHTMLFormatter("<mark>", "</mark>");
         var scorer = new QueryScorer(parsed);
         var highlighter = new Highlighter(formatter, scorer)
         {
-            TextFragmenter = new SimpleSpanFragmenter(scorer, configuration.SnippetMaxChars),
+            TextFragmenter = new SimpleSpanFragmenter(scorer, snippetMax),
         };
 
         var grouped = new Dictionary<SearchKind, List<SearchHit>>();
@@ -105,9 +124,9 @@ internal sealed class LuceneSearchService : ISearchService
             }
             if (string.IsNullOrEmpty(snippet))
             {
-                snippet = bodyText.Length <= configuration.SnippetMaxChars
+                snippet = bodyText.Length <= snippetMax
                     ? bodyText
-                    : bodyText[..configuration.SnippetMaxChars];
+                    : bodyText[..snippetMax];
             }
 
             var metadata = ParseMetadata(doc.Get(SearchConstants.FieldMetadata));
@@ -124,7 +143,7 @@ internal sealed class LuceneSearchService : ISearchService
             .SelectMany(k => grouped.TryGetValue(k, out var bucket) ? bucket : Enumerable.Empty<SearchHit>())
             .ToList();
 
-        return Task.FromResult(new SearchResults(ordered));
+        return new SearchResults(ordered);
     }
 
     private static IReadOnlyDictionary<string, string> ParseMetadata(string? json)
