@@ -41,4 +41,15 @@ public interface IModelClient
         ModelOptions? options = null,
         IReadOnlyDictionary<string, string>? promptVariables = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Streams a single completion turn. Caller supplies the system message explicitly so the
+    /// agent's stored system prompt can be overridden (Playground use case).
+    /// Always runs with skipIngestion behaviour (no <c>IAgentCall</c> recorded).
+    /// </summary>
+    IAsyncEnumerable<ModelStreamUpdate> StreamAsync(
+        SystemMessage systemMessage,
+        Conversation conversation,
+        ModelOptions? options = null,
+        CancellationToken cancellationToken = default);
 }
