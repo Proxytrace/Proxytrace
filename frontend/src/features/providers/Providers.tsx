@@ -5,9 +5,8 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { ModelProviderKind, type ApiKeyDto, type ModelEndpointDto, type ProviderDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
-import { PlusIcon, TrashIcon, XIcon, EditIcon } from '../../components/icons';
-import { Modal } from '../../components/overlays/Modal';
-import { ModalFooter } from '../../components/overlays/Modal';
+import { PlusIcon, TrashIcon, XIcon, EditIcon, CopyIcon } from '../../components/icons';
+import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { useToast } from '../../components/ui/Toast';
@@ -17,6 +16,9 @@ import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { Avatar } from '../../components/ui/Avatar';
+import { Card } from '../../components/ui/Card';
+import { Button, IconButton } from '../../components/ui/Button';
+import { providerColor } from '../../lib/colors';
 
 const PROVIDER_KIND_OPTIONS = [
   { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
@@ -31,11 +33,7 @@ function kindColor(k: ModelProviderKind) {
   if (k === ModelProviderKind.Anthropic) return '#d4915c';
   if (k === ModelProviderKind.OpenAi) return '#3daa6f';
   if (k === ModelProviderKind.OpenAiCompatible) return '#6b9eaa';
-  return '#6b7280';
-}
-function providerColor(name: string) {
-  const map: Record<string, string> = { Anthropic: '#3daa6f', OpenAI: '#c9944a', Google: '#6b9eaa', Azure: '#5b82b0', Mistral: '#d4915c' };
-  return map[name] ?? '#c9944a';
+  return '#67645e';
 }
 function maskKey(k: string) {
   return k.length <= 8 ? '••••••••' : k.slice(0, 7) + '••••••••••••' + k.slice(-4);
@@ -48,7 +46,6 @@ export default function Providers() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<'models' | 'keys'>('models');
 
-  // Forms / dialog state
   const [showNewProvider, setShowNewProvider] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic });
   const [editingKind, setEditingKind] = useState(false);
@@ -160,19 +157,21 @@ export default function Providers() {
   });
 
   const keysColumns: DataColumn<ApiKeyDto>[] = [
-    { key: 'name', label: 'Name', width: '1.5fr', render: k => <span className="text-[13px] font-semibold">{k.name}</span> },
-    { key: 'project', label: 'Project', width: '1.2fr', render: k => <span className="text-[12px] text-secondary">{k.projectName}</span> },
+    { key: 'name', label: 'Name', width: '1.5fr', render: k => <span className="text-title font-semibold text-primary">{k.name}</span> },
+    { key: 'project', label: 'Project', width: '1.2fr', render: k => <span className="text-body text-secondary">{k.projectName}</span> },
     {
       key: 'key', label: 'Key', width: '2fr',
       render: k => (
-        <div className="flex items-center gap-[6px] min-w-0">
-          <code className="mono text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
-          <button onClick={() => { navigator.clipboard.writeText(k.keyValue); toast('API key copied', 'success'); }} className="shrink-0 text-muted px-[6px] py-[3px] rounded-[5px] bg-card border-none cursor-pointer">⧉</button>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <code className="font-mono text-body text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
+          <IconButton aria-label="Copy key" onClick={() => { navigator.clipboard.writeText(k.keyValue); toast('API key copied', 'success'); }}>
+            <CopyIcon size={13} />
+          </IconButton>
         </div>
       ),
     },
-    { key: 'created', label: 'Created', width: '1fr', render: k => <span className="text-[12px] text-muted">{fmtDate(k.createdAt)}</span> },
-    { key: 'delete', label: '', width: 'auto', render: k => <button onClick={() => setDeleteKey(k)} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button> },
+    { key: 'created', label: 'Created', width: '1fr', render: k => <span className="text-body text-muted">{fmtDate(k.createdAt)}</span> },
+    { key: 'delete', label: '', width: 'auto', render: k => <IconButton aria-label="Delete key" danger onClick={() => setDeleteKey(k)}><TrashIcon size={13} /></IconButton> },
   ];
 
   function selectProvider(p: ProviderDto) {
@@ -186,149 +185,190 @@ export default function Providers() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-hidden pb-6 h-[calc(100vh-80px)]">
-      {/* Header */}
+    <div className="w-full min-w-0 flex flex-col gap-4 overflow-hidden pb-6 h-[calc(100vh-80px)]">
+      {/* Page header */}
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Providers</h1>
-          <p className="text-[14px] text-muted m-0">Configure upstream model providers and manage Trsr API keys.</p>
+          <h1 className="text-h1 font-semibold m-0 mb-1 text-primary">Providers</h1>
+          <p className="text-body-sm text-muted m-0">Configure upstream model providers and manage Trsr API keys.</p>
         </div>
-        <button className="btn-primary inline-flex items-center gap-[6px]" onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic }); setShowNewProvider(true); }}>
-          <PlusIcon size={13} />
-          Add Provider
-        </button>
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<PlusIcon size={14} />}
+          onClick={() => { setNewProvider({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic }); setShowNewProvider(true); }}
+        >
+          Add provider
+        </Button>
       </div>
 
       {/* Master-detail */}
       <div className="flex-1 min-h-0 grid grid-cols-[280px_1fr] gap-3">
         {/* Provider list */}
-        <div className="bg-card rounded-2xl overflow-y-auto flex flex-col gap-[2px] p-2" style={{ boxShadow: 'var(--shadow-card)' }}>
-          {providersLoading && <div className="text-center py-10 text-muted text-[13px]">Loading…</div>}
-          {!providersLoading && providers.length === 0 && <EmptyState title="No providers yet" description="Add a provider to route traffic through Trsr." />}
-          {providers.map(p => (
-            <button
-              key={p.id}
-              onClick={() => selectProvider(p)}
-              className="w-full text-left p-[12px_14px] rounded-[10px] relative border-none cursor-pointer"
-              style={{
-                background: selectedId === p.id ? 'var(--accent-subtle)' : 'transparent',
-              }}
-            >
-              <div className="flex items-center gap-[10px]">
-                <Avatar initials={p.name[0]} color={providerColor(p.name)} className="w-[34px] h-[34px] rounded-[10px] text-[13px]" />
+        <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1">
+          {providersLoading && <div className="text-center py-10 text-muted text-body">Loading…</div>}
+          {!providersLoading && providers.length === 0 && (
+            <EmptyState title="No providers yet" description="Add a provider to route traffic through Trsr." />
+          )}
+          {providers.map(p => {
+            const active = (selected?.id ?? null) === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => selectProvider(p)}
+                className={
+                  'group relative w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 border-none cursor-pointer ' +
+                  'transition-[background,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)] ' +
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] ' +
+                  (active
+                    ? 'bg-accent-subtle'
+                    : 'bg-transparent hover:bg-card-2')
+                }
+              >
+                {active && (
+                  <span aria-hidden className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[60%] bg-accent rounded-r-sm" />
+                )}
+                <Avatar initials={p.name[0]} color={providerColor(p.name)} className="w-8 h-8 rounded-md text-title" />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-[6px]">
-                    <div className="text-[13px] font-semibold overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
+                  <div className="text-title font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
+                  <div className="mt-0.5">
                     <ColoredBadge color={kindColor(p.kind)} label={kindLabel(p.kind)} />
                   </div>
                 </div>
-              </div>
-              {selectedId === p.id && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-1/2 bg-accent rounded-[0_2px_2px_0]" />}
-            </button>
-          ))}
-        </div>
+              </button>
+            );
+          })}
+        </Card>
 
         {/* Detail panel */}
         {selected ? (
-          <div className="bg-card rounded-2xl flex flex-col overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <Card elevation="raised" padding="none" className="flex flex-col overflow-hidden">
             {/* Provider header */}
-            <div className="p-[18px_20px] border-b border-hairline shrink-0">
-              <div className="flex items-start gap-[14px]">
-                <Avatar initials={selected.name[0]} color={providerColor(selected.name)} className="w-11 h-11 rounded-[13px] text-[18px]" />
+            <div className="p-5 border-b border-hairline shrink-0">
+              <div className="flex items-start gap-3">
+                <Avatar initials={selected.name[0]} color={providerColor(selected.name)} className="w-11 h-11 rounded-md text-h1" />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-[10px] mb-1">
-                    <h2 className="text-[18px] font-bold m-0">{selected.name}</h2>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-h1 font-semibold m-0 text-primary truncate">{selected.name}</h2>
                     {!editingKind ? (
                       <button
                         onClick={() => { setEditKindValue(selected.kind); setEditingKind(true); }}
-                        className="px-2 py-[2px] rounded-full text-[11px] font-semibold border-none cursor-pointer"
-                        style={{ background: `color-mix(in srgb, ${kindColor(selected.kind)} 14%, transparent)`, color: kindColor(selected.kind), border: `1px solid color-mix(in srgb, ${kindColor(selected.kind)} 28%, transparent)` }}
+                        aria-label="Change provider kind"
+                        className="cursor-pointer border-none bg-transparent p-0"
                       >
-                        {kindLabel(selected.kind)}
+                        <ColoredBadge color={kindColor(selected.kind)} label={kindLabel(selected.kind)} />
                       </button>
                     ) : (
-                      <div className="flex items-center gap-[6px]">
+                      <div className="flex items-center gap-1.5">
                         <select
                           value={editKindValue}
                           onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
-                          className="px-2 py-[2px] rounded-full text-[11px] font-semibold outline-none cursor-pointer"
-                          style={{ background: `color-mix(in srgb, ${kindColor(editKindValue)} 14%, transparent)`, color: kindColor(editKindValue), border: 'none' }}
+                          className={`${formInputCls} h-7 py-0 text-body-sm`}
                         >
-                          {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>{o.label}</option>)}
+                          {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
-                        <button className="btn-primary px-[10px] py-[2px] text-[11px] rounded-full" onClick={() => updateKind.mutate()} disabled={updateKind.isPending}>{updateKind.isPending ? '…' : 'Save'}</button>
-                        <button onClick={() => setEditingKind(false)} className="px-2 py-[2px] rounded-full text-[11px] text-muted bg-card-2 border-none cursor-pointer">Cancel</button>
+                        <Button size="sm" variant="primary" loading={updateKind.isPending} onClick={() => updateKind.mutate()}>Save</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingKind(false)}>Cancel</Button>
                       </div>
                     )}
                   </div>
-                  <div className="mono text-[12px] text-muted">{selected.endpoint}</div>
+                  <div className="font-mono text-body text-muted truncate">{selected.endpoint}</div>
                 </div>
-                <button onClick={() => setDeleteProvider(true)} className="px-[10px] py-[6px] rounded-md text-body font-medium text-danger inline-flex items-center gap-1.5 shrink-0 border-none cursor-pointer" style={{ background: 'var(--danger-subtle)' }}>
-                  <TrashIcon size={13} /> Delete provider
-                </button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  leftIcon={<TrashIcon size={13} />}
+                  className="text-danger hover:text-danger"
+                  onClick={() => setDeleteProvider(true)}
+                >
+                  Delete provider
+                </Button>
               </div>
+
               {/* Upstream key row */}
-              <div className="mt-[14px] px-[14px] py-[10px] bg-card-2 rounded-[10px] flex items-center gap-[10px]">
-                <span className="text-[12px] text-muted whitespace-nowrap">Upstream API key</span>
-                <code className="flex-1 mono text-[12px] text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+              <div className="mt-4 px-3.5 py-2.5 bg-card-2 rounded-md border border-hairline flex items-center gap-2.5">
+                <span className="text-body-sm text-muted whitespace-nowrap">Upstream API key</span>
+                <code className="flex-1 font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
                   {revealKey ? selected.upstreamApiKey : maskKey(selected.upstreamApiKey)}
                 </code>
-                <button onClick={() => setRevealKey(v => !v)} className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap border-none cursor-pointer">
+                <Button size="sm" variant="ghost" onClick={() => setRevealKey(v => !v)}>
                   {revealKey ? 'Hide' : 'Reveal'}
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  leftIcon={<CopyIcon size={12} />}
                   onClick={() => { navigator.clipboard.writeText(selected.upstreamApiKey); toast('Upstream key copied', 'success'); }}
-                  className="text-[11px] text-muted px-2 py-[3px] rounded-md bg-card whitespace-nowrap border-none cursor-pointer"
                 >
                   Copy
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-0 border-b border-hairline shrink-0 -mb-px">
-              {(['models', 'keys'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`px-5 py-3 text-[13px] font-semibold cursor-pointer bg-transparent border-none -mb-px ${
-                    tab === t
-                      ? 'text-accent border-b-2 border-b-accent'
-                      : 'text-muted border-b-2 border-b-transparent'
-                  }`}
-                >
-                  {t === 'models' ? 'Models' : 'API Keys'}
-                </button>
-              ))}
+            <div className="flex border-b border-hairline shrink-0 px-2">
+              {(['models', 'keys'] as const).map(t => {
+                const count = t === 'models' ? models.length : keys.length;
+                const active = tab === t;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={
+                      'relative px-4 py-3 text-title font-semibold cursor-pointer bg-transparent border-none ' +
+                      'transition-colors duration-[var(--motion-base)] ease-[var(--ease-standard)] ' +
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] focus-visible:rounded-sm ' +
+                      (active ? 'text-accent' : 'text-muted hover:text-primary')
+                    }
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      {t === 'models' ? 'Models' : 'API keys'}
+                      {count > 0 && (
+                        <span className={`text-caption font-semibold px-1.5 py-px rounded-full ${active ? 'bg-accent-subtle text-accent' : 'bg-card-2 text-muted'}`}>
+                          {count}
+                        </span>
+                      )}
+                    </span>
+                    {active && (
+                      <span aria-hidden className="absolute left-2 right-2 -bottom-px h-[2px] bg-accent rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto p-[16px_20px] flex flex-col gap-[14px]">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
               {tab === 'models' && (
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-[14px] font-bold mb-[2px]">Models</div>
-                      <div className="text-[12px] text-muted">Set pricing to compute trace costs.</div>
+                      <div className="text-h2 font-semibold text-primary mb-0.5">Models</div>
+                      <div className="text-body-sm text-muted">Set pricing to compute trace costs.</div>
                     </div>
-                    <button onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
-                      + Add Model
-                    </button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<PlusIcon size={13} />}
+                      onClick={() => { setShowNewModel(true); setEditingModel(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }}
+                    >
+                      Add model
+                    </Button>
                   </div>
 
                   {showNewModel && (
-                    <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
-                      <div className="text-[13px] font-semibold">Add Model</div>
+                    <div className="p-4 bg-card-2 rounded-lg border border-hairline flex flex-col gap-3">
+                      <div className="text-title font-semibold text-primary">Add model</div>
                       <FormField label="Model">
                         {availableLoading ? (
-                          <div className="text-[12px] text-muted py-2">Discovering available models…</div>
+                          <div className="text-body text-muted py-2">Discovering available models…</div>
                         ) : availableError ? (
-                          <div className="flex flex-col gap-[6px]">
-                            <div className="text-[12px] text-danger">Could not discover models from endpoint. Enter manually:</div>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="text-body text-danger">Could not discover models from endpoint. Enter manually:</div>
                             <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
                           </div>
                         ) : selectableModels.length === 0 ? (
-                          <div className="text-[12px] text-muted py-2">All discovered models are already added.</div>
+                          <div className="text-body text-muted py-2">All discovered models are already added.</div>
                         ) : (
                           <select value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className={`${formInputCls} font-mono`}>
                             <option value="">Select a model…</option>
@@ -338,7 +378,7 @@ export default function Providers() {
                           </select>
                         )}
                       </FormField>
-                      <div className="grid grid-cols-2 gap-[10px]">
+                      <div className="grid grid-cols-2 gap-2.5">
                         <FormField label="Input cost / 1M tokens (€)">
                           <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" className={formInputCls} />
                         </FormField>
@@ -347,36 +387,42 @@ export default function Providers() {
                         </FormField>
                       </div>
                       <div className="flex gap-2 justify-end">
-                        <button className="btn-ghost" onClick={() => setShowNewModel(false)}>Cancel</button>
-                        <button className="btn-primary" onClick={() => createModel.mutate()} disabled={!newModel.modelName || createModel.isPending}>{createModel.isPending ? 'Adding…' : 'Add Model'}</button>
+                        <Button variant="ghost" size="sm" onClick={() => setShowNewModel(false)}>Cancel</Button>
+                        <Button variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={() => createModel.mutate()}>
+                          Add model
+                        </Button>
                       </div>
                     </div>
                   )}
 
-                  {modelsLoading && <div className="text-center text-muted text-[13px] p-5">Loading models…</div>}
+                  {modelsLoading && <div className="text-center text-muted text-body p-5">Loading models…</div>}
                   {!modelsLoading && models.length === 0 && !showNewModel && (
                     <EmptyState title="No models yet" description="Add one or let Trsr auto-discover them from traces." />
                   )}
                   {models.length > 0 && (
-                    <div className="bg-card-2 rounded-xl overflow-hidden">
-                      <div className="grid p-[10px_16px] text-[11px] font-semibold text-muted tracking-[0.06em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
+                    <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">
+                      <div className="grid px-4 py-2.5 text-caption font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
                         <span>Model</span><span>Input / 1M €</span><span>Output / 1M €</span><span />
                       </div>
                       {models.map((m, i) => (
                         <div key={m.id} className={i < models.length - 1 ? 'border-b border-hairline' : ''}>
-                          <div className="grid p-[11px_16px] items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
-                            <span className="mono text-[12px]">{m.modelName}</span>
-                            <span className="text-[12px] text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
-                            <span className="text-[12px] text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
-                            <div className="flex items-center gap-[4px]">
-                              <button onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }} className="btn-icon" aria-label="Edit pricing"><EditIcon size={13} /></button>
-                              <button onClick={() => setDeleteModel(m)} className="btn-icon btn-icon-danger" aria-label="Delete model"><TrashIcon size={13} /></button>
+                          <div className="grid px-4 py-2.5 items-center" style={{ gridTemplateColumns: '2fr 1fr 1fr auto' }}>
+                            <span className="font-mono text-body text-primary">{m.modelName}</span>
+                            <span className="text-body text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
+                            <span className="text-body text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
+                            <div className="flex items-center gap-1">
+                              <IconButton aria-label="Edit pricing" onClick={() => { setEditingModel(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNewModel(false); }}>
+                                <EditIcon size={13} />
+                              </IconButton>
+                              <IconButton aria-label="Delete model" danger onClick={() => setDeleteModel(m)}>
+                                <TrashIcon size={13} />
+                              </IconButton>
                             </div>
                           </div>
                           {editingModel?.id === m.id && (
-                            <div className="p-[12px_16px_14px] bg-card border-t border-hairline flex flex-col gap-[10px]">
-                              <div className="text-[12px] font-semibold text-secondary">Edit pricing for {m.modelName}</div>
-                              <div className="grid grid-cols-2 gap-[10px]">
+                            <div className="px-4 py-3.5 bg-card border-t border-hairline flex flex-col gap-3">
+                              <div className="text-body-sm font-semibold text-secondary">Edit pricing for <span className="font-mono text-primary">{m.modelName}</span></div>
+                              <div className="grid grid-cols-2 gap-2.5">
                                 <FormField label="Input / 1M (€)">
                                   <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" className={formInputCls} />
                                 </FormField>
@@ -385,8 +431,8 @@ export default function Providers() {
                                 </FormField>
                               </div>
                               <div className="flex gap-2 justify-end">
-                                <button className="btn-ghost" onClick={() => setEditingModel(null)}>Cancel</button>
-                                <button className="btn-primary" onClick={() => updatePricing.mutate()} disabled={updatePricing.isPending}>{updatePricing.isPending ? 'Saving…' : 'Save'}</button>
+                                <Button variant="ghost" size="sm" onClick={() => setEditingModel(null)}>Cancel</Button>
+                                <Button variant="primary" size="sm" loading={updatePricing.isPending} onClick={() => updatePricing.mutate()}>Save</Button>
                               </div>
                             </div>
                           )}
@@ -401,29 +447,34 @@ export default function Providers() {
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-[14px] font-bold mb-[2px]">Trsr API Keys</div>
-                      <div className="text-[12px] text-muted">Keys that authenticate clients at the Trsr proxy.</div>
+                      <div className="text-h2 font-semibold text-primary mb-0.5">Trsr API keys</div>
+                      <div className="text-body-sm text-muted">Keys that authenticate clients at the Trsr proxy.</div>
                     </div>
-                    <button onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: currentProjectId ?? projects[0]?.id ?? '' }); }} className="px-3 py-[7px] bg-card-2 rounded-lg text-[12px] font-semibold inline-flex items-center gap-[6px] border-none cursor-pointer">
-                      + Generate Key
-                    </button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<PlusIcon size={13} />}
+                      onClick={() => { setShowNewKey(true); setNewKey({ name: '', projectId: currentProjectId ?? projects[0]?.id ?? '' }); }}
+                    >
+                      Generate key
+                    </Button>
                   </div>
 
                   {newlyCreatedKey && (
-                    <div className="p-[12px_16px] rounded-md flex items-center gap-3" style={{ background: 'var(--success-subtle)', border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)' }}>
+                    <div className="px-4 py-3 rounded-lg flex items-center gap-3 bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)]">
                       <div className="flex-1 min-w-0">
                         <div className="text-body font-semibold mb-1 text-success">Key "{newlyCreatedKey.name}" created — copy it now</div>
-                        <code className="text-body" style={{ fontFamily: "'JetBrains Mono',monospace", wordBreak: 'break-all' }}>{newlyCreatedKey.keyValue}</code>
+                        <code className="font-mono text-body text-primary break-all">{newlyCreatedKey.keyValue}</code>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }} className="px-3 py-1.5 rounded-md text-body font-semibold text-white whitespace-nowrap border-none cursor-pointer" style={{ background: 'var(--success)' }}>Copy</button>
-                      <button onClick={() => setNewlyCreatedKey(null)} className="btn-icon"><XIcon size={14} /></button>
+                      <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(newlyCreatedKey.keyValue); toast('API key copied', 'success'); }}>Copy</Button>
+                      <IconButton aria-label="Dismiss" onClick={() => setNewlyCreatedKey(null)}><XIcon size={14} /></IconButton>
                     </div>
                   )}
 
                   {showNewKey && (
-                    <div className="p-[14px_16px] bg-card-2 rounded-xl border border-hairline flex flex-col gap-[10px]">
-                      <div className="text-[13px] font-semibold">Generate New Key</div>
-                      <div className="grid grid-cols-2 gap-[10px]">
+                    <div className="p-4 bg-card-2 rounded-lg border border-hairline flex flex-col gap-3">
+                      <div className="text-title font-semibold text-primary">Generate new key</div>
+                      <div className="grid grid-cols-2 gap-2.5">
                         <FormField label="Key name">
                           <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={formInputCls} />
                         </FormField>
@@ -434,40 +485,40 @@ export default function Providers() {
                         </FormField>
                       </div>
                       <div className="flex gap-2 justify-end">
-                        <button className="btn-ghost" onClick={() => setShowNewKey(false)}>Cancel</button>
-                        <button className="btn-primary" onClick={() => createKey.mutate()} disabled={!newKey.name || !newKey.projectId || createKey.isPending}>{createKey.isPending ? 'Generating…' : 'Generate'}</button>
+                        <Button variant="ghost" size="sm" onClick={() => setShowNewKey(false)}>Cancel</Button>
+                        <Button variant="primary" size="sm" loading={createKey.isPending} disabled={!newKey.name || !newKey.projectId} onClick={() => createKey.mutate()}>Generate</Button>
                       </div>
                     </div>
                   )}
 
-                  {keysLoading && <div className="text-center text-muted text-[13px] p-5">Loading keys…</div>}
+                  {keysLoading && <div className="text-center text-muted text-body p-5">Loading keys…</div>}
                   {!keysLoading && keys.length === 0 && !showNewKey && (
                     <EmptyState title="No API keys yet" description="Generate one to start proxying requests." />
                   )}
                   {keys.length > 0 && (
-                    <div className="bg-card-2 rounded-xl overflow-hidden">
+                    <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">
                       <DataTable columns={keysColumns} rows={keys} rowKey={k => k.id} />
                     </div>
                   )}
                 </>
               )}
             </div>
-          </div>
+          </Card>
         ) : (
-          <div className="bg-card rounded-2xl flex items-center justify-center text-muted text-sm" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <Card elevation="raised" padding="lg" className="flex items-center justify-center text-muted text-body">
             Add your first provider to get started.
-          </div>
+          </Card>
         )}
       </div>
 
       {/* Add Provider Modal */}
       {showNewProvider && (
-        <Modal title="Add Provider" onClose={() => setShowNewProvider(false)} maxWidth={460} footer={
-          <ModalFooter onCancel={() => setShowNewProvider(false)} onSubmit={() => createProvider.mutate()} submitLabel={createProvider.isPending ? 'Saving…' : 'Add Provider'} loading={createProvider.isPending} disabled={!newProvider.name || !newProvider.endpoint || !newProvider.upstreamApiKey} />
+        <Modal title="Add provider" onClose={() => setShowNewProvider(false)} maxWidth={460} footer={
+          <ModalFooter onCancel={() => setShowNewProvider(false)} onSubmit={() => createProvider.mutate()} submitLabel={createProvider.isPending ? 'Saving…' : 'Add provider'} loading={createProvider.isPending} disabled={!newProvider.name || !newProvider.endpoint || !newProvider.upstreamApiKey} />
         }>
-          <div className="flex flex-col gap-[14px]">
+          <div className="flex flex-col gap-3.5">
             {[
-              { label: 'Provider name', key: 'name' as const, placeholder: 'e.g. Anthropic', type: 'text' },
+              { label: 'Provider name', key: 'name' as const, placeholder: 'e.g. Anthropic', type: 'text', mono: false },
               { label: 'Endpoint URL', key: 'endpoint' as const, placeholder: 'https://api.anthropic.com/v1', type: 'text', mono: true },
               { label: 'Upstream API key', key: 'upstreamApiKey' as const, placeholder: 'sk-ant-…', type: 'password', mono: true },
             ].map(f => (
@@ -477,12 +528,11 @@ export default function Providers() {
                   value={newProvider[f.key]}
                   onChange={e => setNewProvider(p => ({ ...p, [f.key]: e.target.value }))}
                   placeholder={f.placeholder}
-                  className={formInputCls}
-                  style={f.mono ? { fontFamily: "'JetBrains Mono',monospace" } : undefined}
+                  className={`${formInputCls} ${f.mono ? 'font-mono' : ''}`}
                 />
               </FormField>
             ))}
-            <FormField label="Provider Kind">
+            <FormField label="Provider kind">
               <select value={newProvider.kind} onChange={e => setNewProvider(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
                 {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

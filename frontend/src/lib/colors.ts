@@ -14,6 +14,14 @@ const MODEL_COLORS: Record<string, string> = {
 const MODEL_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#c2836b', '#b8834a', '#5ba394', '#d0956f'];
 const AGENT_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#c2836b', '#deb073', '#5ba394', '#b8834a'];
 
+const PROVIDER_COLORS: Record<string, string> = {
+  Anthropic: '#3daa6f',
+  OpenAI: '#c9944a',
+  Google: '#6b9eaa',
+  Azure: '#5b82b0',
+  Mistral: '#d4915c',
+};
+
 function hashStr(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {
@@ -28,6 +36,10 @@ export function agentColor(id: string): string {
 
 export function modelColor(name: string): string {
   return MODEL_COLORS[name] ?? MODEL_PALETTE[hashStr(name) % MODEL_PALETTE.length];
+}
+
+export function providerColor(name: string): string {
+  return PROVIDER_COLORS[name] ?? AGENT_PALETTE[hashStr(name) % AGENT_PALETTE.length];
 }
 
 export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
