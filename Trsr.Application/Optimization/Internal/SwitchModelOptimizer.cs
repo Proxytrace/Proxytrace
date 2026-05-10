@@ -1,3 +1,5 @@
+using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Proposal;
 using Trsr.Domain.TestRun;
@@ -8,13 +10,17 @@ namespace Trsr.Application.Optimization.Internal;
 internal sealed class SwitchModelOptimizer : IOptimizerImplementation
 {
     private readonly IOptimizationProposal.CreateNew factory;
+    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
-    public SwitchModelOptimizer(IOptimizationProposal.CreateNew factory)
+    public SwitchModelOptimizer(
+        IOptimizationProposal.CreateNew factory,
+        IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
     {
         this.factory = factory;
+        this.runStats = runStats;
     }
 
-    public Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
+    public async Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
         ITestRunGroup testRunGroup,
         IReadOnlyList<ITestRun> testRuns,
         CancellationToken cancellationToken = default)
@@ -25,17 +31,42 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         var alternativeRuns = testRuns.Where(x => x.Endpoint.Id != currentEndpointId).ToList();
 
         if (currentRun is null || alternativeRuns.Count == 0)
-            return Task.FromResult<IReadOnlyList<IOptimizationProposal>>([]);
+        {
+            return [];
+        }
 
-        var best = alternativeRuns
-            .Where(x => x.Statistics.PassRate.HasValue)
-            .OrderByDescending(x => x.Statistics.PassRate)
-            .FirstOrDefault();
+        IReadOnlyList<TestRunStats> groupStats = await runStats.QueryAsync(
+            new TestRunStats.Filter(GroupId: testRunGroup.Id), cancellationToken);
+        Dictionary<Guid, TestRunStats> statsByRun = groupStats.ToDictionary(s => s.TestRunId);
 
-        if (best is null || best.Statistics.PassRate <= currentRun.Statistics.PassRate)
-            return Task.FromResult<IReadOnlyList<IOptimizationProposal>>([]);
+        if (!statsByRun.TryGetValue(currentRun.Id, out TestRunStats? currentStats))
+        {
+            return [];
+        }
 
-        var diff = best.Statistics - currentRun.Statistics;
+        TestRunStats? best = null;
+        foreach (ITestRun alt in alternativeRuns)
+        {
+            if (!statsByRun.TryGetValue(alt.Id, out TestRunStats? altStats))
+            {
+                continue;
+            }
+            if (!altStats.PassRate.HasValue)
+            {
+                continue;
+            }
+            if (best is null || altStats.PassRate > best.PassRate)
+            {
+                best = altStats;
+            }
+        }
+
+        if (best is null || best.PassRate <= currentStats.PassRate)
+        {
+            return [];
+        }
+
+        TestRunStatsAggregate diff = best.ToAggregate() - currentStats.ToAggregate();
 
         var priority = diff.PassRate switch
         {
@@ -45,24 +76,25 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             _ => Priority.Low
         };
 
+        ITestRun bestRun = alternativeRuns.First(r => r.Id == best.TestRunId);
         var currentName = currentRun.Endpoint.Model.Name;
-        var bestName = best.Endpoint.Model.Name;
+        var bestName = bestRun.Endpoint.Model.Name;
         var passRatePct = (diff.PassRate * 100)?.ToString("F1") ?? "?";
         var rationale = $"Switching from {currentName} to {bestName} improved the pass rate by {passRatePct}% in test run evidence."
             + (diff.Cost.HasValue ? $" Cost delta: {diff.Cost:+0.####;-0.####}." : "")
-            + (diff.Latency.HasValue ? $" Latency delta: {diff.Latency:+s\\.f;-s\\.f}s." : "");
+            + (diff.TotalDuration.HasValue ? $" Latency delta: {diff.TotalDuration:+s\\.f;-s\\.f}s." : "");
 
         var proposal = factory(
             agent: testRunGroup.Suite.Agent,
             priority: priority,
             rationale: rationale,
             details: new ModelSwitchDetails(
-                ProposedEndpointId: best.Endpoint.Id,
+                ProposedEndpointId: bestRun.Endpoint.Id,
                 ExpectedPassRateDelta: diff.PassRate,
                 ExpectedCostDelta: diff.Cost,
-                ExpectedLatencyDelta: diff.Latency),
-            evidenceTestRunIds: [currentRun.Id, best.Id]);
+                ExpectedLatencyDelta: diff.TotalDuration),
+            evidenceTestRunIds: [currentRun.Id, bestRun.Id]);
 
-        return Task.FromResult<IReadOnlyList<IOptimizationProposal>>([proposal]);
+        return [proposal];
     }
 }

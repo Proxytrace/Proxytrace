@@ -67,18 +67,17 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             evaluations.Add(createEvaluation(evaluator, e.Score, e.Reasoning));
         }
 
-        var statistics = new TestResultStatistics(
-            Usage: stored.InputTokens.HasValue && stored.OutputTokens.HasValue
-                ? new TokenUsage((ulong)stored.InputTokens.Value, (ulong)stored.OutputTokens.Value)
-                : null,
-            Latency: TimeSpan.FromMicroseconds(stored.DurationMs));
+        TokenUsage? usage = stored.InputTokens.HasValue && stored.OutputTokens.HasValue
+            ? new TokenUsage((ulong)stored.InputTokens.Value, (ulong)stored.OutputTokens.Value)
+            : null;
 
         return factory(
             testCase: await testCases.GetAsync(stored.TestCase, cancellationToken),
             actualResponse: stored.ActualResponse,
             evaluations: evaluations,
-            existing: stored,
-            statistics: statistics);
+            latency: TimeSpan.FromMicroseconds(stored.DurationMs),
+            usage: usage,
+            existing: stored);
     }
 
     public Task<TestResultEntity> Map(ITestResult domain, CancellationToken cancellationToken = default)
@@ -90,9 +89,9 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             Evaluations = domain.Evaluations
                 .Select(e => new StoredEvaluation { EvaluatorId = e.Evaluator.Id, Score = e.Score, Reasoning = e.Reasoning })
                 .ToArray(),
-            DurationMs = (long)domain.Statistics.Latency.TotalMicroseconds,
-            InputTokens = (long?)domain.Statistics.Usage?.InputTokenCount,
-            OutputTokens = (long?)domain.Statistics.Usage?.OutputTokenCount,
+            DurationMs = (long)domain.Latency.TotalMicroseconds,
+            InputTokens = (long?)domain.Usage?.InputTokenCount,
+            OutputTokens = (long?)domain.Usage?.OutputTokenCount,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

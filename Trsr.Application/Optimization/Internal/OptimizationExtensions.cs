@@ -1,18 +1,28 @@
+using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.Proposal;
-using Trsr.Domain.TestRun;
 
 namespace Trsr.Application.Optimization.Internal;
 
 internal static class OptimizationExtensions
 {
-    public static Priority GetOptimizationPriority(this TestRunStatistics statistics)
+    public static Priority GetOptimizationPriority(this TestRunStats stats)
+        => GetPriorityFromFailRate(stats.TestCases, stats.Failed);
+
+    public static Priority GetOptimizationPriority(this TestRunStatsAggregate stats)
+        => GetPriorityFromFailRate(stats.TestCases, stats.Failed);
+
+    public static TestRunStatsAggregate ToAggregate(this TestRunStats stats)
+        => new(stats.TestCases, stats.Passed, stats.TotalDuration, stats.Usage, stats.Cost);
+
+    private static Priority GetPriorityFromFailRate(int testCases, int failed)
     {
-        if (statistics.TestCases <= 0)
+        if (testCases <= 0)
         {
             return Priority.Low;
         }
 
-        double failRate = statistics.Failed / (double)statistics.TestCases;
+        double failRate = failed / (double)testCases;
         return failRate switch
         {
             >= 0.50 => Priority.Critical,

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.Model;
 
 namespace Trsr.Storage.Internal.Entities.Model;
@@ -17,8 +18,9 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
         IModel.CreateNew factory,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
+        IEntityEventService entityEvents,
         IAsyncLock locker,
-        IEntityCache<IModel> cache) : base(mapper, contextFactory, transaction, cache)
+        IEntityCache<IModel> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
     {
         this.factory = factory;
         this.locker = locker;

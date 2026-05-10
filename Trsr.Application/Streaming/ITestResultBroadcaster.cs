@@ -52,7 +52,7 @@ public record TestResultArrivedEvent(
                 e.Evaluator.Name,
                 e.Score,
                 e.Reasoning)).ToArray(),
-            (long)result.Statistics.Latency.TotalMilliseconds);
+            (long)result.Latency.TotalMilliseconds);
 }
 
 public record RunCompleteEvent(

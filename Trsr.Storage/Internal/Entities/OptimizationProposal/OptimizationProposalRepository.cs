@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Storage.Internal.Entities.Agent;
 
@@ -14,7 +15,8 @@ internal class OptimizationProposalRepository :
     public OptimizationProposalRepository(
         IMapper<IOptimizationProposal, OptimizationProposalEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

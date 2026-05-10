@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Trsr.Common.Async;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Events;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Inference;
 using Trsr.Domain.Project;
@@ -26,12 +27,13 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         IMapper<IAgent, AgentEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
+        IEntityEventService entityEvents,
         IAgent.CreateNew createNew,
         IPromptTemplate.Create promptTemplateFactory,
         IModelParameters.Create modelParametersFactory,
         Lazy<IAgentNameGenerator> nameGenerator,
         IAsyncLock locker,
-        IEntityCache<IAgent> cache) : base(mapper, contextFactory, transaction, cache)
+        IEntityCache<IAgent> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
     {
         this.createNew = createNew;
         this.promptTemplateFactory = promptTemplateFactory;

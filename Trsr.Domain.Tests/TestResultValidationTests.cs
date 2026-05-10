@@ -93,11 +93,12 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var existing = await generator.CreateAsync(CancellationToken);
 
         var testResult = createExisting(
-            existing.TestCase, 
-            existing.ActualResponse, 
-            existing.Evaluations, 
-            existing,
-            existing.Statistics);
+            existing.TestCase,
+            existing.ActualResponse,
+            existing.Evaluations,
+            existing.Latency,
+            existing.Usage,
+            existing);
 
         testResult.Should().NotBeNull();
         testResult.Id.Should().Be(existing.Id);

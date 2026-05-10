@@ -9,8 +9,8 @@ namespace Trsr.Domain.TestRunGroup.Internal;
 internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
 {
     public ITestSuite Suite { get; }
-    public TestRunStatus Status { get; }
-    public DateTimeOffset? CompletedAt { get; }
+    public TestRunStatus Status { get; private init; }
+    public DateTimeOffset? CompletedAt { get; private init; }
 
     public TestRunGroup(
         ITestSuite suite,
@@ -63,8 +63,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         }
 
         DateTimeOffset? completedAt = IsTerminal(state) ? DateTimeOffset.UtcNow : null;
-        var updated = new TestRunGroup(Suite, state, completedAt, this, repository);
-        return repository.UpdateAsync(updated, cancellationToken);
+        return ApplyAsync(this with { Status = state, CompletedAt = completedAt }, cancellationToken);
     }
 
     private static bool IsTerminal(TestRunStatus status)

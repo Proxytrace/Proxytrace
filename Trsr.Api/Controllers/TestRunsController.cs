@@ -167,7 +167,7 @@ public class TestRunsController : ControllerBase
                     e.Evaluator.Name,
                     e.Score,
                     e.Reasoning)).ToArray(),
-                (long)res.Statistics.Latency.TotalMilliseconds
+                (long)res.Latency.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
             UpdatedAt: r.UpdatedAt);
@@ -235,7 +235,7 @@ public class TestRunsController : ControllerBase
 
     private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)
     {
-        var total = result.Statistics.Latency.TotalMilliseconds;
+        var total = result.Latency.TotalMilliseconds;
         return new RuntimeBreakdownDto(Total: (long)total, Ttft: 0, Gen: (long)total, Tools: 0, Judge: null);
     }
 
@@ -249,10 +249,10 @@ public class TestRunsController : ControllerBase
                 Region: "n/a",
                 PricingIn: (double)(run.Endpoint.InputTokenCost ?? 0),
                 PricingOut: (double)(run.Endpoint.OutputTokenCost ?? 0),
-                TokIn: result.Statistics.Usage?.InputTokenCount,
-                TokOut: result.Statistics.Usage?.OutputTokenCount,
+                TokIn: result.Usage?.InputTokenCount,
+                TokOut: result.Usage?.OutputTokenCount,
                 Calls: 1,
-                Latency: (long)result.Statistics.Latency.TotalMilliseconds,
+                Latency: (long)result.Latency.TotalMilliseconds,
                 CostUsd: 0
             )
         ];

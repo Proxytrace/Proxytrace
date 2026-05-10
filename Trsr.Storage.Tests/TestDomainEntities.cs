@@ -27,11 +27,12 @@ public class TestDomainEntities : BaseTest<Module>
         }
     }
 
-    private static IReadOnlyCollection<Type> GetStoredEntities() 
+    private static IReadOnlyCollection<Type> GetStoredEntities()
         => typeof(Storage.Module).Assembly
             .GetTypes()
             .Where(t => t is { IsInterface: false, IsAbstract: false, IsClass: true } && t != typeof(IEntity))
             .Where(t => t.GetInterfaces().Any(i => i == typeof(IEntity)))
+            .Where(t => t.GetDomainEntityType() is not null)
             .ToList();
     
     public static IEnumerable<object[]> GetStoredEntityTypes() 

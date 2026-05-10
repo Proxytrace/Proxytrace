@@ -8,12 +8,18 @@ export const QUERY_KEYS = {
   statisticsLatency: (from?: string, agentId?: string, projectId?: string) => ['statistics-latency', from, agentId, projectId ?? null] as const,
   statisticsModelBreakdown: (from?: string, agentId?: string, projectId?: string) => ['statistics-model-breakdown', from, agentId, projectId ?? null] as const,
   statisticsAgentBreakdown: (from?: string, projectId?: string) => ['statistics-agent-breakdown', from, projectId ?? null] as const,
+  statisticsTokenUsage: (from?: string, agentId?: string, projectId?: string) => ['statistics-token-usage', from, agentId, projectId ?? null] as const,
+  statisticsPassRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-pass-rates', from, agentId, projectId ?? null] as const,
+  statisticsErrorRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-error-rates', from, agentId, projectId ?? null] as const,
+  statisticsCostEstimate: (from?: string, agentId?: string, projectId?: string) => ['statistics-cost-estimate', from, agentId, projectId ?? null] as const,
 
   agentStatsOverview: (agentId: string, rangeKey: string) => ['agent-stats-overview', agentId, rangeKey] as const,
   agentSuitePassRates: (agentId: string) => ['agent-suite-pass-rates', agentId] as const,
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 
   evaluators: (projectId?: string) => ['evaluators', projectId ?? null] as const,
+  statisticsEvaluatorOverview: (evaluatorId: string, rangeKey: string) => ['statistics-evaluator-overview', evaluatorId, rangeKey] as const,
+  statisticsEvaluatorSparklines: (projectId: string, rangeKey: string) => ['statistics-evaluator-sparklines', projectId, rangeKey] as const,
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 

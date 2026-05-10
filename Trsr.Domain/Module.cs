@@ -4,10 +4,11 @@ using Autofac;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Evaluator.Internal;
+using Trsr.Domain.Events;
+using Trsr.Domain.Events.Internal;
 using Trsr.Domain.Message.Internal;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Prompt.Internal;
-using Trsr.Domain.TestRun.Internal;
 using Trsr.Domain.Tools.Internal;
 
 namespace Trsr.Domain;
@@ -70,10 +71,10 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<EvaluatorGenerator>()
             .AsImplementedInterfaces();
 
-        builder.RegisterType<StatisticsCalculator>()
-            .As<IStatisticsCalculator>()
+        builder.RegisterType<EntityEventService>()
+            .As<IEntityEventService>()
             .SingleInstance();
-        
+
         builder.RegisterType<ResourcesPromptRepository>()
             .As<IPromptTemplateRepository>();
     }

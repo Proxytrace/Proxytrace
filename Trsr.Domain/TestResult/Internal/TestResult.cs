@@ -3,19 +3,20 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestCase;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.TestResult.Internal;
 
 internal record TestResult : DomainEntity<ITestResult>, ITestResult
 {
-    public ITestCase TestCase { get; }
-    public AssistantMessage ActualResponse { get; }
+    public ITestCase TestCase { get; init; }
+    public AssistantMessage ActualResponse { get; init; }
     public bool Passed => Evaluations.All(x => x.Passed);
-    public IReadOnlyCollection<IEvaluation> Evaluations { get; }
-    public TestResultStatistics Statistics { get; }
-    public EvaluationScore? OverallScore { get; }
+    public IReadOnlyCollection<IEvaluation> Evaluations { get; init; }
+    public TimeSpan Latency { get; init; }
+    public TokenUsage? Usage { get; init; }
+    public EvaluationScore? OverallScore => Evaluations.CombineScores();
 
     public TestResult(
         ITestCase testCase,
@@ -26,26 +27,27 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
         TestCase = testCase;
         ActualResponse = completion.Response;
         Evaluations = evaluations;
-        Statistics = TestResultStatistics.FromCompletion(completion);
-        OverallScore = evaluations.CombineScores();
+        Latency = completion.Latency;
+        Usage = completion.Usage;
     }
 
     public TestResult(
         ITestCase testCase,
         AssistantMessage actualResponse,
         IReadOnlyCollection<IEvaluation> evaluations,
+        TimeSpan latency,
+        TokenUsage? usage,
         IDomainEntityData existing,
-        TestResultStatistics statistics,
         IRepository<ITestResult> repository) : base(existing, repository)
     {
         TestCase = testCase;
         ActualResponse = actualResponse;
         Evaluations = evaluations;
-        Statistics = statistics;
-        OverallScore = evaluations.CombineScores();
+        Latency = latency;
+        Usage = usage;
     }
 
-    public async Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
+    public Task<ITestResult> AddEvaluationAsync(IEvaluation evaluation, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<IEvaluation> updatedEvaluations =
         [
@@ -53,14 +55,7 @@ internal record TestResult : DomainEntity<ITestResult>, ITestResult
             evaluation
         ];
 
-        var updatedResults = new TestResult(
-            TestCase,
-            ActualResponse,
-            updatedEvaluations,
-            this,
-            Statistics,
-            repository);
-        return await repository.UpdateAsync(updatedResults, cancellationToken);
+        return ApplyAsync(this with { Evaluations = updatedEvaluations }, cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.User;
 
 namespace Trsr.Storage.Internal.Entities.User;
@@ -11,7 +12,8 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
     public UserRepository(
         IMapper<IUser, UserEntity> mapper,
         Func<StorageDbContext> context,
-        ITransaction transaction) : base(mapper, context, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, context, transaction, entityEvents)
     {
     }
 

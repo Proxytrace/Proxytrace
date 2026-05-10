@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
+using Trsr.Domain.Events;
 
 namespace Trsr.Storage.Internal.Entities.ApiKey;
 
@@ -11,7 +12,8 @@ internal class ApiKeyRepository : AbstractRepository<IApiKey, ApiKeyEntity>, IAp
     public ApiKeyRepository(
         IMapper<IApiKey, ApiKeyEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

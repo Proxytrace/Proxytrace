@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.ModelProvider;
 
 namespace Trsr.Storage.Internal.Entities.ModelProvider;
@@ -11,7 +12,8 @@ internal class ModelProviderRepository : AbstractRepository<IModelProvider, Mode
         IMapper<IModelProvider, ModelProviderEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IEntityCache<IModelProvider> cache) : base(mapper, contextFactory, transaction, cache)
+        IEntityEventService entityEvents,
+        IEntityCache<IModelProvider> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
     {
     }
 }

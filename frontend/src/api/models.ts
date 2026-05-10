@@ -115,7 +115,7 @@ export interface SummaryDto {
   totalInputTokens: number;
   totalOutputTokens: number;
   avgLatencyMs: number;
-  overallPassRate: number;
+  overallPassRate: number | null;
 }
 export interface ModelBreakdownDto {
   endpointId: string;
@@ -137,6 +137,30 @@ export interface LatencyStatDto {
   minMs: number;
   maxMs: number;
   sampleCount: number;
+}
+export interface TokenUsageDto {
+  date: string;
+  endPointId: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+export interface PassRateDto {
+  suiteId: string;
+  runTimestamp: string;
+  passCount: number;
+  failCount: number;
+}
+export interface ErrorRateDto {
+  endpointId: string;
+  totalCalls: number;
+  errorCalls: number;
+  errorRate: number;
+}
+export interface CostEstimateDto {
+  endpointId: string;
+  inputCostEur: number | null;
+  outputCostEur: number | null;
+  totalCostEur: number | null;
 }
 
 /* ── Agent Statistics ── */
@@ -209,6 +233,37 @@ export interface TestSuiteDto {
 }
 
 /* ── Test Runs ── */
+export interface EvaluatorSummaryDto {
+  totalEvaluations: number;
+  avgScore: number | null;
+  overallPassRate: number | null;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalCostEur: number | null;
+}
+
+export interface EvaluatorPassRatePointDto {
+  bucketStart: string;
+  passed: number;
+  total: number;
+}
+
+export interface EvaluatorScoreBucketDto {
+  score: EvaluationScore;
+  count: number;
+}
+
+export interface EvaluatorOverviewDto {
+  summary: EvaluatorSummaryDto;
+  passRateTrend: EvaluatorPassRatePointDto[];
+  scoreDistribution: EvaluatorScoreBucketDto[];
+}
+
+export interface EvaluatorSparklineDto {
+  evaluatorId: string;
+  points: EvaluatorPassRatePointDto[];
+}
+
 export interface EvaluationResultDto {
   evaluatorId: string;
   evaluatorKind: EvaluatorKind;

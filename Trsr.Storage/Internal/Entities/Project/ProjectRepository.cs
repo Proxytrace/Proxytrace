@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.Exceptions;
 using Trsr.Domain.Project;
 
@@ -12,7 +13,8 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
     public ProjectRepository(
         IMapper<IProject, ProjectEntity> mapper,
         Func<StorageDbContext> contextFactory,
-        ITransaction transaction) : base(mapper, contextFactory, transaction)
+        ITransaction transaction,
+        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
     {
     }
 

@@ -2,6 +2,8 @@ using System.ComponentModel;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Optimization.Internal.Evidence;
+using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -23,18 +25,21 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
+    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateToolDefinitionOptimizer(
         IOptimizationProposal.CreateNew factory,
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
+        IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         ILogger<UpdateToolDefinitionOptimizer> logger)
     {
         this.factory = factory;
         this.prompts = prompts;
         this.agents = agents;
         this.evidenceBuilder = evidenceBuilder;
+        this.runStats = runStats;
     }
 
     public async Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
@@ -49,7 +54,13 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
         }
 
         var currentRun = testRuns.FirstOrDefault(r => r.Endpoint.Id == agent.Endpoint.Id);
-        if (currentRun is null || currentRun.Statistics.Failed == 0)
+        if (currentRun is null)
+        {
+            return [];
+        }
+
+        TestRunStats? stats = await runStats.FindAsync(currentRun.Id, cancellationToken);
+        if (stats is null || stats.Failed == 0)
         {
             return [];
         }
@@ -87,11 +98,11 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             return [];
         }
 
-        Priority priority = currentRun.Statistics.GetOptimizationPriority();
+        Priority priority = stats.GetOptimizationPriority();
         string fullRationale =
             $"""
              {completion.Rationale}
-             (Current run: {currentRun.Statistics.Failed}/{currentRun.Statistics.TestCases} failed.)";
+             (Current run: {stats.Failed}/{stats.TestCases} failed.)";
              """;
 
         var proposal = factory(

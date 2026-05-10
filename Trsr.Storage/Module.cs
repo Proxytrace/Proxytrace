@@ -7,12 +7,15 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Demo;
+using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;
 using Trsr.Storage.Internal.Entities;
 using Trsr.Storage.Internal.Entities.Project;
 using Trsr.Storage.Internal.Entities.TestSuite;
+using Trsr.Storage.Internal.Statistics;
 
 namespace Trsr.Storage;
 
@@ -72,8 +75,16 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
 
-        builder.RegisterType<StatisticsQueryService>()
-            .As<IStatisticsQueryService>()
+        builder.RegisterType<TestRunStatsStore>()
+            .AsImplementedInterfaces()
+            .InstancePerDependency();
+
+        builder.RegisterType<AgentCallStatsQueries>()
+            .As<IAgentCallStatsReader>()
+            .InstancePerDependency();
+
+        builder.RegisterType<EvaluatorStatsQueries>()
+            .As<IEvaluatorStatsReader>()
             .InstancePerDependency();
 
         builder

@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Events;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
@@ -21,10 +22,11 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         IMapper<IModelEndpoint, ModelEndpointEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
+        IEntityEventService entityEvents,
         IModelRepository models,
         IAsyncLock locker,
         IModelEndpoint.CreateNew createNewEndpoint,
-        IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, cache)
+        IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
     {
         this.models = models;
         this.locker = locker;

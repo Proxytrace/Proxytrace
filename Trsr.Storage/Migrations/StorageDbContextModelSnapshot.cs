@@ -416,6 +416,75 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("ProjectUserEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Statistics.TestRunStatsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("EndpointId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("InputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("OutputTokens")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Passed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RunCompletedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SuiteId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TestCases")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TestRunId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("TotalDurationMicroseconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("EndpointId");
+
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("RunCompletedAt");
+
+                    b.HasIndex("SuiteId");
+
+                    b.HasIndex("TestRunId")
+                        .IsUnique();
+
+                    b.ToTable("TestRunStatsEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.TestCase.TestCaseEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -502,24 +571,6 @@ namespace Trsr.Storage.Migrations
 
                     b.Property<Guid>("Group")
                         .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("StatCost")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long?>("StatInputTokens")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("StatOutputTokens")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StatPassed")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StatTestCases")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("StatTotalDurationMs")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
@@ -733,6 +784,15 @@ namespace Trsr.Storage.Migrations
                     b.HasOne("Trsr.Storage.Internal.Entities.User.UserEntity", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Statistics.TestRunStatsEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.TestRun.TestRunEntity", null)
+                        .WithOne()
+                        .HasForeignKey("Trsr.Storage.Internal.Entities.Statistics.TestRunStatsEntity", "TestRunId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

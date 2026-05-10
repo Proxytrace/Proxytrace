@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Trsr.Application.Optimization.Internal;
 using Trsr.Application.Optimization.Internal.Evidence;
+using Trsr.Application.Statistics;
+using Trsr.Application.Statistics.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -20,7 +22,6 @@ using Trsr.Domain.TestSuite;
 using Trsr.Domain.Tools;
 using Trsr.Serialization;
 using Trsr.Testing;
-using TestRunStatistics = Trsr.Domain.TestRun.TestRunStatistics;
 
 namespace Trsr.Application.Tests;
 
@@ -165,6 +166,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
         public required UpdateSystemPromptOptimizer Optimizer { get; init; }
         public required ITestRunGroup Group { get; init; }
         public required Guid AgentEndpointId { get; init; }
+        public required IStatsReader<TestRunStats, TestRunStats.Filter> Statistics { get; init; }
 
         public ITestRun CreateRun(
             Guid endpointId,
@@ -176,16 +178,27 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             endpoint.Id.Returns(endpointId);
 
             var run = Substitute.For<ITestRun>();
-            run.Id.Returns(Guid.NewGuid());
+            Guid runId = Guid.NewGuid();
+            run.Id.Returns(runId);
             run.Endpoint.Returns(endpoint);
             run.TestResults.Returns(results);
             run.Group.Returns(Group);
-            run.Statistics.Returns(new TestRunStatistics(
+
+            Guid groupId = Group.Id;
+            TestRunStats stats = new(
+                TestRunId: runId,
+                AgentId: Guid.Empty,
+                EndpointId: endpointId,
+                GroupId: groupId,
+                SuiteId: Guid.Empty,
                 TestCases: total,
                 Passed: total - failed,
+                TotalDuration: null,
                 Usage: null,
-                Latency: null,
-                Cost: null));
+                Cost: null,
+                RunCompletedAt: DateTimeOffset.UtcNow);
+            Statistics.FindAsync(runId, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<TestRunStats?>(stats));
             return run;
         }
 
@@ -271,17 +284,21 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 
+            var statistics = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
+
             var optimizer = new UpdateSystemPromptOptimizer(
                 proposalFactory,
                 prompts,
                 agents,
-                new OptimizerEvidenceBuilder());
+                new OptimizerEvidenceBuilder(),
+                statistics);
 
             return new OptimizerFixture
             {
                 Optimizer = optimizer,
                 Group = group,
                 AgentEndpointId = agentEndpointId,
+                Statistics = statistics,
             };
         }
     }

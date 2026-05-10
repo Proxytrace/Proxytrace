@@ -5,13 +5,13 @@ public record SummaryDto(
     long TotalInputTokens,
     long TotalOutputTokens,
     double AvgLatencyMs,
-    double OverallPassRate);
+    double? OverallPassRate);
 
 public record TokenUsageDto(DateOnly Date, Guid EndPointId, long InputTokens, long OutputTokens);
 
 public record LatencyDto(Guid EndpointId, double P50Ms, double P95Ms, double P99Ms, double MinMs, double MaxMs, int SampleCount);
 
-public record PassRateDto(Guid SuiteId, DateTimeOffset RunTimestamp, int PassCount, int FailCount, int UndecidedCount);
+public record PassRateDto(Guid SuiteId, DateTimeOffset RunTimestamp, int PassCount, int FailCount);
 
 public record ErrorRateDto(Guid EndpointId, int TotalCalls, int ErrorCalls, double ErrorRate);
 
@@ -60,3 +60,29 @@ public record AgentOverviewDto(
     IReadOnlyList<AgentPassRatePointDto> PassRateTrend,
     IReadOnlyList<AgentSuitePassRateDto> SuitePassRates,
     AgentEntityCountsDto Counts);
+
+public record EvaluatorSummaryDto(
+    int TotalEvaluations,
+    double? AvgScore,
+    double? OverallPassRate,
+    long? InputTokens,
+    long? OutputTokens,
+    decimal? TotalCostEur);
+
+public record EvaluatorPassRatePointDto(
+    DateTimeOffset BucketStart,
+    int Passed,
+    int Total);
+
+public record EvaluatorScoreBucketDto(
+    string Score,
+    int Count);
+
+public record EvaluatorOverviewDto(
+    EvaluatorSummaryDto Summary,
+    IReadOnlyList<EvaluatorPassRatePointDto> PassRateTrend,
+    IReadOnlyList<EvaluatorScoreBucketDto> ScoreDistribution);
+
+public record EvaluatorSparklineDto(
+    Guid EvaluatorId,
+    IReadOnlyList<EvaluatorPassRatePointDto> Points);

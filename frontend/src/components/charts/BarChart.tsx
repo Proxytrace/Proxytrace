@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { computeModelBars } from './chart-math';
+import { ChartTooltip } from './ChartTooltip';
 
 interface BarChartProps {
   data: { label: string; value: number }[];
@@ -7,6 +8,7 @@ interface BarChartProps {
   height?: number;
   color: string;
   truncateAt?: number;
+  formatValue?: (v: number) => string;
 }
 
 export function BarChart({
@@ -15,24 +17,64 @@ export function BarChart({
   height = 220,
   color,
   truncateAt = 10,
+  formatValue,
 }: BarChartProps) {
   const bars = useMemo(() => computeModelBars(data, width, height, truncateAt), [data, width, height, truncateAt]);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (bars.rects.length === 0) return null;
 
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const xPx = e.clientX - rect.left;
+    const xVb = (xPx / rect.width) * width;
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    bars.rects.forEach((r, i) => {
+      const cx = r.x + r.w / 2;
+      const dist = Math.abs(cx - xVb);
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    });
+    setHoverIdx(bestIdx);
+  };
+
+  const hoverRect = hoverIdx !== null ? bars.rects[hoverIdx] : null;
+  const fmt = formatValue ?? ((v: number) => String(v));
+
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height={height}
-      style={{ display: 'block' }}
-      preserveAspectRatio="none"
+    <div
+      ref={wrapRef}
+      className="relative"
+      onMouseMove={handleMove}
+      onMouseLeave={() => setHoverIdx(null)}
     >
-      <line x1="38" x2={width - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="#343438" />
-      <path d={bars.barsPath} fill={color} opacity="0.85" />
-      {bars.rects.map((r, i) => (
-        <text key={i} x={r.labelX} y={bars.baselineY + 14} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
-      ))}
-    </svg>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height={height}
+        style={{ display: 'block' }}
+        preserveAspectRatio="none"
+      >
+        <line x1="38" x2={width - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="#343438" />
+        <path d={bars.barsPath} fill={color} opacity="0.85" />
+        {hoverRect && (
+          <rect x={hoverRect.x} y={hoverRect.y} width={hoverRect.w} height={hoverRect.h} fill={color} />
+        )}
+        {bars.rects.map((r, i) => (
+          <text key={i} x={r.labelX} y={bars.baselineY + 14} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+        ))}
+      </svg>
+      {hoverRect && (
+        <ChartTooltip
+          leftPct={((hoverRect.x + hoverRect.w / 2) / width) * 100}
+          topPct={(hoverRect.y / height) * 100}
+          label={hoverRect.fullLabel}
+          value={fmt(hoverRect.value)}
+          color={color}
+        />
+      )}
+    </div>
   );
 }

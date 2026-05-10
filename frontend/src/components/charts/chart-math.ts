@@ -1,13 +1,16 @@
 export interface GridLine { y: number; val: string; isDashed: boolean; }
+export interface AreaPoint { x: number; y: number; v: number; }
 export interface AreaChartData {
   linePath: string; areaPath: string;
   solidGridPath: string; dashedGridPath: string;
   grid: GridLine[];
   xLabels: { x: number; label: string }[];
   endX: number; endY: number;
+  pts: AreaPoint[];
+  plotL: number; plotR: number; plotT: number; plotB: number;
 }
 export interface SparklineData { path: string; endX: number; endY: number; }
-export interface HistRect { x: number; y: number; w: number; h: number; label: string; labelX: number; }
+export interface HistRect { x: number; y: number; w: number; h: number; label: string; labelX: number; value: number; fullLabel: string; }
 export interface HistData { rects: HistRect[]; barsPath: string; baselineY: number; }
 
 export function computeSparkline(data: number[], width: number, height: number): SparklineData {
@@ -37,12 +40,14 @@ export function computeAreaChart(
       linePath: '', areaPath: '',
       solidGridPath: '', dashedGridPath: '',
       grid: [], xLabels: [], endX: 0, endY: 0,
+      pts: [], plotL: padL, plotR: width - padR, plotT: padT, plotB: height - padB,
     };
   }
   const w = width - padL - padR, h = height - padT - padB;
   const max = Math.max(...data) * 1.15 || 1;
   const stepX = w / (data.length - 1);
   const pts = data.map((v, i) => [padL + i * stepX, padT + h - (v / max) * h]);
+  const ptsTyped: AreaPoint[] = data.map((v, i) => ({ x: pts[i][0], y: pts[i][1], v }));
   const linePts = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
   const areaPath = `${linePts} L ${(padL + w).toFixed(1)} ${(padT + h).toFixed(1)} L ${padL} ${(padT + h).toFixed(1)} Z`;
   const yTicks = 4;
@@ -63,7 +68,12 @@ export function computeAreaChart(
     }
   }
   const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
-  return { linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels, endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1] };
+  return {
+    linePath: linePts, areaPath, solidGridPath, dashedGridPath, grid, xLabels,
+    endX: pts[pts.length - 1][0], endY: pts[pts.length - 1][1],
+    pts: ptsTyped,
+    plotL: padL, plotR: padL + w, plotT: padT, plotB: padT + h,
+  };
 }
 
 export function computeHistogram(
@@ -82,6 +92,7 @@ export function computeHistogram(
     x: padL + i * (bw + gap) + gap / 2, w: bw,
     y: padT + h - (v / max) * h, h: (v / max) * h,
     label: lab[i] ?? '', labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
+    value: v, fullLabel: lab[i] ?? '',
   }));
   const barsPath = rects.map(r =>
     `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
@@ -105,6 +116,7 @@ export function computeModelBars(
     y: padT + h - (d.value / max) * h, h: (d.value / max) * h,
     label: d.label.length > truncateAt ? d.label.slice(0, truncateAt - 1) + '…' : d.label,
     labelX: padL + i * (bw + gap) + gap / 2 + bw / 2,
+    value: d.value, fullLabel: d.label,
   }));
   const barsPath = rects.map(r =>
     `M ${r.x.toFixed(1)} ${r.y.toFixed(1)} h ${r.w.toFixed(1)} v ${r.h.toFixed(1)} h -${r.w.toFixed(1)} Z`
