@@ -37,4 +37,6 @@ export const QUERY_KEYS = {
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
 
   search: (projectId: string, q: string) => ['search', projectId, q] as const,
+  searchSettings: (projectId: string) => ['search-settings', projectId] as const,
+  searchStatus: (projectId: string) => ['search-status', projectId] as const,
 };

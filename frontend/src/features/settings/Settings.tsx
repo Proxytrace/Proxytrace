@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { ProjectsTab } from './ProjectsTab';
+import { SearchIndexingTab } from './SearchIndexingTab';
 import { DangerZoneTab } from './DangerZoneTab';
 
 const TABS = [
   { id: 'projects', label: 'Projects', render: () => <ProjectsTab /> },
+  { id: 'search', label: 'Search indexing', render: () => <SearchIndexingTab /> },
   { id: 'danger', label: 'Danger zone', render: () => <DangerZoneTab /> },
 ] as const;
 

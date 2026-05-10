@@ -54,6 +54,27 @@ public class SearchController : ControllerBase
         return Ok(new { reindexed = projectId });
     }
 
+    [HttpGet("settings")]
+    public Task<ActionResult<SearchIndexingSettingsDto>> GetSettings(Guid projectId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpPut("settings")]
+    public Task<ActionResult<SearchIndexingSettingsDto>> UpdateSettings(
+        Guid projectId,
+        [FromBody] SearchIndexingSettingsDto settings,
+        CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpGet("status")]
+    public Task<ActionResult<SearchIndexStatusDto>> GetStatus(Guid projectId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     private static string KindToWire(SearchKind kind) => kind switch
     {
         SearchKind.Agent => "agent",
