@@ -6,35 +6,35 @@ namespace Trsr.Domain.User.Internal;
 
 internal record User : DomainEntity<IUser>, IUser
 {
-    public string Name { get; }
     public string Email { get; }
-    public string ExternalSubject { get; }
+    public string? ExternalSubject { get; }
+    public string? PasswordHash { get; private init; }
     public UserRole Role { get; private init; }
 
     public User(
-        string name,
         string email,
-        string externalSubject,
+        string? externalSubject,
+        string? passwordHash,
         UserRole role,
         IRepository<IUser> repository) : base(repository)
     {
-        Name = name;
         Email = email;
         ExternalSubject = externalSubject;
+        PasswordHash = passwordHash;
         Role = role;
     }
 
     public User(
-        string name,
         string email,
-        string externalSubject,
+        string? externalSubject,
+        string? passwordHash,
         UserRole role,
         IDomainEntityData existing,
         IRepository<IUser> repository) : base(existing, repository)
     {
-        Name = name;
         Email = email;
         ExternalSubject = externalSubject;
+        PasswordHash = passwordHash;
         Role = role;
     }
 
@@ -43,6 +43,9 @@ internal record User : DomainEntity<IUser>, IUser
             ? Task.FromResult<IUser>(this)
             : ApplyAsync(this with { Role = role }, cancellationToken);
 
+    public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default)
+        => ApplyAsync(this with { PasswordHash = passwordHash }, cancellationToken);
+
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))
@@ -50,9 +53,13 @@ internal record User : DomainEntity<IUser>, IUser
             yield return result;
         }
 
-        foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
         foreach (var __r in Validation.NotNullOrWhiteSpace(Email).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.NotNullOrWhiteSpace(ExternalSubject).AsEnumerable()) yield return __r;
         foreach (var __r in Validation.Defined(Role).AsEnumerable()) yield return __r;
+        if (string.IsNullOrWhiteSpace(ExternalSubject) && string.IsNullOrWhiteSpace(PasswordHash))
+        {
+            yield return new ValidationResult(
+                "User must have either ExternalSubject (OIDC) or PasswordHash (local).",
+                new[] { nameof(ExternalSubject), nameof(PasswordHash) });
+        }
     }
 }
