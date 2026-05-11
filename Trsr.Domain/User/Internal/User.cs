@@ -53,8 +53,8 @@ internal record User : DomainEntity<IUser>, IUser
             yield return result;
         }
 
-        foreach (var __r in Validation.NotNullOrWhiteSpace(Email).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.Defined(Role).AsEnumerable()) yield return __r;
+        foreach (var r in Validation.NotNullOrWhiteSpace(Email).AsEnumerable()) yield return r;
+        foreach (var r in Validation.Defined(Role).AsEnumerable()) yield return r;
         if (string.IsNullOrWhiteSpace(ExternalSubject) && string.IsNullOrWhiteSpace(PasswordHash))
         {
             yield return new ValidationResult(

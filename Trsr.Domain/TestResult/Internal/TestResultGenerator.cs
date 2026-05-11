@@ -31,7 +31,7 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
 
     public override async Task<ITestResult> GenerateAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, Random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
 
@@ -43,7 +43,7 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
 
     public async Task<ITestResult> CreateAsync(ITestCase testCase, CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, Random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
 
@@ -51,6 +51,6 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
             testCase: testCase,
             completion: await completionGenerator.CreateAsync(cancellationToken),
             evaluations: evaluations);
-        return await repository.AddAsync(result, cancellationToken);
+        return await Repository.AddAsync(result, cancellationToken);
     }
 }

@@ -18,8 +18,8 @@ internal class ToolSpecificationGenerator : DomainObjectGenerator<ToolSpecificat
     {
         var arguments = await toolArgumentsGenerator.CreateAsync(cancellationToken);
         return new ToolSpecification(
-            name: random.String(),
-            description: random.String(),
+            name: Random.String(),
+            description: Random.String(),
             arguments: arguments);
     }
 }

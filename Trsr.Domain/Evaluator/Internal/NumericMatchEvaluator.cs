@@ -99,7 +99,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
         foreach (var result in base.Validate(validationContext))
             yield return result;
 
-        foreach (var __r in Validation.NotNull(ExtractionPattern).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.NotDefault(Tolerance).AsEnumerable()) yield return __r;
+        foreach (var r in Validation.NotNull(ExtractionPattern).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotDefault(Tolerance).AsEnumerable()) yield return r;
     }
 }

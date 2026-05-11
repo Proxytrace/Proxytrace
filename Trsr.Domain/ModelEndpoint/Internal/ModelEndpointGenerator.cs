@@ -29,12 +29,12 @@ internal class ModelEndpointGenerator : DomainEntityGenerator<IModelEndpoint>
         var model = await modelGenerator.GetOrCreateAsync(cancellationToken);
         var provider = await providerGenerator.GetOrCreateAsync(cancellationToken);
 
-        var inputTokenCost = random.Decimal(0, 10);
+        var inputTokenCost = Random.Decimal(0, 10);
         return factory(
             model: model,
             provider: provider,
             inputTokenCost: inputTokenCost,
-            outputTokenCost: inputTokenCost * random.Decimal(5, 10));
+            outputTokenCost: inputTokenCost * Random.Decimal(5, 10));
     }
 }
 

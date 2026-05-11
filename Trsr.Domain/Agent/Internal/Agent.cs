@@ -112,7 +112,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
+            foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
         }
 
         foreach (var result in Endpoint.Validate(validationContext))

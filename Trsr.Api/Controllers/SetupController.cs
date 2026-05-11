@@ -14,10 +14,10 @@ namespace Trsr.Api.Controllers;
 [Route("api/setup")]
 public class SetupController : ControllerBase
 {
-    private readonly IRepository<IUser> _users;
-    private readonly IRepository<IProject> _projects;
-    private readonly IDataCleanupService _cleanup;
-    private readonly ISetupService _setup;
+    private readonly IRepository<IUser> users;
+    private readonly IRepository<IProject> projects;
+    private readonly IDataCleanupService cleanup;
+    private readonly ISetupService setup;
 
     public SetupController(
         IRepository<IUser> users,
@@ -25,17 +25,17 @@ public class SetupController : ControllerBase
         IDataCleanupService cleanup,
         ISetupService setup)
     {
-        _users = users;
-        _projects = projects;
-        _cleanup = cleanup;
-        _setup = setup;
+        this.users = users;
+        this.projects = projects;
+        this.cleanup = cleanup;
+        this.setup = setup;
     }
 
     [HttpGet("status")]
     public async Task<SetupStatusDto> GetStatus(CancellationToken cancellationToken)
     {
-        var users = await _users.CountAsync(cancellationToken);
-        var projects = await _projects.CountAsync(cancellationToken);
+        var users = await this.users.CountAsync(cancellationToken);
+        var projects = await this.projects.CountAsync(cancellationToken);
         return new SetupStatusDto { IsConfigured = users > 0 && projects > 0 };
     }
 
@@ -45,7 +45,7 @@ public class SetupController : ControllerBase
         [FromBody] CompleteSetupRequest request,
         CancellationToken cancellationToken)
     {
-        if (await _projects.CountAsync(cancellationToken) > 0)
+        if (await projects.CountAsync(cancellationToken) > 0)
             return Conflict("Setup has already been completed.");
 
         var input = new SetupInput(
@@ -59,7 +59,7 @@ public class SetupController : ControllerBase
             request.ProjectName,
             request.ApiKeyName);
 
-        var result = await _setup.CompleteAsync(input, cancellationToken);
+        var result = await setup.CompleteAsync(input, cancellationToken);
         return new CompleteSetupResponse(
             result.ProviderId,
             result.EndpointId,
@@ -79,7 +79,7 @@ public class SetupController : ControllerBase
                 new Uri(request.ProviderEndpoint),
                 request.ProviderUpstreamApiKey,
                 request.ProviderKind);
-            var ok = await _setup.TestProviderConnectionAsync(input, cancellationToken);
+            var ok = await setup.TestProviderConnectionAsync(input, cancellationToken);
             return new TestConnectionResponse(ok, ok ? null : "Connection failed.");
         }
         catch (Exception ex)
@@ -98,7 +98,7 @@ public class SetupController : ControllerBase
             new Uri(request.ProviderEndpoint),
             request.ProviderUpstreamApiKey,
             request.ProviderKind);
-        var models = await _setup.ListProviderModelsAsync(input, cancellationToken);
+        var models = await setup.ListProviderModelsAsync(input, cancellationToken);
         return new ListModelsResponse(models);
     }
 
@@ -106,7 +106,7 @@ public class SetupController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> CleanupNonModelData(CancellationToken cancellationToken)
     {
-        await _cleanup.DeleteAllNonModelDataAsync(cancellationToken);
+        await cleanup.DeleteAllNonModelDataAsync(cancellationToken);
         return NoContent();
     }
 }

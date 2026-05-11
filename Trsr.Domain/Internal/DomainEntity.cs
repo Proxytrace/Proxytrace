@@ -47,10 +47,10 @@ internal abstract record DomainEntity<TSelf> :
     /// <inheritdoc />
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var __r in Validation.NotDefault(Id).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.InPast(CreatedAt).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.InPast(UpdatedAt).AsEnumerable()) yield return __r;
-        foreach (var __r in Validation.NotBefore(UpdatedAt, CreatedAt).AsEnumerable()) yield return __r;
+        foreach (var r in Validation.NotDefault(Id).AsEnumerable()) yield return r;
+        foreach (var r in Validation.InPast(CreatedAt).AsEnumerable()) yield return r;
+        foreach (var r in Validation.InPast(UpdatedAt).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotBefore(UpdatedAt, CreatedAt).AsEnumerable()) yield return r;
     }
 
     public Task<TSelf> ReloadAsync(CancellationToken cancellationToken = default)

@@ -12,8 +12,8 @@ internal class ToolRequestGenerator : DomainObjectGenerator<ToolRequest>
 
     public override Task<ToolRequest> CreateAsync(CancellationToken cancellationToken = default)
         => new ToolRequest(
-                id: random.Guid().ToString(),
-                name: random.String(),
+                id: Random.Guid().ToString(),
+                name: Random.String(),
                 arguments: "{}")
             .ToTaskResult();
 }

@@ -21,7 +21,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
 
     public async Task<IReadOnlyList<ITestRunGroup>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
+        var context = ContextFactory();
         var stored = await context
             .Set<TestRunGroupEntity>()
             .AsNoTracking()
@@ -38,7 +38,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
 
     public async Task<IReadOnlyList<ITestRunGroup>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
+        var context = ContextFactory();
         var stored = await context
             .Set<TestRunGroupEntity>()
             .AsNoTracking()

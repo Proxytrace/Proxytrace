@@ -10,20 +10,20 @@ internal abstract class DomainEntityGenerator<TDomainEntity> :
     IDomainEntityGenerator<TDomainEntity>
     where TDomainEntity : IDomainEntity
 {
-    protected readonly IRepository<TDomainEntity> repository;
+    protected readonly IRepository<TDomainEntity> Repository;
 
     protected DomainEntityGenerator(
         IRepository<TDomainEntity> repository,
         IRandom random) : base(random)
     {
-        this.repository = repository;
+        this.Repository = repository;
     }
 
     /// <inheritdoc />
     public override async Task<TDomainEntity> CreateAsync(CancellationToken cancellationToken = default)
     {
         TDomainEntity instance = await GenerateAsync(cancellationToken);
-        return await repository.AddAsync(instance, cancellationToken);
+        return await Repository.AddAsync(instance, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -32,7 +32,7 @@ internal abstract class DomainEntityGenerator<TDomainEntity> :
     /// <inheritdoc />
     public async Task<TDomainEntity> GetOrCreateAsync(CancellationToken cancellationToken = default)
     {
-        TDomainEntity? existing = await repository
+        TDomainEntity? existing = await Repository
             .FindFirstAsync(cancellationToken);
         
         return existing is not null

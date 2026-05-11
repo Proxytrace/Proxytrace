@@ -28,8 +28,8 @@ internal class ApiKeyGenerator : DomainEntityGenerator<IApiKey>
         var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
         var provider = await providerGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
-            name: random.String(),
-            apiKey: $"trsr-{random.UniqueString()}",
+            name: Random.String(),
+            apiKey: $"trsr-{Random.UniqueString()}",
             project: project,
             provider: provider);
     }

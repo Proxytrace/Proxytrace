@@ -47,13 +47,13 @@ namespace Trsr.Domain.Tools
         public ToolArguments(params IReadOnlyList<IToolArgument> arguments)
         {
             Arguments = arguments;
-            JsonSchema = toJsonSchema(arguments);
+            JsonSchema = ToJsonSchema(arguments);
         }
 
         /// <summary>
         /// Generates a JSON schema from the provided tool argument metadata
         /// </summary>
-        private static string toJsonSchema(IReadOnlyCollection<IToolArgument> argumentMetadata)
+        private static string ToJsonSchema(IReadOnlyCollection<IToolArgument> argumentMetadata)
         {
             // Create the properties object for the JSON schema
             var properties = new Dictionary<string, object?>();
