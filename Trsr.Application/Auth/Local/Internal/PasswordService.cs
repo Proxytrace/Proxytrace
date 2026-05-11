@@ -7,7 +7,8 @@ internal sealed class PasswordService : IPasswordService
 {
     private readonly PasswordHasher<IUser> hasher = new();
 
-    public string Hash(IUser user, string password) => hasher.HashPassword(user, password);
+    public string Hash(IUser user, string password) 
+        => hasher.HashPassword(user, password);
 
     public bool Verify(IUser user, string hash, string password)
     {

@@ -11,8 +11,10 @@ internal sealed class PasswordPolicy : IPasswordPolicy
             errors.Add("Password must contain a lowercase letter.");
         if (!password.Any(char.IsUpper))
             errors.Add("Password must contain an uppercase letter.");
-        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+        if (password.All(char.IsLetterOrDigit))
             errors.Add("Password must contain a special character.");
-        return errors.Count == 0 ? PasswordValidationResult.Ok() : new(false, errors);
+        return errors.Count == 0 
+            ? PasswordValidationResult.Ok() 
+            : new(false, errors);
     }
 }

@@ -18,8 +18,16 @@ internal sealed class LoginService : ILoginService
     public async Task<LoginResult?> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var user = await users.FindByEmailAsync(email, cancellationToken);
-        if (user is null || string.IsNullOrEmpty(user.PasswordHash)) return null;
-        if (!passwords.Verify(user, user.PasswordHash, password)) return null;
+        if (user is null || string.IsNullOrEmpty(user.PasswordHash))
+        {
+            return null;
+        }
+
+        if (!passwords.Verify(user, user.PasswordHash, password))
+        {
+            return null;
+        }
+        
         var issued = tokens.Issue(user);
         return new LoginResult(user, issued.Token, issued.ExpiresAt);
     }

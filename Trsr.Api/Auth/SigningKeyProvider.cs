@@ -8,7 +8,9 @@ internal static class SigningKeyProvider
     public static string EnsureSigningKey(IHostEnvironment env, string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))
-            return configured!;
+        {
+            return configured;
+        }
 
         var path = Path.Combine(env.ContentRootPath, "appsettings.local.json");
         if (File.Exists(path))

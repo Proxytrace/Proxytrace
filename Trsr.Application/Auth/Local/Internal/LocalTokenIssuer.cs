@@ -24,12 +24,12 @@ internal sealed class LocalTokenIssuer : ILocalTokenIssuer
         var token = new JwtSecurityToken(
             issuer: options.Issuer,
             audience: options.Audience,
-            claims: new[]
-            {
+            claims:
+            [
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim("email", user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-            },
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            ],
             expires: expires.UtcDateTime,
             signingCredentials: creds);
         return new LocalTokenResult(new JwtSecurityTokenHandler().WriteToken(token), expires);

@@ -7,7 +7,10 @@ public sealed class AuthOptions
     public OidcOptions Oidc { get; init; } = new();
     public LocalSection Local { get; init; } = new();
 
-    public AuthMode Mode => string.IsNullOrWhiteSpace(Oidc.Authority) ? AuthMode.Local : AuthMode.Oidc;
+    public AuthMode Mode 
+        => string.IsNullOrWhiteSpace(Oidc.Authority)
+            ? AuthMode.Local 
+            : AuthMode.Oidc;
 
     public sealed class OidcOptions
     {

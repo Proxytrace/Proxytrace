@@ -26,7 +26,10 @@ internal class JitUserProvisioner : IJitUserProvisioner
         => transaction.InvokeAsync(async () =>
         {
             var existing = await users.FindByExternalSubjectAsync(externalSubject, cancellationToken);
-            if (existing is not null) return existing;
+            if (existing is not null)
+            {
+                return existing;
+            }
 
             var total = await users.CountAsync(cancellationToken);
             var role = total == 0 ? UserRole.Admin : UserRole.Viewer;

@@ -9,6 +9,8 @@ internal sealed class RequireLocalModeAttribute : Attribute, IAuthorizationFilte
     {
         var opts = ctx.HttpContext.RequestServices.GetRequiredService<AuthOptions>();
         if (opts.Mode != AuthMode.Local)
+        {
             ctx.Result = new NotFoundResult();
+        }
     }
 }
