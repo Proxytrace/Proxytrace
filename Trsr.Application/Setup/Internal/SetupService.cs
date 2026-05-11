@@ -1,10 +1,12 @@
 using Trsr.Application.Auth;
+using Trsr.Application.Auth.Local;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
+using Trsr.Domain.User;
 
 namespace Trsr.Application.Setup.Internal;
 
@@ -15,11 +17,15 @@ internal class SetupService : ISetupService
     private readonly IModelEndpointRepository endpoints;
     private readonly IProjectRepository projects;
     private readonly IApiKeyRepository apiKeys;
+    private readonly IUserRepository users;
     private readonly ICurrentUserAccessor currentUser;
     private readonly IModelProvider.CreateNew createProvider;
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IProject.CreateNew createProject;
     private readonly IApiKey.CreateNew createApiKey;
+    private readonly IUser.CreateNew createUser;
+    private readonly IPasswordService passwords;
+    private readonly ILocalTokenIssuer tokens;
     private readonly ITransaction transaction;
 
     public SetupService(
@@ -28,11 +34,15 @@ internal class SetupService : ISetupService
         IModelEndpointRepository endpoints,
         IProjectRepository projects,
         IApiKeyRepository apiKeys,
+        IUserRepository users,
         ICurrentUserAccessor currentUser,
         IModelProvider.CreateNew createProvider,
         IModelEndpoint.CreateNew createEndpoint,
         IProject.CreateNew createProject,
         IApiKey.CreateNew createApiKey,
+        IUser.CreateNew createUser,
+        IPasswordService passwords,
+        ILocalTokenIssuer tokens,
         ITransaction transaction)
     {
         this.providers = providers;
@@ -40,12 +50,32 @@ internal class SetupService : ISetupService
         this.endpoints = endpoints;
         this.projects = projects;
         this.apiKeys = apiKeys;
+        this.users = users;
         this.currentUser = currentUser;
         this.createProvider = createProvider;
         this.createEndpoint = createEndpoint;
         this.createProject = createProject;
         this.createApiKey = createApiKey;
+        this.createUser = createUser;
+        this.passwords = passwords;
+        this.tokens = tokens;
         this.transaction = transaction;
+    }
+
+    public async Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken = default)
+        => await users.CountAsync(cancellationToken) > 0;
+
+    public async Task<FirstAdminResult> CreateFirstAdminAsync(string email, string password, CancellationToken cancellationToken = default)
+    {
+        if (await AnyUsersExistAsync(cancellationToken))
+            throw new InvalidOperationException("Setup already completed: users exist.");
+
+        var draft = createUser(email, externalSubject: null, passwordHash: "placeholder", role: UserRole.Admin);
+        var hash = passwords.Hash(draft, password);
+        var withHash = createUser(email, externalSubject: null, passwordHash: hash, role: UserRole.Admin);
+        var saved = await withHash.AddAsync(cancellationToken);
+        var issued = tokens.Issue(saved);
+        return new FirstAdminResult(saved.Id, issued.Token, issued.ExpiresAt);
     }
 
     public Task<SetupResult> CompleteAsync(SetupInput input, CancellationToken cancellationToken = default)

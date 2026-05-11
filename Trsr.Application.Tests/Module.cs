@@ -25,6 +25,7 @@ public class Module : Autofac.Module
 
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
+        builder.RegisterStub<Trsr.Application.Auth.ICurrentUserAccessor>();
 
         builder.RegisterStub<IAgentNameGenerator>(stub =>
             stub.GenerateNameAsync(Arg.Any<IPromptTemplate>(), Arg.Any<IProject>(), Arg.Any<CancellationToken>())
