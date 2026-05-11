@@ -108,6 +108,10 @@ public sealed class Module : Autofac.Module
             .As<IJitUserProvisioner>()
             .SingleInstance();
 
+        builder.RegisterType<Auth.Local.Internal.PasswordPolicy>()
+            .As<Auth.Local.IPasswordPolicy>()
+            .SingleInstance();
+
         builder.RegisterInstance(Prompts.ResourceManager);
 
         builder.RegisterType<AgenticEvaluatorPresets>()
