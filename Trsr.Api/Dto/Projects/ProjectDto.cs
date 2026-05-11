@@ -8,7 +8,7 @@ public record ProjectDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-public record ProjectMemberDto(Guid Id, string Name);
+public record ProjectMemberDto(Guid Id, string Email);
 
 public record CreateProjectRequest(
     string Name,

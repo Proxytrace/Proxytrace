@@ -24,7 +24,7 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
 
         var modifier = new ConcurrentModifier(user);
         var factory = services.GetRequiredService<IUser.CreateExisting>();
-        var modified = factory(modifier.Name, modifier.Email, modifier.ExternalSubject, modifier.Role, modifier);
+        var modified = factory(modifier.Email, modifier.ExternalSubject, modifier.PasswordHash, modifier.Role, modifier);
 
         await FluentActions.Invoking(() => repo.UpdateAsync(modified, CancellationToken))
             .Should()
@@ -38,9 +38,9 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
         public Guid Id => user.Id;
         public DateTimeOffset CreatedAt => user.CreatedAt.Subtract(TimeSpan.FromHours(1));
         public DateTimeOffset UpdatedAt => user.UpdatedAt.Subtract(TimeSpan.FromHours(1));
-        public string Name => user.Name + "_modifier";
-        public string Email => user.Email;
-        public string ExternalSubject => user.ExternalSubject;
+        public string Email => "modifier_" + user.Email;
+        public string? ExternalSubject => user.ExternalSubject;
+        public string? PasswordHash => user.PasswordHash;
         public UserRole Role => user.Role;
 
         public ConcurrentModifier(IUser user)
@@ -50,6 +50,24 @@ public class OptimisticConcurrencyTests : BaseTest<Module>
 
         public Task<IUser> ChangeRole(UserRole role, CancellationToken cancellationToken = default)
             => Task.FromResult<IUser>(this);
+
+        public Task<IUser> ChangePasswordHash(string passwordHash, CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> ReloadAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> AddAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> UpdateAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task<IUser> UpsertAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser>(this);
+
+        public Task RemoveAsync(CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

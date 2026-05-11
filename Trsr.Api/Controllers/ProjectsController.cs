@@ -180,5 +180,5 @@ public class ProjectsController : ControllerBase
             p.UpdatedAt);
 
     private static ProjectMemberDto ToMemberDto(IUser user) =>
-        new(user.Id, user.Name);
+        new(user.Id, user.Email);
 }

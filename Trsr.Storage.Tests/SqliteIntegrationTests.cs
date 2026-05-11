@@ -58,7 +58,7 @@ public class SqliteIntegrationTests : BaseTest<SqliteTestModule>
         IUser retrievedUser = await repository.GetAsync(createdUser.Id, CancellationToken);
         retrievedUser.Should().NotBeNull();
         retrievedUser.Id.Should().Be(createdUser.Id);
-        retrievedUser.Name.Should().Be(createdUser.Name);
+        retrievedUser.Email.Should().Be(createdUser.Email);
     }
 
     [TestMethod]

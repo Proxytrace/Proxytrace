@@ -74,5 +74,5 @@ public class UsersController : ControllerBase
     }
 
     private static UserDto ToDto(IUser u) =>
-        new(u.Id, u.Name, u.Email, u.Role, u.CreatedAt, u.UpdatedAt);
+        new(u.Id, u.Email, u.Role, u.CreatedAt, u.UpdatedAt);
 }
