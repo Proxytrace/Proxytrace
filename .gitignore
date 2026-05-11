@@ -2232,3 +2232,4 @@ sample-client/package-lock.json
 # Lucene full-text search index
 searchindex/
 **/searchindex/
+**/appsettings.local.json

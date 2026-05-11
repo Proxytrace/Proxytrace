@@ -1,6 +1,6 @@
 namespace Trsr.Api.Auth;
 
-internal enum AuthMode
+public enum AuthMode
 {
     Oidc,
     Local,

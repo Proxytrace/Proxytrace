@@ -1,6 +1,6 @@
 namespace Trsr.Api.Auth;
 
-internal sealed class AuthOptions
+public sealed class AuthOptions
 {
     public const string SectionName = "Authentication";
 
@@ -9,7 +9,7 @@ internal sealed class AuthOptions
 
     public AuthMode Mode => string.IsNullOrWhiteSpace(Oidc.Authority) ? AuthMode.Local : AuthMode.Oidc;
 
-    internal sealed class OidcOptions
+    public sealed class OidcOptions
     {
         public string Authority { get; init; } = string.Empty;
         public string Audience { get; init; } = string.Empty;
@@ -18,7 +18,7 @@ internal sealed class AuthOptions
         public string NameClaimType { get; init; } = "name";
     }
 
-    internal sealed class LocalSection
+    public sealed class LocalSection
     {
         public string SigningKey { get; init; } = string.Empty;
     }
