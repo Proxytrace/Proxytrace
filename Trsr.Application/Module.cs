@@ -116,6 +116,10 @@ public sealed class Module : Autofac.Module
             .As<Auth.Local.IPasswordService>()
             .SingleInstance();
 
+        builder.RegisterType<Auth.Local.Internal.LocalTokenIssuer>()
+            .As<Auth.Local.ILocalTokenIssuer>()
+            .SingleInstance();
+
         builder.RegisterInstance(Prompts.ResourceManager);
 
         builder.RegisterType<AgenticEvaluatorPresets>()

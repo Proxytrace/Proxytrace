@@ -56,5 +56,13 @@ public class Module : Autofac.Module
             .Register(_ => NullLogger<AgentCallIngestor>.Instance)
             .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestor>>()
             .SingleInstance();
+
+        builder.RegisterInstance(new Trsr.Application.Auth.Local.LocalAuthOptions
+        {
+            SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+            Issuer = "trsr-local",
+            Audience = "trsr-api",
+            TokenLifetime = TimeSpan.FromDays(7),
+        });
     }
 }
