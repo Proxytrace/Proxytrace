@@ -376,7 +376,7 @@ export interface ApiKeyDto {
 }
 export interface ProjectMemberDto {
   id: string;
-  name: string;
+  email: string;
 }
 export interface ProjectDto {
   id: string;
@@ -388,7 +388,7 @@ export interface ProjectDto {
 }
 export interface UserDto {
   id: string;
-  name: string;
+  email: string;
   createdAt: string;
   updatedAt: string;
 }

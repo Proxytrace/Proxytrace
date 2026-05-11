@@ -307,15 +307,15 @@ export function ProjectsTab() {
                       className="flex items-center gap-3 px-3 py-[10px] border-b border-hairline last:border-b-0"
                     >
                       <Avatar
-                        initials={initials(m.name)}
+                        initials={initials(m.email)}
                         color={colorFor(m.id)}
                         className="w-7 h-7 rounded-md text-[10px]"
                       />
-                      <span className="flex-1 text-[13px] font-semibold text-primary">{m.name}</span>
+                      <span className="flex-1 text-[13px] font-semibold text-primary">{m.email}</span>
                       <button
                         className="btn-icon text-muted hover:text-[#d95555]"
                         onClick={() => setRemoveMember(m)}
-                        aria-label={`Remove ${m.name}`}
+                        aria-label={`Remove ${m.email}`}
                       >
                         <TrashIcon size={14} />
                       </button>
@@ -347,7 +347,7 @@ export function ProjectsTab() {
       )}
       {removeMember && (
         <ConfirmDialog
-          entityName={removeMember.name}
+          entityName={removeMember.email}
           onCancel={() => setRemoveMember(null)}
           onConfirm={() => removeMemberMut.mutate(removeMember.id)}
           loading={removeMemberMut.isPending}

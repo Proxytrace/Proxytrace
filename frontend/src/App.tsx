@@ -11,6 +11,7 @@ import { oidcConfig } from './auth/oidcConfig';
 import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 import { fetchAuthMode, useAuthMode } from './auth/authMode';
 import { LocalAuthProvider, useLocalAuth } from './auth/local/LocalAuthProvider';
+import { CurrentUserContext, type CurrentUser } from './auth/useCurrentUser';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -71,22 +72,32 @@ function OidcAuthGate({ children }: { children: React.ReactNode }) {
       </Suspense>
     );
   }
-  return <>{children}</>;
+  const profile = auth.user?.profile as { email?: string } | undefined;
+  const currentUser: CurrentUser | null = profile?.email
+    ? { email: profile.email, signOut: () => void auth.signoutRedirect() }
+    : null;
+  return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;
 }
 
 function LocalAuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useLocalAuth();
+  const local = useLocalAuth();
   const { pathname } = useLocation();
 
-  if (pathname === '/signup' || pathname === '/setup') return <>{children}</>;
-  if (!isAuthenticated) {
+  const currentUser: CurrentUser | null = local.user
+    ? { email: local.user.email, role: local.user.role, signOut: () => local.signoutRedirect() }
+    : null;
+
+  if (pathname === '/signup' || pathname === '/setup') {
+    return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;
+  }
+  if (!local.isAuthenticated) {
     return (
       <Suspense fallback={<PageLoader />}>
         <Login />
       </Suspense>
     );
   }
-  return <>{children}</>;
+  return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;
 }
 
 function AppRoutes() {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from 'react-oidc-context';
+import { useCurrentUser } from '../../auth/useCurrentUser';
+import { useAuthMode } from '../../auth/authMode';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
@@ -67,11 +68,12 @@ export function Shell() {
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
   const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
-  const auth = useAuth();
-  const userProfile = auth.user?.profile;
-  const userName = (userProfile?.name as string | undefined) ?? (userProfile?.email as string | undefined) ?? 'User';
+  const currentUser = useCurrentUser();
+  const { data: authMode } = useAuthMode();
+  const userName = currentUser?.email ?? 'User';
   const userInitials = userName
-    .split(/\s+/)
+    .split(/[@.\s_-]+/)
+    .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase())
     .join('')
     .slice(0, 2) || 'U';
@@ -196,7 +198,7 @@ export function Shell() {
 
           <button
             type="button"
-            onClick={() => void auth.signoutRedirect()}
+            onClick={() => currentUser?.signOut()}
             title={`Sign out (${userName})`}
             className="cursor-pointer"
           >
