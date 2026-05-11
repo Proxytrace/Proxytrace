@@ -41,7 +41,7 @@ internal static class JitProvisioningEvents
 
             var issuer = principal.FindFirstValue("iss")
                 ?? principal.Claims.FirstOrDefault(c => c.Type == "iss")?.Value
-                ?? options.Authority;
+                ?? options.Oidc.Authority;
             var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? principal.FindFirstValue("sub");
             if (string.IsNullOrWhiteSpace(subject))
@@ -50,7 +50,7 @@ internal static class JitProvisioningEvents
                 return;
             }
 
-            var email = principal.FindFirstValue(options.EmailClaimType)
+            var email = principal.FindFirstValue(options.Oidc.EmailClaimType)
                 ?? principal.FindFirstValue(ClaimTypes.Email)
                 ?? $"{subject}@unknown";
 
