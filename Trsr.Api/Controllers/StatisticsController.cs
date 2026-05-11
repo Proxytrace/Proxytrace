@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Statistics;
 using Trsr.Application.Statistics;
@@ -5,6 +6,7 @@ using Trsr.Application.Statistics;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/statistics")]
 public class StatisticsController : ControllerBase
 {

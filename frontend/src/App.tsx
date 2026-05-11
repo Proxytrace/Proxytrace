@@ -1,11 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from 'react-oidc-context';
+import { lazy, Suspense, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { setupApi } from './api/setup';
+import { oidcConfig } from './auth/oidcConfig';
+import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -18,6 +21,7 @@ const Providers = lazy(() => import('./features/providers/Providers'));
 const Proposals = lazy(() => import('./features/proposals/Proposals'));
 const Settings = lazy(() => import('./features/settings/Settings'));
 const Playground = lazy(() => import('./features/playground/Playground'));
+const Login = lazy(() => import('./features/auth/Login'));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, throwOnError: true } },
@@ -31,6 +35,38 @@ function PageLoader() {
   );
 }
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+
+  useEffect(() => {
+    setAccessToken(auth.user?.access_token ?? null);
+  }, [auth.user?.access_token]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void auth.signinRedirect();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [auth]);
+
+  if (auth.isLoading || auth.activeNavigator) return <PageLoader />;
+  if (auth.error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-danger">
+        Auth error: {auth.error.message}
+      </div>
+    );
+  }
+  if (!auth.isAuthenticated) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Login />
+      </Suspense>
+    );
+  }
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   const { data: setupStatus } = useQuery({
     queryKey: ['setup-status'],
@@ -38,7 +74,6 @@ function AppRoutes() {
     staleTime: Infinity,
   });
 
-  // Still loading setup status — show nothing to avoid flash
   if (setupStatus === undefined) return <PageLoader />;
 
   const wrap = (el: React.ReactNode) => (
@@ -79,12 +114,16 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </ToastProvider>
-    </QueryClientProvider>
+    <AuthProvider {...oidcConfig}>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <BrowserRouter>
+            <AuthGate>
+              <AppRoutes />
+            </AuthGate>
+          </BrowserRouter>
+        </ToastProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }

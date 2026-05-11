@@ -18,7 +18,6 @@ public record ProviderConnectionInput(
     ModelProviderKind ProviderKind);
 
 public record SetupInput(
-    string UserName,
     string ProviderName,
     Uri ProviderEndpoint,
     string ProviderUpstreamApiKey,
@@ -30,7 +29,6 @@ public record SetupInput(
     string ApiKeyName);
 
 public record SetupResult(
-    Guid UserId,
     Guid ProviderId,
     Guid EndpointId,
     Guid ProjectId,

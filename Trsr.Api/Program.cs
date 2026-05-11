@@ -1,6 +1,9 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using Trsr.Api.Auth;
 using Module = Trsr.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,32 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
+builder.Services.AddHttpContextAccessor();
+
+var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
+    ?? new AuthOptions();
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = authOptions.Authority;
+        options.Audience = authOptions.Audience;
+        options.RequireHttpsMetadata = authOptions.RequireHttpsMetadata;
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = !string.IsNullOrWhiteSpace(authOptions.Authority),
+            ValidateAudience = !string.IsNullOrWhiteSpace(authOptions.Audience),
+            ValidAudience = authOptions.Audience,
+            NameClaimType = authOptions.NameClaimType,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+        };
+        options.Events = JitProvisioningEvents.Create();
+    });
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -44,6 +73,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();

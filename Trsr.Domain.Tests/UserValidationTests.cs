@@ -8,22 +8,25 @@ namespace Trsr.Domain.Tests;
 [TestClass]
 public sealed class UserValidationTests : BaseTest<Module>
 {
+    private const string ValidEmail = "user@example.com";
+    private const string ValidSubject = "issuer|sub-123";
+
     [TestMethod]
     public Task CreateNew_WithValidName_CreatesUser()
     {
         try
         {
-            // Arrange
             IServiceProvider services = GetServices();
             var factory = services.GetRequiredService<IUser.CreateNew>();
             var name = "John Doe";
 
-            // Act
-            var user = factory(name);
+            var user = factory(name, ValidEmail, ValidSubject, UserRole.Member);
 
-            // Assert
             user.Should().NotBeNull();
             user.Name.Should().Be(name);
+            user.Email.Should().Be(ValidEmail);
+            user.ExternalSubject.Should().Be(ValidSubject);
+            user.Role.Should().Be(UserRole.Member);
             user.Id.Should().NotBe(Guid.Empty);
             user.CreatedAt.Should().NotBe(default);
             user.UpdatedAt.Should().NotBe(default);
@@ -38,83 +41,94 @@ public sealed class UserValidationTests : BaseTest<Module>
     [TestMethod]
     public void CreateNew_WithNullName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
-        // Act & Assert
-        var action = () => factory.DynamicInvoke(new object?[] { null });
+        var action = () => factory(null!, ValidEmail, ValidSubject, UserRole.Member);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void CreateNew_WithEmptyName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
-        var emptyName = string.Empty;
 
-        // Act & Assert
-        var action = () => factory(emptyName);
+        var action = () => factory(string.Empty, ValidEmail, ValidSubject, UserRole.Member);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void CreateNew_WithWhitespaceName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
-        var whitespaceName = "   ";
 
-        // Act & Assert
-        var action = () => factory(whitespaceName);
+        var action = () => factory("   ", ValidEmail, ValidSubject, UserRole.Member);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void CreateNew_WithTabsName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
-        var tabsName = "\t\t\t";
 
-        // Act & Assert
-        var action = () => factory(tabsName);
+        var action = () => factory("\t\t\t", ValidEmail, ValidSubject, UserRole.Member);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void CreateNew_WithNewlinesName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
-        var newlinesName = "\n\r\n";
 
-        // Act & Assert
-        var action = () => factory(newlinesName);
+        var action = () => factory("\n\r\n", ValidEmail, ValidSubject, UserRole.Member);
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public void CreateNew_WithEmptyEmail_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IUser.CreateNew>();
+
+        var action = () => factory("John", string.Empty, ValidSubject, UserRole.Member);
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public void CreateNew_WithEmptyExternalSubject_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IUser.CreateNew>();
+
+        var action = () => factory("John", ValidEmail, string.Empty, UserRole.Member);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public async Task CreateExisting_WithValidData_CreatesUser()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var createExisting = services.GetRequiredService<IUser.CreateExisting>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
         var existingUser = await generator.CreateAsync(CancellationToken);
 
-        // Act
-        var user = createExisting(existingUser.Name, existingUser);
+        var user = createExisting(
+            existingUser.Name,
+            existingUser.Email,
+            existingUser.ExternalSubject,
+            existingUser.Role,
+            existingUser);
 
-        // Assert
         user.Should().NotBeNull();
         user.Id.Should().Be(existingUser.Id);
         user.Name.Should().Be(existingUser.Name);
+        user.Email.Should().Be(existingUser.Email);
+        user.ExternalSubject.Should().Be(existingUser.ExternalSubject);
+        user.Role.Should().Be(existingUser.Role);
         user.CreatedAt.Should().Be(existingUser.CreatedAt);
         user.UpdatedAt.Should().Be(existingUser.UpdatedAt);
     }
@@ -122,60 +136,53 @@ public sealed class UserValidationTests : BaseTest<Module>
     [TestMethod]
     public async Task CreateExisting_WithInvalidName_ThrowsValidationException()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var createExisting = services.GetRequiredService<IUser.CreateExisting>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
         var existingUser = await generator.CreateAsync(CancellationToken);
 
-        // Act & Assert
-        var action = () => createExisting(string.Empty, existingUser);
+        var action = () => createExisting(
+            string.Empty,
+            existingUser.Email,
+            existingUser.ExternalSubject,
+            existingUser.Role,
+            existingUser);
         action.Should().Throw<Exception>();
     }
 
     [TestMethod]
     public void Id_IsUniqueForEachNewUser()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
-        // Act
-        var user1 = factory("User 1");
-        var user2 = factory("User 2");
+        var user1 = factory("User 1", "u1@example.com", "iss|s1", UserRole.Member);
+        var user2 = factory("User 2", "u2@example.com", "iss|s2", UserRole.Member);
 
-        // Assert
         user1.Id.Should().NotBe(user2.Id);
     }
 
     [TestMethod]
     public async Task User_IsImmutable()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
         var user = await generator.CreateAsync(CancellationToken);
 
-        // Act & Assert
-        // Since User is a record, we can't modify properties directly
-        // This test verifies that the User type doesn't have property setters
         var nameProperty = user.GetType().GetProperty("Name");
         nameProperty.Should().NotBeNull();
-        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
+        nameProperty!.SetMethod.Should().BeNull();
     }
 
     [TestMethod]
     public void CreateNew_WithLongName_CreatesUser()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
         var longName = new string('A', 1000);
 
-        // Act
-        var user = factory(longName);
+        var user = factory(longName, ValidEmail, ValidSubject, UserRole.Member);
 
-        // Assert
         user.Should().NotBeNull();
         user.Name.Should().Be(longName);
     }
@@ -183,15 +190,12 @@ public sealed class UserValidationTests : BaseTest<Module>
     [TestMethod]
     public void CreateNew_WithSpecialCharactersInName_CreatesUser()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
         var specialName = "User @#$% 123 !&*()";
 
-        // Act
-        var user = factory(specialName);
+        var user = factory(specialName, ValidEmail, ValidSubject, UserRole.Member);
 
-        // Assert
         user.Should().NotBeNull();
         user.Name.Should().Be(specialName);
     }
@@ -199,17 +203,13 @@ public sealed class UserValidationTests : BaseTest<Module>
     [TestMethod]
     public void CreateNew_WithUnicodeCharactersInName_CreatesUser()
     {
-        // Arrange
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IUser.CreateNew>();
         var unicodeName = "用户名 José Müller";
 
-        // Act
-        var user = factory(unicodeName);
+        var user = factory(unicodeName, ValidEmail, ValidSubject, UserRole.Member);
 
-        // Assert
         user.Should().NotBeNull();
         user.Name.Should().Be(unicodeName);
     }
-
 }

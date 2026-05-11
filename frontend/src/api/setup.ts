@@ -6,7 +6,6 @@ export interface SetupStatusDto {
 }
 
 export interface CompleteSetupRequest {
-  userName: string;
   providerName: string;
   providerEndpoint: string;
   providerUpstreamApiKey: string;
@@ -19,7 +18,6 @@ export interface CompleteSetupRequest {
 }
 
 export interface CompleteSetupResponse {
-  userId: string;
   providerId: string;
   endpointId: string;
   projectId: string;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.ApiKeys;
@@ -12,6 +13,7 @@ using Trsr.Domain.Project;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/providers")]
 public class ModelProvidersController : ControllerBase
 {

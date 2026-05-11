@@ -64,9 +64,9 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var repository = services.GetRequiredService<IUserRepository>();
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
-        var user1 = factory("John Doe");
-        var user2 = factory("Jane Doe");
-        var user3 = factory("John Smith");
+        var user1 = factory("John Doe", "John Doe"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
+        var user2 = factory("Jane Doe", "Jane Doe"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
+        var user3 = factory("John Smith", "John Smith"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
 
         await repository.AddAsync(user1, CancellationToken);
         await repository.AddAsync(user2, CancellationToken);
@@ -89,7 +89,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var repository = services.GetRequiredService<IUserRepository>();
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
-        var user = factory("TestUser");
+        var user = factory("TestUser", "TestUser"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
         await repository.AddAsync(user, CancellationToken);
 
         // Act
@@ -112,7 +112,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
         var specialName = "User@#$%123";
-        var user = factory(specialName);
+        var user = factory(specialName, specialName  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
         await repository.AddAsync(user, CancellationToken);
 
         // Act
@@ -132,7 +132,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
         var unicodeName = "用户名 José Müller";
-        var user = factory(unicodeName);
+        var user = factory(unicodeName, unicodeName  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
         await repository.AddAsync(user, CancellationToken);
 
         // Act
@@ -152,7 +152,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
         var nameWithSpaces = "John   Doe";
-        var user = factory(nameWithSpaces);
+        var user = factory(nameWithSpaces, nameWithSpaces  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
         await repository.AddAsync(user, CancellationToken);
 
         // Act
@@ -176,7 +176,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var initialName = initialUser.Name;
 
         // Update the user
-        var updatedUser = createExisting("Updated Name", initialUser);
+        var updatedUser = createExisting("Updated Name", initialUser.Email, initialUser.ExternalSubject, initialUser.Role, initialUser);
         await repository.UpdateAsync(updatedUser, CancellationToken);
 
         // Act
@@ -221,11 +221,11 @@ public sealed class UserRepositoryTests : BaseTest<Module>
 
         var users = new[]
         {
-            factory("Alice"),
-            factory("Bob"),
-            factory("Charlie"),
-            factory("David"),
-            factory("Eve")
+            factory("Alice", "Alice"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member),
+            factory("Bob", "Bob"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member),
+            factory("Charlie", "Charlie"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member),
+            factory("David", "David"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member),
+            factory("Eve", "Eve"  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member)
         };
 
         foreach (var user in users)
@@ -258,7 +258,7 @@ public sealed class UserRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<IUser.CreateNew>();
 
         var longName = new string('A', 1000);
-        var user = factory(longName);
+        var user = factory(longName, longName  +  "@example.com", "iss|"  +  System.Guid.NewGuid().ToString(), UserRole.Member);
         await repository.AddAsync(user, CancellationToken);
 
         // Act

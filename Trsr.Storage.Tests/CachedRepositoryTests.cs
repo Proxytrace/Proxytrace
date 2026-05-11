@@ -142,7 +142,7 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
             ?? throw new InvalidOperationException("Expected FindAsync to return user.");
         loaded.Name.Should().Be(created.Name);
 
-        await repository.UpdateAsync(createExisting("renamed", created), CancellationToken);
+        await repository.UpdateAsync(createExisting("renamed", created.Email, created.ExternalSubject, created.Role, created), CancellationToken);
         IUser updated = await repository.FindAsync(created.Id, CancellationToken)
             ?? throw new InvalidOperationException("Expected FindAsync after update to return user.");
         updated.Name.Should().Be("renamed");

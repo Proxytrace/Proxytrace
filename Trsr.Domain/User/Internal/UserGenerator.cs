@@ -16,8 +16,11 @@ internal class UserGenerator : DomainEntityGenerator<IUser>
         this.factory = factory;
     }
 
-    public override Task<IUser> GenerateAsync(CancellationToken cancellationToken = default) 
+    public override Task<IUser> GenerateAsync(CancellationToken cancellationToken = default)
         => factory(
-                name: random.String())
+                name: random.String(),
+                email: random.Email(),
+                externalSubject: $"test|{random.UniqueString()}",
+                role: random.Enum<UserRole>())
             .ToTaskResult();
 }

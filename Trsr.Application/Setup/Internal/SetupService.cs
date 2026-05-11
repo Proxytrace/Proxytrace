@@ -1,22 +1,21 @@
+using Trsr.Application.Auth;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
-using Trsr.Domain.User;
 
 namespace Trsr.Application.Setup.Internal;
 
 internal class SetupService : ISetupService
 {
-    private readonly IRepository<IUser> users;
     private readonly IRepository<IModelProvider> providers;
     private readonly IModelRepository models;
     private readonly IModelEndpointRepository endpoints;
     private readonly IProjectRepository projects;
     private readonly IApiKeyRepository apiKeys;
-    private readonly IUser.CreateNew createUser;
+    private readonly ICurrentUserAccessor currentUser;
     private readonly IModelProvider.CreateNew createProvider;
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IProject.CreateNew createProject;
@@ -24,26 +23,24 @@ internal class SetupService : ISetupService
     private readonly ITransaction transaction;
 
     public SetupService(
-        IRepository<IUser> users,
         IRepository<IModelProvider> providers,
         IModelRepository models,
         IModelEndpointRepository endpoints,
         IProjectRepository projects,
         IApiKeyRepository apiKeys,
-        IUser.CreateNew createUser,
+        ICurrentUserAccessor currentUser,
         IModelProvider.CreateNew createProvider,
         IModelEndpoint.CreateNew createEndpoint,
         IProject.CreateNew createProject,
         IApiKey.CreateNew createApiKey,
         ITransaction transaction)
     {
-        this.users = users;
         this.providers = providers;
         this.models = models;
         this.endpoints = endpoints;
         this.projects = projects;
         this.apiKeys = apiKeys;
-        this.createUser = createUser;
+        this.currentUser = currentUser;
         this.createProvider = createProvider;
         this.createEndpoint = createEndpoint;
         this.createProject = createProject;
@@ -54,10 +51,11 @@ internal class SetupService : ISetupService
     public Task<SetupResult> CompleteAsync(SetupInput input, CancellationToken cancellationToken = default)
         => transaction.InvokeAsync(async () =>
         {
-            if (await users.CountAsync(cancellationToken) > 0)
+            if (await projects.CountAsync(cancellationToken) > 0)
                 throw new InvalidOperationException("Setup has already been completed.");
 
-            var user = await users.AddAsync(createUser(input.UserName), cancellationToken);
+            var user = await currentUser.GetCurrentUserAsync(cancellationToken)
+                ?? throw new InvalidOperationException("Setup requires an authenticated user.");
 
             var provider = await providers.AddAsync(
                 createProvider(input.ProviderName, input.ProviderEndpoint, input.ProviderUpstreamApiKey, input.ProviderKind),
@@ -80,10 +78,10 @@ internal class SetupService : ISetupService
                 createApiKey(input.ApiKeyName, keyValue, project, provider),
                 cancellationToken);
 
-            return new SetupResult(user.Id, provider.Id, endpoint.Id, project.Id, apiKey.ApiKey);
+            return new SetupResult(provider.Id, endpoint.Id, project.Id, apiKey.ApiKey);
         });
 
-    public Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default) 
+    public Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default)
         => CreateProvider(input)
             .CreateClient()
             .VerifyConnectionAsync(cancellationToken);
@@ -96,10 +94,10 @@ internal class SetupService : ISetupService
         return availableModels.Select(m => m.Name).ToArray();
     }
 
-    private IModelProvider CreateProvider(ProviderConnectionInput input) 
+    private IModelProvider CreateProvider(ProviderConnectionInput input)
         => createProvider(
-            name: input.ProviderName, 
-            endpoint: input.ProviderEndpoint, 
+            name: input.ProviderName,
+            endpoint: input.ProviderEndpoint,
             apiKey: input.ProviderUpstreamApiKey,
             kind: input.ProviderKind);
 }

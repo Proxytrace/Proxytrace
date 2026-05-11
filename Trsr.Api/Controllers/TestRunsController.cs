@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.TestRuns;
@@ -12,6 +13,7 @@ using Trsr.Domain.TestRun;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/test-runs")]
 public class TestRunsController : ControllerBase
 {

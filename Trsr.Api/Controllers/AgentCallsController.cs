@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.AgentCalls;
@@ -14,6 +15,7 @@ using Trsr.Domain.Tools;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/agent-calls")]
 public class AgentCallsController : ControllerBase
 {

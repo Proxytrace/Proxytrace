@@ -16,16 +16,21 @@ internal class UserConfig : AbstractEntityConfiguration<UserEntity>, IMapper<IUs
     public override void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         builder.HasIndex(e => e.Name).IsUnique();
+        builder.HasIndex(e => e.ExternalSubject).IsUnique();
+        builder.HasIndex(e => e.Email).IsUnique();
     }
 
     public Task<IUser> Map(UserEntity stored, CancellationToken cancellationToken = default)
-        => factory(stored.Name, stored).ToTaskResult();
+        => factory(stored.Name, stored.Email, stored.ExternalSubject, stored.Role, stored).ToTaskResult();
 
     public Task<UserEntity> Map(IUser domain, CancellationToken cancellationToken = default)
         => new UserEntity
         {
             Id = domain.Id,
             Name = domain.Name,
+            Email = domain.Email,
+            ExternalSubject = domain.ExternalSubject,
+            Role = domain.Role,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

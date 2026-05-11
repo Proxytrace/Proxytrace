@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.TestSuites;
 using Trsr.Domain;
@@ -7,6 +8,7 @@ using Trsr.Domain.TestCase;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/test-cases")]
 public class TestCasesController : ControllerBase
 {

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Evaluators;
 using Trsr.Application.Evaluator;
@@ -12,6 +13,7 @@ using Trsr.Domain.Prompt;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/evaluators")]
 public class EvaluatorsController : ControllerBase
 {

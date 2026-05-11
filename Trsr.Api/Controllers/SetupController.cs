@@ -1,26 +1,32 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Setup;
 using Trsr.Application.Cleanup;
 using Trsr.Application.Setup;
 using Trsr.Domain;
+using Trsr.Domain.Project;
 using Trsr.Domain.User;
 
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/setup")]
 public class SetupController : ControllerBase
 {
     private readonly IRepository<IUser> _users;
+    private readonly IRepository<IProject> _projects;
     private readonly IDataCleanupService _cleanup;
     private readonly ISetupService _setup;
 
     public SetupController(
         IRepository<IUser> users,
+        IRepository<IProject> projects,
         IDataCleanupService cleanup,
         ISetupService setup)
     {
         _users = users;
+        _projects = projects;
         _cleanup = cleanup;
         _setup = setup;
     }
@@ -28,20 +34,21 @@ public class SetupController : ControllerBase
     [HttpGet("status")]
     public async Task<SetupStatusDto> GetStatus(CancellationToken cancellationToken)
     {
-        var count = await _users.CountAsync(cancellationToken);
-        return new SetupStatusDto { IsConfigured = count > 0 };
+        var users = await _users.CountAsync(cancellationToken);
+        var projects = await _projects.CountAsync(cancellationToken);
+        return new SetupStatusDto { IsConfigured = users > 0 && projects > 0 };
     }
 
     [HttpPost("complete")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<CompleteSetupResponse>> Complete(
         [FromBody] CompleteSetupRequest request,
         CancellationToken cancellationToken)
     {
-        if (await _users.CountAsync(cancellationToken) > 0)
+        if (await _projects.CountAsync(cancellationToken) > 0)
             return Conflict("Setup has already been completed.");
 
         var input = new SetupInput(
-            request.UserName,
             request.ProviderName,
             new Uri(request.ProviderEndpoint),
             request.ProviderUpstreamApiKey,
@@ -54,7 +61,6 @@ public class SetupController : ControllerBase
 
         var result = await _setup.CompleteAsync(input, cancellationToken);
         return new CompleteSetupResponse(
-            result.UserId,
             result.ProviderId,
             result.EndpointId,
             result.ProjectId,
@@ -97,6 +103,7 @@ public class SetupController : ControllerBase
     }
 
     [HttpPost("cleanup")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> CleanupNonModelData(CancellationToken cancellationToken)
     {
         await _cleanup.DeleteAllNonModelDataAsync(cancellationToken);

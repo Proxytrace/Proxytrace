@@ -3,7 +3,6 @@ using Trsr.Domain.ModelProvider;
 namespace Trsr.Api.Dto.Setup;
 
 public record CompleteSetupRequest(
-    string UserName,
     string ProviderName,
     string ProviderEndpoint,
     string ProviderUpstreamApiKey,
