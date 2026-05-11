@@ -53,9 +53,6 @@ internal static class JitProvisioningEvents
             var email = principal.FindFirstValue(options.EmailClaimType)
                 ?? principal.FindFirstValue(ClaimTypes.Email)
                 ?? $"{subject}@unknown";
-            var name = principal.FindFirstValue(options.NameClaimType)
-                ?? principal.FindFirstValue(ClaimTypes.Name)
-                ?? email;
 
             var externalSubject = $"{issuer.TrimEnd('/')}|{subject}";
 
@@ -65,7 +62,6 @@ internal static class JitProvisioningEvents
             var user = await provisioner.EnsureProvisionedAsync(
                 externalSubject,
                 email,
-                name,
                 context.HttpContext.RequestAborted);
 
             context.HttpContext.Items[CurrentUserAccessor.UserIdItemKey] = user.Id;

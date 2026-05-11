@@ -22,19 +22,15 @@ internal class JitUserProvisioner : IJitUserProvisioner
     public Task<IUser> EnsureProvisionedAsync(
         string externalSubject,
         string email,
-        string displayName,
         CancellationToken cancellationToken = default)
         => transaction.InvokeAsync(async () =>
         {
             var existing = await users.FindByExternalSubjectAsync(externalSubject, cancellationToken);
-            if (existing is not null)
-            {
-                return existing;
-            }
+            if (existing is not null) return existing;
 
-            var totalUsers = await users.CountAsync(cancellationToken);
-            var role = totalUsers == 0 ? UserRole.Admin : UserRole.Viewer;
-            var user = createUser(displayName, email, externalSubject, role);
+            var total = await users.CountAsync(cancellationToken);
+            var role = total == 0 ? UserRole.Admin : UserRole.Viewer;
+            var user = createUser(email, externalSubject, passwordHash: null, role);
             return await user.AddAsync(cancellationToken);
         });
 }
