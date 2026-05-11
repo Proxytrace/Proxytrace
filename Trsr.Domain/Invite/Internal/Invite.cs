@@ -62,16 +62,9 @@ internal record Invite : DomainEntity<IInvite>, IInvite
         foreach (var r in Validation.Defined(Role).AsEnumerable()) yield return r;
         foreach (var r in Validation.NotBefore(ExpiresAt, CreatedAt, nameof(ExpiresAt)).AsEnumerable()) yield return r;
 
-        if (InvitedBy is null)
+        foreach (var result in InvitedBy.Validate(validationContext))
         {
-            yield return new ValidationResult($"{nameof(InvitedBy)} must not be null.", new[] { nameof(InvitedBy) });
-        }
-        else
-        {
-            foreach (var result in InvitedBy.Validate(validationContext))
-            {
-                yield return result;
-            }
+            yield return result;
         }
     }
 }
