@@ -11,6 +11,7 @@ public record EvaluatorDetailDto(
     string ProjectName,
     Guid? EndpointId,
     string? EndpointName,
+    Guid? AgentId,
     string? JsonSchema,
     string? ExtractionPattern,
     decimal? Tolerance,

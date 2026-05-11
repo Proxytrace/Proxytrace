@@ -7,9 +7,9 @@ interface Props {
 }
 
 const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: string }[] = [
-  { value: 'user', label: 'User', accent: '#22d3ee', description: 'Message from the human' },
-  { value: 'assistant', label: 'Assistant', accent: '#a78bfa', description: 'Reply from the model' },
-  { value: 'system', label: 'System', accent: '#9ca3af', description: 'System instruction' },
+  { value: 'user', label: 'User', accent: 'var(--teal)', description: 'Message from the human' },
+  { value: 'assistant', label: 'Assistant', accent: 'var(--accent-hover)', description: 'Reply from the model' },
+  { value: 'system', label: 'System', accent: 'var(--text-secondary)', description: 'System instruction' },
 ];
 
 export function AddMessageBar({ onAdd }: Props) {
@@ -74,7 +74,7 @@ export function AddMessageBar({ onAdd }: Props) {
                 style={{
                   background: 'rgba(255,255,255,0.04)',
                   color: opt.accent,
-                  border: `1px solid ${opt.accent}33`,
+                  border: `1px solid color-mix(in srgb, ${opt.accent} 22%, transparent)`,
                 }}
               >
                 {opt.label[0]}

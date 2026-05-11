@@ -24,7 +24,7 @@ internal class ProjectGenerator : DomainEntityGenerator<IProject>
     {
         var endpoint = await endpointGenerator.GetOrCreateAsync(cancellationToken);
         return factory(
-            name: random.String(),
+            name: Random.String(),
             systemEndpoint: endpoint,
             members: Array.Empty<IUser>());
     }

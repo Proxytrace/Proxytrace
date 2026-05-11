@@ -327,6 +327,7 @@ export interface EvaluatorDetailDto {
   projectName: string;
   endpointId: string | null;
   endpointName: string | null;
+  agentId: string | null;
   jsonSchema: string | null;
   extractionPattern: string | null;
   tolerance: number | null;
@@ -375,7 +376,7 @@ export interface ApiKeyDto {
 }
 export interface ProjectMemberDto {
   id: string;
-  name: string;
+  email: string;
 }
 export interface ProjectDto {
   id: string;
@@ -387,7 +388,7 @@ export interface ProjectDto {
 }
 export interface UserDto {
   id: string;
-  name: string;
+  email: string;
   createdAt: string;
   updatedAt: string;
 }

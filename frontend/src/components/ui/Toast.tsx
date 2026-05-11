@@ -24,8 +24,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[100] pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} className="fade-up bg-card rounded-[10px] px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)]" style={{
-            border: `1px solid ${typeColor(t.type)}44`,
+          <div key={t.id} className="fade-up bg-card rounded-md px-4 py-2.5 text-title font-medium max-w-[320px] shadow-[var(--shadow-float)]" style={{
+            border: `1px solid color-mix(in srgb, ${typeColor(t.type)} 32%, transparent)`,
             color: typeColor(t.type),
           }}>
             {t.message}

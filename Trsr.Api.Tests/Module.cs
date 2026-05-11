@@ -1,10 +1,12 @@
 using Autofac;
+using Trsr.Application.Auth;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.User;
 using Trsr.Storage;
 using Trsr.Testing;
 
@@ -26,6 +28,12 @@ public sealed class Module : Autofac.Module
             => Task.FromResult<string>("Test Agent");
     }
 
+    private sealed class StubCurrentUserAccessor : ICurrentUserAccessor
+    {
+        public Task<IUser?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IUser?>(null);
+    }
+
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
@@ -35,6 +43,9 @@ public sealed class Module : Autofac.Module
         builder.RegisterStub<IProviderClient>();
 
         builder.RegisterInstance<IAgentNameGenerator>(new StubAgentNameGenerator())
+            .SingleInstance();
+
+        builder.RegisterInstance<ICurrentUserAccessor>(new StubCurrentUserAccessor())
             .SingleInstance();
 
         // Register a default stub factory — tests override this via GetServices(action).

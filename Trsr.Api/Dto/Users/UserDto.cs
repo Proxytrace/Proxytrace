@@ -1,7 +1,12 @@
+using Trsr.Domain.User;
+
 namespace Trsr.Api.Dto.Users;
 
-public record UserDto(Guid Id, string Name, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+public record UserDto(
+    Guid Id,
+    string Email,
+    UserRole Role,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
 
-public record CreateUserRequest(string Name);
-
-public record UpdateUserRequest(string Name);
+public record UpdateUserRoleRequest(UserRole Role);

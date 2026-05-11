@@ -4,6 +4,7 @@ using Trsr.Api.Controllers;
 using Trsr.Application.Cleanup;
 using Trsr.Application.Setup;
 using Trsr.Domain;
+using Trsr.Domain.Project;
 using Trsr.Domain.User;
 using Trsr.Testing;
 
@@ -12,11 +13,17 @@ namespace Trsr.Api.Tests;
 [TestClass]
 public sealed class SetupControllerTests : BaseTest<Module>
 {
+    private static SetupController CreateController(IServiceProvider services) => new(
+        services.GetRequiredService<IRepository<IUser>>(),
+        services.GetRequiredService<IRepository<IProject>>(),
+        services.GetRequiredService<IDataCleanupService>(),
+        services.GetRequiredService<ISetupService>());
+
     [TestMethod]
-    public async Task GetStatus_WhenNoUsersExist_ReturnsNotConfigured()
+    public async Task GetStatus_WhenNoUsersOrProjectsExist_ReturnsNotConfigured()
     {
         IServiceProvider services = GetServices();
-        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>(), services.GetRequiredService<ISetupService>());
+        var controller = CreateController(services);
 
         var result = await controller.GetStatus(CancellationToken);
 
@@ -24,13 +31,26 @@ public sealed class SetupControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task GetStatus_AfterUserCreated_ReturnsConfigured()
+    public async Task GetStatus_WhenUserButNoProject_ReturnsNotConfigured()
     {
         IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-        await generator.CreateAsync(CancellationToken);
+        await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
 
-        var controller = new SetupController(services.GetRequiredService<IRepository<IUser>>(), services.GetRequiredService<IDataCleanupService>(), services.GetRequiredService<ISetupService>());
+        var controller = CreateController(services);
+
+        var result = await controller.GetStatus(CancellationToken);
+
+        result.IsConfigured.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task GetStatus_WhenUserAndProjectExist_ReturnsConfigured()
+    {
+        IServiceProvider services = GetServices();
+        await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+
+        var controller = CreateController(services);
 
         var result = await controller.GetStatus(CancellationToken);
 

@@ -8,6 +8,8 @@ Trsr is an AI agent observability platform that acts as an OpenAI-compatible pro
 
 ## Working on UI
 
+**Before writing any frontend code, read [`frontend/DESIGN.md`](frontend/DESIGN.md).** It is the source of truth for the visual system, tokens, component conventions, and interaction patterns. It overrides any conflicting recommendation from a generic design tool or external skill.
+
 When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
 
 ## Commands

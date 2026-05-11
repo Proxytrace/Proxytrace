@@ -27,8 +27,8 @@ internal class OptimizationProposalGenerator : DomainEntityGenerator<IOptimizati
         return factory(
             agent: agent,
             priority: Priority.Medium,
-            rationale: random.String(),
-            details: new SystemPromptDetails(random.String()),
+            rationale: Random.String(),
+            details: new SystemPromptDetails(Random.String()),
             evidenceTestRunIds: []);
     }
 }

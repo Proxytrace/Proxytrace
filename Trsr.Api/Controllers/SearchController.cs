@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Search;
 using Trsr.Domain.ProjectSearchSettings;
@@ -6,6 +7,7 @@ using Trsr.Domain.Search;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/projects/{projectId:guid}/search")]
 public class SearchController : ControllerBase
 {

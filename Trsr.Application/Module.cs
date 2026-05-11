@@ -2,6 +2,8 @@ using Autofac;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Agent;
+using Trsr.Application.Auth;
+using Trsr.Application.Auth.Internal;
 using Trsr.Application.Cleanup;
 using Trsr.Application.Cleanup.Internal;
 using Trsr.Application.Evaluator;
@@ -100,6 +102,30 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<SetupService>()
             .As<ISetupService>()
+            .SingleInstance();
+
+        builder.RegisterType<JitUserProvisioner>()
+            .As<IJitUserProvisioner>()
+            .SingleInstance();
+
+        builder.RegisterType<Auth.Local.Internal.PasswordPolicy>()
+            .As<Auth.Local.IPasswordPolicy>()
+            .SingleInstance();
+
+        builder.RegisterType<Auth.Local.Internal.PasswordService>()
+            .As<Auth.Local.IPasswordService>()
+            .SingleInstance();
+
+        builder.RegisterType<Auth.Local.Internal.LocalTokenIssuer>()
+            .As<Auth.Local.ILocalTokenIssuer>()
+            .SingleInstance();
+
+        builder.RegisterType<Auth.Local.Internal.InviteService>()
+            .As<Auth.Local.IInviteService>()
+            .SingleInstance();
+
+        builder.RegisterType<Auth.Local.Internal.LoginService>()
+            .As<Auth.Local.ILoginService>()
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);

@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
+import { getAccessToken } from '../auth/token';
 import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TraceCreatedEvent } from './models';
+
+function withAuth(url: string): string {
+  const token = getAccessToken();
+  if (!token) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}access_token=${encodeURIComponent(token)}`;
+}
 
 export function useEventStream<T>(
   url: string | null,
@@ -15,7 +23,7 @@ export function useEventStream<T>(
 
   useEffect(() => {
     if (!url) return;
-    const es = new EventSource(url);
+    const es = new EventSource(withAuth(url));
 
     for (const name of events) {
       es.addEventListener(name, (e: MessageEvent) => {

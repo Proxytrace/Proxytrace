@@ -1,0 +1,93 @@
+import React from 'react';
+import { cn } from '../../lib/cn';
+
+export type BadgeVariant = 'neutral' | 'success' | 'warn' | 'danger' | 'accent' | 'tinted';
+export type BadgeShape = 'pill' | 'rounded';
+export type BadgeSize = 'sm' | 'md';
+
+interface BadgeProps {
+  label: React.ReactNode;
+  variant?: BadgeVariant;
+  color?: string;
+  shape?: BadgeShape;
+  size?: BadgeSize;
+  dot?: boolean;
+  selected?: boolean;
+  onClick?: () => void;
+  className?: string;
+  title?: string;
+}
+
+const VARIANT_TOKEN: Record<Exclude<BadgeVariant, 'tinted'>, { bg: string; fg: string; border: string }> = {
+  neutral: { bg: 'var(--bg-card-2)', fg: 'var(--text-secondary)', border: 'var(--border-color)' },
+  success: { bg: 'var(--success-subtle)', fg: 'var(--success)', border: 'color-mix(in srgb, var(--success) 32%, transparent)' },
+  warn:    { bg: 'var(--warn-subtle)',    fg: 'var(--warn)',    border: 'color-mix(in srgb, var(--warn) 32%, transparent)' },
+  danger:  { bg: 'var(--danger-subtle)',  fg: 'var(--danger)',  border: 'color-mix(in srgb, var(--danger) 32%, transparent)' },
+  accent:  { bg: 'var(--accent-subtle)',  fg: 'var(--accent-hover)', border: 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' },
+};
+
+const SIZE_CLS: Record<BadgeSize, string> = {
+  sm: 'px-2 py-[2px] text-caption gap-1',
+  md: 'px-2.5 py-[3px] text-body-sm gap-1.5',
+};
+
+export function Badge({
+  label,
+  variant = 'neutral',
+  color,
+  shape = 'pill',
+  size = 'sm',
+  dot = false,
+  selected,
+  onClick,
+  className,
+  title,
+}: BadgeProps) {
+  const isTinted = variant === 'tinted' && color;
+  const tokens = !isTinted && variant !== 'tinted'
+    ? VARIANT_TOKEN[variant]
+    : undefined;
+
+  const style: React.CSSProperties = isTinted
+    ? {
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
+        color,
+        border: `1px solid color-mix(in srgb, ${color} 32%, transparent)`,
+        boxShadow: 'var(--shadow-pill)',
+      }
+    : {
+        background: tokens!.bg,
+        color: tokens!.fg,
+        border: `1px solid ${tokens!.border}`,
+        boxShadow: 'var(--shadow-pill)',
+      };
+
+  if (selected) {
+    style.outline = `2px solid ${isTinted ? color : tokens!.fg}`;
+    style.outlineOffset = '1px';
+  }
+  if (onClick) style.cursor = 'pointer';
+
+  return (
+    <span
+      onClick={onClick}
+      title={title}
+      className={cn(
+        'inline-flex items-center font-semibold whitespace-nowrap transition-opacity',
+        SIZE_CLS[size],
+        shape === 'pill' ? 'rounded-full' : 'rounded-sm',
+        className,
+      )}
+      style={style}
+    >
+      {dot && (
+        <span
+          aria-hidden
+          className="w-[5px] h-[5px] rounded-full shrink-0"
+          style={{ background: isTinted ? color : tokens!.fg }}
+        />
+      )}
+      {label}
+    </span>
+  );
+}

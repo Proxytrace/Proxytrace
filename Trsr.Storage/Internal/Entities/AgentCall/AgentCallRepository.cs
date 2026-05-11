@@ -27,7 +27,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
+        var context = ContextFactory();
         var query = context.Set<AgentCallEntity>().AsNoTracking();
 
         if (filter.AgentId.HasValue)
@@ -98,7 +98,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
     public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
         CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
+        var context = ContextFactory();
         var result = await context.Set<AgentCallEntity>()
             .AsNoTracking()
             .GroupBy(e => e.AgentId)
@@ -112,7 +112,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         IProject project,
         CancellationToken cancellationToken = default)
     {
-        var context = contextFactory();
+        var context = ContextFactory();
         var projectId = project.Id;
         var stored = await context.Set<AgentCallEntity>()
             .AsNoTracking()
@@ -126,6 +126,6 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         return stored is null
             ? null
-            : await mapper.Map(stored, cancellationToken);
+            : await Mapper.Map(stored, cancellationToken);
     }
 }

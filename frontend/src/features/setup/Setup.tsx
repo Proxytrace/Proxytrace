@@ -6,6 +6,10 @@ import { CodeBlock } from '../../components/ui/CodeBlock';
 import { useToast } from '../../components/ui/Toast';
 import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
+import { useAuthMode } from '../../auth/authMode';
+import { useLocalAuth } from '../../auth/local/LocalAuthProvider';
+import { localAuthApi } from '../../auth/local/localAuthApi';
+import { PasswordRequirements, passwordIsValid } from '../../components/auth/PasswordRequirements';
 
 const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
   [ModelProviderKind.Anthropic]: 'https://api.anthropic.com/v1',
@@ -15,7 +19,6 @@ const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
 };
 
 const STEP_HEADINGS = [
-  { title: 'Create your admin account', subtitle: 'The first user becomes the workspace owner.' },
   { title: 'Connect a model provider', subtitle: 'Trsr proxies and records every call to this upstream API.' },
   { title: 'Add a model', subtitle: 'Pick which model to route through this provider. Costs are optional.' },
   { title: 'Create your project', subtitle: 'Projects group your agents, traces, and benchmarks.' },
@@ -29,6 +32,99 @@ const PROVIDER_KIND_OPTIONS: { kind: ModelProviderKind; label: string }[] = [
 ];
 
 export default function Setup() {
+  const { data: authMode } = useAuthMode();
+  const qc = useQueryClient();
+
+  if (authMode?.mode === 'local' && authMode.setupRequired) {
+    return (
+      <FirstAdminStep
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ['auth-mode'] });
+        }}
+      />
+    );
+  }
+
+  return <SetupWizard />;
+}
+
+function FirstAdminStep({ onDone }: { onDone: () => void }) {
+  const localAuth = useLocalAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface p-6 sm:p-10">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(201,148,74,0.10),transparent_55%),radial-gradient(circle_at_80%_110%,rgba(107,158,170,0.08),transparent_55%)]"
+      />
+      <form
+        className="relative w-full max-w-md space-y-4 rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-float)]"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!passwordIsValid(password)) return;
+          setErr(null);
+          setSubmitting(true);
+          try {
+            const r = await localAuthApi.setup(email, password);
+            localAuth.setToken(r.token);
+            onDone();
+          } catch (e2) {
+            const status = (e2 as { status?: number }).status;
+            setErr(status === 409 ? 'Admin already exists.' : 'Could not create admin.');
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+      >
+        <div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
+            Step 0
+          </div>
+          <h1 className="text-[20px] font-bold text-primary tracking-[-0.01em]">Create the first admin</h1>
+          <p className="mt-1.5 text-[13px] text-secondary">
+            Local install needs an administrator account before you can configure providers.
+          </p>
+        </div>
+        <FormField label="Email">
+          <input
+            className={formInputCls}
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </FormField>
+        <FormField label="Password">
+          <input
+            className={formInputCls}
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </FormField>
+        <PasswordRequirements password={password} />
+        {err && <p className="text-sm text-danger">{err}</p>}
+        <button
+          type="submit"
+          disabled={submitting || !passwordIsValid(password) || email.trim() === ''}
+          className="w-full rounded-[9px] bg-accent px-4 py-[10px] text-[13px] font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting ? 'Creating…' : 'Create admin'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function SetupWizard() {
   const toast = useToast();
   const qc = useQueryClient();
 
@@ -38,20 +134,17 @@ export default function Setup() {
   const [done, setDone] = useState(false);
   const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
 
-  // Step 1 — Admin User
-  const [userName, setUserName] = useState('');
-
-  // Step 2 — Provider
+  // Step 1 — Provider
   const [providerName, setProviderName] = useState('Anthropic');
   const [providerEndpoint, setProviderEndpoint] = useState('https://api.anthropic.com/v1');
   const [providerApiKey, setProviderApiKey] = useState('');
   const [providerKind, setProviderKind] = useState<ModelProviderKind>(ModelProviderKind.Anthropic);
 
-  // Step 2 — connection test
+  // Step 1 — connection test
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // Step 3 — Model
+  // Step 2 — Model
   const [modelName, setModelName] = useState('');
   const [inputCost, setInputCost] = useState('');
   const [outputCost, setOutputCost] = useState('');
@@ -59,14 +152,13 @@ export default function Setup() {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
 
-  // Step 4 — Project
+  // Step 3 — Project
   const [projectName, setProjectName] = useState('');
 
-  // Step 5 — API Key
+  // Step 4 — API Key
   const [keyName, setKeyName] = useState('default');
 
   const stepValid = [
-    userName.trim().length > 0,
     providerName.trim().length > 0 && providerEndpoint.trim().length > 0 && providerApiKey.trim().length > 0,
     modelName.trim().length > 0,
     projectName.trim().length > 0,
@@ -89,7 +181,6 @@ export default function Setup() {
     setLoading(true);
     try {
       const result = await setupApi.complete({
-        userName: userName.trim(),
         providerName: providerName.trim(),
         providerEndpoint: providerEndpoint.trim(),
         providerUpstreamApiKey: providerApiKey.trim(),
@@ -184,7 +275,7 @@ export default function Setup() {
   }
 
   useEffect(() => {
-    if (currentStep === 2 && models === null && !modelsLoading && providerFilled) {
+    if (currentStep === 1 && models === null && !modelsLoading && providerFilled) {
       loadModels();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -196,26 +287,12 @@ export default function Setup() {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (!canAdvance) return;
-    if (currentStep === 4) handleSubmit(); else handleNext();
+    if (currentStep === 3) handleSubmit(); else handleNext();
   }
 
   const stepContent = [
-    // Step 1 — Admin User
+    // Step 1 — Provider
     <div key="step-1" className="flex flex-col gap-4">
-      <FormField label="Your name" error={currentStep === 0 ? error ?? undefined : undefined}>
-        <input
-          className={formInputCls}
-          placeholder="e.g. Jane Smith"
-          value={userName}
-          onChange={e => setUserName(e.target.value)}
-          onKeyDown={handleEnter}
-          autoFocus
-        />
-      </FormField>
-    </div>,
-
-    // Step 2 — Provider
-    <div key="step-2" className="flex flex-col gap-4">
       <FormField label="Provider type">
         <div className="relative">
           <select
@@ -259,7 +336,7 @@ export default function Setup() {
           onKeyDown={handleEnter}
         />
       </FormField>
-      <FormField label="Upstream API key" error={currentStep === 1 ? error ?? undefined : undefined}>
+      <FormField label="Upstream API key" error={currentStep === 0 ? error ?? undefined : undefined}>
         <input
           className={formInputCls}
           type="password"
@@ -292,9 +369,9 @@ export default function Setup() {
       </p>
     </div>,
 
-    // Step 3 — Model
-    <div key="step-3" className="flex flex-col gap-4">
-      <FormField label="Model" error={currentStep === 2 ? error ?? undefined : undefined}>
+    // Step 2 — Model
+    <div key="step-2" className="flex flex-col gap-4">
+      <FormField label="Model" error={currentStep === 1 ? error ?? undefined : undefined}>
         {modelsLoading ? (
           <input
             className={formInputCls}
@@ -398,9 +475,9 @@ export default function Setup() {
       </p>
     </div>,
 
-    // Step 4 — Project
-    <div key="step-4" className="flex flex-col gap-4">
-      <FormField label="Project name" error={currentStep === 3 ? error ?? undefined : undefined}>
+    // Step 3 — Project
+    <div key="step-3" className="flex flex-col gap-4">
+      <FormField label="Project name" error={currentStep === 2 ? error ?? undefined : undefined}>
         <input
           className={formInputCls}
           placeholder="e.g. Customer Support Bot"
@@ -412,8 +489,8 @@ export default function Setup() {
       </FormField>
     </div>,
 
-    // Step 5 — API Key
-    <div key="step-5">
+    // Step 4 — API Key
+    <div key="step-4">
       {done && apiKeyValue ? (
         <div className="flex flex-col gap-5">
           <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--success-subtle)] border border-[color:var(--success)]/30">
@@ -442,7 +519,7 @@ export default function Setup() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <FormField label="Key name" error={currentStep === 4 ? error ?? undefined : undefined}>
+          <FormField label="Key name" error={currentStep === 3 ? error ?? undefined : undefined}>
             <input
               className={formInputCls}
               placeholder="default"
@@ -462,28 +539,25 @@ export default function Setup() {
   ];
 
   const steps = [
-    { label: 'Admin', content: stepContent[0] },
-    { label: 'Provider', content: stepContent[1] },
-    { label: 'Model', content: stepContent[2] },
-    { label: 'Project', content: stepContent[3] },
-    { label: 'API Key', content: stepContent[4] },
+    { label: 'Provider', content: stepContent[0] },
+    { label: 'Model', content: stepContent[1] },
+    { label: 'Project', content: stepContent[2] },
+    { label: 'API Key', content: stepContent[3] },
   ];
 
   const heading = STEP_HEADINGS[currentStep];
 
   return (
     <div className="relative min-h-screen bg-surface flex items-center justify-center p-6 sm:p-10 overflow-hidden">
-      {/* Ambient backdrop */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(201,148,74,0.10),transparent_55%),radial-gradient(circle_at_80%_110%,rgba(107,158,170,0.08),transparent_55%)]"
       />
 
       <div className="relative w-full max-w-[600px]">
-        {/* Brand header */}
         <div className="flex items-center justify-between mb-7">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base bg-[linear-gradient(135deg,#deb073,#a57038)] shadow-[0_6px_20px_-6px_rgba(201,148,74,0.6)]">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base bg-[image:var(--grad-accent-hover)] shadow-[var(--shadow-btn)]">
               T
             </div>
             <div>
@@ -494,12 +568,11 @@ export default function Setup() {
           <div className="text-[11px] text-muted hidden sm:block">~ 2 minutes</div>
         </div>
 
-        {/* Card */}
         <div className="bg-card border border-border rounded-2xl p-7 sm:p-8 shadow-[var(--shadow-float)] backdrop-blur-sm">
           {!done && (
             <div className="mb-7">
               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent mb-2">
-                {currentStep === 0 ? 'Welcome' : `Step ${currentStep + 1}`}
+                {`Step ${currentStep + 1}`}
               </div>
               <h1 className="text-[20px] font-bold text-primary leading-snug tracking-[-0.01em]">
                 {heading.title}

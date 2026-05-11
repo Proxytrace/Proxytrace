@@ -11,5 +11,5 @@ internal class ContentGenerator : DomainObjectGenerator<Content>
     }
 
     public override Task<Content> CreateAsync(CancellationToken cancellationToken = default)
-        => Content.FromText(random.String()).ToTaskResult();
+        => Content.FromText(Random.String()).ToTaskResult();
 }

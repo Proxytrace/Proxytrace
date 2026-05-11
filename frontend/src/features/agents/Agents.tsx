@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
@@ -24,10 +24,23 @@ export default function Agents() {
     queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
     enabled: currentProjectId !== null,
   });
-  const agents = data?.items ?? [];
+  const allAgents = data?.items ?? [];
 
+  const [showSystem, setShowSystem] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const agents = useMemo(
+    () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
+    [allAgents, showSystem],
+  );
+
+  // If preselected agent is a system agent, auto-enable system visibility.
+  useEffect(() => {
+    if (preselect && allAgents.some(a => a.id === preselect && a.isSystemAgent)) {
+      setShowSystem(true);
+    }
+  }, [preselect, allAgents]);
 
   useEffect(() => {
     if (selectedId && agents.some(a => a.id === selectedId)) return;
@@ -56,13 +69,16 @@ export default function Agents() {
     onError: (err) => toast((err as Error).message || 'Failed to delete agent', 'error'),
   });
 
+  const hasSystemAgents = allAgents.some(a => a.isSystemAgent);
+  const isEmpty = !isLoading && allAgents.length === 0;
+
   return (
     <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-3 h-full overflow-hidden">
-      {!isLoading && agents.length === 0 && (
+      {isEmpty && (
         <EmptyState title="No agents found" description="Agents are auto-created when traces are captured." />
       )}
 
-      {(isLoading || agents.length > 0) && (
+      {(isLoading || allAgents.length > 0) && (
         <div
           className="fade-up flex-1 min-h-0 grid gap-4"
           style={{ gridTemplateColumns: 'minmax(260px, 300px) minmax(0, 1fr)', animationDelay: '20ms' }}
@@ -73,6 +89,8 @@ export default function Agents() {
               selectedId={selected?.id ?? null}
               onSelect={handleSelect}
               isLoading={isLoading}
+              showSystem={showSystem}
+              onToggleSystem={hasSystemAgents ? () => setShowSystem(v => !v) : undefined}
             />
           </aside>
 
@@ -85,7 +103,7 @@ export default function Agents() {
                 highlightTool={highlightTool}
               />
             ) : !isLoading ? (
-              <div className="text-center py-12 text-[12.5px] text-muted">Select an agent to view details.</div>
+              <div className="text-center py-12 text-body text-muted">Select an agent to view details.</div>
             ) : null}
           </main>
         </div>

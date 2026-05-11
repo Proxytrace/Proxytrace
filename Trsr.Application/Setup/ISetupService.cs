@@ -9,6 +9,10 @@ public interface ISetupService
     Task<bool> TestProviderConnectionAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> ListProviderModelsAsync(ProviderConnectionInput input, CancellationToken cancellationToken = default);
+
+    Task<FirstAdminResult> CreateFirstAdminAsync(string email, string password, CancellationToken cancellationToken = default);
+
+    Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken = default);
 }
 
 public record ProviderConnectionInput(
@@ -18,7 +22,6 @@ public record ProviderConnectionInput(
     ModelProviderKind ProviderKind);
 
 public record SetupInput(
-    string UserName,
     string ProviderName,
     Uri ProviderEndpoint,
     string ProviderUpstreamApiKey,
@@ -30,8 +33,9 @@ public record SetupInput(
     string ApiKeyName);
 
 public record SetupResult(
-    Guid UserId,
     Guid ProviderId,
     Guid EndpointId,
     Guid ProjectId,
     string ApiKeyValue);
+
+public record FirstAdminResult(Guid UserId, string Token, DateTimeOffset ExpiresAt);

@@ -16,11 +16,11 @@ internal class ToolArgumentGenerator : DomainObjectGenerator<IToolArgument>
         var schema = JsonSerializer.SerializeToElement(new
         {
             type = "string",
-            description = random.String()
+            description = Random.String()
         });
         return ((IToolArgument)new JsonToolArgument(
-                name: random.String(),
-                isRequired: random.Bool(),
+                name: Random.String(),
+                isRequired: Random.Bool(),
                 json: schema))
             .ToTaskResult();
     }

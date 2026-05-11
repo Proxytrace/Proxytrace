@@ -1,5 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { agentsApi } from '../../api/agents';
 import {
@@ -25,12 +26,31 @@ export default function Playground() {
   const [showSeedModal, setShowSeedModal] = useState(false);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const abortRef = useRef<{ abort: () => void } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: agent } = useQuery({
     queryKey: ['agent', state.agentId],
     queryFn: () => agentsApi.get(state.agentId!),
     enabled: !!state.agentId,
   });
+
+  const requestedAgentId = searchParams.get('agentId');
+  useEffect(() => {
+    if (!requestedAgentId) return;
+    if (state.agentId === requestedAgentId) {
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    let cancelled = false;
+    agentsApi.get(requestedAgentId).then(a => {
+      if (cancelled) return;
+      dispatch({ type: 'pickAgent', agent: a });
+      setSearchParams({}, { replace: true });
+    }).catch(() => {
+      if (!cancelled) setSearchParams({}, { replace: true });
+    });
+    return () => { cancelled = true; };
+  }, [requestedAgentId, state.agentId, dispatch, setSearchParams]);
 
   const buildPayload = useCallback((messages: PlaygroundMessage[]): PlaygroundCompletePayload | null => {
     if (!state.agentId || !state.overrides) return null;

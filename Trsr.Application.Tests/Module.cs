@@ -25,6 +25,7 @@ public class Module : Autofac.Module
 
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
+        builder.RegisterStub<Trsr.Application.Auth.ICurrentUserAccessor>();
 
         builder.RegisterStub<IAgentNameGenerator>(stub =>
             stub.GenerateNameAsync(Arg.Any<IPromptTemplate>(), Arg.Any<IProject>(), Arg.Any<CancellationToken>())
@@ -56,5 +57,13 @@ public class Module : Autofac.Module
             .Register(_ => NullLogger<AgentCallIngestor>.Instance)
             .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestor>>()
             .SingleInstance();
+
+        builder.RegisterInstance(new Trsr.Application.Auth.Local.LocalAuthOptions
+        {
+            SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+            Issuer = "trsr-local",
+            Audience = "trsr-api",
+            TokenLifetime = TimeSpan.FromDays(7),
+        });
     }
 }

@@ -1,6 +1,9 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using Trsr.Api.Auth;
 using Module = Trsr.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,68 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
+
+builder.Services.AddHttpContextAccessor();
+
+var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>()
+    ?? new AuthOptions();
+builder.Services.Configure<AuthOptions>(builder.Configuration.GetSection(AuthOptions.SectionName));
+builder.Services.AddSingleton(authOptions);
+
+if (authOptions.Mode == AuthMode.Local)
+{
+    var signingKey = SigningKeyProvider.EnsureSigningKey(builder.Environment, authOptions.Local.SigningKey);
+    var localOptions = new Trsr.Application.Auth.Local.LocalAuthOptions
+    {
+        SigningKey = signingKey,
+        Issuer = "trsr-local",
+        Audience = "trsr-api",
+        TokenLifetime = TimeSpan.FromDays(7),
+    };
+    builder.Services.AddSingleton(localOptions);
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(o =>
+        {
+            o.MapInboundClaims = false;
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = localOptions.Issuer,
+                ValidAudience = localOptions.Audience,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    System.Text.Encoding.UTF8.GetBytes(localOptions.SigningKey)),
+                RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            };
+            o.Events = LocalAuthEvents.Create();
+        });
+}
+else
+{
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(o =>
+        {
+            o.Authority = authOptions.Oidc.Authority;
+            o.Audience = authOptions.Oidc.Audience;
+            o.RequireHttpsMetadata = authOptions.Oidc.RequireHttpsMetadata;
+            o.MapInboundClaims = false;
+            o.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = !string.IsNullOrWhiteSpace(authOptions.Oidc.Audience),
+                ValidAudience = authOptions.Oidc.Audience,
+                NameClaimType = authOptions.Oidc.NameClaimType,
+                RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            };
+            o.Events = JitProvisioningEvents.Create();
+        });
+}
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -44,6 +109,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();

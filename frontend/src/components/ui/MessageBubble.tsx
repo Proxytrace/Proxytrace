@@ -12,24 +12,24 @@ interface RoleStyle {
 
 const ROLES: Record<string, RoleStyle> = {
   user: {
-    accent: '#06b6d4',
-    bodyBg: 'rgba(6,182,212,0.05)',
-    border: 'rgba(6,182,212,0.22)',
-    hover: 'rgba(6,182,212,0.04)',
+    accent: 'var(--teal)',
+    bodyBg: 'color-mix(in srgb, var(--teal) 6%, transparent)',
+    border: 'color-mix(in srgb, var(--teal) 25%, transparent)',
+    hover: 'color-mix(in srgb, var(--teal) 5%, transparent)',
     label: 'USER',
   },
   assistant: {
-    accent: '#8b5cf6',
-    bodyBg: 'rgba(139,92,246,0.05)',
-    border: 'rgba(139,92,246,0.22)',
-    hover: 'rgba(139,92,246,0.04)',
+    accent: 'var(--accent-primary)',
+    bodyBg: 'var(--accent-subtle)',
+    border: 'color-mix(in srgb, var(--accent-primary) 25%, transparent)',
+    hover: 'color-mix(in srgb, var(--accent-primary) 5%, transparent)',
     label: 'ASSISTANT',
   },
   system: {
-    accent: '#a1a1aa',
-    bodyBg: 'rgba(107,107,117,0.05)',
-    border: 'rgba(255,255,255,0.07)',
-    hover: 'rgba(255,255,255,0.025)',
+    accent: 'var(--text-secondary)',
+    bodyBg: 'var(--bg-wash-hover)',
+    border: 'var(--border-color)',
+    hover: 'var(--bg-wash-hover)',
     label: 'SYSTEM',
   },
 };
@@ -82,7 +82,7 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
             {preview}
           </span>
         )}
-        <span className="ml-auto font-mono text-[9.5px] tracking-[0.06em] shrink-0" style={{ color: '#52525b' }}>
+        <span className="ml-auto font-mono text-[9.5px] tracking-[0.06em] shrink-0 text-muted">
           {charCount.toLocaleString()} chars
         </span>
       </button>

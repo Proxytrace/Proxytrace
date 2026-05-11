@@ -9,6 +9,7 @@ import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { MessageBubble } from '../../components/ui/MessageBubble';
 import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
 import { useToast } from '../../components/ui/Toast';
+import { Button } from '../../components/ui/Button';
 
 interface Props {
   trace: AgentCallDto;
@@ -62,8 +63,8 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
         {/* Header */}
         <div className="px-6 py-[18px] flex items-center gap-[14px] border-b border-hairline shrink-0">
           <div
-            className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white shrink-0"
-            style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}
+            className="w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0"
+            style={{ background: 'var(--grad-accent)' }}
           >
             <PlusIcon strokeWidth={2.5} size={18} />
           </div>
@@ -155,18 +156,20 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                     key={s.id}
                     type="button"
                     onClick={() => setSuiteId(s.id)}
-                    className="text-left rounded-[10px] px-3 py-[10px] cursor-pointer transition-all duration-150 flex items-start gap-2"
+                    className="text-left rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 flex items-start gap-2"
                     style={{
-                      background: isSel ? 'rgba(139,92,246,0.12)' : 'var(--bg-card-2)',
-                      boxShadow: isSel ? 'inset 0 0 0 1.5px #8b5cf6aa' : 'inset 0 0 0 1px var(--border-color)',
+                      background: isSel ? 'var(--accent-subtle)' : 'var(--bg-card-2)',
+                      boxShadow: isSel
+                        ? 'inset 0 0 0 1.5px color-mix(in srgb, var(--accent-primary) 67%, transparent)'
+                        : 'inset 0 0 0 1px var(--border-color)',
                     }}
                   >
                     <span
                       className="w-[14px] h-[14px] rounded-full mt-[2px] shrink-0 flex items-center justify-center transition-all duration-150"
                       style={{
-                        background: isSel ? '#8b5cf6' : 'transparent',
-                        border: isSel ? '1.5px solid #8b5cf6' : '1.5px solid var(--border-color)',
-                        boxShadow: isSel ? '0 0 8px rgba(139,92,246,0.5)' : 'none',
+                        background: isSel ? 'var(--accent-primary)' : 'transparent',
+                        border: isSel ? '1.5px solid var(--accent-primary)' : '1.5px solid var(--border-color)',
+                        boxShadow: isSel ? '0 0 8px var(--accent-glow)' : 'none',
                       }}
                     >
                       {isSel && <span style={{ color: '#fff', display: 'inline-flex' }}><CheckIcon size={9} strokeWidth={3} /></span>}
@@ -201,39 +204,16 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             {errorMsg && <span className="text-[var(--danger)]">{errorMsg}</span>}
           </div>
           <div className="flex gap-2 shrink-0">
-            <button
-              onClick={onClose}
-              type="button"
-              className="px-[18px] py-[9px] bg-card-2 rounded-[10px] text-[13px] font-medium text-secondary cursor-pointer"
-              style={{ boxShadow: 'var(--shadow-pill)' }}
-            >
-              Cancel
-            </button>
-            <button
+            <Button variant="secondary" onClick={onClose}>Cancel</Button>
+            <Button
+              variant="primary"
               onClick={() => addCase.mutate()}
               disabled={submitDisabled}
-              type="button"
-              className="px-5 py-[9px] rounded-[10px] text-[13px] font-semibold inline-flex items-center gap-[6px] cursor-pointer disabled:cursor-not-allowed"
-              style={{
-                background: submitDisabled ? 'var(--bg-card-2)' : 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-                color: submitDisabled ? 'var(--text-muted)' : '#fff',
-                boxShadow: submitDisabled ? 'none' : '0 4px 14px -4px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
-              }}
+              loading={addCase.isPending}
+              leftIcon={!addCase.isPending && <PlusIcon strokeWidth={2.5} size={13} />}
             >
-              {addCase.isPending ? (
-                <>
-                  <span
-                    className="inline-block w-[12px] h-[12px] rounded-full animate-spin"
-                    style={{ border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }}
-                  />
-                  Adding…
-                </>
-              ) : (
-                <>
-                  <PlusIcon strokeWidth={2.5} size={13} /> Add to suite
-                </>
-              )}
-            </button>
+              {addCase.isPending ? 'Adding…' : 'Add to suite'}
+            </Button>
           </div>
         </div>
       </div>
@@ -248,9 +228,9 @@ function SuiteStats({ suite }: { suite: TestSuiteDto }) {
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Cases" value={String(suite.testCases.length)} accent="#8b5cf6" />
-        <Stat label="Pass rate" value={passRateLabel} accent="#10b981" />
-        <Stat label="Total runs" value={String(suite.totalRuns)} accent="#06b6d4" />
+        <Stat label="Cases" value={String(suite.testCases.length)} accent="var(--accent-primary)" />
+        <Stat label="Pass rate" value={passRateLabel} accent="var(--success)" />
+        <Stat label="Total runs" value={String(suite.totalRuns)} accent="var(--teal)" />
       </div>
       <div>
         <div className="text-[10px] font-semibold text-muted uppercase tracking-[0.08em] mb-[6px]">

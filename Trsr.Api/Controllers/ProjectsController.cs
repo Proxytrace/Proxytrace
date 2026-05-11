@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Projects;
@@ -9,6 +10,7 @@ using Trsr.Domain.User;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/projects")]
 public class ProjectsController : ControllerBase
 {
@@ -178,5 +180,5 @@ public class ProjectsController : ControllerBase
             p.UpdatedAt);
 
     private static ProjectMemberDto ToMemberDto(IUser user) =>
-        new(user.Id, user.Name);
+        new(user.Id, user.Email);
 }

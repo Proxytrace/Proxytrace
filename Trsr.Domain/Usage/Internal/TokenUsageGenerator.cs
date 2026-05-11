@@ -12,7 +12,7 @@ internal class TokenUsageGenerator : DomainObjectGenerator<TokenUsage>
 
     public override Task<TokenUsage> CreateAsync(CancellationToken cancellationToken = default)
         => new TokenUsage(
-                inputTokenCount: (ulong)random.Int(min: 0, max: 1000),
-                outputTokenCount: (ulong)random.Int(min: 0, max: 1000))
+                inputTokenCount: (ulong)Random.Int(min: 0, max: 1000),
+                outputTokenCount: (ulong)Random.Int(min: 0, max: 1000))
             .ToTaskResult();
 }

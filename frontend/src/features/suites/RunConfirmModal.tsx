@@ -27,7 +27,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fade-up 0.18s ease-out' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 480, background: 'var(--bg-card)', borderRadius: 20, boxShadow: 'var(--shadow-float)', overflow: 'hidden' }}>
-        <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, ${c}55)` }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 38%, transparent))` }} />
 
         {done ? (
           <div style={{ padding: '40px 32px', textAlign: 'center' }}>
@@ -46,7 +46,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
             </p>
             <button
               onClick={() => { navigate('/runs'); onClose(); }}
-              style={{ padding: '10px 28px', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: '0 4px 14px -4px rgba(139,92,246,0.5)' }}
+              style={{ padding: '10px 28px', background: 'var(--grad-accent)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: 'var(--shadow-btn)' }}
             >
               View Test Runs →
             </button>
@@ -62,7 +62,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Model endpoints to evaluate
                 {isMulti && (
-                  <span style={{ padding: '2px 8px', background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.12))', color: '#c4b5fd', borderRadius: 100, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>
+                  <span style={{ padding: '2px 8px', background: 'var(--accent-subtle)', color: 'var(--accent-hover)', borderRadius: 100, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 0, border: '1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent)' }}>
                     Parallel · {selectedEndpoints.size} selected
                   </span>
                 )}
@@ -72,7 +72,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
                   const mc = modelColor(ep.modelName);
                   const isOn = selectedEndpoints.has(ep.id);
                   return (
-                    <button key={ep.id} onClick={() => toggle(ep.id)} className="flex items-center transition-all duration-[120ms] cursor-pointer" style={{ gap: 10, padding: '9px 12px', borderRadius: 10, textAlign: 'left', background: isOn ? mc + '12' : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px ${mc}44` : 'var(--shadow-pill)' }}>
+                    <button key={ep.id} onClick={() => toggle(ep.id)} className="flex items-center transition-all duration-[120ms] cursor-pointer" style={{ gap: 10, padding: '9px 12px', borderRadius: 'var(--radius-md)', textAlign: 'left', background: isOn ? `color-mix(in srgb, ${mc} 8%, transparent)` : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px color-mix(in srgb, ${mc} 28%, transparent)` : 'var(--shadow-pill)' }}>
                       <div className="flex items-center justify-center shrink-0 transition-all duration-[120ms]" style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent' }}>
                         {isOn && <span style={{ color: '#000', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
                       </div>
@@ -94,7 +94,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
               <button
                 onClick={() => onSubmit(Array.from(selectedEndpoints))}
                 disabled={loading || selectedEndpoints.size === 0}
-                style={{ padding: '9px 20px', background: selectedEndpoints.size > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedEndpoints.size > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 7, opacity: loading ? 0.7 : 1, transition: 'all 0.15s', boxShadow: selectedEndpoints.size > 0 ? '0 4px 14px -4px rgba(139,92,246,0.5)' : 'none' }}
+                style={{ padding: '9px 20px', background: selectedEndpoints.size > 0 ? 'var(--grad-accent)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedEndpoints.size > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 7, opacity: loading ? 0.7 : 1, transition: 'all 0.15s', boxShadow: selectedEndpoints.size > 0 ? 'var(--shadow-btn)' : 'none' }}
               >
                 {loading
                   ? <><span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite', display: 'block' }} /> Running…</>

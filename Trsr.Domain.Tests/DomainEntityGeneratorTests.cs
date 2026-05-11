@@ -32,7 +32,7 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         // Assert
         user.Should().NotBeNull();
         user.Id.Should().NotBe(Guid.Empty);
-        user.Name.Should().NotBeNullOrWhiteSpace();
+        user.Email.Should().NotBeNullOrWhiteSpace();
         user.CreatedAt.Should().NotBe(default);
         user.UpdatedAt.Should().NotBe(default);
     }
@@ -56,7 +56,7 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         var retrieved = await repository.GetAsync(user.Id, CancellationToken);
         retrieved.Should().NotBeNull();
         retrieved.Id.Should().Be(user.Id);
-        retrieved.Name.Should().Be(user.Name);
+        retrieved.Email.Should().Be(user.Email);
     }
 
     [TestMethod]
@@ -108,8 +108,8 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
         user1.Id.Should().NotBe(user2.Id);
         user2.Id.Should().NotBe(user3.Id);
         user1.Id.Should().NotBe(user3.Id);
-        user1.Name.Should().NotBe(user2.Name);
-        user2.Name.Should().NotBe(user3.Name);
+        user1.Email.Should().NotBe(user2.Email);
+        user2.Email.Should().NotBe(user3.Email);
     }
 
     // Project Generator Tests

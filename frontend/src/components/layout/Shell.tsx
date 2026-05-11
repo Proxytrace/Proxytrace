@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useCurrentUser } from '../../auth/useCurrentUser';
+import { useAuthMode } from '../../auth/authMode';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
@@ -66,6 +68,15 @@ export function Shell() {
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
   const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
+  const currentUser = useCurrentUser();
+  const { data: authMode } = useAuthMode();
+  const userName = currentUser?.email ?? 'User';
+  const userInitials = userName
+    .split(/[@.\s_-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2) || 'U';
 
   return (
     <div className="flex w-full h-screen overflow-hidden bg-surface relative z-[1]">
@@ -185,7 +196,14 @@ export function Shell() {
             New Test Suite
           </button>
 
-          <Avatar initials="JK" color="#c9944a" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+          <button
+            type="button"
+            onClick={() => currentUser?.signOut()}
+            title={`Sign out (${userName})`}
+            className="cursor-pointer"
+          >
+            <Avatar initials={userInitials} color="#c9944a" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+          </button>
         </header>
 
         {/* Page content */}

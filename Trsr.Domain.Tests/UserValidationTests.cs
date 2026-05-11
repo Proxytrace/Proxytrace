@@ -8,208 +8,54 @@ namespace Trsr.Domain.Tests;
 [TestClass]
 public sealed class UserValidationTests : BaseTest<Module>
 {
+    private const string ValidEmail = "user@example.com";
+    private const string ValidSubject = "issuer|sub-123";
+    private const string ValidHash = "AQAAAAEAACcQAAAAEHashValue";
+
     [TestMethod]
-    public Task CreateNew_WithValidName_CreatesUser()
+    public void CreateNew_OidcUser_CreatesUser()
     {
-        try
-        {
-            // Arrange
-            IServiceProvider services = GetServices();
-            var factory = services.GetRequiredService<IUser.CreateNew>();
-            var name = "John Doe";
-
-            // Act
-            var user = factory(name);
-
-            // Assert
-            user.Should().NotBeNull();
-            user.Name.Should().Be(name);
-            user.Id.Should().NotBe(Guid.Empty);
-            user.CreatedAt.Should().NotBe(default);
-            user.UpdatedAt.Should().NotBe(default);
-            return Task.CompletedTask;
-        }
-        catch (Exception exception)
-        {
-            return Task.FromException(exception);
-        }
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var u = factory(ValidEmail, ValidSubject, null, UserRole.Member);
+        u.Email.Should().Be(ValidEmail);
+        u.ExternalSubject.Should().Be(ValidSubject);
+        u.PasswordHash.Should().BeNull();
     }
 
     [TestMethod]
-    public void CreateNew_WithNullName_ThrowsValidationException()
+    public void CreateNew_LocalUser_CreatesUser()
     {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-
-        // Act & Assert
-        var action = () => factory.DynamicInvoke(new object?[] { null });
-        action.Should().Throw<Exception>();
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var u = factory(ValidEmail, null, ValidHash, UserRole.Admin);
+        u.ExternalSubject.Should().BeNull();
+        u.PasswordHash.Should().Be(ValidHash);
     }
 
     [TestMethod]
-    public void CreateNew_WithEmptyName_ThrowsValidationException()
+    public void CreateNew_NoSubjectAndNoHash_Throws()
     {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var emptyName = string.Empty;
-
-        // Act & Assert
-        var action = () => factory(emptyName);
-        action.Should().Throw<Exception>();
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var act = () => factory(ValidEmail, null, null, UserRole.Member);
+        act.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public void CreateNew_WithWhitespaceName_ThrowsValidationException()
+    public void CreateNew_EmptyEmail_Throws()
     {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var whitespaceName = "   ";
-
-        // Act & Assert
-        var action = () => factory(whitespaceName);
-        action.Should().Throw<Exception>();
+        var factory = GetServices().GetRequiredService<IUser.CreateNew>();
+        var act = () => factory(string.Empty, ValidSubject, null, UserRole.Member);
+        act.Should().Throw<Exception>();
     }
 
     [TestMethod]
-    public void CreateNew_WithTabsName_ThrowsValidationException()
+    public async Task ChangePasswordHash_UpdatesHash()
     {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var tabsName = "\t\t\t";
+        var services = GetServices();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
+        var u = await gen.CreateAsync(CancellationToken);
 
-        // Act & Assert
-        var action = () => factory(tabsName);
-        action.Should().Throw<Exception>();
+        var updated = await u.ChangePasswordHash("new-hash", CancellationToken);
+
+        updated.PasswordHash.Should().Be("new-hash");
     }
-
-    [TestMethod]
-    public void CreateNew_WithNewlinesName_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var newlinesName = "\n\r\n";
-
-        // Act & Assert
-        var action = () => factory(newlinesName);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public async Task CreateExisting_WithValidData_CreatesUser()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var createExisting = services.GetRequiredService<IUser.CreateExisting>();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-        var existingUser = await generator.CreateAsync(CancellationToken);
-
-        // Act
-        var user = createExisting(existingUser.Name, existingUser);
-
-        // Assert
-        user.Should().NotBeNull();
-        user.Id.Should().Be(existingUser.Id);
-        user.Name.Should().Be(existingUser.Name);
-        user.CreatedAt.Should().Be(existingUser.CreatedAt);
-        user.UpdatedAt.Should().Be(existingUser.UpdatedAt);
-    }
-
-    [TestMethod]
-    public async Task CreateExisting_WithInvalidName_ThrowsValidationException()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var createExisting = services.GetRequiredService<IUser.CreateExisting>();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-        var existingUser = await generator.CreateAsync(CancellationToken);
-
-        // Act & Assert
-        var action = () => createExisting(string.Empty, existingUser);
-        action.Should().Throw<Exception>();
-    }
-
-    [TestMethod]
-    public void Id_IsUniqueForEachNewUser()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-
-        // Act
-        var user1 = factory("User 1");
-        var user2 = factory("User 2");
-
-        // Assert
-        user1.Id.Should().NotBe(user2.Id);
-    }
-
-    [TestMethod]
-    public async Task User_IsImmutable()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-        var user = await generator.CreateAsync(CancellationToken);
-
-        // Act & Assert
-        // Since User is a record, we can't modify properties directly
-        // This test verifies that the User type doesn't have property setters
-        var nameProperty = user.GetType().GetProperty("Name");
-        nameProperty.Should().NotBeNull();
-        nameProperty.SetMethod.Should().BeNull(); // No setter, or init-only
-    }
-
-    [TestMethod]
-    public void CreateNew_WithLongName_CreatesUser()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var longName = new string('A', 1000);
-
-        // Act
-        var user = factory(longName);
-
-        // Assert
-        user.Should().NotBeNull();
-        user.Name.Should().Be(longName);
-    }
-
-    [TestMethod]
-    public void CreateNew_WithSpecialCharactersInName_CreatesUser()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var specialName = "User @#$% 123 !&*()";
-
-        // Act
-        var user = factory(specialName);
-
-        // Assert
-        user.Should().NotBeNull();
-        user.Name.Should().Be(specialName);
-    }
-
-    [TestMethod]
-    public void CreateNew_WithUnicodeCharactersInName_CreatesUser()
-    {
-        // Arrange
-        IServiceProvider services = GetServices();
-        var factory = services.GetRequiredService<IUser.CreateNew>();
-        var unicodeName = "用户名 José Müller";
-
-        // Act
-        var user = factory(unicodeName);
-
-        // Assert
-        user.Should().NotBeNull();
-        user.Name.Should().Be(unicodeName);
-    }
-
 }

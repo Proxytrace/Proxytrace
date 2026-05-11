@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Agents;
 using Trsr.Api.Dto.Proposals;
@@ -11,6 +12,7 @@ using Trsr.Domain.Tools;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/proposals")]
 public class ProposalsController : ControllerBase
 {

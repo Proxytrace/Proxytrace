@@ -55,7 +55,7 @@ internal record ProjectSearchSettings : DomainEntity<IProjectSearchSettings>, IP
             yield return result;
         }
 
-        foreach (var __r in Validation.NotNull(Project, nameof(Project)).AsEnumerable()) yield return __r;
+        foreach (var r in Validation.NotNull(Project, nameof(Project)).AsEnumerable()) yield return r;
 
         if (Project is not null)
         {

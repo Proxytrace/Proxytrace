@@ -19,35 +19,35 @@ interface RoleStyle {
 
 const ROLE_STYLE: Record<PlaygroundRole, RoleStyle> = {
   user: {
-    accent: '#22d3ee',
-    bg: 'linear-gradient(180deg, rgba(34,211,238,0.07), rgba(34,211,238,0.03))',
-    border: 'rgba(34,211,238,0.22)',
+    accent: 'var(--teal)',
+    bg: 'linear-gradient(180deg, color-mix(in srgb, var(--teal) 8%, transparent), color-mix(in srgb, var(--teal) 3%, transparent))',
+    border: 'color-mix(in srgb, var(--teal) 25%, transparent)',
     label: 'User',
-    badge: 'rgba(34,211,238,0.12)',
+    badge: 'color-mix(in srgb, var(--teal) 14%, transparent)',
     icon: 'U',
   },
   assistant: {
-    accent: '#a78bfa',
-    bg: 'linear-gradient(180deg, rgba(167,139,250,0.07), rgba(167,139,250,0.03))',
-    border: 'rgba(167,139,250,0.22)',
+    accent: 'var(--accent-hover)',
+    bg: 'linear-gradient(180deg, var(--accent-subtle), color-mix(in srgb, var(--accent-primary) 4%, transparent))',
+    border: 'color-mix(in srgb, var(--accent-primary) 25%, transparent)',
     label: 'Assistant',
-    badge: 'rgba(167,139,250,0.12)',
+    badge: 'var(--accent-subtle)',
     icon: 'A',
   },
   system: {
-    accent: '#9ca3af',
-    bg: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))',
-    border: 'rgba(255,255,255,0.08)',
+    accent: 'var(--text-secondary)',
+    bg: 'linear-gradient(180deg, var(--bg-wash-hover), rgba(255,255,255,0.015))',
+    border: 'var(--border-color)',
     label: 'System',
-    badge: 'rgba(255,255,255,0.06)',
+    badge: 'var(--bg-wash-active)',
     icon: 'S',
   },
   tool: {
-    accent: '#34d399',
-    bg: 'linear-gradient(180deg, rgba(52,211,153,0.07), rgba(52,211,153,0.03))',
-    border: 'rgba(52,211,153,0.22)',
+    accent: 'var(--success)',
+    bg: 'linear-gradient(180deg, var(--success-subtle), color-mix(in srgb, var(--success) 4%, transparent))',
+    border: 'color-mix(in srgb, var(--success) 25%, transparent)',
     label: 'Tool',
-    badge: 'rgba(52,211,153,0.12)',
+    badge: 'color-mix(in srgb, var(--success) 14%, transparent)',
     icon: 'T',
   },
 };
@@ -196,19 +196,19 @@ export function EditableMessageBubble(props: Props) {
                 {message.toolRequests.map(tr => (
                   <div
                     key={tr.id}
-                    className="rounded-[10px] p-[10px]"
+                    className="rounded-md p-[10px]"
                     style={{
-                      border: '1px solid rgba(52,211,153,0.22)',
-                      background: 'rgba(52,211,153,0.05)',
+                      border: '1px solid color-mix(in srgb, var(--success) 25%, transparent)',
+                      background: 'var(--success-subtle)',
                     }}
                   >
-                    <div className="flex items-center gap-[8px] text-[11.5px] mono mb-[6px]">
-                      <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-[10px] font-bold"
-                        style={{ background: 'rgba(52,211,153,0.18)', color: '#34d399' }}
+                    <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
+                      <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold"
+                        style={{ background: 'color-mix(in srgb, var(--success) 18%, transparent)', color: 'var(--success)' }}
                       >
                         tool call
                       </span>
-                      <span className="font-bold" style={{ color: '#86efac' }}>{tr.name}</span>
+                      <span className="font-bold" style={{ color: 'var(--success)' }}>{tr.name}</span>
                       <span className="text-muted text-[10px]">{tr.id.slice(0, 12)}</span>
                     </div>
                     <JsonBlock value={tr.arguments} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
@@ -221,7 +221,7 @@ export function EditableMessageBubble(props: Props) {
                 className="mt-[10px] text-[12px] mono px-[10px] py-[8px] rounded-[8px]"
                 style={{
                   background: 'var(--danger-subtle)',
-                  border: '1px solid rgba(217,85,85,0.28)',
+                  border: '1px solid color-mix(in srgb, var(--danger) 28%, transparent)',
                   color: 'var(--danger)',
                 }}
               >

@@ -216,6 +216,53 @@ namespace Trsr.Storage.Migrations
                     b.ToTable("EvaluatorEntity");
                 });
 
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Invite.InviteEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExpiresAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("InvitedBy")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("InvitedBy");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("InviteEntity");
+                });
+
             modelBuilder.Entity("Trsr.Storage.Internal.Entities.Model.ModelEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -718,9 +765,18 @@ namespace Trsr.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ExternalSubject")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("UpdatedAt")
                         .IsRequired()
@@ -728,8 +784,12 @@ namespace Trsr.Storage.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("ExternalSubject")
+                        .IsUnique()
+                        .HasFilter("\"ExternalSubject\" IS NOT NULL");
 
                     b.ToTable("UserEntity");
                 });
@@ -776,6 +836,15 @@ namespace Trsr.Storage.Migrations
                         .WithMany()
                         .HasForeignKey("Provider")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trsr.Storage.Internal.Entities.Invite.InviteEntity", b =>
+                {
+                    b.HasOne("Trsr.Storage.Internal.Entities.User.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("InvitedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

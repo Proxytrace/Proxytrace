@@ -1,27 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto;
 using Trsr.Api.Dto.Users;
+using Trsr.Application.Auth;
 using Trsr.Domain;
 using Trsr.Domain.User;
 
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
     private readonly IRepository<IUser> repository;
-    private readonly IUser.CreateNew createNew;
-    private readonly IUser.CreateExisting createExisting;
+    private readonly ICurrentUserAccessor currentUser;
 
     public UsersController(
         IRepository<IUser> repository,
-        IUser.CreateNew createNew,
-        IUser.CreateExisting createExisting)
+        ICurrentUserAccessor currentUser)
     {
         this.repository = repository;
-        this.createNew = createNew;
-        this.createExisting = createExisting;
+        this.currentUser = currentUser;
     }
 
     [HttpGet]
@@ -35,6 +35,13 @@ public class UsersController : ControllerBase
         return new PagedResult<UserDto>(items, all.Count, page, pageSize);
     }
 
+    [HttpGet("me")]
+    public async Task<ActionResult<UserDto>> Me(CancellationToken cancellationToken)
+    {
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        return user is null ? Unauthorized() : ToDto(user);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> Get(Guid id, CancellationToken cancellationToken)
     {
@@ -44,36 +51,28 @@ public class UsersController : ControllerBase
         return ToDto(user);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<UserDto>> Create(
-        [FromBody] CreateUserRequest request,
-        CancellationToken cancellationToken)
-    {
-        var user = createNew(request.Name);
-        var saved = await repository.AddAsync(user, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
-    }
-
-    [HttpPut("{id:guid}")]
-    public async Task<ActionResult<UserDto>> Update(
+    [HttpPut("{id:guid}/role")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
+    public async Task<ActionResult<UserDto>> UpdateRole(
         Guid id,
-        [FromBody] UpdateUserRequest request,
+        [FromBody] UpdateUserRoleRequest request,
         CancellationToken cancellationToken)
     {
         if (!await repository.ContainsAsync(id, cancellationToken))
             return NotFound();
-        var existing = await repository.GetAsync(id, cancellationToken);
-        var updated = createExisting(request.Name, existing);
-        var saved = await repository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        var user = await repository.GetAsync(id, cancellationToken);
+        var updated = await user.ChangeRole(request.Role, cancellationToken);
+        return ToDto(updated);
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var removed = await repository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
     }
 
-    private static UserDto ToDto(IUser u) => new(u.Id, u.Name, u.CreatedAt, u.UpdatedAt);
+    private static UserDto ToDto(IUser u) =>
+        new(u.Id, u.Email, u.Role, u.CreatedAt, u.UpdatedAt);
 }

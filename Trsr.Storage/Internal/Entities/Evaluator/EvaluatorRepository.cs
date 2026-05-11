@@ -19,7 +19,7 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
 
     public async Task<IReadOnlyList<IEvaluator>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        var stored = await contextFactory()
+        var stored = await ContextFactory()
             .Set<EvaluatorEntity>()
             .AsNoTracking()
             .Where(e => e.Project == projectId)

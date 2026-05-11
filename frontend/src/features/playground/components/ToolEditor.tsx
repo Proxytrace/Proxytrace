@@ -8,6 +8,7 @@ interface Props {
   onChange: (next: PlaygroundToolOverride[]) => void;
 }
 
+// Syntax-highlight palette for JSON-Schema type tags (intentional, not brand colors).
 const TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
   string: { bg: 'rgba(34,211,238,0.10)', color: '#67e8f9', border: 'rgba(34,211,238,0.22)' },
   number: { bg: 'rgba(251,191,36,0.10)', color: '#fcd34d', border: 'rgba(251,191,36,0.22)' },

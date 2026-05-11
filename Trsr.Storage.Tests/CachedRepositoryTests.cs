@@ -140,12 +140,12 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         IUser created = await generator.CreateAsync(CancellationToken);
         IUser loaded = await repository.FindAsync(created.Id, CancellationToken)
             ?? throw new InvalidOperationException("Expected FindAsync to return user.");
-        loaded.Name.Should().Be(created.Name);
+        loaded.Email.Should().Be(created.Email);
 
-        await repository.UpdateAsync(createExisting("renamed", created), CancellationToken);
+        await repository.UpdateAsync(createExisting("renamed@example.com", created.ExternalSubject, created.PasswordHash, created.Role, created), CancellationToken);
         IUser updated = await repository.FindAsync(created.Id, CancellationToken)
             ?? throw new InvalidOperationException("Expected FindAsync after update to return user.");
-        updated.Name.Should().Be("renamed");
+        updated.Email.Should().Be("renamed@example.com");
 
         await repository.RemoveAsync(created.Id, CancellationToken);
         (await repository.FindAsync(created.Id, CancellationToken)).Should().BeNull();

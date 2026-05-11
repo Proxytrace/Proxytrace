@@ -24,10 +24,10 @@ interface Props {
 }
 
 const ROLE_COLOR: Record<string, string> = {
-  system: '#c9944a',
-  user: '#6b9eaa',
-  assistant: '#3daa6f',
-  tool: '#888',
+  system: 'var(--accent-primary)',
+  user: 'var(--teal)',
+  assistant: 'var(--success)',
+  tool: 'var(--text-muted)',
 };
 
 function outputStr(val: OutputValueDto): string {
@@ -44,12 +44,12 @@ function OutputBlock({ label, color, value }: { label: string; color: string; va
         <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: color }} />
         <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.07em]">{label}</span>
         {value.kind === 'tool_call' && (
-          <span className="px-[5px] py-[1px] rounded-[3px] text-[9.5px]" style={{ background: 'rgba(201,148,74,0.12)', color: '#c9944a', fontFamily: "'JetBrains Mono',monospace" }}>tool_call</span>
+          <span className="px-[5px] py-[1px] rounded-[3px] text-[9.5px]" style={{ background: 'var(--accent-subtle)', color: 'var(--accent-primary)', fontFamily: "'JetBrains Mono',monospace" }}>tool_call</span>
         )}
       </div>
       <div
         className="rounded-lg p-[10px_12px] max-h-[160px] overflow-y-auto font-mono text-[11.5px] leading-[1.65] text-primary whitespace-pre-wrap break-words bg-black/[0.18]"
-        style={{ border: `1px solid ${color}22` }}
+        style={{ border: `1px solid color-mix(in srgb, ${color} 14%, transparent)` }}
       >
         {text || <span className="text-muted italic">(empty)</span>}
       </div>
@@ -79,8 +79,8 @@ function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResultDto; de
         <span
           className="px-2 py-[2px] rounded-[5px] text-[11px] font-bold shrink-0"
           style={{
-            background: ev.pass ? 'rgba(61,170,111,0.12)' : 'rgba(217,85,85,0.12)',
-            color: ev.pass ? '#3daa6f' : '#d95555',
+            background: ev.pass ? 'var(--success-subtle)' : 'var(--danger-subtle)',
+            color: ev.pass ? 'var(--success)' : 'var(--danger)',
           }}
         >{ev.pass ? '✓ Pass' : '✗ Fail'}</span>
         {hasDetails && (
@@ -108,7 +108,7 @@ function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResultDto; de
                 <div key={i} style={{ display: 'contents' }}>
                   <span className="text-[12px] text-muted">{b.k}</span>
                   <span className="font-mono text-[11px] text-secondary text-right">{b.v}</span>
-                  <span className="text-[11px] font-bold text-right" style={{ color: b.match ? '#3daa6f' : '#d95555' }}>{b.match ? '✓' : '✗'}</span>
+                  <span className="text-[11px] font-bold text-right" style={{ color: b.match ? 'var(--success)' : 'var(--danger)' }}>{b.match ? '✓' : '✗'}</span>
                 </div>
               ))}
             </div>
@@ -120,10 +120,10 @@ function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResultDto; de
 }
 
 const RUNTIME_SEGMENTS: { key: keyof RuntimeBreakdownDto; label: string; color: string }[] = [
-  { key: 'ttft', label: 'TTFT', color: '#6b9eaa' },
-  { key: 'gen', label: 'Gen', color: '#c9944a' },
-  { key: 'tools', label: 'Tools', color: '#3daa6f' },
-  { key: 'judge', label: 'Judge', color: '#c2836b' },
+  { key: 'ttft', label: 'TTFT', color: 'var(--teal)' },
+  { key: 'gen', label: 'Gen', color: 'var(--accent-primary)' },
+  { key: 'tools', label: 'Tools', color: 'var(--success)' },
+  { key: 'judge', label: 'Judge', color: 'var(--warn)' },
 ];
 
 function RuntimePanel({ runtime }: { runtime: RuntimeBreakdownDto }) {
@@ -150,7 +150,7 @@ function RuntimePanel({ runtime }: { runtime: RuntimeBreakdownDto }) {
             </span>
           </div>
         ))}
-        <div className="flex items-center gap-[5px] px-[10px] py-1 rounded-md" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex items-center gap-[5px] px-[10px] py-1 rounded-md" style={{ background: 'var(--bg-wash-hover)' }}>
           <span className="text-[11px] text-muted font-medium">Total</span>
           <span className="font-mono text-[11px] text-primary font-semibold">{fmtDuration(total)}</span>
         </div>
@@ -246,8 +246,8 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
             <span
               className="w-[10px] h-[10px] rounded-full shrink-0"
               style={{
-                background: isPass ? '#3daa6f' : '#d95555',
-                boxShadow: `0 0 8px ${isPass ? '#3daa6f' : '#d95555'}88`,
+                background: isPass ? 'var(--success)' : 'var(--danger)',
+                boxShadow: `0 0 8px ${isPass ? 'var(--success)' : 'var(--danger)'}88`,
               }}
             />
           )}
@@ -269,8 +269,8 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
             <span
               className="px-[9px] py-[3px] rounded-md text-[11px] font-bold shrink-0"
               style={{
-                background: isPass ? 'rgba(61,170,111,0.12)' : 'rgba(217,85,85,0.12)',
-                color: isPass ? '#3daa6f' : '#d95555',
+                background: isPass ? 'var(--success-subtle)' : 'var(--danger-subtle)',
+                color: isPass ? 'var(--success)' : 'var(--danger)',
               }}
             >{isPass ? 'PASS' : 'FAIL'}</span>
           )}
@@ -308,7 +308,7 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
                 label: 'Composite score',
                 value: compositeScore != null ? `${compositeScore}%` : '—',
                 sub: `${passed}/${evalTotal} evaluators`,
-                color: compositeScore != null && compositeScore >= 80 ? '#3daa6f' : compositeScore != null && compositeScore >= 50 ? '#d4915c' : '#d95555',
+                color: compositeScore != null && compositeScore >= 80 ? 'var(--success)' : compositeScore != null && compositeScore >= 50 ? 'var(--warn)' : 'var(--danger)',
               },
               { label: 'Runtime', value: fmtDuration(fixture.runtime.total), sub: undefined, color: 'var(--text-primary)' },
               { label: 'Cost', value: `$${totalCost.toFixed(4)}`, sub: undefined, color: 'var(--text-primary)' },

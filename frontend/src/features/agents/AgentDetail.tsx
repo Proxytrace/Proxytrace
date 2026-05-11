@@ -34,11 +34,11 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
       <ToolsWidget tools={agent.tools} highlightTool={highlightTool} className="col-span-12 lg:col-span-5" />
 
       {isLoading && (
-        <div className="col-span-12 text-center py-8 text-[12px] text-muted">Loading statistics…</div>
+        <div className="col-span-12 text-center py-8 text-body text-muted">Loading statistics…</div>
       )}
 
       {!isLoading && overview && overview.summary.totalTraces === 0 && (
-        <div className="col-span-12 bg-card rounded-2xl py-6" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="col-span-12 bg-card rounded-lg py-6 shadow-[var(--shadow-card)]">
           <EmptyState
             title="No activity yet"
             description="KPIs and charts appear once this agent is invoked."

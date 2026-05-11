@@ -23,7 +23,6 @@ export function KpiTraces({ overview, range, className }: KpiProps) {
         subtitle={`in ${rangeShort(range)}`}
         sparkline={data}
         sparklineColor="#c9944a"
-        accent
       />
     </div>
   );

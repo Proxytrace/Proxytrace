@@ -26,6 +26,6 @@ internal class CompletionGenerator : DomainObjectGenerator<ICompletion>
     {
         AssistantMessage message = await messageGenerator.CreateAsync(cancellationToken);
         TokenUsage usage = await usageGenerator.CreateAsync(cancellationToken);
-        return factory(message, usage, random.TimeSpan());
+        return factory(message, usage, Random.TimeSpan());
     }
 }

@@ -1,4 +1,6 @@
 using Autofac;
+using Trsr.Api.Auth;
+using Trsr.Application.Auth;
 using Trsr.Common.DependencyInjection;
 using Trsr.Storage;
 
@@ -59,6 +61,10 @@ internal sealed class Module : Autofac.Module
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
         var storageConfig = DetermineStorageConfiguration(connectionString);
         builder.RegisterModule(new Storage.Module(storageConfig));
+
+        builder.RegisterType<CurrentUserAccessor>()
+            .As<ICurrentUserAccessor>()
+            .InstancePerLifetimeScope();
     }
 
     private static StorageConfiguration DetermineStorageConfiguration(string connectionString)

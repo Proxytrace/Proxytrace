@@ -1,11 +1,18 @@
+using Trsr.Domain.User;
+
 namespace Trsr.Storage.Internal.Entities.User;
 
 [StoredDomainEntity(typeof(Trsr.Domain.User.IUser))]
 [Cacheable]
 internal record UserEntity : Entity
 {
-    /// <summary>
-    /// <see cref="Trsr.Domain.User.IUser.Name"/>
-    /// </summary>
-    public required string Name { get; init; }
+    public required string Email { get; init; }
+
+    /// <summary><see cref="Trsr.Domain.User.IUser.ExternalSubject"/>. Null for local-auth users.</summary>
+    public string? ExternalSubject { get; init; }
+
+    /// <summary><see cref="Trsr.Domain.User.IUser.PasswordHash"/>. Null for OIDC users.</summary>
+    public string? PasswordHash { get; init; }
+
+    public required UserRole Role { get; init; }
 }

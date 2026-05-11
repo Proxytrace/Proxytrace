@@ -34,7 +34,7 @@ internal class TestRunGenerator : DomainEntityGenerator<ITestRun>
             group: await groupGenerator.GetOrCreateAsync(cancellationToken),
             endpoint: await endpointGenerator.GetOrCreateAsync(cancellationToken));
 
-        int resultCount = random.Int(0, run.Group.Suite.TestCases.Count);
+        int resultCount = Random.Int(0, run.Group.Suite.TestCases.Count);
         IReadOnlyCollection<ITestResult> results = await Enumerable.Range(0, resultCount)
             .Select(i => testResultGenerator.CreateAsync(run.Group.Suite.TestCases.ElementAt(i), cancellationToken))
             .ToArray()

@@ -228,7 +228,7 @@ function Header({ suite, agentColorHex, onClose }: { suite: TestSuiteDto; agentC
       <div className="flex items-start gap-3 min-w-0">
         <div
           className="w-10 h-10 rounded-[10px] shrink-0 flex items-center justify-center"
-          style={{ background: `${agentColorHex}1f`, border: `1px solid ${agentColorHex}33` }}
+          style={{ background: `color-mix(in srgb, ${agentColorHex} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${agentColorHex} 32%, transparent)` }}
         >
           <span className="text-[14px] font-bold" style={{ color: agentColorHex }}>
             {suite.name.charAt(0).toUpperCase()}
@@ -239,7 +239,7 @@ function Header({ suite, agentColorHex, onClose }: { suite: TestSuiteDto; agentC
           <div className="mt-[3px] flex items-center gap-2 flex-wrap">
             <span
               className="inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-[10.5px] font-semibold"
-              style={{ background: `${agentColorHex}20`, color: agentColorHex, boxShadow: 'var(--shadow-pill)' }}
+              style={{ background: `color-mix(in srgb, ${agentColorHex} 14%, transparent)`, color: agentColorHex, boxShadow: 'var(--shadow-pill)', border: `1px solid color-mix(in srgb, ${agentColorHex} 32%, transparent)` }}
             >
               {suite.agentName}
             </span>

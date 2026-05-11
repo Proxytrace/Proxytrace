@@ -44,7 +44,7 @@ internal record Project : DomainEntity<IProject>, IProject
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            foreach (var __r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return __r;
+            foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
         }
 
         foreach (var result in SystemEndpoint.Validate(validationContext))

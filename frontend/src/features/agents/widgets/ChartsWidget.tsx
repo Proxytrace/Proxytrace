@@ -13,16 +13,15 @@ interface Props {
 
 function RangeTabs({ value, onChange }: { value: RangeKey; onChange: (r: RangeKey) => void }) {
   return (
-    <div className="flex gap-1 p-1 bg-card-2 rounded-[10px]">
+    <div className="flex gap-1 p-1 bg-card-2 rounded-md">
       {RANGE_KEYS.map(r => (
         <button
           key={r}
           onClick={() => onChange(r)}
-          style={{
-            boxShadow: value === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
-          }}
-          className={`px-[10px] py-[4px] text-[11px] font-medium rounded-[7px] cursor-pointer ${
-            value === r ? 'bg-card text-primary' : 'bg-transparent text-muted'
+          className={`px-2.5 py-1 text-body-sm font-medium rounded-sm cursor-pointer transition-colors duration-100 ${
+            value === r
+              ? 'bg-card text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.25)]'
+              : 'bg-transparent text-muted hover:text-secondary'
           }`}
         >
           {r}
@@ -35,12 +34,12 @@ function RangeTabs({ value, onChange }: { value: RangeKey; onChange: (r: RangeKe
 function MiniChart({ title, data, color, gradientId, height = 96 }: { title: string; data: number[]; color: string; gradientId: string; height?: number }) {
   const hasData = data.length >= 2 && data.some(v => v > 0);
   return (
-    <div className="bg-card-2 rounded-xl p-3 flex flex-col gap-2 min-w-0" style={{ boxShadow: 'var(--shadow-card)' }}>
-      <span className="text-[11.5px] font-semibold text-secondary tracking-[0.02em]">{title}</span>
+    <div className="bg-card-2 rounded-lg p-3 flex flex-col gap-2 min-w-0 shadow-[var(--shadow-card)]">
+      <span className="text-body-sm font-semibold text-secondary tracking-[0.01em]">{title}</span>
       {hasData ? (
         <AreaChart data={data} width={420} height={height} color={color} gradientId={gradientId} showAxis={false} />
       ) : (
-        <div className="flex items-center justify-center text-[11px] text-muted" style={{ height }}>
+        <div className="flex items-center justify-center text-body-sm text-muted" style={{ height }}>
           No data in range
         </div>
       )}
@@ -56,7 +55,7 @@ export function ChartsWidget({ overview, range, onRangeChange, className }: Prop
 
   const expanded = (
     <div className="flex flex-col gap-3">
-      <div className="text-[11px] text-muted">{rangeLabel(range)}</div>
+      <div className="text-body-sm text-muted">{rangeLabel(range)}</div>
       <MiniChart title="Traces" data={traces} color="#c9944a" gradientId={`${uid}-tracesXL`} height={200} />
       <MiniChart title="Tokens" data={tokens} color="#6b9eaa" gradientId={`${uid}-tokensXL`} height={200} />
       <MiniChart title="Cost" data={costs} color="#d4915c" gradientId={`${uid}-costXL`} height={200} />

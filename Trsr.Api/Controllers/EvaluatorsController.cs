@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Evaluators;
 using Trsr.Application.Evaluator;
@@ -12,6 +13,7 @@ using Trsr.Domain.Prompt;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/evaluators")]
 public class EvaluatorsController : ControllerBase
 {
@@ -247,11 +249,13 @@ public class EvaluatorsController : ControllerBase
         string? jsonSchema = null;
         string? extractionPattern = null;
         decimal? tolerance = null;
+        Guid? agentId = null;
 
         switch (evaluator)
         {
             case IAgenticEvaluator agentic:
                 systemMessage = agentic.Agent.SystemPrompt.Template;
+                agentId = agentic.Agent.Id;
                 break;
             case IJsonSchemaMatchEvaluator jsonSchemaEval:
                 jsonSchema = jsonSchemaEval.JsonSchema;
@@ -273,6 +277,7 @@ public class EvaluatorsController : ControllerBase
             evaluator.Project.Name,
             endpoint.Id,
             endpoint.Model.Name,
+            agentId,
             jsonSchema,
             extractionPattern,
             tolerance,

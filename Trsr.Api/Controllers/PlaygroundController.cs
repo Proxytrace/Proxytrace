@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trsr.Api.Dto.Playground;
 using Trsr.Application.Playground;
@@ -8,6 +9,7 @@ using Trsr.Application.Playground.Internal;
 namespace Trsr.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/playground")]
 public class PlaygroundController : ControllerBase
 {

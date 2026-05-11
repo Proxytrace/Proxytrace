@@ -1,8 +1,18 @@
+import { getAccessToken, notifyUnauthorized } from '../auth/token';
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  });
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    notifyUnauthorized();
+    throw new Error('401 Unauthorized');
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`${res.status} ${res.statusText}${text ? ': ' + text : ''}`);

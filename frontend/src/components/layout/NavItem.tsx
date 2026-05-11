@@ -29,7 +29,7 @@ export function NavItem({ label, icon, to, badge, badgeAccent, collapsed }: NavI
                 <span
                   className={`text-[10px] font-semibold px-[6px] py-[2px] rounded-full min-w-[18px] text-center ${
                     badgeAccent
-                      ? 'bg-[linear-gradient(135deg,#8b5cf6,#06b6d4)] text-white'
+                      ? 'bg-[image:var(--grad-accent)] text-white'
                       : 'bg-card-2 text-secondary'
                   }`}
                 >

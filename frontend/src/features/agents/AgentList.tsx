@@ -9,9 +9,11 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   isLoading: boolean;
+  showSystem: boolean;
+  onToggleSystem?: () => void;
 }
 
-export function AgentList({ agents, selectedId, onSelect, isLoading }: Props) {
+export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem, onToggleSystem }: Props) {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -36,8 +38,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading }: Props) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search agents…"
-          className="w-full bg-card rounded-xl pl-[34px] pr-[34px] py-[8px] text-[12.5px] text-primary placeholder:text-muted outline-none border border-transparent focus:border-[var(--border-hairline)] transition-colors"
-          style={{ boxShadow: 'var(--shadow-card)' }}
+          className="w-full bg-card rounded-md pl-[30px] pr-[30px] py-[7px] text-body text-primary placeholder:text-muted outline-none border border-border-subtle focus:border-border transition-colors shadow-[var(--shadow-card)]"
         />
         {search && (
           <button
@@ -50,12 +51,35 @@ export function AgentList({ agents, selectedId, onSelect, isLoading }: Props) {
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-[6px]">
+      {onToggleSystem && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showSystem}
+          onClick={onToggleSystem}
+          title={showSystem ? 'Hide system agents' : 'Show system agents'}
+          className={`self-start inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none ${showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card'}`}
+          style={{ boxShadow: showSystem ? 'inset 0 0 0 1px var(--accent-primary), var(--shadow-pill)' : 'var(--shadow-pill)' }}
+        >
+          <span
+            className={`w-7 h-4 rounded-full relative transition-colors duration-200 ${showSystem ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]'}`}
+            aria-hidden="true"
+          >
+            <span
+              className="absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200"
+              style={{ left: showSystem ? '14px' : '2px' }}
+            />
+          </span>
+          System Agents
+        </button>
+      )}
+
+      <div className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
         {isLoading && (
-          <div className="text-[12px] text-muted px-2 py-3">Loading…</div>
+          <div className="text-body text-muted px-2 py-3">Loading…</div>
         )}
         {!isLoading && filtered.length === 0 && (
-          <div className="text-[12px] text-muted px-2 py-3 italic">
+          <div className="text-body text-muted px-2 py-3 italic">
             {search ? 'No matches' : 'No agents yet'}
           </div>
         )}
@@ -79,45 +103,45 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
   return (
     <button
       onClick={onClick}
-      className="text-left rounded-xl relative overflow-hidden cursor-pointer transition-shadow duration-150"
-      style={{
-        background: selected ? `linear-gradient(120deg, ${c}1a, transparent 70%), var(--bg-card)` : 'var(--bg-card)',
-        boxShadow: selected ? `0 0 0 1.5px ${c}88, 0 8px 28px -10px ${c}55` : 'var(--shadow-card)',
-        border: 'none',
-        padding: '10px 12px 10px 14px',
-      }}
+      className={`text-left rounded-lg relative overflow-hidden cursor-pointer transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] border-0 ${
+        selected ? '' : 'bg-card hover:bg-card-2 shadow-[var(--shadow-card)]'
+      }`}
+      style={
+        selected
+          ? {
+              background: `linear-gradient(120deg, color-mix(in srgb, ${c} 10%, transparent), transparent 70%), var(--bg-card)`,
+              boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${c} 45%, transparent), 0 6px 22px -10px color-mix(in srgb, ${c} 32%, transparent)`,
+            }
+          : undefined
+      }
     >
       {selected && (
         <div
           aria-hidden
-          style={{
-            position: 'absolute',
-            left: 0, top: 0, bottom: 0,
-            width: 3,
-            background: c,
-          }}
+          className="absolute left-0 top-0 bottom-0 w-[3px]"
+          style={{ background: c }}
         />
       )}
-      <div className="flex items-center gap-[10px] min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0">
         <div
-          className="flex items-center justify-center shrink-0"
+          className="flex items-center justify-center shrink-0 w-[30px] h-[30px] rounded-md"
           style={{
-            width: 30, height: 30, borderRadius: 9,
-            background: `${c}1e`, border: `1px solid ${c}33`,
+            background: `color-mix(in srgb, ${c} 12%, transparent)`,
+            border: `1px solid color-mix(in srgb, ${c} 30%, transparent)`,
           }}
         >
-          <span className="text-[13px] font-bold font-mono" style={{ color: c }}>{initial}</span>
+          <span className="text-title font-bold font-mono" style={{ color: c }}>{initial}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-[12.5px] font-semibold text-primary truncate">{agent.name}</div>
-          <div className="text-[10.5px] text-muted truncate font-mono">{agent.endpointName}</div>
+          <div className="text-body font-semibold text-primary truncate">{agent.name}</div>
+          <div className="text-caption text-muted truncate font-mono">{agent.endpointName}</div>
         </div>
       </div>
-      <div className="flex items-center gap-[10px] mt-[6px] text-[10.5px] text-muted pl-[40px]">
+      <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-[40px]">
         <span className="truncate">{agent.projectName}</span>
-        <span>·</span>
+        <span className="text-border">·</span>
         <span className="shrink-0">{agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}</span>
-        <span className="ml-auto shrink-0">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
+        <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
       </div>
     </button>
   );

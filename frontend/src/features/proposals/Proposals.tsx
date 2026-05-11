@@ -7,6 +7,7 @@ import {
 import { proposalsApi } from '../../api/proposals';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
+import { agentColor as canonicalAgentColor, modelColor as canonicalModelColor } from '../../lib/colors';
 import type { OptimizationProposalDto, ModelSwitchDetailsDto, SystemPromptDetailsDto, ToolDetailsDto } from '../../api/models';
 import { ProposalStatus as ApiProposalStatus } from '../../api/models';
 
@@ -89,20 +90,6 @@ const PROPOSAL_STATUS_META: Record<ProposalStatus, { label: string; color: strin
   ready:      { label: 'Ready to promote',  color: '#5cc98a', dot: '#3daa6f' },
   promoted:   { label: 'Promoted',          color: '#94a3b8', dot: '#64748b' },
   dismissed:  { label: 'Dismissed',         color: '#6e6e74', dot: '#5a5a60' },
-};
-
-const AGENT_COLORS: Record<string, string> = {
-  'Customer Support': '#c9944a',
-  'Code Helper':      '#6b9eaa',
-  'Ticket Triage':    '#3daa6f',
-  'Classifier':       '#c2836b',
-};
-
-const MODEL_COLORS: Record<string, string> = {
-  'gpt-4o':           '#c9944a',
-  'gpt-4o-mini':      '#6b9eaa',
-  'gpt-3.5-turbo':    '#c2836b',
-  'claude-3.5-sonnet':'#3daa6f',
 };
 
 // ── DTO → local Proposal mapping ─────────────────────────────────────────────
@@ -210,11 +197,11 @@ function dtoToProposal(dto: OptimizationProposalDto): Proposal {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function AgentPill({ agent }: { agent: string }) {
-  const color = AGENT_COLORS[agent] ?? '#c9944a';
+  const color = canonicalAgentColor(agent);
   return (
     <span
       className="inline-flex items-center px-[7px] py-[2px] rounded-full text-[11px] font-medium agent-pill"
-      style={{ background: `${color}18`, color, border: `1px solid ${color}33` }}
+      style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 32%, transparent)` }}
     >
       {agent}
     </span>
@@ -329,7 +316,7 @@ function PromptDiff({ before, after }: { before: string; after: string }) {
   const dels = rendered.filter(r => r.kind === 'del').length;
 
   return (
-    <div style={{ background: '#0a0a0e', borderRadius: 10, overflow: 'hidden', boxShadow: '0 1px 0 rgba(255,255,255,0.025) inset', border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: '0 1px 0 rgba(255,255,255,0.025) inset', border: '1px solid var(--border-subtle)' }}>
       <div className="flex items-center gap-[10px]" style={{ padding: '8px 14px', borderBottom: '1px solid var(--hairline)', background: 'rgba(255,255,255,0.02)' }}>
         <span className="mono text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">System prompt</span>
         <span className="mono text-[11px]" style={{ color: '#5cc98a' }}>+{adds}</span>
@@ -338,7 +325,7 @@ function PromptDiff({ before, after }: { before: string; after: string }) {
       <div className="mono text-[11.5px] leading-[1.65]">
         {rendered.map((r, i) => {
           const bg    = r.kind === 'add' ? 'rgba(61,170,111,0.08)' : r.kind === 'del' ? 'rgba(217,85,85,0.08)' : 'transparent';
-          const color = r.kind === 'add' ? '#86efac' : r.kind === 'del' ? '#e88a8a' : 'var(--text-secondary)';
+          const color = r.kind === 'add' ? 'var(--success)' : r.kind === 'del' ? 'var(--danger)' : 'var(--text-secondary)';
           const sigil = r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' ';
           const sigilColor = r.kind === 'add' ? '#3daa6f' : r.kind === 'del' ? '#d95555' : 'var(--text-muted)';
           return (
@@ -359,7 +346,7 @@ function ABResultPanel({ ab, agentColor }: { ab: NonNullable<Proposal['abResult'
   const delta = ab.proposed - ab.current;
 
   return (
-    <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
+    <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 mb-3">
         <span className="text-[12.5px] font-semibold">A/B test result</span>
         <span className="text-[11px] text-muted">· {ab.sampleCases} cases · {ab.runtime}</span>
@@ -372,7 +359,7 @@ function ABResultPanel({ ab, agentColor }: { ab: NonNullable<Proposal['abResult'
           { label: 'Current', val: ab.current, color: 'var(--text-muted)', isWinner: winner === 'current' },
           { label: 'Proposed',                                      val: ab.proposed, color: agentColor,        isWinner: winner === 'proposed' },
         ] as const).map(s => (
-          <div key={s.label} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8, boxShadow: s.isWinner ? `inset 0 0 0 1.5px ${agentColor}55` : 'none' }}>
+          <div key={s.label} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', boxShadow: s.isWinner ? `inset 0 0 0 1.5px color-mix(in srgb, ${agentColor} 38%, transparent)` : 'none' }}>
             <div className="flex justify-between items-center mb-[6px]">
               <span className="text-[11px] text-muted font-semibold">{s.label}</span>
               {s.isWinner && <TargetIcon size={11}/>}
@@ -395,7 +382,7 @@ function EvidenceList({ items }: { items: EvidenceItem[] }) {
   const sevColor: Record<string, string> = { high: 'var(--danger)', medium: 'var(--warn)', low: 'var(--text-muted)' };
 
   return (
-    <div style={{ background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
       <div className="flex items-center gap-2" style={{ padding: '10px 14px', borderBottom: '1px solid var(--hairline)' }}>
         <span className="text-[12.5px] font-semibold">Evidence</span>
         <span className="text-[11px] text-muted">· {items.length} failing case{items.length !== 1 ? 's' : ''} motivated this</span>
@@ -421,7 +408,7 @@ function EvidenceList({ items }: { items: EvidenceItem[] }) {
 
 function ToolDiffPanel({ toolDiff }: { toolDiff: ToolDiff }) {
   return (
-    <div style={{ background: '#0a0a0e', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
       <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--hairline)', background: 'rgba(255,255,255,0.02)' }}>
         <span className="mono text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">Tool definition diff</span>
       </div>
@@ -446,19 +433,19 @@ function ToolDiffPanel({ toolDiff }: { toolDiff: ToolDiff }) {
 
 function ModelDiffPanel({ change }: { change: ModelChange }) {
   return (
-    <div style={{ background: '#0a0a0e', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
       <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--hairline)', background: 'rgba(255,255,255,0.02)' }}>
         <span className="mono text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">Model change</span>
       </div>
       <div className="flex items-center gap-[14px] justify-center" style={{ padding: '16px 14px' }}>
-        <div style={{ padding: '10px 16px', background: 'rgba(217,85,85,0.06)', borderRadius: 8, textAlign: 'center', minWidth: 160 }}>
+        <div style={{ padding: '10px 16px', background: 'var(--danger-subtle)', borderRadius: 'var(--radius-md)', textAlign: 'center', minWidth: 160 }}>
           <div className="mono text-[10px] font-semibold uppercase tracking-[0.07em] text-muted mb-1">From</div>
-          <div className="mono text-[14px] font-bold" style={{ color: MODEL_COLORS[change.from] ?? '#888' }}>{change.from}</div>
+          <div className="mono text-[14px] font-bold" style={{ color: canonicalModelColor(change.from) }}>{change.from}</div>
         </div>
         <div className="text-[18px] text-muted">→</div>
-        <div style={{ padding: '10px 16px', background: 'rgba(61,170,111,0.06)', borderRadius: 8, textAlign: 'center', minWidth: 160 }}>
+        <div style={{ padding: '10px 16px', background: 'var(--success-subtle)', borderRadius: 'var(--radius-md)', textAlign: 'center', minWidth: 160 }}>
           <div className="mono text-[10px] font-semibold uppercase tracking-[0.07em] mb-1" style={{ color: '#5cc98a' }}>To</div>
-          <div className="mono text-[14px] font-bold" style={{ color: MODEL_COLORS[change.to] ?? '#888' }}>{change.to}</div>
+          <div className="mono text-[14px] font-bold" style={{ color: canonicalModelColor(change.to) }}>{change.to}</div>
         </div>
       </div>
     </div>
@@ -467,7 +454,7 @@ function ModelDiffPanel({ change }: { change: ModelChange }) {
 
 function ParamDiffPanel({ paramDiff }: { paramDiff: Record<string, ParamChange> }) {
   return (
-    <div style={{ background: '#0a0a0e', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.04)' }}>
+    <div style={{ background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
       <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--hairline)', background: 'rgba(255,255,255,0.02)' }}>
         <span className="mono text-[11px] font-semibold uppercase tracking-[0.07em] text-muted">Parameter changes</span>
       </div>
@@ -476,7 +463,7 @@ function ParamDiffPanel({ paramDiff }: { paramDiff: Record<string, ParamChange> 
           <span className="mono text-[12.5px] font-semibold" style={{ color: '#93c5fd' }}>{k}</span>
           <span className="mono text-[13px] font-bold text-center" style={{ color: '#e88a8a', padding: '4px 10px', background: 'rgba(217,85,85,0.08)', borderRadius: 6 }}>{v.from}</span>
           <ChevronRightIcon size={14}/>
-          <span className="mono text-[13px] font-bold text-center" style={{ color: '#86efac', padding: '4px 10px', background: 'rgba(61,170,111,0.08)', borderRadius: 6 }}>{v.to}</span>
+          <span className="mono text-[13px] font-bold text-center" style={{ color: 'var(--success)', padding: '4px 10px', background: 'var(--success-subtle)', borderRadius: 'var(--radius-sm)' }}>{v.to}</span>
         </div>
       ))}
     </div>
@@ -484,7 +471,7 @@ function ParamDiffPanel({ paramDiff }: { paramDiff: Record<string, ParamChange> 
 }
 
 function ProposalDetail({ p }: { p: Proposal }) {
-  const c  = AGENT_COLORS[p.agent] ?? '#c9944a';
+  const c  = canonicalAgentColor(p.agent);
   const tm = PROPOSAL_TYPE_META[p.type];
 
   return (
@@ -524,13 +511,13 @@ function ProposalDetail({ p }: { p: Proposal }) {
       {/* Summary */}
       <p
         className="text-[13px] text-secondary leading-[1.6] m-0"
-        style={{ padding: '12px 14px', background: `rgba(201,148,74,0.04)`, borderRadius: 10, borderLeft: `2px solid ${tm.color}66` }}
+        style={{ padding: '12px 14px', background: `color-mix(in srgb, var(--accent-primary) 4%, transparent)`, borderRadius: 'var(--radius-md)', borderLeft: `2px solid color-mix(in srgb, ${tm.color} 40%, transparent)` }}
       >
         {p.summary}
       </p>
 
       {/* Predicted impact */}
-      <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
         <div className="flex items-center gap-2 mb-[10px]">
           <span className="text-[11px] font-semibold text-muted uppercase tracking-[0.07em]">Predicted impact</span>
           <span className="ml-auto flex items-center gap-2" style={{ width: 160 }}>
@@ -551,7 +538,7 @@ function ProposalDetail({ p }: { p: Proposal }) {
             const abs   = Math.abs(s.delta);
             const display = s.format === 'pt' ? `${sign}${abs}pt` : s.format === '$' ? (abs === 0 ? '$0' : `${sign}$${abs / 100}`) : (abs === 0 ? '0ms' : `${sign}${abs}ms`);
             return (
-              <div key={s.label} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 8 }}>
+              <div key={s.label} style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
                 <div className="mono text-[10px] text-muted font-semibold uppercase tracking-[0.07em] mb-1">{s.label}</div>
                 <div className="mono text-[22px] font-bold" style={{ color, letterSpacing: '-0.02em' }}>{display}</div>
               </div>
@@ -562,7 +549,7 @@ function ProposalDetail({ p }: { p: Proposal }) {
 
       {/* A/B running progress */}
       {p.status === 'ab_running' && p.progress !== undefined && (
-        <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
+        <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '14px 16px', boxShadow: 'var(--shadow-card)' }}>
           <div className="flex items-center gap-2 mb-2">
             <span
               className="pulse-dot"
@@ -591,7 +578,7 @@ function ProposalDetail({ p }: { p: Proposal }) {
 
       {/* Terminal notes */}
       {p.status === 'promoted' && (
-        <div className="flex items-center gap-[10px]" style={{ padding: '12px 14px', background: 'var(--success-subtle)', borderRadius: 10, border: '1px solid rgba(61,170,111,0.2)' }}>
+        <div className="flex items-center gap-2.5" style={{ padding: '12px 14px', background: 'var(--success-subtle)', borderRadius: 'var(--radius-md)', border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)' }}>
           <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(61,170,111,0.2)', color: 'var(--success)' }}>
             <CheckboxIcon size={14}/>
           </div>
@@ -602,7 +589,7 @@ function ProposalDetail({ p }: { p: Proposal }) {
         </div>
       )}
       {p.status === 'dismissed' && (
-        <div className="flex items-center gap-[10px]" style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10 }}>
+        <div className="flex items-center gap-2.5" style={{ padding: '12px 14px', background: 'var(--bg-wash-hover)', borderRadius: 'var(--radius-md)' }}>
           <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[14px] font-bold text-muted" style={{ background: 'rgba(255,255,255,0.05)' }}>×</div>
           <div>
             <div className="text-[12.5px] font-semibold text-muted">Dismissed · {p.dismissedAt}</div>
@@ -625,10 +612,10 @@ function ProposalCard({ p, isActive, onClick }: { p: Proposal; isActive: boolean
       className="text-left w-full relative overflow-hidden transition-[box-shadow,opacity]"
       style={{
         background: 'var(--bg-card)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
         padding: '12px 14px 12px 16px',
         boxShadow: isActive
-          ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px ${tm.color}66, 0 8px 24px -8px ${tm.color}55`
+          ? `0 1px 0 rgba(255,255,255,0.07) inset, 0 0 0 1.5px color-mix(in srgb, ${tm.color} 40%, transparent), 0 8px 24px -8px color-mix(in srgb, ${tm.color} 32%, transparent)`
           : 'var(--shadow-card)',
         opacity: isTerminal ? 0.7 : 1,
       }}
@@ -636,7 +623,7 @@ function ProposalCard({ p, isActive, onClick }: { p: Proposal; isActive: boolean
       onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'; }}
     >
       {/* Left color bar */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: tm.color, borderRadius: '12px 0 0 12px', opacity: isTerminal ? 0.4 : 1 }}/>
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: tm.color, borderRadius: 'var(--radius-lg) 0 0 var(--radius-lg)', opacity: isTerminal ? 0.4 : 1 }}/>
 
       <div className="flex items-center gap-[6px] mb-2">
         <TypeChip type={p.type}/>
@@ -764,7 +751,7 @@ export default function Proposals() {
             { label: 'Ready to promote',        value: counts.ready,           color: 'var(--success)' },
             { label: 'Potential pass-rate gain', value: `+${totalPotentialPt}pt`, color: '#8ec0cc' },
           ].map(k => (
-            <div key={k.label} className="text-center" style={{ padding: '10px 16px', minWidth: 90, background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>
+            <div key={k.label} className="text-center" style={{ padding: '10px 16px', minWidth: 90, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>
               <div className="mono text-[18px] font-bold" style={{ color: k.color, letterSpacing: '-0.02em' }}>{k.value}</div>
               <div className="text-[10.5px] text-muted mt-[2px]">{k.label}</div>
             </div>
@@ -775,7 +762,7 @@ export default function Proposals() {
       {/* Filters */}
       <div className="fade-up flex gap-[10px] flex-wrap items-center shrink-0" style={{ animationDelay: '30ms' }}>
         {/* Status tabs */}
-        <div className="flex flex-row gap-[3px]" style={{ padding: 3, background: 'var(--bg-card)', borderRadius: 10, boxShadow: 'var(--shadow-pill)' }}>
+        <div className="flex flex-row gap-[3px]" style={{ padding: 3, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-pill)' }}>
           {statusTabs.map(t => {
             const isActive = filter === t.key;
             return (
@@ -853,11 +840,11 @@ export default function Proposals() {
           <div className="absolute overflow-y-auto" style={{ inset: '0 -20px 0 0', paddingRight: 20, paddingTop: 4, paddingBottom: 24 }}>
             <div className="flex flex-col gap-2">
               {isLoading ? (
-                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>Loading proposals…</div>
+                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>Loading proposals…</div>
               ) : filtered.length > 0 ? filtered.map(p => (
                 <ProposalCard key={p.id} p={p} isActive={selected?.id === p.id} onClick={() => setSelected(p)}/>
               )) : (
-                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 12, boxShadow: 'var(--shadow-card)' }}>No proposals match this filter.</div>
+                <div className="text-center text-muted text-[12.5px]" style={{ padding: '40px 20px', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>No proposals match this filter.</div>
               )}
             </div>
           </div>
@@ -878,11 +865,11 @@ export default function Proposals() {
             >
               <button
                 className="btn-ghost text-[12.5px] font-medium"
-                style={{ padding: '9px 14px', borderRadius: 9 }}
+                style={{ padding: '9px 14px', borderRadius: 'var(--radius-md)' }}
                 disabled={updateStatus.isPending}
                 onClick={() => updateStatus.mutate({ id: selected.id, status: ApiProposalStatus.Rejected })}
               >Dismiss</button>
-              <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 9 }}>
+              <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 'var(--radius-md)' }}>
                 <CopyIcon size={12}/> Edit &amp; re-run
               </button>
               <button
@@ -890,9 +877,9 @@ export default function Proposals() {
                 disabled={updateStatus.isPending}
                 style={{
                   padding: '9px 18px',
-                  background: 'linear-gradient(135deg, #3daa6f, #059669)',
-                  borderRadius: 9,
-                  boxShadow: '0 4px 14px -4px rgba(61,170,111,0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  background: 'var(--grad-success)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-btn-success)',
                   opacity: updateStatus.isPending ? 0.6 : 1,
                 }}
                 onClick={() => updateStatus.mutate({ id: selected.id, status: ApiProposalStatus.Accepted })}
