@@ -52,7 +52,7 @@ public sealed class InviteValidationTests : BaseTest<Module>
         var services = GetServices();
         var user = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var factory = services.GetRequiredService<IInvite.CreateNew>();
-        var invite = factory("a@b.com", UserRole.Member, "tok", DateTimeOffset.UtcNow.AddDays(7), user);
+        var invite = await factory("a@b.com", UserRole.Member, "tok", DateTimeOffset.UtcNow.AddDays(7), user).AddAsync(CancellationToken);
 
         var consumed = await invite.MarkConsumedAsync(CancellationToken);
 
