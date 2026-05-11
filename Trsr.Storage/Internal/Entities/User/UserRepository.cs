@@ -13,26 +13,20 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
         IMapper<IUser, UserEntity> mapper,
         Func<StorageDbContext> context,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, context, transaction, entityEvents)
-    {
-    }
+        IEntityEventService entityEvents) : base(mapper, context, transaction, entityEvents) { }
 
-    public async Task<IUser?> FindByName(string name, CancellationToken cancellationToken = default)
+    public async Task<IUser?> FindByExternalSubjectAsync(string externalSubject, CancellationToken cancellationToken = default)
     {
-        var entity = await contextFactory()
-            .Set<UserEntity>()
-            .AsNoTracking()
-            .Where(x => x.Name == name)
+        var entity = await contextFactory().Set<UserEntity>().AsNoTracking()
+            .Where(x => x.ExternalSubject == externalSubject)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
     }
 
-    public async Task<IUser?> FindByExternalSubjectAsync(string externalSubject, CancellationToken cancellationToken = default)
+    public async Task<IUser?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var entity = await contextFactory()
-            .Set<UserEntity>()
-            .AsNoTracking()
-            .Where(x => x.ExternalSubject == externalSubject)
+        var entity = await contextFactory().Set<UserEntity>().AsNoTracking()
+            .Where(x => x.Email == email)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
     }
