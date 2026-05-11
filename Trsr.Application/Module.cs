@@ -120,6 +120,10 @@ public sealed class Module : Autofac.Module
             .As<Auth.Local.ILocalTokenIssuer>()
             .SingleInstance();
 
+        builder.RegisterType<Auth.Local.Internal.InviteService>()
+            .As<Auth.Local.IInviteService>()
+            .SingleInstance();
+
         builder.RegisterInstance(Prompts.ResourceManager);
 
         builder.RegisterType<AgenticEvaluatorPresets>()
