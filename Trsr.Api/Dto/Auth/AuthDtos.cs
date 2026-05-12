@@ -2,8 +2,9 @@ using Trsr.Domain.User;
 
 namespace Trsr.Api.Dto.Auth;
 
-public record AuthModeDto(string Mode, bool SetupRequired);
+public record AuthModeDto(string Mode, bool SetupRequired, bool LegacyClaimAvailable);
 public record LoginRequest(string Email, string Password);
+public record ClaimLegacyRequest(string Email, string Password);
 public record SignupRequest(string Token, string Password);
 public record SetupAdminRequest(string Email, string Password);
 public record TokenResponse(string Token, DateTimeOffset ExpiresAt);

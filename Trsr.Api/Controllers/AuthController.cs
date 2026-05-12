@@ -17,6 +17,7 @@ public class AuthController : ControllerBase
     private readonly AuthOptions options;
     private readonly ISetupService setup;
     private readonly ILoginService login;
+    private readonly ILegacyClaimService legacyClaim;
     private readonly IInviteService invites;
     private readonly IInviteRepository inviteRepo;
     private readonly IPasswordPolicy policy;
@@ -27,6 +28,7 @@ public class AuthController : ControllerBase
         AuthOptions options,
         ISetupService setup,
         ILoginService login,
+        ILegacyClaimService legacyClaim,
         IInviteService invites,
         IInviteRepository inviteRepo,
         IPasswordPolicy policy,
@@ -36,6 +38,7 @@ public class AuthController : ControllerBase
         this.options = options;
         this.setup = setup;
         this.login = login;
+        this.legacyClaim = legacyClaim;
         this.invites = invites;
         this.inviteRepo = inviteRepo;
         this.policy = policy;
@@ -47,8 +50,23 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<AuthModeDto> GetMode(CancellationToken ct)
     {
-        var setupRequired = options.Mode == AuthMode.Local && !await setup.AnyUsersExistAsync(ct);
-        return new AuthModeDto(options.Mode == AuthMode.Local ? "local" : "oidc", setupRequired);
+        var isLocal = options.Mode == AuthMode.Local;
+        var setupRequired = isLocal && !await setup.AnyUsersExistAsync(ct);
+        var legacyClaimAvailable = isLocal && !setupRequired && await legacyClaim.IsClaimAvailableAsync(ct);
+        return new AuthModeDto(isLocal ? "local" : "oidc", setupRequired, legacyClaimAvailable);
+    }
+
+    [HttpPost("claim-legacy")]
+    [AllowAnonymous]
+    [RequireLocalMode]
+    public async Task<ActionResult<TokenResponse>> ClaimLegacy([FromBody] ClaimLegacyRequest req, CancellationToken ct)
+    {
+        var v = policy.Validate(req.Password);
+        if (!v.IsValid) return BadRequest(v.Errors);
+
+        var result = await legacyClaim.ClaimAsync(req.Email, req.Password, ct);
+        if (result is null) return Conflict("No eligible legacy account.");
+        return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
     [HttpPost("setup")]

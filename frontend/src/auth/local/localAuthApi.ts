@@ -18,6 +18,8 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 export const localAuthApi = {
   login: (email: string, password: string) =>
     post<TokenResponse>('/api/auth/login', { email, password }),
+  claimLegacy: (email: string, password: string) =>
+    post<TokenResponse>('/api/auth/claim-legacy', { email, password }),
   setup: (email: string, password: string) =>
     post<TokenResponse>('/api/auth/setup', { email, password }),
   signup: (token: string, password: string) =>

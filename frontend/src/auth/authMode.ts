@@ -4,6 +4,7 @@ export type AuthMode = 'oidc' | 'local';
 export interface AuthModeResponse {
   mode: AuthMode;
   setupRequired: boolean;
+  legacyClaimAvailable: boolean;
 }
 
 export async function fetchAuthMode(): Promise<AuthModeResponse> {

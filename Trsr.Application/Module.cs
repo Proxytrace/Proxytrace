@@ -128,6 +128,10 @@ public sealed class Module : Autofac.Module
             .As<Auth.Local.ILoginService>()
             .SingleInstance();
 
+        builder.RegisterType<Auth.Local.Internal.LegacyClaimService>()
+            .As<Auth.Local.ILegacyClaimService>()
+            .SingleInstance();
+
         builder.RegisterInstance(Prompts.ResourceManager);
 
         builder.RegisterType<AgenticEvaluatorPresets>()
