@@ -66,8 +66,8 @@ internal static class JitProvisioningEvents
 
             context.HttpContext.Items[CurrentUserAccessor.UserIdItemKey] = user.Id;
 
-            var identity = (ClaimsIdentity)principal.Identity!;
-            if (!identity.HasClaim(c => c.Type == ClaimTypes.Role))
+            var identity = (ClaimsIdentity?)principal.Identity;
+            if (identity != null && !identity.HasClaim(c => c.Type == ClaimTypes.Role))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
             }

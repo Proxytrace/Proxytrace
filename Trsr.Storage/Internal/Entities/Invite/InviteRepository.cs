@@ -17,7 +17,7 @@ internal class InviteRepository : AbstractRepository<IInvite, InviteEntity>, IIn
 
     public async Task<IInvite?> FindByTokenAsync(string token, CancellationToken cancellationToken = default)
     {
-        var entity = await ContextFactory().Set<InviteEntity>().AsNoTracking()
+        var entity = await contextFactory().Set<InviteEntity>().AsNoTracking()
             .Where(x => x.Token == token)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);

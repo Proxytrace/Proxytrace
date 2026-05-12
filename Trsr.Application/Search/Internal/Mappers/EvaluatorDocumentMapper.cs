@@ -1,5 +1,6 @@
 using System.Text;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Search;
@@ -10,7 +11,9 @@ internal sealed class EvaluatorDocumentMapper : AbstractDocumentMapper<IEvaluato
 {
     public override SearchKind Kind => SearchKind.Evaluator;
 
-    public EvaluatorDocumentMapper(IRepository<IEvaluator> repository) : base(repository)
+    public EvaluatorDocumentMapper(
+        IRepository<IEvaluator> repository,
+        ILogger<EvaluatorDocumentMapper> logger) : base(repository, logger)
     {
     }
 

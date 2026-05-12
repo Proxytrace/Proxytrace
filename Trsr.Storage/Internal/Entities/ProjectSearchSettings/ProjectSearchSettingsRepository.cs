@@ -21,11 +21,11 @@ internal class ProjectSearchSettingsRepository
 
     public async Task<IProjectSearchSettings?> FindByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        var stored = await ContextFactory()
+        var stored = await contextFactory()
             .Set<ProjectSearchSettingsEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Project == projectId, cancellationToken);
 
-        return stored is null ? null : await Mapper.Map(stored, cancellationToken);
+        return stored is null ? null : await mapper.Map(stored, cancellationToken);
     }
 }

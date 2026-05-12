@@ -104,8 +104,10 @@ public class AuthController : ControllerBase
         var user = await invites.ConsumeAsync(req.Token, req.Password, ct);
         if (user is null) return StatusCode(410, "Invite invalid, expired, or already used.");
 
-        var session = await login.LoginAsync(user.Email, req.Password, ct);
-        return new TokenResponse(session!.Token, session.ExpiresAt);
+        LoginResult? session = await login.LoginAsync(user.Email, req.Password, ct);
+        return session != null
+            ? new TokenResponse(session.Token, session.ExpiresAt)
+            : NotFound();
     }
 
     [HttpGet("invites/by-token/{token}")]

@@ -1,3 +1,4 @@
+using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Microsoft.Extensions.Logging;
@@ -81,8 +82,9 @@ internal sealed class LuceneSearchIndexer : ISearchIndexer
             {
                 continue;
             }
-            var docs = await mapper.BuildAllForProjectAsync(projectId, cancellationToken);
-            foreach (var doc in docs)
+            
+            var docs = mapper.BuildAllForProjectAsync(projectId, cancellationToken);
+            await foreach (Document doc in docs)
             {
                 var id = doc.Get(SearchConstants.FieldId);
                 writer.Upsert(id, doc);

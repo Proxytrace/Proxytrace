@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -14,9 +15,9 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     where TDomainEntity : class, IDomainEntity
     where TStoredEntity : Entity
 {
-    protected readonly Func<StorageDbContext> ContextFactory;
+    protected readonly Func<StorageDbContext> contextFactory;
     private readonly ITransaction transaction;
-    protected readonly IMapper<TDomainEntity, TStoredEntity> Mapper;
+    protected readonly IMapper<TDomainEntity, TStoredEntity> mapper;
     private readonly IEntityCache<TDomainEntity>? cache;
     private readonly IEntityEventService entityEvents;
 
@@ -27,8 +28,8 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         IEntityEventService entityEvents,
         IEntityCache<TDomainEntity>? cache = null)
     {
-        this.Mapper = mapper;
-        this.ContextFactory = contextFactory;
+        this.mapper = mapper;
+        this.contextFactory = contextFactory;
         this.transaction = transaction;
         this.entityEvents = entityEvents;
         this.cache = cache;
@@ -56,13 +57,13 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             }
         }
 
-        TStoredEntity? stored = await FindAsync(ContextFactory(), id, cancellationToken);
+        TStoredEntity? stored = await FindAsync(contextFactory(), id, cancellationToken);
         if (stored is null)
         {
             return null;
         }
 
-        TDomainEntity domain = await Mapper.Map(stored, cancellationToken);
+        TDomainEntity domain = await mapper.Map(stored, cancellationToken);
         if (CanUseCache)
         {
             cache?.Set(domain);
@@ -79,7 +80,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
     /// <inheritdoc />
     public Task<bool> ContainsAsync(Guid id, CancellationToken cancellationToken = default)
-        => Contains(id, ContextFactory(), cancellationToken);
+        => Contains(id, contextFactory(), cancellationToken);
     
     private async Task<bool> Contains(Guid id, DbContext context, CancellationToken cancellationToken = default)
         => await context
@@ -89,10 +90,28 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
     /// <inheritdoc />
     public async Task<int> CountAsync(CancellationToken cancellationToken = default)
-        => await ContextFactory()
+        => await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
             .CountAsync(cancellationToken);
+
+    public async IAsyncEnumerable<TDomainEntity> EnumerateAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        IAsyncEnumerable<TStoredEntity> enumerable =  contextFactory()
+            .Set<TStoredEntity>()
+            .AsNoTracking()
+            .AsAsyncEnumerable();
+
+        await foreach (TStoredEntity stored in enumerable.WithCancellation(cancellationToken))
+        {
+            TDomainEntity domain = await mapper.Map(stored, cancellationToken);
+            if (CanUseCache)
+            {
+                cache?.Set(domain);
+            }
+            yield return domain;
+        }
+    }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -102,7 +121,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             return snapshot;
         }
 
-        var stored = await ContextFactory()
+        var stored = await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -141,7 +160,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
                 return hits;
             }
 
-            List<TStoredEntity> missingStored = await ContextFactory()
+            List<TStoredEntity> missingStored = await contextFactory()
                 .Set<TStoredEntity>()
                 .AsNoTracking()
                 .Where(e => misses.Contains(e.Id))
@@ -164,7 +183,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             return hits;
         }
 
-        List<TStoredEntity> stored = await ContextFactory()
+        List<TStoredEntity> stored = await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
             .Where(e => primaryKeys.Contains(e.Id))
@@ -183,7 +202,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<TDomainEntity?> FindFirstAsync(CancellationToken cancellationToken = default)
     {
-        TStoredEntity? result = await ContextFactory()
+        TStoredEntity? result = await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
@@ -193,7 +212,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
-        TDomainEntity result = await AddAsync(ContextFactory(), entity, cancellationToken);
+        TDomainEntity result = await AddAsync(contextFactory(), entity, cancellationToken);
         Notify(result.Id, EntityChangeType.Added);
         return result;
     }
@@ -212,11 +231,11 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
                 throw new EntityAlreadyExistsException(entity.Id, typeof(TDomainEntity));
             }
 
-            TStoredEntity stored = await Mapper.Map(entity, cancellationToken);
+            TStoredEntity stored = await mapper.Map(entity, cancellationToken);
             EntityEntry<TStoredEntity> entry = context.Set<TStoredEntity>().Add(stored);
             await context.SaveChangesAsync(cancellationToken);
             cache?.Invalidate(entity.Id);
-            return await Mapper.Map(entry.Entity, cancellationToken);
+            return await mapper.Map(entry.Entity, cancellationToken);
         });
 
     /// <inheritdoc />
@@ -225,7 +244,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         (TDomainEntity result, EntityChangeType change) = await transaction.InvokeAsync(async () =>
         {
             Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
-            var context = ContextFactory();
+            var context = contextFactory();
 
             TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
 
@@ -241,7 +260,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<TDomainEntity> UpdateAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
-        TDomainEntity result = await UpdateAsync(ContextFactory(), entity, cancellationToken);
+        TDomainEntity result = await UpdateAsync(contextFactory(), entity, cancellationToken);
         Notify(result.Id, EntityChangeType.Updated);
         return result;
     }
@@ -270,8 +289,8 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
             // Map the updated domain entity to storage entity, then stamp UpdatedAt centrally
             // so callers don't have to bump it (and don't fight the concurrency check above).
-            TStoredEntity mapped = await Mapper.Map(entity, cancellationToken);
-            TStoredEntity updated = (TStoredEntity)(mapped with { UpdatedAt = DateTimeOffset.UtcNow });
+            TStoredEntity mapped = await mapper.Map(entity, cancellationToken);
+            TStoredEntity updated = mapped with { UpdatedAt = DateTimeOffset.UtcNow };
 
             // Update the tracked entity using EF Core's proper update mechanism
             EntityEntry<TStoredEntity> entry = context.Entry(existing);
@@ -302,7 +321,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         bool removed = await transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = ContextFactory();
+            StorageDbContext context = contextFactory();
             TStoredEntity? existing = await FindAsync(context, id, cancellationToken);
             if (existing is null)
             {
@@ -326,7 +345,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         Guid[] removedIds = await transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = ContextFactory();
+            StorageDbContext context = contextFactory();
             DbSet<TStoredEntity> set = context.Set<TStoredEntity>();
             Guid[] ids = await set.AsNoTracking().Select(e => e.Id).ToArrayAsync(cancellationToken);
             set.RemoveRange(set);
@@ -386,7 +405,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// Maps to the domain entity
     /// </summary>
     protected async Task<TDomainEntity?> Map(TStoredEntity? stored, CancellationToken cancellationToken = default)
-        => stored is not null ? await Mapper.Map(stored, cancellationToken) : null;
+        => stored is not null ? await mapper.Map(stored, cancellationToken) : null;
     
     /// <summary>
     /// Maps to the domain entity
@@ -400,5 +419,5 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// Maps to the stored entity
     /// </summary>
     protected async Task<TStoredEntity?> Map(TDomainEntity? domain, CancellationToken cancellationToken = default)
-        => domain is not null ? await Mapper.Map(domain, cancellationToken) : null;
+        => domain is not null ? await mapper.Map(domain, cancellationToken) : null;
 }

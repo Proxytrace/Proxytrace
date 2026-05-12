@@ -24,7 +24,7 @@ internal class OptimizationProposalRepository :
         Guid agentId,
         CancellationToken cancellationToken = default)
     {
-        var stored = await ContextFactory()
+        var stored = await contextFactory()
             .Set<OptimizationProposalEntity>()
             .AsNoTracking()
             .Where(e => e.Agent == agentId)
@@ -38,7 +38,7 @@ internal class OptimizationProposalRepository :
         Guid projectId,
         CancellationToken cancellationToken = default)
     {
-        var context = ContextFactory();
+        var context = contextFactory();
         var stored = await context
             .Set<OptimizationProposalEntity>()
             .AsNoTracking()

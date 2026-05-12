@@ -19,7 +19,7 @@ internal class ApiKeyRepository : AbstractRepository<IApiKey, ApiKeyEntity>, IAp
 
     public async Task<IApiKey?> FindByKeyAsync(string key, CancellationToken cancellationToken = default)
     {
-        var entity = await ContextFactory()
+        var entity = await contextFactory()
             .Set<ApiKeyEntity>()
             .AsNoTracking()
             .Where(e => e.ApiKey == key)

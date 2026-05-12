@@ -22,7 +22,7 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
         string name,
         CancellationToken cancellationToken = default)
     {
-        var entity = await ContextFactory()
+        var entity = await contextFactory()
             .Set<ProjectEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Name == name, cancellationToken);

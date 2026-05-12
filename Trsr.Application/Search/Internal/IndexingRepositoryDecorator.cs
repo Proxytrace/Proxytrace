@@ -23,6 +23,7 @@ internal sealed class IndexingRepositoryDecorator<TDomain> : IRepository<TDomain
     public Task<TDomain?> FindAsync(Guid id, CancellationToken cancellationToken = default) => inner.FindAsync(id, cancellationToken);
     public Task<bool> ContainsAsync(Guid id, CancellationToken cancellationToken = default) => inner.ContainsAsync(id, cancellationToken);
     public Task<int> CountAsync(CancellationToken cancellationToken = default) => inner.CountAsync(cancellationToken);
+    public IAsyncEnumerable<TDomain> EnumerateAsync(CancellationToken cancellationToken = default) => inner.EnumerateAsync(cancellationToken);
     public Task<IReadOnlyList<TDomain>> GetAllAsync(CancellationToken cancellationToken = default) => inner.GetAllAsync(cancellationToken);
     public Task<IReadOnlyList<TDomain>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default) => inner.GetManyAsync(primaryKeys, cancellationToken);
     public Task<TDomain?> FindFirstAsync(CancellationToken cancellationToken = default) => inner.FindFirstAsync(cancellationToken);
