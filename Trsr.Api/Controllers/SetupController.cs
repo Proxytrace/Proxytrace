@@ -32,6 +32,7 @@ public class SetupController : ControllerBase
     }
 
     [HttpGet("status")]
+    [AllowAnonymous]
     public async Task<SetupStatusDto> GetStatus(CancellationToken cancellationToken)
     {
         var users = await this.users.CountAsync(cancellationToken);

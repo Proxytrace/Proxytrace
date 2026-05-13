@@ -10,7 +10,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 
   const res = await fetch(url, { ...init, headers });
   if (res.status === 401) {
-    notifyUnauthorized();
+    if (token) notifyUnauthorized();
     throw new Error('401 Unauthorized');
   }
   if (!res.ok) {
