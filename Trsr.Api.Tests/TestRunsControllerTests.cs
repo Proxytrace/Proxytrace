@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Controllers;
@@ -104,6 +105,75 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         var result = await controller.Delete(Guid.NewGuid(), CancellationToken);
 
         result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetAll_FilterByAgent_ScopesResults()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+        var runA = await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+        var agentId = runA.Group.Suite.Agent.Id;
+
+        var result = await controller.GetAll(agentId: agentId, cancellationToken: CancellationToken);
+
+        result.Items.Should().OnlyContain(r => r.AgentId == agentId);
+    }
+
+    [TestMethod]
+    public async Task GetAll_Pagination_RespectsPageSize()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+
+        var firstPage = await controller.GetAll(page: 1, pageSize: 2, cancellationToken: CancellationToken);
+        var secondPage = await controller.GetAll(page: 2, pageSize: 2, cancellationToken: CancellationToken);
+
+        firstPage.Items.Should().HaveCount(2);
+        firstPage.Total.Should().Be(3);
+        secondPage.Items.Should().HaveCount(1);
+        secondPage.Items.Select(i => i.Id).Should().NotIntersectWith(firstPage.Items.Select(i => i.Id));
+    }
+
+    [TestMethod]
+    public async Task GetCaseFixture_Existing_ReturnsFixture()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+        ITestRun run;
+        do
+        {
+            run = await gen.CreateAsync(CancellationToken);
+        } while (run.TestResults.Count == 0);
+        var caseId = run.TestResults.First().TestCase.Id;
+
+        var result = await controller.GetCaseFixture(run.Id, caseId, CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value!.Endpoints.Should().NotBeEmpty();
+        result.Value.Runtime.Total.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [TestMethod]
+    public async Task Stream_UnknownRun_Returns404()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        await controller.Stream(Guid.NewGuid(), CancellationToken);
+
+        controller.Response.StatusCode.Should().Be(404);
     }
 
     private static TestRunsController ResolveController(IServiceProvider services) => new(
