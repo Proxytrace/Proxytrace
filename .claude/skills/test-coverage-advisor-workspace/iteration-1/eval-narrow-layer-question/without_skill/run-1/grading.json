@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Provides a coverage % specifically for Trsr.Application",
+      "passed": true,
+      "evidence": "'1670 / 3144 lines = 53.1%' for Trsr.Application"
+    },
+    {
+      "text": "Lists at least one Trsr.Application file with zero or near-zero coverage",
+      "passed": true,
+      "evidence": "Big '0% coverage' table: PlaygroundService.cs (156 lines), StatisticsService.cs (139), etc."
+    },
+    {
+      "text": "Interpretation focuses on Trsr.Application, not other layers",
+      "passed": true,
+      "evidence": "Entire report scoped to Trsr.Application. Sub-namespace breakdown is a strong addition not present in skill output"
+    },
+    {
+      "text": "Mentions specific public types/services in Trsr.Application by name",
+      "passed": true,
+      "evidence": "StatisticsService, PlaygroundService, LuceneSearchService, SwitchModelOptimizer named"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

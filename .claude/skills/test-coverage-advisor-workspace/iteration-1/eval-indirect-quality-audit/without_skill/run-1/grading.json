@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Skill triggers despite no 'coverage' keyword \u2014 uses actual coverage data",
+      "passed": false,
+      "evidence": "Baseline explicitly says 'I cross-referenced production source against the seven *.Tests projects' and notes the stale March cobertura summary. Does not produce current per-file coverage %; relies on source/test cross-reference instead"
+    },
+    {
+      "text": "Output is risk/release framed, ties low-coverage files to recent churn",
+      "passed": true,
+      "evidence": "Severity-1/2/3 framing tied to release. Mentions recent commits (e.g. 'legacy user login' in 1b5524f)"
+    },
+    {
+      "text": "Names at least 2 specific high-churn low-coverage files",
+      "passed": true,
+      "evidence": "Names OpenAiProxyController, OpenAiCallParser, StatisticsService etc. \u2014 but identifies them by source inspection, not churn data"
+    },
+    {
+      "text": "Cites concrete coverage % from cobertura, not speculation",
+      "passed": false,
+      "evidence": "Acknowledges stale summary and gives no current overall %. Per-file numbers are line-count estimates from source files, not cobertura hit data"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  }
+}

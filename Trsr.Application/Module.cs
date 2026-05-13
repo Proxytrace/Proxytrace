@@ -116,6 +116,19 @@ public sealed class Module : Autofac.Module
             .As<Auth.Local.IPasswordService>()
             .SingleInstance();
 
+        builder.Register(_ =>
+            {
+                var configured = this.configuration?.GetSection(Auth.Local.LocalAuthOptions.SectionName)
+                    .Get<Auth.Local.LocalAuthOptions>();
+                return configured ?? new Auth.Local.LocalAuthOptions
+                {
+                    SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+                };
+            })
+            .As<Auth.Local.LocalAuthOptions>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(Auth.Local.LocalAuthOptions));
+
         builder.RegisterType<Auth.Local.Internal.LocalTokenIssuer>()
             .As<Auth.Local.ILocalTokenIssuer>()
             .SingleInstance();

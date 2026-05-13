@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Provides a coverage % specifically for Trsr.Application",
+      "passed": true,
+      "evidence": "'51.7% line coverage, 3.8% branch coverage across 65 files' for Trsr.Application"
+    },
+    {
+      "text": "Lists at least one Trsr.Application file with zero or near-zero coverage",
+      "passed": true,
+      "evidence": "Table of 0% files: StatisticsService.cs, PlaygroundService.cs, AgentNameGenerator.cs, hosted services, etc."
+    },
+    {
+      "text": "Interpretation focuses on Trsr.Application, not other layers",
+      "passed": true,
+      "evidence": "Entire report scoped to Trsr.Application; other layers appear only in the relative-comparison table"
+    },
+    {
+      "text": "Mentions specific public types/services in Trsr.Application by name",
+      "passed": true,
+      "evidence": "StatisticsService, TestRunnerService, OpenAiCallParser, PlaygroundService all named in top-3"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}
