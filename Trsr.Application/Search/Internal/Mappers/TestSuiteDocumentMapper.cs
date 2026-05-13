@@ -1,5 +1,6 @@
 using System.Text;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Search;
 using Trsr.Domain.TestSuite;
@@ -10,7 +11,9 @@ internal sealed class TestSuiteDocumentMapper : AbstractDocumentMapper<ITestSuit
 {
     public override SearchKind Kind => SearchKind.TestSuite;
     
-    public TestSuiteDocumentMapper(IRepository<ITestSuite> repository) : base(repository)
+    public TestSuiteDocumentMapper(
+        IRepository<ITestSuite> repository,
+        ILogger<TestSuiteDocumentMapper> logger) : base(repository, logger)
     {
     }
     

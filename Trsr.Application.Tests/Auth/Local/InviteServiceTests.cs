@@ -35,7 +35,7 @@ public sealed class InviteServiceTests : BaseTest<Module>
 
         var fetched = await svc.GetByTokenAsync(invite.Token, CancellationToken);
         fetched.Should().NotBeNull();
-        fetched!.Email.Should().Be("a@b.com");
+        fetched.Email.Should().Be("a@b.com");
     }
 
     [TestMethod]
@@ -49,7 +49,7 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var newUser = await svc.ConsumeAsync(invite.Token, "Abcdef1!", CancellationToken);
 
         newUser.Should().NotBeNull();
-        newUser!.Email.Should().Be("new@b.com");
+        newUser.Email.Should().Be("new@b.com");
         newUser.Role.Should().Be(UserRole.Admin);
         newUser.PasswordHash.Should().NotBeNullOrEmpty();
 

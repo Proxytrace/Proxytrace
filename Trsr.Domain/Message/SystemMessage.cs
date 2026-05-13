@@ -50,16 +50,6 @@ public sealed record SystemMessage : Message
     }
 
     /// <inheritdoc />
-    public override string ToString()
-    {
-        var sb = new StringBuilder();
-        foreach (var content in Contents)
-        {
-            if (content.Text != null)
-            {
-                sb.AppendLine(content.Text);
-            }
-        }
-        return sb.ToString().TrimEnd();
-    }
+    public override string ToString() 
+        => base.ToString();
 }

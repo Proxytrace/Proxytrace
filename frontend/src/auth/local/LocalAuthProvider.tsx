@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { setAccessToken, setUnauthorizedHandler } from '../token';
 
 const STORAGE_KEY = 'trsr.token';
@@ -40,6 +41,7 @@ function decode(token: string): LocalUser | null {
 
 export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
 
   const setToken = useCallback((t: string | null) => {
@@ -47,7 +49,8 @@ export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
     else localStorage.removeItem(STORAGE_KEY);
     setAccessToken(t);
     setTokenState(t);
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   useEffect(() => {
     setAccessToken(token);

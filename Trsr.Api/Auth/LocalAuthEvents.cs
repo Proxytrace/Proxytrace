@@ -49,8 +49,8 @@ internal static class LocalAuthEvents
 
             ctx.HttpContext.Items[CurrentUserAccessor.UserIdItemKey] = user.Id;
 
-            var id = (ClaimsIdentity)principal.Identity!;
-            if (!id.HasClaim(c => c.Type == ClaimTypes.Role))
+            var id = (ClaimsIdentity?)principal.Identity;
+            if (id != null && !id.HasClaim(c => c.Type == ClaimTypes.Role))
             {
                 id.AddClaim(new Claim(ClaimTypes.Role, user.Role.ToString()));
             }

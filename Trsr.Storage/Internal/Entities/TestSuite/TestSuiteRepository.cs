@@ -21,7 +21,7 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
 
     public async Task<IReadOnlyList<ITestSuite>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
-        var stored = await ContextFactory()
+        var stored = await contextFactory()
             .Set<TestSuiteEntity>()
             .AsNoTracking()
             .Where(e => e.Agent == agentId)
@@ -32,7 +32,7 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
 
     public async Task<IReadOnlyList<ITestSuite>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        var context = ContextFactory();
+        var context = contextFactory();
         var stored = await context
             .Set<TestSuiteEntity>()
             .AsNoTracking()

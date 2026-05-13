@@ -29,6 +29,11 @@ public interface IRepository<TDomainEntity>
     Task<int> CountAsync(CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Enumerates all entities of type <typeparamref name="TDomainEntity"/>
+    /// </summary>
+    IAsyncEnumerable<TDomainEntity> EnumerateAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Returns all entities of type <typeparamref name="TDomainEntity"/>
     /// </summary>
     Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default);

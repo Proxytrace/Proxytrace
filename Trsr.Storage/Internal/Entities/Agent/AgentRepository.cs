@@ -89,11 +89,11 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
     private async Task<IAgent?> FindByFingerprintAsync(string fingerprint, IProject project, CancellationToken cancellationToken)
     {
-        var existing = await ContextFactory()
+        var existing = await contextFactory()
             .Set<AgentEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Fingerprint == fingerprint && e.Project == project.Id, cancellationToken);
-        return existing is null ? null : await Mapper.Map(existing, cancellationToken);
+        return existing is null ? null : await mapper.Map(existing, cancellationToken);
     }
 
     public string GetAgentFingerprint(

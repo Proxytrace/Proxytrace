@@ -17,7 +17,7 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
 
     public async Task<IUser?> FindByExternalSubjectAsync(string externalSubject, CancellationToken cancellationToken = default)
     {
-        var entity = await ContextFactory().Set<UserEntity>().AsNoTracking()
+        var entity = await contextFactory().Set<UserEntity>().AsNoTracking()
             .Where(x => x.ExternalSubject == externalSubject)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
@@ -25,8 +25,9 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
 
     public async Task<IUser?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var entity = await ContextFactory().Set<UserEntity>().AsNoTracking()
-            .Where(x => x.Email == email)
+        var normalized = email.ToLowerInvariant();
+        var entity = await contextFactory().Set<UserEntity>().AsNoTracking()
+            .Where(x => x.Email.ToLower() == normalized)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
     }

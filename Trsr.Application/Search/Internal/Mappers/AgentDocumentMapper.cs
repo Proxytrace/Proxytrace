@@ -1,5 +1,6 @@
 using System.Text;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Search;
@@ -10,7 +11,9 @@ internal sealed class AgentDocumentMapper : AbstractDocumentMapper<IAgent>
 {
     public override SearchKind Kind => SearchKind.Agent;
 
-    public AgentDocumentMapper(IRepository<IAgent> repository) : base(repository)
+    public AgentDocumentMapper(
+        IRepository<IAgent> repository,
+        ILogger<AgentCallDocumentMapper> logger) : base(repository, logger)
     {
     }
     

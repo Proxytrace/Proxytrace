@@ -22,7 +22,8 @@ public sealed class SetupFirstAdminTests : BaseTest<Module>
         result.UserId.Should().NotBe(Guid.Empty);
         result.Token.Should().NotBeNullOrEmpty();
         var user = await users.FindByEmailAsync("admin@trsr.local", CancellationToken);
-        user!.Role.Should().Be(UserRole.Admin);
+        user.Should().NotBeNull();
+        user.Role.Should().Be(UserRole.Admin);
     }
 
     [TestMethod]

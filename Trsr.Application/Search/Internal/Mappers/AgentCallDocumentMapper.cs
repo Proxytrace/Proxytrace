@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Search;
@@ -11,7 +12,9 @@ internal sealed class AgentCallDocumentMapper : AbstractDocumentMapper<IAgentCal
 {
     public override SearchKind Kind => SearchKind.AgentCall;
     
-    public AgentCallDocumentMapper(IRepository<IAgentCall> repository) : base(repository)
+    public AgentCallDocumentMapper(
+        IRepository<IAgentCall> repository,
+        ILogger<AgentCallDocumentMapper> logger) : base(repository, logger)
     {
     }
 

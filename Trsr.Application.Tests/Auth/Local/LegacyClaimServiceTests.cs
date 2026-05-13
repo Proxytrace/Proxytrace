@@ -71,11 +71,12 @@ public sealed class LegacyClaimServiceTests : BaseTest<Module>
         var result = await svc.ClaimAsync(LegacyEmail, NewPassword, CancellationToken);
 
         result.Should().NotBeNull();
-        result!.Token.Should().NotBeNullOrEmpty();
+        result.Token.Should().NotBeNullOrEmpty();
 
         var repo = s.GetRequiredService<IUserRepository>();
         var fresh = await repo.FindByEmailAsync(LegacyEmail, CancellationToken);
-        fresh!.PasswordHash.Should().NotBeNullOrEmpty();
+        fresh.Should().NotBeNull();
+        fresh.PasswordHash.Should().NotBeNullOrEmpty();
 
         var login = s.GetRequiredService<ILoginService>();
         (await login.LoginAsync(LegacyEmail, NewPassword, CancellationToken)).Should().NotBeNull();

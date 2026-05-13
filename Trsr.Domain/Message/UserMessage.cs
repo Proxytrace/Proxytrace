@@ -18,4 +18,7 @@ public sealed record UserMessage : Message
     /// </summary>
     public UserMessage Add(Content content) 
         => new ([..Contents,  content]);
+    
+    public override string ToString() 
+        => base.ToString();
 }

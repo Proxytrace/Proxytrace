@@ -69,4 +69,12 @@ public sealed record Content : IDomainObject
     /// <inheritdoc />
     public override int GetHashCode() 
         => HashCode.Combine((int)Kind, Text, Data);
+
+    public override string ToString()
+        => Kind switch
+        {
+            ContentKind.Text => Text,
+            ContentKind.Image => $"Image: MediaType='{Data?.MediaType}', Size={Data?.Length} bytes",
+            _ => "Unknown content"
+        } ?? string.Empty;
 }

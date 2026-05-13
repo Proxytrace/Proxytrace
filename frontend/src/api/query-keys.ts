@@ -39,4 +39,11 @@ export const QUERY_KEYS = {
   search: (projectId: string, q: string) => ['search', projectId, q] as const,
   searchSettings: (projectId: string) => ['search-settings', projectId] as const,
   searchStatus: (projectId: string) => ['search-status', projectId] as const,
+
+  evaluatorTestBench: (evaluatorId: string, testCaseId: string) =>
+    ['evaluator-test-bench', evaluatorId, testCaseId] as const,
+  evaluatorTestBenchDefault: (evaluatorId: string) =>
+    ['evaluator-test-bench-default', evaluatorId] as const,
+  evaluatorTestBenchRecent: (evaluatorId: string, count: number) =>
+    ['evaluator-test-bench-recent', evaluatorId, count] as const,
 };

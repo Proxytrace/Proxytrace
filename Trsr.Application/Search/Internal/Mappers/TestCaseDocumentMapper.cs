@@ -1,5 +1,7 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Message;
 using Trsr.Domain.Search;
@@ -17,15 +19,18 @@ internal sealed class TestCaseDocumentMapper : IDocumentMapper
 {
     private readonly IRepository<ITestCase> testCases;
     private readonly ITestSuiteRepository testSuites;
+    private readonly ILogger<TestCaseDocumentMapper> logger;
 
     public SearchKind Kind => SearchKind.TestCase;
 
     public TestCaseDocumentMapper(
         IRepository<ITestCase> testCases,
-        ITestSuiteRepository testSuites)
+        ITestSuiteRepository testSuites,
+        ILogger<TestCaseDocumentMapper> logger)
     {
         this.testCases = testCases;
         this.testSuites = testSuites;
+        this.logger = logger;
     }
 
     public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
@@ -36,25 +41,38 @@ internal sealed class TestCaseDocumentMapper : IDocumentMapper
         // Locate parent suite to get project
         var allSuites = await testSuites.GetAllAsync(cancellationToken);
         var suite = allSuites.FirstOrDefault(s => s.TestCases.Any(c => c.Id == entityId));
-        if (suite is null) return null;
-
-        return BuildDocument(tc, suite);
+        return suite is null 
+            ? null 
+            : BuildDocument(tc, suite);
     }
 
-    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<Document> BuildAllForProjectAsync(Guid projectId, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var suites = await testSuites.GetByProjectAsync(projectId, cancellationToken);
-        var docs = new List<Document>();
         var seen = new HashSet<Guid>();
         foreach (var suite in suites)
         {
             foreach (var tc in suite.TestCases)
             {
-                if (!seen.Add(tc.Id)) continue;
-                docs.Add(BuildDocument(tc, suite));
+                if (!seen.Add(tc.Id))
+                    continue;
+                
+                Document? document = null;
+                try
+                {
+                    document = BuildDocument(tc, suite);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to build document for TestCase {TestCaseId} in suite {SuiteId}", tc.Id, suite.Id);
+                }
+
+                if (document != null)
+                {
+                    yield return document;    
+                }
             }
         }
-        return docs;
     }
 
     private static Document BuildDocument(ITestCase tc, ITestSuite suite)

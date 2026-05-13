@@ -42,13 +42,13 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         IModel modelEntity = await models.GetOrCreateAsync(modelName, cancellationToken);
 
         using IDisposable lockObj = await locker.LockAsync(provider.Id, cancellationToken);
-        var endpointEntity = await ContextFactory().Set<ModelEndpointEntity>()
+        var endpointEntity = await contextFactory().Set<ModelEndpointEntity>()
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.Model == modelEntity.Id && e.Provider == provider.Id, cancellationToken);
 
         if (endpointEntity is not null)
         {
-            return await Mapper.Map(endpointEntity, cancellationToken);
+            return await mapper.Map(endpointEntity, cancellationToken);
         }
 
         var endpoint = createNewEndpoint(modelEntity, provider, null, null);

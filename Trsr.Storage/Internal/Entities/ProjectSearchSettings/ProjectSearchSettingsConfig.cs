@@ -76,7 +76,7 @@ internal class ProjectSearchSettingsConfig
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(s => Enum.TryParse<SearchKind>(s, out var k) ? (SearchKind?)k : null)
             .Where(k => k.HasValue)
-            .Select(k => k!.Value)
+            .Select(k => k ?? throw new InvalidOperationException($"Unexpected null value when parsing SearchKind from '{raw}'"))
             .Distinct()
             .ToArray();
     }

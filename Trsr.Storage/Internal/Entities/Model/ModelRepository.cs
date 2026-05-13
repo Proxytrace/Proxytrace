@@ -28,7 +28,7 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
 
     public async Task<IModel> GetOrCreateAsync(string name, CancellationToken cancellationToken = default)
     {
-        var context = ContextFactory();
+        var context = contextFactory();
         var loweredName = name.ToLowerInvariant();
         using IDisposable lockObj = await locker.LockAsync(loweredName, cancellationToken);
         
@@ -39,7 +39,7 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
 
         if (existing is not null)
         {
-            return await Mapper.Map(existing, cancellationToken);
+            return await mapper.Map(existing, cancellationToken);
         }
 
         var model = factory(name: name);

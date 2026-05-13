@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { evaluatorsApi } from '../../api/evaluators';
@@ -14,6 +14,7 @@ import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { Sparkline } from '../../components/charts';
 import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
 import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
+import { EvaluatorTestBench, type EvaluatorTestBenchHandle } from './EvaluatorTestBench';
 
 // ── Type categories ──────────────────────────────────────────────────────────
 
@@ -245,14 +246,15 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
 
 // ── Detail pane ──────────────────────────────────────────────────────────────
 
-function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete, onOpenInPlayground }: {
+function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdit, onDelete }: {
   evaluator: EvaluatorDetailDto;
   attachedSuites: { id: string; name: string; agentName: string }[];
   range: RangeKey;
+  projectId: string | null;
   onEdit: () => void;
   onDelete: () => void;
-  onOpenInPlayground: () => void;
 }) {
+  const benchRef = useRef<EvaluatorTestBenchHandle | null>(null);
   const cat = KIND_CATEGORY[e.kind];
   const m = TYPE_META[cat];
   const agentNames = [...new Set(attachedSuites.map(s => s.agentName))];
@@ -311,15 +313,13 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {e.kind === EvaluatorKind.Agentic && e.agentId && (
-            <button
-              onClick={onOpenInPlayground}
-              title="Load this evaluator's agent in the playground"
-              style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-card-2)', cursor: 'pointer' }}
-            >
-              <PlayIcon size={11}/> Open in playground
-            </button>
-          )}
+          <button
+            onClick={() => benchRef.current?.focus()}
+            title="Test this evaluator against a past test result"
+            style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-card-2)', cursor: 'pointer' }}
+          >
+            <PlayIcon size={11}/> Test evaluator
+          </button>
           <button
             onClick={onDelete}
             style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)', background: 'var(--danger-subtle)', cursor: 'pointer' }}
@@ -337,6 +337,9 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
 
       {/* Configuration */}
       <ConfigPanel evaluator={e} onEdit={onEdit}/>
+
+      {/* Test bench */}
+      <EvaluatorTestBench ref={benchRef} evaluatorId={e.id} projectId={projectId}/>
 
       {/* Metrics block */}
       <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
@@ -383,6 +386,7 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, onEdit, onDelete
           No evaluations yet. Attach this evaluator to a suite and run it.
         </div>
       </section>
+
     </div>
   );
 }
@@ -753,9 +757,9 @@ export default function Evaluators() {
               evaluator={selected}
               attachedSuites={attachedSuites}
               range={range}
+              projectId={currentProjectId}
               onEdit={() => openEdit(selected)}
               onDelete={() => setDeleteTargetId(selected.id)}
-              onOpenInPlayground={() => selected.agentId && navigate(`/playground?agentId=${selected.agentId}`)}
             />
           ) : (
             <EmptyDetail hasAny={evaluators.length > 0} onCreate={openNew}/>

@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using Lucene.Net.Documents;
+using Microsoft.Extensions.Logging;
 using Trsr.Domain;
 using Trsr.Domain.Search;
 
@@ -8,12 +10,16 @@ internal abstract class AbstractDocumentMapper<TDomainEntity> : IDocumentMapper
     where TDomainEntity : class, IDomainEntity, ISearchable
 {
     private readonly IRepository<TDomainEntity> repository;
-    
+    private readonly ILogger logger;
+
     public abstract SearchKind Kind { get; }
     
-    protected AbstractDocumentMapper(IRepository<TDomainEntity> repository)
+    protected AbstractDocumentMapper(
+        IRepository<TDomainEntity> repository,
+        ILogger logger)
     {
         this.repository = repository;
+        this.logger = logger;
     }
     
     public async Task<Document?> BuildAsync(Guid entityId, CancellationToken cancellationToken)
@@ -22,15 +28,27 @@ internal abstract class AbstractDocumentMapper<TDomainEntity> : IDocumentMapper
         return entity is null ? null : GetDocument(entity);
     }
 
-    public async Task<IReadOnlyList<Document>> BuildAllForProjectAsync(Guid projectId, CancellationToken cancellationToken)
+    public async IAsyncEnumerable<Document> BuildAllForProjectAsync(Guid projectId, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var all = await repository.GetAllAsync(cancellationToken);
-        return all
-            .Where(s => s.Project.Id == projectId)
-            .Select(GetDocument)
-            .Where(doc => doc != null)
-            .Cast<Document>()
-            .ToList();
+        IAsyncEnumerable<TDomainEntity> all = repository.EnumerateAsync(cancellationToken)
+            .Where(x => x.Project.Id == projectId);
+        await foreach (var element in all)
+        {
+            Document? document = null;
+            try
+            {
+                document = GetDocument(element);
+            }
+            catch(Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to build document for {Kind} {EntityId}", Kind, element.Id);
+            }
+            
+            if (document is not null)
+            {
+                yield return document;    
+            }
+        }
     }
     
     protected abstract Document? GetDocument(TDomainEntity entity);
