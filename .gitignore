@@ -2228,8 +2228,15 @@ sample-client/node_modules/whatwg-url/lib/URL.js
 sample-client/node_modules/whatwg-url/lib/utils.js
 sample-client/.env
 sample-client/package-lock.json
+frontend/package-lock.json
 
 # Lucene full-text search index
 searchindex/
 **/searchindex/
 **/appsettings.local.json
+
+sample-client/.claude/settings.local.json
+.devcontainer/devcontainer-lock.json
+**/__pycache__/*
+*.local.json
+.DS_Store
