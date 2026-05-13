@@ -274,7 +274,7 @@ public class TestSuitesController : ControllerBase
             };
             msgs.Add(msg);
         }
-        return new Conversation(Guid.NewGuid(), msgs);
+        return new Conversation(msgs);
     }
 
     private static AssistantMessage BuildAssistantMessage(TestSuiteMessageDto m)

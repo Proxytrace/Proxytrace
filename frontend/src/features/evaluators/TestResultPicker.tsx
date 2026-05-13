@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { searchApi, type SearchHit } from '../../api/search';
+import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 
+const RECENT_COUNT = 3;
+
 interface Props {
+  evaluatorId: string;
   projectId: string | null;
   selectedLabel: string | null;
   onSelect: (hit: SearchHit) => void;
 }
 
-export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) {
+export function TestResultPicker({ evaluatorId, projectId, selectedLabel, onSelect }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -36,10 +40,29 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
     staleTime: 15_000,
   });
 
+  const recentQuery = useQuery({
+    queryKey: QUERY_KEYS.evaluatorTestBenchRecent(evaluatorId, RECENT_COUNT),
+    queryFn: () => evaluatorTestBenchApi.recent(evaluatorId, RECENT_COUNT),
+    enabled: open && debounced.length === 0,
+    staleTime: 15_000,
+  });
+
   const hits = useMemo(() => {
     const all = data?.hits ?? [];
     return all.filter(h => h.kind === 'testCase').slice(0, 30);
   }, [data]);
+
+  const recentHits = useMemo<SearchHit[]>(
+    () => (recentQuery.data ?? []).map(r => ({
+      kind: 'testCase',
+      entityId: r.testCaseId,
+      title: r.label,
+      snippet: '',
+      score: 0,
+      metadata: {},
+    })),
+    [recentQuery.data],
+  );
 
   return (
     <div ref={rootRef} className="relative w-full">
@@ -76,7 +99,27 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
             {projectId == null ? (
               <Empty>Pick a project first.</Empty>
             ) : debounced.length === 0 ? (
-              <Empty>Start typing to search…</Empty>
+              recentQuery.isLoading ? (
+                <Empty>Loading recent…</Empty>
+              ) : recentHits.length === 0 ? (
+                <Empty>No recent test results.</Empty>
+              ) : (
+                <>
+                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                    Recent
+                  </div>
+                  {recentHits.map(h => (
+                    <button
+                      key={`${h.kind}:${h.entityId}`}
+                      type="button"
+                      onClick={() => { onSelect(h); setOpen(false); setQuery(''); }}
+                      className="w-full text-left px-3 py-2 hover:bg-card cursor-pointer border-b border-hairline last:border-b-0"
+                    >
+                      <div className="text-[12.5px] text-primary truncate">{h.title}</div>
+                    </button>
+                  ))}
+                </>
+              )
             ) : isFetching ? (
               <Empty>Searching…</Empty>
             ) : hits.length === 0 ? (

@@ -139,7 +139,7 @@ internal sealed class LuceneSearchService : ISearchService
                 Metadata: metadata));
         }
 
-        var ordered = new[] { SearchKind.Agent, SearchKind.TestSuite, SearchKind.AgentCall, SearchKind.Evaluator }
+        var ordered = new[] { SearchKind.Agent, SearchKind.TestSuite, SearchKind.AgentCall, SearchKind.Evaluator, SearchKind.TestCase }
             .SelectMany(k => grouped.TryGetValue(k, out var bucket) ? bucket : Enumerable.Empty<SearchHit>())
             .ToList();
 

@@ -13,3 +13,11 @@ public record EvaluatorTestBenchPayloadDto(
 public record RunEvaluatorOnBenchRequest(
     Guid TestCaseId,
     string? ActualResponseOverride);
+
+public record EvaluatorTestBenchDefaultDto(
+    Guid? TestCaseId,
+    string? Label);
+
+public record EvaluatorTestBenchRecentItemDto(
+    Guid TestCaseId,
+    string Label);

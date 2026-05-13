@@ -24,7 +24,7 @@ public sealed class LoginServiceTests : BaseTest<Module>
         var result = await svc.LoginAsync("u@b.com", "Abcdef1!", CancellationToken);
 
         result.Should().NotBeNull();
-        result!.Token.Should().NotBeNullOrEmpty();
+        result.Token.Should().NotBeNullOrEmpty();
     }
 
     [TestMethod]

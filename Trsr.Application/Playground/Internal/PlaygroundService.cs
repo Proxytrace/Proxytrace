@@ -225,13 +225,13 @@ internal sealed class PlaygroundService : IPlaygroundService
                     if (string.IsNullOrEmpty(id)) continue;
                     var request = new ToolRequest(id, "", "{}");
                     ToolResponse response = m.ToolSucceeded
-                        ? new ToolResponse(request, new[] { Content.FromText(m.Content ?? string.Empty) })
+                        ? new ToolResponse(request, [Content.FromText(m.Content)])
                         : new ToolResponse(request, new InvalidOperationException(m.ToolError ?? "tool error"));
                     converted.Add(Message.CreateToolMessage(response));
                     break;
                 }
             }
         }
-        return new Conversation(Guid.NewGuid(), converted);
+        return new Conversation(converted);
     }
 }

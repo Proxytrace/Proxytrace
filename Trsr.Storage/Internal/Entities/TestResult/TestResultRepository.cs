@@ -29,4 +29,48 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
 
         return await Map(stored, cancellationToken);
     }
+
+    public async Task<ITestResult?> GetLatestByEvaluatorAsync(Guid evaluatorId, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var recent = await context
+            .Set<TestResultEntity>()
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(200)
+            .ToListAsync(cancellationToken);
+
+        var match = recent.FirstOrDefault(r => r.Evaluations.Any(e => e.EvaluatorId == evaluatorId));
+        if (match is null) return null;
+
+        return await Map(match, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ITestResult>> GetRecentByEvaluatorAsync(Guid evaluatorId, int count, CancellationToken cancellationToken = default)
+    {
+        if (count <= 0) return [];
+
+        var context = contextFactory();
+        var recent = await context
+            .Set<TestResultEntity>()
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(500)
+            .ToListAsync(cancellationToken);
+
+        var matching = recent
+            .Where(r => r.Evaluations.Any(e => e.EvaluatorId == evaluatorId))
+            .GroupBy(r => r.TestCase)
+            .Select(g => g.First())
+            .Take(count)
+            .ToList();
+
+        var mapped = new List<ITestResult>(matching.Count);
+        foreach (var r in matching)
+        {
+            var m = await Map(r, cancellationToken);
+            if (m is not null) mapped.Add(m);
+        }
+        return mapped;
+    }
 }

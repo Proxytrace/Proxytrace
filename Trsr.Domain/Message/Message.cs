@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Json.Serialization;
 using Trsr.Domain.Prompt;
 
@@ -40,13 +39,13 @@ public abstract record Message : IDomainObject
     }
     
     /// <summary>
-    /// Creates a new <see cref="Internal.Role.User"/> message with the <paramref name="content"/>
+    /// Creates a new <see cref="Role.User"/> message with the <paramref name="content"/>
     /// </summary>
     public static UserMessage CreateUserMessage(string content)
         => CreateUserMessage([Content.FromText(content)]);
     
     /// <summary>
-    /// Creates a new <see cref="Domain.Message.Role.System"/> message with the <paramref name="content"/>
+    /// Creates a new <see cref="Domain.Message.Role.System"/> message with the <paramref name="systemPrompt"/>
     /// </summary>
     /// TODO: Remove this overload
     public static SystemMessage CreateSystemMessage(string systemPrompt)
@@ -58,13 +57,13 @@ public abstract record Message : IDomainObject
         => new(template.Render(variables).ToPromptString());
     
     /// <summary>
-    /// Creates a new <see cref="Internal.Role.User"/> message with the <paramref name="content"/>
+    /// Creates a new <see cref="Role.User"/> message with the <paramref name="content"/>
     /// </summary>
     public static UserMessage CreateUserMessage(IReadOnlyList<Content> content)
         => new(content);
 
     /// <summary>
-    /// Creates a new <see cref="Internal.Role.Assistant"/> message with the given <paramref name="contents"/> and tool requests.
+    /// Creates a new <see cref="Role.Assistant"/> message with the given <paramref name="contents"/> and tool requests.
     /// </summary>
     public static AssistantMessage CreateAssistantMessage(
         IReadOnlyList<Content> contents,
@@ -72,7 +71,7 @@ public abstract record Message : IDomainObject
         => new(contents, toolRequests);
     
     /// <summary>
-    /// Creates a new <see cref="Internal.Role.Tool"/> message with the given <paramref name="response"/>.
+    /// Creates a new <see cref="Role.Tool"/> message with the given <paramref name="response"/>.
     /// </summary>
     public static ToolMessage CreateToolMessage(ToolResponse response)
         => new(response);
@@ -90,4 +89,7 @@ public abstract record Message : IDomainObject
     /// <inheritdoc />
     public override int GetHashCode() 
         => HashCode.Combine(Role, Contents);
+
+    public override string ToString()
+        => $"{Role}: {string.Join(Environment.NewLine, Contents.Select(c => c.ToString()))}";
 }

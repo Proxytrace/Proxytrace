@@ -12,11 +12,6 @@ public sealed record Conversation : IDomainObject
     private IList<Message> messages = [];
     
     /// <summary>
-    /// The unique identifier of the conversation
-    /// </summary>
-    public Guid Id { get; }
-    
-    /// <summary>
     /// The messages in the conversation
     /// </summary>
     public IReadOnlyList<Message> Messages 
@@ -31,10 +26,8 @@ public sealed record Conversation : IDomainObject
     /// <param name="id">The unique identifier of the conversation.</param>
     /// <param name="messages">The messages in the conversation.</param>
     public Conversation(
-        Guid id,
         IReadOnlyList<Message> messages)
     {
-        Id = id;
         this.messages = messages.ToList();
     }
 
@@ -42,9 +35,7 @@ public sealed record Conversation : IDomainObject
     /// Creates a new empty conversation
     /// </summary>
     public static Conversation Create()
-        => new(
-            Guid.NewGuid(),
-            []);
+        => new([]);
 
     /// <summary>
     /// Adds a message to the conversation
@@ -75,24 +66,22 @@ public sealed record Conversation : IDomainObject
     /// </summary>
     [Pure]
     public Conversation WithoutSystemMessage() 
-        => new(Id, Messages.Where(x => x.Role != Role.System).ToArray());
+        => new(Messages.Where(x => x.Role != Role.System).ToArray());
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        Validation.NotDefault(Id);
         return Messages.SelectMany(x => x.Validate(validationContext));
     }
 
     /// <inheritdoc />
     public bool Equals(Conversation? other)
         => other is not null && 
-           Id == other.Id && 
            Messages.SequenceEqual(other.Messages);
 
     /// <inheritdoc />
     public override int GetHashCode() 
-        => HashCode.Combine(Id, Messages);
+        => HashCode.Combine(Messages);
     
     /// <summary>
     /// Replaces any existing system Prompt with this system prompt
@@ -104,4 +93,7 @@ public sealed record Conversation : IDomainObject
         newConversation.AddSystemMessage(systemMessage);
         return newConversation;
     }
+
+    public override string ToString() 
+        => string.Join(Environment.NewLine, messages.Select(x => x.ToString()));
 }

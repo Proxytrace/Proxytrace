@@ -1,11 +1,11 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { EvaluationScore, type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Card } from '../../components/ui/Card';
 import { MessageBubble } from '../../components/ui/MessageBubble';
-import { CodeBlock } from '../../components/ui/CodeBlock';
 import { TestResultPicker } from './TestResultPicker';
 import type { SearchHit } from '../../api/search';
 
@@ -31,8 +31,6 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     const rootRef = useRef<HTMLDivElement | null>(null);
     const [pickedHit, setPickedHit] = useState<SearchHit | null>(null);
     const [actualOverride, setActualOverride] = useState<string | null>(null);
-    const [editing, setEditing] = useState(false);
-    const [editDraft, setEditDraft] = useState('');
     const [lastResult, setLastResult] = useState<EvaluationResultDto | null>(null);
 
     useImperativeHandle(ref, () => ({
@@ -40,6 +38,32 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
         rootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       },
     }));
+
+    const defaultQuery = useQuery({
+      queryKey: QUERY_KEYS.evaluatorTestBenchDefault(evaluatorId),
+      queryFn: () => evaluatorTestBenchApi.default(evaluatorId),
+      staleTime: 60_000,
+    });
+
+    useEffect(() => {
+      setPickedHit(null);
+      setActualOverride(null);
+      setLastResult(null);
+    }, [evaluatorId]);
+
+    useEffect(() => {
+      if (pickedHit != null) return;
+      const d = defaultQuery.data;
+      if (d?.testCaseId == null) return;
+      setPickedHit({
+        kind: 'testCase',
+        entityId: d.testCaseId,
+        title: d.label ?? 'Test case',
+        snippet: '',
+        score: 0,
+        metadata: {},
+      });
+    }, [defaultQuery.data, pickedHit]);
 
     const testCaseId = pickedHit?.entityId ?? null;
 
@@ -67,24 +91,11 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     function onPick(hit: SearchHit) {
       setPickedHit(hit);
       setActualOverride(null);
-      setEditing(false);
       setLastResult(null);
     }
 
-    function onEditStart() {
-      setEditDraft(currentActual);
-      setEditing(true);
-    }
-    function onEditSave() {
-      setActualOverride(editDraft);
-      setEditing(false);
-    }
-    function onEditCancel() {
-      setEditing(false);
-    }
     function onResetActual() {
       setActualOverride(null);
-      setEditing(false);
     }
 
     const conversationMessages = useMemo<MessageDto[]>(
@@ -102,7 +113,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     const runLabel = runMutation.isPending
       ? 'Running…'
       : lastResult != null
-        ? 'Re-run evaluator'
+        ? 'Re-run'
         : 'Run evaluator';
 
     return (
@@ -110,18 +121,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
         <Card padding="md" elevation="raised">
           <Card.Header
             title="Test bench"
-            description="Test this evaluator against a past test result. Edit the actual response to probe behavior."
-            action={
-              <button
-                type="button"
-                disabled={runDisabled}
-                onClick={() => runMutation.mutate()}
-                className="px-3 py-1.5 rounded-md text-[12px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                style={{ background: 'var(--grad-accent)' }}
-              >
-                <PlayIcon /> {runLabel}
-              </button>
-            }
+            description="Run this evaluator against a past test result. Edit the actual response to probe behavior."
           />
 
           <Card.Body className="flex flex-col gap-3">
@@ -131,6 +131,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
               </label>
               <div className="flex-1 min-w-0">
                 <TestResultPicker
+                  evaluatorId={evaluatorId}
                   projectId={projectId}
                   selectedLabel={selectedLabel}
                   onSelect={onPick}
@@ -145,98 +146,96 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
             ) : payloadQuery.isError ? (
               <ErrorState message={String((payloadQuery.error as Error)?.message ?? 'Failed to load')} />
             ) : payload ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Panel title="Input conversation">
-                  {conversationMessages.length === 0 ? (
-                    <div className="text-[12px] text-muted">No messages.</div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {conversationMessages.map((m, i) => (
-                        <MessageBubble key={i} msg={m} defaultOpen={i === conversationMessages.length - 1} />
-                      ))}
-                    </div>
-                  )}
-                </Panel>
+              <div className="flex flex-col gap-3">
+                <details className="group rounded-lg border border-hairline bg-card-2">
+                  <summary className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none list-none">
+                    <ChevronIcon />
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
+                      Input conversation
+                    </span>
+                    <span className="text-[10.5px] text-muted">
+                      {conversationMessages.length} {conversationMessages.length === 1 ? 'message' : 'messages'}
+                    </span>
+                  </summary>
+                  <div className="px-3 pb-3">
+                    {conversationMessages.length === 0 ? (
+                      <div className="text-[12px] text-muted">No messages.</div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {conversationMessages.map((m, i) => (
+                          <MessageBubble key={i} msg={m} defaultOpen={i === conversationMessages.length - 1} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
 
-                <Panel
-                  title="Result"
-                  action={
-                    runMutation.isError ? (
-                      <span className="text-[10.5px] text-danger">failed</span>
-                    ) : null
-                  }
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch"
+                  style={{ height: 'min(60vh, 480px)' }}
                 >
-                  {runMutation.isPending ? (
-                    <ResultSkeleton />
-                  ) : lastResult ? (
-                    <EvaluationView result={lastResult} />
-                  ) : (
-                    <div className="text-[12px] text-muted py-4 text-center">
-                      Click <strong className="text-secondary">Run evaluator</strong> to score this result.
-                    </div>
-                  )}
-                </Panel>
+                  <ResponsePane title="Expected response">
+                    <pre className="w-full min-h-0 flex-1 m-0 px-3 py-2.5 rounded-lg bg-surface border border-border text-xs text-primary font-mono leading-relaxed overflow-auto whitespace-pre-wrap break-words">
+                      {payload.expectedResponse || '—'}
+                    </pre>
+                  </ResponsePane>
 
-                <Panel title="Expected response">
-                  <CodeBlock content={payload.expectedResponse || '—'} maxLines={12} />
-                </Panel>
-
-                <Panel
-                  title="Actual response"
-                  action={
-                    <div className="flex items-center gap-2">
-                      {isModified && (
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-md bg-card-2 text-accent">
+                  <ResponsePane
+                    title="Actual response"
+                    badge={isModified ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] px-1.5 py-0.5 rounded-md bg-card text-accent border border-hairline">
                           modified
                         </span>
-                      )}
-                      {!editing && (
-                        <button
-                          onClick={onEditStart}
-                          className="text-[11px] font-medium text-accent cursor-pointer"
-                        >
-                          ✏ Edit
-                        </button>
-                      )}
-                      {isModified && !editing && (
                         <button
                           onClick={onResetActual}
-                          className="text-[11px] font-medium text-muted cursor-pointer"
+                          className="text-[11px] font-medium text-muted hover:text-secondary cursor-pointer"
                         >
                           Reset
                         </button>
+                      </div>
+                    ) : null}
+                  >
+                    <textarea
+                      value={currentActual}
+                      onChange={e => setActualOverride(e.target.value)}
+                      spellCheck={false}
+                      className="w-full min-h-0 flex-1 px-3 py-2.5 rounded-lg bg-surface border border-border text-xs text-primary font-mono leading-relaxed resize-none outline-none focus:ring-1 focus:ring-accent"
+                    />
+                  </ResponsePane>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center pt-1">
+                  <div>
+                    <button
+                      type="button"
+                      disabled={runDisabled}
+                      onClick={() => runMutation.mutate()}
+                      className="px-4 py-2 rounded-md text-[12.5px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      style={{ background: 'var(--grad-accent)' }}
+                    >
+                      <PlayIcon /> {runLabel}
+                    </button>
+                  </div>
+                  <div className="min-w-0 flex items-center gap-2 px-3 rounded-lg border border-hairline bg-card-2 h-[40px]">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted shrink-0">
+                      Result
+                    </span>
+                    <div className="min-w-0 flex items-center">
+                      {runMutation.isPending ? (
+                        <ResultPill loading />
+                      ) : lastResult ? (
+                        <ResultPill result={lastResult} />
+                      ) : runMutation.isError ? (
+                        <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-danger">failed</span>
+                      ) : (
+                        <span className="text-[11.5px] text-muted">
+                          {isModified ? 'Actual response modified — re-run to score.' : 'Run evaluator to see score.'}
+                        </span>
                       )}
                     </div>
-                  }
-                >
-                  {editing ? (
-                    <div className="flex flex-col gap-2">
-                      <textarea
-                        value={editDraft}
-                        onChange={e => setEditDraft(e.target.value)}
-                        rows={10}
-                        className="w-full px-3 py-2.5 rounded-lg bg-surface border border-border text-xs text-primary font-mono leading-relaxed resize-y outline-none focus:ring-1 focus:ring-accent"
-                      />
-                      <div className="flex gap-2 self-end">
-                        <button
-                          onClick={onEditCancel}
-                          className="px-2.5 py-1 rounded-md text-[11.5px] border border-border bg-card text-secondary cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={onEditSave}
-                          className="px-2.5 py-1 rounded-md text-[11.5px] font-semibold text-white cursor-pointer"
-                          style={{ background: 'var(--grad-accent)' }}
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <CodeBlock content={currentActual || '—'} maxLines={12} />
-                  )}
-                </Panel>
+                  </div>
+                </div>
               </div>
             ) : null}
           </Card.Body>
@@ -246,15 +245,99 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
   },
 );
 
-function Panel({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function ResponsePane({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 p-3 rounded-lg border border-hairline bg-card-2 min-w-0">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-col gap-2 p-3 rounded-lg border border-hairline bg-card-2 min-w-0 h-full overflow-hidden">
+      <div className="flex items-center justify-between gap-2 min-h-[20px] shrink-0">
         <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{title}</span>
-        {action}
+        {badge}
       </div>
-      <div className="min-w-0">{children}</div>
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">{children}</div>
     </div>
+  );
+}
+
+function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading?: boolean }) {
+  if (loading) {
+    return (
+      <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold bg-card-2 text-muted">
+        <span className="w-2 h-2 rounded-full bg-muted animate-pulse" />
+        Scoring…
+      </span>
+    );
+  }
+  if (!result) return null;
+  const color = SCORE_COLOR[result.score] ?? 'var(--accent-primary)';
+  const hasReasoning = !!result.reasoning;
+  return (
+    <div className="flex items-center gap-1.5">
+      <span
+        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
+        style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
+      >
+        <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+        {result.score}
+      </span>
+      {hasReasoning && <ReasoningTip text={result.reasoning!} />}
+    </div>
+  );
+}
+
+function ReasoningTip({ text }: { text: string }) {
+  const anchorRef = useRef<HTMLSpanElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  function show() {
+    const el = anchorRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = Math.min(352, window.innerWidth * 0.8);
+    const left = Math.max(8, rect.right - width);
+    const top = rect.top - 8;
+    setPos({ top, left });
+    setOpen(true);
+  }
+
+  function hide() {
+    setOpen(false);
+  }
+
+  return (
+    <>
+      <span
+        ref={anchorRef}
+        tabIndex={0}
+        role="button"
+        aria-label="Show reasoning"
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        className="w-5 h-5 inline-flex items-center justify-center rounded-full border border-hairline bg-card-2 text-[10.5px] font-semibold text-muted hover:text-accent hover:border-accent focus:text-accent focus:border-accent cursor-help transition-colors outline-none"
+      >
+        ?
+      </span>
+      {open && pos && createPortal(
+        <div
+          role="tooltip"
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            width: 'min(22rem, 80vw)',
+            transform: 'translateY(-100%)',
+          }}
+          className="pointer-events-none z-[1000] max-h-72 overflow-auto p-3 rounded-md bg-card border border-border shadow-[var(--shadow-card)] text-[11.5px] leading-[1.55] text-primary whitespace-pre-wrap text-left"
+        >
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-1.5">
+            Reasoning
+          </span>
+          {text}
+        </div>,
+        document.body,
+      )}
+    </>
   );
 }
 
@@ -274,39 +357,11 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-function ResultSkeleton() {
+function ChevronIcon() {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="h-6 w-28 rounded-md bg-card animate-pulse" />
-      <div className="h-3 w-full rounded bg-card animate-pulse" />
-      <div className="h-3 w-5/6 rounded bg-card animate-pulse" />
-      <div className="h-3 w-3/4 rounded bg-card animate-pulse" />
-    </div>
-  );
-}
-
-function EvaluationView({ result }: { result: EvaluationResultDto }) {
-  const color = SCORE_COLOR[result.score] ?? 'var(--accent-primary)';
-  return (
-    <div className="flex flex-col gap-2.5">
-      <span
-        className="inline-flex items-center gap-2 self-start px-2.5 py-1 rounded-md text-[12px] font-semibold"
-        style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
-      >
-        <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-        {result.score}
-      </span>
-      {result.reasoning ? (
-        <div className="text-[12.5px] leading-[1.6] text-primary whitespace-pre-wrap">
-          {result.reasoning}
-        </div>
-      ) : (
-        <div className="text-[11.5px] text-muted italic">No reasoning provided.</div>
-      )}
-      <div className="text-[10.5px] font-mono tracking-[0.04em] text-muted">
-        {result.evaluatorName} · {result.evaluatorKind}
-      </div>
-    </div>
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted transition-transform group-open:rotate-90" aria-hidden>
+      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

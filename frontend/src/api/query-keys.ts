@@ -42,4 +42,8 @@ export const QUERY_KEYS = {
 
   evaluatorTestBench: (evaluatorId: string, testCaseId: string) =>
     ['evaluator-test-bench', evaluatorId, testCaseId] as const,
+  evaluatorTestBenchDefault: (evaluatorId: string) =>
+    ['evaluator-test-bench-default', evaluatorId] as const,
+  evaluatorTestBenchRecent: (evaluatorId: string, count: number) =>
+    ['evaluator-test-bench-recent', evaluatorId, count] as const,
 };

@@ -63,6 +63,36 @@ public class EvaluatorTestBenchController : ControllerBase
             ActualResponse: ToText(latest.ActualResponse));
     }
 
+    [HttpGet("default")]
+    public async Task<ActionResult<EvaluatorTestBenchDefaultDto>> Default(
+        Guid evaluatorId,
+        CancellationToken cancellationToken)
+    {
+        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+            return NotFound($"Evaluator {evaluatorId} not found.");
+
+        var latest = await testResults.GetLatestByEvaluatorAsync(evaluatorId, cancellationToken);
+        if (latest is null)
+            return new EvaluatorTestBenchDefaultDto(null, null);
+
+        return new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, Summarize(latest.TestCase));
+    }
+
+    [HttpGet("recent")]
+    public async Task<ActionResult<IReadOnlyList<EvaluatorTestBenchRecentItemDto>>> Recent(
+        Guid evaluatorId,
+        [FromQuery] int count,
+        CancellationToken cancellationToken)
+    {
+        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+            return NotFound($"Evaluator {evaluatorId} not found.");
+
+        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, count, cancellationToken);
+        return recent
+            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, Summarize(r.TestCase)))
+            .ToArray();
+    }
+
     [HttpPost("run")]
     public async Task<ActionResult<EvaluationResultDto>> Run(
         Guid evaluatorId,
@@ -82,7 +112,8 @@ public class EvaluatorTestBenchController : ControllerBase
         if (request.ActualResponseOverride is not null)
         {
             actual = new AssistantMessage([Trsr.Domain.Message.Content.FromText(request.ActualResponseOverride)], []);
-            latency = TimeSpan.Zero;
+            var latest = await testResults.GetLatestByTestCaseAsync(request.TestCaseId, cancellationToken);
+            latency = latest?.Latency ?? TimeSpan.FromMilliseconds(1);
         }
         else
         {

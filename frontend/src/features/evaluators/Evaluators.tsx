@@ -338,6 +338,9 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdi
       {/* Configuration */}
       <ConfigPanel evaluator={e} onEdit={onEdit}/>
 
+      {/* Test bench */}
+      <EvaluatorTestBench ref={benchRef} evaluatorId={e.id} projectId={projectId}/>
+
       {/* Metrics block */}
       <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
 
@@ -384,8 +387,6 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdi
         </div>
       </section>
 
-      {/* Test bench */}
-      <EvaluatorTestBench ref={benchRef} evaluatorId={e.id} projectId={projectId}/>
     </div>
   );
 }
