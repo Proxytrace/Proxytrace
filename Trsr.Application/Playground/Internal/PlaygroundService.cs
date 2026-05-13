@@ -225,7 +225,7 @@ internal sealed class PlaygroundService : IPlaygroundService
                     if (string.IsNullOrEmpty(id)) continue;
                     var request = new ToolRequest(id, "", "{}");
                     ToolResponse response = m.ToolSucceeded
-                        ? new ToolResponse(request, [Content.FromText(m.Content)])
+                        ? new ToolResponse(request, [Content.FromText(m.Content ?? string.Empty)])
                         : new ToolResponse(request, new InvalidOperationException(m.ToolError ?? "tool error"));
                     converted.Add(Message.CreateToolMessage(response));
                     break;

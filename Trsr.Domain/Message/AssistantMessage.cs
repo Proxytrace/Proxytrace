@@ -64,4 +64,7 @@ public sealed record AssistantMessage : Message
     /// <inheritdoc />
     public override int GetHashCode() 
         => HashCode.Combine(base.GetHashCode(), ToolRequests);
+
+    public override string ToString() 
+        => base.ToString();
 }

@@ -93,4 +93,7 @@ public sealed record ToolMessage : Message
         foreach (var r in Validation.HasCount(Contents, 2).AsEnumerable()) yield return r;
         foreach (var r in Validation.NotNullOrWhiteSpace(Contents[0].Text).AsEnumerable()) yield return r;
     }
+    
+    public override string ToString() 
+        => base.ToString();
 }
