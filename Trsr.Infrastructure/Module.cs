@@ -14,21 +14,9 @@ public class Module : Autofac.Module
         builder.RegisterModule<Trsr.Domain.Module>();
         builder.RegisterModule<Trsr.Serialization.Module>();
 
-        builder.RegisterType<KioskModelClient>()
-            .AsSelf();
         builder.RegisterType<ModelClient>()
+            .As<IModelClient>()
             .AsSelf();
-
-        builder.Register<IModelClient>(c =>
-        {
-            KioskOptions kiosk = c.Resolve<KioskOptions>();
-            if (kiosk.Enabled)
-            {
-                return c.Resolve<KioskModelClient>();
-            }
-
-            return c.Resolve<ModelClient>();
-        }).As<IModelClient>();
 
         builder.RegisterType<ProviderClient>()
             .As<IProviderClient>();

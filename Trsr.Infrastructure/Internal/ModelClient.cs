@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using Trsr.Application.Demo;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Completion;
@@ -20,6 +21,7 @@ internal class ModelClient : IModelClient
 {
     private readonly IAgent agent;
     private readonly bool skipIngestion;
+    private readonly KioskOptions kioskOptions;
     private readonly ICompletion.Create completionFactory;
     private readonly IAgentCall.CreateNew agentCallFactory;
     private readonly IModelEndpoint endpoint;
@@ -30,6 +32,7 @@ internal class ModelClient : IModelClient
         IAgent agent,
         IModelEndpoint? customEndpoint,
         bool skipIngestion,
+        KioskOptions kioskOptions,
         ICompletion.Create completionFactory,
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory)
@@ -37,6 +40,7 @@ internal class ModelClient : IModelClient
         endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
         this.skipIngestion = skipIngestion;
+        this.kioskOptions = kioskOptions;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
@@ -46,6 +50,7 @@ internal class ModelClient : IModelClient
     internal ModelClient(
         IAgent agent,
         IModelEndpoint? customEndpoint,
+        KioskOptions kioskOptions,
         ICompletion.Create completionFactory,
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory,
@@ -53,6 +58,7 @@ internal class ModelClient : IModelClient
     {
         endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
+        this.kioskOptions = kioskOptions;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
@@ -102,6 +108,12 @@ internal class ModelClient : IModelClient
         ModelOptions? options,
         CancellationToken cancellationToken)
     {
+        if (kioskOptions.Enabled)
+        {
+            throw new InvalidOperationException(
+                "Model calls are disabled in kiosk mode. This instance of ModelClient is not functional.");
+        }
+        
         options ??= ModelOptions.FromModel(endpoint.Model);
         conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
 
