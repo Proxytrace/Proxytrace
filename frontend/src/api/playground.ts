@@ -1,3 +1,4 @@
+import { getAccessToken, notifyUnauthorized } from '../auth/token';
 import type { ModelParametersDto } from './models';
 
 export interface PlaygroundToolArgumentPayload {
@@ -56,14 +57,22 @@ export function streamPlaygroundCompletion(
 
   (async () => {
     try {
+      const token = getAccessToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/playground/complete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        headers,
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
 
       if (!res.ok || !res.body) {
+        if (res.status === 401 && token) notifyUnauthorized();
         const text = await res.text().catch(() => '');
         onEvent({ type: 'error', message: `${res.status} ${res.statusText}${text ? ': ' + text : ''}` });
         return;

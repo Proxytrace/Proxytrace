@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../api/client';
 
 interface InviteRow {
   id: string;
@@ -15,18 +16,11 @@ interface CreateInviteResponse {
   expiresAt: string;
 }
 
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`${url} ${res.status}`);
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
-
 export default function Invites() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['invites'],
-    queryFn: () => api<InviteRow[]>('/api/auth/invites'),
+    queryFn: () => api.get<InviteRow[]>('/api/auth/invites'),
   });
 
   const [email, setEmail] = useState('');
@@ -36,11 +30,7 @@ export default function Invites() {
 
   const create = useMutation({
     mutationFn: () =>
-      api<CreateInviteResponse>('/api/auth/invites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role }),
-      }),
+      api.post<CreateInviteResponse>('/api/auth/invites', { email, role }),
     onSuccess: (r) => {
       setCreatedUrl(r.url);
       setEmail('');
@@ -49,7 +39,7 @@ export default function Invites() {
   });
 
   const revoke = useMutation({
-    mutationFn: (id: string) => api<void>(`/api/auth/invites/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => api.del(`/api/auth/invites/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
   });
 

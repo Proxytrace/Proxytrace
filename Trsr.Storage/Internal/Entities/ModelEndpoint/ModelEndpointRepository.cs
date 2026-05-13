@@ -6,7 +6,6 @@ using Trsr.Domain.Events;
 using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
-using Trsr.Storage.Internal.Entities.Model;
 
 namespace Trsr.Storage.Internal.Entities.ModelEndpoint;
 

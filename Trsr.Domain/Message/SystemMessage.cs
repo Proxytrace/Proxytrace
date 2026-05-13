@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 

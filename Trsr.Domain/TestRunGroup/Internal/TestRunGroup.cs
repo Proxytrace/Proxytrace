@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Trsr.Common.Validation;
 using Trsr.Domain.Internal;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.TestSuite;

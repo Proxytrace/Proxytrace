@@ -16,6 +16,6 @@ internal sealed class PromptTemplateGenerator : DomainObjectGenerator<IPromptTem
     }
 
     public override Task<IPromptTemplate> CreateAsync(CancellationToken cancellationToken = default) 
-        => factory(name: Random.String(), template: Random.String())
+        => factory(name: random.String(), template: random.String())
             .ToTaskResult();
 }

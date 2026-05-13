@@ -18,7 +18,9 @@ public sealed class ModuleTests : BaseTest<Module>
         var method = typeof(Trsr.Api.Module)
             .GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new InvalidOperationException($"Missing {name}");
-        return (T)method.Invoke(null, args)!;
+        var result = (T?)method.Invoke(null, args);
+        result.Should().NotBeNull();
+        return result;
     }
 
     [TestMethod]
@@ -26,7 +28,6 @@ public sealed class ModuleTests : BaseTest<Module>
     {
         var config = Invoke<StorageConfiguration>("DetermineStorageConfiguration",
             "Host=localhost;Database=trsr;Username=u;Password=p");
-
         config.GetType().Name.Should().Be("PostgresConfiguration");
     }
 
@@ -87,13 +88,6 @@ public sealed class ModuleTests : BaseTest<Module>
     public void Constructor_DefaultsToProduction()
     {
         var module = new Trsr.Api.Module();
-        module.Should().NotBeNull();
-    }
-
-    [TestMethod]
-    public void Constructor_AcceptsDevelopmentFlag()
-    {
-        var module = new Trsr.Api.Module(isDevelopment: true);
         module.Should().NotBeNull();
     }
 }

@@ -20,7 +20,7 @@ internal class StatisticsHostedService : BackgroundService
     {
         this.entityEvents = entityEvents;
         this.logger = logger;
-        this.projectorsByType = projectors
+        projectorsByType = projectors
             .GroupBy(p => p.EntityType)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<IStatsProjector>)g.ToArray());
     }

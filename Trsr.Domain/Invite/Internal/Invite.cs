@@ -60,7 +60,7 @@ internal record Invite : DomainEntity<IInvite>, IInvite
         foreach (var r in Validation.NotNullOrWhiteSpace(Email).AsEnumerable()) yield return r;
         foreach (var r in Validation.NotNullOrWhiteSpace(Token).AsEnumerable()) yield return r;
         foreach (var r in Validation.Defined(Role).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotBefore(ExpiresAt, CreatedAt, nameof(ExpiresAt)).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotBefore(ExpiresAt, CreatedAt).AsEnumerable()) yield return r;
 
         foreach (var result in InvitedBy.Validate(validationContext))
         {

@@ -13,7 +13,7 @@ public interface IRandom
     double Double(double? min = null, double? max = null);
     decimal Decimal(decimal? min = null, decimal? max = null);
     T Any<T>(IReadOnlyCollection<T> options);
-    T Enum<T>() where T : struct, System.Enum;
+    T Enum<T>() where T : struct, Enum;
     TimeSpan TimeSpan(TimeSpan? min = null, TimeSpan? max = null);
     DateTimeOffset DateTimeOffset(DateTimeOffset? min = null, DateTimeOffset? max = null);
 }

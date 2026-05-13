@@ -119,9 +119,9 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
     private record ToolOptimizerOutput
     {
         [Description("the tool definitions that should be changed")]
-        public required IReadOnlyList<ToolSpecification> Tools { get; init; }
+        public required IReadOnlyList<ToolSpecification> Tools { get; [UsedImplicitly] init; }
 
         [Description("string (1-3 sentences explaining what changed and why)")]
-        public required string Rationale { get; init; }
+        public required string Rationale { get; [UsedImplicitly] init; }
     }
 }

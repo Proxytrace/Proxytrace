@@ -146,18 +146,18 @@ public sealed class TestSuiteValidationTests : BaseTest<Module>
     private static async Task<IAgent> CreateTestAgentAsync(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
-        return await generator.GetOrCreateAsync(default);
+        return await generator.GetOrCreateAsync();
     }
 
     private static async Task<IEvaluator> CreateTestEvaluatorAsync(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<IEvaluator>>();
-        return await generator.GetOrCreateAsync(default);
+        return await generator.GetOrCreateAsync();
     }
 
     private static async Task<ITestCase> CreateTestCaseAsync(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
-        return await generator.CreateAsync(default);
+        return await generator.CreateAsync();
     }
 }

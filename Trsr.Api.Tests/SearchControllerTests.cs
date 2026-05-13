@@ -60,7 +60,9 @@ public sealed class SearchControllerTests : BaseTest<Module>
         var result = await controller.Search(projectId, "hello", CancellationToken);
 
         var ok = (OkObjectResult)(result.Result ?? throw new InvalidOperationException());
-        ((SearchResultsDto)ok.Value!).Hits.Should().ContainSingle();
+        var val = ((SearchResultsDto?)ok.Value);
+        val.Should().NotBeNull();
+        val.Hits.Should().ContainSingle();
     }
 
     [TestMethod]
@@ -127,7 +129,8 @@ public sealed class SearchControllerTests : BaseTest<Module>
         var result = await controller.GetStatus(projectId, CancellationToken);
 
         var ok = (OkObjectResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (SearchIndexStatusDto)ok.Value!;
+        var dto = (SearchIndexStatusDto?)ok.Value;
+        dto.Should().NotBeNull();
         dto.DocumentCount.Should().Be(7);
         dto.IsReindexing.Should().BeTrue();
     }

@@ -1,17 +1,19 @@
 using System.Reflection;
 using AwesomeAssertions;
+using Trsr.Testing;
 
 namespace Trsr.Storage.Tests;
 
 [TestClass]
-public sealed class StorageDbContextFactoryTests
+public sealed class StorageDbContextFactoryTests : BaseTest<Module>
 {
     private static T Invoke<T>(string name, params object?[] args)
     {
         var method = typeof(StorageDbContextFactory)
             .GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new InvalidOperationException($"Missing {name}");
-        return (T)method.Invoke(null, args)!;
+        return (T?)method.Invoke(null, args) 
+               ?? throw new InvalidOperationException($"Method {name} returned null");
     }
 
     [TestMethod]
@@ -63,15 +65,15 @@ public sealed class StorageDbContextFactoryTests
     [TestMethod]
     public void CreateDbContext_WithSqliteAppSettings_BuildsContext()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), "trsr-dbctx-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempDir);
+        var services = GetServices();
+        using var tempDir = services.GetTempDirectory(prefix: "trsr-dbctx-");
         var prevCwd = Directory.GetCurrentDirectory();
         try
         {
             File.WriteAllText(
-                Path.Combine(tempDir, "appsettings.json"),
+                Path.Combine(tempDir.Path, "appsettings.json"),
                 """{"ConnectionStrings":{"Default":"Data Source=:memory:"}}""");
-            Directory.SetCurrentDirectory(tempDir);
+            Directory.SetCurrentDirectory(tempDir.Path);
 
             var factory = new StorageDbContextFactory();
             using var ctx = factory.CreateDbContext([]);
@@ -81,20 +83,19 @@ public sealed class StorageDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(prevCwd);
-            Directory.Delete(tempDir, recursive: true);
         }
     }
 
     [TestMethod]
     public void CreateDbContext_MissingConnectionString_Throws()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), "trsr-dbctx-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempDir);
+        var services = GetServices();
+        using var tempDir = services.GetTempDirectory(prefix: "trsr-dbctx-");
         var prevCwd = Directory.GetCurrentDirectory();
         try
         {
-            File.WriteAllText(Path.Combine(tempDir, "appsettings.json"), "{}");
-            Directory.SetCurrentDirectory(tempDir);
+            File.WriteAllText(Path.Combine(tempDir.Path, "appsettings.json"), "{}");
+            Directory.SetCurrentDirectory(tempDir.Path);
 
             var factory = new StorageDbContextFactory();
             var act = () => factory.CreateDbContext([]);
@@ -104,7 +105,6 @@ public sealed class StorageDbContextFactoryTests
         finally
         {
             Directory.SetCurrentDirectory(prevCwd);
-            Directory.Delete(tempDir, recursive: true);
         }
     }
 }

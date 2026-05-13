@@ -2,7 +2,6 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Evaluator;
 using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
@@ -28,7 +27,7 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
 
         var (projectA, agentA) = await CreateProjectAndAgent(services);
-        var (projectB, agentB) = await CreateProjectAndAgent(services);
+        var (_, agentB) = await CreateProjectAndAgent(services);
         var caseA = await testCaseGenerator.CreateAsync(CancellationToken);
         var caseB = await testCaseGenerator.CreateAsync(CancellationToken);
 
@@ -52,7 +51,7 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
         var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
 
         var (projectA, agentA) = await CreateProjectAndAgent(services);
-        var (projectB, agentB) = await CreateProjectAndAgent(services);
+        var (_, agentB) = await CreateProjectAndAgent(services);
         var caseA = await testCaseGenerator.CreateAsync(CancellationToken);
         var caseB = await testCaseGenerator.CreateAsync(CancellationToken);
 
@@ -75,7 +74,7 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
 
         var (projectA, agentA) = await CreateProjectAndAgent(services);
-        var (projectB, agentB) = await CreateProjectAndAgent(services);
+        var (_, agentB) = await CreateProjectAndAgent(services);
         var details = new SystemPromptDetails("Improved system prompt");
 
         var inA = await repository.AddAsync(

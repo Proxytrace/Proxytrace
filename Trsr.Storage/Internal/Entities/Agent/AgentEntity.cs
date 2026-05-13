@@ -1,6 +1,4 @@
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
-using Trsr.Domain.Prompt;
 using Trsr.Domain.Tools;
 using Trsr.Storage.Internal.Entities.Inference;
 
@@ -8,7 +6,7 @@ namespace Trsr.Storage.Internal.Entities.Agent;
 
 internal record SystemPromptData(string Name, string Template);
 
-[StoredDomainEntity(typeof(Trsr.Domain.Agent.IAgent))]
+[StoredDomainEntity(typeof(IAgent))]
 [Cacheable]
 internal record AgentEntity : Entity
 {

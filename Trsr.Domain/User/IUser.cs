@@ -15,7 +15,7 @@ public interface IUser : IDomainEntity<IUser>
     string? ExternalSubject { get; }
 
     /// <summary>
-    /// ASP.NET <see cref="Microsoft.AspNetCore.Identity.PasswordHasher{TUser}"/> output.
+    /// ASP.NET Microsoft.AspNetCore.Identity.PasswordHasher{TUser} output.
     /// <see langword="null"/> for OIDC users.
     /// </summary>
     string? PasswordHash { get; }

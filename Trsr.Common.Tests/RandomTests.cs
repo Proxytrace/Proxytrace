@@ -383,14 +383,14 @@ public sealed class RandomTests : BaseTest<Module>
     {
         var result = Random.TimeSpan();
 
-        result.Should().BeGreaterThan(System.TimeSpan.Zero);
+        result.Should().BeGreaterThan(TimeSpan.Zero);
     }
 
     [TestMethod]
     public void TimeSpan_WithMinAndMax_ReturnsValueInRange()
     {
-        var min = System.TimeSpan.FromSeconds(1);
-        var max = System.TimeSpan.FromSeconds(10);
+        var min = TimeSpan.FromSeconds(1);
+        var max = TimeSpan.FromSeconds(10);
         var results = new List<TimeSpan>();
         var random = Random;
         for (int i = 0; i < 50; i++)
@@ -405,9 +405,9 @@ public sealed class RandomTests : BaseTest<Module>
     [TestMethod]
     public void TimeSpan_WithMin_ReturnsValueGreaterThanOrEqualToMin()
     {
-        var min = System.TimeSpan.FromMinutes(1);
+        var min = TimeSpan.FromMinutes(1);
 
-        var result = Random.TimeSpan(min: min, max: System.TimeSpan.FromMinutes(5));
+        var result = Random.TimeSpan(min: min, max: TimeSpan.FromMinutes(5));
 
         result.Should().BeGreaterThanOrEqualTo(min);
     }
@@ -419,7 +419,7 @@ public sealed class RandomTests : BaseTest<Module>
         var random = Random;
         for (int i = 0; i < 50; i++)
         {
-            results.Add(random.TimeSpan(min: System.TimeSpan.Zero, max: System.TimeSpan.FromHours(1)));
+            results.Add(random.TimeSpan(min: TimeSpan.Zero, max: TimeSpan.FromHours(1)));
         }
 
         results.Count.Should().BeGreaterThan(1);
@@ -430,7 +430,7 @@ public sealed class RandomTests : BaseTest<Module>
     {
         var result = Random.Enum<DayOfWeek>();
 
-        System.Enum.IsDefined(result).Should().BeTrue();
+        Enum.IsDefined(result).Should().BeTrue();
     }
 
     [TestMethod]

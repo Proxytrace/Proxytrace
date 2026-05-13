@@ -78,8 +78,7 @@ public sealed class ObjectToInferredTypesConverterTests : BaseTest<Module>
     {
         var result = Read("""{"name":"alice","age":30,"active":true}""");
 
-        result.Should().BeOfType<Dictionary<string, object?>>();
-        var dict = (Dictionary<string, object?>)result!;
+        var dict = result.Should().BeOfType<Dictionary<string, object?>>().Subject;
         dict["name"].Should().Be("alice");
         dict["age"].Should().Be(30);
         dict["active"].Should().Be(true);
@@ -90,8 +89,7 @@ public sealed class ObjectToInferredTypesConverterTests : BaseTest<Module>
     {
         var result = Read("""[1, "two", true, null]""");
 
-        result.Should().BeOfType<List<object?>>();
-        var list = (List<object?>)result!;
+        var list = result.Should().BeOfType<List<object?>>().Subject;
         list.Should().HaveCount(4);
         list[0].Should().Be(1);
         list[1].Should().Be("two");
@@ -103,8 +101,8 @@ public sealed class ObjectToInferredTypesConverterTests : BaseTest<Module>
     public void Read_NestedObject_RecursesIntoDictionaries()
     {
         var result = Read("""{"outer":{"inner":7}}""");
-        var outer = (Dictionary<string, object?>)result!;
-        var inner = (Dictionary<string, object?>)outer["outer"]!;
+        var outer = result.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var inner = outer["outer"].Should().BeOfType<Dictionary<string, object?>>().Subject;
         inner["inner"].Should().Be(7);
     }
 
@@ -112,9 +110,9 @@ public sealed class ObjectToInferredTypesConverterTests : BaseTest<Module>
     public void Read_NestedArray_RecursesIntoLists()
     {
         var result = Read("""[[1,2],[3]]""");
-        var outer = (List<object?>)result!;
-        ((List<object?>)outer[0]!).Should().HaveCount(2);
-        ((List<object?>)outer[1]!).Should().HaveCount(1);
+        var outer = result.Should().BeOfType<List<object?>>().Subject;
+        outer[0].Should().BeOfType<List<object?>>().Subject.Should().HaveCount(2);
+        outer[1].Should().BeOfType<List<object?>>().Subject.Should().HaveCount(1);
     }
 
     [TestMethod]

@@ -1,7 +1,6 @@
 using Autofac;
 using Trsr.Application.Auth;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
@@ -38,7 +37,8 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
-        builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterModule<Api.Module>();
+        builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.InMemory()));
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
 

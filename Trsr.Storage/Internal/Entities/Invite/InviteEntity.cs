@@ -3,7 +3,7 @@ using Trsr.Domain.User;
 
 namespace Trsr.Storage.Internal.Entities.Invite;
 
-[StoredDomainEntity(typeof(Trsr.Domain.Invite.IInvite))]
+[StoredDomainEntity(typeof(IInvite))]
 internal record InviteEntity : Entity
 {
     public required string Email { get; init; }

@@ -426,8 +426,9 @@ public sealed class ModelClientTests : BaseTest<Module>
 
         capturedMessages.Should().HaveCount(2);
         var messages = capturedMessages ?? throw new InvalidOperationException("Expected captured messages.");
-        messages.First().Role.Should().Be(ChatRole.System);
-        messages.Last().Role.Should().Be(ChatRole.User);
+        var chatMessages = messages as ChatMessage[] ?? messages.ToArray();
+        chatMessages.First().Role.Should().Be(ChatRole.System);
+        chatMessages.Last().Role.Should().Be(ChatRole.User);
     }
 
     // ── CompleteAsync<TOutput> (generic) ─────────────────────────────────────

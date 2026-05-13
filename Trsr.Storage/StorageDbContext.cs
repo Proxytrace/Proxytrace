@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trsr.Storage.Internal;
@@ -41,7 +42,7 @@ internal class StorageDbContext : DbContext
     {
         var converter = new ValueConverter<DateTimeOffset, string>(
             v => v.ToString("o"),
-            v => DateTimeOffset.Parse(v, null, System.Globalization.DateTimeStyles.RoundtripKind));
+            v => DateTimeOffset.Parse(v, null, DateTimeStyles.RoundtripKind));
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {

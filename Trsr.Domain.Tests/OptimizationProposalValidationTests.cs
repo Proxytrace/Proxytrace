@@ -1,7 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Message;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Proposal;
 using Trsr.Testing;
@@ -200,6 +199,6 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
     private static async Task<IAgent> CreateAgentAsync(IServiceProvider services)
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
-        return await generator.GetOrCreateAsync(default);
+        return await generator.GetOrCreateAsync();
     }
 }

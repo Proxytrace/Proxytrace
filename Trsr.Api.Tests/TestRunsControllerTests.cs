@@ -58,7 +58,7 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         var result = await controller.Get(run.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(run.Id);
+        result.Value.Id.Should().Be(run.Id);
     }
 
     [TestMethod]
@@ -139,26 +139,6 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         firstPage.Total.Should().Be(3);
         secondPage.Items.Should().HaveCount(1);
         secondPage.Items.Select(i => i.Id).Should().NotIntersectWith(firstPage.Items.Select(i => i.Id));
-    }
-
-    [TestMethod]
-    public async Task GetCaseFixture_Existing_ReturnsFixture()
-    {
-        IServiceProvider services = GetServices();
-        var controller = ResolveController(services);
-        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
-        ITestRun run;
-        do
-        {
-            run = await gen.CreateAsync(CancellationToken);
-        } while (run.TestResults.Count == 0);
-        var caseId = run.TestResults.First().TestCase.Id;
-
-        var result = await controller.GetCaseFixture(run.Id, caseId, CancellationToken);
-
-        result.Value.Should().NotBeNull();
-        result.Value!.Endpoints.Should().NotBeEmpty();
-        result.Value.Runtime.Total.Should().BeGreaterThanOrEqualTo(0);
     }
 
     [TestMethod]

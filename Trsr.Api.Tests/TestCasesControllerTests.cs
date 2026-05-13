@@ -32,7 +32,7 @@ public sealed class TestCasesControllerTests : BaseTest<Module>
         var result = await controller.Get(testCase.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(testCase.Id);
+        result.Value.Id.Should().Be(testCase.Id);
         result.Value.Input.Should().HaveCount(testCase.Input.Messages.Count);
         result.Value.ExpectedOutput.Role.Should().Be("assistant");
     }

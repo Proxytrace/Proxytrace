@@ -1,4 +1,4 @@
-namespace Trsr.Api.Auth;
+namespace Trsr.Application.Auth;
 
 public enum AuthMode
 {

@@ -1,20 +1,36 @@
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Testing.Platform.Services;
 using NSubstitute;
 using Trsr.Api.Auth;
+using Trsr.Common.Lifecycle;
+using Trsr.Testing;
 
 namespace Trsr.Api.Tests.Auth;
 
 [TestClass]
-public sealed class SigningKeyProviderTests
+public sealed class SigningKeyProviderTests : BaseTest<Module>
 {
+    protected override void ConfigureContainer(ContainerBuilder builder)
+    {
+        base.ConfigureContainer(builder);
+
+        builder.Register(c =>
+        {
+            var dir = c.Resolve<ITempDirectory.Create>()();
+            var env = Substitute.For<IHostEnvironment>();
+            env.ContentRootPath.Returns(dir.Path);
+            return env;
+        }).SingleInstance();
+    }
+
     [TestMethod]
     public void EnsureSigningKey_ConfiguredValue_IsReturnedAsIs()
     {
-        var env = Substitute.For<IHostEnvironment>();
-        env.ContentRootPath.Returns(Path.GetTempPath());
-
-        var result = SigningKeyProvider.EnsureSigningKey(env, "preset-key-1234");
+        var services = GetServices();
+        var provider = services.GetRequiredService<ISigningKeyProvider>();
+        var result = provider.EnsureSigningKey("preset-key-1234");
 
         result.Should().Be("preset-key-1234");
     }
@@ -22,44 +38,60 @@ public sealed class SigningKeyProviderTests
     [TestMethod]
     public void EnsureSigningKey_NoConfig_GeneratesAndPersistsKey()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "trsr-test-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
+        var services = GetServices();
+        var host = services.GetRequiredService<IHostEnvironment>();
+        var dir = host.ContentRootPath;
         try
         {
             var env = Substitute.For<IHostEnvironment>();
             env.ContentRootPath.Returns(dir);
 
-            var first = SigningKeyProvider.EnsureSigningKey(env, configured: null);
+            var provider = services.GetRequiredService<ISigningKeyProvider>();
+            var first = provider.EnsureSigningKey(configured: null);
 
             first.Should().NotBeNullOrWhiteSpace();
             File.Exists(Path.Combine(dir, "appsettings.local.json")).Should().BeTrue();
         }
         finally
         {
-            try { Directory.Delete(dir, recursive: true); } catch { }
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 
     [TestMethod]
     public void EnsureSigningKey_ExistingFileWithKey_ReusesIt()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "trsr-test-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
+        var services = GetServices();
+        var env = services.GetRequiredService<IHostEnvironment>();
+        var dir = env.ContentRootPath;
         try
         {
-            var env = Substitute.For<IHostEnvironment>();
-            env.ContentRootPath.Returns(dir);
             File.WriteAllText(
                 Path.Combine(dir, "appsettings.local.json"),
                 """{"Authentication":{"Local":{"SigningKey":"persisted-key-xyz"}}}""");
 
-            var key = SigningKeyProvider.EnsureSigningKey(env, configured: null);
+            var provider = services.GetRequiredService<ISigningKeyProvider>();
+            var key = provider.EnsureSigningKey(configured: null);
 
             key.Should().Be("persisted-key-xyz");
         }
         finally
         {
-            try { Directory.Delete(dir, recursive: true); } catch { }
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

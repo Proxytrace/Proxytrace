@@ -111,10 +111,8 @@ namespace Trsr.Domain.Tools
         /// </summary>
         public static ToolArguments FromJsonSchema(string jsonSchemaString)
         {
-            using (JsonDocument document = JsonDocument.Parse(jsonSchemaString))
-            {
-                return FromJsonSchema(document.RootElement);    
-            }
+            using JsonDocument document = JsonDocument.Parse(jsonSchemaString);
+            return FromJsonSchema(document.RootElement);
         }
 
         /// <summary>

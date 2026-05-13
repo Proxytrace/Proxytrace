@@ -6,7 +6,6 @@ using Trsr.Domain.AgentCall;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Inference;
 using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.Tests;
@@ -158,8 +157,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agentCall1 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop", null, null);
-        var agentCall2 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop", null, null);
+        var agentCall1 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop");
+        var agentCall2 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop");
 
         // Assert
         agentCall1.Id.Should().NotBe(agentCall2.Id);

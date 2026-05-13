@@ -1,6 +1,8 @@
+using Trsr.Domain.Model;
+
 namespace Trsr.Storage.Internal.Entities.Model;
 
-[StoredDomainEntity(typeof(Trsr.Domain.Model.IModel))]
+[StoredDomainEntity(typeof(IModel))]
 [Cacheable]
 internal record ModelEntity : Entity
 {

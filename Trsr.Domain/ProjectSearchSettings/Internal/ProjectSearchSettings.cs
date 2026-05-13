@@ -55,14 +55,11 @@ internal record ProjectSearchSettings : DomainEntity<IProjectSearchSettings>, IP
             yield return result;
         }
 
-        foreach (var r in Validation.NotNull(Project, nameof(Project)).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotNull(Project).AsEnumerable()) yield return r;
 
-        if (Project is not null)
+        foreach (var result in Project.Validate(validationContext))
         {
-            foreach (var result in Project.Validate(validationContext))
-            {
-                yield return result;
-            }
+            yield return result;
         }
 
         if (IndexedKinds.Count == 0)

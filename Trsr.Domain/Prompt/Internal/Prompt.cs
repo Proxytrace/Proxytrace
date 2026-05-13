@@ -41,8 +41,8 @@ internal record Prompt : IPrompt
     [Pure]
     public IPrompt Append(IPrompt other) 
         => new Prompt(
-            name: $"{this.Name}_{other.Name}",
-            promptString: string.Join(Environment.NewLine, this.ToPromptString(), other.ToPromptString()));
+            name: $"{Name}_{other.Name}",
+            promptString: string.Join(Environment.NewLine, ToPromptString(), other.ToPromptString()));
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

@@ -17,11 +17,11 @@ internal sealed class ModelParametersGenerator : DomainObjectGenerator<IModelPar
 
     public override Task<IModelParameters> CreateAsync(CancellationToken cancellationToken = default)
         => factory(
-            temperature: Random.Double(min: 0.7, max: 0.9),
-            topP: Random.Double(min: 0.7, max: 0.9),
-            reasoningEffort: Random.Any(["none", "low", "medium", "high"]),
-            frequencyPenalty: Random.Double(min: 0.0, max: 0.5),
-            presencePenalty: Random.Double(min: 0.0, max: 0.5),
-            maxTokens: Random.Int(min: 50, max: 200)
+            temperature: random.Double(min: 0.7, max: 0.9),
+            topP: random.Double(min: 0.7, max: 0.9),
+            reasoningEffort: random.Any(["none", "low", "medium", "high"]),
+            frequencyPenalty: random.Double(min: 0.0, max: 0.5),
+            presencePenalty: random.Double(min: 0.0, max: 0.5),
+            maxTokens: random.Int(min: 50, max: 200)
             ).ToTaskResult();
 }

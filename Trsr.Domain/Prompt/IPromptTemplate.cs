@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Trsr.Domain.Prompt;
+﻿namespace Trsr.Domain.Prompt;
 
 /// <summary>
 /// A template for a LLM prompt that can be rendered with a set of values.

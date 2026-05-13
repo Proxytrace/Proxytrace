@@ -1,5 +1,7 @@
 using Autofac;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Trsr.Common.Lifecycle;
 
 namespace Trsr.Testing;
 

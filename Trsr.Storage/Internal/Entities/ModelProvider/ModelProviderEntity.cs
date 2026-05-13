@@ -2,7 +2,7 @@ using Trsr.Domain.ModelProvider;
 
 namespace Trsr.Storage.Internal.Entities.ModelProvider;
 
-[StoredDomainEntity(typeof(Trsr.Domain.ModelProvider.IModelProvider))]
+[StoredDomainEntity(typeof(IModelProvider))]
 [Cacheable]
 internal record ModelProviderEntity : Entity
 {

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Trsr.Common.Async;
 
 public static class TaskExtensions

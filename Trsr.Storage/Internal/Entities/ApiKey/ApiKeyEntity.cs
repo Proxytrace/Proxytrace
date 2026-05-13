@@ -1,6 +1,8 @@
+using Trsr.Domain.ApiKey;
+
 namespace Trsr.Storage.Internal.Entities.ApiKey;
 
-[StoredDomainEntity(typeof(Trsr.Domain.ApiKey.IApiKey))]
+[StoredDomainEntity(typeof(IApiKey))]
 [Cacheable]
 internal record ApiKeyEntity : Entity
 {

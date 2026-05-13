@@ -1,5 +1,3 @@
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
 

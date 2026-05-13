@@ -1,5 +1,4 @@
 using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
 

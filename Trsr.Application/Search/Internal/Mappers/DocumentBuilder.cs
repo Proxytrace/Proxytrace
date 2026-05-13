@@ -23,11 +23,11 @@ internal static class DocumentBuilder
             new StringField(SearchConstants.FieldEntityId, entityId.ToString(), Field.Store.YES),
             new StringField(SearchConstants.FieldProjectId, projectId.ToString(), Field.Store.YES),
             new Int64Field(SearchConstants.FieldCreatedAt, createdAt.UtcTicks, Field.Store.YES),
-            new TextField(SearchConstants.FieldTitle, title ?? string.Empty, Field.Store.YES),
-            new TextField(SearchConstants.FieldBody, body ?? string.Empty, Field.Store.YES),
+            new TextField(SearchConstants.FieldTitle, title, Field.Store.YES),
+            new TextField(SearchConstants.FieldBody, body, Field.Store.YES),
         };
 
-        var boostedField = new TextField(SearchConstants.FieldBoostedBody, boostedBody ?? string.Empty, Field.Store.NO)
+        var boostedField = new TextField(SearchConstants.FieldBoostedBody, boostedBody, Field.Store.NO)
         {
             Boost = SearchConstants.BoostedBodyBoost,
         };

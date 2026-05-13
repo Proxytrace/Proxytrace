@@ -41,10 +41,6 @@ internal sealed class LuceneSearchIndexStatistics : ISearchIndexStatistics
         }
 
         long? ticks = field.GetInt64Value();
-        if (ticks is null)
-        {
-            return Task.FromResult<DateTimeOffset?>(null);
-        }
-        return Task.FromResult<DateTimeOffset?>(new DateTimeOffset(ticks.Value, TimeSpan.Zero));
+        return ticks is null ? Task.FromResult<DateTimeOffset?>(null) : Task.FromResult<DateTimeOffset?>(new DateTimeOffset(ticks.Value, TimeSpan.Zero));
     }
 }

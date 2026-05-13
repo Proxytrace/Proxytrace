@@ -1,11 +1,14 @@
-using System.Text.Json;
 using Autofac;
 using Trsr.Common.Async;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
+using Trsr.Common.Hosting;
+using Trsr.Common.Lifecycle;
+using Trsr.Common.Lifecycle.Internal;
 using Trsr.Common.Random;
 using Trsr.Common.Random.Internal;
 using Trsr.Common.Serialization;
+using Trsr.Common.Serialization.Internal;
 
 namespace Trsr.Common;
 
@@ -28,10 +31,16 @@ public class Module : Autofac.Module
             .As<IRandom>()
             .SingleInstance();
 
-        builder.RegisterType<Serialization.Internal.JsonSerializer>()
+        builder.RegisterType<JsonSerializer>()
             .As<ISerializer>()
             .SingleInstance();
 
         builder.RegisterType<AsyncLock>().As<IAsyncLock>();
+
+        builder.RegisterType<NullHostedService>().AsSelf();
+        
+        builder.RegisterType<TempDirectory>()
+            .As<ITempDirectory>()
+            .OwnedByLifetimeScope();
     }
 }

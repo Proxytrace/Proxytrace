@@ -1,7 +1,6 @@
 using Trsr.Common.Random;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Internal;
-using Trsr.Domain.TestResult;
 
 namespace Trsr.Domain.Evaluation.Internal;
 
@@ -22,6 +21,6 @@ internal class EvaluationGenerator : DomainObjectGenerator<IEvaluation>
     public override async Task<IEvaluation> CreateAsync(CancellationToken cancellationToken = default)
     {
         IEvaluator evaluator = await evaluatorGenerator.GetOrCreateAsync(cancellationToken);
-        return factory(evaluator, Random.Enum<EvaluationScore>(), Random.String());
+        return factory(evaluator, random.Enum<EvaluationScore>(), random.String());
     }
 }

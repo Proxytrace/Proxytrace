@@ -24,7 +24,6 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
             .CreateAsync(CancellationToken);
         var testResult = BuildResult(actual: """{"name":"foo","age":5}""");
 
-        var json = ((JsonSchemaMatchEvaluator)evaluator) with { };
         var concrete = new JsonSchemaMatchEvaluator(
             jsonSchema: """{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}""",
             project: evaluator.Project,
@@ -34,7 +33,7 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
         var result = await concrete.EvaluateAsync(testResult, CancellationToken);
 
         result.Should().NotBeNull();
-        result!.Score.Should().Be(EvaluationScore.Excellent);
+        result.Score.Should().Be(EvaluationScore.Excellent);
     }
 
     [TestMethod]
@@ -51,7 +50,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Terrible);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Terrible);
     }
 
     [TestMethod]
@@ -67,7 +67,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Terrible);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Terrible);
         result.Reasoning.Should().Contain("not valid JSON");
     }
 
@@ -85,7 +86,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Excellent);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Excellent);
     }
 
     [TestMethod]
@@ -102,7 +104,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Terrible);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Terrible);
         result.Reasoning.Should().Contain("delta");
     }
 
@@ -120,7 +123,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Terrible);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Terrible);
     }
 
     [TestMethod]
@@ -154,7 +158,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Excellent);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Excellent);
     }
 
     [TestMethod]
@@ -167,7 +172,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Acceptable);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Acceptable);
     }
 
     [TestMethod]
@@ -180,7 +186,8 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
 
         var result = await evaluator.EvaluateAsync(testResult, CancellationToken);
 
-        result!.Score.Should().Be(EvaluationScore.Terrible);
+        result.Should().NotBeNull();
+        result.Score.Should().Be(EvaluationScore.Terrible);
     }
 
     private static IEvaluation.Create BuildEvaluationFactory()

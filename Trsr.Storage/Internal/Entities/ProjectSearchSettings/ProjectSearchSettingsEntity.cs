@@ -1,6 +1,8 @@
+using Trsr.Domain.ProjectSearchSettings;
+
 namespace Trsr.Storage.Internal.Entities.ProjectSearchSettings;
 
-[StoredDomainEntity(typeof(Trsr.Domain.ProjectSearchSettings.IProjectSearchSettings))]
+[StoredDomainEntity(typeof(IProjectSearchSettings))]
 internal record ProjectSearchSettingsEntity : Entity
 {
     /// <summary>

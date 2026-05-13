@@ -54,12 +54,7 @@ internal sealed class InviteService : IInviteService
             return null;
         }
 
-        if (invite.IsExpired(DateTimeOffset.UtcNow))
-        {
-            return null;
-        }
-        
-        return invite;
+        return invite.IsExpired(DateTimeOffset.UtcNow) ? null : invite;
     }
 
     public Task<IUser?> ConsumeAsync(string token, string password, CancellationToken cancellationToken = default)

@@ -198,7 +198,7 @@ internal class ToolCallSimulator
         CancellationToken cancellationToken)
     {
         var payload = tools is { Length: > 0 }
-            ? (object)new { model = "gpt-4o-mini", messages, tools, max_tokens = 256 }
+            ? new { model = "gpt-4o-mini", messages, tools, max_tokens = 256 }
             : (object)new { model = "gpt-4o-mini", messages, max_tokens = 512 };
 
         var json = JsonSerializer.Serialize(payload, JsonOptions);

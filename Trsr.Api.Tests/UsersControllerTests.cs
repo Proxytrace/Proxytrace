@@ -55,7 +55,7 @@ public sealed class UsersControllerTests : BaseTest<Module>
         var result = await controller.Me(CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(user.Id);
+        result.Value.Id.Should().Be(user.Id);
     }
 
     [TestMethod]
@@ -80,7 +80,7 @@ public sealed class UsersControllerTests : BaseTest<Module>
         var result = await controller.UpdateRole(user.Id, new UpdateUserRoleRequest(target), CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Role.Should().Be(target);
+        result.Value.Role.Should().Be(target);
     }
 
     [TestMethod]

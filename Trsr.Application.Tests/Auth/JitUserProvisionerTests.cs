@@ -1,7 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Auth;
-using Trsr.Domain;
 using Trsr.Domain.User;
 using Trsr.Testing;
 

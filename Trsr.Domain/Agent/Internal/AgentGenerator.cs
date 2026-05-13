@@ -42,7 +42,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
         var modelParameters = await modelParametersGenerator.CreateAsync(cancellationToken);
 
         return factory(
-            name: Random.String(),
+            name: random.String(),
             systemPrompt: promptTemplate,
             tools: [],
             endpoint: endpoint,
@@ -64,7 +64,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
         var modelParameters = await modelParametersGenerator.CreateAsync(cancellationToken);
 
         var agent = factory(
-            name: Random.String(),
+            name: random.String(),
             systemPrompt: promptTemplate,
             tools: [],
             endpoint: endpoint,

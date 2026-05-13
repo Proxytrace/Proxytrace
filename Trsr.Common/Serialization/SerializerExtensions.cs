@@ -1,3 +1,4 @@
+using System.Text;
 using Trsr.Common.Async;
 
 namespace Trsr.Common.Serialization;
@@ -19,7 +20,7 @@ public static class SerializerExtensions
         string serialized,
         CancellationToken cancellationToken = default)
     {
-        await using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(serialized));
+        await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(serialized));
         return await serializer.DeserializeAsync<T>(stream, cancellationToken);
     }
 
@@ -27,9 +28,11 @@ public static class SerializerExtensions
         => SerializeAsync(serializer, obj).SynchronouslyAwait();
     
     public static T? Deserialize<T>(this ISerializer serializer, string serialized)
-        => DeserializeAsync<T>(serializer, serialized).SynchronouslyAwait();
+        =>
+            serializer.DeserializeAsync<T>(serialized).SynchronouslyAwait();
     
     public static T DeserializeRequired<T>(this ISerializer serializer, string serialized)
-        => Deserialize<T>(serializer, serialized)
+        =>
+            serializer.Deserialize<T>(serialized)
            ?? throw new InvalidOperationException($"Deserialization of type {typeof(T).FullName} resulted in null.");
 }

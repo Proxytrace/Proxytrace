@@ -2,7 +2,6 @@ using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Trsr.Api.Auth;
 using Trsr.Api.Controllers;
 using Trsr.Api.Dto.Auth;
 using Trsr.Application.Auth;

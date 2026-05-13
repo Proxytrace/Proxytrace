@@ -37,18 +37,21 @@ internal class StatisticsBackfillHostedService : IHostedService
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (cts is not null)
+        if (backfillTask is null)
         {
-            await cts.CancelAsync();
+            return;
         }
 
-        if (backfillTask is not null)
+        try
         {
-            try
+            await backfillTask.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            if (cts is not null)
             {
-                await backfillTask.WaitAsync(cancellationToken);
+                await cts.CancelAsync();
             }
-            catch (OperationCanceledException) { }
         }
     }
 

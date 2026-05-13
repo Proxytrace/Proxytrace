@@ -1,5 +1,4 @@
 using Autofac;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Trsr.Common.Serialization;
 using Trsr.Domain.Message;
 using Trsr.Domain.Tools;
@@ -42,7 +41,7 @@ public class SerializationProbeTests
         var json = serializer.Serialize(tools);
         Console.WriteLine("=== TOOLS JSON ===");
         Console.WriteLine(json);
-        Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsNotNull(json);
+        Assert.IsNotNull(json);
     }
 
     [TestMethod]
@@ -52,7 +51,7 @@ public class SerializationProbeTests
         var json = serializer.Serialize(msg);
         Console.WriteLine("=== SYSTEM MESSAGE JSON ===");
         Console.WriteLine(json);
-        Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsNotNull(json);
+        Assert.IsNotNull(json);
     }
 
     [TestMethod]
@@ -70,7 +69,7 @@ public class SerializationProbeTests
         var json = serializer.Serialize(conv);
         Console.WriteLine("=== CONVERSATION JSON ===");
         Console.WriteLine(json);
-        Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsNotNull(json);
+        Assert.IsNotNull(json);
     }
 
     [TestMethod]
@@ -80,6 +79,6 @@ public class SerializationProbeTests
         var json = serializer.Serialize(msg);
         Console.WriteLine("=== ASSISTANT MESSAGE JSON ===");
         Console.WriteLine(json);
-        Microsoft.VisualStudio.TestTools.UnitTesting.Assert.IsNotNull(json);
+        Assert.IsNotNull(json);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Trsr.Storage.Internal.Entities;
 
 namespace Trsr.Storage.Internal;
 

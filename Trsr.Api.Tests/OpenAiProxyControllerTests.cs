@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Trsr.Api.Controllers;
+using Trsr.Application.Demo;
 using Trsr.Application.Ingestion;
 using Trsr.Domain;
 using Trsr.Domain.ApiKey;
@@ -126,6 +127,7 @@ public sealed class OpenAiProxyControllerTests : BaseTest<Module>
             httpClientFactory,
             services.GetRequiredService<IAgentCallIngestor>(),
             services.GetRequiredService<IApiKeyRepository>(),
+            new KioskOptions(),
             NullLogger<OpenAiProxyController>.Instance);
     }
 

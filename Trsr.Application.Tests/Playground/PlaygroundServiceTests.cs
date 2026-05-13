@@ -56,7 +56,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
                 .Returns(ci =>
                 {
                     var u = ci.Arg<TokenUsage>();
-                    return (decimal)u.InputTokenCount * inputCost.Value + (decimal)u.OutputTokenCount * outputCost.Value;
+                    return u.InputTokenCount * inputCost.Value + u.OutputTokenCount * outputCost.Value;
                 });
         }
         return endpoint;
@@ -121,7 +121,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
     {
         var client = Substitute.For<IModelClient>();
         client.StreamAsync(Arg.Any<SystemMessage>(), Arg.Any<Conversation>(), Arg.Any<ModelOptions>(), Arg.Any<CancellationToken>())
-            .Returns<IAsyncEnumerable<ModelStreamUpdate>>(_ => throw new InvalidOperationException("boom"));
+            .Returns(_ => throw new InvalidOperationException("boom"));
         var agent = MakeAgent(client);
         var endpoint = MakeEndpoint();
         var svc = Build(agent, endpoint, out _, out _);
@@ -262,7 +262,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
         await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id, messages), CancellationToken).ToListAsync();
 
         captured.Should().NotBeNull();
-        captured!.Messages.Should().ContainSingle();
+        captured.Messages.Should().ContainSingle();
         captured.Messages.Single().Should().BeOfType<UserMessage>();
     }
 
@@ -286,7 +286,7 @@ public sealed class PlaygroundServiceTests : BaseTest<Module>
         await svc.CompleteStreamAsync(Request(agent.Id, endpoint.Id, tools: overrides), CancellationToken).ToListAsync();
 
         capturedOptions.Should().NotBeNull();
-        capturedOptions!.Tools.Should().ContainSingle();
+        capturedOptions.Tools.Should().ContainSingle();
         capturedOptions.Tools[0].Name.Should().Be("lookup");
         capturedOptions.Tools[0].Description.Should().Be("overridden description");
     }

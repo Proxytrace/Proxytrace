@@ -43,7 +43,7 @@ internal sealed class PlaygroundService : IPlaygroundService
             yield break;
         }
 
-        SystemMessage systemMessage = new(request.SystemPrompt ?? string.Empty);
+        SystemMessage systemMessage = new(request.SystemPrompt);
         IReadOnlyList<ToolSpecification> tools = ResolveTools(agent.Tools, request.Tools);
         ModelOptions options = new(endpoint.Model.Name, tools);
         Conversation conversation = BuildConversation(request.Messages);
@@ -206,14 +206,14 @@ internal sealed class PlaygroundService : IPlaygroundService
             switch (role)
             {
                 case "user":
-                    converted.Add(Message.CreateUserMessage(m.Content ?? string.Empty));
+                    converted.Add(Message.CreateUserMessage(m.Content));
                     break;
                 case "assistant":
                 {
                     IReadOnlyList<Content> contents = string.IsNullOrEmpty(m.Content)
                         ? Array.Empty<Content>()
                         : new[] { Content.FromText(m.Content) };
-                    var toolRequests = (m.ToolRequests ?? [])
+                    var toolRequests = (m.ToolRequests)
                         .Select(tr => new ToolRequest(tr.Id, tr.Name, tr.Arguments))
                         .ToList();
                     converted.Add(Message.CreateAssistantMessage(contents, toolRequests));
@@ -225,7 +225,7 @@ internal sealed class PlaygroundService : IPlaygroundService
                     if (string.IsNullOrEmpty(id)) continue;
                     var request = new ToolRequest(id, "", "{}");
                     ToolResponse response = m.ToolSucceeded
-                        ? new ToolResponse(request, [Content.FromText(m.Content ?? string.Empty)])
+                        ? new ToolResponse(request, [Content.FromText(m.Content)])
                         : new ToolResponse(request, new InvalidOperationException(m.ToolError ?? "tool error"));
                     converted.Add(Message.CreateToolMessage(response));
                     break;

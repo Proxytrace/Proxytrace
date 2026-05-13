@@ -112,7 +112,7 @@ internal sealed class LuceneSearchService : ISearchService
 
             string title = doc.Get(SearchConstants.FieldTitle) ?? string.Empty;
             string bodyText = doc.Get(SearchConstants.FieldBody) ?? string.Empty;
-            string snippet = string.Empty;
+            string snippet;
             try
             {
                 using var stream = analyzer.GetTokenStream(SearchConstants.FieldBody, bodyText);

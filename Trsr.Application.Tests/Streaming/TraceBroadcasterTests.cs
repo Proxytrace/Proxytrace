@@ -1,4 +1,3 @@
-using System.Threading.Channels;
 using AwesomeAssertions;
 using Trsr.Application.Streaming;
 using Trsr.Application.Streaming.Internal;
@@ -46,18 +45,19 @@ public sealed class TraceBroadcasterTests
         using var cts = new CancellationTokenSource();
         var reader = broadcaster.Subscribe(cts.Token);
 
-        cts.Cancel();
+        await cts.CancelAsync();
 
         var completion = reader.Completion;
-        await Task.WhenAny(completion, Task.Delay(2000));
+        await Task.WhenAny(completion, Task.Delay(2000, cts.Token));
         completion.IsCompleted.Should().BeTrue();
     }
 
     [TestMethod]
     public void Publish_WithNoSubscribers_DoesNotThrow()
     {
-        using var broadcaster = new TraceBroadcaster();
+        using TraceBroadcaster broadcaster = new TraceBroadcaster();
 
+        // ReSharper disable once AccessToDisposedClosure
         var act = () => broadcaster.Publish(NewEvent());
 
         act.Should().NotThrow();

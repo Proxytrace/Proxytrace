@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -39,6 +40,14 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
             await EnableSqliteWalAsync(context, cancellationToken);
         }
 
+        if (!configuration.SupportsMigrations)
+        {
+            logger.LogInformation("Storage provider does not support migrations. Using EnsureCreatedAsync.");
+            await context.Database.EnsureCreatedAsync(cancellationToken);
+            logger.LogInformation("Database initialization completed successfully");
+            return;
+        }
+
         logger.LogInformation("Ensuring database is created and up to date via migrations...");
         await context.Database.MigrateAsync(cancellationToken);
 
@@ -71,7 +80,7 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         }
 
         var connection = context.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
         }
@@ -116,6 +125,11 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        if (!configuration.SupportsMigrations)
+        {
+            return;
+        }
+        
         try
         {
             await EnsureDatabaseReadyAsync(cancellationToken);

@@ -7,8 +7,6 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.ModelEndpoint;
-using Trsr.Domain.Project;
 using Trsr.Domain.TestCase;
 using Trsr.Domain.TestSuite;
 using Trsr.Testing;
@@ -164,8 +162,10 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.Get(suite.Id, CancellationToken);
 
-        result.Value!.Id.Should().Be(suite.Id);
-        result.Value.Name.Should().Be(suite.Name);
+        var value = result.Value;
+        value.Should().NotBeNull();
+        value.Id.Should().Be(suite.Id);
+        value.Name.Should().Be(suite.Name);
     }
 
     [TestMethod]
@@ -284,7 +284,9 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             new UpdateTestSuiteRequest(AgentId: null, EvaluatorIds: [newEval.Id], TestCaseIds: null),
             CancellationToken);
 
-        result.Value!.Evaluators.Should().ContainSingle(e => e.Id == newEval.Id);
+        var value = result.Value;
+        value.Should().NotBeNull();
+        value.Evaluators.Should().ContainSingle(e => e.Id == newEval.Id);
     }
 
     [TestMethod]
@@ -397,7 +399,8 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
                 ExpectedOutput: new TestSuiteMessageDto("assistant", "world")),
             CancellationToken);
 
-        result.Value!.TestCases.Should().HaveCount(initialCount + 1);
+        result.Value.Should().NotBeNull();
+        result.Value.TestCases.Should().HaveCount(initialCount + 1);
     }
 
     [TestMethod]
@@ -421,7 +424,8 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.RemoveTestCase(suite.Id, targetCase.Id, CancellationToken);
 
-        result.Value!.TestCases.Should().NotContain(tc => tc.Id == targetCase.Id);
+        result.Value.Should().NotBeNull();
+        result.Value.TestCases.Should().NotContain(tc => tc.Id == targetCase.Id);
     }
 
     private static TestSuitesController ResolveController(IServiceProvider services) =>

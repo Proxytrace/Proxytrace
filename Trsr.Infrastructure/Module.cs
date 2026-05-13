@@ -1,4 +1,5 @@
 using Autofac;
+using Trsr.Application.Demo;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Infrastructure.Internal;
@@ -14,10 +15,10 @@ public class Module : Autofac.Module
         builder.RegisterModule<Trsr.Serialization.Module>();
 
         builder.RegisterType<ModelClient>()
-            .As<IModelClient>();
-        
+            .As<IModelClient>()
+            .AsSelf();
+
         builder.RegisterType<ProviderClient>()
             .As<IProviderClient>();
-
     }
 }

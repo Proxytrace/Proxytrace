@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Trsr.Common.Validation;
 
 namespace Trsr.Domain.Usage;
 
