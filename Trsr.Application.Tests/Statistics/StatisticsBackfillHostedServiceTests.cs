@@ -82,19 +82,21 @@ public sealed class StatisticsBackfillHostedServiceTests : BaseTest<Module>
         var reader = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
         var alreadyProjected = MakeRun(TestRunStatus.Completed);
         var missing = MakeRun(TestRunStatus.Completed);
+        Guid alreadyProjectedId = alreadyProjected.Id;
+        Guid missingId = missing.Id;
         runs.GetAllAsync(Arg.Any<CancellationToken>()).Returns([alreadyProjected, missing]);
 
-        reader.FindAsync(alreadyProjected.Id, Arg.Any<CancellationToken>())
-            .Returns(new TestRunStats(alreadyProjected.Id, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, 1, null, null, null, DateTimeOffset.UtcNow));
-        reader.FindAsync(missing.Id, Arg.Any<CancellationToken>()).Returns((TestRunStats?)null);
+        var existingStats = new TestRunStats(alreadyProjectedId, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, 1, null, null, null, DateTimeOffset.UtcNow);
+        reader.FindAsync(alreadyProjectedId, Arg.Any<CancellationToken>()).Returns(existingStats);
+        reader.FindAsync(missingId, Arg.Any<CancellationToken>()).Returns((TestRunStats?)null);
 
         var projector = MakeProjector(typeof(ITestRun));
         var svc = new StatisticsBackfillHostedService(runs, reader, [projector], NullLogger<StatisticsBackfillHostedService>.Instance);
 
         await RunAndWaitAsync(svc);
 
-        await projector.DidNotReceive().ProjectAsync(alreadyProjected.Id, Arg.Any<CancellationToken>());
-        await projector.Received(1).ProjectAsync(missing.Id, Arg.Any<CancellationToken>());
+        await projector.DidNotReceive().ProjectAsync(alreadyProjectedId, Arg.Any<CancellationToken>());
+        await projector.Received(1).ProjectAsync(missingId, Arg.Any<CancellationToken>());
     }
 
     [TestMethod]

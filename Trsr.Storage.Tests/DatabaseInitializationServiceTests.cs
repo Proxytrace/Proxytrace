@@ -30,7 +30,7 @@ public sealed class DatabaseInitializationServiceTests : BaseTest<Module>
             ITempDirectory tempPath = serviceProvider.GetTempDirectory(prefix: "trsr-tests");
             var dbPath = tempPath.Combine($"trsr_init_{Guid.NewGuid():N}.db");
             return new TestData(dbPath);
-        });
+        }).SingleInstance();
 
         builder.RegisterModule(new Storage.Module(sp =>
         {

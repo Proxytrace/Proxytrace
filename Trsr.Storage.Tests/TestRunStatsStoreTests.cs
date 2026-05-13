@@ -117,8 +117,13 @@ public sealed class TestRunStatsStoreTests : BaseTest<Module>
         await writer.UpsertAsync(StatsFor(runA), CancellationToken);
         await writer.UpsertAsync(StatsFor(runB), CancellationToken);
 
+        var agentA = runA.Group.Suite.Agent.Id;
+        var agentB = Guid.NewGuid();
+        if (agentB == agentA) agentB = Guid.NewGuid();
+        await writer.UpsertAsync(StatsFor(runB) with { AgentId = agentB }, CancellationToken);
+
         var byAgentA = await reader.QueryAsync(
-            new TestRunStats.Filter(AgentId: runA.Group.Suite.Agent.Id), CancellationToken);
+            new TestRunStats.Filter(AgentId: agentA), CancellationToken);
 
         byAgentA.Should().ContainSingle();
         byAgentA[0].TestRunId.Should().Be(runA.Id);
