@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Autofac;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -5,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Trsr.Api.Auth;
 using Trsr.Api.Auth.Kiosk;
 using Trsr.Application.Auth;
+using Trsr.Application.Auth.Local;
 using Trsr.Application.Demo;
 using Trsr.Application.Search;
 using Trsr.Application.TestRun;
@@ -119,24 +121,26 @@ internal sealed class Module : Autofac.Module
             }
             else if (authOptions.Mode == AuthMode.Local)
             {
-                services.AddSingleton(sp =>
+                services.AddSingleton<LocalAuthOptions>(sp =>
                 {
                     var signingKeyProvider = sp.GetRequiredService<ISigningKeyProvider>();
-                    
                     var signingKey = signingKeyProvider.EnsureSigningKey(authOptions.Local.SigningKey);
-                    var localOptions = new Trsr.Application.Auth.Local.LocalAuthOptions
+                    return new LocalAuthOptions
                     {
                         SigningKey = signingKey,
                         Issuer = "trsr-local",
                         Audience = "trsr-api",
                         TokenLifetime = TimeSpan.FromDays(7),
                     };
-                    return localOptions;
                 });
 
                 services
                     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(o =>
+                    .AddJwtBearer();
+
+                services
+                    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                    .Configure<LocalAuthOptions>((o, localOptions) =>
                     {
                         o.MapInboundClaims = false;
                         o.TokenValidationParameters = new TokenValidationParameters
@@ -148,7 +152,7 @@ internal sealed class Module : Autofac.Module
                             ValidateIssuerSigningKey = true,
                             IssuerSigningKey = new SymmetricSecurityKey(
                                 System.Text.Encoding.UTF8.GetBytes(localOptions.SigningKey)),
-                            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+                            RoleClaimType = ClaimTypes.Role,
                         };
                         o.Events = LocalAuthEvents.Create();
                     });
@@ -157,19 +161,23 @@ internal sealed class Module : Autofac.Module
             {
                 services
                     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(o =>
+                    .AddJwtBearer();
+
+                services
+                    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                    .Configure<AuthOptions>((o, opts) =>
                     {
-                        o.Authority = authOptions.Oidc.Authority;
-                        o.Audience = authOptions.Oidc.Audience;
-                        o.RequireHttpsMetadata = authOptions.Oidc.RequireHttpsMetadata;
+                        o.Authority = opts.Oidc.Authority;
+                        o.Audience = opts.Oidc.Audience;
+                        o.RequireHttpsMetadata = opts.Oidc.RequireHttpsMetadata;
                         o.MapInboundClaims = false;
                         o.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuer = true,
-                            ValidateAudience = !string.IsNullOrWhiteSpace(authOptions.Oidc.Audience),
-                            ValidAudience = authOptions.Oidc.Audience,
-                            NameClaimType = authOptions.Oidc.NameClaimType,
-                            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+                            ValidateAudience = !string.IsNullOrWhiteSpace(opts.Oidc.Audience),
+                            ValidAudience = opts.Oidc.Audience,
+                            NameClaimType = opts.Oidc.NameClaimType,
+                            RoleClaimType = ClaimTypes.Role,
                         };
                         o.Events = JitProvisioningEvents.Create();
                     });
