@@ -16,13 +16,6 @@ namespace Trsr.Application.Search;
 
 internal sealed class SearchModule : Autofac.Module
 {
-    private readonly Func<IComponentContext, SearchConfiguration> searchConfigurationFactory;
-
-    public SearchModule(Func<IComponentContext, SearchConfiguration> searchConfigurationFactory)
-    {
-        this.searchConfigurationFactory = searchConfigurationFactory;
-    }
-
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);

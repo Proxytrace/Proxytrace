@@ -60,7 +60,9 @@ public sealed class SearchControllerTests : BaseTest<Module>
         var result = await controller.Search(projectId, "hello", CancellationToken);
 
         var ok = (OkObjectResult)(result.Result ?? throw new InvalidOperationException());
-        ((SearchResultsDto)ok.Value!).Hits.Should().ContainSingle();
+        var val = ((SearchResultsDto?)ok.Value);
+        val.Should().NotBeNull();
+        val.Hits.Should().ContainSingle();
     }
 
     [TestMethod]

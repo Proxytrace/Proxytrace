@@ -3,6 +3,7 @@ using Autofac;
 using Trsr.Common.Async;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
+using Trsr.Common.Hosting;
 using Trsr.Common.Random;
 using Trsr.Common.Random.Internal;
 using Trsr.Common.Serialization;
@@ -33,5 +34,7 @@ public class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterType<AsyncLock>().As<IAsyncLock>();
+
+        builder.RegisterType<NullHostedService>().AsSelf();
     }
 }

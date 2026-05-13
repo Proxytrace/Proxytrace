@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Trsr.Application.Auth;
 
 namespace Trsr.Api.Auth;
 

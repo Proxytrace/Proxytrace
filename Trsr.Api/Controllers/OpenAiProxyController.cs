@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Trsr.Application.Demo;
 using Trsr.Application.Ingestion;
 using Trsr.Domain.ApiKey;
 using Trsr.Domain.ModelProvider;
@@ -45,17 +46,20 @@ public class OpenAiProxyController : ControllerBase
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IAgentCallIngestor ingestor;
     private readonly IApiKeyRepository apiKeyRepository;
+    private readonly KioskOptions kioskOptions;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
         IAgentCallIngestor ingestor,
         IApiKeyRepository apiKeyRepository,
+        KioskOptions kioskOptions,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.ingestor = ingestor;
         this.apiKeyRepository = apiKeyRepository;
+        this.kioskOptions = kioskOptions;
         this.logger = logger;
     }
 
@@ -63,6 +67,16 @@ public class OpenAiProxyController : ControllerBase
     [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
     public async Task Proxy(string path, CancellationToken cancellationToken)
     {
+        if (kioskOptions.Enabled)
+        {
+            Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+            Response.ContentType = "application/json";
+            await Response.WriteAsync(
+                "{\"kiosk\":true,\"message\":\"Proxy disabled in demo mode.\"}",
+                cancellationToken);
+            return;
+        }
+
         IApiKey? apiKey = await GetApiKeyAsync(cancellationToken);
         if (apiKey is null)
         {

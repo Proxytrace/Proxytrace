@@ -164,8 +164,10 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
 
         var result = await controller.Get(suite.Id, CancellationToken);
 
-        result.Value!.Id.Should().Be(suite.Id);
-        result.Value.Name.Should().Be(suite.Name);
+        var value = result.Value;
+        value.Should().NotBeNull();
+        value.Id.Should().Be(suite.Id);
+        value.Name.Should().Be(suite.Name);
     }
 
     [TestMethod]
@@ -284,7 +286,9 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             new UpdateTestSuiteRequest(AgentId: null, EvaluatorIds: [newEval.Id], TestCaseIds: null),
             CancellationToken);
 
-        result.Value!.Evaluators.Should().ContainSingle(e => e.Id == newEval.Id);
+        var value = result.Value;
+        value.Should().NotBeNull();
+        value.Evaluators.Should().ContainSingle(e => e.Id == newEval.Id);
     }
 
     [TestMethod]

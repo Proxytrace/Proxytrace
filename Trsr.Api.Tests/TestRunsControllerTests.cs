@@ -58,7 +58,7 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         var result = await controller.Get(run.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(run.Id);
+        result.Value.Id.Should().Be(run.Id);
     }
 
     [TestMethod]
@@ -157,7 +157,7 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
         var result = await controller.GetCaseFixture(run.Id, caseId, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Endpoints.Should().NotBeEmpty();
+        result.Value.Endpoints.Should().NotBeEmpty();
         result.Value.Runtime.Total.Should().BeGreaterThanOrEqualTo(0);
     }
 

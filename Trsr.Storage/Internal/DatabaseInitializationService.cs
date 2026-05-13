@@ -39,6 +39,14 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
             await EnableSqliteWalAsync(context, cancellationToken);
         }
 
+        if (!configuration.SupportsMigrations)
+        {
+            logger.LogInformation("Storage provider does not support migrations. Using EnsureCreatedAsync.");
+            await context.Database.EnsureCreatedAsync(cancellationToken);
+            logger.LogInformation("Database initialization completed successfully");
+            return;
+        }
+
         logger.LogInformation("Ensuring database is created and up to date via migrations...");
         await context.Database.MigrateAsync(cancellationToken);
 

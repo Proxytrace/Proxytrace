@@ -28,7 +28,8 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (ModelProviderDto)created.Value!;
+        var dto = (ModelProviderDto?)created.Value;
+        dto.Should().NotBeNull();
         dto.Name.Should().Be("Acme");
         dto.Kind.Should().Be(ModelProviderKind.OpenAiCompatible);
     }
@@ -57,7 +58,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Name.Should().Be("Renamed");
+        result.Value.Name.Should().Be("Renamed");
     }
 
     [TestMethod]
@@ -129,7 +130,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.InputTokenCost.Should().Be(9.99m);
+        result.Value.InputTokenCost.Should().Be(9.99m);
         result.Value.OutputTokenCost.Should().Be(19.99m);
     }
 
@@ -174,7 +175,8 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (ApiKeyDto)created.Value!;
+        var dto = (ApiKeyDto?)created.Value;
+        dto.Should().NotBeNull();
         dto.Name.Should().Be("dev-key");
         dto.ProjectId.Should().Be(project.Id);
     }

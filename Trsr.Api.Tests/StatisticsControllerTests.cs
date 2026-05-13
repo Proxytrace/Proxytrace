@@ -223,7 +223,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
 
         var result = await controller.GetAgentOverview(Guid.NewGuid(), from: bucketStart, to: bucketStart, bucket: StatisticsBucket.Daily, cancellationToken: CancellationToken);
 
-        var dto = result.Value!;
+        var dto = result.Value;
+        dto.Should().NotBeNull();
         dto.Summary.TotalTraces.Should().Be(10);
         dto.TimeSeries.Should().ContainSingle();
         dto.PassRateTrend.Should().ContainSingle();
@@ -257,9 +258,9 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var result = await controller.GetAgentTimeSeries(Guid.NewGuid(), from: bucketStart, to: bucketStart, cancellationToken: CancellationToken);
 
         result.Value.Should().ContainSingle();
-        result.Value![0].TraceCount.Should().Be(2);
-        result.Value![0].InputTokens.Should().Be(11);
-        result.Value![0].CostEur.Should().Be(1.1m);
+        result.Value[0].TraceCount.Should().Be(2);
+        result.Value[0].InputTokens.Should().Be(11);
+        result.Value[0].CostEur.Should().Be(1.1m);
     }
 
     [TestMethod]
@@ -284,8 +285,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var result = await controller.GetAgentPassRateTrend(Guid.NewGuid(), from: bucketStart, to: bucketStart, cancellationToken: CancellationToken);
 
         result.Value.Should().ContainSingle();
-        result.Value![0].Passed.Should().Be(3);
-        result.Value![0].TestCases.Should().Be(4);
+        result.Value[0].Passed.Should().Be(3);
+        result.Value[0].TestCases.Should().Be(4);
     }
 
     [TestMethod]
@@ -348,7 +349,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
 
         var result = await controller.GetEvaluatorOverview(Guid.NewGuid(), from: when, to: when, cancellationToken: CancellationToken);
 
-        var dto = result.Value!;
+        var dto = result.Value;
+        dto.Should().NotBeNull();
         dto.Summary.TotalEvaluations.Should().Be(10);
         dto.Summary.OverallPassRate.Should().Be(0.9);
         dto.PassRateTrend.Should().ContainSingle();
@@ -389,8 +391,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var result = await controller.GetEvaluatorSparklines(projectId: Guid.NewGuid(), from: when, to: when, cancellationToken: CancellationToken);
 
         result.Value.Should().ContainSingle();
-        result.Value![0].EvaluatorId.Should().Be(evaluatorId);
-        result.Value![0].Points.Should().ContainSingle();
+        result.Value[0].EvaluatorId.Should().Be(evaluatorId);
+        result.Value[0].Points.Should().ContainSingle();
     }
 
     private StatisticsController ResolveController(IStatisticsService stats)

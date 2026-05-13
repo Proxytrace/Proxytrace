@@ -36,6 +36,7 @@ Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 - Use `this(...)` constructor chaining to avoid duplication between "new" and "existing" constructors on domain entities
 - Use `nameof(...)` for all parameter names in exceptions and validation
 - Prefer collection expressions when possible
+- Supressing nullable warnings with `!` is strictly forbidden everywhere!
 
 ### EF Core Migrations (run from Trsr.Storage/)
 ```bash

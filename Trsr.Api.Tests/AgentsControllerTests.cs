@@ -71,7 +71,7 @@ public sealed class AgentsControllerTests : BaseTest<Module>
         var result = await controller.Get(agent.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(agent.Id);
+        result.Value.Id.Should().Be(agent.Id);
     }
 
     [TestMethod]

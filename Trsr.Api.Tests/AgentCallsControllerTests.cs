@@ -57,7 +57,7 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         var result = await controller.Get(call.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(call.Id);
+        result.Value.Id.Should().Be(call.Id);
     }
 
     [TestMethod]

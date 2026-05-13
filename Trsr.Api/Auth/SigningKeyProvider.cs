@@ -3,16 +3,23 @@ using System.Text.Json;
 
 namespace Trsr.Api.Auth;
 
-internal static class SigningKeyProvider
+internal class SigningKeyProvider : ISigningKeyProvider
 {
-    public static string EnsureSigningKey(IHostEnvironment env, string? configured)
+    private readonly IHostEnvironment environment;
+
+    public SigningKeyProvider(IHostEnvironment environment)
+    {
+        this.environment = environment;
+    }
+    
+    public string EnsureSigningKey(string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))
         {
             return configured;
         }
 
-        var path = Path.Combine(env.ContentRootPath, "appsettings.local.json");
+        var path = Path.Combine(environment.ContentRootPath, "appsettings.local.json");
         if (File.Exists(path))
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(path));

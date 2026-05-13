@@ -17,4 +17,14 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Configuration\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.Hosting.Abstractions">
+        <HintPath>..\..\.nuget\packages\microsoft.extensions.hosting.abstractions\10.0.7\lib\net10.0\Microsoft.Extensions.Hosting.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

@@ -7,11 +7,13 @@ import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { setupApi } from './api/setup';
+import { configApi } from './api/config';
 import { oidcConfig } from './auth/oidcConfig';
 import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 import { fetchAuthMode, useAuthMode } from './auth/authMode';
 import { LocalAuthProvider, useLocalAuth } from './auth/local/LocalAuthProvider';
 import { CurrentUserContext, type CurrentUser } from './auth/useCurrentUser';
+import { KioskContext } from './contexts/KioskContext';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -34,6 +36,7 @@ const queryClient = new QueryClient({
 
 // Prefetch auth-mode so children can render synchronously.
 queryClient.prefetchQuery({ queryKey: ['auth-mode'], queryFn: fetchAuthMode, staleTime: Infinity });
+queryClient.prefetchQuery({ queryKey: ['app-config'], queryFn: configApi.get, staleTime: Infinity });
 
 function PageLoader() {
   return (
@@ -146,8 +149,26 @@ function AppRoutes() {
   );
 }
 
+function KioskShell() {
+  return (
+    <KioskContext.Provider value={{ enabled: true }}>
+      <BrowserRouter>
+        <CurrentUserContext.Provider value={{ email: 'demo@trsr.dev', signOut: () => {} }}>
+          <AppRoutes />
+        </CurrentUserContext.Provider>
+      </BrowserRouter>
+    </KioskContext.Provider>
+  );
+}
+
 function ModeShell() {
+  const { data: appConfig } = useQuery({
+    queryKey: ['app-config'],
+    queryFn: configApi.get,
+    staleTime: Infinity,
+  });
   const { data, isLoading, error } = useAuthMode();
+  if (appConfig?.kiosk) return <KioskShell />;
   if (isLoading) return <PageLoader />;
   if (error || !data) {
     return (

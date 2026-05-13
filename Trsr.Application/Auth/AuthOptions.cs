@@ -1,9 +1,7 @@
-namespace Trsr.Api.Auth;
+namespace Trsr.Application.Auth;
 
 public sealed class AuthOptions
 {
-    public const string SectionName = "Authentication";
-
     public OidcOptions Oidc { get; init; } = new();
     public LocalSection Local { get; init; } = new();
 

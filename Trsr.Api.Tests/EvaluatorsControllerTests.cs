@@ -62,7 +62,8 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (EvaluatorDetailDto)created.Value!;
+        var dto = (EvaluatorDetailDto?)created.Value;
+        dto.Should().NotBeNull();
         dto.Kind.Should().Be(EvaluatorKind.ExactMatch);
     }
 
@@ -133,7 +134,8 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (EvaluatorDetailDto)created.Value!;
+        var dto = (EvaluatorDetailDto?)created.Value;
+        dto.Should().NotBeNull();
         dto.Kind.Should().Be(EvaluatorKind.NumericMatch);
         dto.Tolerance.Should().Be(0.1m);
     }
@@ -166,7 +168,8 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
             CancellationToken);
 
         var created = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException());
-        var dto = (EvaluatorDetailDto)created.Value!;
+        var dto = (EvaluatorDetailDto?)created.Value;
+        dto.Should().NotBeNull();
         dto.Kind.Should().Be(EvaluatorKind.JsonSchemaMatch);
     }
 
