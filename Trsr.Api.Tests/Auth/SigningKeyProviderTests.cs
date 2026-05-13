@@ -1,11 +1,10 @@
 using Autofac;
-using Autofac.Util;
 using AwesomeAssertions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Testing.Platform.Services;
 using NSubstitute;
 using Trsr.Api.Auth;
-using Trsr.Common.DependencyInjection;
+using Trsr.Common.Lifecycle;
 using Trsr.Testing;
 
 namespace Trsr.Api.Tests.Auth;
@@ -16,23 +15,14 @@ public sealed class SigningKeyProviderTests : BaseTest<Module>
     protected override void ConfigureContainer(ContainerBuilder builder)
     {
         base.ConfigureContainer(builder);
-        var dir = Path.Combine(Path.GetTempPath(), "trsr-test-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
-        var env = Substitute.For<IHostEnvironment>();
-        env.ContentRootPath.Returns(dir);
-        builder.RegisterInstance(env);
-        
-        builder.OnDispose(() =>
+
+        builder.Register(c =>
         {
-            try
-            {
-                Directory.Delete(dir, recursive: true);
-            }
-            catch
-            {
-                // ignored
-            }
-        });
+            var dir = c.Resolve<ITempDirectory.Create>()();
+            var env = Substitute.For<IHostEnvironment>();
+            env.ContentRootPath.Returns(dir.Path);
+            return env;
+        }).SingleInstance();
     }
 
     [TestMethod]

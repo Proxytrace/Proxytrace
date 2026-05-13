@@ -4,6 +4,8 @@ using Trsr.Common.Async;
 using Trsr.Common.Conversion;
 using Trsr.Common.Conversion.Internal;
 using Trsr.Common.Hosting;
+using Trsr.Common.Lifecycle;
+using Trsr.Common.Lifecycle.Internal;
 using Trsr.Common.Random;
 using Trsr.Common.Random.Internal;
 using Trsr.Common.Serialization;
@@ -36,5 +38,9 @@ public class Module : Autofac.Module
         builder.RegisterType<AsyncLock>().As<IAsyncLock>();
 
         builder.RegisterType<NullHostedService>().AsSelf();
+        
+        builder.RegisterType<TempDirectory>()
+            .As<ITempDirectory>()
+            .OwnedByLifetimeScope();
     }
 }
