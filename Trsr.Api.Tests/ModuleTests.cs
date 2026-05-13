@@ -90,11 +90,4 @@ public sealed class ModuleTests : BaseTest<Module>
         var module = new Trsr.Api.Module();
         module.Should().NotBeNull();
     }
-
-    [TestMethod]
-    public void Constructor_AcceptsDevelopmentFlag()
-    {
-        var module = new Trsr.Api.Module(isDevelopment: true);
-        module.Should().NotBeNull();
-    }
 }

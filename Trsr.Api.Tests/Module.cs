@@ -38,6 +38,7 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
+        builder.RegisterModule<Api.Module>();
         builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();

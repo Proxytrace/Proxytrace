@@ -1,16 +1,11 @@
 using Autofac;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Trsr.Application.Search.Internal;
 using Trsr.Application.Search.Internal.Mappers;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
-using Trsr.Domain.Agent;
-using Trsr.Domain.AgentCall;
-using Trsr.Domain.Evaluator;
 using Trsr.Domain.Search;
-using Trsr.Domain.TestSuite;
 
 namespace Trsr.Application.Search;
 
@@ -19,10 +14,6 @@ internal sealed class SearchModule : Autofac.Module
     protected override void Load(ContainerBuilder builder)
     {
         base.Load(builder);
-
-        builder.Register(searchConfigurationFactory)
-            .As<SearchConfiguration>()
-            .SingleInstance();
 
         builder.Register(ctx =>
             {

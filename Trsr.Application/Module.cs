@@ -62,7 +62,8 @@ public sealed class Module : Autofac.Module
                 KioskOptions kiosk = sc.GetRequiredService<KioskOptions>();
                 if (kiosk.Enabled)
                 {
-                    return (IHostedService)sc.GetRequiredService<NullHostedService>();
+                    // ReSharper disable once NullableWarningSuppressionIsUsed
+                    return (TestRunnerService)null!;
                 }
 
                 return sc.GetRequiredService<TestRunnerService>();
@@ -84,7 +85,8 @@ public sealed class Module : Autofac.Module
                 KioskOptions kiosk = sc.GetRequiredService<KioskOptions>();
                 if (kiosk.Enabled)
                 {
-                    return (IHostedService)sc.GetRequiredService<NullHostedService>();
+                    // ReSharper disable once NullableWarningSuppressionIsUsed
+                    return (AgentCallIngestor)null!;
                 }
 
                 return sc.GetRequiredService<AgentCallIngestor>();
@@ -161,7 +163,8 @@ public sealed class Module : Autofac.Module
                 var kiosk = sp.GetRequiredService<KioskOptions>();
                 if (!kiosk.Enabled)
                 {
-                    return (IHostedService)sp.GetRequiredService<NullHostedService>();
+                    // ReSharper disable once NullableWarningSuppressionIsUsed
+                    return (DemoSeederHostedService)null!;
                 }
 
                 return sp.GetRequiredService<DemoSeederHostedService>();
