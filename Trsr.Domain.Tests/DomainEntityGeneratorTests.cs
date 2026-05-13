@@ -14,7 +14,7 @@ public sealed class DomainEntityGeneratorTests : BaseTest<Module>
     protected override void ConfigureContainer(ContainerBuilder builder)
     {
         base.ConfigureContainer(builder);
-        builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.InMemory()));
     }
 
     // User Generator Tests

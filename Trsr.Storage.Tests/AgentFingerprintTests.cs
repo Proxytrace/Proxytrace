@@ -3,6 +3,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Inference;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
@@ -172,7 +173,7 @@ public sealed class AgentFingerprintTests : BaseTest<Module>
         var endpoint = await CreateEndpointAsync(services, CancellationToken);
         var msg      = MakePrompt(services, "You are a helpful assistant");
 
-        var paramsFactory = services.GetRequiredService<Trsr.Domain.Inference.IModelParameters.Create>();
+        var paramsFactory = services.GetRequiredService<IModelParameters.Create>();
         var withTemp02 = paramsFactory(temperature: 0.2);
         var withTemp07 = paramsFactory(temperature: 0.7);
 

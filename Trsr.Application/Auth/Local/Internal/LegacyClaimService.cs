@@ -50,8 +50,6 @@ internal sealed class LegacyClaimService : ILegacyClaimService
 
         if (!string.IsNullOrEmpty(only.PasswordHash)) return null;
         if (only.ExternalSubject is null) return null;
-        if (!only.ExternalSubject.StartsWith(LegacyExternalSubjectPrefix, StringComparison.Ordinal)) return null;
-
-        return only;
+        return !only.ExternalSubject.StartsWith(LegacyExternalSubjectPrefix, StringComparison.Ordinal) ? null : only;
     }
 }

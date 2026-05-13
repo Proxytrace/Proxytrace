@@ -15,7 +15,7 @@ public class Module : Autofac.Module
     /// </summary>
     protected override void Load(ContainerBuilder builder)
     {
-        builder.RegisterModule(new Storage.Module(StorageConfiguration.InMemory()));
+        builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.InMemory()));
         builder.RegisterStub<IModelClient>();
         builder.RegisterStub<IProviderClient>();
     }

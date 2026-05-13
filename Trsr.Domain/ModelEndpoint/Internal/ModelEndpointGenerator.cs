@@ -1,4 +1,3 @@
-using Trsr.Common.Async;
 using Trsr.Common.Random;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Model;
@@ -29,12 +28,12 @@ internal class ModelEndpointGenerator : DomainEntityGenerator<IModelEndpoint>
         var model = await modelGenerator.GetOrCreateAsync(cancellationToken);
         var provider = await providerGenerator.GetOrCreateAsync(cancellationToken);
 
-        var inputTokenCost = Random.Decimal(0, 10);
+        var inputTokenCost = random.Decimal(0, 10);
         return factory(
             model: model,
             provider: provider,
             inputTokenCost: inputTokenCost,
-            outputTokenCost: inputTokenCost * Random.Decimal(5, 10));
+            outputTokenCost: inputTokenCost * random.Decimal(5, 10));
     }
 }
 

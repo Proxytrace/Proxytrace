@@ -2,6 +2,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
+// ReSharper disable UnusedParameter.Local
 
 namespace Trsr.Infrastructure.Internal;
 
@@ -40,6 +41,7 @@ internal sealed class KioskModelClient : IModelClient
         await Task.CompletedTask;
         throw new InvalidOperationException(Message);
 #pragma warning disable CS0162
+        // ReSharper disable once HeuristicUnreachableCode
         yield break;
 #pragma warning restore CS0162
     }

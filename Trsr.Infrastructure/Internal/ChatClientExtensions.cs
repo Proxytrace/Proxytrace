@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Trsr.Domain.Message;
-using Trsr.Domain.Model;
 using Trsr.Domain.ModelEndpoint;
 
 namespace Trsr.Infrastructure.Internal;

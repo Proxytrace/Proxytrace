@@ -11,7 +11,6 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
-using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 using Trsr.Serialization;
 
@@ -35,7 +34,7 @@ internal class ModelClient : IModelClient
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory)
     {
-        this.endpoint = customEndpoint ?? agent.Endpoint;
+        endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
         this.skipIngestion = skipIngestion;
         this.completionFactory = completionFactory;
@@ -52,7 +51,7 @@ internal class ModelClient : IModelClient
         IOutputFormat.Create outputFormatFactory,
         IChatClient chatClient)
     {
-        this.endpoint = customEndpoint ?? agent.Endpoint;
+        endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
@@ -187,7 +186,7 @@ internal class ModelClient : IModelClient
             options.ToChatOptions(),
             cancellationToken);
 
-        await foreach (ChatResponseUpdate update in stream.WithCancellation(cancellationToken))
+        await foreach (ChatResponseUpdate update in stream)
         {
             foreach (AIContent content in update.Contents)
             {

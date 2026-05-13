@@ -72,10 +72,9 @@ public class EvaluatorTestBenchController : ControllerBase
             return NotFound($"Evaluator {evaluatorId} not found.");
 
         var latest = await testResults.GetLatestByEvaluatorAsync(evaluatorId, cancellationToken);
-        if (latest is null)
-            return new EvaluatorTestBenchDefaultDto(null, null);
-
-        return new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, Summarize(latest.TestCase));
+        return latest is null
+            ? new EvaluatorTestBenchDefaultDto(null, null) 
+            : new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, Summarize(latest.TestCase));
     }
 
     [HttpGet("recent")]
@@ -111,7 +110,7 @@ public class EvaluatorTestBenchController : ControllerBase
         TimeSpan latency;
         if (request.ActualResponseOverride is not null)
         {
-            actual = new AssistantMessage([Trsr.Domain.Message.Content.FromText(request.ActualResponseOverride)], []);
+            actual = new AssistantMessage([Domain.Message.Content.FromText(request.ActualResponseOverride)], []);
             var latest = await testResults.GetLatestByTestCaseAsync(request.TestCaseId, cancellationToken);
             latency = latest?.Latency ?? TimeSpan.FromMilliseconds(1);
         }

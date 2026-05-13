@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
 using Trsr.Common.DependencyInjection;
-using Trsr.Domain.Evaluator;
 using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Events;
 using Trsr.Domain.Events.Internal;

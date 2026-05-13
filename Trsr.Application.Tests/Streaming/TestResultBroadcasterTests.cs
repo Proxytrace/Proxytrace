@@ -57,7 +57,7 @@ public sealed class TestResultBroadcasterTests
 
         var got = await reader.ReadAsync(cts.Token);
         got.Should().Be(evt);
-        await Task.WhenAny(reader.Completion, Task.Delay(2000));
+        await Task.WhenAny(reader.Completion, Task.Delay(2000, cts.Token));
         reader.Completion.IsCompleted.Should().BeTrue();
     }
 
@@ -89,7 +89,7 @@ public sealed class TestResultBroadcasterTests
         broadcaster.PublishGroupComplete(evt);
 
         (await groupReader.ReadAsync(cts.Token)).Should().Be(evt);
-        await Task.WhenAny(groupReader.Completion, Task.Delay(2000));
+        await Task.WhenAny(groupReader.Completion, Task.Delay(2000, cts.Token));
         groupReader.Completion.IsCompleted.Should().BeTrue();
     }
 
@@ -100,9 +100,9 @@ public sealed class TestResultBroadcasterTests
         using var cts = new CancellationTokenSource();
         var reader = broadcaster.Subscribe(Guid.NewGuid(), cts.Token);
 
-        cts.Cancel();
+        await cts.CancelAsync();
 
-        await Task.WhenAny(reader.Completion, Task.Delay(2000));
+        await Task.WhenAny(reader.Completion, Task.Delay(2000, cts.Token));
         reader.Completion.IsCompleted.Should().BeTrue();
     }
 
@@ -111,6 +111,7 @@ public sealed class TestResultBroadcasterTests
     {
         using var broadcaster = new TestResultBroadcaster();
 
+        // ReSharper disable once AccessToDisposedClosure
         var act = () => broadcaster.Publish(new TestCaseStartedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()));
 
         act.Should().NotThrow();

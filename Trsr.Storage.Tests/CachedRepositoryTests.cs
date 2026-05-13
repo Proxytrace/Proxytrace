@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Transactions;
 using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -196,7 +197,7 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
         var model = new StubModel(Guid.NewGuid(), "m1");
 
         cache.Set(model);
-        cache.SetAll(new IModel[] { model });
+        cache.SetAll([model]);
         cache.TryGet(model.Id).Should().NotBeNull();
         cache.TryGetAll().Should().NotBeNull();
 
@@ -239,7 +240,7 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
     {
         public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow.AddMinutes(-1);
         public DateTimeOffset UpdatedAt { get; } = DateTimeOffset.UtcNow.AddMinutes(-1);
-        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(
-            System.ComponentModel.DataAnnotations.ValidationContext validationContext) => [];
+        public IEnumerable<ValidationResult> Validate(
+            ValidationContext validationContext) => [];
     }
 }

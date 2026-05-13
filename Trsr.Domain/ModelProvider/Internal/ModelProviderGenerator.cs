@@ -26,8 +26,8 @@ internal class ModelProviderGenerator : DomainEntityGenerator<IModelProvider>
 
     public override Task<IModelProvider> GenerateAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(factory(
-            name: $"{Random.Any(ProviderNames)}-{Random.UniqueString()}",
-            endpoint: new Uri($"https://api.{Random.Int(1, int.MaxValue)}.example.com/v1"),
-            apiKey: Random.String(),
+            name: $"{random.Any(ProviderNames)}-{random.UniqueString()}",
+            endpoint: new Uri($"https://api.{random.Int(1, int.MaxValue)}.example.com/v1"),
+            apiKey: random.String(),
             kind: ModelProviderKind.OpenAiCompatible));
 }

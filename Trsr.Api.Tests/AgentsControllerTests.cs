@@ -41,7 +41,7 @@ public sealed class AgentsControllerTests : BaseTest<Module>
         var seedA = await agentGen.CreateAsync(CancellationToken);
         var projectB = await projectGen.CreateAsync(CancellationToken);
         var agentB = await agentRepo.AddAsync(
-            agentFactory(seedA.Name + "-b", seedA.SystemPrompt, seedA.Tools, seedA.Endpoint, projectB, seedA.ModelParameters, false),
+            agentFactory(seedA.Name + "-b", seedA.SystemPrompt, seedA.Tools, seedA.Endpoint, projectB, seedA.ModelParameters),
             CancellationToken);
 
         var result = await controller.GetAll(projectId: seedA.Project.Id, cancellationToken: CancellationToken);

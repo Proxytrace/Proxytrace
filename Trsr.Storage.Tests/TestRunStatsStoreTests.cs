@@ -38,11 +38,12 @@ public sealed class TestRunStatsStoreTests : BaseTest<Module>
 
         var found = await reader.FindAsync(run.Id, CancellationToken);
         found.Should().NotBeNull();
-        found!.TestRunId.Should().Be(run.Id);
+        found.TestRunId.Should().Be(run.Id);
         found.TestCases.Should().Be(4);
         found.Passed.Should().Be(3);
-        found.Usage.Should().NotBeNull();
-        found.Usage!.InputTokenCount.Should().Be(100);
+        var usage = found.Usage;
+        usage.Should().NotBeNull();
+        usage.InputTokenCount.Should().Be(100);
         found.Cost.Should().Be(0.05m);
         found.TotalDuration.Should().Be(TimeSpan.FromSeconds(2));
     }
@@ -59,7 +60,8 @@ public sealed class TestRunStatsStoreTests : BaseTest<Module>
         await writer.UpsertAsync(StatsFor(run, cases: 6, passed: 5), CancellationToken);
 
         var found = await reader.FindAsync(run.Id, CancellationToken);
-        found!.TestCases.Should().Be(6);
+        found.Should().NotBeNull();
+        found.TestCases.Should().Be(6);
         found.Passed.Should().Be(5);
 
         var all = await reader.QueryAsync(new TestRunStats.Filter(), CancellationToken);

@@ -28,7 +28,7 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
         var storageConfig = DetermineStorageConfiguration(connectionString);
 
         var containerBuilder = new ContainerBuilder();
-        containerBuilder.RegisterModule(new Module(storageConfig));
+        containerBuilder.RegisterModule(new Module(_ => storageConfig));
         containerBuilder.RegisterInstance(NullLoggerFactory.Instance).As<ILoggerFactory>();
         containerBuilder.RegisterGeneric(typeof(NullLogger<>)).As(typeof(ILogger<>));
         var container = containerBuilder.Build();
@@ -43,13 +43,10 @@ internal class StorageDbContextFactory : IDesignTimeDbContextFactory<StorageDbCo
             return StorageConfiguration.Postgres(connectionString);
         }
         
-        if (IsSqliteConnectionString(connectionString))
-        {
-            return StorageConfiguration.Sqlite(connectionString);
-        }
-        
-        // Default to SQL Server
-        return StorageConfiguration.SqlServer(connectionString);
+        return IsSqliteConnectionString(connectionString) 
+            ? StorageConfiguration.Sqlite(connectionString) :
+            // Default to SQL Server
+            StorageConfiguration.SqlServer(connectionString);
     }
 
     private static bool IsPostgresConnectionString(string connectionString)

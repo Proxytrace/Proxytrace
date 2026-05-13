@@ -44,15 +44,15 @@ public sealed class ProjectRepositoryTests : BaseTest<Module>
         var (repository, projectFactory, endpoint, users) = await SetupAsync(services, memberCount: 2);
         var createExisting = services.GetRequiredService<IProject.CreateExisting>();
 
-        var project = projectFactory("Add member", endpoint, new[] { users[0] });
+        var project = projectFactory("Add member", endpoint, [users[0]]);
         var saved = await repository.AddAsync(project, CancellationToken);
 
-        var updated = createExisting(saved.Name, saved.SystemEndpoint, new[] { users[0], users[1] }, saved);
+        var updated = createExisting(saved.Name, saved.SystemEndpoint, [users[0], users[1]], saved);
         await repository.UpdateAsync(updated, CancellationToken);
 
         var retrieved = await repository.GetAsync(saved.Id, CancellationToken);
         retrieved.Members.Should().HaveCount(2);
-        retrieved.Members.Select(m => m.Id).Should().BeEquivalentTo(new[] { users[0].Id, users[1].Id });
+        retrieved.Members.Select(m => m.Id).Should().BeEquivalentTo([users[0].Id, users[1].Id]);
     }
 
     [TestMethod]
@@ -65,7 +65,7 @@ public sealed class ProjectRepositoryTests : BaseTest<Module>
         var project = projectFactory("Remove member", endpoint, users);
         var saved = await repository.AddAsync(project, CancellationToken);
 
-        var updated = createExisting(saved.Name, saved.SystemEndpoint, new[] { users[0] }, saved);
+        var updated = createExisting(saved.Name, saved.SystemEndpoint, [users[0]], saved);
         await repository.UpdateAsync(updated, CancellationToken);
 
         var retrieved = await repository.GetAsync(saved.Id, CancellationToken);

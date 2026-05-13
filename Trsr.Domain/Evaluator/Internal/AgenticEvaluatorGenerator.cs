@@ -1,6 +1,5 @@
 using Trsr.Common.Random;
 using Trsr.Domain.Agent;
-using Trsr.Domain.Project;
 
 namespace Trsr.Domain.Evaluator.Internal;
 

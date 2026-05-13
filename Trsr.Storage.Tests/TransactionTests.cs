@@ -59,7 +59,7 @@ public sealed class TransactionTests : BaseTest<Module>
         // Verify the transaction was rolled back
         if (userId != Guid.Empty)
         {
-            var userExists = await repository.ContainsAsync(userId, CancellationToken);
+            await repository.ContainsAsync(userId, CancellationToken);
             // In an in-memory database, rollback behavior may vary
             // This test documents the expected behavior
         }
@@ -129,8 +129,7 @@ public sealed class TransactionTests : BaseTest<Module>
         var transaction = services.GetRequiredService<ITransaction>();
         var repository = services.GetRequiredService<IRepository<IUser>>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-        var initialCount = await repository.CountAsync(CancellationToken);
-        var createdUserIds = new List<Guid>();
+        await repository.CountAsync(CancellationToken);
 
         // Act & Assert
         await FluentActions.Invoking(async () =>
@@ -141,9 +140,7 @@ public sealed class TransactionTests : BaseTest<Module>
                 var user2 = await generator.GenerateAsync(CancellationToken);
 
                 await repository.AddAsync(user1, CancellationToken);
-                createdUserIds.Add(user1.Id);
                 await repository.AddAsync(user2, CancellationToken);
-                createdUserIds.Add(user2.Id);
 
                 // Force failure after adding users
                 throw new InvalidOperationException("Test exception");
@@ -151,7 +148,7 @@ public sealed class TransactionTests : BaseTest<Module>
         }).Should().ThrowAsync<InvalidOperationException>();
 
         // Verify rollback - count should be unchanged
-        var finalCount = await repository.CountAsync(CancellationToken);
+        await repository.CountAsync(CancellationToken);
         // Note: In-memory database might not support true transaction rollback
         // This test documents the expected behavior
     }

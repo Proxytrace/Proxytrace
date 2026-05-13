@@ -23,7 +23,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
         var user = await services.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
 
         var result = await controller.Create(
-            new CreateProjectRequest("New project", endpoint.Id, new[] { user.Id }),
+            new CreateProjectRequest("New project", endpoint.Id, [user.Id]),
             CancellationToken);
 
         var actionResult = (CreatedAtActionResult)(result.Result ?? throw new InvalidOperationException("Expected non-null Result."));
@@ -106,7 +106,7 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
 
         await controller.AddMember(project.Id, userA.Id, CancellationToken);
 
-        var update = new UpdateProjectRequest(project.Name, project.SystemEndpoint.Id, new[] { userB.Id });
+        var update = new UpdateProjectRequest(project.Name, project.SystemEndpoint.Id, [userB.Id]);
         var result = await controller.Update(project.Id, update, CancellationToken);
 
         (result.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().ContainSingle(m => m.Id == userB.Id);

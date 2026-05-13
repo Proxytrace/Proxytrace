@@ -17,7 +17,7 @@ internal sealed class AgentDocumentMapper : AbstractDocumentMapper<IAgent>
     {
     }
     
-    protected override Document? GetDocument(IAgent agent)
+    protected override Document GetDocument(IAgent agent)
     {
         var body = new StringBuilder()
             .Append(agent.SystemPrompt.Name).Append('\n')

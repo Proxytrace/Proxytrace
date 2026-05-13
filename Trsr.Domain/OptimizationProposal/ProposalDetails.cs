@@ -1,4 +1,3 @@
-using Trsr.Domain.Message;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.OptimizationProposal;

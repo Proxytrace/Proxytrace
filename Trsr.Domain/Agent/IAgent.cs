@@ -1,4 +1,3 @@
-using Trsr.Domain.Completion;
 using Trsr.Domain.Inference;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;

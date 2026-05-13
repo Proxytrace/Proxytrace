@@ -57,16 +57,12 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterServiceCollection(services
-            => services.AddHostedService(sc =>
+            => services.AddSingleton<IHostedService>(sc =>
             {
-                KioskOptions kiosk = sc.GetRequiredService<KioskOptions>();
-                if (kiosk.Enabled)
-                {
-                    // ReSharper disable once NullableWarningSuppressionIsUsed
-                    return (TestRunnerService)null!;
-                }
-
-                return sc.GetRequiredService<TestRunnerService>();
+                var kiosk = sc.GetRequiredService<KioskOptions>();
+                return kiosk.Enabled
+                    ? new NullHostedService()
+                    : sc.GetRequiredService<TestRunnerService>();
             }));
 
         builder.RegisterType<OpenAiCallParser>()
@@ -80,16 +76,12 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterServiceCollection(services =>
         {
-            services.AddHostedService(sc =>
+            services.AddSingleton<IHostedService>(sc =>
             {
-                KioskOptions kiosk = sc.GetRequiredService<KioskOptions>();
-                if (kiosk.Enabled)
-                {
-                    // ReSharper disable once NullableWarningSuppressionIsUsed
-                    return (AgentCallIngestor)null!;
-                }
-
-                return sc.GetRequiredService<AgentCallIngestor>();
+                var kiosk = sc.GetRequiredService<KioskOptions>();
+                return kiosk.Enabled
+                    ? new NullHostedService()
+                    : sc.GetRequiredService<AgentCallIngestor>();
             });
         });
 
@@ -113,13 +105,13 @@ public sealed class Module : Autofac.Module
             .As<Auth.Local.IPasswordService>()
             .SingleInstance();
 
-        // builder.Register(_ => new Auth.Local.LocalAuthOptions
-        //     {
-        //         SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-        //     })
-        //     .As<Auth.Local.LocalAuthOptions>()
-        //     .SingleInstance()
-        //     .IfNotRegistered(typeof(Auth.Local.LocalAuthOptions));
+        builder.Register(_ => new Auth.Local.LocalAuthOptions
+            {
+                SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+            })
+            .As<Auth.Local.LocalAuthOptions>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(Auth.Local.LocalAuthOptions));
 
         builder.RegisterType<Auth.Local.Internal.LocalTokenIssuer>()
             .As<Auth.Local.ILocalTokenIssuer>()
@@ -158,13 +150,12 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
         builder.RegisterServiceCollection(services =>
         {
-            services.AddHostedService(sp =>
+            services.AddSingleton<IHostedService>(sp =>
             {
                 var kiosk = sp.GetRequiredService<KioskOptions>();
                 if (!kiosk.Enabled)
                 {
-                    // ReSharper disable once NullableWarningSuppressionIsUsed
-                    return (DemoSeederHostedService)null!;
+                    return new NullHostedService();
                 }
 
                 return sp.GetRequiredService<DemoSeederHostedService>();

@@ -27,7 +27,7 @@ internal class ModelGenerator : DomainEntityGenerator<IModel>
     }
 
     public override Task<IModel> GenerateAsync(CancellationToken cancellationToken = default)
-        => factory(name: $"{Random.Any(ModelNames)}-{Random.UniqueString()}").ToTaskResult();
+        => factory(name: $"{random.Any(ModelNames)}-{random.UniqueString()}").ToTaskResult();
 }
 
 

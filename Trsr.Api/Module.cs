@@ -25,8 +25,8 @@ internal sealed class Module : Autofac.Module
 
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         IConfiguration configuration = configurationBuilder
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("appsettings.development.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .AddJsonFile("appsettings.development.json", optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
@@ -88,7 +88,7 @@ internal sealed class Module : Autofac.Module
             storageConfig = DetermineStorageConfiguration(connectionString);
         }
 
-        builder.RegisterModule(new Storage.Module(storageConfig));
+        builder.RegisterModule(new Storage.Module(_ => storageConfig));
 
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()

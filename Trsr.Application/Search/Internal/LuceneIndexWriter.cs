@@ -29,9 +29,9 @@ internal sealed class LuceneIndexWriter : IDisposable
         {
             OpenMode = OpenMode.CREATE_OR_APPEND,
         };
-        this.writer = new IndexWriter(directory, config);
-        this.writer.Commit();
-        this.searcherManager = new SearcherManager(this.writer, applyAllDeletes: true, null);
+        writer = new IndexWriter(directory, config);
+        writer.Commit();
+        searcherManager = new SearcherManager(writer, applyAllDeletes: true, null);
     }
 
     internal static LuceneIndexWriter ForTesting(Lucene.Net.Store.Directory directory)

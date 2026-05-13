@@ -14,19 +14,19 @@ namespace Trsr.Api.Controllers;
 [Route("api/setup")]
 public class SetupController : ControllerBase
 {
-    private readonly IRepository<IUser> users;
-    private readonly IRepository<IProject> projects;
+    private readonly IRepository<IUser> userRepository;
+    private readonly IRepository<IProject> projectRepository;
     private readonly IDataCleanupService cleanup;
     private readonly ISetupService setup;
 
     public SetupController(
-        IRepository<IUser> users,
-        IRepository<IProject> projects,
+        IRepository<IUser> userRepository,
+        IRepository<IProject> projectRepository,
         IDataCleanupService cleanup,
         ISetupService setup)
     {
-        this.users = users;
-        this.projects = projects;
+        this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
         this.cleanup = cleanup;
         this.setup = setup;
     }
@@ -35,8 +35,8 @@ public class SetupController : ControllerBase
     [AllowAnonymous]
     public async Task<SetupStatusDto> GetStatus(CancellationToken cancellationToken)
     {
-        var users = await this.users.CountAsync(cancellationToken);
-        var projects = await this.projects.CountAsync(cancellationToken);
+        var users = await this.userRepository.CountAsync(cancellationToken);
+        var projects = await this.projectRepository.CountAsync(cancellationToken);
         return new SetupStatusDto { IsConfigured = users > 0 && projects > 0 };
     }
 
@@ -46,7 +46,7 @@ public class SetupController : ControllerBase
         [FromBody] CompleteSetupRequest request,
         CancellationToken cancellationToken)
     {
-        if (await projects.CountAsync(cancellationToken) > 0)
+        if (await projectRepository.CountAsync(cancellationToken) > 0)
             return Conflict("Setup has already been completed.");
 
         var input = new SetupInput(

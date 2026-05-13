@@ -2,7 +2,7 @@ using Trsr.Domain.User;
 
 namespace Trsr.Storage.Internal.Entities.User;
 
-[StoredDomainEntity(typeof(Trsr.Domain.User.IUser))]
+[StoredDomainEntity(typeof(IUser))]
 [Cacheable]
 internal record UserEntity : Entity
 {

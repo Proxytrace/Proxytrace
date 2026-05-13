@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+
 // ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace Trsr.Common.Validation;

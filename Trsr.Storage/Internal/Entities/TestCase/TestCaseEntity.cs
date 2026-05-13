@@ -1,8 +1,9 @@
 using Trsr.Domain.Message;
+using Trsr.Domain.TestCase;
 
 namespace Trsr.Storage.Internal.Entities.TestCase;
 
-[StoredDomainEntity(typeof(Trsr.Domain.TestCase.ITestCase))]
+[StoredDomainEntity(typeof(ITestCase))]
 internal record TestCaseEntity : Entity
 {
     /// <summary>

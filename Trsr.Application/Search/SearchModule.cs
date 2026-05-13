@@ -15,6 +15,11 @@ internal sealed class SearchModule : Autofac.Module
     {
         base.Load(builder);
 
+        builder.RegisterInstance(new SearchConfiguration())
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(SearchConfiguration));
+
         builder.Register(ctx =>
             {
                 var cfg = ctx.Resolve<SearchConfiguration>();

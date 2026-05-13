@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Trsr.Application.Ingestion.Internal;
 using Trsr.Domain;
 using Trsr.Domain.AgentCall;
-using Trsr.Domain.Inference;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Testing;
@@ -18,8 +17,6 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     private const string UserPrompt = "What's the weather in Berlin?";
     private const string ToolCallId = "call_abc123";
     private const string ToolName = "get_weather";
-    private const string ToolResult = "Sunny, 25C";
-    private const string FinalReply = "It's sunny and 25C in Berlin.";
     private const string Model = "gpt-4o";
 
     private const string FirstRequestBody = $$"""
@@ -61,70 +58,6 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
                                                    "usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
                                                }
                                                """;
-
-    private const string ContinuationRequestBody = $$"""
-                                                     {
-                                                         "model": "{{Model}}",
-                                                         "messages": [
-                                                             {"role": "system", "content": "{{SystemPrompt}}"},
-                                                             {"role": "user", "content": "{{UserPrompt}}"},
-                                                             {
-                                                                 "role": "assistant",
-                                                                 "content": null,
-                                                                 "tool_calls": [{
-                                                                     "id": "{{ToolCallId}}",
-                                                                     "type": "function",
-                                                                     "function": {"name": "{{ToolName}}", "arguments": "{}"}
-                                                                 }]
-                                                             },
-                                                             {"role": "tool", "tool_call_id": "{{ToolCallId}}", "content": "{{ToolResult}}"}
-                                                         ],
-                                                         "tools": [{
-                                                             "type": "function",
-                                                             "function": {
-                                                                 "name": "{{ToolName}}",
-                                                                 "description": "Get current weather",
-                                                                 "parameters": {"type": "object", "properties": "{}"}
-                                                             }
-                                                         }]
-                                                     }
-                                                     """;
-
-    private const string ContinuationResponseBody = $$"""
-                                                      {
-                                                          "id": "chatcmpl-2",
-                                                          "object": "chat.completion",
-                                                          "model": "{{Model}}",
-                                                          "choices": [{
-                                                              "index": 0,
-                                                              "message": {"role": "assistant", "content": "{{FinalReply}}"},
-                                                              "finish_reason": "stop"
-                                                          }],
-                                                          "usage": {"prompt_tokens": 20, "completion_tokens": 8, "total_tokens": 28}
-                                                      }
-                                                      """;
-
-    // Same conversation but second call has a different system message (tool info stripped), simulating
-    // agents that inject tool descriptions into the system message on the first call only.
-    private const string ContinuationRequestBodyDifferentSystemMessage = $$"""
-                                                                           {
-                                                                               "model": "{{Model}}",
-                                                                               "messages": [
-                                                                                   {"role": "system", "content": "Different system message without tool info"},
-                                                                                   {"role": "user", "content": "{{UserPrompt}}"},
-                                                                                   {
-                                                                                       "role": "assistant",
-                                                                                       "content": null,
-                                                                                       "tool_calls": [{
-                                                                                           "id": "{{ToolCallId}}",
-                                                                                           "type": "function",
-                                                                                           "function": {"name": "{{ToolName}}", "arguments": "{}"}
-                                                                                       }]
-                                                                                   },
-                                                                                   {"role": "tool", "tool_call_id": "{{ToolCallId}}", "content": "{{ToolResult}}"}
-                                                                               ]
-                                                                           }
-                                                                           """;
 
     // Plain multi-turn chat (no tools) — used for conversation grouping tests
     private const string ChatTurn1RequestBody = $$"""

@@ -11,5 +11,5 @@ internal class SystemMessageGenerator : DomainObjectGenerator<SystemMessage>
     }
 
     public override Task<SystemMessage> CreateAsync(CancellationToken cancellationToken = default)
-        => new SystemMessage(Random.String()).ToTaskResult();
+        => new SystemMessage(random.String()).ToTaskResult();
 }

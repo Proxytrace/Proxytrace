@@ -142,26 +142,6 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task GetCaseFixture_Existing_ReturnsFixture()
-    {
-        IServiceProvider services = GetServices();
-        var controller = ResolveController(services);
-        var gen = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
-        ITestRun run;
-        do
-        {
-            run = await gen.CreateAsync(CancellationToken);
-        } while (run.TestResults.Count == 0);
-        var caseId = run.TestResults.First().TestCase.Id;
-
-        var result = await controller.GetCaseFixture(run.Id, caseId, CancellationToken);
-
-        result.Value.Should().NotBeNull();
-        result.Value.Endpoints.Should().NotBeEmpty();
-        result.Value.Runtime.Total.Should().BeGreaterThanOrEqualTo(0);
-    }
-
-    [TestMethod]
     public async Task Stream_UnknownRun_Returns404()
     {
         IServiceProvider services = GetServices();

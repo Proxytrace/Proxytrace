@@ -1,8 +1,6 @@
 using System.Reflection;
 using Autofac;
-using Autofac.Builder;
 using Autofac.Extensions.DependencyInjection;
-using Autofac.Features.Scanning;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Common.Lifecycle;
 

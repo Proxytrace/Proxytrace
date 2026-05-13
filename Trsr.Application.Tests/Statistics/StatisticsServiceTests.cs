@@ -1,5 +1,4 @@
 using AwesomeAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Trsr.Application.Statistics;
 using Trsr.Application.Statistics.Internal;

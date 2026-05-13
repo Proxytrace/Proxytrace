@@ -102,9 +102,9 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
     private record SystemPromptOptimizerOutput
     {
         [Description("the full new system prompt")]
-        public required string ProposedSystemPrompt { get; init; }
+        public required string ProposedSystemPrompt { get; [UsedImplicitly] init; }
 
         [Description("1-3 sentences explaining what changed and why, citing patterns observed in the failing cases")]
-        public required string Rationale { get; set; }
+        public required string Rationale { get; [UsedImplicitly] set; }
     }
 }

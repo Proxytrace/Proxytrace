@@ -1,4 +1,3 @@
-using System.Net;
 using Trsr.Api.Dto.Agents;
 using Trsr.Api.Dto.Inference;
 

@@ -23,9 +23,9 @@ internal class InviteGenerator : DomainEntityGenerator<IInvite>
     {
         var user = await users.CreateAsync(cancellationToken);
         return factory(
-            email: Random.Email(),
-            role: Random.Enum<UserRole>(),
-            token: Random.UniqueString(),
+            email: random.Email(),
+            role: random.Enum<UserRole>(),
+            token: random.UniqueString(),
             expiresAt: DateTimeOffset.UtcNow.AddDays(7),
             invitedBy: user);
     }

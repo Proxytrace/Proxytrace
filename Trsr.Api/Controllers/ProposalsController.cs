@@ -111,7 +111,7 @@ public class ProposalsController : ControllerBase
     }
 
     private static SystemPromptDetailsDto ToSystemPromptDto(IAgent agent, SystemPromptDetails sp)
-        => new(agent.SystemPrompt.Template, sp.ProposedSystemMessage.ToString());
+        => new(agent.SystemPrompt.Template, sp.ProposedSystemMessage);
 
     private static ToolDetailsDto ToToolDto(IAgent agent, ToolDetails td)
         => new(
@@ -134,7 +134,11 @@ public class ProposalsController : ControllerBase
             if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
                 enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
         }
-        catch { }
+        catch
+        {
+            // ignored
+        }
+
         return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
 }

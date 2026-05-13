@@ -19,7 +19,6 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
 {
     private static AgentNameGenerator Build(
         IModelClient modelClient,
-        out IPromptTemplateRepository prompts,
         out IAgentRepository agentRepo,
         out IPromptTemplate template,
         out IProject project)
@@ -27,7 +26,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
         template = Substitute.For<IPromptTemplate>();
         template.Template.Returns("Generate a name for this agent.");
 
-        prompts = Substitute.For<IPromptTemplateRepository>();
+        var prompts = Substitute.For<IPromptTemplateRepository>();
         prompts.GetAsync("agent_name_generator", Arg.Any<CancellationToken>()).Returns(template);
 
         var endpoint = Substitute.For<IModelEndpoint>();
@@ -46,7 +45,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
             endpoint: Arg.Any<IModelEndpoint>(),
             name: Arg.Any<string?>(),
             isSystemAgent: Arg.Any<bool>(),
-            modelParameters: Arg.Any<Trsr.Domain.Inference.IModelParameters?>(),
+            modelParameters: Arg.Any<Domain.Inference.IModelParameters?>(),
             cancellationToken: Arg.Any<CancellationToken>()).Returns(agent);
 
         return new AgentNameGenerator(prompts, agentRepo, NullLogger<AgentNameGenerator>.Instance);
@@ -69,7 +68,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
     [TestMethod]
     public async Task GenerateNameAsync_ReturnsModelResponse()
     {
-        var sut = Build(ClientReturning("Cool Agent"), out _, out _, out var template, out var project);
+        var sut = Build(ClientReturning("Cool Agent"), out _, out var template, out var project);
 
         var name = await sut.GenerateNameAsync(template, project, CancellationToken);
 
@@ -79,7 +78,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
     [TestMethod]
     public async Task GenerateNameAsync_UsesProjectSystemEndpointForGeneratorAgent()
     {
-        var sut = Build(ClientReturning("X"), out _, out var agentRepo, out var template, out var project);
+        var sut = Build(ClientReturning("X"), out var agentRepo, out var template, out var project);
 
         await sut.GenerateNameAsync(template, project, CancellationToken);
 
@@ -90,7 +89,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
             endpoint: project.SystemEndpoint,
             name: "agent_name_generator",
             isSystemAgent: true,
-            modelParameters: Arg.Any<Trsr.Domain.Inference.IModelParameters?>(),
+            modelParameters: Arg.Any<Domain.Inference.IModelParameters?>(),
             cancellationToken: Arg.Any<CancellationToken>());
     }
 
@@ -104,7 +103,7 @@ public sealed class AgentNameGeneratorTests : BaseTest<Module>
                 Arg.Any<IReadOnlyDictionary<string, string>?>(),
                 Arg.Any<CancellationToken>())
             .Throws(new InvalidOperationException("boom"));
-        var sut = Build(client, out _, out _, out var template, out var project);
+        var sut = Build(client, out _, out var template, out var project);
 
         await sut.Invoking(g => g.GenerateNameAsync(template, project, CancellationToken))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("boom");

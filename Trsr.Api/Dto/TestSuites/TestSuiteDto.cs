@@ -50,11 +50,7 @@ public record AddTestCaseRequest(
 /// Callers select which traces to include, enabling curation over blind bulk import.
 /// </summary>
 public record PromoteTracesRequest(
-    /// <summary>Human-readable label for the new suite.</summary>
     string Name,
-    /// <summary>The agent whose traces are being promoted. Must match the agent that produced the traces.</summary>
     Guid AgentId,
-    /// <summary>IDs of the <c>AgentCall</c> traces to promote into test cases.</summary>
     IReadOnlyList<Guid> AgentCallIds,
-    /// <summary>Optional IDs of existing evaluators to attach to the suite. When omitted or empty, a default ExactMatch evaluator is created.</summary>
     IReadOnlyList<Guid>? EvaluatorIds = null);

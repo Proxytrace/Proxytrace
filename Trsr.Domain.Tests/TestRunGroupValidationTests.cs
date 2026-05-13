@@ -35,7 +35,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
 
-        var action = () => factory.DynamicInvoke(new object?[] { null });
+        var action = () => factory.DynamicInvoke([null]);
         action.Should().Throw<Exception>();
     }
 

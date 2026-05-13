@@ -1,8 +1,4 @@
 using System.Net;
-using Trsr.Domain.Agent;
-using Trsr.Domain.Completion;
-using Trsr.Domain.Message;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 

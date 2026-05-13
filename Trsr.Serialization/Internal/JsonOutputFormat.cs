@@ -87,7 +87,7 @@ internal record JsonOutputFormat : IOutputFormat
     
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var r in Validation.NotNullOrWhiteSpace(Schema, nameof(Schema)).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotNullOrWhiteSpace(Schema).AsEnumerable()) yield return r;
         foreach (var r in Validation.Json(Schema).AsEnumerable()) yield return r;
     }
     

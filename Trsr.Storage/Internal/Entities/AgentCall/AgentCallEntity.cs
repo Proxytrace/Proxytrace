@@ -1,9 +1,10 @@
+using Trsr.Domain.AgentCall;
 using Trsr.Domain.Message;
 using Trsr.Storage.Internal.Entities.Inference;
 
 namespace Trsr.Storage.Internal.Entities.AgentCall;
 
-[StoredDomainEntity(typeof(Trsr.Domain.AgentCall.IAgentCall))]
+[StoredDomainEntity(typeof(IAgentCall))]
 internal record AgentCallEntity : Entity
 {
     public required Guid AgentId { get; init; }

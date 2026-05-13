@@ -4,12 +4,22 @@ internal class TempDirectory : ITempDirectory
 {
     public string Path { get; }
 
-    public TempDirectory(string? parentDirectory = null)
+    public TempDirectory(
+        string? parentDirectory = null,
+        string? prefix = null)
     {
         parentDirectory ??= System.IO.Path.GetTempPath();
-        Path = System.IO.Path.Combine(parentDirectory, System.IO.Path.GetRandomFileName());
+        
+        string folderName = !string.IsNullOrWhiteSpace(prefix)
+            ? $"{prefix}_{Guid.NewGuid()}"
+            : System.IO.Path.GetRandomFileName();
+        
+        Path = System.IO.Path.Combine(parentDirectory, folderName);
         Directory.CreateDirectory(Path);
     }
+    
+    public string Combine(string path)
+        => System.IO.Path.Combine(Path, path);
     
     public void Dispose()
     {

@@ -266,7 +266,6 @@ public class TestRunsController : ControllerBase
         var lower = providerName.ToLowerInvariant();
         if (lower.Contains("openai")) return "#10a37f";
         if (lower.Contains("azure")) return "#3b82f6";
-        if (lower.Contains("anthropic")) return "#d97757";
-        return "#8b5cf6";
+        return lower.Contains("anthropic") ? "#d97757" : "#8b5cf6";
     }
 }

@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Trsr.Application.Demo;
 using Trsr.Application.Statistics;
-using Trsr.Application.Statistics.TestRun;
 using Trsr.Common.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Storage.Internal;
@@ -24,11 +23,11 @@ namespace Trsr.Storage;
 /// </summary>
 public sealed class Module : Autofac.Module
 {
-    private readonly StorageConfiguration configuration;
+    private readonly Func<IServiceProvider, StorageConfiguration> configurationFactory;
 
-    public Module(StorageConfiguration configuration)
+    public Module(Func<IServiceProvider, StorageConfiguration> configurationFactory)
     {
-        this.configuration = configuration;
+        this.configurationFactory = configurationFactory;
     }
 
     /// <summary>
@@ -41,15 +40,12 @@ public sealed class Module : Autofac.Module
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule<Application.Module>();
 
-        builder.RegisterInstance(configuration).SingleInstance();
+        builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();
 
         builder.RegisterServiceCollection(services =>
         {
             // Register database initialization service
-            if (configuration.SupportsMigrations)
-            {
-                services.AddHostedService<DatabaseInitializationService>();
-            }
+            services.AddHostedService<DatabaseInitializationService>();
         });
 
         // Register the database initializer interface (accessible even if migrations not supported)
@@ -57,10 +53,10 @@ public sealed class Module : Autofac.Module
             .As<IDatabaseInitializer>()
             .SingleInstance();
 
-        builder.Register<DbContextOptions<StorageDbContext>>(_ =>
+        builder.Register<DbContextOptions<StorageDbContext>>(ct =>
         {
             var dbBuilder = new DbContextOptionsBuilder<StorageDbContext>();
-            ConfigureStorage(dbBuilder, configuration);
+            ConfigureStorage(dbBuilder, ct.Resolve<StorageConfiguration>());
             return dbBuilder.Options;
         }).SingleInstance();
 

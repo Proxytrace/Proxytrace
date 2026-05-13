@@ -11,9 +11,9 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
-using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 using Trsr.Domain.User;
+// ReSharper disable InconsistentNaming
 
 namespace Trsr.Application.Demo.Scenarios;
 
@@ -25,7 +25,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
     {
         var kiosk = services.GetRequiredService<KioskOptions>();
 
-        var users = services.GetRequiredService<IRepository<IUser>>();
+        services.GetRequiredService<IRepository<IUser>>();
         var userFactory = services.GetRequiredService<IUser.CreateNew>();
         var demoUser = await userFactory(
             kiosk.DemoUserEmail,
@@ -68,7 +68,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
         var project = await projects.AddAsync(projectFactory(
             "Showcase Project",
             gpt4oMiniEndpoint,
-            new[] { demoUser }), cancellationToken);
+            [demoUser]), cancellationToken);
 
         var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
         var paramsFactory = services.GetRequiredService<IModelParameters.Create>();
@@ -79,7 +79,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
             promptFactory("support-system",
                 "You are a friendly, concise customer-support agent for an e-commerce store. "
                 + "Always acknowledge the issue, propose a clear next step, and close politely."),
-            tools: Array.Empty<ToolSpecification>(),
+            tools: [],
             endpoint: gpt4oEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.3),
@@ -90,7 +90,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
             promptFactory("code-review-system",
                 "You are a senior software engineer reviewing pull requests. "
                 + "Identify correctness, security, and clarity issues. Be specific, cite line numbers."),
-            tools: Array.Empty<ToolSpecification>(),
+            tools: [],
             endpoint: claudeEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.2),
@@ -101,7 +101,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
             promptFactory("analytics-system",
                 "You are a data analyst. Given a question and a table description, "
                 + "answer with a short summary and a SQL query."),
-            tools: Array.Empty<ToolSpecification>(),
+            tools: [],
             endpoint: gpt4oEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.1),
@@ -161,17 +161,15 @@ internal sealed class CoreSeedScenario : IDemoScenario
             (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[] samples,
             int spreadHours)
         {
-            int i = 0;
             foreach (var s in samples)
             {
-                var request = new Conversation(new Message[]
-                {
+                var request = new Conversation([
                     agent.CreateSystemMessage(),
-                    new UserMessage(new[] { Content.FromText(s.user) }),
-                });
+                    new UserMessage([Content.FromText(s.user)])
+                ]);
                 var response = new AssistantMessage(
-                    new[] { Content.FromText(s.assistant) },
-                    Array.Empty<ToolRequest>());
+                    [Content.FromText(s.assistant)],
+                    []);
                 var completion = completionFactory(
                     response,
                     new TokenUsage(s.inTok, s.outTok),
@@ -187,7 +185,6 @@ internal sealed class CoreSeedScenario : IDemoScenario
                     errorMessage: null,
                     modelParameters: paramsFactory(temperature: 0.3),
                     conversationId: null).AddAsync(cancellationToken);
-                i++;
             }
             _ = spreadHours;
         }

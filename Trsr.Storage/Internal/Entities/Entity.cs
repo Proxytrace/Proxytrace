@@ -7,7 +7,7 @@ namespace Trsr.Storage.Internal.Entities;
 /// <summary>
 /// Base implementation of <see cref="IEntity"/>
 /// </summary>
-internal abstract record Entity : IEntity, IDomainEntityData
+internal abstract record Entity : IEntity
 {
     /// <inheritdoc cref="IDomainEntityData" />
     public required Guid Id { get; init; }
@@ -21,10 +21,10 @@ internal abstract record Entity : IEntity, IDomainEntityData
     /// <inheritdoc />
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var r in Validation.NotDefault(Id, nameof(Id)).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotDefault(CreatedAt, nameof(CreatedAt)).AsEnumerable()) yield return r;
-        foreach (var r in Validation.InPast(CreatedAt, nameof(CreatedAt)).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotDefault(UpdatedAt, nameof(UpdatedAt)).AsEnumerable()) yield return r;
-        foreach (var r in Validation.InPast(UpdatedAt, nameof(UpdatedAt)).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotDefault(Id).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotDefault(CreatedAt).AsEnumerable()) yield return r;
+        foreach (var r in Validation.InPast(CreatedAt).AsEnumerable()) yield return r;
+        foreach (var r in Validation.NotDefault(UpdatedAt).AsEnumerable()) yield return r;
+        foreach (var r in Validation.InPast(UpdatedAt).AsEnumerable()) yield return r;
     }
 }

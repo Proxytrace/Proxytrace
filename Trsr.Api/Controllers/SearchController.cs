@@ -84,7 +84,7 @@ public class SearchController : ControllerBase
         [FromBody] SearchIndexingSettingsDto settings,
         CancellationToken cancellationToken)
     {
-        if (settings.IndexedKinds is null || settings.IndexedKinds.Count == 0)
+        if (settings.IndexedKinds.Count == 0)
         {
             return BadRequest(new { error = "indexedKinds must contain at least one kind" });
         }

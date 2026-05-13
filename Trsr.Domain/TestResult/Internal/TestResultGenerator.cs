@@ -3,7 +3,6 @@ using Trsr.Common.Random;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
-using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
 
 namespace Trsr.Domain.TestResult.Internal;
@@ -31,7 +30,7 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
 
     public override async Task<ITestResult> GenerateAsync(CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, Random.Int(1, 3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
 
@@ -43,7 +42,7 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
 
     public async Task<ITestResult> CreateAsync(ITestCase testCase, CancellationToken cancellationToken = default)
     {
-        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, Random.Int(1, 3))
+        IReadOnlyCollection<IEvaluation> evaluations = await Enumerable.Range(0, random.Int(1, 3))
             .Select(_ => evaluationGenerator.CreateAsync(cancellationToken))
             .Await();
 
@@ -51,6 +50,6 @@ internal class TestResultGenerator : DomainEntityGenerator<ITestResult>, ITestRe
             testCase: testCase,
             completion: await completionGenerator.CreateAsync(cancellationToken),
             evaluations: evaluations);
-        return await Repository.AddAsync(result, cancellationToken);
+        return await repository.AddAsync(result, cancellationToken);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
-using Trsr.Common.Validation;
 
 namespace Trsr.Domain.Message;
 
@@ -23,7 +22,6 @@ public sealed record Conversation : IDomainObject
     /// <summary>
     /// Initializes a new instance of the <see cref="Conversation"/> class with the specified id, title, user name, and messages.
     /// </summary>
-    /// <param name="id">The unique identifier of the conversation.</param>
     /// <param name="messages">The messages in the conversation.</param>
     public Conversation(
         IReadOnlyList<Message> messages)

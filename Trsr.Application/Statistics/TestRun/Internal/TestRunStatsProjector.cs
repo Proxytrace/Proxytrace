@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Logging;
 using Trsr.Application.Statistics.Internal;
 using Trsr.Domain;
-using Trsr.Domain.Events;
 using Trsr.Domain.TestRun;
 using Trsr.Domain.Usage;
 

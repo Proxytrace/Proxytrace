@@ -1,3 +1,4 @@
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestResult;
 
@@ -20,6 +21,6 @@ internal record TestResultEntity : Entity
 internal record StoredEvaluation
 {
     public required Guid EvaluatorId { get; init; }
-    public required Domain.Evaluation.EvaluationScore Score { get; init; }
+    public required EvaluationScore Score { get; init; }
     public string? Reasoning { get; init; }
 }

@@ -71,6 +71,7 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
         await Task.Yield();
         throw new NotImplementedException();
 #pragma warning disable CS0162
+        // ReSharper disable once HeuristicUnreachableCode
         yield break;
 #pragma warning restore CS0162
     }
@@ -80,6 +81,7 @@ public sealed class PlaygroundControllerTests : BaseTest<Module>
         await Task.Yield();
         throw ex;
 #pragma warning disable CS0162
+        // ReSharper disable once HeuristicUnreachableCode
         yield break;
 #pragma warning restore CS0162
     }

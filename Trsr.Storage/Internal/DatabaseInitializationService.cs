@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -79,7 +80,7 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         }
 
         var connection = context.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
         }
@@ -124,6 +125,11 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        if (!configuration.SupportsMigrations)
+        {
+            return;
+        }
+        
         try
         {
             await EnsureDatabaseReadyAsync(cancellationToken);

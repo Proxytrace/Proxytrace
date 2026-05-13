@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trsr.Common.Async;
 using Trsr.Domain;
-using Trsr.Domain.TestRun;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
 using Trsr.Storage.Internal.Entities.TestSuite;

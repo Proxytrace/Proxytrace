@@ -1,8 +1,6 @@
-using AwesomeAssertions;
 using Autofac;
-using Microsoft.EntityFrameworkCore;
+using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Trsr.Domain;
 using Trsr.Domain.User;
 using Trsr.Testing;
@@ -81,7 +79,7 @@ public class SqliteTestModule : Autofac.Module
     {
         // Use SQLite with a temporary file-based database for testing
         var testDbPath = Path.Combine(Path.GetTempPath(), $"trsr_sqlite_test_{Guid.NewGuid()}.db");
-        builder.RegisterModule(new Storage.Module(StorageConfiguration.Sqlite($"Data Source={testDbPath}")));
+        builder.RegisterModule(new Storage.Module(_ => StorageConfiguration.Sqlite($"Data Source={testDbPath}")));
     }
 }
 

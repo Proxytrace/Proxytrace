@@ -3,7 +3,6 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
 using Trsr.Domain.Tools;
-using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.ModelEndpoint;
 
