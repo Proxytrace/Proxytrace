@@ -30,4 +30,6 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
         Guid conversationId,
         IProject project,
         CancellationToken cancellationToken = default);
+
+    Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken);
 }
