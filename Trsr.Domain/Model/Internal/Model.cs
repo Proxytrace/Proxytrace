@@ -24,7 +24,7 @@ internal record Model : DomainEntity<IModel>, IModel
         {
             yield return result;
         }
-        foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
+        yield return Validation.NotNullOrWhiteSpace(Name);
     }
 }
 

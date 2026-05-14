@@ -56,7 +56,7 @@ internal record TestRun : DomainEntity<ITestRun>, ITestRun
 
         if (Status == TestRunStatus.Completed)
         {
-            foreach (var r in Validation.NotNull(CompletedAt).AsEnumerable()) yield return r;
+            yield return Validation.NotNull(CompletedAt);
         }
     }
 

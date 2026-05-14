@@ -49,7 +49,7 @@ internal record TestSuite : DomainEntity<ITestSuite>, ITestSuite
             yield return result;
 
         if (string.IsNullOrWhiteSpace(Name))
-            foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
+            yield return Validation.NotNullOrWhiteSpace(Name);
 
         foreach (var result in Agent.Validate(validationContext))
             yield return result;

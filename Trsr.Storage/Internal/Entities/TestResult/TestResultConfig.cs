@@ -19,6 +19,7 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
     private readonly IRepository<IEvaluator> evaluators;
     private readonly ITestResult.CreateExisting factory;
     private readonly IEvaluation.Create createEvaluation;
+    private readonly IEvaluation.CreateErrored createErroredEvaluation;
     private readonly ISerializer serializer;
 
     public TestResultConfig(
@@ -26,12 +27,14 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
         IRepository<IEvaluator> evaluators,
         ITestResult.CreateExisting factory,
         IEvaluation.Create createEvaluation,
+        IEvaluation.CreateErrored createErroredEvaluation,
         ISerializer serializer)
     {
         this.testCases = testCases;
         this.evaluators = evaluators;
         this.factory = factory;
         this.createEvaluation = createEvaluation;
+        this.createErroredEvaluation = createErroredEvaluation;
         this.serializer = serializer;
     }
 
@@ -64,7 +67,14 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
         foreach (var e in stored.Evaluations)
         {
             var evaluator = await evaluators.GetAsync(e.EvaluatorId, cancellationToken);
-            evaluations.Add(createEvaluation(evaluator, e.Score, e.Reasoning));
+            if (!string.IsNullOrWhiteSpace(e.ErrorMessage))
+            {
+                evaluations.Add(createErroredEvaluation(evaluator, e.ErrorMessage ?? string.Empty));
+            }
+            else if (e.Score.HasValue)
+            {
+                evaluations.Add(createEvaluation(evaluator, e.Score.Value, e.Reasoning));
+            }
         }
 
         TokenUsage? usage = stored.InputTokens.HasValue && stored.OutputTokens.HasValue
@@ -87,7 +97,13 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
             TestCase = domain.TestCase.Id,
             ActualResponse = domain.ActualResponse,
             Evaluations = domain.Evaluations
-                .Select(e => new StoredEvaluation { EvaluatorId = e.Evaluator.Id, Score = e.Score, Reasoning = e.Reasoning })
+                .Select(e => new StoredEvaluation
+                {
+                    EvaluatorId = e.Evaluator.Id,
+                    Score = e.Score,
+                    Reasoning = e.Reasoning,
+                    ErrorMessage = e.ErrorMessage,
+                })
                 .ToArray(),
             DurationMs = (long)domain.Latency.TotalMicroseconds,
             InputTokens = (long?)domain.Usage?.InputTokenCount,

@@ -23,6 +23,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestResult.CreateNew createTestResult;
     private readonly ITestRun.CreateNew createTestRun;
     private readonly ITestRunGroup.CreateNew createTestRunGroup;
+    private readonly IEvaluation.CreateErrored createErroredEvaluation;
     private readonly ITestRunRepository testRunRepository;
     private readonly ITestRunGroupRepository testRunGroupRepository;
     private readonly IRepository<ITestResult> testResultRepository;
@@ -44,6 +45,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestResult.CreateNew createTestResult,
         ITestRun.CreateNew createTestRun,
         ITestRunGroup.CreateNew createTestRunGroup,
+        IEvaluation.CreateErrored createErroredEvaluation,
         ITestRunRepository testRunRepository,
         ITestRunGroupRepository testRunGroupRepository,
         IRepository<ITestResult> testResultRepository,
@@ -56,6 +58,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
         this.createTestRunGroup = createTestRunGroup;
+        this.createErroredEvaluation = createErroredEvaluation;
         this.testRunRepository = testRunRepository;
         this.testRunGroupRepository = testRunGroupRepository;
         this.testResultRepository = testResultRepository;
@@ -269,7 +272,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluator.Id,
                 evaluator.Kind,
                 testResult.Id);
-            return;
+            evaluation = createErroredEvaluation(evaluator, $"{ex.GetType().Name}: {ex.Message}");
         }
 
         if (evaluation is null)
@@ -289,7 +292,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluator.Kind,
                 evaluator.Name,
                 evaluation.Score,
-                evaluation.Reasoning)));
+                evaluation.Reasoning,
+                evaluation.ErrorMessage)));
     }
 
     private static bool IsTerminal(TestRunStatus status)

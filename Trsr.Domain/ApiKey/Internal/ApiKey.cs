@@ -49,14 +49,7 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
             yield return result;
         }
 
-        if (string.IsNullOrWhiteSpace(Name))
-        {
-            foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
-        }
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            foreach (var r in Validation.NotNullOrWhiteSpace(apiKey, nameof(IApiKey.ApiKey)).AsEnumerable()) yield return r;
-        }
+        yield return Validation.NotNullOrWhiteSpace(Name);
+        yield return Validation.NotNullOrWhiteSpace(apiKey);
     }
 }

@@ -57,10 +57,10 @@ internal record Invite : DomainEntity<IInvite>, IInvite
             yield return result;
         }
 
-        foreach (var r in Validation.NotNullOrWhiteSpace(Email).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotNullOrWhiteSpace(Token).AsEnumerable()) yield return r;
-        foreach (var r in Validation.Defined(Role).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotBefore(ExpiresAt, CreatedAt).AsEnumerable()) yield return r;
+        yield return Validation.NotNullOrWhiteSpace(Email);
+        yield return Validation.NotNullOrWhiteSpace(Token);
+        yield return Validation.Defined(Role);
+        yield return Validation.NotBefore(ExpiresAt, CreatedAt);
 
         foreach (var result in InvitedBy.Validate(validationContext))
         {

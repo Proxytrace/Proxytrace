@@ -29,7 +29,7 @@ internal sealed record Completion : ICompletion
         {
             yield return validationResult;
         }
-        
-        foreach (var r in Validation.Positive(Latency).AsEnumerable()) yield return r;
+
+        yield return Validation.Positive(Latency);
     }
 }

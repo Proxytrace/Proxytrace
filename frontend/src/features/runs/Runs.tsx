@@ -4,10 +4,12 @@ import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
-import { TestRunStatus, EvaluatorKind, EvaluationScore, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
+import { TestRunStatus, EvaluatorKind, EvaluationScore, EvaluationStatus, type EvaluationResultDto, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
 
 const PASSING_SCORES = new Set<EvaluationScore>([EvaluationScore.Acceptable, EvaluationScore.Good, EvaluationScore.Excellent]);
-const isPass = (score: EvaluationScore) => PASSING_SCORES.has(score);
+const isPass = (e: EvaluationResultDto) =>
+  e.status === EvaluationStatus.Succeeded && e.score !== null && PASSING_SCORES.has(e.score);
+const isErrored = (e: EvaluationResultDto) => e.status === EvaluationStatus.Errored;
 import { GridIcon, TableIcon, TrashIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useTestRunGroupStream } from '../../api/event-stream';
@@ -45,13 +47,14 @@ function passColorOf(rate: number) {
 
 function resultPass(r: TestResultDto): boolean | null {
   if (r.evaluations.length === 0) return null;
-  return r.evaluations.every(e => isPass(e.score));
+  return r.evaluations.every(e => isPass(e));
 }
 
 function resultScore(r: TestResultDto): number | null {
-  if (r.evaluations.length === 0) return null;
-  const passed = r.evaluations.filter(e => isPass(e.score)).length;
-  return passed / r.evaluations.length;
+  const succeeded = r.evaluations.filter(e => e.status === EvaluationStatus.Succeeded);
+  if (succeeded.length === 0) return null;
+  const passed = succeeded.filter(e => isPass(e)).length;
+  return passed / succeeded.length;
 }
 
 function avgLatency(run: TestRunDto): number | null {
@@ -121,7 +124,10 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
   const pass = resultPass(r);
   const score = resultScore(r);
   const scoreColor = score === null ? 'var(--text-muted)' : score >= SCORE_WARN ? 'var(--success)' : score >= SCORE_DANGER ? 'var(--warn)' : 'var(--danger)';
-  const reasoning = r.evaluations.find(e => !isPass(e.score) && e.reasoning)?.reasoning;
+  const erroredFirst = r.evaluations.find(e => isErrored(e));
+  const reasoning = erroredFirst
+    ? erroredFirst.errorMessage
+    : r.evaluations.find(e => !isPass(e) && e.reasoning)?.reasoning;
   const tint = pass === false
     ? (isSelected ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.05)')
     : (isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)');
@@ -179,22 +185,33 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
         <div className="flex flex-wrap gap-[4px]">
           {r.evaluations.map((e, i) => {
             const c = EVALUATOR_KIND_COLOR[e.evaluatorKind as EvaluatorKind] ?? 'var(--text-muted)';
-            const evalPass = isPass(e.score);
+            const errored = isErrored(e);
+            const evalPass = isPass(e);
+            const accent = errored ? 'var(--warn)' : (evalPass ? c : 'var(--danger)');
+            const bg = errored
+              ? 'color-mix(in srgb, var(--warn) 18%, transparent)'
+              : evalPass
+                ? `color-mix(in srgb, ${c} 14%, transparent)`
+                : 'color-mix(in srgb, var(--danger) 18%, transparent)';
+            const title = errored
+              ? `${e.evaluatorName}: error — ${e.errorMessage ?? ''}`
+              : `${e.evaluatorName}: ${e.score}`;
+            const label = errored ? `${e.evaluatorName} · error` : e.evaluatorName;
             return (
               <span
                 key={i}
-                title={`${e.evaluatorName}: ${e.score}`}
+                title={title}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   padding: '2px 7px', borderRadius: 100,
-                  background: evalPass ? `color-mix(in srgb, ${c} 14%, transparent)` : 'color-mix(in srgb, var(--danger) 18%, transparent)',
-                  color: evalPass ? c : 'var(--danger)',
+                  background: bg,
+                  color: accent,
                   fontSize: 10, fontWeight: 600,
-                  opacity: evalPass ? 0.85 : 1,
+                  opacity: errored ? 1 : evalPass ? 0.85 : 1,
                 }}
               >
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: evalPass ? c : 'var(--danger)' }} />
-                {e.evaluatorName}
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent }} />
+                {label}
               </span>
             );
           })}
@@ -331,8 +348,10 @@ function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Se
       key: 'note', label: 'Note', width: '1.4fr',
       render: r => {
         const pass = resultPass(r);
-        const note = r.evaluations.find(e => e.reasoning)?.reasoning ?? '';
-        return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color: pass ? 'var(--text-muted)' : 'var(--danger)' }}>{note}</span>;
+        const errored = r.evaluations.find(e => isErrored(e));
+        const note = errored ? (errored.errorMessage ?? '') : (r.evaluations.find(e => e.reasoning)?.reasoning ?? '');
+        const color = errored ? 'var(--warn)' : (pass ? 'var(--text-muted)' : 'var(--danger)');
+        return <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: 11.5, color }}>{note}</span>;
       },
     },
   ];

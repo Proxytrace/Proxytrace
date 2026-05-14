@@ -21,6 +21,7 @@ internal record TestResultEntity : Entity
 internal record StoredEvaluation
 {
     public required Guid EvaluatorId { get; init; }
-    public required EvaluationScore Score { get; init; }
+    public EvaluationScore? Score { get; init; }
     public string? Reasoning { get; init; }
+    public string? ErrorMessage { get; init; }
 }

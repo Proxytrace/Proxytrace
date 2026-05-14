@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { EvaluationScore, type EvaluationResultDto, type MessageDto } from '../../api/models';
+import { EvaluationScore, EvaluationStatus, type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Card } from '../../components/ui/Card';
@@ -268,7 +268,23 @@ function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading
     );
   }
   if (!result) return null;
-  const color = SCORE_COLOR[result.score] ?? 'var(--accent-primary)';
+  if (result.status === EvaluationStatus.Errored) {
+    const color = 'var(--warn)';
+    return (
+      <div className="flex items-center gap-1.5">
+        <span
+          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
+          style={{ background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
+          title={result.errorMessage ?? 'Evaluator errored'}
+        >
+          <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+          Error
+        </span>
+        {result.errorMessage && <ReasoningTip text={result.errorMessage} />}
+      </div>
+    );
+  }
+  const color = result.score ? (SCORE_COLOR[result.score] ?? 'var(--accent-primary)') : 'var(--accent-primary)';
   const hasReasoning = !!result.reasoning;
   return (
     <div className="flex items-center gap-1.5">

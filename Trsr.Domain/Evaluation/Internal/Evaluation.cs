@@ -7,9 +7,14 @@ namespace Trsr.Domain.Evaluation.Internal;
 internal sealed record Evaluation : IEvaluation
 {
     public IEvaluator Evaluator { get; }
-    public EvaluationScore Score { get; }
-    public bool Passed => Score >= EvaluationScore.Acceptable;
+    public EvaluationScore? Score { get; }
+
+    public bool Passed =>
+        string.IsNullOrWhiteSpace(ErrorMessage)
+        && Score is >= EvaluationScore.Acceptable;
+
     public string? Reasoning { get; }
+    public string? ErrorMessage { get; }
 
     public Evaluation(
         IEvaluator evaluator,
@@ -19,8 +24,19 @@ internal sealed record Evaluation : IEvaluation
         Evaluator = evaluator;
         Score = score;
         Reasoning = reasoning;
+        ErrorMessage = null;
     }
-    
+
+    public Evaluation(
+        IEvaluator evaluator,
+        string errorMessage)
+    {
+        Evaluator = evaluator;
+        Score = null;
+        Reasoning = null;
+        ErrorMessage = errorMessage;
+    }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var validationResult in Evaluator.Validate(validationContext))
@@ -28,6 +44,12 @@ internal sealed record Evaluation : IEvaluation
             yield return validationResult;
         }
 
-        yield return Validation.Defined(Score);
+        yield return Validation.NotNull(Score);
+        if (Score.HasValue)
+        {
+            yield return Validation.Defined(Score.Value);
+        }
+
+        yield return Validation.NotNullOrWhiteSpace(ErrorMessage);
     }
 }

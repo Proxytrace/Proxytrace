@@ -7,10 +7,15 @@ internal static class EvaluationExtensions
 {
     public static EvaluationScore? CombineScores(this IReadOnlyCollection<IEvaluation> evaluations)
     {
-        if (evaluations.Count == 0)
+        var scored = evaluations
+            .Where(x => x is { ErrorMessage: null, Score: not null })
+            .Select(x => (byte)(x.Score ?? 0))
+            .ToArray();
+
+        if (scored.Length == 0)
         {
             return null;
         }
-        return (EvaluationScore)Math.Round(evaluations.Average(x => (byte)x.Score));
+        return (EvaluationScore)Math.Round(scored.Average(b => (double)b));
     }
 }

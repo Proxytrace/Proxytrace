@@ -5,5 +5,7 @@ namespace Trsr.Application.Optimization;
 
 public interface IOptimizer
 {
-    Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(ITestRunGroup testRunGroup, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
+        ITestRunGroup testRunGroup, 
+        CancellationToken cancellationToken = default);
 }
