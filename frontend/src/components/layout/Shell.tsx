@@ -4,6 +4,7 @@ import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useAuthMode } from '../../auth/authMode';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
+import { Button } from '../ui/Button';
 import { ProjectSelector } from './ProjectSelector';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { checkHealth } from '../../api/health';
@@ -189,12 +190,9 @@ export function Shell() {
             <span className="absolute top-[6px] right-[6px] w-[7px] h-[7px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-primary)]" />
           </button>
 
-          <button
-            className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]"
-          >
-            <PlusIcon size={14} />
+          <Button size="sm" leftIcon={<PlusIcon size={14} />} className="shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]!">
             New Test Suite
-          </button>
+          </Button>
 
           <button
             type="button"
