@@ -5,6 +5,7 @@ using Trsr.Application.Optimization.Internal;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Application.Statistics;
 using Trsr.Application.Statistics.TestRun;
+using Trsr.Application.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -258,6 +259,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             agent.Project.Returns(project);
             agent.SystemPrompt.Returns(systemPrompt);
             agent.Tools.Returns(new List<ToolSpecification>());
+            agent.ModelParameters.Returns(Substitute.For<Domain.Inference.IModelParameters>());
 
             var suite = Substitute.For<ITestSuite>();
             suite.Agent.Returns(agent);
@@ -265,6 +267,24 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             var group = Substitute.For<ITestRunGroup>();
             group.Id.Returns(Guid.NewGuid());
             group.Suite.Returns(suite);
+
+            var abTestRun = Substitute.For<ITestRun>();
+            abTestRun.Id.Returns(Guid.NewGuid());
+            var abGroup = Substitute.For<ITestRunGroup>();
+            abGroup.GetTestRuns(Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<IReadOnlyList<ITestRun>>([abTestRun]));
+
+            var testRunnerService = Substitute.For<ITestRunnerService>();
+            testRunnerService.RunInForegroundAsync(
+                    Arg.Any<ITestSuite>(),
+                    Arg.Any<IReadOnlyList<IModelEndpoint>>(),
+                    Arg.Any<IAgent?>(),
+                    Arg.Any<bool>(),
+                    Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult(abGroup));
+
+            var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
+            var agentFactory = services.GetRequiredService<IAgent.CreateNew>();
 
             var systemAgent = new CannedJsonAgent(cannedResponse, outputFormatFactory);
 
@@ -291,6 +311,9 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                 prompts,
                 agents,
                 new OptimizerEvidenceBuilder(),
+                new Lazy<ITestRunnerService>(() => testRunnerService),
+                promptTemplateFactory,
+                agentFactory,
                 statistics);
 
             return new OptimizerFixture

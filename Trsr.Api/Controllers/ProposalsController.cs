@@ -64,13 +64,13 @@ public class ProposalsController : ControllerBase
             IModelSwitchProposal ms => createModelSwitch(
                 ms.Agent, request.Status, ms.Priority, ms.Rationale,
                 ms.ProposedEndpoint, ms.ExpectedPassRateDelta, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                ms.EvidenceTestRunIds, ms),
+                ms.EvidenceTestRunIds, ms.ABTestRun, ms),
             ISystemPromptProposal sp => createSystemPrompt(
                 sp.Agent, request.Status, sp.Priority, sp.Rationale,
-                sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp),
+                sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp.ABTestRun, sp),
             IToolUpdateProposal tu => createToolUpdate(
                 tu.Agent, request.Status, tu.Priority, tu.Rationale,
-                tu.ProposedTools, tu.EvidenceTestRunIds, tu),
+                tu.ProposedTools, tu.EvidenceTestRunIds, tu.ABTestRun, tu),
             _ => throw new ArgumentOutOfRangeException(nameof(existing))
         };
         await repository.UpdateAsync(updated, cancellationToken);

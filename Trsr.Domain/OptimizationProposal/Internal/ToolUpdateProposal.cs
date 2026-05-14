@@ -4,6 +4,7 @@ using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
@@ -16,6 +17,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
     public ProposalStatus Status { get; }
     public Priority Priority { get; }
     public string Rationale { get; }
+    public ITestRun ABTestRun { get; }
     public IReadOnlyList<ToolSpecification> ProposedTools { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
 
@@ -25,6 +27,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
@@ -33,6 +36,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Rationale = rationale;
         ProposedTools = proposedTools.ToArray();
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public ToolUpdateProposal(
@@ -42,6 +46,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
@@ -51,6 +56,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Rationale = rationale;
         ProposedTools = proposedTools.ToArray();
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

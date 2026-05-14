@@ -4,6 +4,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 using Trsr.Testing;
 
 namespace Trsr.Domain.Tests;
@@ -17,13 +18,15 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
 
         var proposal = factory(
             agent: agent,
             priority: Priority.High,
             rationale: "Tests failed due to vague instructions.",
             proposedSystemMessage: "Improved system prompt",
-            evidenceTestRunIds: [Guid.NewGuid()]);
+            evidenceTestRunIds: [Guid.NewGuid()],
+            abTestRun: abRun);
 
         proposal.Should().NotBeNull();
         proposal.Agent.Should().Be(agent);
@@ -33,9 +36,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         proposal.Rationale.Should().Be("Tests failed due to vague instructions.");
         proposal.ProposedSystemMessage.Should().Be("Improved system prompt");
         proposal.EvidenceTestRunIds.Should().ContainSingle();
+        proposal.ABTestRun.Should().Be(abRun);
         proposal.Id.Should().NotBe(Guid.Empty);
-        proposal.CreatedAt.Should().NotBe(default);
-        proposal.UpdatedAt.Should().NotBe(default);
     }
 
     [TestMethod]
@@ -44,17 +46,20 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
 
         var proposal = factory(
             agent: agent,
             priority: Priority.Medium,
             rationale: "Tool arguments were misused.",
             proposedTools: [],
-            evidenceTestRunIds: []);
+            evidenceTestRunIds: [],
+            abTestRun: abRun);
 
         proposal.Kind.Should().Be(ProposalKind.Tool);
         proposal.Status.Should().Be(ProposalStatus.Draft);
         proposal.ProposedTools.Should().BeEmpty();
+        proposal.ABTestRun.Should().Be(abRun);
     }
 
     [TestMethod]
@@ -64,6 +69,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var factory = services.GetRequiredService<IModelSwitchProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
         var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var abRun = await CreateTestRunAsync(services);
 
         var proposal = factory(
             agent: agent,
@@ -73,11 +79,13 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             expectedPassRateDelta: 0.25,
             expectedCostDelta: -0.05m,
             expectedLatencyDelta: TimeSpan.FromMilliseconds(-200),
-            evidenceTestRunIds: [Guid.NewGuid(), Guid.NewGuid()]);
+            evidenceTestRunIds: [Guid.NewGuid(), Guid.NewGuid()],
+            abTestRun: abRun);
 
         proposal.Kind.Should().Be(ProposalKind.ModelSwitch);
         proposal.ProposedEndpoint.Should().Be(endpoint);
         proposal.ExpectedPassRateDelta.Should().Be(0.25);
+        proposal.ABTestRun.Should().Be(abRun);
     }
 
     [TestMethod]
@@ -86,8 +94,9 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
 
-        var action = () => factory(agent, Priority.Low, "   ", "msg", []);
+        var action = () => factory(agent, Priority.Low, "   ", "msg", [], abRun);
         action.Should().Throw<Exception>();
     }
 
@@ -97,8 +106,9 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
 
-        var proposal = factory(agent, Priority.Low, "rationale", [], []);
+        var proposal = factory(agent, Priority.Low, "rationale", [], [], abRun);
 
         proposal.Status.Should().Be(ProposalStatus.Draft);
     }
@@ -109,9 +119,10 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
 
-        var proposal1 = factory(agent, Priority.Low, "rationale", [], []);
-        var proposal2 = factory(agent, Priority.Low, "rationale", [], []);
+        var proposal1 = factory(agent, Priority.Low, "rationale", [], [], abRun);
+        var proposal2 = factory(agent, Priority.Low, "rationale", [], [], abRun);
 
         proposal1.Id.Should().NotBe(proposal2.Id);
     }
@@ -122,6 +133,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
         var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
         var evidenceIds = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
 
         var proposal = factory(
@@ -129,7 +141,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: Priority.Medium,
             rationale: "Multiple test runs failed.",
             proposedSystemMessage: "New prompt",
-            evidenceTestRunIds: evidenceIds);
+            evidenceTestRunIds: evidenceIds,
+            abTestRun: abRun);
 
         proposal.EvidenceTestRunIds.Should().HaveCount(3);
         proposal.EvidenceTestRunIds.Should().BeEquivalentTo(evidenceIds);
@@ -150,6 +163,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             rationale: existing.Rationale,
             proposedSystemMessage: existing.ProposedSystemMessage,
             evidenceTestRunIds: existing.EvidenceTestRunIds,
+            abTestRun: existing.ABTestRun,
             existing: existing);
 
         reconstituted.Id.Should().Be(existing.Id);
@@ -170,8 +184,10 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<ISystemPromptProposal>>();
         var source = await generator.CreateAsync(CancellationToken);
 
-        var accepted = createExisting(source.Agent, ProposalStatus.Accepted, source.Priority, source.Rationale, source.ProposedSystemMessage, source.EvidenceTestRunIds, source);
-        var rejected = createExisting(source.Agent, ProposalStatus.Rejected, source.Priority, source.Rationale, source.ProposedSystemMessage, source.EvidenceTestRunIds, source);
+        var accepted = createExisting(source.Agent, ProposalStatus.Accepted, source.Priority, source.Rationale,
+            source.ProposedSystemMessage, source.EvidenceTestRunIds, source.ABTestRun, source);
+        var rejected = createExisting(source.Agent, ProposalStatus.Rejected, source.Priority, source.Rationale,
+            source.ProposedSystemMessage, source.EvidenceTestRunIds, source.ABTestRun, source);
 
         accepted.Status.Should().Be(ProposalStatus.Accepted);
         rejected.Status.Should().Be(ProposalStatus.Rejected);
@@ -181,5 +197,11 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
     {
         var generator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
         return await generator.GetOrCreateAsync();
+    }
+
+    private async Task<ITestRun> CreateTestRunAsync(IServiceProvider services)
+    {
+        var generator = services.GetRequiredService<IDomainEntityGenerator<ITestRun>>();
+        return await generator.CreateAsync(CancellationToken);
     }
 }

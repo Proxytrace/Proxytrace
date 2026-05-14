@@ -5,6 +5,7 @@ using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
@@ -16,6 +17,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
     public ProposalStatus Status { get; }
     public Priority Priority { get; }
     public string Rationale { get; }
+    public ITestRun ABTestRun { get; }
     public IModelEndpoint ProposedEndpoint { get; }
     public double? ExpectedPassRateDelta { get; }
     public decimal? ExpectedCostDelta { get; }
@@ -31,6 +33,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
@@ -42,6 +45,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public ModelSwitchProposal(
@@ -54,6 +58,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
@@ -66,6 +71,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

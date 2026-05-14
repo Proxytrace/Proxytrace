@@ -69,9 +69,10 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         var controller = ResolveController(services);
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
         var newEndpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().CreateAsync(CancellationToken);
+        var abRun = await services.GetRequiredService<IDomainEntityGenerator<Domain.TestRun.ITestRun>>().CreateAsync(CancellationToken);
         var factory = services.GetRequiredService<IModelSwitchProposal.CreateNew>();
         var repo = services.GetRequiredService<IOptimizationProposalRepository>();
-        var proposal = factory(agent, Priority.Medium, "r", newEndpoint, 0.1, null, null, []);
+        var proposal = factory(agent, Priority.Medium, "r", newEndpoint, 0.1, null, null, [], abRun);
         proposal = (IModelSwitchProposal)await repo.AddAsync(proposal, CancellationToken);
 
         var target = proposal.Status == ProposalStatus.Accepted ? ProposalStatus.Rejected : ProposalStatus.Accepted;

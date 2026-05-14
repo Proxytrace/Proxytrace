@@ -6,6 +6,7 @@ using Trsr.Application.Optimization;
 using Trsr.Application.Streaming;
 using Trsr.Common.Async;
 using Trsr.Domain;
+using Trsr.Domain.Agent;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Evaluator;
@@ -72,10 +73,12 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     public async Task<ITestRunGroup> RunInForegroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
+        IAgent? customAgent = null,
+        bool isSystemTestRun = false,
         CancellationToken cancellationToken = default)
     {
         ITestRunGroup group = await CreateGroup(suite, endpoints, cancellationToken);
-        return await ExecuteGroupAsync(group, cancellationToken);
+        return await ExecuteGroupAsync(group, customAgent, isSystemTestRun, cancellationToken);
     }
 
     public async Task<ITestRunGroup> RunInBackgroundAsync(
@@ -132,6 +135,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
 
     private async Task<ITestRunGroup> ExecuteGroupAsync(
         ITestRunGroup group,
+        IAgent? customAgent = null,
+        bool isSystemTestRun = false,
         CancellationToken cancellationToken = default)
     {
         if (group.Status != TestRunStatus.Pending)
@@ -156,14 +161,17 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             
             await Parallel.ForEachAsync(
                 testRuns,
-                parallelOptions, 
-                async (testRun, ct) => await RunTestRun(testRun, ct));
-            
+                parallelOptions,
+                async (testRun, ct) => await RunTestRun(testRun, customAgent, ct));
+
             group = await group.ReloadAsync(cancellationToken);
             group = await group.SetCompleted(cancellationToken);
             broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
 
-            await optimizer.EnqueueAsync(group, cancellationToken);
+            if (!isSystemTestRun)
+            {
+                await optimizer.EnqueueAsync(group, cancellationToken);
+            }
             return group;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -196,6 +204,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
 
     private async Task RunTestRun(
         ITestRun testRun,
+        IAgent? customAgent,
         CancellationToken cancellationToken)
     {
         var parallelOptions = new ParallelOptions
@@ -207,20 +216,22 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         await Parallel.ForEachAsync(
             testRun.Group.Suite.TestCases,
             parallelOptions,
-            async (testCase, ct) => await RunTestCase(testCase, testRun, ct));
+            async (testCase, ct) => await RunTestCase(testCase, testRun, customAgent, ct));
 
         testRun = await testRun.ReloadAsync(cancellationToken);
         broadcaster.PublishComplete(RunCompleteEvent.Create(testRun));
     }
 
     private async Task RunTestCase(
-        ITestCase testCase, 
-        ITestRun testRun, 
+        ITestCase testCase,
+        ITestRun testRun,
+        IAgent? customAgent,
         CancellationToken cancellationToken)
     {
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        IModelClient client = testRun.Group.Suite.Agent.CreateClient(
+        IAgent agent = customAgent ?? testRun.Group.Suite.Agent;
+        IModelClient client = agent.CreateClient(
             customEndpoint: testRun.Endpoint,
             skipIngestion: true);
         ICompletion completion = await client.CompleteAsync(
@@ -310,7 +321,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                     ITestRunGroup? group = await testRunGroupRepository.FindAsync(groupId, cancellationToken);
                     if (group != null)
                     {
-                        await ExecuteGroupAsync(group, cancellationToken);
+                        await ExecuteGroupAsync(group, cancellationToken: cancellationToken);
                     }
                     else
                     {

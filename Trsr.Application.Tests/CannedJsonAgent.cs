@@ -42,6 +42,12 @@ internal sealed class CannedJsonAgent : IAgent
     public Task<IAgent> ChangeModelParameters(IModelParameters modelParameters, CancellationToken cancellationToken = default)
         => Task.FromResult<IAgent>(this);
 
+    public Task<IAgent> ChangeSystemMessage(IPromptTemplate systemPrompt, CancellationToken cancellationToken = default)
+        => Task.FromResult<IAgent>(this);
+
+    public Task<IAgent> ChangeTools(IReadOnlyList<ToolSpecification> tools, CancellationToken cancellationToken = default)
+        => Task.FromResult<IAgent>(this);
+
     public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null)
         => new([Content.FromText("canned")]);
 

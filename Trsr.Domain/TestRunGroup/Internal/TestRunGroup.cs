@@ -7,14 +7,18 @@ namespace Trsr.Domain.TestRunGroup.Internal;
 
 internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
 {
+    private readonly ITestRunRepository testRuns;
+
     public ITestSuite Suite { get; }
     public TestRunStatus Status { get; private init; }
     public DateTimeOffset? CompletedAt { get; private init; }
 
     public TestRunGroup(
         ITestSuite suite,
-        IRepository<ITestRunGroup> repository) : base(repository)
+        IRepository<ITestRunGroup> repository,
+        ITestRunRepository testRuns) : base(repository)
     {
+        this.testRuns = testRuns;
         Suite = suite;
         Status = TestRunStatus.Pending;
         CompletedAt = null;
@@ -25,12 +29,17 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         TestRunStatus status,
         DateTimeOffset? completedAt,
         IDomainEntityData existing,
-        IRepository<ITestRunGroup> repository) : base(existing, repository)
+        IRepository<ITestRunGroup> repository,
+        ITestRunRepository testRuns) : base(existing, repository)
     {
+        this.testRuns = testRuns;
         Suite = suite;
         Status = status;
         CompletedAt = completedAt;
     }
+
+    public Task<IReadOnlyList<ITestRun>> GetTestRuns(CancellationToken cancellationToken = default)
+        => testRuns.GetByGroupAsync(Id, cancellationToken);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

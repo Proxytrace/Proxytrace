@@ -24,7 +24,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
-    private readonly ITestRunnerService testRunnerService;
+    private readonly Lazy<ITestRunnerService> testRunnerService;
     private readonly IPromptTemplate.Create promptTemplateFactory;
     private readonly IAgent.CreateNew agentFactory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
@@ -34,7 +34,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
-        ITestRunnerService testRunnerService,
+        Lazy<ITestRunnerService> testRunnerService,
         IPromptTemplate.Create promptTemplateFactory,
         IAgent.CreateNew agentFactory,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
@@ -101,7 +101,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             modelParameters: agent.ModelParameters,
             isSystemAgent: agent.IsSystemAgent);
         
-        var abTestRunGroup = await testRunnerService.RunInForegroundAsync(
+        var abTestRunGroup = await testRunnerService.Value.RunInForegroundAsync(
             suite: testRunGroup.Suite,
             endpoints: [updatedAgent.Endpoint],
             customAgent: updatedAgent,

@@ -1,5 +1,6 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.OptimizationProposal;
@@ -17,7 +18,8 @@ public interface IToolUpdateProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
-        IReadOnlyCollection<Guid> evidenceTestRunIds);
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun);
 
     public delegate IToolUpdateProposal CreateExisting(
         IAgent agent,
@@ -26,5 +28,6 @@ public interface IToolUpdateProposal : IOptimizationProposal
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IDomainEntityData existing);
 }

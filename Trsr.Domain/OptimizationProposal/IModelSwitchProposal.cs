@@ -1,6 +1,7 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 
 namespace Trsr.Domain.OptimizationProposal;
 
@@ -29,7 +30,8 @@ public interface IModelSwitchProposal : IOptimizationProposal
         double? expectedPassRateDelta,
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
-        IReadOnlyCollection<Guid> evidenceTestRunIds);
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun);
 
     public delegate IModelSwitchProposal CreateExisting(
         IAgent agent,
@@ -41,5 +43,6 @@ public interface IModelSwitchProposal : IOptimizationProposal
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IDomainEntityData existing);
 }

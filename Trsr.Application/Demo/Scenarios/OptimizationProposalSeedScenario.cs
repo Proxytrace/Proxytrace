@@ -2,6 +2,7 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Application.Demo.Scenarios;
@@ -41,11 +42,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
 
     private sealed record ProposalSpec(
         Func<DemoSeedContext, IAgent> SelectAgent,
-        Priority Priority,
         ProposalStatus Status,
-        string Rationale,
-        Func<DemoSeedContext, IAgent, IReadOnlyCollection<Guid>, IOptimizationProposal> BuildDraft,
-        Func<DemoSeedContext> SelectEvidence);
+        Func<DemoSeedContext, IAgent, IReadOnlyCollection<Guid>, ITestRun, IOptimizationProposal> BuildDraft);
 
     public async Task SeedAsync(CancellationToken cancellationToken)
     {
@@ -53,11 +51,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
         {
             new(
                 SelectAgent: c => c.RequireCustomerSupportAgent(),
-                Priority: Priority.High,
                 Status: ProposalStatus.Draft,
-                Rationale: "Claude consistently outperforms gpt-4o on the tone suite (+17 percentage points pass rate). "
-                           + "Latency increase is negligible and per-call cost stays within budget.",
-                BuildDraft: (c, agent, evidence) => createModelSwitch(
+                BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
                     agent,
                     Priority.High,
                     "Claude consistently outperforms gpt-4o on the tone suite (+17 percentage points pass rate). "
@@ -66,15 +61,13 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     0.17,
                     0.0001m,
                     TimeSpan.FromMilliseconds(50),
-                    evidence),
-                SelectEvidence: () => ctx),
+                    evidence,
+                    ab)),
 
             new(
                 SelectAgent: c => c.RequireCustomerSupportAgent(),
-                Priority: Priority.Medium,
                 Status: ProposalStatus.Accepted,
-                Rationale: "Adding explicit empathy guidance to the system prompt raised pass rate from 50 % to 67 %.",
-                BuildDraft: (_, agent, evidence) => createSystemPrompt(
+                BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
                     agent,
                     Priority.Medium,
                     "Adding explicit empathy guidance to the system prompt raised pass rate from 50 % to 67 % "
@@ -82,15 +75,13 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "You are a friendly, concise customer-support agent for an e-commerce store. "
                     + "Open with an empathetic acknowledgement of the customer's situation. "
                     + "Propose a clear next step, and close politely. Never blame the customer.",
-                    evidence),
-                SelectEvidence: () => ctx),
+                    evidence,
+                    ab)),
 
             new(
                 SelectAgent: c => c.RequireCodeReviewAgent(),
-                Priority: Priority.High,
                 Status: ProposalStatus.Draft,
-                Rationale: "Adding a `lookup_symbol` tool would let the reviewer cite definitions.",
-                BuildDraft: (_, agent, evidence) => createToolUpdate(
+                BuildDraft: (_, agent, evidence, ab) => createToolUpdate(
                     agent,
                     Priority.High,
                     "Adding a `lookup_symbol` tool would let the reviewer cite definitions instead of guessing "
@@ -101,15 +92,13 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                             description: "Look up the definition of a symbol (function, class, constant) in the repository.",
                             arguments: ToolArguments.None),
                     ],
-                    evidence),
-                SelectEvidence: () => ctx),
+                    evidence,
+                    ab)),
 
             new(
                 SelectAgent: c => c.RequireCodeReviewAgent(),
-                Priority: Priority.Low,
                 Status: ProposalStatus.Rejected,
-                Rationale: "Earlier prompt-rewrite attempt did not move politeness pass rate.",
-                BuildDraft: (_, agent, evidence) => createSystemPrompt(
+                BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
                     agent,
                     Priority.Low,
                     "Earlier attempt to soften review tone via prompt rewrite did not move the politeness pass rate "
@@ -117,15 +106,13 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "You are a senior software engineer reviewing pull requests. "
                     + "Be encouraging. Identify correctness, security, and clarity issues with concrete suggestions. "
                     + "Cite line numbers and offer to pair if a fix is non-trivial.",
-                    evidence),
-                SelectEvidence: () => ctx),
+                    evidence,
+                    ab)),
 
             new(
                 SelectAgent: c => c.RequireDataAnalyticsAgent(),
-                Priority: Priority.Critical,
                 Status: ProposalStatus.Draft,
-                Rationale: "gpt-4o-mini outperformed gpt-4o on the analytics suite at roughly a fifth of the cost.",
-                BuildDraft: (c, agent, evidence) => createModelSwitch(
+                BuildDraft: (c, agent, evidence, ab) => createModelSwitch(
                     agent,
                     Priority.Critical,
                     "gpt-4o-mini outperformed gpt-4o on the analytics suite at roughly a fifth of the cost. "
@@ -134,15 +121,24 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     0.13,
                     -0.0008m,
                     TimeSpan.FromMilliseconds(-200),
-                    evidence),
-                SelectEvidence: () => ctx),
+                    evidence,
+                    ab)),
         };
 
         foreach (var spec in specs)
         {
             var agent = spec.SelectAgent(ctx);
-            var evidence = EvidenceForAgent(ctx, agent);
-            var draft = spec.BuildDraft(ctx, agent, evidence);
+            var runsForAgent = ctx.AllRuns
+                .Where(r => r.Group.Suite.Agent.Id == agent.Id)
+                .ToArray();
+            if (runsForAgent.Length == 0)
+            {
+                continue;
+            }
+            var evidence = runsForAgent.Take(3).Select(r => r.Id).ToArray();
+            var abTestRun = runsForAgent[0];
+
+            var draft = spec.BuildDraft(ctx, agent, evidence, abTestRun);
             var saved = await repo.AddAsync(draft, cancellationToken);
 
             if (spec.Status != ProposalStatus.Draft)
@@ -152,24 +148,17 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     IModelSwitchProposal ms => modelSwitchExisting(
                         ms.Agent, spec.Status, ms.Priority, ms.Rationale,
                         ms.ProposedEndpoint, ms.ExpectedPassRateDelta, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                        ms.EvidenceTestRunIds, ms),
+                        ms.EvidenceTestRunIds, ms.ABTestRun, ms),
                     ISystemPromptProposal sp => systemPromptExisting(
                         sp.Agent, spec.Status, sp.Priority, sp.Rationale,
-                        sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp),
+                        sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp.ABTestRun, sp),
                     IToolUpdateProposal tu => toolUpdateExisting(
                         tu.Agent, spec.Status, tu.Priority, tu.Rationale,
-                        tu.ProposedTools, tu.EvidenceTestRunIds, tu),
+                        tu.ProposedTools, tu.EvidenceTestRunIds, tu.ABTestRun, tu),
                     _ => throw new ArgumentOutOfRangeException(nameof(saved))
                 };
                 await repo.UpdateAsync(transitioned, cancellationToken);
             }
         }
     }
-
-    private static IReadOnlyCollection<Guid> EvidenceForAgent(DemoSeedContext ctx, IAgent agent)
-        => ctx.AllRuns
-            .Where(r => r.Group.Suite.Agent.Id == agent.Id)
-            .Select(r => r.Id)
-            .Take(3)
-            .ToArray();
 }

@@ -92,7 +92,8 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             expectedPassRateDelta: diff.PassRate,
             expectedCostDelta: diff.Cost,
             expectedLatencyDelta: diff.TotalDuration,
-            evidenceTestRunIds: [currentRun.Id, bestRun.Id]);
+            evidenceTestRunIds: [currentRun.Id, bestRun.Id],
+            abTestRun: bestRun);
 
         return [proposal];
     }

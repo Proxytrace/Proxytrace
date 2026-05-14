@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Application.Statistics;
 using Trsr.Application.Statistics.TestRun;
+using Trsr.Application.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -25,6 +26,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
+    private readonly Lazy<ITestRunnerService> testRunnerService;
+    private readonly IAgent.CreateNew agentFactory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateToolDefinitionOptimizer(
@@ -32,6 +35,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
+        Lazy<ITestRunnerService> testRunnerService,
+        IAgent.CreateNew agentFactory,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         ILogger<UpdateToolDefinitionOptimizer> logger)
     {
@@ -39,6 +44,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
         this.prompts = prompts;
         this.agents = agents;
         this.evidenceBuilder = evidenceBuilder;
+        this.testRunnerService = testRunnerService;
+        this.agentFactory = agentFactory;
         this.runStats = runStats;
     }
 
@@ -98,6 +105,27 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             return [];
         }
 
+        // create updated agent with the proposed tools
+        var updatedAgent = agentFactory(
+            name: agent.Name,
+            systemPrompt: agent.SystemPrompt,
+            tools: completion.Tools,
+            endpoint: agent.Endpoint,
+            project: agent.Project,
+            modelParameters: agent.ModelParameters,
+            isSystemAgent: agent.IsSystemAgent);
+
+        var abTestRunGroup = await testRunnerService.Value.RunInForegroundAsync(
+            suite: testRunGroup.Suite,
+            endpoints: [updatedAgent.Endpoint],
+            customAgent: updatedAgent,
+            cancellationToken: cancellationToken);
+        var abTestRuns = await abTestRunGroup.GetTestRuns(cancellationToken);
+        if (abTestRuns.Count == 0)
+        {
+            return [];
+        }
+
         Priority priority = stats.GetOptimizationPriority();
         string fullRationale =
             $"""
@@ -110,7 +138,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             priority: priority,
             rationale: fullRationale,
             proposedTools: completion.Tools,
-            evidenceTestRunIds: [currentRun.Id]);
+            evidenceTestRunIds: [currentRun.Id],
+            abTestRun: abTestRuns.First());
 
         return [proposal];
     }

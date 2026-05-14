@@ -21,6 +21,9 @@ internal record OptimizationProposalEntity : Entity
     /// <summary><see cref="IOptimizationProposal.Rationale"/></summary>
     public required string Rationale { get; init; }
 
+    /// <summary><see cref="IOptimizationProposal.ABTestRun"/></summary>
+    public required Guid ABTestRun { get; init; }
+
     /// <summary>
     /// Kind-specific JSON payload. Shape is determined by <see cref="Kind"/>.
     /// </summary>

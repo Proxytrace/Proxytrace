@@ -19,8 +19,8 @@ internal record Agent : DomainEntity<IAgent>, IAgent
     public string Name { get; }
     public IModelEndpoint Endpoint { get; private init; }
     public IProject Project { get; }
-    public IPromptTemplate SystemPrompt { get; }
-    public IReadOnlyList<ToolSpecification> Tools { get; }
+    public IPromptTemplate SystemPrompt { get; private init; }
+    public IReadOnlyList<ToolSpecification> Tools { get; private init; }
     public IModelParameters ModelParameters { get; private init; }
     public bool IsSystemAgent { get; }
 
@@ -91,6 +91,20 @@ internal record Agent : DomainEntity<IAgent>, IAgent
 
         return ApplyAsync(this with { Endpoint = modelEndpoint }, cancellationToken);
     }
+
+    public Task<IAgent> ChangeSystemMessage(
+        IPromptTemplate systemPrompt,
+        CancellationToken cancellationToken = default)
+        => SystemPrompt.Equals(systemPrompt)
+            ? Task.FromResult<IAgent>(this)
+            : ApplyAsync(this with { SystemPrompt = systemPrompt }, cancellationToken);
+
+    public Task<IAgent> ChangeTools(
+        IReadOnlyList<ToolSpecification> tools,
+        CancellationToken cancellationToken = default)
+        => Tools.SequenceEqual(tools)
+            ? Task.FromResult<IAgent>(this)
+            : ApplyAsync(this with { Tools = tools }, cancellationToken);
 
     public Task<IAgent> ChangeModelParameters(
         IModelParameters modelParameters,
