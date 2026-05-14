@@ -26,6 +26,7 @@ cd Trsr.Api && dotnet run        # Start API on http://localhost:5001
 Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 
 #### Code Style
+- Dependency Injection is super important - use it whenever possible. Avoid the static keyword and service locators.
 - Do not use primary constructors. Use constructor injection with DI and `this(...)` chaining for domain entities.
 - Use `record` types for all domain entities and storage entities (even if mutable)
 - Make types `internal` by default; only interfaces or POCO types should be `public`

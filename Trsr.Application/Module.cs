@@ -54,16 +54,22 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<TestRunnerService>()
             .AsImplementedInterfaces()
             .AsSelf()
-            .SingleInstance();
+            .SingleInstance()
+            .IfNotRegistered(typeof(TestRunnerService));
 
-        builder.RegisterServiceCollection(services
-            => services.AddSingleton<IHostedService>(sc =>
-            {
-                var kiosk = sc.GetRequiredService<KioskOptions>();
-                return kiosk.Enabled
-                    ? new NullHostedService()
-                    : sc.GetRequiredService<TestRunnerService>();
-            }));
+        const string testRunnerHostedServiceKey = "Trsr.Application.TestRunnerService.Registered";
+        if (!builder.Properties.ContainsKey(testRunnerHostedServiceKey))
+        {
+            builder.Properties[testRunnerHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services
+                => services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    return kiosk.Enabled
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<TestRunnerService>();
+                }));
+        }
 
         builder.RegisterType<OpenAiCallParser>()
             .As<IOpenAiCallParser>()
@@ -72,18 +78,24 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<AgentCallIngestor>()
             .AsImplementedInterfaces()
             .AsSelf()
-            .SingleInstance();
+            .SingleInstance()
+            .IfNotRegistered(typeof(AgentCallIngestor));
 
-        builder.RegisterServiceCollection(services =>
+        const string agentCallIngestorHostedServiceKey = "Trsr.Application.AgentCallIngestor.Registered";
+        if (!builder.Properties.ContainsKey(agentCallIngestorHostedServiceKey))
         {
-            services.AddSingleton<IHostedService>(sc =>
+            builder.Properties[agentCallIngestorHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
             {
-                var kiosk = sc.GetRequiredService<KioskOptions>();
-                return kiosk.Enabled
-                    ? new NullHostedService()
-                    : sc.GetRequiredService<AgentCallIngestor>();
+                services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    return kiosk.Enabled
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<AgentCallIngestor>();
+                });
             });
-        });
+        }
 
         builder.RegisterType<DataCleanupService>()
             .As<IDataCleanupService>()
@@ -145,25 +157,34 @@ public sealed class Module : Autofac.Module
         foreach (var t in scenarioTypes)
         {
             builder.RegisterType(t)
+                .AsSelf()
                 .As<IDemoScenario>()
-                .SingleInstance();
+                .SingleInstance()
+                .IfNotRegistered(t);
         }
 
         builder.RegisterType<DemoSeederHostedService>()
             .AsSelf()
-            .SingleInstance();
-        builder.RegisterServiceCollection(services =>
-        {
-            services.AddSingleton<IHostedService>(sp =>
-            {
-                var kiosk = sp.GetRequiredService<KioskOptions>();
-                if (!kiosk.Enabled)
-                {
-                    return new NullHostedService();
-                }
+            .SingleInstance()
+            .IfNotRegistered(typeof(DemoSeederHostedService));
 
-                return sp.GetRequiredService<DemoSeederHostedService>();
+        const string demoSeederHostedServiceKey = "Trsr.Application.DemoSeederHostedService.Registered";
+        if (!builder.Properties.ContainsKey(demoSeederHostedServiceKey))
+        {
+            builder.Properties[demoSeederHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
+            {
+                services.AddSingleton<IHostedService>(sp =>
+                {
+                    var kiosk = sp.GetRequiredService<KioskOptions>();
+                    if (!kiosk.Enabled)
+                    {
+                        return new NullHostedService();
+                    }
+
+                    return sp.GetRequiredService<DemoSeederHostedService>();
+                });
             });
-        });
+        }
     }
 }
