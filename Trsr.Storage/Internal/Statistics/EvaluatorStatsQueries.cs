@@ -85,11 +85,12 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
                 }
 
                 EvaluatorPassRatePoint[] points = entries
+                    .Where(x => x.Eval is { ErrorMessage: null, Score: not null })
                     .GroupBy(x => bucket.BucketStart(x.Timestamp))
                     .OrderBy(g => g.Key)
                     .Select(g => new EvaluatorPassRatePoint(
                         BucketStart: g.Key,
-                        Passed: g.Count(x => IsPassed(x.Eval.Score)),
+                        Passed: g.Count(x => IsPassed(x.Eval.Score ?? 0)),
                         Total: g.Count()))
                     .ToArray();
 
@@ -102,9 +103,12 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
         (DateTimeOffset Timestamp, StoredEvaluation Eval)[] matching,
         StatisticsBucket bucket)
     {
-        int total = matching.Length;
-        double? avgScore = total > 0 ? matching.Average(x => (double)(byte)x.Eval.Score) : null;
-        int passedCount = matching.Count(x => IsPassed(x.Eval.Score));
+        var succeeded = matching
+            .Where(x => x.Eval.Score.HasValue)
+            .ToArray();
+        int total = succeeded.Length;
+        double? avgScore = total > 0 ? succeeded.Average(x => (double)(byte)(x.Eval.Score ?? 0)) : null;
+        int passedCount = succeeded.Count(x => IsPassed(x.Eval.Score ?? 0));
         double? passRate = total > 0 ? passedCount / (double)total : null;
 
         // Token usage and cost are not captured per-evaluation; the underlying judge LLM call is
@@ -118,17 +122,18 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             OutputTokens: null,
             TotalCostEur: null);
 
-        EvaluatorPassRatePoint[] trend = matching
+        EvaluatorPassRatePoint[] trend = succeeded
             .GroupBy(x => bucket.BucketStart(x.Timestamp))
             .OrderBy(g => g.Key)
             .Select(g => new EvaluatorPassRatePoint(
                 BucketStart: g.Key,
-                Passed: g.Count(x => IsPassed(x.Eval.Score)),
+                Passed: g.Count(x => IsPassed(x.Eval.Score ?? 0)),
                 Total: g.Count()))
             .ToArray();
 
-        EvaluatorScoreBucket[] distribution = matching
-            .GroupBy(x => x.Eval.Score)
+        EvaluatorScoreBucket[] distribution = succeeded
+            .Where(x => x.Eval.Score.HasValue)
+            .GroupBy(x => x.Eval.Score ?? 0)
             .OrderBy(g => (byte)g.Key)
             .Select(g => new EvaluatorScoreBucket(g.Key.ToString(), g.Count()))
             .ToArray();

@@ -46,15 +46,15 @@ public sealed record Content : IDomainObject
         
         if (Kind is ContentKind.Text)
         {
-            foreach (var r in Validation.NotNullOrWhiteSpace(Text).AsEnumerable()) yield return r;
-            foreach (var r in Validation.MaxLength(Text, 10_000).AsEnumerable()) yield return r;
-            foreach (var r in Validation.NotEmpty(Text).AsEnumerable()) yield return r;
+            yield return Validation.NotNullOrWhiteSpace(Text);
+            yield return Validation.MaxLength(Text, 10_000);
+            yield return Validation.NotEmpty(Text);
         }
         
         if (Kind is ContentKind.Image)
         {
-            foreach (var r in Validation.NotNull(Data).AsEnumerable()) yield return r;
-            foreach (var r in Validation.NotNullOrWhiteSpace(Data?.MediaType).AsEnumerable()) yield return r;
+            yield return Validation.NotNull(Data);
+            yield return Validation.NotNullOrWhiteSpace(Data?.MediaType);
         }
     }
 

@@ -11,8 +11,9 @@ public record EvaluationEventData(
     Guid EvaluatorId,
     EvaluatorKind EvaluatorKind,
     string EvaluatorName,
-    EvaluationScore Score,
-    string? Reasoning);
+    EvaluationScore? Score,
+    string? Reasoning,
+    string? ErrorMessage);
 
 public abstract record TestRunEvent(Guid RunId, Guid GroupId);
 
@@ -51,7 +52,8 @@ public record TestResultArrivedEvent(
                 e.Evaluator.Kind,
                 e.Evaluator.Name,
                 e.Score,
-                e.Reasoning)).ToArray(),
+                e.Reasoning,
+                e.ErrorMessage)).ToArray(),
             (long)result.Latency.TotalMilliseconds);
 }
 

@@ -10,8 +10,9 @@ public record EvaluationResultDto(
     Guid EvaluatorId,
     EvaluatorKind EvaluatorKind,
     string EvaluatorName,
-    EvaluationScore Score,
-    string? Reasoning);
+    EvaluationScore? Score,
+    string? Reasoning,
+    string? ErrorMessage);
 
 public record TestRunDto(
     Guid Id,

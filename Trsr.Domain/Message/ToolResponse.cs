@@ -83,14 +83,14 @@ public sealed record ToolResponse : IDomainObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var r in Validation.NotNullOrWhiteSpace(Id).AsEnumerable()) yield return r;
+        yield return Validation.NotNullOrWhiteSpace(Id);
         if (Success)
         {
-            foreach (var r in Validation.Null(Error).AsEnumerable()) yield return r;
+            yield return Validation.Null(Error);
         }
         else
         {
-            foreach (var r in Validation.NotNull(Error).AsEnumerable()) yield return r;
+            yield return Validation.NotNull(Error);
         }
     }
 }

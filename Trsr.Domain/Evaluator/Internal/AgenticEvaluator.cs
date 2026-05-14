@@ -86,7 +86,7 @@ internal sealed record AgenticEvaluator : DomainEntity<IEvaluator>, IAgenticEval
             yield return validationResult;
         }
 
-        foreach (var r in Validation.True(Agent.IsSystemAgent).AsEnumerable()) yield return r;
+        yield return Validation.True(Agent.IsSystemAgent);
     }
     
     [UsedImplicitly]

@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Trsr.Domain;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
@@ -10,6 +11,7 @@ using Trsr.Domain.Usage;
 
 namespace Trsr.Application.Demo.Scenarios;
 
+[UsedImplicitly]
 internal sealed class TestRunSeedScenario : IDemoScenario
 {
     private readonly DemoSeedContext ctx;
@@ -45,9 +47,10 @@ internal sealed class TestRunSeedScenario : IDemoScenario
 
     private sealed record RunSpec(
         string SuiteKey,
-        string GroupKey,
+        [UsedImplicitly] string GroupKey,
         IReadOnlyList<EndpointPick> Endpoints);
 
+    [UsedImplicitly]
     private sealed record EndpointPick(
         Func<DemoSeedContext, IModelEndpoint> SelectEndpoint,
         double PassRate);

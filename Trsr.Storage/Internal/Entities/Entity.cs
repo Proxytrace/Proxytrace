@@ -21,10 +21,10 @@ internal abstract record Entity : IEntity
     /// <inheritdoc />
     public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var r in Validation.NotDefault(Id).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotDefault(CreatedAt).AsEnumerable()) yield return r;
-        foreach (var r in Validation.InPast(CreatedAt).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotDefault(UpdatedAt).AsEnumerable()) yield return r;
-        foreach (var r in Validation.InPast(UpdatedAt).AsEnumerable()) yield return r;
+        yield return Validation.NotDefault(Id);
+        yield return Validation.NotDefault(CreatedAt);
+        yield return Validation.InPast(CreatedAt);
+        yield return Validation.NotDefault(UpdatedAt);
+        yield return Validation.InPast(UpdatedAt);
     }
 }

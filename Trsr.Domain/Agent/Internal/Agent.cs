@@ -110,10 +110,7 @@ internal record Agent : DomainEntity<IAgent>, IAgent
             yield return result;
         }
 
-        if (string.IsNullOrWhiteSpace(Name))
-        {
-            foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
-        }
+        yield return Validation.NotNullOrWhiteSpace(Name);
 
         foreach (var result in Endpoint.Validate(validationContext))
         {

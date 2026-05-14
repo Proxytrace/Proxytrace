@@ -90,8 +90,8 @@ public sealed record ToolMessage : Message
             yield return result;
         }
         
-        foreach (var r in Validation.HasCount(Contents, 2).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotNullOrWhiteSpace(Contents[0].Text).AsEnumerable()) yield return r;
+        yield return Validation.HasCount(Contents, 2);
+        yield return Validation.NotNullOrWhiteSpace(Contents[0].Text);
     }
     
     public override string ToString() 

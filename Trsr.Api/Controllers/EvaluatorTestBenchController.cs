@@ -135,7 +135,8 @@ public class EvaluatorTestBenchController : ControllerBase
             evaluator.Kind,
             evaluator.Name,
             evaluation.Score,
-            evaluation.Reasoning);
+            evaluation.Reasoning,
+            evaluation.ErrorMessage);
     }
 
     private static string Summarize(ITestCase tc)

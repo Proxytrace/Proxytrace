@@ -168,7 +168,8 @@ public class TestRunsController : ControllerBase
                     e.Evaluator.Kind,
                     e.Evaluator.Name,
                     e.Score,
-                    e.Reasoning)).ToArray(),
+                    e.Reasoning,
+                    e.ErrorMessage)).ToArray(),
                 (long)res.Latency.TotalMilliseconds
             )).ToArray(),
             CreatedAt: r.CreatedAt,
@@ -229,10 +230,10 @@ public class TestRunsController : ControllerBase
             EvaluatorId: eval.Evaluator.Id.ToString(),
             EvaluatorKind: eval.Evaluator.Kind.ToString(),
             EvaluatorName: eval.Evaluator.Name,
-            Score: EvaluationScoreToFloat(eval.Score),
-            Pass: eval.Score >= EvaluationScore.Acceptable,
+            Score: eval.Score.HasValue ? EvaluationScoreToFloat(eval.Score.Value) : 0,
+            Pass: eval.Passed,
             Breakdown: [],
-            Note: eval.Reasoning ?? string.Empty
+            Note: eval.ErrorMessage ?? eval.Reasoning ?? string.Empty
         )).ToArray();
 
     private static RuntimeBreakdownDto MapRuntime(Domain.TestResult.ITestResult result)

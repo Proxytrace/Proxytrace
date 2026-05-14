@@ -39,7 +39,7 @@ public sealed record ToolRequest : IDomainObject
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        foreach (var r in Validation.NotNullOrWhiteSpace(Id).AsEnumerable()) yield return r;
-        foreach (var r in Validation.NotNullOrWhiteSpace(Name).AsEnumerable()) yield return r;
+        yield return Validation.NotNullOrWhiteSpace(Id);
+        yield return Validation.NotNullOrWhiteSpace(Name);
     }
 }

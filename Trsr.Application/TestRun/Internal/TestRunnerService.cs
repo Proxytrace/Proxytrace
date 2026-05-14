@@ -23,6 +23,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly ITestResult.CreateNew createTestResult;
     private readonly ITestRun.CreateNew createTestRun;
     private readonly ITestRunGroup.CreateNew createTestRunGroup;
+    private readonly IEvaluation.CreateErrored createErroredEvaluation;
     private readonly ITestRunRepository testRunRepository;
     private readonly ITestRunGroupRepository testRunGroupRepository;
     private readonly IRepository<ITestResult> testResultRepository;
@@ -44,6 +45,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestResult.CreateNew createTestResult,
         ITestRun.CreateNew createTestRun,
         ITestRunGroup.CreateNew createTestRunGroup,
+        IEvaluation.CreateErrored createErroredEvaluation,
         ITestRunRepository testRunRepository,
         ITestRunGroupRepository testRunGroupRepository,
         IRepository<ITestResult> testResultRepository,
@@ -56,6 +58,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.createTestResult = createTestResult;
         this.createTestRun = createTestRun;
         this.createTestRunGroup = createTestRunGroup;
+        this.createErroredEvaluation = createErroredEvaluation;
         this.testRunRepository = testRunRepository;
         this.testRunGroupRepository = testRunGroupRepository;
         this.testResultRepository = testResultRepository;
@@ -163,6 +166,28 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             await optimizer.EnqueueAsync(group, cancellationToken);
             return group;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Test run group {GroupId} failed", group.Id);
+            try
+            {
+                group = await group.ReloadAsync(CancellationToken.None);
+                if (!IsTerminal(group.Status))
+                {
+                    group = await group.SetFailed(CancellationToken.None);
+                }
+                broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+            }
+            catch (Exception broadcastEx)
+            {
+                logger.LogError(broadcastEx, "Failed to mark test run group {GroupId} as Failed", group.Id);
+            }
+            return group;
+        }
         finally
         {
             cancellationTokens.TryRemove(group.Id, out _);
@@ -225,12 +250,31 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     }
 
     private async Task RunEvaluator(
-        IEvaluator evaluator, 
+        IEvaluator evaluator,
         ITestResult testResult,
         ITestRun testRun,
         CancellationToken cancellationToken)
     {
-        IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+        IEvaluation? evaluation;
+        try
+        {
+            evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Evaluator {EvaluatorId} ({EvaluatorKind}) failed for test result {TestResultId}",
+                evaluator.Id,
+                evaluator.Kind,
+                testResult.Id);
+            evaluation = createErroredEvaluation(evaluator, $"{ex.GetType().Name}: {ex.Message}");
+        }
+
         if (evaluation is null)
         {
             return;
@@ -248,7 +292,8 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluator.Kind,
                 evaluator.Name,
                 evaluation.Score,
-                evaluation.Reasoning)));
+                evaluation.Reasoning,
+                evaluation.ErrorMessage)));
     }
 
     private static bool IsTerminal(TestRunStatus status)

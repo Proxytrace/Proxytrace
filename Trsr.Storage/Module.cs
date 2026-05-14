@@ -38,20 +38,21 @@ public sealed class Module : Autofac.Module
         base.Load(builder);
 
         builder.RegisterModule<Domain.Module>();
-        builder.RegisterModule<Application.Module>();
 
-        builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();
-
+        // Register DB initializer FIRST so its IHostedService starts before any other
+        // hosted service that may query the database on startup (e.g. StatisticsBackfillHostedService).
         builder.RegisterServiceCollection(services =>
         {
-            // Register database initialization service
             services.AddHostedService<DatabaseInitializationService>();
         });
 
-        // Register the database initializer interface (accessible even if migrations not supported)
         builder.RegisterType<DatabaseInitializationService>()
             .As<IDatabaseInitializer>()
             .SingleInstance();
+
+        builder.RegisterModule<Application.Module>();
+
+        builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();
 
         builder.Register<DbContextOptions<StorageDbContext>>(ct =>
         {
