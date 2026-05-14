@@ -20,7 +20,7 @@ export function ConfirmDialog({ entityName, displayName, onConfirm, onCancel, lo
       footer={
         <>
           <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-          <button className="btn-danger" onClick={onConfirm} disabled={!match || loading}>
+          <button data-write className="btn-danger" onClick={onConfirm} disabled={!match || loading}>
             {loading ? 'Deleting…' : 'Delete'}
           </button>
         </>

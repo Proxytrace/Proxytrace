@@ -182,6 +182,7 @@ export function ComposeBox({
             className="btn-primary inline-flex items-center gap-[8px] py-[6px] px-[12px] text-[12.5px]"
             onClick={send}
             disabled={!canSend}
+            data-write
             aria-label="Send message"
           >
             Send

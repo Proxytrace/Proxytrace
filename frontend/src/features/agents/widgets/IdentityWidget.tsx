@@ -63,6 +63,7 @@ export function IdentityWidget({ agent, onDelete, className }: Props) {
 
         <button
           onClick={onDelete}
+          data-write
           className="btn-icon btn-icon-danger shrink-0"
           title="Delete agent"
           aria-label="Delete agent"

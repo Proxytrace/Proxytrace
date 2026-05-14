@@ -81,6 +81,7 @@ export default function Invites() {
         <button
           className="rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           type="submit"
+          data-write
           disabled={create.isPending}
         >
           {create.isPending ? 'Creating…' : 'Create invite'}
@@ -130,6 +131,7 @@ export default function Invites() {
                     {!i.consumedAt && (
                       <button
                         onClick={() => revoke.mutate(i.id)}
+                        data-write
                         className="text-xs text-danger hover:underline"
                       >
                         Revoke

@@ -28,11 +28,25 @@ export default function Playground() {
   const abortRef = useRef<{ abort: () => void } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: agent } = useQuery({
+  const { data: agent, error: agentError } = useQuery({
     queryKey: ['agent', state.agentId],
-    queryFn: () => agentsApi.get(state.agentId!),
+    queryFn: async () => {
+      try {
+        return await agentsApi.get(state.agentId!);
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith('404')) return null;
+        throw e;
+      }
+    },
     enabled: !!state.agentId,
+    throwOnError: false,
   });
+
+  useEffect(() => {
+    if (state.agentId && (agent === null || agentError)) {
+      dispatch({ type: 'clearAgent' });
+    }
+  }, [state.agentId, agent, agentError, dispatch]);
 
   const requestedAgentId = searchParams.get('agentId');
   useEffect(() => {
@@ -257,6 +271,7 @@ export default function Playground() {
             className="btn-icon"
             onClick={onRunCompletion}
             disabled={!canRunCompletion}
+            data-write
             title="Run completion on current conversation"
             aria-label="Run completion on current conversation"
           >

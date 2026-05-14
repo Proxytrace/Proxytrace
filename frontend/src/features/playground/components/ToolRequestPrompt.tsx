@@ -86,7 +86,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
 
       <div className="flex items-center justify-end gap-2">
         <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-        <button className={tab === 'error' ? 'btn-danger' : 'btn-primary'} onClick={submit}>
+        <button data-write className={tab === 'error' ? 'btn-danger' : 'btn-primary'} onClick={submit}>
           {tab === 'error' ? 'Send error' : 'Send result'}
         </button>
       </div>

@@ -150,6 +150,10 @@ function AppRoutes() {
 }
 
 function KioskShell() {
+  useEffect(() => {
+    document.body.classList.add('kiosk');
+    return () => document.body.classList.remove('kiosk');
+  }, []);
   return (
     <KioskContext.Provider value={{ enabled: true }}>
       <BrowserRouter>

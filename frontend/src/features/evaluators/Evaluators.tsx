@@ -233,6 +233,7 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
           )}
           <button
             onClick={onEdit}
+            data-write
             style={{ padding: '5px 10px', borderRadius: 6, fontSize: 11, color: 'var(--accent-hover)', background: 'var(--accent-subtle)', fontWeight: 600, cursor: 'pointer' }}
           >
             Edit
@@ -322,12 +323,14 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdi
           </button>
           <button
             onClick={onDelete}
+            data-write
             style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)', background: 'var(--danger-subtle)', cursor: 'pointer' }}
           >
             Delete
           </button>
           <button
             onClick={onEdit}
+            data-write
             style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600, color: '#fff', background: 'var(--grad-accent)', boxShadow: 'var(--shadow-btn)', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
           >
             <EditPencilIcon size={11}/> Edit
@@ -417,6 +420,7 @@ function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => vo
       </div>
       <button
         onClick={onCreate}
+        data-write
         style={{
           marginTop: 4, padding: '9px 16px',
           background: 'var(--grad-accent)',
@@ -520,6 +524,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
             <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
             <button
               onClick={onSubmit}
+              data-write
               disabled={!pickedKind || loading}
               style={{
                 padding: '8px 16px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600,
@@ -671,6 +676,7 @@ export default function Evaluators() {
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--hairline)' }}>
             <button
               onClick={openNew}
+              data-write
               style={{
                 width: '100%', padding: '9px 14px',
                 background: 'var(--grad-accent)',

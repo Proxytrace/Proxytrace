@@ -253,6 +253,7 @@ export default function Providers() {
                     {!editingKind ? (
                       <button
                         onClick={() => { setEditKindValue(selected.kind); setEditingKind(true); }}
+                        data-write
                         aria-label="Change provider kind"
                         className="cursor-pointer border-none bg-transparent p-0"
                       >
@@ -267,7 +268,7 @@ export default function Providers() {
                         >
                           {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
-                        <Button size="sm" variant="primary" loading={updateKind.isPending} onClick={() => updateKind.mutate()}>Save</Button>
+                        <Button data-write size="sm" variant="primary" loading={updateKind.isPending} onClick={() => updateKind.mutate()}>Save</Button>
                         <Button size="sm" variant="ghost" onClick={() => setEditingKind(false)}>Cancel</Button>
                       </div>
                     )}
@@ -388,7 +389,7 @@ export default function Providers() {
                       </div>
                       <div className="flex gap-2 justify-end">
                         <Button variant="ghost" size="sm" onClick={() => setShowNewModel(false)}>Cancel</Button>
-                        <Button variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={() => createModel.mutate()}>
+                        <Button data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={() => createModel.mutate()}>
                           Add model
                         </Button>
                       </div>
@@ -432,7 +433,7 @@ export default function Providers() {
                               </div>
                               <div className="flex gap-2 justify-end">
                                 <Button variant="ghost" size="sm" onClick={() => setEditingModel(null)}>Cancel</Button>
-                                <Button variant="primary" size="sm" loading={updatePricing.isPending} onClick={() => updatePricing.mutate()}>Save</Button>
+                                <Button data-write variant="primary" size="sm" loading={updatePricing.isPending} onClick={() => updatePricing.mutate()}>Save</Button>
                               </div>
                             </div>
                           )}
@@ -486,7 +487,7 @@ export default function Providers() {
                       </div>
                       <div className="flex gap-2 justify-end">
                         <Button variant="ghost" size="sm" onClick={() => setShowNewKey(false)}>Cancel</Button>
-                        <Button variant="primary" size="sm" loading={createKey.isPending} disabled={!newKey.name || !newKey.projectId} onClick={() => createKey.mutate()}>Generate</Button>
+                        <Button data-write variant="primary" size="sm" loading={createKey.isPending} disabled={!newKey.name || !newKey.projectId} onClick={() => createKey.mutate()}>Generate</Button>
                       </div>
                     </div>
                   )}

@@ -70,6 +70,7 @@ export function overridesFromAgent(agent: AgentDto): PlaygroundOverrides {
 
 type Action =
   | { type: 'reset' }
+  | { type: 'clearAgent' }
   | { type: 'pickAgent'; agent: AgentDto }
   | { type: 'setOverrides'; overrides: PlaygroundOverrides }
   | { type: 'setMessages'; messages: PlaygroundMessage[] }
@@ -90,6 +91,8 @@ function reducer(state: PlaygroundSession, action: Action): PlaygroundSession {
   switch (action.type) {
     case 'reset':
       return { ...EMPTY_SESSION, agentId: state.agentId, overrides: state.overrides };
+    case 'clearAgent':
+      return EMPTY_SESSION;
     case 'pickAgent':
       return {
         ...EMPTY_SESSION,

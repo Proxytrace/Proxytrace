@@ -1,5 +1,4 @@
 using System.Net;
-using Microsoft.Extensions.DependencyInjection;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -19,26 +18,68 @@ namespace Trsr.Application.Demo.Scenarios;
 
 internal sealed class CoreSeedScenario : IDemoScenario
 {
+    private readonly KioskOptions kiosk;
+    private readonly DemoSeedContext ctx;
+    private readonly IUser.CreateNew userFactory;
+    private readonly IModelProvider.CreateNew providerFactory;
+    private readonly IModel.CreateNew modelFactory;
+    private readonly IModelEndpoint.CreateNew endpointFactory;
+    private readonly IRepository<IModelProvider> providers;
+    private readonly IRepository<IModel> models;
+    private readonly IRepository<IModelEndpoint> endpoints;
+    private readonly IProject.CreateNew projectFactory;
+    private readonly IRepository<IProject> projects;
+    private readonly IPromptTemplate.Create promptFactory;
+    private readonly IModelParameters.Create paramsFactory;
+    private readonly IAgent.CreateNew agentFactory;
+    private readonly IAgentCall.CreateNew agentCallFactory;
+    private readonly ICompletion.Create completionFactory;
+
+    public CoreSeedScenario(
+        KioskOptions kiosk,
+        DemoSeedContext ctx,
+        IUser.CreateNew userFactory,
+        IModelProvider.CreateNew providerFactory,
+        IModel.CreateNew modelFactory,
+        IModelEndpoint.CreateNew endpointFactory,
+        IRepository<IModelProvider> providers,
+        IRepository<IModel> models,
+        IRepository<IModelEndpoint> endpoints,
+        IProject.CreateNew projectFactory,
+        IRepository<IProject> projects,
+        IPromptTemplate.Create promptFactory,
+        IModelParameters.Create paramsFactory,
+        IAgent.CreateNew agentFactory,
+        IAgentCall.CreateNew agentCallFactory,
+        ICompletion.Create completionFactory)
+    {
+        this.kiosk = kiosk;
+        this.ctx = ctx;
+        this.userFactory = userFactory;
+        this.providerFactory = providerFactory;
+        this.modelFactory = modelFactory;
+        this.endpointFactory = endpointFactory;
+        this.providers = providers;
+        this.models = models;
+        this.endpoints = endpoints;
+        this.projectFactory = projectFactory;
+        this.projects = projects;
+        this.promptFactory = promptFactory;
+        this.paramsFactory = paramsFactory;
+        this.agentFactory = agentFactory;
+        this.agentCallFactory = agentCallFactory;
+        this.completionFactory = completionFactory;
+    }
+
     public int Order => 0;
 
-    public async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken)
+    public async Task SeedAsync(CancellationToken cancellationToken)
     {
-        var kiosk = services.GetRequiredService<KioskOptions>();
-
-        services.GetRequiredService<IRepository<IUser>>();
-        var userFactory = services.GetRequiredService<IUser.CreateNew>();
         var demoUser = await userFactory(
             kiosk.DemoUserEmail,
             externalSubject: null,
             passwordHash: "kiosk-no-login",
             role: UserRole.Member).AddAsync(cancellationToken);
-
-        var providerFactory = services.GetRequiredService<IModelProvider.CreateNew>();
-        var modelFactory = services.GetRequiredService<IModel.CreateNew>();
-        var endpointFactory = services.GetRequiredService<IModelEndpoint.CreateNew>();
-        var providers = services.GetRequiredService<IRepository<IModelProvider>>();
-        var models = services.GetRequiredService<IRepository<IModel>>();
-        var endpoints = services.GetRequiredService<IRepository<IModelEndpoint>>();
 
         var openAiProvider = await providers.AddAsync(providerFactory(
             "OpenAI (demo)",
@@ -63,16 +104,10 @@ internal sealed class CoreSeedScenario : IDemoScenario
         var claudeEndpoint = await endpoints.AddAsync(endpointFactory(claudeSonnet, anthropicProvider,
             inputTokenCost: 0.000003m, outputTokenCost: 0.000015m), cancellationToken);
 
-        var projectFactory = services.GetRequiredService<IProject.CreateNew>();
-        var projects = services.GetRequiredService<IRepository<IProject>>();
         var project = await projects.AddAsync(projectFactory(
             "Showcase Project",
             gpt4oMiniEndpoint,
             [demoUser]), cancellationToken);
-
-        var promptFactory = services.GetRequiredService<IPromptTemplate.Create>();
-        var paramsFactory = services.GetRequiredService<IModelParameters.Create>();
-        var agentFactory = services.GetRequiredService<IAgent.CreateNew>();
 
         var supportAgent = await agentFactory(
             "Customer Support Agent",
@@ -106,9 +141,6 @@ internal sealed class CoreSeedScenario : IDemoScenario
             project: project,
             modelParameters: paramsFactory(temperature: 0.1),
             isSystemAgent: false).AddAsync(cancellationToken);
-
-        var agentCallFactory = services.GetRequiredService<IAgentCall.CreateNew>();
-        var completionFactory = services.GetRequiredService<ICompletion.Create>();
 
         var supportSamples = new (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[]
         {
@@ -193,8 +225,13 @@ internal sealed class CoreSeedScenario : IDemoScenario
         await SeedTraces(codeReviewAgent, claudeEndpoint, reviewSamples, spreadHours: 72);
         await SeedTraces(analyticsAgent, gpt4oEndpoint, analyticsSamples, spreadHours: 36);
 
-        _ = supportAgent;
-        _ = codeReviewAgent;
-        _ = analyticsAgent;
+        ctx.DemoUser = demoUser;
+        ctx.Project = project;
+        ctx.Gpt4oEndpoint = gpt4oEndpoint;
+        ctx.Gpt4oMiniEndpoint = gpt4oMiniEndpoint;
+        ctx.ClaudeEndpoint = claudeEndpoint;
+        ctx.CustomerSupportAgent = supportAgent;
+        ctx.CodeReviewAgent = codeReviewAgent;
+        ctx.DataAnalyticsAgent = analyticsAgent;
     }
 }

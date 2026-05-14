@@ -58,6 +58,7 @@ export function ModalFooter({ onCancel, onSubmit, submitLabel, loading, disabled
     <>
       <button className="btn-ghost" onClick={onCancel}>Cancel</button>
       <button
+        data-write
         className={danger ? 'btn-danger' : 'btn-primary'}
         onClick={onSubmit}
         disabled={loading || disabled}

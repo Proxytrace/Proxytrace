@@ -499,3 +499,15 @@ a { text-decoration: none; color: inherit; }
   border: 1px solid rgba(255,255,255,0.15);
   letter-spacing: 0.04em;
 }
+
+/* ── kiosk read-only: disable write actions ── */
+body.kiosk [data-write],
+body.kiosk .btn-primary,
+body.kiosk .btn-danger,
+body.kiosk .btn-success,
+body.kiosk .btn-icon-danger {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.4);
+}

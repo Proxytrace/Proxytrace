@@ -135,6 +135,10 @@ public sealed class Module : Autofac.Module
             .As<IAgenticEvaluatorPresets>()
             .SingleInstance();
 
+        builder.RegisterType<DemoSeedContext>()
+            .AsSelf()
+            .SingleInstance();
+
         var scenarioTypes = typeof(Module).Assembly.GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false }
                         && typeof(IDemoScenario).IsAssignableFrom(t));

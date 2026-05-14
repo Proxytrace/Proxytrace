@@ -44,6 +44,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
+        data-write
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium transition-[background-color] duration-100 cursor-pointer"
         style={{
           background: `color-mix(in srgb, ${c} 12%, transparent)`,

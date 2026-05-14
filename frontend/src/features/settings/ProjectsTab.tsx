@@ -144,6 +144,7 @@ export function ProjectsTab() {
           />
           <button
             onClick={() => setShowNew(true)}
+            data-write
             className="flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]"
           >
             <PlusIcon size={14} />
@@ -200,6 +201,7 @@ export function ProjectsTab() {
                     />
                     <button
                       className="btn-icon"
+                      data-write
                       onClick={() =>
                         updateProject.mutate({ name: nameDraft.trim(), systemEndpointId: selected.systemEndpointId })
                       }
@@ -214,7 +216,7 @@ export function ProjectsTab() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <h2 className="text-[20px] font-bold m-0 text-primary truncate">{selected.name}</h2>
-                    <button className="btn-icon" onClick={() => setEditName(true)}>
+                    <button className="btn-icon" data-write onClick={() => setEditName(true)}>
                       <EditIcon size={14} />
                     </button>
                   </div>
@@ -225,6 +227,7 @@ export function ProjectsTab() {
               </div>
               <button
                 onClick={() => setConfirmDelete(true)}
+                data-write
                 className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[rgba(217,85,85,0.3)] text-[#d95555] hover:bg-[rgba(217,85,85,0.08)]"
               >
                 <TrashIcon size={14} />
@@ -251,6 +254,7 @@ export function ProjectsTab() {
                     </select>
                     <button
                       className="btn-icon"
+                      data-write
                       onClick={() =>
                         updateProject.mutate({ name: selected.name, systemEndpointId: endpointDraft })
                       }
@@ -272,7 +276,7 @@ export function ProjectsTab() {
                         ? `${endpoints.find(e => e.id === selected.systemEndpointId)!.providerName} · ${endpoints.find(e => e.id === selected.systemEndpointId)!.modelName}`
                         : selected.systemEndpointId}
                     </span>
-                    <button className="btn-icon" onClick={() => setEditEndpoint(true)}>
+                    <button className="btn-icon" data-write onClick={() => setEditEndpoint(true)}>
                       <EditIcon size={14} />
                     </button>
                   </div>
@@ -288,6 +292,7 @@ export function ProjectsTab() {
                 </h3>
                 <button
                   onClick={() => setShowAddMember(true)}
+                  data-write
                   className="flex items-center gap-1.5 px-3 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer bg-card-2 border border-hairline text-primary hover:bg-[rgba(201,148,74,0.08)]"
                 >
                   <PlusIcon size={12} />
@@ -314,6 +319,7 @@ export function ProjectsTab() {
                       <span className="flex-1 text-[13px] font-semibold text-primary">{m.email}</span>
                       <button
                         className="btn-icon text-muted hover:text-[#d95555]"
+                        data-write
                         onClick={() => setRemoveMember(m)}
                         aria-label={`Remove ${m.email}`}
                       >

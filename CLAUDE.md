@@ -37,6 +37,7 @@ Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 - Use `nameof(...)` for all parameter names in exceptions and validation
 - Prefer collection expressions when possible
 - Supressing nullable warnings with `!` is strictly forbidden everywhere!
+- Injecting `IServiceProvider` shall be strongly avoided
 
 ### EF Core Migrations (run from Trsr.Storage/)
 ```bash

@@ -82,6 +82,7 @@ export function DangerZoneTab() {
           <div>
             <button
               onClick={() => setConfirm(true)}
+              data-write
               className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[rgba(217,85,85,0.3)] text-[#d95555] hover:bg-[rgba(217,85,85,0.08)]"
             >
               <TrashIcon size={14} />

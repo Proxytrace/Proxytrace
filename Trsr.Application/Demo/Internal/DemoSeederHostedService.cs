@@ -36,7 +36,7 @@ internal sealed class DemoSeederHostedService : IHostedService
             {
                 logger.LogInformation("Seeding scenario {Name} (order {Order})",
                     scenario.GetType().Name, scenario.Order);
-                await scenario.SeedAsync(scope.ServiceProvider, cancellationToken);
+                await scenario.SeedAsync(cancellationToken);
             }
             catch (Exception ex)
             {

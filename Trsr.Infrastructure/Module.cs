@@ -1,5 +1,4 @@
 using Autofac;
-using Trsr.Application.Demo;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Infrastructure.Internal;

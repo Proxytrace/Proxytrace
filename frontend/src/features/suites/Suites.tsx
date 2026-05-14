@@ -65,13 +65,14 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
               onClick={onRun}
+              data-write
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 600, background: 'var(--grad-accent)', color: '#fff', boxShadow: 'var(--shadow-btn)', whiteSpace: 'nowrap' }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
               ▶ {hasRuns ? 'Run again' : 'Run now'}
             </button>
-            <button onClick={onEdit} className="btn-icon"><EditIcon size={13} /></button>
+            <button onClick={onEdit} data-write className="btn-icon"><EditIcon size={13} /></button>
             <button onClick={onDelete} className="btn-icon btn-icon-danger"><TrashIcon size={13} /></button>
           </div>
         </div>

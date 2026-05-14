@@ -567,7 +567,7 @@ function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: ()
           </div>
           <div className="flex gap-2 shrink-0">
             {active && (
-              <button onClick={() => cancelGroup.mutate()} className="text-[12px] px-[10px] py-[5px] rounded-[7px] border border-border bg-transparent text-secondary cursor-pointer">Cancel</button>
+              <button onClick={() => cancelGroup.mutate()} data-write className="text-[12px] px-[10px] py-[5px] rounded-[7px] border border-border bg-transparent text-secondary cursor-pointer">Cancel</button>
             )}
             <button onClick={onDelete} className="btn-icon btn-icon-danger" title="Delete run group"><TrashIcon size={14} /></button>
           </div>

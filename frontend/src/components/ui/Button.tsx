@@ -51,12 +51,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
 ) {
   const isDisabled = disabled || loading;
   const spinnerSize = size === 'lg' ? 16 : size === 'md' ? 16 : 12;
+  const isWriteVariant = variant === 'primary' || variant === 'danger' || variant === 'success';
   return (
     <button
       ref={ref}
       type={type}
       disabled={isDisabled}
       aria-busy={loading || undefined}
+      data-write={isWriteVariant || undefined}
       className={cn(
         'inline-flex items-center justify-center font-semibold whitespace-nowrap select-none',
         'transition-[background,color,opacity,box-shadow] duration-[var(--motion-base)] ease-[var(--ease-standard)]',
@@ -83,6 +85,7 @@ export function IconButton({ danger, className, type = 'button', ...rest }: Icon
   return (
     <button
       type={type}
+      data-write={danger || undefined}
       className={cn('btn-icon', danger && 'btn-icon-danger', className)}
       {...rest}
     />

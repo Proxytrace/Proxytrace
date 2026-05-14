@@ -867,6 +867,7 @@ export default function Proposals() {
                 className="btn-ghost text-[12.5px] font-medium"
                 style={{ padding: '9px 14px', borderRadius: 'var(--radius-md)' }}
                 disabled={updateStatus.isPending}
+                data-write
                 onClick={() => updateStatus.mutate({ id: selected.id, status: ApiProposalStatus.Rejected })}
               >Dismiss</button>
               <button className="btn-ghost text-[12.5px] font-medium inline-flex items-center gap-[6px]" style={{ padding: '9px 16px', borderRadius: 'var(--radius-md)' }}>
@@ -875,6 +876,7 @@ export default function Proposals() {
               <button
                 className="inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-white"
                 disabled={updateStatus.isPending}
+                data-write
                 style={{
                   padding: '9px 18px',
                   background: 'var(--grad-success)',

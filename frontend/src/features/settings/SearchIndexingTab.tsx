@@ -168,6 +168,7 @@ export function SearchIndexingTab() {
                 <h3 className="text-[14px] font-bold m-0 text-primary">Index status</h3>
                 <button
                   onClick={() => reindex.mutate()}
+                  data-write
                   disabled={reindex.isPending || status?.isReindexing}
                   className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -267,6 +268,7 @@ export function SearchIndexingTab() {
                   <div className="flex items-center gap-2 pt-2 border-t border-hairline">
                     <button
                       onClick={() => updateSettings.mutate(draft)}
+                      data-write
                       disabled={!dirty || updateSettings.isPending}
                       className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
