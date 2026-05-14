@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeAreaChart } from './chart-math';
 import { ChartTooltip } from './ChartTooltip';
+import { useElementWidth } from '../../hooks/useElementWidth';
 
 interface AreaChartProps {
   data: number[];
@@ -34,12 +35,14 @@ export function AreaChart({
   const padT = padding?.t ?? (showAxis ? 14 : 4);
   const padB = padding?.b ?? (showAxis ? 24 : 4);
 
+  const [wrapRef, measuredWidth] = useElementWidth<HTMLDivElement>(width);
+  const w = measuredWidth || width;
+
   const chart = useMemo(
-    () => computeAreaChart(data, width, height, padL, padR, padT, padB, showAxis, xLabelFn),
-    [data, width, height, padL, padR, padT, padB, showAxis, xLabelFn],
+    () => computeAreaChart(data, w, height, padL, padR, padT, padB, showAxis, xLabelFn),
+    [data, w, height, padL, padR, padT, padB, showAxis, xLabelFn],
   );
 
-  const wrapRef = useRef<HTMLDivElement>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (data.length < 2) return null;
@@ -48,9 +51,8 @@ export function AreaChart({
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     const xPx = e.clientX - rect.left;
-    const xVb = (xPx / rect.width) * width;
-    const stepX = (width - padL - padR) / (data.length - 1);
-    const idx = Math.max(0, Math.min(data.length - 1, Math.round((xVb - padL) / stepX)));
+    const stepX = (w - padL - padR) / (data.length - 1);
+    const idx = Math.max(0, Math.min(data.length - 1, Math.round((xPx - padL) / stepX)));
     setHoverIdx(idx);
   };
 
@@ -65,11 +67,10 @@ export function AreaChart({
       onMouseLeave={() => setHoverIdx(null)}
     >
       <svg
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${w} ${height}`}
         width="100%"
         height={height}
         style={{ display: 'block', overflow: 'visible' }}
-        preserveAspectRatio="none"
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
@@ -114,7 +115,7 @@ export function AreaChart({
       </svg>
       {hoverPt && hoverIdx !== null && (
         <ChartTooltip
-          leftPct={(hoverPt.x / width) * 100}
+          leftPct={(hoverPt.x / w) * 100}
           topPct={(hoverPt.y / height) * 100}
           label={tooltipLabelFn ? tooltipLabelFn(hoverIdx) : undefined}
           value={fmt(hoverPt.v)}

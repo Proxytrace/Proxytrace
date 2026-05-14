@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { computeModelBars } from './chart-math';
 import { ChartTooltip } from './ChartTooltip';
+import { useElementWidth } from '../../hooks/useElementWidth';
 
 interface BarChartProps {
   data: { label: string; value: number }[];
@@ -19,8 +20,9 @@ export function BarChart({
   truncateAt = 10,
   formatValue,
 }: BarChartProps) {
-  const bars = useMemo(() => computeModelBars(data, width, height, truncateAt), [data, width, height, truncateAt]);
-  const wrapRef = useRef<HTMLDivElement>(null);
+  const [wrapRef, measuredWidth] = useElementWidth<HTMLDivElement>(width);
+  const w = measuredWidth || width;
+  const bars = useMemo(() => computeModelBars(data, w, height, truncateAt), [data, w, height, truncateAt]);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (bars.rects.length === 0) return null;
@@ -28,8 +30,7 @@ export function BarChart({
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const xPx = e.clientX - rect.left;
-    const xVb = (xPx / rect.width) * width;
+    const xVb = e.clientX - rect.left;
     let bestIdx = 0;
     let bestDist = Infinity;
     bars.rects.forEach((r, i) => {
@@ -51,13 +52,12 @@ export function BarChart({
       onMouseLeave={() => setHoverIdx(null)}
     >
       <svg
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${w} ${height}`}
         width="100%"
         height={height}
         style={{ display: 'block' }}
-        preserveAspectRatio="none"
       >
-        <line x1="38" x2={width - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="#343438" />
+        <line x1="38" x2={w - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="#343438" />
         <path d={bars.barsPath} fill={color} opacity="0.85" />
         {hoverRect && (
           <rect x={hoverRect.x} y={hoverRect.y} width={hoverRect.w} height={hoverRect.h} fill={color} />
@@ -68,7 +68,7 @@ export function BarChart({
       </svg>
       {hoverRect && (
         <ChartTooltip
-          leftPct={((hoverRect.x + hoverRect.w / 2) / width) * 100}
+          leftPct={((hoverRect.x + hoverRect.w / 2) / w) * 100}
           topPct={(hoverRect.y / height) * 100}
           label={hoverRect.fullLabel}
           value={fmt(hoverRect.value)}

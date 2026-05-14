@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { computeHistogram } from './chart-math';
+import { useElementWidth } from '../../hooks/useElementWidth';
 
 interface HistogramProps {
   data: number[];
@@ -16,21 +17,24 @@ export function Histogram({
   color,
   labels,
 }: HistogramProps) {
-  const hist = useMemo(() => computeHistogram(data, width, height, labels), [data, width, height, labels]);
+  const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(width);
+  const w = measuredWidth || width;
+  const hist = useMemo(() => computeHistogram(data, w, height, labels), [data, w, height, labels]);
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height={height}
-      style={{ display: 'block' }}
-      preserveAspectRatio="none"
-    >
-      <line x1="38" x2={width - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="#343438" />
-      <path d={hist.barsPath} fill={color} opacity="0.85" />
-      {hist.rects.map((r, i) => (
-        <text key={i} x={r.labelX} y={height - 8} textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
-      ))}
-    </svg>
+    <div ref={ref}>
+      <svg
+        viewBox={`0 0 ${w} ${height}`}
+        width="100%"
+        height={height}
+        style={{ display: 'block' }}
+      >
+        <line x1="38" x2={w - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="#343438" />
+        <path d={hist.barsPath} fill={color} opacity="0.85" />
+        {hist.rects.map((r, i) => (
+          <text key={i} x={r.labelX} y={height - 8} textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+        ))}
+      </svg>
+    </div>
   );
 }
