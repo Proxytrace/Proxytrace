@@ -7,6 +7,7 @@ using Trsr.Api.Auth;
 using Trsr.Api.Auth.Kiosk;
 using Trsr.Application.Auth;
 using Trsr.Application.Auth.Local;
+using Trsr.Application.Cleanup;
 using Trsr.Application.Demo;
 using Trsr.Application.Search;
 using Trsr.Application.TestRun;
@@ -42,6 +43,12 @@ internal sealed class Module : Autofac.Module
         var kiosk = configuration.GetSection("Kiosk").Get<KioskOptions>() ?? new KioskOptions();
         builder
             .RegisterInstance(kiosk)
+            .SingleInstance();
+        
+        var agentCallCleanupConfiguration = configuration.GetSection("AgentCallCleanup")
+            .Get<AgentCallCleanupConfiguration>() ?? new AgentCallCleanupConfiguration();
+        builder
+            .RegisterInstance(agentCallCleanupConfiguration)
             .SingleInstance();
 
         var upstreamBaseUrl = configuration.GetSection("ModelProvider").GetValue<string>("UpstreamBaseUrl");
