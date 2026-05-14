@@ -1,5 +1,6 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 
 namespace Trsr.Domain.OptimizationProposal;
 
@@ -16,7 +17,8 @@ public interface ISystemPromptProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         string proposedSystemMessage,
-        IReadOnlyCollection<Guid> evidenceTestRunIds);
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun);
 
     public delegate ISystemPromptProposal CreateExisting(
         IAgent agent,
@@ -25,5 +27,6 @@ public interface ISystemPromptProposal : IOptimizationProposal
         string rationale,
         string proposedSystemMessage,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IDomainEntityData existing);
 }

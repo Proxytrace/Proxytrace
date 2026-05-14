@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Trsr.Application.Optimization.Internal.Evidence;
 using Trsr.Application.Statistics;
 using Trsr.Application.Statistics.TestRun;
+using Trsr.Application.TestRun;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
@@ -23,6 +24,9 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
+    private readonly ITestRunnerService testRunnerService;
+    private readonly IPromptTemplate.Create promptTemplateFactory;
+    private readonly IAgent.CreateNew agentFactory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateSystemPromptOptimizer(
@@ -30,12 +34,18 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
+        ITestRunnerService testRunnerService,
+        IPromptTemplate.Create promptTemplateFactory,
+        IAgent.CreateNew agentFactory,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
     {
         this.factory = factory;
         this.prompts = prompts;
         this.agents = agents;
         this.evidenceBuilder = evidenceBuilder;
+        this.testRunnerService = testRunnerService;
+        this.promptTemplateFactory = promptTemplateFactory;
+        this.agentFactory = agentFactory;
         this.runStats = runStats;
     }
 
@@ -79,6 +89,28 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
         {
             return [];
         }
+        
+        // create updated agent
+        var promptTemplate = promptTemplateFactory(agent.Name, output.ProposedSystemPrompt);
+        var updatedAgent = agentFactory(
+            name: agent.Name,
+            systemPrompt: promptTemplate,
+            tools: agent.Tools,
+            endpoint: agent.Endpoint,
+            project: agent.Project,
+            modelParameters: agent.ModelParameters,
+            isSystemAgent: agent.IsSystemAgent);
+        
+        var abTestRunGroup = await testRunnerService.RunInForegroundAsync(
+            suite: testRunGroup.Suite,
+            endpoints: [updatedAgent.Endpoint],
+            customAgent: updatedAgent,
+            cancellationToken: cancellationToken);
+        var abTestRuns = await abTestRunGroup.GetTestRuns(cancellationToken);
+        if (abTestRuns.Count == 0)
+        {
+            return [];
+        }
 
         Priority priority = stats.GetOptimizationPriority();
         string fullRationale =
@@ -92,7 +124,8 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             evidenceTestRunIds:
             [
                 currentRun.Id
-            ]);
+            ],
+            abTestRun: abTestRuns.First());
 
         return [proposal];
     }

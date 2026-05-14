@@ -4,6 +4,7 @@ using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
@@ -15,6 +16,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
     public ProposalStatus Status { get; }
     public Priority Priority { get; }
     public string Rationale { get; }
+    public ITestRun ABTestRun { get; }
     public string ProposedSystemMessage { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
 
@@ -24,6 +26,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         string rationale,
         string proposedSystemMessage,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
+        ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
@@ -32,6 +35,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Rationale = rationale;
         ProposedSystemMessage = proposedSystemMessage;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public SystemPromptProposal(
@@ -42,6 +46,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         string proposedSystemMessage,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         IDomainEntityData existing,
+        ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
         Agent = agent;
@@ -50,6 +55,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Rationale = rationale;
         ProposedSystemMessage = proposedSystemMessage;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
+        ABTestRun = abTestRun;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

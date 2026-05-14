@@ -31,4 +31,5 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
     Task<ITestRunGroup> SetCompleted(CancellationToken cancellationToken = default);
     Task<ITestRunGroup> SetFailed(CancellationToken cancellationToken = default);
     Task<ITestRunGroup> SetCancelled(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ITestRun>> GetTestRuns(CancellationToken cancellationToken = default);
 }

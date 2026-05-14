@@ -68,6 +68,14 @@ public interface IAgent : IDomainEntity<IAgent>, ISearchable
         IModelEndpoint? customEndpoint = null,
         bool skipIngestion = false);
 
+    Task<IAgent> ChangeSystemMessage(
+        IPromptTemplate systemPrompt,
+        CancellationToken cancellationToken = default);
+    
+    Task<IAgent> ChangeTools(
+        IReadOnlyList<ToolSpecification> tools,
+        CancellationToken cancellationToken = default);
+    
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint,
         CancellationToken cancellationToken = default);

@@ -1,3 +1,4 @@
+using Trsr.Domain.Agent;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestRunGroup;
 using Trsr.Domain.TestSuite;
@@ -13,6 +14,8 @@ public interface ITestRunnerService
     internal Task<ITestRunGroup> RunInForegroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
+        IAgent? customAgent = null,
+        bool isSystemTestRun = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

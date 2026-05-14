@@ -1,5 +1,6 @@
 using Trsr.Domain.Agent;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.TestRun;
 
 namespace Trsr.Domain.OptimizationProposal;
 
@@ -26,6 +27,11 @@ public interface IOptimizationProposal : IDomainEntity
     /// referencing the test evidence that motivated it.
     /// </summary>
     string Rationale { get; }
+    
+    /// <summary>
+    /// A/B Test run 
+    /// </summary>
+    ITestRun ABTestRun { get; }
 
     /// <summary>
     /// IDs of the <see cref="TestRun.ITestRun"/> instances whose results motivated this proposal.
