@@ -163,6 +163,28 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             await optimizer.EnqueueAsync(group, cancellationToken);
             return group;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Test run group {GroupId} failed", group.Id);
+            try
+            {
+                group = await group.ReloadAsync(CancellationToken.None);
+                if (!IsTerminal(group.Status))
+                {
+                    group = await group.SetFailed(CancellationToken.None);
+                }
+                broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+            }
+            catch (Exception broadcastEx)
+            {
+                logger.LogError(broadcastEx, "Failed to mark test run group {GroupId} as Failed", group.Id);
+            }
+            return group;
+        }
         finally
         {
             cancellationTokens.TryRemove(group.Id, out _);
@@ -225,12 +247,31 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     }
 
     private async Task RunEvaluator(
-        IEvaluator evaluator, 
+        IEvaluator evaluator,
         ITestResult testResult,
         ITestRun testRun,
         CancellationToken cancellationToken)
     {
-        IEvaluation? evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+        IEvaluation? evaluation;
+        try
+        {
+            evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Evaluator {EvaluatorId} ({EvaluatorKind}) failed for test result {TestResultId}",
+                evaluator.Id,
+                evaluator.Kind,
+                testResult.Id);
+            return;
+        }
+
         if (evaluation is null)
         {
             return;

@@ -28,6 +28,6 @@ internal sealed record Evaluation : IEvaluation
             yield return validationResult;
         }
 
-        foreach (var r in Validation.Defined(Score).AsEnumerable()) yield return r;
+        yield return Validation.Defined(Score);
     }
 }
