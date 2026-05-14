@@ -118,7 +118,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
               width={420}
               height={140}
               color={color}
-              gradientId={`evalTrend-${color.replace('#', '')}`}
+              gradientId={`evalTrend-${color.replace(/[^a-zA-Z0-9]/g, '')}`}
               showAxis={false}
               showEndMarker
               formatValue={v => fmtPct(v)}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { evaluatorsApi } from '../../api/evaluators';
@@ -603,6 +603,12 @@ export default function Evaluators() {
 
   const visible = evaluators.filter(e => typeFilter === 'all' || KIND_CATEGORY[e.kind] === typeFilter);
   const selected = routeId ? evaluators.find(e => e.id === routeId) ?? null : null;
+
+  useEffect(() => {
+    if (!routeId && visible.length > 0) {
+      navigate(`/evaluators/${visible[0].id}`, { replace: true });
+    }
+  }, [routeId, visible, navigate]);
   const editTarget = evaluators.find(e => e.id === editTargetId) ?? null;
   const deleteTarget = evaluators.find(e => e.id === deleteTargetId) ?? null;
 
