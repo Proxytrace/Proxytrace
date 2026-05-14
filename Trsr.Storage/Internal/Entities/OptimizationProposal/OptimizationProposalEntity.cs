@@ -9,7 +9,7 @@ internal record OptimizationProposalEntity : Entity
     /// <summary><see cref="IOptimizationProposal.Agent"/></summary>
     public required Guid Agent { get; init; }
 
-    /// <summary><see cref="IOptimizationProposal.Kind"/> — stored for indexed querying.</summary>
+    /// <summary><see cref="IOptimizationProposal.Kind"/> — discriminator for deserialization.</summary>
     public required ProposalKind Kind { get; init; }
 
     /// <summary><see cref="IOptimizationProposal.Status"/></summary>
@@ -22,10 +22,9 @@ internal record OptimizationProposalEntity : Entity
     public required string Rationale { get; init; }
 
     /// <summary>
-    /// <see cref="IOptimizationProposal.Details"/> serialized as JSON.
-    /// Deserialize using <see cref="Kind"/> to select the concrete <see cref="ProposalDetails"/> subtype.
+    /// Kind-specific JSON payload. Shape is determined by <see cref="Kind"/>.
     /// </summary>
-    public required string Details { get; init; }
+    public required string Data { get; init; }
 
     /// <summary>
     /// <see cref="IOptimizationProposal.EvidenceTestRunIds"/> serialized as JSON.

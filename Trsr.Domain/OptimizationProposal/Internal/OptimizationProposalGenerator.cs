@@ -1,33 +1,35 @@
 using Trsr.Common.Random;
-using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
-using Trsr.Domain.Proposal;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
-internal class OptimizationProposalGenerator : DomainEntityGenerator<IOptimizationProposal>
+internal class OptimizationProposalGenerator : DomainEntityGenerator<IOptimizationProposal>, IOptimizationProposalGenerator
 {
-    private readonly IOptimizationProposal.CreateNew factory;
-    private readonly IDomainEntityGenerator<IAgent> agentGenerator;
+    private readonly IDomainEntityGenerator<ISystemPromptProposal> systemPromptGenerator;
+    private readonly IDomainEntityGenerator<IToolUpdateProposal> toolUpdateGenerator;
+    private readonly IDomainEntityGenerator<IModelSwitchProposal> modelSwitchGenerator;
 
     public OptimizationProposalGenerator(
-        IOptimizationProposal.CreateNew factory,
         IRepository<IOptimizationProposal> repository,
-        IDomainEntityGenerator<IAgent> agentGenerator,
+        IDomainEntityGenerator<ISystemPromptProposal> systemPromptGenerator,
+        IDomainEntityGenerator<IToolUpdateProposal> toolUpdateGenerator,
+        IDomainEntityGenerator<IModelSwitchProposal> modelSwitchGenerator,
         IRandom random) : base(repository, random)
     {
-        this.factory = factory;
-        this.agentGenerator = agentGenerator;
+        this.systemPromptGenerator = systemPromptGenerator;
+        this.toolUpdateGenerator = toolUpdateGenerator;
+        this.modelSwitchGenerator = modelSwitchGenerator;
     }
 
     public override async Task<IOptimizationProposal> GenerateAsync(CancellationToken cancellationToken = default)
-    {
-        var agent = await agentGenerator.GetOrCreateAsync(cancellationToken);
-        return factory(
-            agent: agent,
-            priority: Priority.Medium,
-            rationale: random.String(),
-            details: new SystemPromptDetails(random.String()),
-            evidenceTestRunIds: []);
-    }
+        => await systemPromptGenerator.GenerateAsync(cancellationToken);
+
+    public async Task<IOptimizationProposal> CreateAsync(ProposalKind kind, CancellationToken cancellationToken = default)
+        => kind switch
+        {
+            ProposalKind.SystemPrompt => await systemPromptGenerator.CreateAsync(cancellationToken),
+            ProposalKind.Tool => await toolUpdateGenerator.CreateAsync(cancellationToken),
+            ProposalKind.ModelSwitch => await modelSwitchGenerator.CreateAsync(cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
 }

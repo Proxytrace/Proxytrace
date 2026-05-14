@@ -21,14 +21,14 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
 {
     internal const string PromptName = "update_tool_definition_optimizer";
 
-    private readonly IOptimizationProposal.CreateNew factory;
+    private readonly IToolUpdateProposal.CreateNew factory;
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateToolDefinitionOptimizer(
-        IOptimizationProposal.CreateNew factory,
+        IToolUpdateProposal.CreateNew factory,
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
@@ -109,7 +109,7 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             agent: agent,
             priority: priority,
             rationale: fullRationale,
-            details: new ToolDetails(completion.Tools),
+            proposedTools: completion.Tools,
             evidenceTestRunIds: [currentRun.Id]);
 
         return [proposal];

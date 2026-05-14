@@ -9,11 +9,11 @@ namespace Trsr.Application.Optimization.Internal;
 
 internal sealed class SwitchModelOptimizer : IOptimizerImplementation
 {
-    private readonly IOptimizationProposal.CreateNew factory;
+    private readonly IModelSwitchProposal.CreateNew factory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public SwitchModelOptimizer(
-        IOptimizationProposal.CreateNew factory,
+        IModelSwitchProposal.CreateNew factory,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
     {
         this.factory = factory;
@@ -88,11 +88,10 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             agent: testRunGroup.Suite.Agent,
             priority: priority,
             rationale: rationale,
-            details: new ModelSwitchDetails(
-                ProposedEndpointId: bestRun.Endpoint.Id,
-                ExpectedPassRateDelta: diff.PassRate,
-                ExpectedCostDelta: diff.Cost,
-                ExpectedLatencyDelta: diff.TotalDuration),
+            proposedEndpoint: bestRun.Endpoint,
+            expectedPassRateDelta: diff.PassRate,
+            expectedCostDelta: diff.Cost,
+            expectedLatencyDelta: diff.TotalDuration,
             evidenceTestRunIds: [currentRun.Id, bestRun.Id]);
 
         return [proposal];

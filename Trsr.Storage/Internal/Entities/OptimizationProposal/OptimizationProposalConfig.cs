@@ -5,6 +5,7 @@ using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Storage.Internal.Entities.Agent;
 
@@ -14,18 +15,27 @@ internal class OptimizationProposalConfig :
     AbstractEntityConfiguration<OptimizationProposalEntity>,
     IMapper<IOptimizationProposal, OptimizationProposalEntity>
 {
-    private readonly IOptimizationProposal.CreateExisting factory;
+    private readonly IModelSwitchProposal.CreateExisting createModelSwitch;
+    private readonly ISystemPromptProposal.CreateExisting createSystemPrompt;
+    private readonly IToolUpdateProposal.CreateExisting createToolUpdate;
     private readonly ISerializer serializer;
     private readonly IRepository<IAgent> agents;
+    private readonly IRepository<IModelEndpoint> endpoints;
 
     public OptimizationProposalConfig(
-        IOptimizationProposal.CreateExisting factory,
+        IModelSwitchProposal.CreateExisting createModelSwitch,
+        ISystemPromptProposal.CreateExisting createSystemPrompt,
+        IToolUpdateProposal.CreateExisting createToolUpdate,
         ISerializer serializer,
-        IRepository<IAgent> agents)
+        IRepository<IAgent> agents,
+        IRepository<IModelEndpoint> endpoints)
     {
-        this.factory = factory;
+        this.createModelSwitch = createModelSwitch;
+        this.createSystemPrompt = createSystemPrompt;
+        this.createToolUpdate = createToolUpdate;
         this.serializer = serializer;
         this.agents = agents;
+        this.endpoints = endpoints;
     }
 
     public override void Configure(EntityTypeBuilder<OptimizationProposalEntity> builder)
@@ -47,34 +57,86 @@ internal class OptimizationProposalConfig :
         var evidenceTestRunIds = serializer.Deserialize<IReadOnlyCollection<Guid>>(stored.EvidenceTestRunIds)
                                  ?? Array.Empty<Guid>();
 
-        ProposalDetails? details = stored.Kind switch
+        return stored.Kind switch
         {
-            ProposalKind.ModelSwitch 
-                => serializer.Deserialize<ModelSwitchDetails>(stored.Details),
-            ProposalKind.SystemPrompt 
-                => serializer.Deserialize<SystemPromptDetails>(stored.Details),
-            ProposalKind.Tool 
-                => serializer.Deserialize<ToolDetails>(stored.Details),
+            ProposalKind.ModelSwitch => await MapModelSwitch(stored, agent, evidenceTestRunIds, cancellationToken),
+            ProposalKind.SystemPrompt => MapSystemPrompt(stored, agent, evidenceTestRunIds),
+            ProposalKind.Tool => MapToolUpdate(stored, agent, evidenceTestRunIds),
             _ => throw new ArgumentOutOfRangeException(nameof(stored.Kind))
         };
+    }
 
-        if (details == null)
-        {
-            throw new SerializationException($"Failed to deserialize details for proposal {stored.Id} of kind {stored.Kind}");
-        }
-
-        return factory(
+    private async Task<IModelSwitchProposal> MapModelSwitch(
+        OptimizationProposalEntity stored,
+        IAgent agent,
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        CancellationToken cancellationToken)
+    {
+        var data = serializer.Deserialize<ModelSwitchProposalData>(stored.Data)
+                   ?? throw new SerializationException($"Failed to deserialize ModelSwitchProposalData for proposal {stored.Id}");
+        var proposedEndpoint = await endpoints.GetAsync(data.ProposedEndpointId, cancellationToken);
+        return createModelSwitch(
             agent: agent,
             status: stored.Status,
             priority: stored.Priority,
             rationale: stored.Rationale,
-            details: details,
+            proposedEndpoint: proposedEndpoint,
+            expectedPassRateDelta: data.ExpectedPassRateDelta,
+            expectedCostDelta: data.ExpectedCostDelta,
+            expectedLatencyDelta: data.ExpectedLatencyDelta,
+            evidenceTestRunIds: evidenceTestRunIds,
+            existing: stored);
+    }
+
+    private ISystemPromptProposal MapSystemPrompt(
+        OptimizationProposalEntity stored,
+        IAgent agent,
+        IReadOnlyCollection<Guid> evidenceTestRunIds)
+    {
+        var data = serializer.Deserialize<SystemPromptProposalData>(stored.Data)
+                   ?? throw new SerializationException($"Failed to deserialize SystemPromptProposalData for proposal {stored.Id}");
+        return createSystemPrompt(
+            agent: agent,
+            status: stored.Status,
+            priority: stored.Priority,
+            rationale: stored.Rationale,
+            proposedSystemMessage: data.ProposedSystemMessage,
+            evidenceTestRunIds: evidenceTestRunIds,
+            existing: stored);
+    }
+
+    private IToolUpdateProposal MapToolUpdate(
+        OptimizationProposalEntity stored,
+        IAgent agent,
+        IReadOnlyCollection<Guid> evidenceTestRunIds)
+    {
+        var data = serializer.Deserialize<ToolUpdateProposalData>(stored.Data)
+                   ?? throw new SerializationException($"Failed to deserialize ToolUpdateProposalData for proposal {stored.Id}");
+        return createToolUpdate(
+            agent: agent,
+            status: stored.Status,
+            priority: stored.Priority,
+            rationale: stored.Rationale,
+            proposedTools: data.ProposedTools,
             evidenceTestRunIds: evidenceTestRunIds,
             existing: stored);
     }
 
     public Task<OptimizationProposalEntity> Map(IOptimizationProposal domain, CancellationToken cancellationToken = default)
-        => new OptimizationProposalEntity
+    {
+        string data = domain switch
+        {
+            IModelSwitchProposal ms => serializer.Serialize(new ModelSwitchProposalData(
+                ms.ProposedEndpoint.Id,
+                ms.ExpectedPassRateDelta,
+                ms.ExpectedCostDelta,
+                ms.ExpectedLatencyDelta)),
+            ISystemPromptProposal sp => serializer.Serialize(new SystemPromptProposalData(sp.ProposedSystemMessage)),
+            IToolUpdateProposal tu => serializer.Serialize(new ToolUpdateProposalData(tu.ProposedTools)),
+            _ => throw new NotSupportedException($"Unsupported proposal type: {domain.GetType()}")
+        };
+
+        return new OptimizationProposalEntity
         {
             Id = domain.Id,
             Agent = domain.Agent.Id,
@@ -82,9 +144,10 @@ internal class OptimizationProposalConfig :
             Status = domain.Status,
             Priority = domain.Priority,
             Rationale = domain.Rationale,
-            Details = serializer.Serialize(domain.Details),
+            Data = data,
             EvidenceTestRunIds = serializer.Serialize(domain.EvidenceTestRunIds),
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
+    }
 }

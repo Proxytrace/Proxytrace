@@ -5,7 +5,6 @@ using Trsr.Api.Dto.Agents;
 using Trsr.Api.Dto.Proposals;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
-using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.OptimizationProposal;
 using Trsr.Domain.Tools;
 
@@ -17,17 +16,20 @@ namespace Trsr.Api.Controllers;
 public class ProposalsController : ControllerBase
 {
     private readonly IOptimizationProposalRepository repository;
-    private readonly IRepository<IModelEndpoint> endpointRepository;
-    private readonly IOptimizationProposal.CreateExisting createExisting;
+    private readonly IModelSwitchProposal.CreateExisting createModelSwitch;
+    private readonly ISystemPromptProposal.CreateExisting createSystemPrompt;
+    private readonly IToolUpdateProposal.CreateExisting createToolUpdate;
 
     public ProposalsController(
         IOptimizationProposalRepository repository,
-        IRepository<IModelEndpoint> endpointRepository,
-        IOptimizationProposal.CreateExisting createExisting)
+        IModelSwitchProposal.CreateExisting createModelSwitch,
+        ISystemPromptProposal.CreateExisting createSystemPrompt,
+        IToolUpdateProposal.CreateExisting createToolUpdate)
     {
         this.repository = repository;
-        this.endpointRepository = endpointRepository;
-        this.createExisting = createExisting;
+        this.createModelSwitch = createModelSwitch;
+        this.createSystemPrompt = createSystemPrompt;
+        this.createToolUpdate = createToolUpdate;
     }
 
     [HttpGet]
@@ -44,10 +46,7 @@ public class ProposalsController : ControllerBase
         else
             proposals = await repository.GetAllAsync(cancellationToken);
 
-        var dtos = new List<OptimizationProposalDto>(proposals.Count);
-        foreach (var p in proposals)
-            dtos.Add(await ToDtoAsync(p, cancellationToken));
-        return dtos;
+        return proposals.Select(ToDto).ToList();
     }
 
     [HttpPatch("{id:guid}/status")]
@@ -60,22 +59,26 @@ public class ProposalsController : ControllerBase
             return NotFound();
 
         var existing = await repository.GetAsync(id, cancellationToken);
-        var updated = createExisting(
-            existing.Agent,
-            request.Status,
-            existing.Priority,
-            existing.Rationale,
-            existing.Details,
-            existing.EvidenceTestRunIds,
-            existing);
+        IOptimizationProposal updated = existing switch
+        {
+            IModelSwitchProposal ms => createModelSwitch(
+                ms.Agent, request.Status, ms.Priority, ms.Rationale,
+                ms.ProposedEndpoint, ms.ExpectedPassRateDelta, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
+                ms.EvidenceTestRunIds, ms),
+            ISystemPromptProposal sp => createSystemPrompt(
+                sp.Agent, request.Status, sp.Priority, sp.Rationale,
+                sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp),
+            IToolUpdateProposal tu => createToolUpdate(
+                tu.Agent, request.Status, tu.Priority, tu.Rationale,
+                tu.ProposedTools, tu.EvidenceTestRunIds, tu),
+            _ => throw new ArgumentOutOfRangeException(nameof(existing))
+        };
         await repository.UpdateAsync(updated, cancellationToken);
-        return Ok(await ToDtoAsync(updated, cancellationToken));
+        return Ok(ToDto(updated));
     }
 
-    private async Task<OptimizationProposalDto> ToDtoAsync(IOptimizationProposal p, CancellationToken ct)
-    {
-        var details = await ToDetailsDtoAsync(p, ct);
-        return new OptimizationProposalDto(
+    private static OptimizationProposalDto ToDto(IOptimizationProposal p)
+        => new(
             p.Id,
             p.Kind,
             p.Status,
@@ -83,40 +86,36 @@ public class ProposalsController : ControllerBase
             p.Agent.Name,
             p.Priority,
             p.Rationale,
-            details,
+            ToDetailsDto(p),
             [.. p.EvidenceTestRunIds],
             p.CreatedAt,
             p.UpdatedAt);
-    }
 
-    private async Task<ProposalDetailsDto> ToDetailsDtoAsync(IOptimizationProposal p, CancellationToken ct)
-        => p.Details switch
+    private static ProposalDetailsDto ToDetailsDto(IOptimizationProposal p)
+        => p switch
         {
-            ModelSwitchDetails ms => await ToModelSwitchDtoAsync(p.Agent, ms, ct),
-            SystemPromptDetails sp => ToSystemPromptDto(p.Agent, sp),
-            ToolDetails td => ToToolDto(p.Agent, td),
-            _ => throw new ArgumentOutOfRangeException(nameof(p.Details)),
+            IModelSwitchProposal ms => ToModelSwitchDto(ms),
+            ISystemPromptProposal sp => ToSystemPromptDto(sp),
+            IToolUpdateProposal tu => ToToolDto(tu),
+            _ => throw new ArgumentOutOfRangeException(nameof(p)),
         };
 
-    private async Task<ModelSwitchDetailsDto> ToModelSwitchDtoAsync(IAgent agent, ModelSwitchDetails ms, CancellationToken ct)
-    {
-        var proposed = await endpointRepository.GetAsync(ms.ProposedEndpointId, ct);
-        return new ModelSwitchDetailsDto(
-            ms.ProposedEndpointId,
-            agent.Endpoint.Model.Name,
-            proposed.Model.Name,
+    private static ModelSwitchDetailsDto ToModelSwitchDto(IModelSwitchProposal ms)
+        => new(
+            ms.ProposedEndpoint.Id,
+            ms.Agent.Endpoint.Model.Name,
+            ms.ProposedEndpoint.Model.Name,
             ms.ExpectedPassRateDelta,
             ms.ExpectedCostDelta.HasValue ? (double)ms.ExpectedCostDelta.Value : null,
             ms.ExpectedLatencyDelta.HasValue ? (long)ms.ExpectedLatencyDelta.Value.TotalMilliseconds : null);
-    }
 
-    private static SystemPromptDetailsDto ToSystemPromptDto(IAgent agent, SystemPromptDetails sp)
-        => new(agent.SystemPrompt.Template, sp.ProposedSystemMessage);
+    private static SystemPromptDetailsDto ToSystemPromptDto(ISystemPromptProposal sp)
+        => new(sp.Agent.SystemPrompt.Template, sp.ProposedSystemMessage);
 
-    private static ToolDetailsDto ToToolDto(IAgent agent, ToolDetails td)
+    private static ToolDetailsDto ToToolDto(IToolUpdateProposal tu)
         => new(
-            [.. agent.Tools.Select(ToToolSpecDto)],
-            [.. td.ProposedTools.Select(ToToolSpecDto)]);
+            [.. tu.Agent.Tools.Select(ToToolSpecDto)],
+            [.. tu.ProposedTools.Select(ToToolSpecDto)]);
 
     private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t)
         => new(t.Name, t.Description, [.. t.Arguments.Arguments.Select(ToArgumentDto)]);

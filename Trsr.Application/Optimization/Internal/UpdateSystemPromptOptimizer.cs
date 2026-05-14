@@ -19,14 +19,14 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
 {
     internal const string PromptName = "update_system_prompt_optimizer";
 
-    private readonly IOptimizationProposal.CreateNew factory;
+    private readonly ISystemPromptProposal.CreateNew factory;
     private readonly IPromptTemplateRepository prompts;
     private readonly IAgentRepository agents;
     private readonly IOptimizerEvidenceBuilder evidenceBuilder;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public UpdateSystemPromptOptimizer(
-        IOptimizationProposal.CreateNew factory,
+        ISystemPromptProposal.CreateNew factory,
         IPromptTemplateRepository prompts,
         IAgentRepository agents,
         IOptimizerEvidenceBuilder evidenceBuilder,
@@ -80,7 +80,6 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             return [];
         }
 
-        var details = new SystemPromptDetails(output.ProposedSystemPrompt);
         Priority priority = stats.GetOptimizationPriority();
         string fullRationale =
             $"{output.Rationale} (Current run: {stats.Failed}/{stats.TestCases} failed.)";
@@ -89,7 +88,7 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             agent: agent,
             priority: priority,
             rationale: fullRationale,
-            details: details,
+            proposedSystemMessage: output.ProposedSystemPrompt,
             evidenceTestRunIds:
             [
                 currentRun.Id

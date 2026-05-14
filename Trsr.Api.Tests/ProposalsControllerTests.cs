@@ -12,11 +12,6 @@ using Trsr.Testing;
 
 namespace Trsr.Api.Tests;
 
-// NOTE: seeded-proposal tests routing through ToDtoAsync are intentionally not covered here.
-// The proposal details serializer round-trip loses fields (ModelSwitchDetails.ProposedEndpointId
-// comes back as Guid.Empty, SystemPromptDetails.ProposedSystemMessage comes back null), which
-// surfaces as NRE / EntityNotFoundException in ProposalsController.ToDtoAsync. That is a real
-// storage/serialization bug to fix separately; covering it here would just lock in red.
 [TestClass]
 public sealed class ProposalsControllerTests : BaseTest<Module>
 {
@@ -70,26 +65,17 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task UpdateStatus_OnAgent_PersistsStatusChange()
     {
-        // Mutates persisted Status without re-serializing details on the same call: we verify by
-        // re-reading from the repo (skipping the controller's faulty DTO mapping for now).
         IServiceProvider services = GetServices();
         var controller = ResolveController(services);
         var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
         var newEndpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().CreateAsync(CancellationToken);
-        var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+        var factory = services.GetRequiredService<IModelSwitchProposal.CreateNew>();
         var repo = services.GetRequiredService<IOptimizationProposalRepository>();
-        var proposal = factory(agent, Priority.Medium, "r", new ModelSwitchDetails(newEndpoint.Id, 0.1, null, null), []);
-        proposal = await repo.AddAsync(proposal, CancellationToken);
+        var proposal = factory(agent, Priority.Medium, "r", newEndpoint, 0.1, null, null, []);
+        proposal = (IModelSwitchProposal)await repo.AddAsync(proposal, CancellationToken);
 
         var target = proposal.Status == ProposalStatus.Accepted ? ProposalStatus.Rejected : ProposalStatus.Accepted;
-        try
-        {
-            await controller.UpdateStatus(proposal.Id, new UpdateProposalStatusRequest(target), CancellationToken);
-        }
-        catch
-        {
-            // ToDtoAsync after update hits the round-trip bug; swallow so we can still verify the write.
-        }
+        await controller.UpdateStatus(proposal.Id, new UpdateProposalStatusRequest(target), CancellationToken);
 
         var reloaded = await repo.GetAsync(proposal.Id, CancellationToken);
         reloaded.Status.Should().Be(target);
@@ -97,6 +83,7 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
 
     private static ProposalsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IOptimizationProposalRepository>(),
-        services.GetRequiredService<IRepository<IModelEndpoint>>(),
-        services.GetRequiredService<IOptimizationProposal.CreateExisting>());
+        services.GetRequiredService<IModelSwitchProposal.CreateExisting>(),
+        services.GetRequiredService<ISystemPromptProposal.CreateExisting>(),
+        services.GetRequiredService<IToolUpdateProposal.CreateExisting>());
 }

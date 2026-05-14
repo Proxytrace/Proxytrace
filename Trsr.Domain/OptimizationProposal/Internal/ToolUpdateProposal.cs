@@ -1,32 +1,29 @@
 using System.ComponentModel.DataAnnotations;
+using JetBrains.Annotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Internal;
 using Trsr.Domain.Proposal;
+using Trsr.Domain.Tools;
 
 namespace Trsr.Domain.OptimizationProposal.Internal;
 
-internal record OptimizationProposal : DomainEntity<IOptimizationProposal>, IOptimizationProposal
+[UsedImplicitly]
+internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolUpdateProposal
 {
     public IAgent Agent { get; }
-    public ProposalKind Kind => Details switch
-    {
-        ModelSwitchDetails => ProposalKind.ModelSwitch,
-        SystemPromptDetails => ProposalKind.SystemPrompt,
-        ToolDetails => ProposalKind.Tool,
-        _ => throw new ArgumentOutOfRangeException(nameof(Details))
-    };
+    public ProposalKind Kind => ProposalKind.Tool;
     public ProposalStatus Status { get; }
     public Priority Priority { get; }
     public string Rationale { get; }
-    public ProposalDetails Details { get; }
+    public IReadOnlyList<ToolSpecification> ProposedTools { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
 
-    public OptimizationProposal(
+    public ToolUpdateProposal(
         IAgent agent,
         Priority priority,
         string rationale,
-        ProposalDetails details,
+        IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
@@ -34,16 +31,16 @@ internal record OptimizationProposal : DomainEntity<IOptimizationProposal>, IOpt
         Status = ProposalStatus.Draft;
         Priority = priority;
         Rationale = rationale;
-        Details = details;
+        ProposedTools = proposedTools.ToArray();
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
     }
 
-    public OptimizationProposal(
+    public ToolUpdateProposal(
         IAgent agent,
         ProposalStatus status,
         Priority priority,
         string rationale,
-        ProposalDetails details,
+        IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
@@ -52,7 +49,7 @@ internal record OptimizationProposal : DomainEntity<IOptimizationProposal>, IOpt
         Status = status;
         Priority = priority;
         Rationale = rationale;
-        Details = details;
+        ProposedTools = proposedTools.ToArray();
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
     }
 

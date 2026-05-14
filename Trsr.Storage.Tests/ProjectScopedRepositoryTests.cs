@@ -71,17 +71,16 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
     {
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IOptimizationProposalRepository>();
-        var factory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
 
         var (projectA, agentA) = await CreateProjectAndAgent(services);
         var (_, agentB) = await CreateProjectAndAgent(services);
-        var details = new SystemPromptDetails("Improved system prompt");
 
         var inA = await repository.AddAsync(
-            factory(agentA, Priority.Medium, "rationale A", details, [Guid.NewGuid()]),
+            factory(agentA, Priority.Medium, "rationale A", "Improved system prompt", [Guid.NewGuid()]),
             CancellationToken);
         var inB = await repository.AddAsync(
-            factory(agentB, Priority.Medium, "rationale B", details, [Guid.NewGuid()]),
+            factory(agentB, Priority.Medium, "rationale B", "Improved system prompt", [Guid.NewGuid()]),
             CancellationToken);
 
         var resultsA = await repository.GetByProjectAsync(projectA.Id, CancellationToken);

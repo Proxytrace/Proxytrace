@@ -120,9 +120,9 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 
         proposals.Should().HaveCount(1);
         IOptimizationProposal proposal = proposals[0];
-        proposal.Details.Should().BeOfType<ToolDetails>();
+        proposal.Should().BeAssignableTo<IToolUpdateProposal>();
 
-        var tools = ((ToolDetails)proposal.Details).ProposedTools.ToList();
+        var tools = ((IToolUpdateProposal)proposal).ProposedTools.ToList();
         tools.Should().HaveCount(1);
         tools[0].Name.Should().Be(OnlyToolName);
         tools[0].Description.Should().Be("Refined search description.");
@@ -278,7 +278,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 
         public static OptimizerFixture Build(IServiceProvider services, string cannedResponse, bool includeTool = true)
         {
-            var proposalFactory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+            var proposalFactory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
             var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
 
             var agentEndpointId = Guid.NewGuid();

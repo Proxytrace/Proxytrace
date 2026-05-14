@@ -88,8 +88,8 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         proposals.Should().HaveCount(1);
         IOptimizationProposal proposal = proposals[0];
-        proposal.Details.Should().BeOfType<SystemPromptDetails>();
-        ((SystemPromptDetails)proposal.Details).ProposedSystemMessage
+        proposal.Should().BeAssignableTo<ISystemPromptProposal>();
+        ((ISystemPromptProposal)proposal).ProposedSystemMessage
             .Should().Be("You are an even better assistant.");
         proposal.Rationale.Should().Contain("Failing cases lacked structured guidance.");
         proposal.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(run.Id);
@@ -234,7 +234,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         public static OptimizerFixture Build(IServiceProvider services, string cannedResponse)
         {
-            var proposalFactory = services.GetRequiredService<IOptimizationProposal.CreateNew>();
+            var proposalFactory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
             var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
 
             var agentEndpointId = Guid.NewGuid();

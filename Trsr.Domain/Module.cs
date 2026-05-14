@@ -6,6 +6,7 @@ using Trsr.Domain.Evaluator.Internal;
 using Trsr.Domain.Events;
 using Trsr.Domain.Events.Internal;
 using Trsr.Domain.Message.Internal;
+using Trsr.Domain.OptimizationProposal.Internal;
 using Trsr.Domain.Prompt;
 using Trsr.Domain.Prompt.Internal;
 using Trsr.Domain.Tools.Internal;
@@ -68,6 +69,9 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterType<EvaluatorGenerator>()
+            .AsImplementedInterfaces();
+
+        builder.RegisterType<OptimizationProposalGenerator>()
             .AsImplementedInterfaces();
 
         builder.RegisterType<EntityEventService>()
