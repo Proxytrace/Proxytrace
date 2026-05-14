@@ -54,94 +54,95 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
         IReadOnlyList<ITestRun> testRuns,
         CancellationToken cancellationToken = default)
     {
-        var agent = testRunGroup.Suite.Agent;
-        if (agent.Tools.Count == 0)
-        {
-            return [];
-        }
-
-        var currentRun = testRuns.FirstOrDefault(r => r.Endpoint.Id == agent.Endpoint.Id);
-        if (currentRun is null)
-        {
-            return [];
-        }
-
-        TestRunStats? stats = await runStats.FindAsync(currentRun.Id, cancellationToken);
-        if (stats is null || stats.Failed == 0)
-        {
-            return [];
-        }
-
-        IPromptTemplate systemPrompt = await prompts.GetAsync(PromptName, cancellationToken);
-        IAgent systemAgent = await agents.GetOrCreateAsync(
-            systemPrompt: systemPrompt,
-            tools: [],
-            project: agent.Project,
-            endpoint: agent.Project.SystemEndpoint,
-            name: PromptName,
-            isSystemAgent: true,
-            cancellationToken: cancellationToken);
-
-        OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
-        ToolOptimizerOutput? completion = await systemAgent
-            .CreateClient()
-            .CompleteAsync<ToolOptimizerOutput>(
-                Message.CreateUserMessage(evidence.ToJson()),
-                cancellationToken: cancellationToken);
-
-        if (completion == null)
-        {
-            return [];
-        }
-
-        if (completion.Tools.Count != agent.Tools.Count)
-        {
-            return [];
-        }
-
-        var existingNames = agent.Tools.Select(t => t.Name).ToHashSet();
-        if (completion.Tools.Any(t => !existingNames.Contains(t.Name)))
-        {
-            return [];
-        }
-
-        // create updated agent with the proposed tools
-        var updatedAgent = agentFactory(
-            name: agent.Name,
-            systemPrompt: agent.SystemPrompt,
-            tools: completion.Tools,
-            endpoint: agent.Endpoint,
-            project: agent.Project,
-            modelParameters: agent.ModelParameters,
-            isSystemAgent: agent.IsSystemAgent);
-
-        var abTestRunGroup = await testRunnerService.Value.RunInForegroundAsync(
-            suite: testRunGroup.Suite,
-            endpoints: [updatedAgent.Endpoint],
-            customAgent: updatedAgent,
-            cancellationToken: cancellationToken);
-        var abTestRuns = await abTestRunGroup.GetTestRuns(cancellationToken);
-        if (abTestRuns.Count == 0)
-        {
-            return [];
-        }
-
-        Priority priority = stats.GetOptimizationPriority();
-        string fullRationale =
-            $"""
-             {completion.Rationale}
-             (Current run: {stats.Failed}/{stats.TestCases} failed.)";
-             """;
-
-        var proposal = factory(
-            agent: agent,
-            priority: priority,
-            rationale: fullRationale,
-            proposedTools: completion.Tools,
-            evidenceTestRunIds: [currentRun.Id],
-            abTestRun: abTestRuns.First());
-
-        return [proposal];
+        return [];
+//         var agent = testRunGroup.Suite.Agent;
+//         if (agent.Tools.Count == 0)
+//         {
+//             return [];
+//         }
+//
+//         var currentRun = testRuns.FirstOrDefault(r => r.Endpoint.Id == agent.Endpoint.Id);
+//         if (currentRun is null)
+//         {
+//             return [];
+//         }
+//
+//         TestRunStats? stats = await runStats.FindAsync(currentRun.Id, cancellationToken);
+//         if (stats is null || stats.Failed == 0)
+//         {
+//             return [];
+//         }
+//
+//         IPromptTemplate systemPrompt = await prompts.GetAsync(PromptName, cancellationToken);
+//         IAgent systemAgent = await agents.GetOrCreateAsync(
+//             systemPrompt: systemPrompt,
+//             tools: [],
+//             project: agent.Project,
+//             endpoint: agent.Project.SystemEndpoint,
+//             name: PromptName,
+//             isSystemAgent: true,
+//             cancellationToken: cancellationToken);
+//
+//         OptimizerEvidence evidence = evidenceBuilder.Build(currentRun);
+//         ToolOptimizerOutput? completion = await systemAgent
+//             .CreateClient()
+//             .CompleteAsync<ToolOptimizerOutput>(
+//                 Message.CreateUserMessage(evidence.ToJson()),
+//                 cancellationToken: cancellationToken);
+//
+//         if (completion == null)
+//         {
+//             return [];
+//         }
+//
+//         if (completion.Tools.Count != agent.Tools.Count)
+//         {
+//             return [];
+//         }
+//
+//         var existingNames = agent.Tools.Select(t => t.Name).ToHashSet();
+//         if (completion.Tools.Any(t => !existingNames.Contains(t.Name)))
+//         {
+//             return [];
+//         }
+//
+//         // create updated agent with the proposed tools
+//         var updatedAgent = agentFactory(
+//             name: agent.Name,
+//             systemPrompt: agent.SystemPrompt,
+//             tools: completion.Tools,
+//             endpoint: agent.Endpoint,
+//             project: agent.Project,
+//             modelParameters: agent.ModelParameters,
+//             isSystemAgent: agent.IsSystemAgent);
+//
+//         var abTestRunGroup = await testRunnerService.Value.RunInForegroundAsync(
+//             suite: testRunGroup.Suite,
+//             endpoints: [updatedAgent.Endpoint],
+//             customAgent: updatedAgent,
+//             cancellationToken: cancellationToken);
+//         var abTestRuns = await abTestRunGroup.GetTestRuns(cancellationToken);
+//         if (abTestRuns.Count == 0)
+//         {
+//             return [];
+//         }
+//
+//         Priority priority = stats.GetOptimizationPriority();
+//         string fullRationale =
+//             $"""
+//              {completion.Rationale}
+//              (Current run: {stats.Failed}/{stats.TestCases} failed.)";
+//              """;
+//
+//         var proposal = factory(
+//             agent: agent,
+//             priority: priority,
+//             rationale: fullRationale,
+//             proposedTools: completion.Tools,
+//             evidenceTestRunIds: [currentRun.Id],
+//             abTestRun: abTestRuns.First());
+//
+//         return [proposal];
     }
 
     [UsedImplicitly]

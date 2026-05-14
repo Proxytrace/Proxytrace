@@ -491,7 +491,6 @@ export interface ModelSwitchDetailsDto {
   endpointId: string;
   currentModelName: string;
   proposedModelName: string;
-  expectedPassRateDelta: number | null;
   expectedCostDelta: number | null;
   expectedLatencyMs: number | null;
 }
@@ -510,6 +509,20 @@ export interface ToolDetailsDto {
 
 export type ProposalDetailsDto = ModelSwitchDetailsDto | SystemPromptDetailsDto | ToolDetailsDto;
 
+export interface AbTestRunSummaryDto {
+  id: string;
+  groupId: string;
+  status: TestRunStatus;
+  totalCases: number;
+  completedCases: number;
+  passedCases: number;
+  failedCases: number;
+  passRate: number;
+  startedAt: string;
+  completedAt: string | null;
+  durationMs: number | null;
+}
+
 export interface OptimizationProposalDto {
   id: string;
   kind: ProposalKind;
@@ -520,6 +533,10 @@ export interface OptimizationProposalDto {
   rationale: string;
   details: ProposalDetailsDto;
   evidenceTestRunIds: string[];
+  abTestRun: AbTestRunSummaryDto | null;
+  currentPassRate: number | null;
+  proposedPassRate: number | null;
+  expectedPassRateDelta: number | null;
   createdAt: string;
   updatedAt: string;
 }

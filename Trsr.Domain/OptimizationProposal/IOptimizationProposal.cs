@@ -37,4 +37,16 @@ public interface IOptimizationProposal : IDomainEntity
     /// IDs of the <see cref="TestRun.ITestRun"/> instances whose results motivated this proposal.
     /// </summary>
     IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
+
+    /// <summary>Pass-rate of the baseline (current) run before applying this proposal.</summary>
+    double? CurrentPassRate { get; }
+
+    /// <summary>Pass-rate observed when the proposal was applied (in the A/B run).</summary>
+    double? ProposedPassRate { get; }
+
+    /// <summary>Convenience: <see cref="ProposedPassRate"/> − <see cref="CurrentPassRate"/>.</summary>
+    double? ExpectedPassRateDelta
+        => ProposedPassRate.HasValue && CurrentPassRate.HasValue
+            ? ProposedPassRate.Value - CurrentPassRate.Value
+            : null;
 }

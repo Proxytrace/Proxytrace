@@ -19,7 +19,8 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
     public string Rationale { get; }
     public ITestRun ABTestRun { get; }
     public IModelEndpoint ProposedEndpoint { get; }
-    public double? ExpectedPassRateDelta { get; }
+    public double? CurrentPassRate { get; }
+    public double? ProposedPassRate { get; }
     public decimal? ExpectedCostDelta { get; }
     public TimeSpan? ExpectedLatencyDelta { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
@@ -29,7 +30,8 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         Priority priority,
         string rationale,
         IModelEndpoint proposedEndpoint,
-        double? expectedPassRateDelta,
+        double? currentPassRate,
+        double? proposedPassRate,
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
@@ -41,7 +43,8 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         Priority = priority;
         Rationale = rationale;
         ProposedEndpoint = proposedEndpoint;
-        ExpectedPassRateDelta = expectedPassRateDelta;
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
@@ -54,7 +57,8 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         Priority priority,
         string rationale,
         IModelEndpoint proposedEndpoint,
-        double? expectedPassRateDelta,
+        double? currentPassRate,
+        double? proposedPassRate,
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
@@ -67,7 +71,8 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         Priority = priority;
         Rationale = rationale;
         ProposedEndpoint = proposedEndpoint;
-        ExpectedPassRateDelta = expectedPassRateDelta;
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         ExpectedCostDelta = expectedCostDelta;
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();

@@ -33,4 +33,10 @@ internal record OptimizationProposalEntity : Entity
     /// <see cref="IOptimizationProposal.EvidenceTestRunIds"/> serialized as JSON.
     /// </summary>
     public required string EvidenceTestRunIds { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.CurrentPassRate"/></summary>
+    public double? CurrentPassRate { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.ProposedPassRate"/></summary>
+    public double? ProposedPassRate { get; init; }
 }

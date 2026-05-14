@@ -34,6 +34,8 @@ internal class ToolUpdateProposalGenerator : OptimizationProposalGeneratorBase<I
             priority: Priority.Medium,
             rationale: random.String(),
             proposedTools: [],
+            currentPassRate: 0.5,
+            proposedPassRate: 0.7,
             evidenceTestRunIds: [],
             abTestRun: abTestRun);
     }

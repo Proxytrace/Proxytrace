@@ -17,6 +17,8 @@ public interface ISystemPromptProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         string proposedSystemMessage,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun);
 
@@ -26,6 +28,8 @@ public interface ISystemPromptProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         string proposedSystemMessage,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         IDomainEntityData existing);

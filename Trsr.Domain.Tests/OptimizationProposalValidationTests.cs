@@ -25,6 +25,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: Priority.High,
             rationale: "Tests failed due to vague instructions.",
             proposedSystemMessage: "Improved system prompt",
+            currentPassRate: 0.5,
+            proposedPassRate: 0.7,
             evidenceTestRunIds: [Guid.NewGuid()],
             abTestRun: abRun);
 
@@ -53,6 +55,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: Priority.Medium,
             rationale: "Tool arguments were misused.",
             proposedTools: [],
+            currentPassRate: 0.5,
+            proposedPassRate: 0.7,
             evidenceTestRunIds: [],
             abTestRun: abRun);
 
@@ -76,7 +80,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: Priority.Critical,
             rationale: "Switching model improves pass rate by 25%.",
             proposedEndpoint: endpoint,
-            expectedPassRateDelta: 0.25,
+            currentPassRate: 0.6,
+            proposedPassRate: 0.85,
             expectedCostDelta: -0.05m,
             expectedLatencyDelta: TimeSpan.FromMilliseconds(-200),
             evidenceTestRunIds: [Guid.NewGuid(), Guid.NewGuid()],
@@ -96,7 +101,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var agent = await CreateAgentAsync(services);
         var abRun = await CreateTestRunAsync(services);
 
-        var action = () => factory(agent, Priority.Low, "   ", "msg", [], abRun);
+        var action = () => factory(agent, Priority.Low, "   ", "msg", null, null, [], abRun);
         action.Should().Throw<Exception>();
     }
 
@@ -108,7 +113,7 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var agent = await CreateAgentAsync(services);
         var abRun = await CreateTestRunAsync(services);
 
-        var proposal = factory(agent, Priority.Low, "rationale", [], [], abRun);
+        var proposal = factory(agent, Priority.Low, "rationale", [], null, null, [], abRun);
 
         proposal.Status.Should().Be(ProposalStatus.Draft);
     }
@@ -121,8 +126,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var agent = await CreateAgentAsync(services);
         var abRun = await CreateTestRunAsync(services);
 
-        var proposal1 = factory(agent, Priority.Low, "rationale", [], [], abRun);
-        var proposal2 = factory(agent, Priority.Low, "rationale", [], [], abRun);
+        var proposal1 = factory(agent, Priority.Low, "rationale", [], null, null, [], abRun);
+        var proposal2 = factory(agent, Priority.Low, "rationale", [], null, null, [], abRun);
 
         proposal1.Id.Should().NotBe(proposal2.Id);
     }
@@ -141,6 +146,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: Priority.Medium,
             rationale: "Multiple test runs failed.",
             proposedSystemMessage: "New prompt",
+            currentPassRate: null,
+            proposedPassRate: null,
             evidenceTestRunIds: evidenceIds,
             abTestRun: abRun);
 
@@ -162,6 +169,8 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             priority: existing.Priority,
             rationale: existing.Rationale,
             proposedSystemMessage: existing.ProposedSystemMessage,
+            currentPassRate: existing.CurrentPassRate,
+            proposedPassRate: existing.ProposedPassRate,
             evidenceTestRunIds: existing.EvidenceTestRunIds,
             abTestRun: existing.ABTestRun,
             existing: existing);
@@ -185,12 +194,121 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var source = await generator.CreateAsync(CancellationToken);
 
         var accepted = createExisting(source.Agent, ProposalStatus.Accepted, source.Priority, source.Rationale,
-            source.ProposedSystemMessage, source.EvidenceTestRunIds, source.ABTestRun, source);
+            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source);
         var rejected = createExisting(source.Agent, ProposalStatus.Rejected, source.Priority, source.Rationale,
-            source.ProposedSystemMessage, source.EvidenceTestRunIds, source.ABTestRun, source);
+            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source);
 
         accepted.Status.Should().Be(ProposalStatus.Accepted);
         rejected.Status.Should().Be(ProposalStatus.Rejected);
+    }
+
+    [TestMethod]
+    public async Task ExpectedPassRateDelta_BothNull_ReturnsNull()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Low, "r", "msg", null, null, [], abRun);
+
+        proposal.ExpectedPassRateDelta.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExpectedPassRateDelta_OnlyCurrentNull_ReturnsNull()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Low, "r", "msg", null, 0.8, [], abRun);
+
+        proposal.ExpectedPassRateDelta.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExpectedPassRateDelta_OnlyProposedNull_ReturnsNull()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Low, "r", "msg", 0.6, null, [], abRun);
+
+        proposal.ExpectedPassRateDelta.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExpectedPassRateDelta_BothSet_ReturnsDifference()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Low, "r", "msg", 0.6, 0.85, [], abRun);
+
+        proposal.ExpectedPassRateDelta.Should().BeApproximately(0.25, 1e-9);
+    }
+
+    [TestMethod]
+    public async Task ExpectedPassRateDelta_NegativeDelta_ReturnsNegative()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Low, "r", [], 0.9, 0.4, [], abRun);
+
+        proposal.ExpectedPassRateDelta.Should().BeApproximately(-0.5, 1e-9);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_SystemPrompt_PreservesPassRates()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Medium, "r", "msg", 0.55, 0.72, [], abRun);
+
+        proposal.CurrentPassRate.Should().Be(0.55);
+        proposal.ProposedPassRate.Should().Be(0.72);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_ToolUpdate_PreservesPassRates()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Medium, "r", [], 0.40, 0.65, [], abRun);
+
+        proposal.CurrentPassRate.Should().Be(0.40);
+        proposal.ProposedPassRate.Should().Be(0.65);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_ModelSwitch_PreservesPassRates()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<IModelSwitchProposal.CreateNew>();
+        var agent = await CreateAgentAsync(services);
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync(CancellationToken);
+        var abRun = await CreateTestRunAsync(services);
+
+        var proposal = factory(agent, Priority.Medium, "r", endpoint, 0.30, 0.81, null, null, [], abRun);
+
+        proposal.CurrentPassRate.Should().Be(0.30);
+        proposal.ProposedPassRate.Should().Be(0.81);
+        proposal.ExpectedPassRateDelta.Should().BeApproximately(0.51, 1e-9);
     }
 
     private static async Task<IAgent> CreateAgentAsync(IServiceProvider services)

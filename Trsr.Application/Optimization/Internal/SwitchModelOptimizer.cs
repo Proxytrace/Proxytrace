@@ -82,14 +82,15 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         var passRatePct = (diff.PassRate * 100)?.ToString("F1") ?? "?";
         var rationale = $"Switching from {currentName} to {bestName} improved the pass rate by {passRatePct}% in test run evidence."
             + (diff.Cost.HasValue ? $" Cost delta: {diff.Cost:+0.####;-0.####}." : "")
-            + (diff.TotalDuration.HasValue ? $" Latency delta: {diff.TotalDuration:+s\\.f;-s\\.f}s." : "");
+            + (diff.TotalDuration.HasValue ? $" Latency delta: {diff.TotalDuration.Value.TotalSeconds}s" : "");
 
         var proposal = factory(
             agent: testRunGroup.Suite.Agent,
             priority: priority,
             rationale: rationale,
             proposedEndpoint: bestRun.Endpoint,
-            expectedPassRateDelta: diff.PassRate,
+            currentPassRate: currentStats.PassRate,
+            proposedPassRate: best.PassRate,
             expectedCostDelta: diff.Cost,
             expectedLatencyDelta: diff.TotalDuration,
             evidenceTestRunIds: [currentRun.Id, bestRun.Id],

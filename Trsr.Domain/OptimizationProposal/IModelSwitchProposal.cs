@@ -13,9 +13,6 @@ public interface IModelSwitchProposal : IOptimizationProposal
     /// <summary>The endpoint proposed as a replacement for the agent's current one.</summary>
     IModelEndpoint ProposedEndpoint { get; }
 
-    /// <summary>Observed pass-rate improvement (proposed - current) from the evidence runs.</summary>
-    double? ExpectedPassRateDelta { get; }
-
     /// <summary>Observed cost-per-call delta (proposed - current) from the evidence runs.</summary>
     decimal? ExpectedCostDelta { get; }
 
@@ -27,7 +24,8 @@ public interface IModelSwitchProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         IModelEndpoint proposedEndpoint,
-        double? expectedPassRateDelta,
+        double? currentPassRate,
+        double? proposedPassRate,
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
@@ -39,7 +37,8 @@ public interface IModelSwitchProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         IModelEndpoint proposedEndpoint,
-        double? expectedPassRateDelta,
+        double? currentPassRate,
+        double? proposedPassRate,
         decimal? expectedCostDelta,
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,

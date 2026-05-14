@@ -5,7 +5,9 @@ using Trsr.Api.Dto.Agents;
 using Trsr.Api.Dto.Proposals;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
+using Trsr.Domain.Evaluation;
 using Trsr.Domain.OptimizationProposal;
+using Trsr.Domain.TestRun;
 using Trsr.Domain.Tools;
 
 namespace Trsr.Api.Controllers;
@@ -63,14 +65,16 @@ public class ProposalsController : ControllerBase
         {
             IModelSwitchProposal ms => createModelSwitch(
                 ms.Agent, request.Status, ms.Priority, ms.Rationale,
-                ms.ProposedEndpoint, ms.ExpectedPassRateDelta, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
+                ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
                 ms.EvidenceTestRunIds, ms.ABTestRun, ms),
             ISystemPromptProposal sp => createSystemPrompt(
                 sp.Agent, request.Status, sp.Priority, sp.Rationale,
-                sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp.ABTestRun, sp),
+                sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
+                sp.EvidenceTestRunIds, sp.ABTestRun, sp),
             IToolUpdateProposal tu => createToolUpdate(
                 tu.Agent, request.Status, tu.Priority, tu.Rationale,
-                tu.ProposedTools, tu.EvidenceTestRunIds, tu.ABTestRun, tu),
+                tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
+                tu.EvidenceTestRunIds, tu.ABTestRun, tu),
             _ => throw new ArgumentOutOfRangeException(nameof(existing))
         };
         await repository.UpdateAsync(updated, cancellationToken);
@@ -88,8 +92,36 @@ public class ProposalsController : ControllerBase
             p.Rationale,
             ToDetailsDto(p),
             [.. p.EvidenceTestRunIds],
+            p.ABTestRun is not null ? ToAbTestRunSummaryDto(p.ABTestRun) : null,
+            p.CurrentPassRate,
+            p.ProposedPassRate,
+            p.ExpectedPassRateDelta,
             p.CreatedAt,
             p.UpdatedAt);
+
+    private static AbTestRunSummaryDto ToAbTestRunSummaryDto(ITestRun r)
+    {
+        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
+        var completed = r.TestResults.Count;
+        var total = r.Group.Suite.TestCases.Count;
+        var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
+        long? durationMs = r.CompletedAt.HasValue
+            ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
+            : null;
+
+        return new AbTestRunSummaryDto(
+            Id: r.Id,
+            GroupId: r.Group.Id,
+            Status: r.Status,
+            TotalCases: total,
+            CompletedCases: completed,
+            PassedCases: passed,
+            FailedCases: completed - passed,
+            PassRate: passRate,
+            StartedAt: r.CreatedAt,
+            CompletedAt: r.CompletedAt,
+            DurationMs: durationMs);
+    }
 
     private static ProposalDetailsDto ToDetailsDto(IOptimizationProposal p)
         => p switch
@@ -105,7 +137,6 @@ public class ProposalsController : ControllerBase
             ms.ProposedEndpoint.Id,
             ms.Agent.Endpoint.Model.Name,
             ms.ProposedEndpoint.Model.Name,
-            ms.ExpectedPassRateDelta,
             ms.ExpectedCostDelta.HasValue ? (double)ms.ExpectedCostDelta.Value : null,
             ms.ExpectedLatencyDelta.HasValue ? (long)ms.ExpectedLatencyDelta.Value.TotalMilliseconds : null);
 

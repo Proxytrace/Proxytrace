@@ -13,6 +13,10 @@ public record OptimizationProposalDto(
     string Rationale,
     ProposalDetailsDto Details,
     Guid[] EvidenceTestRunIds,
+    AbTestRunSummaryDto? AbTestRun,
+    double? CurrentPassRate,
+    double? ProposedPassRate,
+    double? ExpectedPassRateDelta,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt
 );

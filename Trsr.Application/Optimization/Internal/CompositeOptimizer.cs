@@ -17,7 +17,7 @@ internal sealed class CompositeOptimizer : IOptimizer
         ITestRunRepository testRuns,
         IRepository<IOptimizationProposal> proposals)
     {
-        this.optimizers = optimizers;
+        this.optimizers = optimizers.DistinctBy(x => x.GetType()).ToArray();
         this.testRuns = testRuns;
         this.proposals = proposals;
     }

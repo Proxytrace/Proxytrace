@@ -47,7 +47,6 @@ public sealed record Content : IDomainObject
         if (Kind is ContentKind.Text)
         {
             yield return Validation.NotNullOrWhiteSpace(Text);
-            yield return Validation.MaxLength(Text, 10_000);
             yield return Validation.NotEmpty(Text);
         }
         

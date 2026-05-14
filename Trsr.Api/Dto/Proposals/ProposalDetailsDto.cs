@@ -13,7 +13,6 @@ public record ModelSwitchDetailsDto(
     Guid EndpointId,
     string CurrentModelName,
     string ProposedModelName,
-    double? ExpectedPassRateDelta,
     double? ExpectedCostDelta,
     long? ExpectedLatencyMs
 ) : ProposalDetailsDto;

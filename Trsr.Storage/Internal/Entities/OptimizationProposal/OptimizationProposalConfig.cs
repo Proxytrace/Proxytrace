@@ -94,7 +94,8 @@ internal class OptimizationProposalConfig :
             priority: stored.Priority,
             rationale: stored.Rationale,
             proposedEndpoint: proposedEndpoint,
-            expectedPassRateDelta: data.ExpectedPassRateDelta,
+            currentPassRate: stored.CurrentPassRate,
+            proposedPassRate: stored.ProposedPassRate,
             expectedCostDelta: data.ExpectedCostDelta,
             expectedLatencyDelta: data.ExpectedLatencyDelta,
             evidenceTestRunIds: evidenceTestRunIds,
@@ -116,6 +117,8 @@ internal class OptimizationProposalConfig :
             priority: stored.Priority,
             rationale: stored.Rationale,
             proposedSystemMessage: data.ProposedSystemMessage,
+            currentPassRate: stored.CurrentPassRate,
+            proposedPassRate: stored.ProposedPassRate,
             evidenceTestRunIds: evidenceTestRunIds,
             existing: stored,
             abTestRun: abTestRun);
@@ -135,6 +138,8 @@ internal class OptimizationProposalConfig :
             priority: stored.Priority,
             rationale: stored.Rationale,
             proposedTools: data.ProposedTools,
+            currentPassRate: stored.CurrentPassRate,
+            proposedPassRate: stored.ProposedPassRate,
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
             existing: stored);
@@ -146,7 +151,6 @@ internal class OptimizationProposalConfig :
         {
             IModelSwitchProposal ms => serializer.Serialize(new ModelSwitchProposalData(
                 ms.ProposedEndpoint.Id,
-                ms.ExpectedPassRateDelta,
                 ms.ExpectedCostDelta,
                 ms.ExpectedLatencyDelta)),
             ISystemPromptProposal sp => serializer.Serialize(new SystemPromptProposalData(sp.ProposedSystemMessage)),
@@ -165,6 +169,8 @@ internal class OptimizationProposalConfig :
             ABTestRun = domain.ABTestRun.Id,
             Data = data,
             EvidenceTestRunIds = serializer.Serialize(domain.EvidenceTestRunIds),
+            CurrentPassRate = domain.CurrentPassRate,
+            ProposedPassRate = domain.ProposedPassRate,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

@@ -18,6 +18,8 @@ public interface IToolUpdateProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun);
 
@@ -27,6 +29,8 @@ public interface IToolUpdateProposal : IOptimizationProposal
         Priority priority,
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         IDomainEntityData existing);

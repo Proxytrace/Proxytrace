@@ -105,12 +105,16 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             suite: testRunGroup.Suite,
             endpoints: [updatedAgent.Endpoint],
             customAgent: updatedAgent,
+            isSystemTestRun: true,
             cancellationToken: cancellationToken);
         var abTestRuns = await abTestRunGroup.GetTestRuns(cancellationToken);
         if (abTestRuns.Count == 0)
         {
             return [];
         }
+
+        ITestRun abRun = abTestRuns.First();
+        TestRunStats? abStats = await runStats.FindAsync(abRun.Id, cancellationToken);
 
         Priority priority = stats.GetOptimizationPriority();
         string fullRationale =
@@ -121,11 +125,13 @@ internal sealed class UpdateSystemPromptOptimizer : IOptimizerImplementation
             priority: priority,
             rationale: fullRationale,
             proposedSystemMessage: output.ProposedSystemPrompt,
+            currentPassRate: stats.PassRate,
+            proposedPassRate: abStats?.PassRate,
             evidenceTestRunIds:
             [
                 currentRun.Id
             ],
-            abTestRun: abTestRuns.First());
+            abTestRun: abRun);
 
         return [proposal];
     }

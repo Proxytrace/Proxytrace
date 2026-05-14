@@ -58,7 +58,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "Claude consistently outperforms gpt-4o on the tone suite (+17 percentage points pass rate). "
                     + "Latency increase is negligible and per-call cost stays within budget.",
                     c.RequireClaudeEndpoint(),
-                    0.17,
+                    0.71,
+                    0.88,
                     0.0001m,
                     TimeSpan.FromMilliseconds(50),
                     evidence,
@@ -75,6 +76,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "You are a friendly, concise customer-support agent for an e-commerce store. "
                     + "Open with an empathetic acknowledgement of the customer's situation. "
                     + "Propose a clear next step, and close politely. Never blame the customer.",
+                    0.50,
+                    0.67,
                     evidence,
                     ab)),
 
@@ -92,6 +95,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                             description: "Look up the definition of a symbol (function, class, constant) in the repository.",
                             arguments: ToolArguments.None),
                     ],
+                    0.55,
+                    0.74,
                     evidence,
                     ab)),
 
@@ -106,6 +111,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "You are a senior software engineer reviewing pull requests. "
                     + "Be encouraging. Identify correctness, security, and clarity issues with concrete suggestions. "
                     + "Cite line numbers and offer to pair if a fix is non-trivial.",
+                    0.40,
+                    0.40,
                     evidence,
                     ab)),
 
@@ -118,7 +125,8 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     "gpt-4o-mini outperformed gpt-4o on the analytics suite at roughly a fifth of the cost. "
                     + "Switching saves ~80 % of inference spend with no quality loss.",
                     c.RequireGpt4oMiniEndpoint(),
-                    0.13,
+                    0.69,
+                    0.82,
                     -0.0008m,
                     TimeSpan.FromMilliseconds(-200),
                     evidence,
@@ -147,14 +155,16 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                 {
                     IModelSwitchProposal ms => modelSwitchExisting(
                         ms.Agent, spec.Status, ms.Priority, ms.Rationale,
-                        ms.ProposedEndpoint, ms.ExpectedPassRateDelta, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
+                        ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
                         ms.EvidenceTestRunIds, ms.ABTestRun, ms),
                     ISystemPromptProposal sp => systemPromptExisting(
                         sp.Agent, spec.Status, sp.Priority, sp.Rationale,
-                        sp.ProposedSystemMessage, sp.EvidenceTestRunIds, sp.ABTestRun, sp),
+                        sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
+                        sp.EvidenceTestRunIds, sp.ABTestRun, sp),
                     IToolUpdateProposal tu => toolUpdateExisting(
                         tu.Agent, spec.Status, tu.Priority, tu.Rationale,
-                        tu.ProposedTools, tu.EvidenceTestRunIds, tu.ABTestRun, tu),
+                        tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
+                        tu.EvidenceTestRunIds, tu.ABTestRun, tu),
                     _ => throw new ArgumentOutOfRangeException(nameof(saved))
                 };
                 await repo.UpdateAsync(transitioned, cancellationToken);

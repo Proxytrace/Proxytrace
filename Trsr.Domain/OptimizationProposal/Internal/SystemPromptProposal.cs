@@ -18,6 +18,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
     public string Rationale { get; }
     public ITestRun ABTestRun { get; }
     public string ProposedSystemMessage { get; }
+    public double? CurrentPassRate { get; }
+    public double? ProposedPassRate { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
 
     public SystemPromptProposal(
@@ -25,6 +27,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Priority priority,
         string rationale,
         string proposedSystemMessage,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(repository)
@@ -34,6 +38,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Priority = priority;
         Rationale = rationale;
         ProposedSystemMessage = proposedSystemMessage;
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
     }
@@ -44,6 +50,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Priority priority,
         string rationale,
         string proposedSystemMessage,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         IDomainEntityData existing,
         ITestRun abTestRun,
@@ -54,6 +62,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         Priority = priority;
         Rationale = rationale;
         ProposedSystemMessage = proposedSystemMessage;
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
     }

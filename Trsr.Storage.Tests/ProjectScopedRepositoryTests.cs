@@ -78,10 +78,10 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
         var (_, agentB) = await CreateProjectAndAgent(services);
 
         var inA = await repository.AddAsync(
-            factory(agentA, Priority.Medium, "rationale A", "Improved system prompt", [Guid.NewGuid()], abRun),
+            factory(agentA, Priority.Medium, "rationale A", "Improved system prompt", null, null, [Guid.NewGuid()], abRun),
             CancellationToken);
         var inB = await repository.AddAsync(
-            factory(agentB, Priority.Medium, "rationale B", "Improved system prompt", [Guid.NewGuid()], abRun),
+            factory(agentB, Priority.Medium, "rationale B", "Improved system prompt", null, null, [Guid.NewGuid()], abRun),
             CancellationToken);
 
         var resultsA = await repository.GetByProjectAsync(projectA.Id, CancellationToken);

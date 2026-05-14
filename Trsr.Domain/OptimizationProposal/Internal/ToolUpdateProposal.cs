@@ -19,6 +19,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
     public string Rationale { get; }
     public ITestRun ABTestRun { get; }
     public IReadOnlyList<ToolSpecification> ProposedTools { get; }
+    public double? CurrentPassRate { get; }
+    public double? ProposedPassRate { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
 
     public ToolUpdateProposal(
@@ -26,6 +28,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Priority priority,
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         IRepository<IOptimizationProposal> repository) : base(repository)
@@ -35,6 +39,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Priority = priority;
         Rationale = rationale;
         ProposedTools = proposedTools.ToArray();
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
     }
@@ -45,6 +51,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Priority priority,
         string rationale,
         IReadOnlyList<ToolSpecification> proposedTools,
+        double? currentPassRate,
+        double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         IDomainEntityData existing,
@@ -55,6 +63,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         Priority = priority;
         Rationale = rationale;
         ProposedTools = proposedTools.ToArray();
+        CurrentPassRate = currentPassRate;
+        ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
     }

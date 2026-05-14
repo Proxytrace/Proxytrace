@@ -56,9 +56,16 @@ internal sealed class ProviderClient : IProviderClient
 
     private async Task<IReadOnlyList<string>> GetOpenAiModelNamesAsync(CancellationToken cancellationToken)
     {
-        OpenAIModelClient modelClient = CreateOpenAiClient();
-        ClientResult<OpenAIModelCollection> result = await modelClient.GetModelsAsync(cancellationToken);
-        return result.Value.Select(m => m.Id).ToArray();
+        try
+        {
+            OpenAIModelClient modelClient = CreateOpenAiClient();
+            var result = (await modelClient.GetModelsAsync(cancellationToken))?.Value?.ToArray() ?? [];
+            return result.Select(m => m.Id).ToArray();
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private async Task<IReadOnlyList<string>?> TryGetAzureDeploymentNamesAsync(CancellationToken cancellationToken)

@@ -34,6 +34,8 @@ internal class SystemPromptProposalGenerator : OptimizationProposalGeneratorBase
             priority: Priority.Medium,
             rationale: random.String(),
             proposedSystemMessage: random.String(),
+            currentPassRate: 0.6,
+            proposedPassRate: 0.8,
             evidenceTestRunIds: [],
             abTestRun: abTestRun);
     }
