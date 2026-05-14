@@ -44,12 +44,9 @@ internal sealed record Evaluation : IEvaluation
             yield return validationResult;
         }
 
-        yield return Validation.NotNull(Score);
         if (Score.HasValue)
         {
             yield return Validation.Defined(Score.Value);
         }
-
-        yield return Validation.NotNullOrWhiteSpace(ErrorMessage);
     }
 }
