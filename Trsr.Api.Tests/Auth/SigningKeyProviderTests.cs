@@ -12,19 +12,6 @@ namespace Trsr.Api.Tests.Auth;
 [TestClass]
 public sealed class SigningKeyProviderTests : BaseTest<Module>
 {
-    protected override void ConfigureContainer(ContainerBuilder builder)
-    {
-        base.ConfigureContainer(builder);
-
-        builder.Register(c =>
-        {
-            var dir = c.Resolve<ITempDirectory.Create>()();
-            var env = Substitute.For<IHostEnvironment>();
-            env.ContentRootPath.Returns(dir.Path);
-            return env;
-        }).SingleInstance();
-    }
-
     [TestMethod]
     public void EnsureSigningKey_ConfiguredValue_IsReturnedAsIs()
     {

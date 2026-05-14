@@ -5,6 +5,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Trsr.Application.Demo;
 using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.AgentCall;
@@ -32,6 +33,8 @@ public sealed class ModelClientTests : BaseTest<Module>
 
         IOutputFormat DefaultFactory(Type _) => Substitute.For<IOutputFormat>();
         builder.RegisterInstance((IOutputFormat.Create)DefaultFactory);
+
+        builder.RegisterInstance(new KioskOptions()).AsSelf();
 
         var agentCallRepo = Substitute.For<IRepository<IAgentCall>>();
         agentCallRepo.AddAsync(Arg.Any<IAgentCall>(), Arg.Any<CancellationToken>())
