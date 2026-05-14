@@ -128,4 +128,18 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             ? null
             : await mapper.Map(stored, cancellationToken);
     }
+
+    public Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var contextSet = context.Set<AgentCallEntity>();
+
+        var toRemove = contextSet
+            .AsNoTracking()
+            .Where(x => x.CreatedAt <= cutoffDate);
+
+        contextSet.RemoveRange(toRemove);
+
+        return context.SaveChangesAsync(cancellationToken);
+    }
 }

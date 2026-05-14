@@ -29,6 +29,12 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
+        builder.RegisterType<AgentCallCleanupService>()
+            .AsSelf()
+            .SingleInstance();
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService(sc => sc.GetRequiredService<AgentCallCleanupService>()));
+
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()
             .SingleInstance();
