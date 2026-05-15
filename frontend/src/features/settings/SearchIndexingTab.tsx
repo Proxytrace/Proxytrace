@@ -66,7 +66,6 @@ export function SearchIndexingTab() {
       qc.setQueryData(QUERY_KEYS.searchSettings(effectiveId!), saved);
       toast('Search settings saved', 'success');
     },
-    onError: (err) => toast((err as Error).message || 'Failed to save settings', 'error'),
   });
 
   const reindex = useMutation({
@@ -75,7 +74,6 @@ export function SearchIndexingTab() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.searchStatus(effectiveId!) });
       toast('Reindex started', 'success');
     },
-    onError: (err) => toast((err as Error).message || 'Failed to start reindex', 'error'),
   });
 
   const dirty = useMemo(() => {

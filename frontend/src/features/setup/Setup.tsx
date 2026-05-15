@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { CodeBlock } from '../../components/ui/CodeBlock';
-import { useToast } from '../../components/ui/Toast';
 import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
 import { useAuthMode } from '../../auth/authMode';
@@ -125,7 +124,6 @@ function FirstAdminStep({ onDone }: { onDone: () => void }) {
 }
 
 function SetupWizard() {
-  const toast = useToast();
   const qc = useQueryClient();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -197,7 +195,6 @@ function SetupWizard() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'An unexpected error occurred.';
       setError(msg);
-      toast.show(msg, 'error');
     } finally {
       setLoading(false);
     }

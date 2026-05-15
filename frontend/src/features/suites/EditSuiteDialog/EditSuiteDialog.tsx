@@ -7,7 +7,6 @@ import { evaluatorsApi } from '../../../api/evaluators';
 import { agentCallsApi } from '../../../api/agent-calls';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { FilterTabs } from '../../../components/ui/FilterTabs';
-import { useToast } from '../../../components/ui/Toast';
 import { XIcon } from '../../../components/icons';
 import { agentColor } from '../../../lib/colors';
 import { TestCasesPanel } from './TestCasesPanel';
@@ -25,7 +24,6 @@ type Tab = 'cases' | 'evaluators';
 
 export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
 
   const [tab, setTab] = useState<Tab>('cases');
   const [pendingAddTraceIds, setPendingAddTraceIds] = useState<Set<string>>(new Set());
@@ -76,7 +74,6 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
       qc.invalidateQueries({ queryKey: ['test-suites'] });
       onClose();
     },
-    onError: (err) => toast((err as Error).message || 'Failed to save changes', 'error'),
   });
 
   function attemptClose() {

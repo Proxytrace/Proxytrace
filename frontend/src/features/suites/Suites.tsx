@@ -18,7 +18,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
 import { EditSuiteDialog } from './EditSuiteDialog';
-import { useToast } from '../../components/ui/Toast';
 import { useFilter } from '../../hooks/useFilter';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, LIST_PAGE_SIZE } from '../../lib/constants';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
@@ -155,7 +154,6 @@ function SuiteCard({ suite, onRun, onEdit, onDelete }: {
 
 export default function Suites() {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -205,19 +203,16 @@ export default function Suites() {
   const startRun = useMutation({
     mutationFn: (endpointIds: string[]) => testRunGroupsApi.create(runSuite!.id, endpointIds),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setRunDone(true); },
-    onError: (err) => toast((err as Error).message || 'Failed to start run', 'error'),
   });
 
   const delSuite = useMutation({
     mutationFn: () => testSuitesApi.delete(deleteSuite!.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setDeleteSuite(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to delete suite', 'error'),
   });
 
   const createSuite = useMutation({
     mutationFn: () => testSuitesApi.create({ name: createName, agentId: createAgentId, agentCallIds: Array.from(selectedCalls), evaluatorIds: Array.from(selectedEvaluatorIds) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-suites'] }); setCreateOpen(false); resetCreate(); },
-    onError: (err) => toast((err as Error).message || 'Failed to create suite', 'error'),
   });
 
   function resetCreate() { setCreateStep(0); setCreateAgentId(''); setCreateName(''); setSelectedCalls(new Set()); setSelectedEvaluatorIds(new Set()); }
