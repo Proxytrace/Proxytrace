@@ -673,7 +673,7 @@ export default function Evaluators() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0, padding: '0 0 14px' }}>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0 }}>
         {/* Left rail */}
         <aside style={{
           background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',

@@ -656,7 +656,7 @@ export default function Runs() {
   const deleteTarget = groups.find(g => g.id === deleteGroupId);
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-y-auto p-[4px_4px_24px]">
+    <div className="w-full min-w-0 flex flex-col gap-[14px]">
       <div className="fade-up grid gap-[14px] items-start" style={{ animationDelay: '40ms', gridTemplateColumns: '280px 1fr' }}>
         {/* Left: group list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>

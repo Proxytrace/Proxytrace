@@ -277,7 +277,7 @@ export default function Suites() {
   const canAdvanceCreate = ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-4 overflow-y-auto pb-6">
+    <div className="w-full min-w-0 flex flex-col gap-4">
       {/* KPI row */}
       <div className="fade-up grid gap-3" style={{ animationDelay: '30ms', gridTemplateColumns: 'repeat(4, 1fr)' }}>
         {[

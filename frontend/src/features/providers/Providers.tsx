@@ -185,7 +185,7 @@ export default function Providers() {
   }
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-4 overflow-hidden pb-6 h-[calc(100vh-80px)]">
+    <div className="w-full min-w-0 flex flex-col gap-4">
       {/* Page header */}
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>

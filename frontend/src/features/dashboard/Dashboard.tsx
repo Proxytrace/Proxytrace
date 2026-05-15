@@ -151,7 +151,7 @@ export default function Dashboard() {
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
 
   return (
-    <div className="w-full min-w-0 min-h-0 flex-1 flex flex-col gap-3 overflow-y-auto px-1 pb-6">
+    <div className="w-full min-w-0 flex flex-col gap-3">
 
       {/* KPI Row */}
       <div className="fade-up grid grid-cols-2 lg:grid-cols-4 gap-3">

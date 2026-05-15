@@ -73,7 +73,7 @@ export default function Agents() {
   const isEmpty = !isLoading && allAgents.length === 0;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-3 h-full overflow-hidden">
+    <div className="w-full min-w-0 flex flex-col gap-3 h-full overflow-hidden">
       {isEmpty && (
         <EmptyState title="No agents found" description="Agents are auto-created when traces are captured." />
       )}
