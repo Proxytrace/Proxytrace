@@ -46,7 +46,6 @@ export function DangerZoneTab() {
       setConfirm(false);
       toast('Non-model data deleted', 'success');
     },
-    onError: (err) => toast((err as Error).message || 'Failed to delete data', 'error'),
   });
 
   return (

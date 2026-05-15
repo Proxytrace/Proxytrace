@@ -1,4 +1,5 @@
 import { getAccessToken, notifyUnauthorized } from '../auth/token';
+import { showToast } from '../components/ui/Toast';
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken();
@@ -14,8 +15,57 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error('401 Unauthorized');
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${res.statusText}${text ? ': ' + text : ''}`);
+    let message = `${res.status} ${res.statusText}`;
+    let stacktrace: string | undefined;
+    let type: string | undefined;
+
+    try {
+      const body = await res.json();
+      if (body?.error?.message) {
+        message = body.error.message;
+        stacktrace = body.error.stacktrace;
+        type = body.error.type;
+      }
+    } catch {
+      const text = await res.text().catch(() => '');
+      if (text) message = `${message}: ${text}`;
+    }
+
+    const error = new Error(message);
+    (error as any).status = res.status;
+    (error as any).stacktrace = stacktrace;
+    (error as any).type = type;
+
+    const errMessage = message;
+    const errStacktrace = stacktrace;
+    const errType = type;
+    const errUrl = window.location.href;
+
+    showToast(errMessage, 'error', {
+      stacktrace: errStacktrace,
+      errorType: errType,
+      url: errUrl,
+      sendReport: async ({ description, timestamp }) => {
+        const token = getAccessToken();
+        await fetch('/api/errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            message: errMessage,
+            stacktrace: errStacktrace,
+            type: errType,
+            url: errUrl,
+            description,
+            timestamp,
+          }),
+        }).catch(() => {});
+      },
+    });
+
+    throw error;
   }
   if (res.status === 204) return undefined as T;
   return res.json();

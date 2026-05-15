@@ -1,8 +1,10 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 using Trsr.Api.Kiosk;
+using Trsr.Api.Middleware;
 using Module = Trsr.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +64,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<KioskReadOnlyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

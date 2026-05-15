@@ -20,7 +20,6 @@ import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { FixtureDrawer } from './FixtureDrawer';
-import { useToast } from '../../components/ui/Toast';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER, REFETCH_INTERVAL_LIVE, LIST_PAGE_SIZE } from '../../lib/constants';
 
@@ -521,7 +520,6 @@ function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Se
 
 function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: () => void }) {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(group.runs[0]?.id ?? null);
   const [activeCaseIds, setActiveCaseIds] = useState<Set<string>>(new Set());
   const c = agentColor(group.agentId);
@@ -530,7 +528,6 @@ function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: ()
   const cancelGroup = useMutation({
     mutationFn: () => testRunGroupsApi.cancel(group.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['test-run-groups'] }),
-    onError: (err) => toast((err as Error).message || 'Failed to cancel run', 'error'),
   });
 
   const handleStreamEvent = useCallback((e: TestRunEvent) => {
@@ -618,7 +615,6 @@ function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: ()
 
 export default function Runs() {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -650,7 +646,6 @@ export default function Runs() {
   const delGroup = useMutation({
     mutationFn: () => testRunGroupsApi.delete(deleteGroupId!),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setDeleteGroupId(null); if (deleteGroupId === selectedGroupId) setSelectedGroupId(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to delete run group', 'error'),
   });
 
   const deleteTarget = groups.find(g => g.id === deleteGroupId);
