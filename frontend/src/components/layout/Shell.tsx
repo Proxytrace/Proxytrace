@@ -17,13 +17,13 @@ import {
 
 const primaryNavItems = [
   { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
-  { label: 'Traces', icon: 'activity', to: '/traces', badge: '60' },
+  { label: 'Traces', icon: 'activity', to: '/traces' },
   { label: 'Agents', icon: 'users', to: '/agents' },
   { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
   { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
   { label: 'Test Runs', icon: 'play', to: '/runs' },
   { label: 'Playground', icon: 'beaker', to: '/playground' },
-  { label: 'Proposals', icon: 'sparkles', to: '/proposals', badge: '2', badgeAccent: true },
+  { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
 ] as const;
 
 const systemNavItems = [
