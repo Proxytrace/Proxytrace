@@ -10,6 +10,7 @@ using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.ModelProvider;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.Tools;
 using Trsr.Domain.Usage;
 using Trsr.Domain.User;
 // ReSharper disable InconsistentNaming
@@ -109,12 +110,25 @@ internal sealed class CoreSeedScenario : IDemoScenario
             gpt4oMiniEndpoint,
             [demoUser]), cancellationToken);
 
+        var lookupOrderTool = new ToolSpecification(
+            name: "lookup_order",
+            description: "Look up the status of a customer order by its numeric id.",
+            arguments: ToolArguments.FromJsonSchema(
+                """{"type":"object","properties":{"order_id":{"type":"string","description":"The order id, e.g. 12831"}},"required":["order_id"]}"""));
+
+        var startReturnTool = new ToolSpecification(
+            name: "start_return",
+            description: "Open a return for a previously delivered order.",
+            arguments: ToolArguments.FromJsonSchema(
+                """{"type":"object","properties":{"order_id":{"type":"string"},"reason":{"type":"string","enum":["damaged","wrong_item","no_longer_needed"]}},"required":["order_id","reason"]}"""));
+
         var supportAgent = await agentFactory(
             "Customer Support Agent",
             promptFactory("support-system",
                 "You are a friendly, concise customer-support agent for an e-commerce store. "
-                + "Always acknowledge the issue, propose a clear next step, and close politely."),
-            tools: [],
+                + "Always acknowledge the issue, propose a clear next step, and close politely. "
+                + "Use the `lookup_order` and `start_return` tools when a customer references an order id."),
+            tools: [lookupOrderTool, startReturnTool],
             endpoint: gpt4oEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.3),
@@ -224,6 +238,179 @@ internal sealed class CoreSeedScenario : IDemoScenario
         await SeedTraces(supportAgent, gpt4oEndpoint, supportSamples, spreadHours: 48);
         await SeedTraces(codeReviewAgent, claudeEndpoint, reviewSamples, spreadHours: 72);
         await SeedTraces(analyticsAgent, gpt4oEndpoint, analyticsSamples, spreadHours: 36);
+
+        await SeedToolCallConversation(supportAgent, gpt4oEndpoint);
+        await SeedMultiTurnConversation(supportAgent, gpt4oEndpoint);
+        await SeedMultiTurnConversation(analyticsAgent, gpt4oEndpoint, analyticsMultiTurn: true);
+
+        async Task SeedToolCallConversation(IAgent agent, IModelEndpoint endpoint)
+        {
+            var conversationId = Guid.NewGuid();
+            var systemMsg = agent.CreateSystemMessage();
+            var userMsg = new UserMessage([Content.FromText("Where is my order #18342?")]);
+
+            var toolCallId = "call_lookup_18342";
+            var toolRequest = new ToolRequest(
+                id: toolCallId,
+                name: "lookup_order",
+                arguments: """{"order_id":"18342"}""");
+
+            var assistantToolMsg = new AssistantMessage([], [toolRequest]);
+
+            var turn1Request = new Conversation([systemMsg, userMsg]);
+            var turn1Completion = completionFactory(
+                assistantToolMsg,
+                new TokenUsage(248, 32),
+                TimeSpan.FromMilliseconds(540));
+
+            await agentCallFactory(
+                agent: agent,
+                endpoint: endpoint,
+                request: turn1Request,
+                response: turn1Completion,
+                httpStatus: HttpStatusCode.OK,
+                finishReason: "tool_calls",
+                errorMessage: null,
+                modelParameters: paramsFactory(temperature: 0.3),
+                conversationId: conversationId).AddAsync(cancellationToken);
+
+            var toolResponse = new ToolResponse(
+                toolRequest,
+                [Content.FromText("""{"order_id":"18342","status":"in_transit","carrier":"UPS","eta":"2026-05-16","tracking":"1Z999AA10123456784"}""")]);
+            var toolMsg = new ToolMessage(toolResponse);
+
+            var finalAssistant = new AssistantMessage(
+                [Content.FromText("Order #18342 is in transit with UPS, ETA 2026-05-16. Tracking: 1Z999AA10123456784. Anything else?")],
+                []);
+
+            var turn2Request = new Conversation([systemMsg, userMsg, assistantToolMsg, toolMsg]);
+            var turn2Completion = completionFactory(
+                finalAssistant,
+                new TokenUsage(312, 58),
+                TimeSpan.FromMilliseconds(710));
+
+            await agentCallFactory(
+                agent: agent,
+                endpoint: endpoint,
+                request: turn2Request,
+                response: turn2Completion,
+                httpStatus: HttpStatusCode.OK,
+                finishReason: "stop",
+                errorMessage: null,
+                modelParameters: paramsFactory(temperature: 0.3),
+                conversationId: conversationId).AddAsync(cancellationToken);
+
+            // Second tool-call conversation: start_return
+            var convId2 = Guid.NewGuid();
+            var systemMsg2 = agent.CreateSystemMessage();
+            var userMsg2 = new UserMessage([Content.FromText("Order #20114 arrived damaged. Please start a return.")]);
+
+            var returnCallId = "call_return_20114";
+            var returnRequest = new ToolRequest(
+                id: returnCallId,
+                name: "start_return",
+                arguments: """{"order_id":"20114","reason":"damaged"}""");
+            var assistantReturnMsg = new AssistantMessage([], [returnRequest]);
+
+            var convReq1 = new Conversation([systemMsg2, userMsg2]);
+            var convComp1 = completionFactory(
+                assistantReturnMsg,
+                new TokenUsage(261, 38),
+                TimeSpan.FromMilliseconds(602));
+            await agentCallFactory(
+                agent: agent,
+                endpoint: endpoint,
+                request: convReq1,
+                response: convComp1,
+                httpStatus: HttpStatusCode.OK,
+                finishReason: "tool_calls",
+                errorMessage: null,
+                modelParameters: paramsFactory(temperature: 0.3),
+                conversationId: convId2).AddAsync(cancellationToken);
+
+            var returnResponse = new ToolResponse(
+                returnRequest,
+                [Content.FromText("""{"return_id":"RMA-7741","label_url":"https://shop.example.com/labels/RMA-7741","refund_estimate_days":3}""")]);
+            var returnToolMsg = new ToolMessage(returnResponse);
+            var finalReturnAssistant = new AssistantMessage(
+                [Content.FromText("Return RMA-7741 created for order #20114. Label: https://shop.example.com/labels/RMA-7741. Refund issued within 3 business days of receipt.")],
+                []);
+
+            var convReq2 = new Conversation([systemMsg2, userMsg2, assistantReturnMsg, returnToolMsg]);
+            var convComp2 = completionFactory(
+                finalReturnAssistant,
+                new TokenUsage(338, 71),
+                TimeSpan.FromMilliseconds(795));
+            await agentCallFactory(
+                agent: agent,
+                endpoint: endpoint,
+                request: convReq2,
+                response: convComp2,
+                httpStatus: HttpStatusCode.OK,
+                finishReason: "stop",
+                errorMessage: null,
+                modelParameters: paramsFactory(temperature: 0.3),
+                conversationId: convId2).AddAsync(cancellationToken);
+        }
+
+        async Task SeedMultiTurnConversation(IAgent agent, IModelEndpoint endpoint, bool analyticsMultiTurn = false)
+        {
+            var conversationId = Guid.NewGuid();
+            var system = agent.CreateSystemMessage();
+
+            var turns = analyticsMultiTurn
+                ? new (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[]
+                {
+                    ("How many signups did we have in April 2026?",
+                        "April 2026 signups: 4,812.\n```sql\nSELECT COUNT(*) FROM users WHERE created_at >= '2026-04-01' AND created_at < '2026-05-01';\n```",
+                        298, 112, 920),
+                    ("Break that down by acquisition channel.",
+                        "By channel: organic 2,104, paid_search 1,388, referral 812, social 508.\n```sql\nSELECT channel, COUNT(*) FROM users\nWHERE created_at >= '2026-04-01' AND created_at < '2026-05-01'\nGROUP BY channel ORDER BY 2 DESC;\n```",
+                        414, 168, 1180),
+                    ("Which channel had the highest 7-day retention?",
+                        "Referral led at 41 % D7 retention, vs. organic 33 %, paid_search 22 %, social 19 %.\n```sql\nSELECT channel,\n  AVG(CASE WHEN last_active_at >= created_at + INTERVAL '7 days' THEN 1.0 ELSE 0 END) AS d7\nFROM users WHERE created_at BETWEEN '2026-04-01' AND '2026-04-30'\nGROUP BY channel ORDER BY d7 DESC;\n```",
+                        522, 224, 1410),
+                }
+                : new (string user, string assistant, ulong inTok, ulong outTok, int latencyMs)[]
+                {
+                    ("Hi, I need help with order #19120.",
+                        "Hi — happy to help with order #19120. What's the issue?",
+                        232, 28, 410),
+                    ("It says delivered but I never received it.",
+                        "Sorry to hear that. I'll mark #19120 as a non-delivery, open a carrier trace, and issue a replacement. Want the replacement to the original address or a new one?",
+                        298, 84, 720),
+                    ("Same address is fine. How long will it take?",
+                        "Replacement for #19120 is scheduled for dispatch tomorrow morning, ETA 2–3 business days. You'll get tracking by email. Anything else?",
+                        372, 76, 690),
+                };
+
+            var history = new List<Message> { system };
+            foreach (var t in turns)
+            {
+                var user = new UserMessage([Content.FromText(t.user)]);
+                history.Add(user);
+
+                var request = new Conversation(history.ToArray());
+                var assistant = new AssistantMessage([Content.FromText(t.assistant)], []);
+                var completion = completionFactory(
+                    assistant,
+                    new TokenUsage(t.inTok, t.outTok),
+                    TimeSpan.FromMilliseconds(t.latencyMs));
+
+                await agentCallFactory(
+                    agent: agent,
+                    endpoint: endpoint,
+                    request: request,
+                    response: completion,
+                    httpStatus: HttpStatusCode.OK,
+                    finishReason: "stop",
+                    errorMessage: null,
+                    modelParameters: paramsFactory(temperature: 0.3),
+                    conversationId: conversationId).AddAsync(cancellationToken);
+
+                history.Add(assistant);
+            }
+        }
 
         ctx.DemoUser = demoUser;
         ctx.Project = project;

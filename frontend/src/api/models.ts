@@ -477,6 +477,7 @@ export interface AgentCallFilter {
   to?: string;
   httpStatus?: number;
   includeSystemAgents?: boolean;
+  q?: string;
   page?: number;
   pageSize?: number;
 }

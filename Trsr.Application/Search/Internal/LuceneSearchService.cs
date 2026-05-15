@@ -49,7 +49,7 @@ internal sealed class LuceneSearchService : ISearchService
         Query parsed;
         try
         {
-            parsed = parser.Parse(query);
+            parsed = parser.Parse(PrefixQueryRewriter.Rewrite(query));
         }
         catch (ParseException)
         {
@@ -144,6 +144,75 @@ internal sealed class LuceneSearchService : ISearchService
             .ToList();
 
         return new SearchResults(ordered);
+    }
+
+    public async Task<IReadOnlyList<Guid>> SearchEntityIdsAsync(
+        Guid projectId,
+        string query,
+        SearchKind kind,
+        int maxHits,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query) || maxHits <= 0)
+        {
+            return [];
+        }
+
+        var settings = await settingsResolver.GetOrDefaultsAsync(projectId, cancellationToken);
+        if (!settings.Enabled || !settings.IndexedKinds.Contains(kind))
+        {
+            return [];
+        }
+
+        using var analyzer = new StandardAnalyzer(LuceneIndexWriter.Version);
+        var parser = new MultiFieldQueryParser(
+            LuceneIndexWriter.Version,
+            [SearchConstants.FieldTitle, SearchConstants.FieldBody, SearchConstants.FieldBoostedBody],
+            analyzer)
+        {
+            DefaultOperator = QueryParserBase.AND_OPERATOR,
+            AllowLeadingWildcard = false,
+        };
+
+        Query parsed;
+        try
+        {
+            parsed = parser.Parse(PrefixQueryRewriter.Rewrite(query));
+        }
+        catch (ParseException)
+        {
+            try
+            {
+                parsed = parser.Parse(QuerySanitizer.Escape(query));
+            }
+            catch (ParseException)
+            {
+                return [];
+            }
+        }
+
+        var combined = new BooleanQuery
+        {
+            { parsed, Occur.MUST },
+            { new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString())), Occur.MUST },
+            { new TermQuery(new Term(SearchConstants.FieldKind, kind.ToString())), Occur.MUST },
+        };
+
+        using var reader = writer.AcquireReader();
+        var searcher = reader.Searcher;
+
+        var topDocs = searcher.Search(combined, maxHits);
+        var ids = new List<Guid>(topDocs.ScoreDocs.Length);
+        foreach (var scoreDoc in topDocs.ScoreDocs)
+        {
+            var doc = searcher.Doc(scoreDoc.Doc);
+            var entityIdStr = doc.Get(SearchConstants.FieldEntityId);
+            if (Guid.TryParse(entityIdStr, out var id))
+            {
+                ids.Add(id);
+            }
+        }
+        return ids;
     }
 
     private static IReadOnlyDictionary<string, string> ParseMetadata(string? json)

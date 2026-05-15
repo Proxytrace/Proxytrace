@@ -131,6 +131,54 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     TimeSpan.FromMilliseconds(-200),
                     evidence,
                     ab)),
+
+            new(
+                SelectAgent: c => c.RequireCustomerSupportAgent(),
+                Status: ProposalStatus.Draft,
+                BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
+                    agent,
+                    Priority.High,
+                    "Tool-call traces show the agent often replies in prose before invoking `lookup_order`, "
+                    + "wasting tokens and latency. Instruct it to call the tool first when an order id is present.",
+                    "You are a friendly, concise customer-support agent for an e-commerce store. "
+                    + "When a customer mentions an order id, call `lookup_order` BEFORE composing a reply. "
+                    + "Acknowledge the issue, propose a clear next step, and close politely. Never blame the customer.",
+                    0.62,
+                    0.79,
+                    evidence,
+                    ab)),
+
+            new(
+                SelectAgent: c => c.RequireDataAnalyticsAgent(),
+                Status: ProposalStatus.Draft,
+                BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
+                    agent,
+                    Priority.Medium,
+                    "Evaluator flagged 22 % of answers missing the SQL block. Making the SQL section mandatory "
+                    + "in the system prompt closed the gap in a pilot run.",
+                    "You are a data analyst. Given a question and a table description, answer with: "
+                    + "(1) a one-sentence numeric summary, (2) a fenced ```sql``` block with the exact query, "
+                    + "(3) any assumptions you made. Never omit the SQL block.",
+                    0.71,
+                    0.89,
+                    evidence,
+                    ab)),
+
+            new(
+                SelectAgent: c => c.RequireCodeReviewAgent(),
+                Status: ProposalStatus.Draft,
+                BuildDraft: (_, agent, evidence, ab) => createSystemPrompt(
+                    agent,
+                    Priority.Medium,
+                    "Reviewer skips severity tagging on ~35 % of findings, hurting downstream triage. "
+                    + "Requiring an explicit severity per comment raises consistency in offline trials.",
+                    "You are a senior software engineer reviewing pull requests. For each finding, prefix it "
+                    + "with `[Critical]`, `[Major]`, or `[Minor]`. Identify correctness, security, and clarity issues. "
+                    + "Be specific, cite line numbers, and suggest the smallest viable fix.",
+                    0.58,
+                    0.76,
+                    evidence,
+                    ab)),
         };
 
         foreach (var spec in specs)

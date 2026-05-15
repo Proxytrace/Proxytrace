@@ -8,4 +8,5 @@ public record AgentCallFilter(
     DateTimeOffset? From = null,
     DateTimeOffset? To = null,
     int? HttpStatus = null,
-    bool IncludeSystemAgents = true);
+    bool IncludeSystemAgents = true,
+    string? Query = null);
