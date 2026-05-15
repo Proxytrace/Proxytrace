@@ -54,6 +54,8 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
         IReadOnlyList<ITestRun> testRuns,
         CancellationToken cancellationToken = default)
     {
+        // TODO: Re-enable UpdateToolDefinitionOptimizerTests.DiscoverOptimizations_HappyPath_ProducesToolProposal
+        //       once this has been implemented.
         return [];
 //         var agent = testRunGroup.Suite.Agent;
 //         if (agent.Tools.Count == 0)

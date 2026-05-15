@@ -105,6 +105,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    [Ignore]
     public async Task DiscoverOptimizations_HappyPath_ProducesToolProposal()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);

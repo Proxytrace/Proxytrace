@@ -96,7 +96,7 @@ export default function Proposals() {
   ];
 
   return (
-    <div className="flex flex-col gap-3.5 flex-1 min-h-0 w-full px-4">
+    <div className="flex flex-col gap-3.5 flex-1 min-h-0 w-full">
       {/* Header */}
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>

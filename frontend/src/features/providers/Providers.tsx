@@ -99,13 +99,11 @@ export default function Providers() {
       setShowNewProvider(false);
       setSelectedId(p.id);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to create provider', 'error'),
   });
 
   const updateKind = useMutation({
     mutationFn: () => providersApi.update(selected!.id, { name: selected!.name, endpoint: selected!.endpoint, upstreamApiKey: selected!.upstreamApiKey, kind: editKindValue }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }); setEditingKind(false); },
-    onError: (err) => toast((err as Error).message || 'Failed to update provider', 'error'),
   });
 
   const delProvider = useMutation({
@@ -116,7 +114,6 @@ export default function Providers() {
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteProvider(false);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to delete provider', 'error'),
   });
 
   const createModel = useMutation({
@@ -126,13 +123,11 @@ export default function Providers() {
       outputTokenCost: newModel.outputTokenCost ? parseFloat(newModel.outputTokenCost) : null,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setShowNewModel(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); },
-    onError: (err) => toast((err as Error).message || 'Failed to create model', 'error'),
   });
 
   const delModel = useMutation({
     mutationFn: () => providersApi.deleteModel(deleteModel!.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setDeleteModel(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to delete model', 'error'),
   });
 
   const updatePricing = useMutation({
@@ -141,19 +136,16 @@ export default function Providers() {
       outputTokenCost: editPricing.outputTokenCost ? parseFloat(editPricing.outputTokenCost) : null,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(activeId) }); setEditingModel(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to update pricing', 'error'),
   });
 
   const createKey = useMutation({
     mutationFn: () => providersApi.createKey(activeId!, { name: newKey.name, projectId: newKey.projectId }),
     onSuccess: (k) => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(activeId) }); setShowNewKey(false); setNewlyCreatedKey(k); },
-    onError: (err) => toast((err as Error).message || 'Failed to create API key', 'error'),
   });
 
   const delKey = useMutation({
     mutationFn: () => providersApi.deleteKey(activeId!, deleteKey!.id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(activeId) }); setDeleteKey(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to delete API key', 'error'),
   });
 
   const keysColumns: DataColumn<ApiKeyDto>[] = [
@@ -185,7 +177,7 @@ export default function Providers() {
   }
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-4 overflow-hidden pb-6 h-[calc(100vh-80px)]">
+    <div className="w-full min-w-0 flex flex-col gap-4">
       {/* Page header */}
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>

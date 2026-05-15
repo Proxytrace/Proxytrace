@@ -8,7 +8,6 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
-import { useToast } from '../../components/ui/Toast';
 import { fmtRelative } from '../../lib/format';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { Sparkline } from '../../components/charts';
@@ -550,7 +549,6 @@ export default function Evaluators() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { id: routeId } = useParams<{ id: string }>();
-  const { show: toast } = useToast();
   const { currentProjectId } = useCurrentProject();
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
@@ -630,7 +628,6 @@ export default function Evaluators() {
       navigate(`/evaluators/${e.id}`);
       setShowNew(false); setPickedKind(null); setCreateForm(initForm());
     },
-    onError: (err) => toast((err as Error).message || 'Failed to create evaluator', 'error'),
   });
 
   const updateEval = useMutation({
@@ -643,7 +640,6 @@ export default function Evaluators() {
       return evaluatorsApi.update(ev.id, payload);
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(currentProjectId ?? undefined) }); setEditOpen(false); setEditTargetId(null); },
-    onError: (err) => toast((err as Error).message || 'Failed to update evaluator', 'error'),
   });
 
   const deleteEval = useMutation({
@@ -653,7 +649,6 @@ export default function Evaluators() {
       if (routeId === deleteTargetId) navigate('/evaluators');
       setDeleteTargetId(null);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to delete evaluator', 'error'),
   });
 
   function openEdit(e: EvaluatorDetailDto) {
@@ -673,7 +668,7 @@ export default function Evaluators() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0, padding: '0 0 14px' }}>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0 }}>
         {/* Left rail */}
         <aside style={{
           background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',

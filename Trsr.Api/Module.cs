@@ -126,68 +126,67 @@ internal sealed class Module : Autofac.Module
                     .AddScheme<AuthenticationSchemeOptions, KioskAuthenticationHandler>(
                         KioskAuthenticationHandler.SchemeName, _ => { });
             }
-            else if (authOptions.Mode == AuthMode.Local)
-            {
-                services.AddSingleton<LocalAuthOptions>(sp =>
-                {
-                    var signingKeyProvider = sp.GetRequiredService<ISigningKeyProvider>();
-                    var signingKey = signingKeyProvider.EnsureSigningKey(authOptions.Local.SigningKey);
-                    return new LocalAuthOptions
-                    {
-                        SigningKey = signingKey,
-                        Issuer = "trsr-local",
-                        Audience = "trsr-api",
-                        TokenLifetime = TimeSpan.FromDays(7),
-                    };
-                });
-
-                services
-                    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer();
-
-                services
-                    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-                    .Configure<LocalAuthOptions>((o, localOptions) =>
-                    {
-                        o.MapInboundClaims = false;
-                        o.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidIssuer = localOptions.Issuer,
-                            ValidAudience = localOptions.Audience,
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = new SymmetricSecurityKey(
-                                System.Text.Encoding.UTF8.GetBytes(localOptions.SigningKey)),
-                            RoleClaimType = ClaimTypes.Role,
-                        };
-                        o.Events = LocalAuthEvents.Create();
-                    });
-            }
             else
             {
                 services
                     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer();
 
-                services
-                    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-                    .Configure<AuthOptions>((o, opts) =>
+                if (authOptions.Mode == AuthMode.Local)
+                {
+                    services.AddSingleton<LocalAuthOptions>(sp =>
                     {
-                        o.Authority = opts.Oidc.Authority;
-                        o.Audience = opts.Oidc.Audience;
-                        o.RequireHttpsMetadata = opts.Oidc.RequireHttpsMetadata;
-                        o.MapInboundClaims = false;
-                        o.TokenValidationParameters = new TokenValidationParameters
+                        var signingKeyProvider = sp.GetRequiredService<ISigningKeyProvider>();
+                        var signingKey = signingKeyProvider.EnsureSigningKey(authOptions.Local.SigningKey);
+                        return new LocalAuthOptions
                         {
-                            ValidateIssuer = true,
-                            ValidateAudience = !string.IsNullOrWhiteSpace(opts.Oidc.Audience),
-                            ValidAudience = opts.Oidc.Audience,
-                            NameClaimType = opts.Oidc.NameClaimType,
-                            RoleClaimType = ClaimTypes.Role,
+                            SigningKey = signingKey,
+                            Issuer = "trsr-local",
+                            Audience = "trsr-api",
+                            TokenLifetime = TimeSpan.FromDays(7),
                         };
-                        o.Events = JitProvisioningEvents.Create();
                     });
+
+                    services
+                        .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                        .Configure<LocalAuthOptions>((o, localOptions) =>
+                        {
+                            o.MapInboundClaims = false;
+                            o.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidIssuer = localOptions.Issuer,
+                                ValidAudience = localOptions.Audience,
+                                ValidateIssuer = true,
+                                ValidateAudience = true,
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = new SymmetricSecurityKey(
+                                    System.Text.Encoding.UTF8.GetBytes(localOptions.SigningKey)),
+                                RoleClaimType = ClaimTypes.Role,
+                            };
+                            o.Events = JwtBearerEventsFactory.Create(new LocalUserResolver());
+                        });
+                }
+                else
+                {
+                    services
+                        .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                        .Configure<AuthOptions>((o, opts) =>
+                        {
+                            o.Authority = opts.Oidc.Authority;
+                            o.Audience = opts.Oidc.Audience;
+                            o.RequireHttpsMetadata = opts.Oidc.RequireHttpsMetadata;
+                            o.MapInboundClaims = false;
+                            o.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuer = true,
+                                ValidateAudience = !string.IsNullOrWhiteSpace(opts.Oidc.Audience),
+                                ValidAudience = opts.Oidc.Audience,
+                                NameClaimType = opts.Oidc.NameClaimType,
+                                RoleClaimType = ClaimTypes.Role,
+                            };
+                            o.Events = JwtBearerEventsFactory.Create(new JitUserResolver());
+                        });
+                }
             }
         });
     }

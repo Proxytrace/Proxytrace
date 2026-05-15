@@ -4,7 +4,6 @@ import { useCurrentUser } from '../../auth/useCurrentUser';
 import { useAuthMode } from '../../auth/authMode';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
-import { Button } from '../ui/Button';
 import { ProjectSelector } from './ProjectSelector';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { checkHealth } from '../../api/health';
@@ -13,7 +12,7 @@ import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
   SettingsIcon, BeakerIcon,
-  LayoutSidebarIcon, BellIcon, PlusIcon,
+  LayoutSidebarIcon,
 } from '../icons';
 
 const primaryNavItems = [
@@ -185,15 +184,6 @@ export function Shell() {
             {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
 
-          <button className="btn-icon relative">
-            <BellIcon size={16} />
-            <span className="absolute top-[6px] right-[6px] w-[7px] h-[7px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-primary)]" />
-          </button>
-
-          <Button size="sm" leftIcon={<PlusIcon size={14} />} className="shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]!">
-            New Test Suite
-          </Button>
-
           <button
             type="button"
             onClick={() => currentUser?.signOut()}
@@ -204,8 +194,8 @@ export function Shell() {
           </button>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-hidden p-[16px_10px] bg-transparent relative z-0 flex flex-col">
+        {/* Page content — single vertical scroll container for the app */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_10px_10px_10px] bg-transparent relative z-0 flex flex-col">
           <Outlet />
         </main>
       </div>

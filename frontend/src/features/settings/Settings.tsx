@@ -16,7 +16,7 @@ export default function Settings() {
   const active = TABS.find(t => t.id === tab)!;
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto min-w-0 flex flex-col gap-[14px] overflow-hidden pb-6 h-[calc(100vh-80px)]">
+    <div className="w-full min-w-0 flex flex-col gap-[14px]">
       <header className="fade-up shrink-0">
         <h1 className="text-[24px] font-bold tracking-[-0.02em] m-0 mb-1">Settings</h1>
         <p className="text-[14px] text-muted m-0">Configure projects and team membership.</p>

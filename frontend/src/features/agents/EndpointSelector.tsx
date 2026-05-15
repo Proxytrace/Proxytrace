@@ -35,7 +35,6 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
       setOpen(false);
       toast('Endpoint updated', 'success');
     },
-    onError: (err) => toast((err as Error).message || 'Failed to update endpoint', 'error'),
   });
 
   const c = modelColor(agent.endpointName);

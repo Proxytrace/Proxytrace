@@ -5,7 +5,6 @@ import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
-import { useToast } from '../../components/ui/Toast';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { AgentList } from './AgentList';
@@ -13,7 +12,6 @@ import { AgentDetail } from './AgentDetail';
 
 export default function Agents() {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
   const { currentProjectId } = useCurrentProject();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselect = searchParams.get('id');
@@ -66,14 +64,13 @@ export default function Agents() {
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteOpen(false);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to delete agent', 'error'),
   });
 
   const hasSystemAgents = allAgents.some(a => a.isSystemAgent);
   const isEmpty = !isLoading && allAgents.length === 0;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 flex flex-col gap-3 h-full overflow-hidden">
+    <div className="w-full min-w-0 flex flex-col gap-3 h-full overflow-hidden">
       {isEmpty && (
         <EmptyState title="No agents found" description="Agents are auto-created when traces are captured." />
       )}

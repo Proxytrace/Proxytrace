@@ -1,7 +1,10 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 using Trsr.Api.Kiosk;
+using Trsr.Api.Middleware;
 using Module = Trsr.Api.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +38,20 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
-        c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo { Title = "Trsr API", Version = "v1" });
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "Trsr API", Version = "v1" });
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter the token below, without any prefixes",
+        });
+        c.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", doc)] = [],
+        });
     });
 }
 
@@ -48,6 +64,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<KioskReadOnlyMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

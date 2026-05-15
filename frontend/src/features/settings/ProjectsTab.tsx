@@ -5,7 +5,6 @@ import { providersApi } from '../../api/providers';
 import { QUERY_KEYS } from '../../api/query-keys';
 import type { ProjectDto, ProjectMemberDto } from '../../api/models';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
-import { useToast } from '../../components/ui/Toast';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Avatar } from '../../components/ui/Avatar';
@@ -31,7 +30,6 @@ function colorFor(id: string): string {
 
 export function ProjectsTab() {
   const qc = useQueryClient();
-  const { show: toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
@@ -89,7 +87,6 @@ export function ProjectsTab() {
       setShowNew(false);
       setSelectedId(p.id);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to create project', 'error'),
   });
 
   const updateProject = useMutation({
@@ -100,7 +97,6 @@ export function ProjectsTab() {
       setEditName(false);
       setEditEndpoint(false);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to update project', 'error'),
   });
 
   const deleteProject = useMutation({
@@ -110,7 +106,6 @@ export function ProjectsTab() {
       setConfirmDelete(false);
       setSelectedId(null);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to delete project', 'error'),
   });
 
   const addMember = useMutation({
@@ -119,7 +114,6 @@ export function ProjectsTab() {
       invalidateAll();
       setShowAddMember(false);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to add member', 'error'),
   });
 
   const removeMemberMut = useMutation({
@@ -128,7 +122,6 @@ export function ProjectsTab() {
       invalidateAll();
       setRemoveMember(null);
     },
-    onError: (err) => toast((err as Error).message || 'Failed to remove member', 'error'),
   });
 
   return (

@@ -389,7 +389,7 @@ export default function Traces() {
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   return (
-    <div className="w-full max-w-[1480px] mx-auto min-w-0 min-h-0 flex-1 flex flex-col gap-[14px] pb-2">
+    <div className="w-full min-w-0 flex flex-col gap-[14px]">
 
       {/* ── Agent filter cards ── */}
       {agents.length > 0 && (
