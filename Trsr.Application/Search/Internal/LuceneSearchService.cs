@@ -49,7 +49,7 @@ internal sealed class LuceneSearchService : ISearchService
         Query parsed;
         try
         {
-            parsed = parser.Parse(query);
+            parsed = parser.Parse(PrefixQueryRewriter.Rewrite(query));
         }
         catch (ParseException)
         {
@@ -177,7 +177,7 @@ internal sealed class LuceneSearchService : ISearchService
         Query parsed;
         try
         {
-            parsed = parser.Parse(query);
+            parsed = parser.Parse(PrefixQueryRewriter.Rewrite(query));
         }
         catch (ParseException)
         {
