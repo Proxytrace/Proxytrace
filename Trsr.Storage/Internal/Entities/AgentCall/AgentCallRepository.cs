@@ -4,6 +4,7 @@ using Trsr.Domain;
 using Trsr.Domain.AgentCall;
 using Trsr.Domain.Events;
 using Trsr.Domain.Project;
+using Trsr.Domain.Search;
 using Trsr.Storage.Internal.Entities.Agent;
 using Trsr.Storage.Internal.Entities.Model;
 using Trsr.Storage.Internal.Entities.ModelEndpoint;
@@ -13,12 +14,18 @@ namespace Trsr.Storage.Internal.Entities.AgentCall;
 [UsedImplicitly]
 internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEntity>, IAgentCallRepository
 {
+    private const int MaxFulltextHits = 1000;
+
+    private readonly ISearchService searchService;
+
     public AgentCallRepository(
         IMapper<IAgentCall, AgentCallEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
+        IEntityEventService entityEvents,
+        ISearchService searchService) : base(mapper, contextFactory, transaction, entityEvents)
     {
+        this.searchService = searchService;
     }
 
     public async Task<(IReadOnlyList<IAgentCall> Items, int Total)> GetFilteredAsync(
@@ -73,6 +80,29 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         if (filter.HttpStatus.HasValue)
         {
             query = query.Where(e => e.HttpStatus == filter.HttpStatus.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Query))
+        {
+            if (filter.ProjectId is null)
+            {
+                return ([], 0);
+            }
+
+            var matchingIds = await searchService.SearchEntityIdsAsync(
+                filter.ProjectId.Value,
+                filter.Query,
+                SearchKind.AgentCall,
+                MaxFulltextHits,
+                cancellationToken);
+
+            if (matchingIds.Count == 0)
+            {
+                return ([], 0);
+            }
+
+            var idSet = matchingIds.ToHashSet();
+            query = query.Where(e => idSet.Contains(e.Id));
         }
 
         if (!filter.IncludeSystemAgents)

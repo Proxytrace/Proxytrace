@@ -6,7 +6,7 @@ import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useCurrentProject } from '../../contexts/ProjectContext';
-import { ExternalLinkIcon, PlusIcon, SearchIcon } from '../../components/icons';
+import { SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
 import { Pill } from '../../components/ui/Pill';
@@ -79,7 +79,7 @@ function buildRows(traces: AgentCallDto[]): TraceRow[] {
 
 // ── Column widths (shared between header, flat rows, and child rows) ──────────
 
-const COL_WIDTHS = ['180px', '1fr', '140px', '72px', '130px', '120px', '80px'];
+const COL_WIDTHS = ['180px', '1fr', '140px', '72px', '70px', '130px', '120px', '80px'];
 const GRID = `${COL_WIDTHS.join(' ')}`;
 
 // ── Shared cell renderers ─────────────────────────────────────────────────────
@@ -101,6 +101,12 @@ function TokenCell({ trace }: { trace: AgentCallDto }) {
       <span className="text-muted ml-[5px] text-[10px]">{fmtTokens(trace.inputTokens)}/{fmtTokens(trace.outputTokens)}</span>
     </span>
   );
+}
+
+function ToolsCell({ count }: { count: number }) {
+  return count > 0
+    ? <span className="mono text-[11px] text-primary">{count}</span>
+    : <span className="text-muted text-[11px]">—</span>;
 }
 
 function LatencyCell({ trace }: { trace: AgentCallDto }) {
@@ -128,10 +134,8 @@ function FlatTraceRow({ trace, selected, onClick }: { trace: AgentCallDto; selec
         {trace.agentName ?? <span className="text-muted">—</span>}
       </span>
       <span className="overflow-hidden"><Pill label={trace.model} color={modelColor(trace.model)} size="sm" /></span>
-      <span className="inline-flex items-center gap-[5px]">
-        <StatusDot httpStatus={trace.httpStatus} />
-        <span className={`mono text-[11px] ${trace.httpStatus >= 200 && trace.httpStatus < 300 ? 'text-success' : trace.httpStatus >= 500 ? 'text-danger' : 'text-warn'}`}>{trace.httpStatus}</span>
-      </span>
+      <StatusDot httpStatus={trace.httpStatus} />
+      <ToolsCell count={trace.response.toolRequests.length} />
       <TokenCell trace={trace} />
       <LatencyCell trace={trace} />
       <span className="text-muted text-[11px] whitespace-nowrap text-right">{fmtRelative(trace.createdAt)}</span>
@@ -157,6 +161,7 @@ function ConversationGroupRow({
   const { turns, conversationId } = group;
   const totalTokens = turns.reduce((n, t) => n + t.inputTokens + t.outputTokens, 0);
   const totalMs = turns.reduce((n, t) => n + t.durationMs, 0);
+  const totalTools = turns.reduce((n, t) => n + t.response.toolRequests.length, 0);
   const agentName = turns[0].agentName;
   const model = turns[0].model;
   const c = turns[0].agentId ? agentColor(turns[0].agentId) : agentColor(conversationId);
@@ -197,9 +202,12 @@ function ConversationGroupRow({
         {/* Status — combined: show success if all OK, else warn/danger */}
         <span className="inline-flex items-center gap-[5px]">
           {turns.every(t => t.httpStatus >= 200 && t.httpStatus < 300)
-            ? <><StatusDot httpStatus={200} /><span className="mono text-[11px] text-success">2xx</span></>
-            : <><StatusDot httpStatus={500} /><span className="mono text-[11px] text-warn">mixed</span></>}
+            ? <><StatusDot httpStatus={200} showLabel={false} /><span className="mono text-[11px] text-success">2xx</span></>
+            : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-[11px] text-warn">mixed</span></>}
         </span>
+
+        {/* Tools — summed */}
+        <ToolsCell count={totalTools} />
 
         {/* Tokens — summed */}
         <span className="mono text-[11px]">
@@ -236,10 +244,8 @@ function ConversationGroupRow({
             {turn.agentName ?? <span className="text-muted">—</span>}
           </span>
           <span className="overflow-hidden"><Pill label={turn.model} color={modelColor(turn.model)} size="sm" /></span>
-          <span className="inline-flex items-center gap-[5px]">
-            <StatusDot httpStatus={turn.httpStatus} />
-            <span className={`mono text-[11px] ${turn.httpStatus >= 200 && turn.httpStatus < 300 ? 'text-success' : turn.httpStatus >= 500 ? 'text-danger' : 'text-warn'}`}>{turn.httpStatus}</span>
-          </span>
+          <StatusDot httpStatus={turn.httpStatus} />
+          <ToolsCell count={turn.response.toolRequests.length} />
           <TokenCell trace={turn} />
           <LatencyCell trace={turn} />
           <span className="text-muted text-[11px] whitespace-nowrap text-right">{fmtRelative(turn.createdAt)}</span>
@@ -260,12 +266,21 @@ export default function Traces() {
   const [range, setRange] = useState('24h');
   const [agentFilter, setAgentFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get('focus');
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [search]);
 
   useEffect(() => {
     if (!focusId) return;
@@ -297,13 +312,15 @@ export default function Traces() {
   }, [focusId, setSearchParams]);
 
   const from = useMemo(() => rangeFrom(range), [range]);
+  const trimmedSearch = debouncedSearch.trim();
   const filter = useMemo(() => ({
     page, pageSize: PAGE_SIZE,
     includeSystemAgents: showSystem,
     ...(projectId ? { projectId } : {}),
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
-  }), [page, agentFilter, from, showSystem, projectId]);
+    ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),
+  }), [page, agentFilter, from, showSystem, projectId, trimmedSearch]);
 
   const { data, isFetching } = useQuery({
     queryKey: QUERY_KEYS.agentCalls(filter),
@@ -472,34 +489,22 @@ export default function Traces() {
           </span>
           System Traces
         </button>
-        <div className="flex gap-2 shrink-0 ml-auto">
-          <button className="px-3 py-2 bg-card rounded-[9px] text-[12.5px] font-medium text-secondary inline-flex items-center gap-[6px] cursor-pointer" style={{ boxShadow: 'var(--shadow-pill)' }}>
-            <ExternalLinkIcon size={13} />
-            Export CSV
-          </button>
-          <button className="px-[14px] py-2 rounded-[9px] text-[12.5px] font-semibold text-white inline-flex items-center gap-[6px] cursor-pointer" style={{ background: 'linear-gradient(135deg, var(--accent-primary), #a57038)', boxShadow: '0 4px 14px -4px rgba(201,148,74,0.4), inset 0 1px 0 rgba(255,255,255,0.15)' }}>
-            <PlusIcon size={13} strokeWidth={2.5} />
-            New Test Case
-          </button>
-        </div>
       </div>
 
       {/* ── Grouped trace table ── */}
       <div className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col" style={{ animationDelay: '120ms', boxShadow: 'var(--shadow-card)' }}>
-        {/* Table header */}
+        {/* Rows (header is sticky inside the scroll container so column widths match) */}
+        <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
         <div
-          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] shrink-0"
+          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] sticky top-0 z-10 bg-card"
           style={{ gridTemplateColumns: GRID }}
         >
-          {['Trace ID', 'Agent', 'Model', 'Status', 'Tokens', 'Latency', 'Time'].map((label, i) => (
-            <span key={label} className={`text-[11px] font-semibold text-muted uppercase tracking-[0.06em] ${i === 6 ? 'text-right' : ''}`}>
+          {['Trace ID', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Latency', 'Time'].map((label, i) => (
+            <span key={label} className={`text-[11px] font-semibold text-muted uppercase tracking-[0.06em] ${i === 7 ? 'text-right' : ''}`}>
               {label}
             </span>
           ))}
         </div>
-
-        {/* Rows */}
-        <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
         {rows.length === 0 ? (
           <div className="py-12 text-center text-muted text-[13px]">
             {isFetching ? 'Loading…' : 'No traces found.'}

@@ -44,11 +44,12 @@ public class AgentCallsController : ControllerBase
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] int? httpStatus = null,
         [FromQuery] bool includeSystemAgents = true,
+        [FromQuery] string? q = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallDto>(items.Select(ToDto).ToArray(), total, page, pageSize);
     }
