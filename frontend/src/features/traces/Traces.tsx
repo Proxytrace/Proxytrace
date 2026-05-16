@@ -5,7 +5,7 @@ import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { SearchIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { Pagination } from '../../components/ui/Pagination';
@@ -346,9 +346,9 @@ export default function Traces() {
     enabled,
   });
 
-  const traces = data?.items ?? [];
+  const traces = useMemo(() => data?.items ?? [], [data]);
   const total = data?.total ?? 0;
-  const allAgents = agentsData?.items ?? [];
+  const allAgents = useMemo(() => agentsData?.items ?? [], [agentsData]);
   const agents = useMemo(
     () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
     [allAgents, showSystem],
@@ -377,7 +377,8 @@ export default function Traces() {
   function toggleConv(id: string) {
     setExpandedConvs(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }

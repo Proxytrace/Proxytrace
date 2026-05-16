@@ -5,15 +5,16 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ProjectProvider } from './contexts/ProjectContext';
+import ProjectProvider  from './contexts/ProjectProvider';
 import { setupApi } from './api/setup';
 import { configApi } from './api/config';
 import { oidcConfig } from './auth/oidcConfig';
 import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 import { fetchAuthMode, useAuthMode } from './auth/authMode';
-import { LocalAuthProvider, useLocalAuth } from './auth/local/LocalAuthProvider';
+import { LocalAuthProvider } from './auth/local/LocalAuthProvider';
 import { CurrentUserContext, type CurrentUser } from './auth/useCurrentUser';
 import { KioskContext } from './contexts/KioskContext';
+import useLocalAuth from './hooks/useLocalAuth';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));

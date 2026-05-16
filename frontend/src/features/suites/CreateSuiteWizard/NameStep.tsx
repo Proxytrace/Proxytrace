@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { FormField, formInputCls } from '../../../components/ui/FormField';
+import { useRef, useState } from 'react';
+import { FormField } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 
 interface Preset {
   key: string;
@@ -14,22 +15,23 @@ const PRESETS: Preset[] = [
   { key: 'failure', name: 'Failure Cases', description: 'Inputs the agent has historically struggled with — track improvements over time.' },
 ];
 
+const findPreset = (value: string): string | null => {
+  const match = PRESETS.find(p => p.name === value);
+  if (match) {
+    return match.key;
+  }
+  return null;
+}
+
 interface Props {
   value: string;
   onChange: (value: string) => void;
 }
 
 export function NameStep({ value, onChange }: Props) {
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | null>(findPreset(value));
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const match = PRESETS.find(p => p.name === value);
-    if (match) setActive(match.key);
-    else if (value !== '' && active && PRESETS.find(p => p.key === active)?.name !== value) {
-      setActive(null);
-    }
-  }, [value, active]);
 
   const description = active
     ? PRESETS.find(p => p.key === active)?.description

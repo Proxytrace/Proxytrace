@@ -5,7 +5,7 @@ import {
   TrashIcon,
 } from '../../../components/icons';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 import type { PlaygroundMessage, PlaygroundRole } from '../state/types';
 
 interface RoleStyle {

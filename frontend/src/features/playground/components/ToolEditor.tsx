@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDownIcon, TrashIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 import type { PlaygroundToolOverride } from '../state/types';
 
 interface Props {

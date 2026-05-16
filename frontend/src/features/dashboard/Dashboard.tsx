@@ -5,7 +5,7 @@ import { statisticsApi } from '../../api/statistics';
 import { agentCallsApi } from '../../api/agent-calls';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { SparklesIcon, ActivityIcon, CoinsIcon, ClockIcon, TargetIcon } from '../../components/icons';
 import type { AgentCallDto } from '../../api/models';
 import { KpiCard } from '../../components/ui/KpiCard';

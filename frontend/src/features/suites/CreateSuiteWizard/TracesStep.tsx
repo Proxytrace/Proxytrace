@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto } from '../../../api/models';
 import { agentCallsApi } from '../../../api/agent-calls';
@@ -65,7 +65,7 @@ interface Props {
 export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
   const [range, setRange] = useState<string>('7d');
   const [search, setSearch] = useState<string>('');
-  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [focusedIdState, setFocusedIdState] = useState<string | null>(null);
 
   const from = useMemo(() => rangeFrom(range), [range]);
   const { data, isLoading } = useQuery({
@@ -74,7 +74,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
     enabled: !!agentId,
   });
 
-  const allTraces = data?.items ?? [];
+  const allTraces = useMemo(() => data?.items ?? [], [data]);
 
   const traces = useMemo(() => {
     const success = allTraces.filter(t => t.httpStatus >= 200 && t.httpStatus < 300);
@@ -83,10 +83,11 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
     return success.filter(t => searchHaystack(t).includes(q));
   }, [allTraces, search]);
 
-  useEffect(() => {
-    if (focusedId && !traces.find(t => t.id === focusedId)) setFocusedId(null);
-    if (!focusedId && traces.length > 0) setFocusedId(traces[0].id);
-  }, [traces, focusedId]);
+  const focusedId = useMemo(() => {
+    if (focusedIdState && traces.find(t => t.id === focusedIdState)) return focusedIdState;
+    return traces[0]?.id ?? null;
+  }, [traces, focusedIdState]);
+  const setFocusedId = (id: string | null) => setFocusedIdState(id);
 
   const focused = traces.find(t => t.id === focusedId) ?? null;
   const truncated = data && data.total > TRACE_PAGE_SIZE;

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
-import { FormField, formInputCls } from '../../components/ui/FormField';
+import { FormField } from '../../components/ui/FormField';
 import type { ModelEndpointDto } from '../../api/models';
+import { formInputCls } from '../../components/ui/classes';
 
 interface NewProjectModalProps {
   endpoints: ModelEndpointDto[];

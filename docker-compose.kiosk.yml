@@ -1,0 +1,24 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Trsr.Api/Dockerfile
+    ports:
+      - "5200:8080"
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Data Source=/tmp/trsr.db
+      - Kiosk__Enabled=true
+      - Self__BaseUrl=http://localhost:5200
+      - Frontend__AllowedOrigin=http://localhost:5201
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5201:80"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro

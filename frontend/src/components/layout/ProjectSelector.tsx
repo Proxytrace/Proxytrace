@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import type { ProjectDto } from '../../api/models';
 
 function projectInitials(name: string) {
@@ -89,7 +89,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
             {projects.length === 0 && (
               <li className="px-3 py-2 text-[12px] text-muted">No projects</li>
             )}
-            {projects.map(p => {
+            {projects.map((p) => {
               const active = p.id === currentProject?.id;
               return (
                 <li key={p.id}>

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
@@ -22,31 +22,31 @@ export default function Agents() {
     queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
     enabled: currentProjectId !== null,
   });
-  const allAgents = data?.items ?? [];
+  const allAgents = useMemo(() => data?.items ?? [], [data]);
 
   const [showSystem, setShowSystem] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const agents = useMemo(
-    () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
-    [allAgents, showSystem],
+  const preselectIsSystem = useMemo(
+    () => preselect ? allAgents.some(a => a.id === preselect && a.isSystemAgent) : false,
+    [preselect, allAgents],
   );
 
-  // If preselected agent is a system agent, auto-enable system visibility.
-  useEffect(() => {
-    if (preselect && allAgents.some(a => a.id === preselect && a.isSystemAgent)) {
-      setShowSystem(true);
-    }
-  }, [preselect, allAgents]);
+  const agents = useMemo(
+    () => (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent),
+    [allAgents, showSystem, preselectIsSystem],
+  );
 
-  useEffect(() => {
-    if (selectedId && agents.some(a => a.id === selectedId)) return;
-    if (agents.length > 0) setSelectedId(agents[0].id);
-    else setSelectedId(null);
+  const effectiveSelectedId = useMemo(() => {
+    if (selectedId && agents.some(a => a.id === selectedId)) return selectedId;
+    return agents[0]?.id ?? null;
   }, [agents, selectedId]);
 
-  const selected = agents.find(a => a.id === selectedId) ?? null;
+  const selected = useMemo(
+    () => agents.find(a => a.id === effectiveSelectedId) ?? null,
+    [agents, effectiveSelectedId],
+  );
 
   const handleSelect = (id: string) => {
     setSelectedId(id);

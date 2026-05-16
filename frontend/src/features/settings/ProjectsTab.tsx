@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../../api/projects';
 import { providersApi } from '../../api/providers';
@@ -9,11 +9,12 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
-import { FormField, formInputCls } from '../../components/ui/FormField';
+import { FormField } from '../../components/ui/FormField';
 import { PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from '../../components/icons';
 import { fmtDate } from '../../lib/format';
 import { NewProjectModal } from './NewProjectModal';
 import { AddMemberModal } from './AddMemberModal';
+import { formInputCls } from '../../components/ui/classes';
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -40,9 +41,7 @@ export function ProjectsTab() {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const [editName, setEditName] = useState(false);
-  const [nameDraft, setNameDraft] = useState('');
   const [editEndpoint, setEditEndpoint] = useState(false);
-  const [endpointDraft, setEndpointDraft] = useState('');
 
   const { data: projectsData, isLoading: projectsLoading } = useQuery({
     queryKey: QUERY_KEYS.projects,
@@ -53,7 +52,7 @@ export function ProjectsTab() {
     queryFn: providersApi.getAllModels,
   });
 
-  const projects = projectsData?.items ?? [];
+  const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return projects;
@@ -69,12 +68,8 @@ export function ProjectsTab() {
     enabled: !!effectiveId,
   });
 
-  useEffect(() => {
-    if (selected) {
-      setNameDraft(selected.name);
-      setEndpointDraft(selected.systemEndpointId);
-    }
-  }, [selected?.id]);
+  const [nameDraft, setNameDraft] = useState(selected?.name ?? '');
+  const [endpointDraft, setEndpointDraft] = useState(selected?.systemEndpointId ?? '');
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: QUERY_KEYS.projects });

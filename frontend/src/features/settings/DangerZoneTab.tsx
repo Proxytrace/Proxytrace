@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { setupApi } from '../../api/setup';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useToast } from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { TrashIcon } from '../../components/icons';
 

@@ -1,0 +1,27 @@
+﻿**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.project
+**/.settings
+**/.toolstarget
+**/.vs
+**/.vscode
+**/.idea
+**/*.*proj.user
+**/*.dbmdl
+**/*.jfm
+**/azds.yaml
+**/bin
+# FUCK YOU RIDER!!!! WARUM IS DES DA?!?!?! DES HAT MI VIEL ZEIT UND NERVE GERADE GEKOSTET DU SOHN EINER FREIZUEGIGEN DAME
+**/charts
+!frontend/src/components/charts
+**/docker-compose*
+**/Dockerfile*
+**/node_modules
+**/npm-debug.log
+**/obj
+**/secrets.dev.yaml
+**/values.dev.yaml
+LICENSE
+README.md

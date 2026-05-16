@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
 import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TraceCreatedEvent } from './models';
 
@@ -18,14 +18,18 @@ export function useEventStream<T>(
 ) {
   const onEventRef = useRef(onEvent);
   const onCompleteRef = useRef(onComplete);
-  onEventRef.current = onEvent;
-  onCompleteRef.current = onComplete;
+
+  useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  const eventsKey = useMemo(() => events.join(','), [events]);
+  const eventNames = useMemo(() => eventsKey.split(','), [eventsKey]);
 
   useEffect(() => {
     if (!url) return;
     const es = new EventSource(withAuth(url));
 
-    for (const name of events) {
+    for (const name of eventNames) {
       es.addEventListener(name, (e: MessageEvent) => {
         onEventRef.current({ type: name, ...JSON.parse(e.data) } as T);
       });
@@ -40,7 +44,7 @@ export function useEventStream<T>(
     }
 
     return () => es.close();
-  }, [url, events.join(','), completeEvent]);
+  }, [url, eventNames, completeEvent]);
 }
 
 export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from 'react-oidc-context';
 import { useAuthMode } from '../../auth/authMode';
-import { useLocalAuth } from '../../auth/local/LocalAuthProvider';
 import { localAuthApi } from '../../auth/local/localAuthApi';
-import { PasswordRequirements, passwordIsValid } from '../../components/auth/PasswordRequirements';
+import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
+import useLocalAuth from '../../hooks/useLocalAuth';
+import { passwordIsValid } from '../../auth/password';
 
 export default function Login() {
   const { data } = useAuthMode();

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 
 interface Props {
   value: string;

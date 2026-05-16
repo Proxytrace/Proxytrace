@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../../api/projects';
 import { searchApi, type SearchIndexingSettings, type SearchKind } from '../../api/search';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
-import { useToast } from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
+import { formInputCls } from '../../components/ui/classes';
 
 const KIND_OPTIONS: { value: SearchKind; label: string }[] = [
   { value: 'agent', label: 'Agents' },
@@ -24,13 +25,12 @@ export function SearchIndexingTab() {
   const { show: toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [draft, setDraft] = useState<SearchIndexingSettings | null>(null);
 
   const { data: projectsData, isLoading: projectsLoading } = useQuery({
     queryKey: QUERY_KEYS.projects,
     queryFn: () => projectsApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
-  const projects = projectsData?.items ?? [];
+  const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -49,6 +49,8 @@ export function SearchIndexingTab() {
     retry: false,
   });
 
+  const [draft, setDraft] = useState<SearchIndexingSettings | null>(settings ?? null);
+
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: QUERY_KEYS.searchStatus(effectiveId ?? 'none'),
     queryFn: () => searchApi.getStatus(effectiveId!),
@@ -56,10 +58,6 @@ export function SearchIndexingTab() {
     refetchInterval: 5000,
     retry: false,
   });
-
-  useEffect(() => {
-    if (settings) setDraft(settings);
-  }, [settings]);
 
   const updateSettings = useMutation({
     mutationFn: (next: SearchIndexingSettings) => searchApi.updateSettings(effectiveId!, next),

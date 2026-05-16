@@ -6,7 +6,7 @@ import { TrashIcon, EditIcon } from '../../components/icons';
 import { agentsApi } from '../../api/agents';
 import { evaluatorsApi } from '../../api/evaluators';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';

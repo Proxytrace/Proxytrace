@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { EvaluationScore, EvaluationStatus, type EvaluationResultDto, type MessageDto } from '../../api/models';
@@ -32,6 +32,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     const [pickedHit, setPickedHit] = useState<SearchHit | null>(null);
     const [actualOverride, setActualOverride] = useState<string | null>(null);
     const [lastResult, setLastResult] = useState<EvaluationResultDto | null>(null);
+    const [prevEvaluatorId] = useState(evaluatorId);
 
     useImperativeHandle(ref, () => ({
       focus() {
@@ -45,27 +46,29 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
       staleTime: 60_000,
     });
 
-    useEffect(() => {
+    if (evaluatorId !== prevEvaluatorId) {
       setPickedHit(null);
       setActualOverride(null);
       setLastResult(null);
-    }, [evaluatorId]);
+    }
 
-    useEffect(() => {
-      if (pickedHit != null) return;
+    const autoHit = useMemo(() => {
+      if (pickedHit != null) return null;
       const d = defaultQuery.data;
-      if (d?.testCaseId == null) return;
-      setPickedHit({
-        kind: 'testCase',
+      if (d?.testCaseId == null) return null;
+      return {
+        kind: 'testCase' as const,
         entityId: d.testCaseId,
         title: d.label ?? 'Test case',
         snippet: '',
         score: 0,
-        metadata: {},
-      });
+        metadata: {} as Record<string, string>,
+      };
     }, [defaultQuery.data, pickedHit]);
 
-    const testCaseId = pickedHit?.entityId ?? null;
+    const effectivePickedHit = pickedHit ?? autoHit;
+
+    const testCaseId = effectivePickedHit?.entityId ?? null;
 
     const payloadQuery = useQuery({
       queryKey: QUERY_KEYS.evaluatorTestBench(evaluatorId, testCaseId ?? ''),
@@ -108,7 +111,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
       [payload?.conversation],
     );
 
-    const selectedLabel = pickedHit?.title ?? null;
+    const selectedLabel = effectivePickedHit?.title ?? null;
     const runDisabled = testCaseId == null || payloadQuery.isLoading || runMutation.isPending;
     const runLabel = runMutation.isPending
       ? 'Running…'

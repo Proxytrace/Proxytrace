@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
-import { useAuthMode } from '../../auth/authMode';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { checkHealth } from '../../api/health';
 import { SearchBar } from '../search/SearchBar';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
@@ -69,7 +68,6 @@ export function Shell() {
   }, []);
   const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
   const currentUser = useCurrentUser();
-  const { data: authMode } = useAuthMode();
   const userName = currentUser?.email ?? 'User';
   const userInitials = userName
     .split(/[@.\s_-]+/)

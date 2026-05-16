@@ -37,11 +37,12 @@ export function SearchBar({ projectId, inputRef }: Props) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handle = setTimeout(() => setDebounced(raw.trim()), 180);
+    const handle = setTimeout(() => {
+      setDebounced(raw.trim());
+      setActiveIndex(0);
+    }, 180);
     return () => clearTimeout(handle);
   }, [raw]);
-
-  useEffect(() => { setActiveIndex(0); }, [debounced]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -59,7 +60,7 @@ export function SearchBar({ projectId, inputRef }: Props) {
     staleTime: 30_000,
   });
 
-  const hits = data?.hits ?? [];
+  const hits = useMemo(() => data?.hits ?? [], [data]);
   const grouped = useMemo(() => {
     const m = new Map<SearchKind, SearchHit[]>();
     for (const h of hits) {
@@ -74,6 +75,16 @@ export function SearchBar({ projectId, inputRef }: Props) {
     () => groupOrder.flatMap(g => grouped.get(g.kind) ?? []),
     [grouped]
   );
+
+  const groupOffsets = useMemo(() => {
+    const offsets = new Map<SearchKind, number>();
+    let c = 0;
+    for (const g of groupOrder) {
+      offsets.set(g.kind, c);
+      c += (grouped.get(g.kind) ?? []).length;
+    }
+    return offsets;
+  }, [grouped]);
 
   const activeHit = flat[activeIndex];
 
@@ -105,8 +116,6 @@ export function SearchBar({ projectId, inputRef }: Props) {
   }
 
   const showDropdown = open && (raw.length > 0);
-
-  let cursor = 0;
 
   return (
     <div ref={wrapperRef} className="relative flex-1 max-w-[460px] mx-auto">
@@ -160,8 +169,7 @@ export function SearchBar({ projectId, inputRef }: Props) {
                   const groupHits = grouped.get(g.kind) ?? [];
                   if (groupHits.length === 0) return null;
                   const meta = kindMeta[g.kind];
-                  const startIndex = cursor;
-                  cursor += groupHits.length;
+                  const startIndex = groupOffsets.get(g.kind) ?? 0;
                   return (
                     <div key={g.kind} className="mb-2">
                       <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-white/40 flex items-center gap-1.5">

@@ -4,7 +4,7 @@ import { agentsApi } from '../../api/agents';
 import { providersApi } from '../../api/providers';
 import type { AgentDto } from '../../api/models';
 import { ChevronDownIcon } from '../../components/icons';
-import { useToast } from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
 import { modelColor } from '../../lib/colors';
 
 export function EndpointSelector({ agent }: { agent: AgentDto }) {

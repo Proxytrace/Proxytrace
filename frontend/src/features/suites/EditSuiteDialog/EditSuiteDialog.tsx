@@ -43,7 +43,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
     queryKey: QUERY_KEYS.agentCallsForSuiteEdit(suite.agentId),
     queryFn: () => agentCallsApi.list({ agentId: suite.agentId, pageSize: 50 }),
   });
-  const traces = tracesData?.items ?? [];
+  const traces = useMemo(() => tracesData?.items ?? [], [tracesData]);
 
   const traceById = useMemo(() => new Map(traces.map(t => [t.id, t])), [traces]);
   const evalById = useMemo(() => new Map((evaluators as EvaluatorDetailDto[]).map(e => [e.id, e])), [evaluators]);
