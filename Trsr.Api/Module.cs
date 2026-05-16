@@ -80,9 +80,6 @@ internal sealed class Module : Autofac.Module
             });
         });
 
-        builder.RegisterModule<Domain.Module>();
-        builder.RegisterModule<Application.Module>();
-
         StorageConfiguration storageConfig;
         if (kiosk.Enabled)
         {
@@ -96,6 +93,9 @@ internal sealed class Module : Autofac.Module
         }
 
         builder.RegisterModule(new Storage.Module(_ => storageConfig));
+        
+        builder.RegisterModule<Domain.Module>();
+        builder.RegisterModule<Application.Module>();
 
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()
