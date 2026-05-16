@@ -1,4 +1,7 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER root
+RUN mkdir -p /app
+RUN chown $APP_UID:$APP_UID /app
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
