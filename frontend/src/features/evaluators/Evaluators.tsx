@@ -12,10 +12,10 @@ import { fmtRelative } from '../../lib/format';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { Sparkline } from '../../components/charts';
 import { SkeletonList } from '../../components/ui/Skeleton';
-import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
+import { EvaluatorForm } from './EvaluatorForm';
 import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
 import { EvaluatorTestBench, type EvaluatorTestBenchHandle } from './EvaluatorTestBench';
-import { type EvaluatorFormState, META, KIND_ORDER, initForm } from './evaluators';
+import { META, KIND_ORDER, initForm, type EvaluatorFormState } from './evaluators';
 
 // ── Type categories ──────────────────────────────────────────────────────────
 
