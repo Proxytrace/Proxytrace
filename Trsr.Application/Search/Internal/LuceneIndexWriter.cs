@@ -67,6 +67,31 @@ internal sealed class LuceneIndexWriter : IDisposable
         }
     }
 
+    public void UpsertDeferred(string id, Document doc)
+    {
+        lock (commitLock)
+        {
+            writer.UpdateDocument(new Term(SearchConstants.FieldId, id), doc);
+        }
+    }
+
+    public void DeleteDeferred(string id)
+    {
+        lock (commitLock)
+        {
+            writer.DeleteDocuments(new Term(SearchConstants.FieldId, id));
+        }
+    }
+
+    public void CommitAndRefresh()
+    {
+        lock (commitLock)
+        {
+            writer.Commit();
+            searcherManager.MaybeRefresh();
+        }
+    }
+
     public AcquiredReader AcquireReader()
     {
         lock (commitLock)
