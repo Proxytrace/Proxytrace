@@ -63,14 +63,16 @@ export default function Proposals() {
 
   const selected = selectedId ? proposals.find(p => p.id === selectedId) ?? null : null;
 
-  const potentialGainPt = useMemo(() =>
-    proposals
-      .filter(p => p.status === ProposalStatus.Draft && p.details.kind === 'ModelSwitch')
-      .reduce((sum, p) => {
-        const d = p.details.kind === 'ModelSwitch' ? p.details.expectedPassRateDelta : null;
-        return sum + Math.max(0, Math.round((d ?? 0) * 100));
-      }, 0),
-    [proposals]);
+  // :noExpectedPassRateDelta
+  // expectedPassRateDelta doesn't seem to exist on ModelSwitchDetailsDto
+  // const potentialGainPt = useMemo(() =>
+  //   proposals
+  //     .filter(p => p.status === ProposalStatus.Draft && p.details.kind === 'ModelSwitch')
+  //     .reduce((sum, p) => {
+  //       const d = p.details.kind === 'ModelSwitch' ? p.details.expectedPassRateDelta : null;
+  //       return sum + Math.max(0, Math.round((d ?? 0) * 100));
+  //     }, 0),
+  //   [proposals]);
 
   const statusTabs: { key: StatusFilter; label: string; count: number }[] = [
     { key: 'open',       label: 'Open',          count: counts.open },
@@ -91,8 +93,9 @@ export default function Proposals() {
 
   const kpis: { label: string; value: string; color: string }[] = [
     { label: 'Open',                     value: String(counts.open),  color: 'var(--accent-hover)' },
-    { label: 'Ready to promote',         value: String(counts.ready), color: 'var(--success)' },
-    { label: 'Potential pass-rate gain', value: `+${potentialGainPt}pt`, color: 'var(--teal)' },
+    { label: 'Ready to promote', value: String(counts.ready), color: 'var(--success)' },
+    // :noExpectedPassRateDelta
+    // { label: 'Potential pass-rate gain', value: `+${potentialGainPt}pt`, color: 'var(--teal)' },
   ];
 
   return (
