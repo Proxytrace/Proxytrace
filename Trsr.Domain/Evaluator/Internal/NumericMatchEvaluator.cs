@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Trsr.Common.Validation;
@@ -56,6 +57,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
         ITestResult testResult,
         CancellationToken cancellationToken = default)
     {
+        Stopwatch sw = Stopwatch.StartNew();
         var expectedText = testResult.TestCase.ExpectedOutput.GetTextResponse();
         var expectedMatch = ExtractionPattern.Match(expectedText);
         if (!expectedMatch.Success || !decimal.TryParse(expectedMatch.Value, out var expected))
@@ -91,7 +93,7 @@ internal record NumericMatchEvaluator : DomainEntity<IEvaluator>, INumericMatchE
             }
         }
 
-        return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, reasoning));
+        return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, sw.Elapsed, reasoning: reasoning));
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

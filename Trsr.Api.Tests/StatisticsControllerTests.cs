@@ -342,9 +342,10 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         var when = DateTimeOffset.UtcNow;
         stats.GetEvaluatorOverviewAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
             .Returns(new EvaluatorOverviewStat(
-                Summary: new EvaluatorSummary(TotalEvaluations: 10, AvgScore: 0.8, OverallPassRate: 0.9, InputTokens: 1, OutputTokens: 2, TotalCostEur: 3.0m),
+                Summary: new EvaluatorSummary(TotalEvaluations: 10, AvgScore: 0.8, OverallPassRate: 0.9, InputTokens: 1, OutputTokens: 2, TotalCost: 3.0m, AvgLatencyMs: 42.0),
                 PassRateTrend: [new EvaluatorPassRatePoint(when, Passed: 4, Total: 5)],
-                ScoreDistribution: [new EvaluatorScoreBucket("pass", 8)]));
+                ScoreDistribution: [new EvaluatorScoreBucket("pass", 8)],
+                CostTrend: [new EvaluatorCostPoint(when, InputTokens: 1, OutputTokens: 2, Cost: 3.0m, AvgLatencyMs: 42.0)]));
         var controller = ResolveController(stats);
 
         var result = await controller.GetEvaluatorOverview(Guid.NewGuid(), from: when, to: when, cancellationToken: CancellationToken);

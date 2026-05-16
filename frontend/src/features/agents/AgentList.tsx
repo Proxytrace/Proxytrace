@@ -3,6 +3,7 @@ import type { AgentDto } from '../../api/models';
 import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
 import { fmtRelative } from '../../lib/format';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 interface Props {
   agents: AgentDto[];
@@ -76,7 +77,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
         {isLoading && (
-          <div className="text-body text-muted px-2 py-3">Loading…</div>
+          <SkeletonList rows={6} height={64} gap={6} />
         )}
         {!isLoading && filtered.length === 0 && (
           <div className="text-body text-muted px-2 py-3 italic">

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../../components/overlays/Modal';
 import { Avatar } from '../../components/ui/Avatar';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { usersApi } from '../../api/users';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
@@ -55,7 +56,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
       />
       <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]">
         {isLoading ? (
-          <div className="text-center text-[13px] text-muted py-10">Loading users…</div>
+          <div className="p-2"><SkeletonList rows={6} height={44} gap={4} /></div>
         ) : candidates.length === 0 ? (
           <EmptyState
             title={query ? 'No matches' : 'No users to add'}

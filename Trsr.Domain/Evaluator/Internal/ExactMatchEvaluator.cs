@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Internal;
@@ -45,11 +46,12 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
         ITestResult testResult,
         CancellationToken cancellationToken = default)
     {
+        Stopwatch sw = Stopwatch.StartNew();
         var expectedOutput = testResult.TestCase.ExpectedOutput;
         var actualOutput = testResult.ActualResponse;
         var pairs = expectedOutput.Contents.Zip(actualOutput.Contents, (e, a) => (Expected: e, Actual: a));
         var differences = pairs.Where(p => !p.Expected.Equals(p.Actual)).ToArray();
-        
+
         EvaluationScore score;
         string? reasoning = null;
         if (differences.Length > 0)
@@ -63,10 +65,11 @@ internal record ExactMatchEvaluator : DomainEntity<IEvaluator>, IExactMatchEvalu
         {
             score = EvaluationScore.Acceptable;
         }
-        
+
         IEvaluation evaluation = evaluationFactory(
             this,
             score,
+            sw.Elapsed,
             reasoning: reasoning);
         return Task.FromResult<IEvaluation?>(evaluation);
     }

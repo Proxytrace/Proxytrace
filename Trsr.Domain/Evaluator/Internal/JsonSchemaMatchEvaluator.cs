@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Text.Json;
 using JetBrains.Annotations;
 using Json.Schema;
@@ -52,6 +53,7 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
         ITestResult testResult,
         CancellationToken cancellationToken = default)
     {
+        Stopwatch sw = Stopwatch.StartNew();
         var actualText = testResult.ActualResponse.GetTextResponse();
 
         EvaluationScore score;
@@ -83,7 +85,7 @@ internal record JsonSchemaMatchEvaluator : DomainEntity<IEvaluator>, IJsonSchema
             reasoning = $"Response is not valid JSON: {ex.Message}";
         }
 
-        return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, reasoning));
+        return Task.FromResult<IEvaluation?>(evaluationFactory(this, score, sw.Elapsed, reasoning: reasoning));
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

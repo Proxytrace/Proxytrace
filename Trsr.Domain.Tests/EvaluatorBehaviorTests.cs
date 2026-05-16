@@ -191,12 +191,15 @@ public sealed class EvaluatorBehaviorTests : BaseTest<Module>
     }
 
     private static IEvaluation.Create BuildEvaluationFactory()
-        => (evaluator, score, reasoning) =>
+        => (evaluator, score, latency, tokenUsage, cost, reasoning) =>
         {
             var e = Substitute.For<IEvaluation>();
             e.Evaluator.Returns(evaluator);
             e.Score.Returns(score);
             e.Reasoning.Returns(reasoning);
+            e.Latency.Returns(latency);
+            e.TokenUsage.Returns(tokenUsage);
+            e.Cost.Returns(cost);
             return e;
         };
 

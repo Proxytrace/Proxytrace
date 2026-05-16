@@ -72,7 +72,7 @@ internal sealed class CannedJsonAgent : IAgent
             CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
-        public async Task<TOutput?> CompleteAsync<TOutput>(
+        public async Task<TypedCompletion<TOutput>> CompleteAsync<TOutput>(
             Conversation conversation,
             ModelOptions? options = null,
             IReadOnlyDictionary<string, string>? promptVariables = null,
@@ -80,11 +80,13 @@ internal sealed class CannedJsonAgent : IAgent
         {
             try
             {
-                return await outputFormatFactory(typeof(TOutput)).ParseAsync<TOutput>(cannedResponse, cancellationToken);
+                var output = await outputFormatFactory(typeof(TOutput))
+                    .ParseAsync<TOutput>(cannedResponse, cancellationToken);
+                return new TypedCompletion<TOutput>(output, null, TimeSpan.FromMilliseconds(100));
             }
             catch
             {
-                return default;
+                return new TypedCompletion<TOutput>(default, null, TimeSpan.Zero);
             }
         }
 

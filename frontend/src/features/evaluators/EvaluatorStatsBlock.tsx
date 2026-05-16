@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { EvaluationScore, EvaluatorKind, type EvaluatorOverviewDto } from '../../api/models';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { AreaChart, BarChart } from '../../components/charts';
-import { fmtPct, fmtTokens } from '../../lib/format';
+import { fmtPct, fmtTokens, fmtLatency } from '../../lib/format';
 import { EmptyState } from '../../components/ui/EmptyState';
 
 const SCORE_ORDER: EvaluationScore[] = [
@@ -45,9 +45,10 @@ export function EvaluatorStatsBlock({ evaluatorId, kind, range, color }: Props) 
     queryKey: QUERY_KEYS.statisticsEvaluatorOverview(evaluatorId, range),
     queryFn: () => statisticsApi.evaluatorOverview(evaluatorId, params),
     retry: false,
+    placeholderData: keepPreviousData,
   });
 
-  if (isLoading) return <StatsBlockShell color={color}><LoadingPlaceholder/></StatsBlockShell>;
+  if (isLoading && !data) return <StatsBlockShell color={color}><LoadingPlaceholder/></StatsBlockShell>;
   if (isError || !data) return <StatsBlockShell color={color}><ErrorPlaceholder/></StatsBlockShell>;
 
   return <StatsBlockBody data={data} kind={kind} color={color} />;
@@ -75,11 +76,16 @@ function ErrorPlaceholder() {
 }
 
 function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kind: EvaluatorKind; color: string }) {
-  const { summary, passRateTrend, scoreDistribution } = data;
+  const { summary, passRateTrend, scoreDistribution, costTrend } = data;
 
   const passRateSeries = useMemo(
     () => passRateTrend.map(p => (p.total > 0 ? p.passed / p.total : 0)),
     [passRateTrend],
+  );
+
+  const costSeries = useMemo(
+    () => costTrend.map(p => Number(p.cost ?? 0)),
+    [costTrend],
   );
 
   const distData = useMemo(() => {
@@ -89,6 +95,7 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
 
   const showCost = kind === EvaluatorKind.Agentic;
   const hasTrend = passRateSeries.length >= 2;
+  const hasCostTrend = showCost && costSeries.length >= 2 && costSeries.some(v => v > 0);
   const hasDist = scoreDistribution.some(b => b.count > 0);
   const hasAny = summary.totalEvaluations > 0;
 
@@ -99,10 +106,11 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
         <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>
           Performance
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           <Kpi label="Evaluations" value={summary.totalEvaluations.toLocaleString()} color={color}/>
           <Kpi label="Avg score" value={fmtScore(summary.avgScore)} color={color}/>
           <Kpi label="Pass rate" value={summary.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} color={color}/>
+          <Kpi label="Avg latency" value={summary.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} color={color}/>
         </div>
       </section>
 
@@ -152,7 +160,25 @@ function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kin
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             <Kpi label="Input tokens" value={summary.inputTokens != null ? fmtTokens(summary.inputTokens) : '—'} color={color}/>
             <Kpi label="Output tokens" value={summary.outputTokens != null ? fmtTokens(summary.outputTokens) : '—'} color={color}/>
-            <Kpi label="Total cost" value={fmtEur(summary.totalCostEur)} color={color}/>
+            <Kpi label="Total cost" value={fmtEur(summary.totalCost)} color={color}/>
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 8 }}>
+              Cost over time
+            </div>
+            {hasCostTrend ? (
+              <AreaChart
+                data={costSeries}
+                width={860}
+                height={140}
+                color={color}
+                gradientId={`evalCost-${color.replace(/[^a-zA-Z0-9]/g, '')}`}
+                showAxis={false}
+                showEndMarker
+                formatValue={v => fmtEur(v)}
+                tooltipLabelFn={i => new Date(costTrend[i].bucketStart).toLocaleDateString()}
+              />
+            ) : <EmptyChart label="Not enough data"/>}
           </div>
         </section>
       )}

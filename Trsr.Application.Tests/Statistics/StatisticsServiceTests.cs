@@ -302,7 +302,7 @@ public sealed class StatisticsServiceTests : BaseTest<Module>
     {
         var svc = Build(out _, out _, out var evaluatorStats, out _, out _, out _);
         var expected = new EvaluatorOverviewStat(
-            new EvaluatorSummary(1, null, null, null, null, null), [], []);
+            new EvaluatorSummary(1, null, null, null, null, null, null), [], [], []);
         var id = Guid.NewGuid();
         evaluatorStats.GetOverviewAsync(id, Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), StatisticsBucket.Daily, Arg.Any<CancellationToken>())
             .Returns(expected);

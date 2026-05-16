@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Trsr.Common.Validation;
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.Evaluation.Internal;
 
@@ -15,26 +16,41 @@ internal sealed record Evaluation : IEvaluation
 
     public string? Reasoning { get; }
     public string? ErrorMessage { get; }
+    public TimeSpan Latency { get; }
+    public TokenUsage? TokenUsage { get; }
+    public decimal? Cost { get; }
 
     public Evaluation(
         IEvaluator evaluator,
         EvaluationScore score,
+        TimeSpan latency,
+        TokenUsage? tokenUsage = null,
+        decimal? cost = null,
         string? reasoning = null)
     {
         Evaluator = evaluator;
         Score = score;
+        Latency = latency;
+        TokenUsage = tokenUsage;
+        Cost = cost;
         Reasoning = reasoning;
         ErrorMessage = null;
     }
 
     public Evaluation(
         IEvaluator evaluator,
-        string errorMessage)
+        TimeSpan latency,
+        Exception exception)
     {
         Evaluator = evaluator;
         Score = null;
+        Latency = latency;
+        TokenUsage = null;
+        Cost = null;
         Reasoning = null;
-        ErrorMessage = errorMessage;
+        ErrorMessage = exception is StoredEvaluationException
+            ? exception.Message
+            : $"{exception.GetType().Name}: {exception.Message}";
     }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -35,12 +35,15 @@ internal sealed class SearchModule : Autofac.Module
 
         foreach (var mapperType in typeof(IDocumentMapper).GetImplementations())
         {
-            builder.RegisterType(mapperType).As<IDocumentMapper>().SingleInstance();
+            builder.RegisterType(mapperType).As<IDocumentMapper>().InstancePerLifetimeScope();
         }
 
-        builder.RegisterType<LuceneSearchIndexer>()
+        builder.RegisterType<LuceneIndexingService>()
+            .AsSelf()
             .As<ISearchIndexer>()
             .SingleInstance();
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService(sc => sc.GetRequiredService<LuceneIndexingService>()));
 
         builder.RegisterType<LuceneSearchService>()
             .As<ISearchService>()

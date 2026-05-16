@@ -267,6 +267,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         CancellationToken cancellationToken)
     {
         IEvaluation? evaluation;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);
@@ -283,7 +284,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                 evaluator.Id,
                 evaluator.Kind,
                 testResult.Id);
-            evaluation = createErroredEvaluation(evaluator, $"{ex.GetType().Name}: {ex.Message}");
+            evaluation = createErroredEvaluation(evaluator, sw.Elapsed, ex);
         }
 
         if (evaluation is null)

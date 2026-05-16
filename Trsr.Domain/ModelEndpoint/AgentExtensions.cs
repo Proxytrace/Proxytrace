@@ -24,7 +24,7 @@ public static class ModelClientExtensions
             cancellationToken);
     }
 
-    public static Task<TOutput?> CompleteAsync<TOutput>(
+    public static async Task<TOutput?> CompleteAsync<TOutput>(
         this IModelClient client,
         UserMessage userMessage,
         ModelOptions? modelOptions = null,
@@ -33,10 +33,11 @@ public static class ModelClientExtensions
     {
         Conversation conversation = Conversation.Create();
         conversation.Add(userMessage);
-        return client.CompleteAsync<TOutput>(
+        var completion = await client.CompleteAsync<TOutput>(
             conversation, 
             modelOptions, 
             variables,
             cancellationToken);
+        return completion.Response;
     }
 }

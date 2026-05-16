@@ -111,16 +111,25 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
         int passedCount = succeeded.Count(x => IsPassed(x.Eval.Score ?? 0));
         double? passRate = total > 0 ? passedCount / (double)total : null;
 
-        // Token usage and cost are not captured per-evaluation; the underlying judge LLM call is
-        // logged as a separate AgentCall against the evaluator's system agent. Attribution back to
-        // a specific evaluation is not yet wired, so leave these null until that link exists.
+        var withTokens = matching.Where(x => x.Eval is { InputTokens: not null, OutputTokens: not null }).ToArray();
+        long? inputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.InputTokens ?? 0) : null;
+        long? outputTokens = withTokens.Length > 0 ? withTokens.Sum(x => x.Eval.OutputTokens ?? 0) : null;
+
+        var withCost = matching.Where(x => x.Eval.Cost.HasValue).ToArray();
+        decimal? totalCost = withCost.Length > 0 ? withCost.Sum(x => x.Eval.Cost ?? 0) : null;
+
+        double? avgLatencyMs = matching.Length > 0
+            ? matching.Average(x => x.Eval.LatencyMicroseconds / 1_000.0)
+            : null;
+
         var summary = new EvaluatorSummary(
             TotalEvaluations: total,
             AvgScore: avgScore,
             OverallPassRate: passRate,
-            InputTokens: null,
-            OutputTokens: null,
-            TotalCostEur: null);
+            InputTokens: inputTokens,
+            OutputTokens: outputTokens,
+            TotalCost: totalCost,
+            AvgLatencyMs: avgLatencyMs);
 
         EvaluatorPassRatePoint[] trend = succeeded
             .GroupBy(x => bucket.BucketStart(x.Timestamp))
@@ -138,7 +147,18 @@ internal class EvaluatorStatsQueries : IEvaluatorStatsReader
             .Select(g => new EvaluatorScoreBucket(g.Key.ToString(), g.Count()))
             .ToArray();
 
-        return new EvaluatorOverviewStat(summary, trend, distribution);
+        EvaluatorCostPoint[] costTrend = matching
+            .GroupBy(x => bucket.BucketStart(x.Timestamp))
+            .OrderBy(g => g.Key)
+            .Select(g => new EvaluatorCostPoint(
+                BucketStart: g.Key,
+                InputTokens: g.Sum(x => x.Eval.InputTokens ?? 0),
+                OutputTokens: g.Sum(x => x.Eval.OutputTokens ?? 0),
+                Cost: g.Sum(x => x.Eval.Cost ?? 0m),
+                AvgLatencyMs: g.Average(x => x.Eval.LatencyMicroseconds / 1_000.0)))
+            .ToArray();
+
+        return new EvaluatorOverviewStat(summary, trend, distribution, costTrend);
     }
 
     private static bool IsPassed(EvaluationScore score) => (byte)score >= (byte)EvaluationScore.Acceptable;

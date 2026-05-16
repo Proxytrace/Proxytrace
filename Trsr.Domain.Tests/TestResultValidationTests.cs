@@ -77,7 +77,7 @@ public sealed class TestResultValidationTests : BaseTest<Module>
         var completion =  CreateCompletion("Answer", services);
         
         var evaluator = await evaluatorGenerator.GetOrCreateAsync();
-        var evaluation = createEvaluation(evaluator, EvaluationScore.Good, "Correct");
+        var evaluation = createEvaluation(evaluator, EvaluationScore.Good, TimeSpan.FromMilliseconds(50), reasoning: "Correct");
 
         var testResult = factory(testCase, completion, [evaluation]);
 

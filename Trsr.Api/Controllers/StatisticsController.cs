@@ -225,7 +225,8 @@ public class StatisticsController : ControllerBase
         return new EvaluatorOverviewDto(
             Summary: ToDto(result.Summary),
             PassRateTrend: result.PassRateTrend.Select(ToDto).ToArray(),
-            ScoreDistribution: result.ScoreDistribution.Select(ToDto).ToArray());
+            ScoreDistribution: result.ScoreDistribution.Select(ToDto).ToArray(),
+            CostTrend: result.CostTrend.Select(ToDto).ToArray());
     }
 
     [HttpGet("evaluators/sparklines")]
@@ -244,11 +245,14 @@ public class StatisticsController : ControllerBase
     }
 
     private static EvaluatorSummaryDto ToDto(EvaluatorSummary s) =>
-        new(s.TotalEvaluations, s.AvgScore, s.OverallPassRate, s.InputTokens, s.OutputTokens, s.TotalCostEur);
+        new(s.TotalEvaluations, s.AvgScore, s.OverallPassRate, s.InputTokens, s.OutputTokens, s.TotalCost, s.AvgLatencyMs);
 
     private static EvaluatorPassRatePointDto ToDto(EvaluatorPassRatePoint p) =>
         new(p.BucketStart, p.Passed, p.Total);
 
     private static EvaluatorScoreBucketDto ToDto(EvaluatorScoreBucket b) =>
         new(b.Score, b.Count);
+
+    private static EvaluatorCostPointDto ToDto(EvaluatorCostPoint p) =>
+        new(p.BucketStart, p.InputTokens, p.OutputTokens, p.Cost, p.AvgLatencyMs);
 }

@@ -3,6 +3,7 @@ using Trsr.Domain.Completion;
 using Trsr.Domain.Message;
 using Trsr.Domain.Model;
 using Trsr.Domain.Tools;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.ModelEndpoint;
 
@@ -22,6 +23,8 @@ public record ModelOptions(
             Tools: agent.Tools);
 }
 
+public record TypedCompletion<TOutput>(TOutput? Response, TokenUsage? Usage, TimeSpan Latency);
+
 public interface IModelClient
 {
     public delegate IModelClient Factory(
@@ -35,7 +38,7 @@ public interface IModelClient
         IReadOnlyDictionary<string, string>? promptVariables = null,
         CancellationToken cancellationToken = default);
 
-    Task<TOutput?> CompleteAsync<TOutput>(
+    Task<TypedCompletion<TOutput>> CompleteAsync<TOutput>(
         Conversation conversation,
         ModelOptions? options = null,
         IReadOnlyDictionary<string, string>? promptVariables = null,
