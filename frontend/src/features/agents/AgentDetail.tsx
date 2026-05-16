@@ -1,5 +1,6 @@
 import type { AgentDto } from '../../api/models';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { useAgentStats } from './useAgentStats';
 import { IdentityWidget } from './widgets/IdentityWidget';
 import { KpiTraces, KpiTokens, KpiCost, KpiLatency } from './widgets/KpiWidgets';
@@ -34,7 +35,14 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
       <ToolsWidget tools={agent.tools} highlightTool={highlightTool} className="col-span-12 lg:col-span-5" />
 
       {isLoading && (
-        <div className="col-span-12 text-center py-8 text-body text-muted">Loading statistics…</div>
+        <>
+          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
+          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
+          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
+          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
+          <Skeleton height={240} className="col-span-12 lg:col-span-4 rounded-lg" />
+          <Skeleton height={240} className="col-span-12 lg:col-span-8 rounded-lg" />
+        </>
       )}
 
       {!isLoading && overview && overview.summary.totalTraces === 0 && (

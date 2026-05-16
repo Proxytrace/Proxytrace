@@ -6,6 +6,7 @@ import { QUERY_KEYS } from '../../api/query-keys';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { useToast } from '../../components/ui/Toast';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 import { FormField, formInputCls } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
@@ -110,7 +111,7 @@ export function SearchIndexingTab() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {projectsLoading ? (
-            <div className="p-6 text-[13px] text-muted text-center">Loading…</div>
+            <div className="p-2"><SkeletonList rows={5} height={44} gap={4} /></div>
           ) : filtered.length === 0 ? (
             <div className="p-6 text-[13px] text-muted text-center">No projects.</div>
           ) : (
@@ -176,7 +177,11 @@ export function SearchIndexingTab() {
               </div>
 
               {statusLoading && !status ? (
-                <div className="text-[13px] text-muted">Loading status…</div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Skeleton height={48} className="rounded-md" />
+                  <Skeleton height={48} className="rounded-md" />
+                  <Skeleton height={48} className="rounded-md" />
+                </div>
               ) : (
                 <div className="grid grid-cols-3 gap-3">
                   <StatusCell
@@ -202,7 +207,7 @@ export function SearchIndexingTab() {
               <h3 className="text-[14px] font-bold m-0 text-primary">Settings</h3>
 
               {settingsLoading && !draft ? (
-                <div className="text-[13px] text-muted">Loading…</div>
+                <SkeletonList rows={4} height={56} gap={8} />
               ) : settingsError ? (
                 <div className="text-[13px] text-[#d95555]">
                   Failed to load settings: {(settingsError as Error).message}

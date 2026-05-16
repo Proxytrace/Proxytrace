@@ -11,6 +11,7 @@ import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { fmtRelative } from '../../lib/format';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { Sparkline } from '../../components/charts';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
 import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
 import { EvaluatorTestBench, type EvaluatorTestBenchHandle } from './EvaluatorTestBench';
@@ -736,7 +737,7 @@ export default function Evaluators() {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
             {isLoading ? (
-              <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Loading…</div>
+              <SkeletonList rows={6} height={56} gap={4} />
             ) : visible.length === 0 ? (
               <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
                 {evaluators.length === 0 ? 'No evaluators yet.' : 'No evaluators match this filter.'}

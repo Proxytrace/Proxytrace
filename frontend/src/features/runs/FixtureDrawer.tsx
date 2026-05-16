@@ -11,6 +11,7 @@ import type {
   EndpointUsageDto,
 } from '../../api/models';
 import { fmtDuration, fmtTokens } from '../../lib/format';
+import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 
 interface Props {
   runId: string;
@@ -326,7 +327,12 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-[22px]">
           {isLoading && (
-            <div className="text-center text-muted text-[13px] p-10">Loading…</div>
+            <div className="flex flex-col gap-4">
+              <Skeleton height={20} width="40%" className="rounded-sm" />
+              <SkeletonList rows={3} height={62} gap={6} />
+              <Skeleton height={20} width="40%" className="rounded-sm" />
+              <SkeletonList rows={2} height={62} gap={6} />
+            </div>
           )}
 
           {fixture && (

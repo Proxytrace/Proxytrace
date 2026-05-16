@@ -17,6 +17,7 @@ import { fmtLatency, fmtRelative, fmtTokens } from '../../lib/format';
 import { TraceDetail } from './TraceDetail';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { DEFAULT_PAGE_SIZE } from '../../lib/constants';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE;
 const RANGES = [
@@ -502,9 +503,11 @@ export default function Traces() {
           ))}
         </div>
         {rows.length === 0 ? (
-          <div className="py-12 text-center text-muted text-[13px]">
-            {isFetching ? 'Loading…' : 'No traces found.'}
-          </div>
+          isFetching ? (
+            <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>
+          ) : (
+            <div className="py-12 text-center text-muted text-[13px]">No traces found.</div>
+          )
         ) : (
           rows.map(row =>
             row.type === 'flat' ? (

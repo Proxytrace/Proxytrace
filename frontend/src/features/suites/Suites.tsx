@@ -15,6 +15,7 @@ import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtDate } from '../../lib/format';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Skeleton } from '../../components/ui/Skeleton';
 import { sparklinePath } from '../../lib/charts';
 import { RunConfirmModal } from './RunConfirmModal';
 import { EditSuiteDialog } from './EditSuiteDialog';
@@ -317,7 +318,13 @@ export default function Suites() {
         </button>
       </div>
 
-      {isLoading && <div className="text-center p-[60px] text-muted text-[13px]">Loading…</div>}
+      {isLoading && (
+        <div className="grid gap-[14px]" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))' }}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} height={220} className="rounded-lg" />
+          ))}
+        </div>
+      )}
 
       {/* Suite grid */}
       <div className="fade-up grid gap-[14px]" style={{ animationDelay: '100ms', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))' }}>

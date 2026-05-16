@@ -21,6 +21,7 @@ import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { FixtureDrawer } from './FixtureDrawer';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER, REFETCH_INTERVAL_LIVE, LIST_PAGE_SIZE } from '../../lib/constants';
 
 type CaseFilter = 'all' | 'passed' | 'failed';
@@ -668,7 +669,7 @@ export default function Runs() {
             />
           </div>
 
-          {isLoading && <div className="text-center p-5 text-muted text-[13px]">Loading…</div>}
+          {isLoading && <SkeletonList rows={5} height={110} gap={10} />}
 
           {/* Group cards */}
           {groups.map(group => {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api/client';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 interface InviteRow {
   id: string;
@@ -102,7 +103,7 @@ export default function Invites() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted">Loading…</p>
+        <SkeletonList rows={4} height={36} gap={6} />
       ) : (
         <table className="w-full text-sm">
           <thead className="text-muted">

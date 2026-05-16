@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon, XIcon, EditIcon, CopyIcon } from '../../components/icons';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { useToast } from '../../components/ui/Toast';
 import { FormField, formInputCls } from '../../components/ui/FormField';
@@ -198,7 +199,7 @@ export default function Providers() {
       <div className="flex-1 min-h-0 grid grid-cols-[280px_1fr] gap-3">
         {/* Provider list */}
         <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1">
-          {providersLoading && <div className="text-center py-10 text-muted text-body">Loading…</div>}
+          {providersLoading && <SkeletonList rows={5} height={52} gap={6} />}
           {!providersLoading && providers.length === 0 && (
             <EmptyState title="No providers yet" description="Add a provider to route traffic through Trsr." />
           )}
@@ -388,7 +389,7 @@ export default function Providers() {
                     </div>
                   )}
 
-                  {modelsLoading && <div className="text-center text-muted text-body p-5">Loading models…</div>}
+                  {modelsLoading && <SkeletonList rows={3} height={48} gap={8} />}
                   {!modelsLoading && models.length === 0 && !showNewModel && (
                     <EmptyState title="No models yet" description="Add one or let Trsr auto-discover them from traces." />
                   )}
@@ -484,7 +485,7 @@ export default function Providers() {
                     </div>
                   )}
 
-                  {keysLoading && <div className="text-center text-muted text-body p-5">Loading keys…</div>}
+                  {keysLoading && <SkeletonList rows={3} height={48} gap={8} />}
                   {!keysLoading && keys.length === 0 && !showNewKey && (
                     <EmptyState title="No API keys yet" description="Generate one to start proxying requests." />
                   )}

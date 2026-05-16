@@ -13,6 +13,7 @@ import { Pill } from '../../components/ui/Pill';
 import { StatusDot } from '../../components/ui/StatusDot';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { DataTable } from '../../components/ui/DataTable';
+import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 import type { DataColumn } from '../../components/ui/DataTable';
 import { AreaChart, BarChart } from '../../components/charts';
 import { rangeFrom, rangeLabel, type RangeKey } from '../../lib/time-range';
@@ -155,34 +156,42 @@ export default function Dashboard() {
 
       {/* KPI Row */}
       <div className="fade-up grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          icon={<ActivityIcon size={14} />}
-          title="Total Traces"
-          value={summaryLoading ? '…' : String(summary?.totalCalls ?? 0)}
-          subtitle="LLM calls captured"
-          trend={{ direction: 'up', pct: '+24%', positive: true }}
-        />
-        <KpiCard
-          icon={<CoinsIcon size={14} />}
-          title="Total Tokens"
-          value={summaryLoading ? '…' : fmtTokens(totalTokens)}
-          subtitle={summaryLoading ? '' : `${(summary?.totalInputTokens ?? 0).toLocaleString()} in · ${(summary?.totalOutputTokens ?? 0).toLocaleString()} out`}
-          trend={{ direction: 'up', pct: '+12%', positive: true }}
-        />
-        <KpiCard
-          icon={<ClockIcon size={14} />}
-          title="Avg Latency"
-          value={summaryLoading ? '…' : fmtLatency(summary?.avgLatencyMs ?? 0)}
-          subtitle={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : ''}
-          trend={{ direction: 'down', pct: '-8%', positive: false }}
-        />
-        <KpiCard
-          icon={<TargetIcon size={14} />}
-          title="Pass Rate"
-          value={summaryLoading ? '…' : `${Math.round((summary?.overallPassRate ?? 0) * 100)}%`}
-          subtitle="latest evaluation suite run"
-          trend={{ direction: 'up', pct: '+7pt', positive: true }}
-        />
+        {summaryLoading ? (
+          Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} height={108} className="rounded-xl" />
+          ))
+        ) : (
+          <>
+            <KpiCard
+              icon={<ActivityIcon size={14} />}
+              title="Total Traces"
+              value={String(summary?.totalCalls ?? 0)}
+              subtitle="LLM calls captured"
+              trend={{ direction: 'up', pct: '+24%', positive: true }}
+            />
+            <KpiCard
+              icon={<CoinsIcon size={14} />}
+              title="Total Tokens"
+              value={fmtTokens(totalTokens)}
+              subtitle={`${(summary?.totalInputTokens ?? 0).toLocaleString()} in · ${(summary?.totalOutputTokens ?? 0).toLocaleString()} out`}
+              trend={{ direction: 'up', pct: '+12%', positive: true }}
+            />
+            <KpiCard
+              icon={<ClockIcon size={14} />}
+              title="Avg Latency"
+              value={fmtLatency(summary?.avgLatencyMs ?? 0)}
+              subtitle={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : ''}
+              trend={{ direction: 'down', pct: '-8%', positive: false }}
+            />
+            <KpiCard
+              icon={<TargetIcon size={14} />}
+              title="Pass Rate"
+              value={`${Math.round((summary?.overallPassRate ?? 0) * 100)}%`}
+              subtitle="latest evaluation suite run"
+              trend={{ direction: 'up', pct: '+7pt', positive: true }}
+            />
+          </>
+        )}
       </div>
 
       {/* Charts Row 1: Token Volume + p95 by Endpoint */}
@@ -215,7 +224,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="px-[18px] pb-[14px] pt-2">
-            {tokenVolumeSeries.length === 0 ? (
+            {tokenUsageData === undefined ? (
+              <Skeleton height={200} className="rounded-md" />
+            ) : tokenVolumeSeries.length === 0 ? (
               <div className="h-[200px] flex items-center justify-center">
                 <EmptyState title="No data yet" description="Token volume will appear once traces are captured." />
               </div>
@@ -238,7 +249,7 @@ export default function Dashboard() {
           <div className="card-header">
             <div className="min-w-0 flex-1">
               <h3>p95 by Endpoint</h3>
-              <p>{latencyData ? `${latencyData.reduce((s, d) => s + d.sampleCount, 0)} samples` : 'Loading…'}</p>
+              <p>{latencyData ? `${latencyData.reduce((s, d) => s + d.sampleCount, 0)} samples` : '—'}</p>
             </div>
             <div className="flex gap-3 shrink-0">
               {(latencyStats
@@ -253,7 +264,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="px-[18px] pb-[14px] pt-2">
-            {latencyBarItems.length === 0 ? (
+            {latencyData === undefined ? (
+              <Skeleton height={200} className="rounded-md" />
+            ) : latencyBarItems.length === 0 ? (
               <div className="h-[200px] flex items-center justify-center">
                 <EmptyState title="No samples" description="Latency stats appear after traces arrive." />
               </div>
@@ -277,7 +290,7 @@ export default function Dashboard() {
           </div>
           <div className="px-[18px] pb-[14px] pt-2">
             {modelLoading && (
-              <div className="h-[200px] flex items-center justify-center text-xs text-muted">Loading…</div>
+              <Skeleton height={200} className="rounded-md" />
             )}
             {!modelLoading && modelBarItems.length === 0 && (
               <div className="h-[200px] flex items-center justify-center">
@@ -354,7 +367,9 @@ export default function Dashboard() {
           </div>
           <div className="card-body-flush">
             {tracesLoading && (
-              <div className="p-8 px-[18px] text-center text-xs text-muted">Loading…</div>
+              <div className="px-[18px] py-3">
+                <SkeletonList rows={7} height={36} gap={6} />
+              </div>
             )}
             {!tracesLoading && (
               <DataTable
@@ -383,7 +398,7 @@ export default function Dashboard() {
           </div>
           <div className="card-body flex flex-col gap-[10px] px-[18px] py-[14px]">
             {agentsLoading && (
-              <div className="text-center text-xs text-muted py-8">Loading…</div>
+              <SkeletonList rows={4} height={62} gap={10} />
             )}
             {!agentsLoading && agents.length === 0 && (
               <EmptyState
