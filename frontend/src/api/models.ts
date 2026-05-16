@@ -240,7 +240,16 @@ export interface EvaluatorSummaryDto {
   overallPassRate: number | null;
   inputTokens: number | null;
   outputTokens: number | null;
-  totalCostEur: number | null;
+  totalCost: number | null;
+  avgLatencyMs: number | null;
+}
+
+export interface EvaluatorCostPointDto {
+  bucketStart: string;
+  inputTokens: number;
+  outputTokens: number;
+  cost: number;
+  avgLatencyMs: number;
 }
 
 export interface EvaluatorPassRatePointDto {
@@ -258,6 +267,7 @@ export interface EvaluatorOverviewDto {
   summary: EvaluatorSummaryDto;
   passRateTrend: EvaluatorPassRatePointDto[];
   scoreDistribution: EvaluatorScoreBucketDto[];
+  costTrend: EvaluatorCostPointDto[];
 }
 
 export interface EvaluatorSparklineDto {

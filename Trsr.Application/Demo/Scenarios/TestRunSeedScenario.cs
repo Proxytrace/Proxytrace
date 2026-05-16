@@ -2,6 +2,7 @@ using JetBrains.Annotations;
 using Trsr.Domain;
 using Trsr.Domain.Completion;
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.ModelEndpoint;
 using Trsr.Domain.TestResult;
@@ -131,12 +132,25 @@ internal sealed class TestRunSeedScenario : IDemoScenario
                         TimeSpan.FromMilliseconds(720 + (i * 30)));
 
                     var evaluations = suite.Evaluators
-                        .Select(ev => createEvaluation(
-                            ev,
-                            shouldPass ? EvaluationScore.Good : EvaluationScore.Bad,
-                            shouldPass
-                                ? $"{ev.Name}: response matches expected tone and content."
-                                : $"{ev.Name}: response is off-target or missing key elements."))
+                        .Select(ev =>
+                        {
+                            TokenUsage? evalUsage = null;
+                            decimal? evalCost = null;
+                            if (ev is IAgenticEvaluator agentic)
+                                {
+                                    evalUsage = new TokenUsage(inputTokenCount: 360UL + (ulong)(i * 4), outputTokenCount: 55UL + (ulong)(i * 2));
+                                    evalCost = agentic.Agent.Endpoint.CalculateCost(evalUsage);
+                                }
+                            return createEvaluation(
+                                ev,
+                                shouldPass ? EvaluationScore.Good : EvaluationScore.Bad,
+                                TimeSpan.FromMilliseconds(120 + (i * 5)),
+                                tokenUsage: evalUsage,
+                                cost: evalCost,
+                                reasoning: shouldPass
+                                    ? $"{ev.Name}: response matches expected tone and content."
+                                    : $"{ev.Name}: response is off-target or missing key elements.");
+                        })
                         .ToArray();
 
                     var result = await resultRepo.AddAsync(

@@ -4,6 +4,7 @@ using Trsr.Common.Async;
 using Trsr.Common.Serialization;
 using Trsr.Domain;
 using Trsr.Domain.Evaluation;
+using Trsr.Domain.Evaluation.Internal;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestCase;
@@ -67,13 +68,18 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
         foreach (var e in stored.Evaluations)
         {
             var evaluator = await evaluators.GetAsync(e.EvaluatorId, cancellationToken);
+            TimeSpan evalLatency = TimeSpan.FromMicroseconds(e.LatencyMicroseconds);
+            TokenUsage? evalUsage = e.InputTokens.HasValue && e.OutputTokens.HasValue
+                ? new TokenUsage((ulong)e.InputTokens.Value, (ulong)e.OutputTokens.Value)
+                : null;
+
             if (!string.IsNullOrWhiteSpace(e.ErrorMessage))
             {
-                evaluations.Add(createErroredEvaluation(evaluator, e.ErrorMessage ?? string.Empty));
+                evaluations.Add(createErroredEvaluation(evaluator, evalLatency, new StoredEvaluationException(e.ErrorMessage)));
             }
             else if (e.Score.HasValue)
             {
-                evaluations.Add(createEvaluation(evaluator, e.Score.Value, e.Reasoning));
+                evaluations.Add(createEvaluation(evaluator, e.Score.Value, evalLatency, evalUsage, e.Cost, e.Reasoning));
             }
         }
 
@@ -103,6 +109,10 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
                     Score = e.Score,
                     Reasoning = e.Reasoning,
                     ErrorMessage = e.ErrorMessage,
+                    InputTokens = (long?)e.TokenUsage?.InputTokenCount,
+                    OutputTokens = (long?)e.TokenUsage?.OutputTokenCount,
+                    LatencyMicroseconds = (long)e.Latency.TotalMicroseconds,
+                    Cost = e.Cost,
                 })
                 .ToArray(),
             DurationMs = (long)domain.Latency.TotalMicroseconds,

@@ -24,12 +24,16 @@ internal class EvaluationGenerator : DomainObjectGenerator<IEvaluation>
     public override async Task<IEvaluation> CreateAsync(CancellationToken cancellationToken = default)
     {
         IEvaluator evaluator = await evaluatorGenerator.GetOrCreateAsync(cancellationToken);
-        return factory(evaluator, random.Enum<EvaluationScore>(), random.String());
+        return factory(
+            evaluator,
+            random.Enum<EvaluationScore>(),
+            TimeSpan.FromMilliseconds(random.Int(1, 5_000)),
+            reasoning: random.String());
     }
 
     public async Task<IEvaluation> CreateErroredAsync(CancellationToken cancellationToken = default)
     {
         IEvaluator evaluator = await evaluatorGenerator.GetOrCreateAsync(cancellationToken);
-        return erroredFactory(evaluator, random.String());
+        return erroredFactory(evaluator, TimeSpan.FromMilliseconds(random.Int(1, 5_000)), new InvalidOperationException(random.String()));
     }
 }

@@ -67,7 +67,8 @@ public record EvaluatorSummaryDto(
     double? OverallPassRate,
     long? InputTokens,
     long? OutputTokens,
-    decimal? TotalCostEur);
+    decimal? TotalCost,
+    double? AvgLatencyMs);
 
 public record EvaluatorPassRatePointDto(
     DateTimeOffset BucketStart,
@@ -78,10 +79,18 @@ public record EvaluatorScoreBucketDto(
     string Score,
     int Count);
 
+public record EvaluatorCostPointDto(
+    DateTimeOffset BucketStart,
+    long InputTokens,
+    long OutputTokens,
+    decimal Cost,
+    double AvgLatencyMs);
+
 public record EvaluatorOverviewDto(
     EvaluatorSummaryDto Summary,
     IReadOnlyList<EvaluatorPassRatePointDto> PassRateTrend,
-    IReadOnlyList<EvaluatorScoreBucketDto> ScoreDistribution);
+    IReadOnlyList<EvaluatorScoreBucketDto> ScoreDistribution,
+    IReadOnlyList<EvaluatorCostPointDto> CostTrend);
 
 public record EvaluatorSparklineDto(
     Guid EvaluatorId,

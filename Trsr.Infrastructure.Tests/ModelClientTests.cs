@@ -503,7 +503,8 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        string? result = await client.CompleteAsync<string>(SimpleConversation(), cancellationToken: CancellationToken);
+        var completion = await client.CompleteAsync<string>(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = completion.Response;
 
         result.Should().Be(expected);
     }
@@ -523,7 +524,8 @@ public sealed class ModelClientTests : BaseTest<Module>
         });
 
         var client = services.GetRequiredService<IModelClient>();
-        string? result = await client.CompleteAsync<string>(SimpleConversation(), cancellationToken: CancellationToken);
+        var completion = await client.CompleteAsync<string>(SimpleConversation(), cancellationToken: CancellationToken);
+        var result = completion.Response;
 
         result.Should().BeNull();
     }

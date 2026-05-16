@@ -247,10 +247,11 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
 
 // ── Detail pane ──────────────────────────────────────────────────────────────
 
-function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdit, onDelete }: {
+function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeChange, projectId, onEdit, onDelete }: {
   evaluator: EvaluatorDetailDto;
   attachedSuites: { id: string; name: string; agentName: string }[];
   range: RangeKey;
+  onRangeChange: (r: RangeKey) => void;
   projectId: string | null;
   onEdit: () => void;
   onDelete: () => void;
@@ -345,6 +346,22 @@ function EvaluatorDetail({ evaluator: e, attachedSuites, range, projectId, onEdi
       <EvaluatorTestBench ref={benchRef} evaluatorId={e.id} projectId={projectId}/>
 
       {/* Metrics block */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: -6 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Statistics</div>
+        <div className="flex gap-1 p-1 bg-card-2 rounded-[9px]" role="group" aria-label="Time range">
+          {(['1h', '24h', '7d', '30d'] as const).map(r => (
+            <button
+              key={r}
+              onClick={() => onRangeChange(r)}
+              aria-pressed={range === r}
+              style={{ boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none' }}
+              className={`px-[10px] py-[3px] text-[11px] font-medium rounded-[6px] cursor-pointer transition-colors duration-150 ${
+                range === r ? 'bg-card text-primary' : 'bg-transparent text-muted hover:text-secondary'
+              }`}
+            >{r}</button>
+          ))}
+        </div>
+      </div>
       <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
 
       {/* Attached to */}
@@ -554,6 +571,7 @@ export default function Evaluators() {
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [range, setRange] = useState<RangeKey>('7d');
+  const SPARKLINE_RANGE: RangeKey = '7d';
   const [showNew, setShowNew] = useState(false);
   const [pickedKind, setPickedKind] = useState<EvaluatorKind | null>(null);
   const [createForm, setCreateForm] = useState<EvaluatorFormState>(initForm());
@@ -579,14 +597,14 @@ export default function Evaluators() {
     if (!currentProjectId) return null;
     return {
       projectId: currentProjectId,
-      from: rangeFrom(range),
+      from: rangeFrom(SPARKLINE_RANGE),
       to: new Date().toISOString(),
-      bucket: bucketFor(range),
+      bucket: bucketFor(SPARKLINE_RANGE),
     };
-  }, [currentProjectId, range]);
+  }, [currentProjectId]);
 
   const { data: sparklineRows } = useQuery({
-    queryKey: QUERY_KEYS.statisticsEvaluatorSparklines(currentProjectId ?? '', range),
+    queryKey: QUERY_KEYS.statisticsEvaluatorSparklines(currentProjectId ?? '', SPARKLINE_RANGE),
     queryFn: () => statisticsApi.evaluatorSparklines(sparklineParams!),
     enabled: sparklineParams !== null,
     retry: false,
@@ -691,23 +709,7 @@ export default function Evaluators() {
             </button>
           </div>
 
-          <div style={{ padding: '10px 12px 6px' }}>
-            <div className="flex gap-1 p-1 bg-card-2 rounded-[9px]" role="group" aria-label="Time range">
-              {(['1h', '24h', '7d', '30d'] as const).map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRange(r)}
-                  aria-pressed={range === r}
-                  style={{ boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none' }}
-                  className={`flex-1 px-[8px] py-[3px] text-[11px] font-medium rounded-[6px] cursor-pointer transition-colors duration-150 ${
-                    range === r ? 'bg-card text-primary' : 'bg-transparent text-muted hover:text-secondary'
-                  }`}
-                >{r}</button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ padding: '6px 12px 10px', borderBottom: '1px solid var(--hairline)' }}>
+          <div style={{ padding: '10px 12px 10px', borderBottom: '1px solid var(--hairline)' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {typeFilterOptions.map(([k, label, color]) => {
                 const isActive = typeFilter === k;
@@ -765,6 +767,7 @@ export default function Evaluators() {
               evaluator={selected}
               attachedSuites={attachedSuites}
               range={range}
+              onRangeChange={setRange}
               projectId={currentProjectId}
               onEdit={() => openEdit(selected)}
               onDelete={() => setDeleteTargetId(selected.id)}

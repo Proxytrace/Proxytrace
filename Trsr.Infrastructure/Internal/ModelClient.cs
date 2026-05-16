@@ -75,7 +75,7 @@ internal class ModelClient : IModelClient
         return CompleteAsync(systemMessage, conversation, options, cancellationToken);
     }
 
-    public async Task<TOutput?> CompleteAsync<TOutput>(
+    public async Task<TypedCompletion<TOutput>> CompleteAsync<TOutput>(
         Conversation conversation,
         ModelOptions? options = null,
         IReadOnlyDictionary<string, string>? promptVariables = null,
@@ -85,7 +85,6 @@ internal class ModelClient : IModelClient
 
         SystemMessage systemMessage = agent.CreateSystemMessage(promptVariables);
 
-        // add expected output format to system message
         systemMessage = new SystemMessage($"""
                                            {systemMessage}
                                            {outputFormat.ToPromptString()}
@@ -97,9 +96,11 @@ internal class ModelClient : IModelClient
             options,
             cancellationToken);
 
-        return await outputFormat.ParseAsync<TOutput>(
+        TOutput? output = await outputFormat.ParseAsync<TOutput>(
             completion.Response.GetTextResponse(),
             cancellationToken);
+
+        return new TypedCompletion<TOutput>(output, completion.Usage, completion.Latency);
     }
 
     private async Task<ICompletion> CompleteAsync(
@@ -214,7 +215,7 @@ internal class ModelClient : IModelClient
                     var args = fc.Arguments is not null ? JsonSerializer.Serialize(fc.Arguments) : "{}";
                     yield return new ToolRequested(new ToolRequest(fc.CallId, fc.Name, args));
                 }
-                else if (content is UsageContent uc && uc.Details is { InputTokenCount: not null, OutputTokenCount: not null })
+                else if (content is UsageContent { Details: { InputTokenCount: not null, OutputTokenCount: not null } } uc)
                 {
                     usage = new TokenUsage(
                         (ulong)uc.Details.InputTokenCount.Value,

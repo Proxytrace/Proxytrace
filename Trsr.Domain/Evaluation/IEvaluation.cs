@@ -1,4 +1,5 @@
 using Trsr.Domain.Evaluator;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Domain.Evaluation;
 
@@ -7,11 +8,15 @@ public interface IEvaluation : IDomainObject
     public delegate IEvaluation Create(
         IEvaluator evaluator,
         EvaluationScore score,
+        TimeSpan latency,
+        TokenUsage? tokenUsage = null,
+        decimal? cost = null,
         string? reasoning = null);
 
     public delegate IEvaluation CreateErrored(
         IEvaluator evaluator,
-        string errorMessage);
+        TimeSpan latency,
+        Exception exception);
 
     /// <summary>
     /// The <see cref="IEvaluator"/>
@@ -38,4 +43,21 @@ public interface IEvaluation : IDomainObject
     /// Error description
     /// </summary>
     string? ErrorMessage { get; }
+
+    /// <summary>
+    /// Total wall-clock time spent producing this evaluation.
+    /// </summary>
+    TimeSpan Latency { get; }
+
+    /// <summary>
+    /// Token usage attributable to this evaluation. Null for evaluators that do not invoke an LLM
+    /// (e.g. exact match, JSON schema match, numeric match).
+    /// </summary>
+    TokenUsage? TokenUsage { get; }
+
+    /// <summary>
+    /// Cost of the LLM call backing this evaluation, snapshot at the time of evaluation using the
+    /// judge endpoint's per-token cost. Null for non-LLM evaluators.
+    /// </summary>
+    decimal? Cost { get; }
 }

@@ -24,4 +24,8 @@ internal record StoredEvaluation
     public EvaluationScore? Score { get; init; }
     public string? Reasoning { get; init; }
     public string? ErrorMessage { get; init; }
+    public long? InputTokens { get; init; }
+    public long? OutputTokens { get; init; }
+    public long LatencyMicroseconds { get; init; }
+    public decimal? Cost { get; init; }
 }
