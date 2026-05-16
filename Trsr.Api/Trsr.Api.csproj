@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Trsr.Api</RootNamespace>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,12 +36,19 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <Target Name="BuildAngularFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="npm run build -- --configuration production" WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
+  <ItemGroup>
+    <Content Include="..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
+  </ItemGroup>
+
+  <!--<Target Name="BuildAngularFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="npm run build" 
+          WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
     <ItemGroup>
       <FrontendFiles Include="$(MSBuildThisFileDirectory)../frontend/dist/frontend/browser/**" />
     </ItemGroup>
     <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot/%(RecursiveDir)" />
-  </Target>
+  </Target>-->
 
 </Project>
