@@ -50,8 +50,6 @@ internal sealed class AgentCallCleanupService : BackgroundService
         var period = TimeSpan.FromHours(Math.Max(1, configuration.CleanupIntervalHours));
         while (!cancellationToken.IsCancellationRequested)
         {
-            await CleanOnceAsync(cancellationToken);
-
             try
             {
                 await Task.Delay(period, cancellationToken);
@@ -60,6 +58,8 @@ internal sealed class AgentCallCleanupService : BackgroundService
             {
                 return;
             }
+            
+            await CleanOnceAsync(cancellationToken);
         }
     }
 }
