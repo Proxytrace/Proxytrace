@@ -102,11 +102,12 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('Messages');
   const [promoting, setPromoting] = useState(false);
+  const [prevTrace] = useState(trace);
 
-  useEffect(() => {
+  if (prevTrace?.id !== trace.id) {
     setTab('Messages');
     setPromoting(false);
-  }, [trace.id]);
+  }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
-import { formInputCls } from './FormField';
+import { formInputCls } from './classes';
 
 type Size = 'sm' | 'md';
 

@@ -1,14 +1,16 @@
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import { useCallback, useState, type KeyboardEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { StepWizard } from '../../components/overlays/StepWizard';
-import { FormField, formInputCls } from '../../components/ui/FormField';
+import { FormField } from '../../components/ui/FormField';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
 import { useAuthMode } from '../../auth/authMode';
-import { useLocalAuth } from '../../auth/local/LocalAuthProvider';
 import { localAuthApi } from '../../auth/local/localAuthApi';
-import { PasswordRequirements, passwordIsValid } from '../../components/auth/PasswordRequirements';
+import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
+import useLocalAuth from '../../hooks/useLocalAuth';
+import { passwordIsValid } from '../../auth/password';
+import { formInputCls } from '../../components/ui/classes';
 
 const PROVIDER_ENDPOINTS: Record<ModelProviderKind, string> = {
   [ModelProviderKind.Anthropic]: 'https://api.anthropic.com/v1',
@@ -249,34 +251,29 @@ function SetupWizard() {
     }
   }
 
-  async function loadModels() {
-    setModelsLoading(true);
-    setModelsError(null);
-    try {
-      const res = await setupApi.listModels({
-        providerName: providerName.trim(),
-        providerEndpoint: providerEndpoint.trim(),
-        providerUpstreamApiKey: providerApiKey.trim(),
-        providerKind,
-      });
-      setModels(res.models);
-      if (res.models.length > 0 && !res.models.includes(modelName)) {
-        setModelName(res.models[0]);
-      }
-    } catch (e) {
-      setModels([]);
-      setModelsError(e instanceof Error ? e.message : 'Failed to load models.');
-    } finally {
-      setModelsLoading(false);
-    }
-  }
-
-  useEffect(() => {
+  const loadModels = useCallback(async () => {
     if (currentStep === 1 && models === null && !modelsLoading && providerFilled) {
-      loadModels();
+      setModelsLoading(true);
+      setModelsError(null);
+      try {
+        const res = await setupApi.listModels({
+          providerName: providerName.trim(),
+          providerEndpoint: providerEndpoint.trim(),
+          providerUpstreamApiKey: providerApiKey.trim(),
+          providerKind,
+        });
+        setModels(res.models);
+        if (res.models.length > 0 && !res.models.includes(modelName)) {
+          setModelName(res.models[0]);
+        }
+      } catch (e) {
+        setModels([]);
+        setModelsError(e instanceof Error ? e.message : 'Failed to load models.');
+      } finally {
+        setModelsLoading(false);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep]);
+  }, [modelName, providerApiKey, providerEndpoint, providerKind, providerName, currentStep, models, modelsLoading, providerFilled]);
 
   const canAdvance = done ? true : (stepValid[currentStep] ?? false) && !loading;
 

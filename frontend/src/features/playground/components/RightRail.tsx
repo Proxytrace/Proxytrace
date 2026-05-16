@@ -6,7 +6,7 @@ import {
   XIcon,
 } from '../../../components/icons';
 import type { ModelParametersDto } from '../../../api/models';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 import type { PlaygroundOverrides } from '../state/types';
 import { ToolEditor } from './ToolEditor';
 import { ParameterSlider } from './ParameterSlider';

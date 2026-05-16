@@ -1,6 +1,8 @@
 import { getAccessToken, notifyUnauthorized } from '../auth/token';
 import { showToast } from '../components/ui/Toast';
 
+type ErrorMeta = { status: number; stacktrace?: string; type?: string };
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -31,10 +33,10 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
       if (text) message = `${message}: ${text}`;
     }
 
-    const error = new Error(message);
-    (error as any).status = res.status;
-    (error as any).stacktrace = stacktrace;
-    (error as any).type = type;
+    const error = new Error(message) as Error & ErrorMeta;
+    error.status = res.status;
+    error.stacktrace = stacktrace;
+    error.type = type;
 
     const errMessage = message;
     const errStacktrace = stacktrace;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 import type { PlaygroundToolRequest } from '../state/types';
 
 interface Props {

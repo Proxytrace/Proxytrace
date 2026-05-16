@@ -19,7 +19,12 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
   const c = agentColor(suite.agentId);
 
   function toggle(id: string) {
-    setSelectedEndpoints(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedEndpoints(s => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   }
 
   const isMulti = selectedEndpoints.size > 1;

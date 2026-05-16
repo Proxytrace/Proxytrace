@@ -5,7 +5,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { proposalsApi } from '../../api/proposals';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import type { OptimizationProposalDto } from '../../api/models';
 import { ProposalKind, ProposalStatus, TestRunStatus } from '../../api/models';
 import { ProposalCard } from './ProposalCard';

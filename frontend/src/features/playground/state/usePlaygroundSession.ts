@@ -154,7 +154,10 @@ function reducer(state: PlaygroundSession, action: Action): PlaygroundSession {
 export function usePlaygroundSession() {
   const [state, dispatch] = useReducer(reducer, undefined as unknown as PlaygroundSession, loadFromStorage);
   const stateRef = useRef(state);
-  stateRef.current = state;
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     saveToStorage(state);

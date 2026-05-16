@@ -1,32 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '../overlays/Modal';
 import { FormField } from './FormField';
-
-interface ErrorToastOptions {
-  stacktrace?: string;
-  errorType?: string;
-  url?: string;
-  sendReport?: (details: { description: string; timestamp: string }) => void;
-}
-
-interface ToastItem {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-  stacktrace?: string;
-  errorType?: string;
-  url?: string;
-  sendReport?: (details: { description: string; timestamp: string }) => void;
-}
-
-interface ToastContextValue {
-  show: (message: string, type?: ToastItem['type'], options?: ErrorToastOptions) => void;
-}
-
-const ToastContext = createContext<ToastContextValue>({ show: () => {} });
+import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
 
 let globalShow: ((message: string, type: ToastItem['type'], options?: ErrorToastOptions) => void) | null = null;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function showToast(message: string, type: ToastItem['type'] = 'info', options?: ErrorToastOptions) {
   globalShow?.(message, type, options);
 }
@@ -229,5 +208,3 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     </ToastContext.Provider>
   );
 }
-
-export function useToast() { return useContext(ToastContext); }

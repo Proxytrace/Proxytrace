@@ -4,7 +4,7 @@ import { searchApi, type SearchHit } from '../../../api/search';
 import { agentCallsApi } from '../../../api/agent-calls';
 import { testCasesApi } from '../../../api/test-cases';
 import type { AgentCallDto, MessageDto, TestCaseDto, TestSuiteMessageDto } from '../../../api/models';
-import { formInputCls } from '../../../components/ui/FormField';
+import { formInputCls } from '../../../components/ui/classes';
 import { makeMessage } from '../state/usePlaygroundSession';
 import type { PlaygroundMessage, PlaygroundRole } from '../state/types';
 
@@ -22,6 +22,7 @@ export function SeedFromSearchModal({ projectId, onClose, onLoad }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (query.trim().length < 2) { setHits([]); return; }
     let cancelled = false;
@@ -41,6 +42,7 @@ export function SeedFromSearchModal({ projectId, onClose, onLoad }: Props) {
     }, 200);
     return () => { cancelled = true; clearTimeout(t); };
   }, [query, projectId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const pick = async (hit: SearchHit) => {
     try {

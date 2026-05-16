@@ -5,15 +5,16 @@ import { evaluatorsApi } from '../../api/evaluators';
 import { testSuitesApi } from '../../api/test-suites';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { fmtRelative } from '../../lib/format';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
 import { Sparkline } from '../../components/charts';
-import { EvaluatorForm, META, KIND_ORDER, initForm, type EvaluatorFormState } from './EvaluatorForm';
+import { EvaluatorForm, } from './EvaluatorForm';
 import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
 import { EvaluatorTestBench, type EvaluatorTestBenchHandle } from './EvaluatorTestBench';
+import { type EvaluatorFormState, META, KIND_ORDER, initForm } from './evaluators';
 
 // ── Type categories ──────────────────────────────────────────────────────────
 

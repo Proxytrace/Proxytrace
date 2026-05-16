@@ -241,6 +241,10 @@ React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code live
 
 Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Trsr.Application` and consumed via `event-stream.ts`.
 
+### Commands
+- `npm run build` -– build the frontend, use this to verify there are no typing issues (output in `dist/`)
+- `npm run lint` -– run ESLint with auto-fix, use this frequently during development
+
 ## Reference Implementations
 
 When implementing a new entity, the existing ones are the source of truth:

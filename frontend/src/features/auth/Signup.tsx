@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { localAuthApi, type InvitePreview } from '../../auth/local/localAuthApi';
-import { useLocalAuth } from '../../auth/local/LocalAuthProvider';
-import { PasswordRequirements, passwordIsValid } from '../../components/auth/PasswordRequirements';
+import { useQuery } from '@tanstack/react-query';
+import { localAuthApi } from '../../auth/local/localAuthApi';
+import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
+import useLocalAuth from '../../hooks/useLocalAuth';
+import { passwordIsValid } from '../../auth/password';
 
 export default function Signup() {
   const [params] = useSearchParams();
@@ -10,22 +12,15 @@ export default function Signup() {
   const navigate = useNavigate();
   const { setToken } = useLocalAuth();
 
-  const [preview, setPreview] = useState<InvitePreview | null>(null);
-  const [expired, setExpired] = useState(false);
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!token) {
-      setExpired(true);
-      return;
-    }
-    localAuthApi
-      .fetchInvite(token)
-      .then(setPreview)
-      .catch(() => setExpired(true));
-  }, [token]);
+  const { data: preview, isError: expired } = useQuery({
+    queryKey: ['invite', token],
+    queryFn: () => localAuthApi.fetchInvite(token),
+    enabled: !!token,
+  });
 
   if (expired) {
     return (

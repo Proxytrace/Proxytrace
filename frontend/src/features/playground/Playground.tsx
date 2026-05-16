@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { useCurrentProject } from '../../contexts/ProjectContext';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { agentsApi } from '../../api/agents';
 import {
   streamPlaygroundCompletion,

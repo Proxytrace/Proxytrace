@@ -6,7 +6,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { usersApi } from '../../api/users';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
-import { formInputCls } from '../../components/ui/FormField';
+import { formInputCls } from '../../components/ui/classes';
 
 interface AddMemberModalProps {
   excludeIds: string[];

@@ -8,7 +8,7 @@ import { PlusIcon, XIcon, CheckIcon } from '../../components/icons';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { MessageBubble } from '../../components/ui/MessageBubble';
 import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
-import { useToast } from '../../components/ui/Toast';
+import useToast from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
 
 interface Props {
