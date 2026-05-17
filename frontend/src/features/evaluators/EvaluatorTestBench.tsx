@@ -32,7 +32,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     const [pickedHit, setPickedHit] = useState<SearchHit | null>(null);
     const [actualOverride, setActualOverride] = useState<string | null>(null);
     const [lastResult, setLastResult] = useState<EvaluationResultDto | null>(null);
-    const [prevEvaluatorId] = useState(evaluatorId);
+    const [prevEvaluatorId, setPrevEvaluatorId] = useState(evaluatorId);
 
     useImperativeHandle(ref, () => ({
       focus() {
@@ -47,6 +47,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     });
 
     if (evaluatorId !== prevEvaluatorId) {
+      setPrevEvaluatorId(evaluatorId);
       setPickedHit(null);
       setActualOverride(null);
       setLastResult(null);

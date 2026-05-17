@@ -7,8 +7,11 @@ using Trsr.Domain;
 using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
 using Trsr.Domain.Inference;
+using Trsr.Domain.Message;
 using Trsr.Domain.Project;
 using Trsr.Domain.Prompt;
+using Trsr.Domain.TestCase;
+using Trsr.Domain.TestResult;
 
 namespace Trsr.Api.Controllers;
 
@@ -32,6 +35,7 @@ public class EvaluatorsController : ControllerBase
     private readonly IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch;
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting;
     private readonly IAgenticEvaluatorPresets agenticPresets;
+    private readonly ITestResultRepository testResults;
     private readonly ITransaction transaction;
 
     public EvaluatorsController(
@@ -50,6 +54,7 @@ public class EvaluatorsController : ControllerBase
         IJsonSchemaMatchEvaluator.CreateNew createJsonSchemaMatch,
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting,
         IAgenticEvaluatorPresets agenticPresets,
+        ITestResultRepository testResults,
         ITransaction transaction)
     {
         this.createAgent = createAgent;
@@ -67,6 +72,7 @@ public class EvaluatorsController : ControllerBase
         this.createJsonSchemaMatch = createJsonSchemaMatch;
         this.createJsonSchemaMatchExisting = createJsonSchemaMatchExisting;
         this.agenticPresets = agenticPresets;
+        this.testResults = testResults;
         this.transaction = transaction;
     }
 
@@ -241,6 +247,43 @@ public class EvaluatorsController : ControllerBase
     {
         var removed = await evaluatorRepository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
+    }
+
+    [HttpGet("{id:guid}/recent-evaluations")]
+    public async Task<ActionResult<IReadOnlyList<RecentEvaluationItemDto>>> RecentEvaluations(
+        Guid id,
+        [FromQuery] int count = 8,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+
+        var capped = Math.Clamp(count, 1, 50);
+        var recent = await testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
+
+        return recent
+            .Select(r =>
+            {
+                var evaluation = r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == id);
+                return new RecentEvaluationItemDto(
+                    TestResultId: r.Id,
+                    TestCaseId: r.TestCase.Id,
+                    CaseSummary: Summarize(r.TestCase),
+                    Score: evaluation?.Score?.ToString(),
+                    Passed: evaluation?.Passed ?? r.Passed,
+                    Reasoning: evaluation?.Reasoning,
+                    LatencyMs: (int)r.Latency.TotalMilliseconds,
+                    EvaluatedAt: r.UpdatedAt);
+            })
+            .ToArray();
+    }
+
+    private static string Summarize(ITestCase tc)
+    {
+        var firstUser = tc.Input.Messages.OfType<UserMessage>().FirstOrDefault();
+        if (firstUser is null) return "Test case";
+        var text = string.Concat(firstUser.Contents.Select(c => c.Text ?? ""));
+        return text.Length > 80 ? text[..77] + "…" : text;
     }
 
     private static EvaluatorDetailDto ToDto(IEvaluator evaluator)

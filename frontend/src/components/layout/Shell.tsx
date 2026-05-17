@@ -10,29 +10,65 @@ import { SearchBar } from '../search/SearchBar';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon,
+  SettingsIcon, BeakerIcon, TargetIcon,
   LayoutSidebarIcon,
 } from '../icons';
 
-const primaryNavItems = [
-  { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
-  { label: 'Traces', icon: 'activity', to: '/traces' },
-  { label: 'Agents', icon: 'users', to: '/agents' },
-  { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
-  { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
-  { label: 'Test Runs', icon: 'play', to: '/runs' },
-  { label: 'Playground', icon: 'beaker', to: '/playground' },
-  { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
-] as const;
+type NavIconName =
+  | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings';
 
-const systemNavItems = [
-  { label: 'Providers', icon: 'server', to: '/providers' },
-  { label: 'Settings', icon: 'settings', to: '/settings' },
-] as const;
+interface NavEntry {
+  label: string;
+  icon: NavIconName;
+  to: string;
+}
 
-const navItems = [...primaryNavItems, ...systemNavItems] as const;
+interface NavGroup {
+  label: string | null;
+  items: NavEntry[];
+}
 
-type NavIconName = typeof navItems[number]['icon'];
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [
+      { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
+      { label: 'Traces', icon: 'activity', to: '/traces' },
+    ],
+  },
+  {
+    label: 'Agents',
+    items: [
+      { label: 'Agents', icon: 'users', to: '/agents' },
+      { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
+      { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
+    ],
+  },
+  {
+    label: 'Evaluators',
+    items: [
+      { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
+      { label: 'Evaluator Playground', icon: 'target', to: '/evaluator-playground' },
+    ],
+  },
+  {
+    label: 'Benchmarks',
+    items: [
+      { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
+      { label: 'Test Runs', icon: 'play', to: '/runs' },
+    ],
+  },
+  {
+    label: 'Configure',
+    items: [
+      { label: 'Providers', icon: 'server', to: '/providers' },
+      { label: 'Settings', icon: 'settings', to: '/settings' },
+    ],
+  },
+];
+
+const navItems: NavEntry[] = navGroups.flatMap(g => g.items);
 
 const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   grid: <GridIcon size={16} />,
@@ -42,6 +78,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   scale: <ScaleIcon size={16} />,
   play: <PlayIcon size={16} />,
   beaker: <BeakerIcon size={16} />,
+  target: <TargetIcon size={16} />,
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,
@@ -66,7 +103,9 @@ export function Shell() {
     const timer = setInterval(poll, 10_000);
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
-  const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
+  const pageLabel = [...navItems]
+    .sort((a, b) => b.to.length - a.to.length)
+    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
   const currentUser = useCurrentUser();
   const userName = currentUser?.email ?? 'User';
   const userInitials = userName
@@ -97,45 +136,30 @@ export function Shell() {
           )}
         </div>
 
-        {/* Section label */}
-        {!collapsed && (
-          <div className="px-[18px] pt-[18px] pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Workspace
-          </div>
-        )}
-
         {/* Nav */}
         <nav
-          className={`flex-1 flex flex-col gap-[2px] overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-1.5'}`}
+          className={`flex-1 flex flex-col overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
-          {primaryNavItems.map(item => (
-            <NavItem
-              key={item.to}
-              label={item.label}
-              icon={NAV_ICONS[item.icon]}
-              to={item.to}
-              badge={'badge' in item ? item.badge : undefined}
-              badgeAccent={'badgeAccent' in item ? item.badgeAccent : undefined}
-              collapsed={collapsed}
-            />
-          ))}
-
-          <div className={`my-2 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
-
-          {!collapsed && (
-            <div className="px-[6px] pt-1 pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-              System
+          {navGroups.map((group, gIdx) => (
+            <div key={group.label ?? `__g${gIdx}`} className="flex flex-col gap-[2px]">
+              {gIdx > 0 && (
+                <div className={`my-1.5 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
+              )}
+              {!collapsed && group.label && (
+                <div className="px-[6px] pt-1 pb-[4px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
+                  {group.label}
+                </div>
+              )}
+              {group.items.map(item => (
+                <NavItem
+                  key={item.to}
+                  label={item.label}
+                  icon={NAV_ICONS[item.icon]}
+                  to={item.to}
+                  collapsed={collapsed}
+                />
+              ))}
             </div>
-          )}
-
-          {systemNavItems.map(item => (
-            <NavItem
-              key={item.to}
-              label={item.label}
-              icon={NAV_ICONS[item.icon]}
-              to={item.to}
-              collapsed={collapsed}
-            />
           ))}
         </nav>
 
