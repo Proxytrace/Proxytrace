@@ -16,16 +16,18 @@ import { RightRail } from './components/RightRail';
 import { ConversationView } from './components/ConversationView';
 import { ComposeBox } from './components/ComposeBox';
 import { ToolRequestPrompt } from './components/ToolRequestPrompt';
-import { SeedFromSearchModal } from './components/SeedFromSearchModal';
 import { CompletionStats } from './components/CompletionStats';
-import { PlayIcon, TrashIcon } from '../../components/icons';
+import { PlayIcon, SearchIcon, TrashIcon } from '../../components/icons';
+import { UnifiedSearch } from '../../components/search/UnifiedSearch';
+import { loadMessagesForHit } from './lib/seed';
 import { makeMessage, overridesFromAgent, usePlaygroundSession } from './state/usePlaygroundSession';
 import type { PlaygroundMessage, PlaygroundRole, PlaygroundToolRequest } from './state/types';
 
 export default function Playground() {
   const { currentProject } = useCurrentProject();
   const { state, dispatch } = usePlaygroundSession();
-  const [showSeedModal, setShowSeedModal] = useState(false);
+  const [showSeed, setShowSeed] = useState(false);
+  const seedAnchorRef = useRef<HTMLDivElement | null>(null);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const abortRef = useRef<{ abort: () => void } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -244,6 +246,21 @@ export default function Playground() {
     dispatch({ type: 'setMessages', messages });
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!showSeed) return;
+    function onDocClick(e: MouseEvent) {
+      if (!seedAnchorRef.current) return;
+      if (!seedAnchorRef.current.contains(e.target as Node)) setShowSeed(false);
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setShowSeed(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showSeed]);
+
   const defaultEndpointId = agent?.endpointId;
 
   const composerDisabledReason = !state.agentId
@@ -292,6 +309,40 @@ export default function Playground() {
           >
             <TrashIcon size={13} strokeWidth={2.2} />
           </button>
+          <div ref={seedAnchorRef} className="relative">
+            <button
+              type="button"
+              className="btn-icon"
+              onClick={() => setShowSeed(o => !o)}
+              disabled={!state.agentId}
+              title="Load from trace or test case"
+              aria-label="Load from trace or test case"
+              aria-expanded={showSeed}
+              aria-haspopup="listbox"
+            >
+              <SearchIcon size={13} strokeWidth={2.2} />
+            </button>
+            {showSeed && (
+              <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[480px] max-w-[80vw]">
+                <UnifiedSearch
+                  projectId={currentProject.id}
+                  kinds={['agentCall', 'testCase']}
+                  width="auto"
+                  autoFocus
+                  showShortcut={false}
+                  placeholder="Search traces and test cases…"
+                  onSelect={async hit => {
+                    try {
+                      const messages = await loadMessagesForHit(hit);
+                      onLoadFromSearch(messages);
+                    } finally {
+                      setShowSeed(false);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
           <button
             type="button"
             className="btn-icon"
@@ -332,7 +383,7 @@ export default function Playground() {
           onDelete={localId => dispatch({ type: 'deleteMessage', localId })}
           onInsert={onInsert}
           onMove={onMove}
-          onLoadFromTrace={state.agentId ? () => setShowSeedModal(true) : undefined}
+          onLoadFromTrace={state.agentId ? () => setShowSeed(true) : undefined}
         />
 
         {state.pendingToolRequest ? (
@@ -370,13 +421,6 @@ export default function Playground() {
         />
       )}
 
-      {showSeedModal && (
-        <SeedFromSearchModal
-          projectId={currentProject.id}
-          onClose={() => setShowSeedModal(false)}
-          onLoad={onLoadFromSearch}
-        />
-      )}
     </div>
   );
 }

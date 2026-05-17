@@ -10,4 +10,10 @@ public interface ISearchService
         SearchKind kind,
         int maxHits,
         CancellationToken cancellationToken = default);
+
+    Task<SearchResults> GetRecentAsync(
+        Guid projectId,
+        IReadOnlyList<SearchKind> kinds,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

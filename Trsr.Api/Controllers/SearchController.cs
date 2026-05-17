@@ -64,6 +64,40 @@ public class SearchController : ControllerBase
         return Ok(dto);
     }
 
+    [HttpGet("recent")]
+    public async Task<ActionResult<SearchResultsDto>> Recent(
+        Guid projectId,
+        [FromQuery] string? kinds,
+        [FromQuery] int limit,
+        CancellationToken cancellationToken)
+    {
+        if (limit <= 0 || limit > 50)
+        {
+            return BadRequest(new { error = "limit must be between 1 and 50" });
+        }
+
+        var parsedKinds = new List<SearchKind>();
+        foreach (var raw in (kinds ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!TryWireToKind(raw, out var kind))
+            {
+                return BadRequest(new { error = $"unknown kind '{raw}'" });
+            }
+            parsedKinds.Add(kind);
+        }
+
+        var results = await searchService.GetRecentAsync(projectId, parsedKinds, limit, cancellationToken);
+        var dto = new SearchResultsDto(
+            results.Hits.Select(h => new SearchHitDto(
+                Kind: KindToWire(h.Kind),
+                EntityId: h.EntityId,
+                Title: h.Title,
+                Snippet: h.Snippet,
+                Score: h.Score,
+                Metadata: h.Metadata)).ToList());
+        return Ok(dto);
+    }
+
     [HttpPost("reindex")]
     public async Task<ActionResult<object>> Reindex(Guid projectId, CancellationToken cancellationToken)
     {

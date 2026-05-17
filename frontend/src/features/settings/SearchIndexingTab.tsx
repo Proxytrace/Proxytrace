@@ -7,7 +7,7 @@ import { LIST_PAGE_SIZE } from '../../lib/constants';
 import useToast from '../../hooks/useToast';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
-import { FormField, formInputCls } from '../../components/ui/FormField';
+import { FormField } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
 import { formInputCls } from '../../components/ui/classes';

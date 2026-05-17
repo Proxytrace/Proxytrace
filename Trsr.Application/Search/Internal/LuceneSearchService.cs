@@ -236,4 +236,79 @@ internal sealed class LuceneSearchService : ISearchService
             return new Dictionary<string, string>();
         }
     }
+
+    public Task<SearchResults> GetRecentAsync(
+        Guid projectId,
+        IReadOnlyList<SearchKind> kinds,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        if (limit <= 0 || kinds.Count == 0)
+        {
+            return Task.FromResult(new SearchResults([]));
+        }
+
+        var combined = new BooleanQuery
+        {
+            { new TermQuery(new Term(SearchConstants.FieldProjectId, projectId.ToString())), Occur.MUST },
+        };
+
+        var kindFilter = new BooleanQuery();
+        foreach (var kind in kinds)
+        {
+            kindFilter.Add(new TermQuery(new Term(SearchConstants.FieldKind, kind.ToString())), Occur.SHOULD);
+        }
+        combined.Add(kindFilter, Occur.MUST);
+
+        using var reader = writer.AcquireReader();
+        var searcher = reader.Searcher;
+
+        var sort = new Sort(new SortField(SearchConstants.FieldCreatedAt, SortFieldType.INT64, reverse: true));
+        var perKind = new Dictionary<SearchKind, List<SearchHit>>();
+        var fetched = 0;
+        var pageSize = Math.Max(limit * kinds.Count * 2, 32);
+        var topDocs = searcher.Search(combined, null, pageSize, sort);
+
+        foreach (var scoreDoc in topDocs.ScoreDocs)
+        {
+            var doc = searcher.Doc(scoreDoc.Doc);
+            if (!Enum.TryParse<SearchKind>(doc.Get(SearchConstants.FieldKind), out var kind))
+            {
+                continue;
+            }
+            if (!perKind.TryGetValue(kind, out var bucket))
+            {
+                bucket = [];
+                perKind[kind] = bucket;
+            }
+            if (bucket.Count >= limit)
+            {
+                continue;
+            }
+
+            var entityIdStr = doc.Get(SearchConstants.FieldEntityId);
+            if (!Guid.TryParse(entityIdStr, out var entityId))
+            {
+                continue;
+            }
+
+            bucket.Add(new SearchHit(
+                Kind: kind,
+                EntityId: entityId,
+                Title: doc.Get(SearchConstants.FieldTitle) ?? string.Empty,
+                Snippet: string.Empty,
+                Score: 0f,
+                Metadata: ParseMetadata(doc.Get(SearchConstants.FieldMetadata))));
+            fetched++;
+            if (fetched >= limit * kinds.Count)
+            {
+                break;
+            }
+        }
+
+        var ordered = kinds
+            .SelectMany(k => perKind.TryGetValue(k, out var bucket) ? bucket : Enumerable.Empty<SearchHit>())
+            .ToList();
+        return Task.FromResult(new SearchResults(ordered));
+    }
 }

@@ -6,7 +6,7 @@ import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { checkHealth } from '../../api/health';
-import { SearchBar } from '../search/SearchBar';
+import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
@@ -89,8 +89,8 @@ export function Shell() {
   const [online, setOnline] = useState<boolean | null>(null);
   const location = useLocation();
   const { currentProject } = useCurrentProject();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const focusSearch = useCallback(() => searchInputRef.current?.focus(), []);
+  const searchRef = useRef<UnifiedSearchHandle>(null);
+  const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
 
   useEffect(() => {
@@ -186,7 +186,7 @@ export function Shell() {
           </div>
 
           {currentProject?.id ? (
-            <SearchBar projectId={currentProject.id} inputRef={searchInputRef} />
+            <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
           ) : (
             <div className="flex-1 max-w-[460px] mx-auto" />
           )}
