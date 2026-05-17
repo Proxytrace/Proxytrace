@@ -15,6 +15,7 @@ interface Props {
   onDelete: (localId: string) => void;
   onInsert: (atIndex: number, role: PlaygroundRole) => void;
   onMove: (fromId: string, toIndex: number) => void;
+  onLoadFromTrace?: () => void;
 }
 
 export function ConversationView({
@@ -28,6 +29,7 @@ export function ConversationView({
   onDelete,
   onInsert,
   onMove,
+  onLoadFromTrace,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export function ConversationView({
             </div>
           )}
           <div className="mt-[6px]">
-            <AddMessageBar onAdd={role => onInsert(0, role)} />
+            <AddMessageBar onAdd={role => onInsert(0, role)} onLoadFromTrace={onLoadFromTrace} />
           </div>
         </div>
       </div>
@@ -133,7 +135,7 @@ export function ConversationView({
       className="h-[2px] rounded-full mx-[2px]"
       style={{
         background: 'linear-gradient(90deg, transparent, var(--accent-primary), transparent)',
-        boxShadow: '0 0 12px rgba(201,148,74,0.5)',
+        boxShadow: '0 0 12px var(--accent-glow)',
       }}
     />
   );
@@ -171,7 +173,7 @@ export function ConversationView({
         </div>
       ))}
       {dropIndex === messages.length && draggingId && dropIndicator}
-      <AddMessageBar onAdd={role => onInsert(messages.length, role)} />
+      <AddMessageBar onAdd={role => onInsert(messages.length, role)} onLoadFromTrace={onLoadFromTrace} />
     </div>
   );
 }

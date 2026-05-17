@@ -34,9 +34,15 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
   try { parsedArgs = JSON.parse(request.arguments); } catch { /* ignore */ }
 
   return (
-    <div className="border border-emerald-700/40 bg-[rgba(16,185,129,0.06)] rounded-[12px] p-[12px] flex flex-col gap-[10px]">
+    <div
+      className="rounded-[12px] p-[12px] flex flex-col gap-[10px]"
+      style={{
+        background: 'var(--success-subtle)',
+        border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)',
+      }}
+    >
       <div className="flex items-center gap-2 text-[12px] font-mono">
-        <span className="font-bold text-emerald-300">Tool requested:</span>
+        <span className="font-bold text-success">Tool requested:</span>
         <span>{request.name}</span>
         <span className="text-muted text-[10px]">{request.id}</span>
         <button className="btn-icon ml-auto" onClick={onCancel} title="Cancel turn">✕</button>
@@ -49,7 +55,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
 
       <div className="flex items-center gap-1 border-b border-border">
         <button
-          className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'result' ? 'border-emerald-400 text-primary' : 'border-transparent text-muted'}`}
+          className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted'}`}
           onClick={() => { setTab('result'); setValidationError(null); }}
         >
           Provide result

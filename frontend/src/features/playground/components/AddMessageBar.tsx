@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { PlusIcon } from '../../../components/icons';
+import { PlusIcon, SearchIcon } from '../../../components/icons';
 import type { PlaygroundRole } from '../state/types';
 
 interface Props {
   onAdd: (role: PlaygroundRole) => void;
+  onLoadFromTrace?: () => void;
 }
 
 const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: string }[] = [
@@ -12,7 +13,7 @@ const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; desc
   { value: 'system', label: 'System', accent: 'var(--text-secondary)', description: 'System instruction' },
 ];
 
-export function AddMessageBar({ onAdd }: Props) {
+export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,7 @@ export function AddMessageBar({ onAdd }: Props) {
         className="group w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[10px] cursor-pointer transition-colors"
         style={{
           background: open ? 'var(--accent-subtle)' : 'transparent',
-          border: `1px dashed ${open ? 'rgba(201,148,74,0.32)' : 'var(--border-color)'}`,
+          border: `1px dashed ${open ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
           color: open ? 'var(--accent-hover)' : 'var(--text-muted)',
         }}
         aria-haspopup="menu"
@@ -85,6 +86,36 @@ export function AddMessageBar({ onAdd }: Props) {
               </span>
             </button>
           ))}
+          {onLoadFromTrace && (
+            <>
+              <div
+                className="my-[4px] mx-[10px]"
+                style={{ borderTop: '1px solid var(--border-color)' }}
+              />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { onLoadFromTrace(); setOpen(false); }}
+                className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
+              >
+                <span
+                  aria-hidden
+                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <SearchIcon size={12} strokeWidth={2.2} />
+                </span>
+                <span className="flex flex-col min-w-0">
+                  <span className="text-[12.5px] text-primary font-semibold">Load from trace</span>
+                  <span className="text-[10.5px] text-muted">Seed conversation from past trace or test case</span>
+                </span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -79,8 +79,8 @@ export function ComposeBox({
         className="rounded-[12px] flex flex-col"
         style={{
           background: 'var(--bg-card)',
-          border: `1px solid ${canSend ? 'rgba(201,148,74,0.32)' : 'var(--border-color)'}`,
-          boxShadow: canSend ? '0 0 0 3px rgba(201,148,74,0.08)' : 'var(--shadow-pill)',
+          border: `1px solid ${canSend ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
+          boxShadow: canSend ? '0 0 0 3px color-mix(in srgb, var(--accent-primary) 12%, transparent)' : 'var(--shadow-pill)',
           transition: 'border-color 0.15s, box-shadow 0.15s',
         }}
       >
@@ -106,7 +106,7 @@ export function ComposeBox({
                 className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary"
                 style={{
                   background: pickerOpen ? 'var(--accent-subtle)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${pickerOpen ? 'rgba(201,148,74,0.32)' : 'var(--border-color)'}`,
+                  border: `1px solid ${pickerOpen ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
                   color: pickerOpen ? 'var(--accent-hover)' : 'var(--text-secondary)',
                 }}
                 title="Switch endpoint"

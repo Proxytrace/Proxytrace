@@ -3,12 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { agentsApi } from '../../api/agents';
+import { agentCallsApi } from '../../api/agent-calls';
 import {
   streamPlaygroundCompletion,
   type PlaygroundCompletePayload,
   type PlaygroundMessagePayload,
   type PlaygroundStreamEvent,
 } from '../../api/playground';
+import type { AgentCallDto, MessageDto } from '../../api/models';
 import { AgentPicker } from './components/AgentPicker';
 import { RightRail } from './components/RightRail';
 import { ConversationView } from './components/ConversationView';
@@ -16,7 +18,7 @@ import { ComposeBox } from './components/ComposeBox';
 import { ToolRequestPrompt } from './components/ToolRequestPrompt';
 import { SeedFromSearchModal } from './components/SeedFromSearchModal';
 import { CompletionStats } from './components/CompletionStats';
-import { ArrowDownToLineIcon, PlayIcon, PlusIcon } from '../../components/icons';
+import { PlayIcon, TrashIcon } from '../../components/icons';
 import { makeMessage, overridesFromAgent, usePlaygroundSession } from './state/usePlaygroundSession';
 import type { PlaygroundMessage, PlaygroundRole, PlaygroundToolRequest } from './state/types';
 
@@ -47,6 +49,39 @@ export default function Playground() {
       dispatch({ type: 'clearAgent' });
     }
   }, [state.agentId, agent, agentError, dispatch]);
+
+  const { data: agentsList } = useQuery({
+    queryKey: ['agents', currentProject?.id],
+    queryFn: () => agentsApi.list({ projectId: currentProject!.id, pageSize: 200 }),
+    enabled: !!currentProject,
+  });
+
+  useEffect(() => {
+    if (state.agentId) return;
+    const first = agentsList?.items?.[0];
+    if (first) dispatch({ type: 'pickAgent', agent: first });
+  }, [state.agentId, agentsList, dispatch]);
+
+  const autoLoadedAgentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!state.agentId || !agent) return;
+    if (autoLoadedAgentRef.current === state.agentId) return;
+    if (state.messages.length > 0) {
+      autoLoadedAgentRef.current = state.agentId;
+      return;
+    }
+    let cancelled = false;
+    autoLoadedAgentRef.current = state.agentId;
+    agentCallsApi.list({ agentId: state.agentId, pageSize: 1, includeSystemAgents: true })
+      .then(res => {
+        if (cancelled) return;
+        const call = res.items[0];
+        if (!call) return;
+        dispatch({ type: 'setMessages', messages: agentCallToMessages(call) });
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [state.agentId, agent, state.messages.length, dispatch]);
 
   const requestedAgentId = searchParams.get('agentId');
   useEffect(() => {
@@ -198,11 +233,12 @@ export default function Playground() {
     dispatch({ type: 'reorderMessages', messages: next });
   }, [state.messages, dispatch]);
 
-  const onNewSession = useCallback(() => {
+  const onClearConversation = useCallback(() => {
     abortRef.current?.abort();
     setStreamingId(null);
+    if (state.agentId) autoLoadedAgentRef.current = state.agentId;
     dispatch({ type: 'reset' });
-  }, [dispatch]);
+  }, [dispatch, state.agentId]);
 
   const onLoadFromSearch = useCallback((messages: PlaygroundMessage[]) => {
     dispatch({ type: 'setMessages', messages });
@@ -230,7 +266,7 @@ export default function Playground() {
       <section
         className="flex-1 rounded-[14px] flex flex-col overflow-hidden min-w-0"
         style={{
-          background: 'var(--bg-card-2)',
+          background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           boxShadow: 'var(--shadow-card)',
         }}
@@ -249,22 +285,12 @@ export default function Playground() {
           <button
             type="button"
             className="btn-icon"
-            onClick={onNewSession}
-            disabled={!state.agentId}
-            title="New session"
-            aria-label="New session"
+            onClick={onClearConversation}
+            disabled={!state.agentId || state.messages.length === 0}
+            title="Clear conversation"
+            aria-label="Clear conversation"
           >
-            <PlusIcon size={13} strokeWidth={2.4} />
-          </button>
-          <button
-            type="button"
-            className="btn-icon"
-            onClick={() => setShowSeedModal(true)}
-            disabled={!state.agentId}
-            title="Load from trace"
-            aria-label="Load from trace"
-          >
-            <ArrowDownToLineIcon size={13} strokeWidth={2.2} />
+            <TrashIcon size={13} strokeWidth={2.2} />
           </button>
           <button
             type="button"
@@ -287,7 +313,7 @@ export default function Playground() {
             className="px-[14px] py-[6px] text-[11.5px] mono"
             style={{
               background: 'var(--danger-subtle)',
-              borderBottom: '1px solid rgba(217,85,85,0.28)',
+              borderBottom: '1px solid color-mix(in srgb, var(--danger) 32%, transparent)',
               color: 'var(--danger)',
             }}
           >
@@ -306,6 +332,7 @@ export default function Playground() {
           onDelete={localId => dispatch({ type: 'deleteMessage', localId })}
           onInsert={onInsert}
           onMove={onMove}
+          onLoadFromTrace={state.agentId ? () => setShowSeedModal(true) : undefined}
         />
 
         {state.pendingToolRequest ? (
@@ -352,6 +379,26 @@ export default function Playground() {
       )}
     </div>
   );
+}
+
+function roleFromString(role: string): PlaygroundRole {
+  const lower = role.toLowerCase();
+  if (lower === 'user' || lower === 'assistant' || lower === 'system' || lower === 'tool') return lower;
+  return 'user';
+}
+
+function agentCallToMessages(call: AgentCallDto): PlaygroundMessage[] {
+  const toMsg = (m: MessageDto): PlaygroundMessage => {
+    const base = makeMessage(roleFromString(m.role), m.content ?? '');
+    if (m.toolRequests && m.toolRequests.length > 0) {
+      base.toolRequests = m.toolRequests.map(tr => ({ id: tr.id, name: tr.name, arguments: tr.arguments }));
+    }
+    if (m.toolCallId) base.toolCallId = m.toolCallId;
+    return base;
+  };
+  const out: PlaygroundMessage[] = call.request.map(toMsg);
+  if (call.response) out.push(toMsg(call.response));
+  return out;
 }
 
 function toPayloadMessage(m: PlaygroundMessage): PlaygroundMessagePayload {

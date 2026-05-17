@@ -28,7 +28,7 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
               aria-label="modified"
               title="Modified from agent default"
               className="size-[5px] rounded-full bg-accent"
-              style={{ boxShadow: '0 0 0 2px rgba(201,148,74,0.18)' }}
+              style={{ boxShadow: '0 0 0 2px var(--accent-subtle)' }}
             />
           )}
         </label>

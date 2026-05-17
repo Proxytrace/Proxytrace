@@ -8,14 +8,37 @@ interface Props {
   onChange: (next: PlaygroundToolOverride[]) => void;
 }
 
-// Syntax-highlight palette for JSON-Schema type tags (intentional, not brand colors).
 const TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  string: { bg: 'rgba(34,211,238,0.10)', color: '#67e8f9', border: 'rgba(34,211,238,0.22)' },
-  number: { bg: 'rgba(251,191,36,0.10)', color: '#fcd34d', border: 'rgba(251,191,36,0.22)' },
-  integer: { bg: 'rgba(251,191,36,0.10)', color: '#fcd34d', border: 'rgba(251,191,36,0.22)' },
-  boolean: { bg: 'rgba(167,139,250,0.10)', color: '#c4b5fd', border: 'rgba(167,139,250,0.22)' },
-  array: { bg: 'rgba(52,211,153,0.10)', color: '#86efac', border: 'rgba(52,211,153,0.22)' },
-  object: { bg: 'rgba(255,255,255,0.05)', color: '#9ca3af', border: 'rgba(255,255,255,0.10)' },
+  string: {
+    bg: 'color-mix(in srgb, var(--teal) 12%, transparent)',
+    color: 'var(--teal)',
+    border: 'color-mix(in srgb, var(--teal) 28%, transparent)',
+  },
+  number: {
+    bg: 'var(--warn-subtle)',
+    color: 'var(--warn)',
+    border: 'color-mix(in srgb, var(--warn) 28%, transparent)',
+  },
+  integer: {
+    bg: 'var(--warn-subtle)',
+    color: 'var(--warn)',
+    border: 'color-mix(in srgb, var(--warn) 28%, transparent)',
+  },
+  boolean: {
+    bg: 'var(--accent-subtle)',
+    color: 'var(--accent-hover)',
+    border: 'color-mix(in srgb, var(--accent-primary) 28%, transparent)',
+  },
+  array: {
+    bg: 'var(--success-subtle)',
+    color: 'var(--success)',
+    border: 'color-mix(in srgb, var(--success) 28%, transparent)',
+  },
+  object: {
+    bg: 'var(--border-subtle)',
+    color: 'var(--text-secondary)',
+    border: 'var(--border-color)',
+  },
 };
 
 function typeColor(type: string) {
@@ -57,7 +80,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             strokeWidth={2.4}
             className={`text-muted transition-transform ${open ? '' : '-rotate-90'}`}
           />
-          <span className="mono text-[12px] font-semibold" style={{ color: '#86efac' }}>
+          <span className="mono text-[12px] font-semibold text-success">
             {tool.name || '(unnamed)'}
           </span>
           <span
