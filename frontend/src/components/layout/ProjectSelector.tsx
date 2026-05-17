@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import type { ProjectDto } from '../../api/models';
+import { projectColor } from '../../lib/colors';
 
 function projectInitials(name: string) {
   const trimmed = name.trim();
@@ -10,14 +11,6 @@ function projectInitials(name: string) {
   const parts = trimmed.split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-const COLORS = ['#6b9eaa', '#c9944a', '#8e7cc3', '#5fa37b', '#d97a6c', '#7aa3c9'];
-
-function projectColor(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return COLORS[hash % COLORS.length];
 }
 
 export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
@@ -44,7 +37,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
 
   const name = currentProject?.name ?? 'No project';
   const memberCount = currentProject?.members.length ?? 0;
-  const color = currentProject ? projectColor(currentProject.id) : '#6b9eaa';
+  const color = currentProject ? projectColor(currentProject.id) : 'var(--teal)';
 
   return (
     <div ref={ref} className="relative">

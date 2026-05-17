@@ -361,8 +361,8 @@ export function FixtureDrawer({ runId, caseId, caseIdx, total: totalCases, caseS
               <section>
                 <div className="text-[11px] font-semibold text-muted uppercase tracking-[0.07em] mb-[10px]">Output</div>
                 <div className="flex gap-3">
-                  <OutputBlock label="Expected" color="#6b9eaa" value={fixture.expected} />
-                  <OutputBlock label="Actual" color="#3daa6f" value={fixture.actual} />
+                  <OutputBlock label="Expected" color="var(--teal)" value={fixture.expected} />
+                  <OutputBlock label="Actual" color="var(--success)" value={fixture.actual} />
                 </div>
               </section>
 

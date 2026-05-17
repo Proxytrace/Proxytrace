@@ -21,11 +21,11 @@ const groupOrder: { kind: SearchKind; label: string }[] = [
 ];
 
 const kindMeta: Record<SearchKind, { label: string; accent: string; icon: (s: number) => React.ReactNode }> = {
-  agent:     { label: 'Agent',      accent: '#7aa2ff', icon: s => <UsersIcon size={s} /> },
-  testSuite: { label: 'Test Suite', accent: '#3daa6f', icon: s => <CheckboxIcon size={s} /> },
-  agentCall: { label: 'Trace',      accent: '#c9944a', icon: s => <ActivityIcon size={s} /> },
-  evaluator: { label: 'Evaluator',  accent: '#b97aff', icon: s => <ScaleIcon size={s} /> },
-  testCase:  { label: 'Test Case',  accent: '#3daa6f', icon: s => <CheckboxIcon size={s} /> },
+  agent:     { label: 'Agent',      accent: 'var(--teal)', icon: s => <UsersIcon size={s} /> },
+  testSuite: { label: 'Test Suite', accent: 'var(--success)', icon: s => <CheckboxIcon size={s} /> },
+  agentCall: { label: 'Trace',      accent: 'var(--accent-primary)', icon: s => <ActivityIcon size={s} /> },
+  evaluator: { label: 'Evaluator',  accent: 'var(--warn)', icon: s => <ScaleIcon size={s} /> },
+  testCase:  { label: 'Test Case',  accent: 'var(--success)', icon: s => <CheckboxIcon size={s} /> },
 };
 
 export function SearchBar({ projectId, inputRef }: Props) {
@@ -119,7 +119,7 @@ export function SearchBar({ projectId, inputRef }: Props) {
 
   return (
     <div ref={wrapperRef} className="relative flex-1 max-w-[460px] mx-auto">
-      <div className="flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] bg-white/[.03] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)] focus-within:shadow-[inset_0_0_0_1px_rgba(201,148,74,0.4),0_1px_2px_rgba(0,0,0,0.2)] transition-shadow">
+      <div className="flex items-center gap-2 px-3 py-[7px] rounded-[10px] text-[13px] bg-white/[.03] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_1px_2px_rgba(0,0,0,0.2)] focus-within:shadow-[inset_0_0_0_1px_color-mix(in srgb, var(--accent-primary) 40%, transparent),0_1px_2px_rgba(0,0,0,0.2)] transition-shadow">
         <SearchIcon size={14} />
         <input
           ref={inputRef}
@@ -250,7 +250,7 @@ function PreviewPane({ hit }: { hit: SearchHit }) {
       <div className="text-[15px] font-semibold text-white leading-snug break-words">{hit.title}</div>
 
       <div
-        className="text-[12.5px] text-white/70 leading-relaxed break-words [&_mark]:bg-[#c9944a]/30 [&_mark]:text-[#f0d9a8] [&_mark]:rounded [&_mark]:px-[3px] [&_mark]:py-[1px] [&_mark]:font-medium"
+        className="text-[12.5px] text-white/70 leading-relaxed break-words [&_mark]:bg-accent/30 [&_mark]:text-accent-hover [&_mark]:rounded [&_mark]:px-[3px] [&_mark]:py-[1px] [&_mark]:font-medium"
         dangerouslySetInnerHTML={{ __html: hit.snippet }}
       />
 

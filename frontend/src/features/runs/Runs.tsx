@@ -81,8 +81,8 @@ function Minimap({
       {run.results.map((r, i) => {
         const pass = resultPass(r);
         const selected = selectedCaseId === r.testCaseId;
-        const fill = pass === true ? 'rgba(16,185,129,0.28)' : pass === false ? 'rgba(239,68,68,0.28)' : 'rgba(255,255,255,0.07)';
-        const border = selected ? '#fff' : pass === true ? 'rgba(16,185,129,0.55)' : pass === false ? 'rgba(239,68,68,0.55)' : 'var(--border-color)';
+        const fill = pass === true ? 'color-mix(in srgb, var(--success) 28%, transparent)' : pass === false ? 'color-mix(in srgb, var(--danger) 28%, transparent)' : 'rgba(255,255,255,0.07)';
+        const border = selected ? '#fff' : pass === true ? 'color-mix(in srgb, var(--success) 55%, transparent)' : pass === false ? 'color-mix(in srgb, var(--danger) 55%, transparent)' : 'var(--border-color)';
         return (
           <button
             key={r.id}
@@ -108,8 +108,8 @@ function Minimap({
             className={running ? 'pulse-dot' : undefined}
             style={{
               width: size, height: size, borderRadius: 4, flexShrink: 0,
-              background: running ? 'rgba(201,148,74,0.18)' : 'transparent',
-              border: `1.5px dashed ${running ? 'rgba(201,148,74,0.55)' : 'var(--hairline)'}`,
+              background: running ? 'color-mix(in srgb, var(--accent-primary) 18%, transparent)' : 'transparent',
+              border: `1.5px dashed ${running ? 'color-mix(in srgb, var(--accent-primary) 55%, transparent)' : 'var(--hairline)'}`,
             }}
           />
         );
@@ -129,10 +129,10 @@ function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelected: bo
     ? erroredFirst.errorMessage
     : r.evaluations.find(e => !isPass(e) && e.reasoning)?.reasoning;
   const tint = pass === false
-    ? (isSelected ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.05)')
-    : (isSelected ? 'rgba(201,148,74,0.06)' : 'var(--bg-card-2)');
+    ? (isSelected ? 'color-mix(in srgb, var(--danger) 10%, transparent)' : 'color-mix(in srgb, var(--danger) 5%, transparent)')
+    : (isSelected ? 'color-mix(in srgb, var(--accent-primary) 6%, transparent)' : 'var(--bg-card-2)');
   const borderColor = isSelected
-    ? (pass === false ? 'rgba(239,68,68,0.45)' : 'rgba(201,148,74,0.35)')
+    ? (pass === false ? 'color-mix(in srgb, var(--danger) 45%, transparent)' : 'color-mix(in srgb, var(--accent-primary) 35%, transparent)')
     : pass === false ? 'color-mix(in srgb, var(--danger) 28%, transparent)' : 'var(--hairline)';
 
   return (
@@ -328,7 +328,7 @@ function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseIds?: Se
       key: 'evaluator', label: 'Evaluator', width: '1fr',
       render: r => {
         const primary = r.evaluations[0];
-        const c = primary ? (EVALUATOR_KIND_COLOR[primary.evaluatorKind as EvaluatorKind] ?? '#888') : null;
+        const c = primary ? (EVALUATOR_KIND_COLOR[primary.evaluatorKind as EvaluatorKind] ?? 'var(--text-muted)') : null;
         return c ? <ColoredBadge color={c} label={primary.evaluatorName} shape="rounded" /> : <span />;
       },
     },

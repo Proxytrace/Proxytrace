@@ -67,11 +67,11 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
 }
 
 const SCORE_SCALE: { n: number; name: string; meaning: string; color: string }[] = [
-  { n: 1, name: 'Terrible',   meaning: 'Completely wrong / unsafe', color: '#ef4444' },
-  { n: 2, name: 'Bad',        meaning: 'Mostly wrong',              color: '#f97316' },
-  { n: 3, name: 'Acceptable', meaning: 'Partially correct',         color: '#eab308' },
-  { n: 4, name: 'Good',       meaning: 'Mostly correct',            color: '#84cc16' },
-  { n: 5, name: 'Excellent',  meaning: 'Fully correct',             color: '#22c55e' },
+  { n: 1, name: 'Terrible',   meaning: 'Completely wrong / unsafe', color: 'var(--danger)' },
+  { n: 2, name: 'Bad',        meaning: 'Mostly wrong',              color: 'var(--warn)' },
+  { n: 3, name: 'Acceptable', meaning: 'Partially correct',         color: 'var(--accent-primary)' },
+  { n: 4, name: 'Good',       meaning: 'Mostly correct',            color: 'var(--teal)' },
+  { n: 5, name: 'Excellent',  meaning: 'Fully correct',             color: 'var(--success)' },
 ];
 
 function OutputContractPanel() {

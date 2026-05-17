@@ -126,7 +126,7 @@ export function Shell() {
           className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
         >
           <div
-            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_16px_-4px_rgba(201,148,74,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
           >T</div>
           {!collapsed && (
             <div className="ml-[10px]">
@@ -173,7 +173,7 @@ export function Shell() {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {/* Topbar */}
         <header
-          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[rgba(30,30,34,0.75)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
+          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
           <button onClick={() => setCollapsed(c => !c)} className="btn-icon">
             <LayoutSidebarIcon size={16} />
@@ -193,15 +193,15 @@ export function Shell() {
 
           <div
             style={{
-              background: online === false ? 'rgba(217,85,85,0.12)' : online === true ? 'rgba(61,170,111,0.12)' : 'var(--warn-subtle)',
-              border: `1px solid ${online === false ? 'rgba(217,85,85,0.25)' : online === true ? 'rgba(61,170,111,0.25)' : 'rgba(245,158,11,0.25)'}`,
-              color: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)',
+              background: online === false ? 'var(--danger-subtle)' : online === true ? 'var(--success-subtle)' : 'var(--warn-subtle)',
+              border: `1px solid ${online === false ? 'color-mix(in srgb, var(--danger) 25%, transparent)' : online === true ? 'color-mix(in srgb, var(--success) 25%, transparent)' : 'color-mix(in srgb, var(--warn) 25%, transparent)'}`,
+              color: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)',
             }}
             className="flex items-center gap-1.5 px-[10px] py-[6px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0"
           >
             <span
               className={`size-[6px] rounded-full inline-block ${online === true ? 'pulse-dot' : ''}`}
-              style={{ background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)' }}
+              style={{ background: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)' }}
             />
             {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
@@ -212,7 +212,7 @@ export function Shell() {
             title={`Sign out (${userName})`}
             className="cursor-pointer"
           >
-            <Avatar initials={userInitials} color="#c9944a" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+            <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
           </button>
         </header>
 

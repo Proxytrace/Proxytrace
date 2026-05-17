@@ -29,10 +29,10 @@ export function Histogram({
         height={height}
         style={{ display: 'block' }}
       >
-        <line x1="38" x2={w - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="#343438" />
+        <line x1="38" x2={w - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="var(--border-color)" />
         <path d={hist.barsPath} fill={color} opacity="0.85" />
         {hist.rects.map((r, i) => (
-          <text key={i} x={r.labelX} y={height - 8} textAnchor="middle" fill="#67645e" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+          <text key={i} x={r.labelX} y={height - 8} textAnchor="middle" fill="var(--text-muted)" fontSize="9" fontFamily="JetBrains Mono, monospace">{r.label}</text>
         ))}
       </svg>
     </div>

@@ -241,12 +241,8 @@ export function ProposalDetail({ dto }: Props) {
             onClick={() => updateStatus.mutate(ProposalStatus.Accepted)}
             className="px-4 py-2 rounded-md text-body-sm font-semibold text-white inline-flex items-center gap-1.5 disabled:opacity-50"
             style={{
-              background: abReady
-                ? 'linear-gradient(135deg, var(--success), #059669)'
-                : 'linear-gradient(135deg, var(--accent-primary), #a07434)',
-              boxShadow: abReady
-                ? '0 4px 14px -4px color-mix(in srgb, var(--success) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)'
-                : '0 4px 14px -4px color-mix(in srgb, var(--accent-primary) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.15)',
+              background: abReady ? 'var(--grad-success)' : 'var(--grad-accent)',
+              boxShadow: abReady ? 'var(--shadow-btn-success)' : 'var(--shadow-btn)',
             }}
             data-write
           >
@@ -357,7 +353,7 @@ function PromptDiff({ before, after }: { before: string; after: string }) {
   const dels = rendered.filter(r => r.kind === 'del').length;
 
   return (
-    <div className="bg-[#0a0a0e] rounded-md overflow-hidden border border-border-subtle">
+    <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle">
       <div className="flex items-center gap-2.5 px-3.5 py-2 border-b border-hairline bg-card-2/30">
         <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">System prompt</span>
         <span className="mono text-body-sm text-success">+{adds}</span>
@@ -366,14 +362,14 @@ function PromptDiff({ before, after }: { before: string; after: string }) {
       <div className="mono text-body leading-[1.65]">
         {rendered.map((r, i) => {
           const color = r.kind === 'add'
-            ? '#86efac'
+            ? 'var(--success)'
             : r.kind === 'del'
-            ? '#e88a8a'
+            ? 'var(--danger)'
             : 'var(--text-secondary)';
           const bg = r.kind === 'add'
-            ? 'rgba(61,170,111,0.08)'
+            ? 'color-mix(in srgb, var(--success) 8%, transparent)'
             : r.kind === 'del'
-            ? 'rgba(217,85,85,0.08)'
+            ? 'color-mix(in srgb, var(--danger) 8%, transparent)'
             : 'transparent';
           const sigil = r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' ';
           const sigilColor = r.kind === 'add' ? 'var(--success)' : r.kind === 'del' ? 'var(--danger)' : 'var(--text-muted)';
@@ -395,14 +391,14 @@ function ModelSwitchSection({ details }: { details: ModelSwitchDetailsDto }) {
   const toColor = modelColor(details.proposedModelName);
 
   return (
-    <div className="bg-[#0a0a0e] rounded-md overflow-hidden border border-border-subtle">
+    <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
         <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">Model change</span>
       </div>
       <div className="flex items-center gap-3.5 justify-center px-3.5 py-4">
-        <ModelBox label="From" name={details.currentModelName} color={fromColor} tint="rgba(217,85,85,0.06)"/>
+        <ModelBox label="From" name={details.currentModelName} color={fromColor} tint="color-mix(in srgb, var(--danger) 6%, transparent)"/>
         <span className="text-h2 text-muted">→</span>
-        <ModelBox label="To" name={details.proposedModelName} color={toColor} tint="rgba(61,170,111,0.06)"/>
+        <ModelBox label="To" name={details.proposedModelName} color={toColor} tint="color-mix(in srgb, var(--success) 6%, transparent)"/>
       </div>
     </div>
   );
@@ -416,7 +412,7 @@ function ModelBox({ label, name, color, tint }: { label: string; name: string; c
     >
       <div
         className="text-caption font-semibold uppercase tracking-[0.07em] mb-1"
-        style={{ color: label === 'To' ? '#5cc98a' : 'var(--text-muted)' }}
+        style={{ color: label === 'To' ? 'var(--success)' : 'var(--text-muted)' }}
       >
         {label}
       </div>
@@ -432,7 +428,7 @@ function ToolUpdateSection({ details }: { details: ToolDetailsDto }) {
   const removed  = details.currentTools.filter(t => !proposedNames.has(t.name));
 
   return (
-    <div className="bg-[#0a0a0e] rounded-md overflow-hidden border border-border-subtle">
+    <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
         <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">Tool definition diff</span>
       </div>
@@ -448,9 +444,9 @@ function ToolUpdateSection({ details }: { details: ToolDetailsDto }) {
 function ToolRow({ kind, tool }: { kind: 'add' | 'del'; tool: ToolSpecDto }) {
   const isAdd = kind === 'add';
   const color = isAdd ? 'var(--success)' : 'var(--danger)';
-  const bg = isAdd ? 'rgba(61,170,111,0.06)' : 'rgba(217,85,85,0.06)';
+  const bg = isAdd ? 'color-mix(in srgb, var(--success) 6%, transparent)' : 'color-mix(in srgb, var(--danger) 6%, transparent)';
   const label = isAdd ? '+ added' : '− removed';
-  const nameColor = isAdd ? '#5cc98a' : '#e88a8a';
+  const nameColor = isAdd ? 'var(--success)' : 'var(--danger)';
   return (
     <div
       className="px-3.5 py-3"

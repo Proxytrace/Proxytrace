@@ -60,7 +60,7 @@ function FirstAdminStep({ onDone }: { onDone: () => void }) {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface p-6 sm:p-10">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(201,148,74,0.10),transparent_55%),radial-gradient(circle_at_80%_110%,rgba(107,158,170,0.08),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,color-mix(in srgb, var(--accent-primary) 10%, transparent),transparent_55%),radial-gradient(circle_at_80%_110%,color-mix(in srgb, var(--teal) 8%, transparent),transparent_55%)]"
       />
       <form
         className="relative w-full max-w-md space-y-4 rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-float)]"
@@ -352,7 +352,7 @@ function SetupWizard() {
         </button>
         {testResult && (
           <span
-            className={`text-[12px] ${testResult.ok ? 'text-success' : 'text-[color:var(--danger,#dc2626)]'}`}
+            className={`text-[12px] ${testResult.ok ? 'text-success' : 'text-danger'}`}
           >
             {testResult.message}
           </span>
@@ -418,7 +418,7 @@ function SetupWizard() {
               autoFocus
             />
             {modelsError && (
-              <span className="text-[11px] text-[color:var(--danger,#dc2626)]">
+              <span className="text-[11px] text-danger">
                 Could not list models from provider: {modelsError}. Enter the model name manually.
               </span>
             )}
@@ -545,7 +545,7 @@ function SetupWizard() {
     <div className="relative min-h-screen bg-surface flex items-center justify-center p-6 sm:p-10 overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(201,148,74,0.10),transparent_55%),radial-gradient(circle_at_80%_110%,rgba(107,158,170,0.08),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,color-mix(in srgb, var(--accent-primary) 10%, transparent),transparent_55%),radial-gradient(circle_at_80%_110%,color-mix(in srgb, var(--teal) 8%, transparent),transparent_55%)]"
       />
 
       <div className="relative w-full max-w-[600px]">

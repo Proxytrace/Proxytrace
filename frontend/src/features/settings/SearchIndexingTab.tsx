@@ -121,7 +121,7 @@ export function SearchIndexingTab() {
                   type="button"
                   onClick={() => setSelectedId(p.id)}
                   className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
-                    isActive ? 'bg-[rgba(201,148,74,0.06)]' : 'hover:bg-[rgba(201,148,74,0.04)]'
+                    isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
                   }`}
                 >
                   <span className="text-[13px] font-semibold text-primary">{p.name}</span>
@@ -167,7 +167,7 @@ export function SearchIndexingTab() {
                   onClick={() => reindex.mutate()}
                   data-write
                   disabled={reindex.isPending || status?.isReindexing}
-                  className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <ZapIcon size={14} />
                   {status?.isReindexing || reindex.isPending ? 'Reindexing…' : 'Reindex now'}
@@ -194,7 +194,7 @@ export function SearchIndexingTab() {
                   <StatusCell
                     label="State"
                     value={status?.isReindexing ? 'Reindexing' : 'Idle'}
-                    valueClassName={status?.isReindexing ? 'text-[#c9944a]' : 'text-[#3daa6f]'}
+                    valueClassName={status?.isReindexing ? 'text-accent' : 'text-success'}
                   />
                 </div>
               )}
@@ -207,7 +207,7 @@ export function SearchIndexingTab() {
               {settingsLoading && !draft ? (
                 <SkeletonList rows={4} height={56} gap={8} />
               ) : settingsError ? (
-                <div className="text-[13px] text-[#d95555]">
+                <div className="text-[13px] text-danger">
                   Failed to load settings: {(settingsError as Error).message}
                 </div>
               ) : draft ? (
@@ -240,7 +240,7 @@ export function SearchIndexingTab() {
                             onClick={() => toggleKind(opt.value)}
                             className={`px-3 py-[6px] rounded-full text-[12px] font-semibold cursor-pointer border transition-colors ${
                               checked
-                                ? 'bg-[rgba(201,148,74,0.15)] border-[rgba(201,148,74,0.45)] text-primary'
+                                ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_15%,_transparent)] border-[color-mix(in_srgb,_var(--accent-primary)_45%,_transparent)] text-primary'
                                 : 'bg-card-2 border-hairline text-muted hover:text-primary'
                             }`}
                           >
@@ -271,7 +271,7 @@ export function SearchIndexingTab() {
                       onClick={() => updateSettings.mutate(draft)}
                       data-write
                       disabled={!dirty || updateSettings.isPending}
-                      className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {updateSettings.isPending ? 'Saving…' : 'Save changes'}
                     </button>
@@ -342,7 +342,7 @@ function ToggleRow({
         aria-label={label}
         onClick={() => onChange(!checked)}
         className={`relative shrink-0 w-10 h-6 rounded-full transition-colors cursor-pointer ${
-          checked ? 'bg-[linear-gradient(135deg,#c9944a,#a57038)]' : 'bg-card-2 border border-hairline'
+          checked ? 'bg-[image:var(--grad-accent)]' : 'bg-card-2 border border-hairline'
         }`}
       >
         <span

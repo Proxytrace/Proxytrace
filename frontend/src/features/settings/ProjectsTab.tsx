@@ -24,7 +24,7 @@ function initials(name: string): string {
 }
 
 function colorFor(id: string): string {
-  const palette = ['#c9944a', '#3daa6f', '#6b9eaa', '#5b82b0', '#d4915c', '#a07db8'];
+  const palette = ['var(--accent-primary)', 'var(--success)', 'var(--teal)', 'var(--teal)', 'var(--warn)', 'var(--accent-hover)'];
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
   return palette[Math.abs(hash) % palette.length];
@@ -134,7 +134,7 @@ export function ProjectsTab() {
           <button
             onClick={() => setShowNew(true)}
             data-write
-            className="flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_14px_-4px_rgba(201,148,74,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            className="flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
           >
             <PlusIcon size={14} />
             New project
@@ -154,7 +154,7 @@ export function ProjectsTab() {
                   type="button"
                   onClick={() => setSelectedId(p.id)}
                   className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
-                    isActive ? 'bg-[rgba(201,148,74,0.06)]' : 'hover:bg-[rgba(201,148,74,0.04)]'
+                    isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
                   }`}
                 >
                   <span className="text-[13px] font-semibold text-primary">{p.name}</span>
@@ -217,7 +217,7 @@ export function ProjectsTab() {
               <button
                 onClick={() => setConfirmDelete(true)}
                 data-write
-                className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[rgba(217,85,85,0.3)] text-[#d95555] hover:bg-[rgba(217,85,85,0.08)]"
+                className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle"
               >
                 <TrashIcon size={14} />
                 Delete
@@ -282,7 +282,7 @@ export function ProjectsTab() {
                 <button
                   onClick={() => setShowAddMember(true)}
                   data-write
-                  className="flex items-center gap-1.5 px-3 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer bg-card-2 border border-hairline text-primary hover:bg-[rgba(201,148,74,0.08)]"
+                  className="flex items-center gap-1.5 px-3 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer bg-card-2 border border-hairline text-primary hover:bg-[color-mix(in_srgb,_var(--accent-primary)_8%,_transparent)]"
                 >
                   <PlusIcon size={12} />
                   Add member
@@ -307,7 +307,7 @@ export function ProjectsTab() {
                       />
                       <span className="flex-1 text-[13px] font-semibold text-primary">{m.email}</span>
                       <button
-                        className="btn-icon text-muted hover:text-[#d95555]"
+                        className="btn-icon text-muted hover:text-danger"
                         data-write
                         onClick={() => setRemoveMember(m)}
                         aria-label={`Remove ${m.email}`}

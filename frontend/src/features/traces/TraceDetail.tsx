@@ -195,7 +195,7 @@ export function TraceDetail({ trace, onClose, onPrev, onNext }: Props) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
               <span className="mono text-[13px] font-semibold">{trace.id.slice(0, 18)}…</span>
-              <span className="inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-[10.5px] font-semibold font-mono" style={{ background: statusOk ? 'var(--success-subtle)' : statusErr ? 'var(--danger-subtle)' : 'rgba(212,145,92,0.15)', color: statusColor }}>
+              <span className="inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-[10.5px] font-semibold font-mono" style={{ background: statusOk ? 'var(--success-subtle)' : statusErr ? 'var(--danger-subtle)' : 'color-mix(in srgb, var(--warn) 15%, transparent)', color: statusColor }}>
                 <span className="w-[5px] h-[5px] rounded-full" style={{ background: statusColor }} />
                 {trace.httpStatus} {statusLabel}
               </span>

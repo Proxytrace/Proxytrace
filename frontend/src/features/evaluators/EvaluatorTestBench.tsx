@@ -10,11 +10,11 @@ import { TestResultPicker } from './TestResultPicker';
 import type { SearchHit } from '../../api/search';
 
 const SCORE_COLOR: Record<EvaluationScore, string> = {
-  [EvaluationScore.Terrible]: '#ef4444',
-  [EvaluationScore.Bad]: '#f97316',
-  [EvaluationScore.Acceptable]: '#eab308',
-  [EvaluationScore.Good]: '#84cc16',
-  [EvaluationScore.Excellent]: '#22c55e',
+  [EvaluationScore.Terrible]: 'var(--danger)',
+  [EvaluationScore.Bad]: 'var(--warn)',
+  [EvaluationScore.Acceptable]: 'var(--accent-primary)',
+  [EvaluationScore.Good]: 'var(--teal)',
+  [EvaluationScore.Excellent]: 'var(--success)',
 };
 
 export interface EvaluatorTestBenchHandle {

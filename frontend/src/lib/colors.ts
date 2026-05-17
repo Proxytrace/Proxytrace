@@ -11,14 +11,16 @@ const MODEL_COLORS: Record<string, string> = {
   'claude-3-haiku': '#3daa6f',
 };
 
-const MODEL_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#c2836b', '#b8834a', '#5ba394', '#d0956f'];
-const AGENT_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#c2836b', '#deb073', '#5ba394', '#b8834a'];
+// Entity palettes use only on-system tokens (accent, teal, success, warn, accent-hover).
+// Do not add new brand hexes — extend by repetition with hash mixing.
+const MODEL_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#deb073', '#6b9eaa', '#3daa6f', '#c9944a'];
+const AGENT_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#deb073', '#3daa6f', '#6b9eaa', '#c9944a'];
 
 const PROVIDER_COLORS: Record<string, string> = {
   Anthropic: '#3daa6f',
   OpenAI: '#c9944a',
   Google: '#6b9eaa',
-  Azure: '#5b82b0',
+  Azure: '#6b9eaa',
   Mistral: '#d4915c',
 };
 
@@ -40,6 +42,10 @@ export function modelColor(name: string): string {
 
 export function providerColor(name: string): string {
   return PROVIDER_COLORS[name] ?? AGENT_PALETTE[hashStr(name) % AGENT_PALETTE.length];
+}
+
+export function projectColor(id: string): string {
+  return AGENT_PALETTE[hashStr(id) % AGENT_PALETTE.length];
 }
 
 export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {

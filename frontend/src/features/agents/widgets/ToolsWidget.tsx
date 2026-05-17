@@ -15,8 +15,8 @@ interface Props {
 
 // Syntax-highlight palette for JSON-Schema type tags (intentional, not brand colors).
 const TYPE_COLORS: Record<string, string> = {
-  string: '#93c5fd', integer: '#fbbf24', number: '#fbbf24',
-  boolean: '#f472b6', enum: '#6ee7b7', object: '#f9a8d4', array: '#86efac',
+  string: 'var(--teal)', integer: 'var(--warn)', number: 'var(--warn)',
+  boolean: 'var(--danger)', enum: 'var(--success)', object: 'var(--accent-hover)', array: 'var(--success)',
 };
 
 const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
@@ -26,7 +26,7 @@ const TOOL_ARG_COLUMNS: DataColumn<ToolArgumentDto>[] = [
   },
   {
     key: 'type', label: 'Type', width: '0.8fr',
-    render: p => <ColoredBadge color={TYPE_COLORS[p.type] ?? '#888'} label={p.type} shape="rounded" />,
+    render: p => <ColoredBadge color={TYPE_COLORS[p.type] ?? 'var(--text-muted)'} label={p.type} shape="rounded" />,
   },
   {
     key: 'req', label: 'Req', width: '0.4fr',

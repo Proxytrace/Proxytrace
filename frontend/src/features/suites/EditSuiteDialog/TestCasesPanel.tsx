@@ -157,7 +157,7 @@ function CurrentCasesList({
             }}
           >
             <div className="flex items-center gap-2">
-              <ColoredBadge color="#6b9eaa" label={`${tc.input.length} msg`} size="sm" />
+              <ColoredBadge color="var(--teal)" label={`${tc.input.length} msg`} size="sm" />
               <span
                 className={`text-[12.5px] truncate min-w-0 flex-1 ${removing ? 'line-through text-muted' : 'text-primary'}`}
               >

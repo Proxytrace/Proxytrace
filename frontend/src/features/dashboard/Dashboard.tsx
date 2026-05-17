@@ -203,7 +203,7 @@ export default function Dashboard() {
             <div className="min-w-0 flex-1">
               <h3>Token Volume</h3>
               <p className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: '#c9944a' }} />
+                <span className="w-2 h-2 rounded-[2px] inline-block" style={{ background: 'var(--accent-primary)' }} />
                 Tokens · {rangeLabel(range)}
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function Dashboard() {
                 data={tokenVolumeSeries}
                 width={820}
                 height={200}
-                color="#c9944a"
+                color="var(--accent-primary)"
                 gradientId="volGrad"
                 formatValue={v => `${fmtTokens(v)} tokens`}
                 tooltipLabelFn={i => tokenVolume.dates[i] ?? ''}
@@ -271,7 +271,7 @@ export default function Dashboard() {
                 <EmptyState title="No samples" description="Latency stats appear after traces arrive." />
               </div>
             ) : (
-              <BarChart data={latencyBarItems} width={360} height={200} color="#6b9eaa" formatValue={v => `p95 ${fmtLatency(v)}`} />
+              <BarChart data={latencyBarItems} width={360} height={200} color="var(--teal)" formatValue={v => `p95 ${fmtLatency(v)}`} />
             )}
           </div>
         </div>
@@ -298,7 +298,7 @@ export default function Dashboard() {
               </div>
             )}
             {!modelLoading && modelBarItems.length > 0 && (
-              <BarChart data={modelBarItems} width={820} height={200} color="#c9944a" formatValue={v => `${fmtTokens(v)} tokens`} />
+              <BarChart data={modelBarItems} width={820} height={200} color="var(--accent-primary)" formatValue={v => `${fmtTokens(v)} tokens`} />
             )}
           </div>
         </div>
@@ -314,9 +314,9 @@ export default function Dashboard() {
           <div className="px-[18px] pb-[14px] pt-2 flex flex-col gap-3">
             <div className="flex items-center gap-4">
               <svg width="72" height="72" style={{ display: 'block', transform: 'rotate(-90deg)', flexShrink: 0 }}>
-                <circle cx="36" cy="36" r="32" fill="none" stroke="#343438" strokeWidth="6" />
+                <circle cx="36" cy="36" r="32" fill="none" stroke="var(--border-color)" strokeWidth="6" />
                 <circle
-                  cx="36" cy="36" r="32" fill="none" stroke="#3daa6f" strokeWidth="6"
+                  cx="36" cy="36" r="32" fill="none" stroke="var(--success)" strokeWidth="6"
                   strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 32}
                   strokeDashoffset={2 * Math.PI * 32 - (summary?.overallPassRate ?? 0) * 2 * Math.PI * 32}
@@ -340,7 +340,7 @@ export default function Dashboard() {
                   data={passRateSeries}
                   width={360}
                   height={100}
-                  color="#3daa6f"
+                  color="var(--success)"
                   gradientId="passGrad"
                   showAxis={false}
                   formatValue={v => `${v.toFixed(1)}% pass`}

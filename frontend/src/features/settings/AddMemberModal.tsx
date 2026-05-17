@@ -24,7 +24,7 @@ function initials(name: string): string {
 }
 
 function colorFor(id: string): string {
-  const palette = ['#c9944a', '#3daa6f', '#6b9eaa', '#5b82b0', '#d4915c', '#a07db8'];
+  const palette = ['var(--accent-primary)', 'var(--success)', 'var(--teal)', 'var(--teal)', 'var(--warn)', 'var(--accent-hover)'];
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
   return palette[Math.abs(hash) % palette.length];
@@ -69,7 +69,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
               type="button"
               onClick={() => onPick(u.id)}
               disabled={loading}
-              className="flex items-center gap-3 w-full px-3 py-[10px] text-left text-[13px] bg-transparent border-none border-b border-hairline last:border-b-0 cursor-pointer hover:bg-[rgba(201,148,74,0.04)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 w-full px-3 py-[10px] text-left text-[13px] bg-transparent border-none border-b border-hairline last:border-b-0 cursor-pointer hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Avatar
                 initials={initials(u.email)}

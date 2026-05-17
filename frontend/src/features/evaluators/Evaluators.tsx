@@ -38,14 +38,14 @@ const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
 const TYPE_META: Record<TypeCategory, { label: string; short: string; color: string }> = {
   llm:     { label: 'LLM-as-judge',    short: 'LLM judge', color: 'var(--accent-primary)' },
   rule:    { label: 'Rule-based',      short: 'Rule',      color: 'var(--teal)' },
-  numeric: { label: 'Numeric extract', short: 'Numeric',   color: '#8ec0cc' },
+  numeric: { label: 'Numeric extract', short: 'Numeric',   color: 'var(--teal)' },
 };
 
 // Distinct hex per category for color-mix and dynamic backgrounds
 const TYPE_HEX: Record<TypeCategory, string> = {
-  llm: '#c9944a',
-  rule: '#6b9eaa',
-  numeric: '#8ec0cc',
+  llm: 'var(--accent-primary)',
+  rule: 'var(--teal)',
+  numeric: 'var(--teal)',
 };
 
 const SCORE_ORDER: EvaluationScore[] = [
@@ -338,7 +338,7 @@ function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, sparklin
                   padding: '0 5px', borderRadius: 100, fontSize: 9.5,
                   fontFamily: 'JetBrains Mono, monospace', fontWeight: 600,
                   background: active ? 'var(--accent-subtle)' : 'transparent',
-                  color: active ? '#e8c99a' : 'var(--text-muted)',
+                  color: active ? 'var(--accent-hover)' : 'var(--text-muted)',
                 }}>{count}</span>
               </button>
             );
@@ -414,7 +414,7 @@ function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }: {
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 10px', borderRadius: 100,
-              background: 'var(--success-subtle)', color: '#5cc98a',
+              background: 'var(--success-subtle)', color: 'var(--success)',
               fontSize: 10.5, fontWeight: 600,
             }}>
               <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>
@@ -540,8 +540,8 @@ function PerformancePanel({ evaluator: e, overview, range, onRangeChange, color 
           big
         />
         <StatCell label="Evaluations" value={(summary?.totalEvaluations ?? 0).toLocaleString()} sub="executed" color="var(--text-primary)"/>
-        <StatCell label="Pass rate" value={summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} sub="score ≥ acceptable" color="#5cc98a"/>
-        <StatCell label="Avg latency" value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub="per evaluation" color="#8ec0cc" last/>
+        <StatCell label="Pass rate" value={summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} sub="score ≥ acceptable" color="var(--success)"/>
+        <StatCell label="Avg latency" value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub="per evaluation" color="var(--teal)" last/>
       </div>
 
       <div style={{ padding: '14px 18px 14px' }}>
@@ -610,7 +610,7 @@ function DefinitionPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailD
         {e.extractionPattern && (
           <div style={{ padding: '12px 14px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>extract pattern</div>
-            <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#8ec0cc' }}>/{e.extractionPattern}/</code>
+            <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--teal)' }}>/{e.extractionPattern}/</code>
           </div>
         )}
         {e.tolerance != null && (
@@ -978,7 +978,7 @@ function RecentEvaluationsTable({ evaluatorId }: { evaluatorId: string }) {
                   padding: '2px 8px', borderRadius: 100,
                   fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
                   background: s.passed ? 'var(--success-subtle)' : 'var(--danger-subtle)',
-                  color: s.passed ? '#5cc98a' : '#e88a8a',
+                  color: s.passed ? 'var(--success)' : 'var(--danger)',
                 }}>{s.passed ? 'PASS' : 'FAIL'}</span>
               </span>
             </div>
@@ -1116,7 +1116,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
-        background: 'rgba(8, 8, 11, 0.7)', backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >

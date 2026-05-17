@@ -280,7 +280,7 @@ export default function Suites() {
           { label: 'Total suites',  value: suites.length,                                          sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: 'var(--accent-primary)' },
           { label: 'Total cases',   value: totalCases,                                             sub: 'test case inputs',                                           color: 'var(--teal)' },
           { label: 'Total runs',    value: totalRuns,                                              sub: 'evaluations run',                                            color: 'var(--success)' },
-          { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—',         sub: 'across all suites',                                          color: '#f59e0b' },
+          { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—',         sub: 'across all suites',                                          color: 'var(--warn)' },
         ].map(k => (
           <div key={k.label} className="bg-card rounded-[14px] px-[18px] py-4 flex items-center gap-[14px]" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="w-10 h-10 rounded-[11px] flex items-center justify-center shrink-0" style={{ background: k.color + '18' }}>
