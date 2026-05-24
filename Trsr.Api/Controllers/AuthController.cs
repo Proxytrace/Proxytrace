@@ -83,6 +83,15 @@ public class AuthController : ControllerBase
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
+    // Issues a short-lived, single-use token for SSE connections, so the long-lived
+    // session JWT never has to ride in the EventSource query string (where it would
+    // leak via browser history / Referer / proxy logs). Validate this ticket in
+    // JwtBearerEventsFactory.OnMessageReceived alongside the existing access_token path.
+    [HttpGet("stream-ticket")]
+    [Authorize]
+    public Task<ActionResult<StreamTicketResponse>> StreamTicket(CancellationToken ct)
+        => throw new NotImplementedException();
+
     [HttpPost("login")]
     [AllowAnonymous]
     [RequireLocalMode]

@@ -2,6 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- CSP meta is injected at build time only (see vite.config.ts) so it covers
+         both the nginx and .NET-wwwroot deployments without breaking dev HMR.
+         Header-only directives (frame-ancestors, X-Frame-Options) live in nginx.conf. -->
+    <meta name="referrer" content="same-origin" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png" />

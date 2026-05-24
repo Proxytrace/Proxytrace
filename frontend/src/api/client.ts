@@ -44,7 +44,8 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     const errUrl = window.location.href;
 
     showToast(errMessage, 'error', {
-      stacktrace: errStacktrace,
+      // Don't surface server stacktraces to users in production builds.
+      stacktrace: import.meta.env.DEV ? errStacktrace : undefined,
       errorType: errType,
       url: errUrl,
       sendReport: async ({ description, timestamp }) => {
