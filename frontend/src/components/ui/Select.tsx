@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
+import { ChevronDownIcon } from '../icons';
 import { formInputCls } from './classes';
 
 type Size = 'sm' | 'md';
@@ -33,18 +34,10 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function 
       >
         {children}
       </select>
-      <svg
-        aria-hidden
+      <ChevronDownIcon
+        size={12}
         className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted"
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M6 9l6 6 6-6" />
-      </svg>
+      />
     </div>
   );
 });

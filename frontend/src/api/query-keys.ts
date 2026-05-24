@@ -2,7 +2,10 @@ const TEST_RUN_GROUPS = 'test-run-groups';
 
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
+  agent: (id: string | null) => ['agent', id ?? null] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
+  /** Prefix matching every agent-calls query — use for invalidation. */
+  agentCallsRoot: ['agent-calls'] as const,
   agentCallsForSuiteCreate: (agentId: string, from?: string) => ['agent-calls', 'suite-create', agentId, from ?? null] as const,
   agentCallsForSuiteEdit: (agentId?: string) => ['agent-calls', 'suite-edit', agentId] as const,
 
@@ -10,6 +13,8 @@ export const QUERY_KEYS = {
   statisticsLatency: (from?: string, agentId?: string, projectId?: string) => ['statistics-latency', from, agentId, projectId ?? null] as const,
   statisticsModelBreakdown: (from?: string, agentId?: string, projectId?: string) => ['statistics-model-breakdown', from, agentId, projectId ?? null] as const,
   statisticsAgentBreakdown: (from?: string, projectId?: string) => ['statistics-agent-breakdown', from, projectId ?? null] as const,
+  /** Prefix matching every statistics-agent-breakdown query — use for invalidation. */
+  statisticsAgentBreakdownRoot: ['statistics-agent-breakdown'] as const,
   statisticsTokenUsage: (from?: string, agentId?: string, projectId?: string) => ['statistics-token-usage', from, agentId, projectId ?? null] as const,
   statisticsPassRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-pass-rates', from, agentId, projectId ?? null] as const,
   statisticsErrorRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-error-rates', from, agentId, projectId ?? null] as const,
@@ -28,6 +33,8 @@ export const QUERY_KEYS = {
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 
+  health: ['health'] as const,
+  invites: ['invites'] as const,
   providers: ['providers'] as const,
   projects: ['projects'] as const,
   project: (id: string) => ['project', id] as const,

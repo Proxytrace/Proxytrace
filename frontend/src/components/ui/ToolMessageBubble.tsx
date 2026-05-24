@@ -3,12 +3,6 @@ import type { MessageDto, ToolRequestDto } from '../../api/models';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
 import { JsonBlock } from './JsonBlock';
 
-const EMERALD = 'var(--success)';
-const EMERALD_BG = 'var(--success-subtle)';
-const EMERALD_BORDER = 'color-mix(in srgb, var(--success) 22%, transparent)';
-const CYAN = 'var(--teal)';
-const CYAN_BG = 'color-mix(in srgb, var(--teal) 7%, transparent)';
-
 function safeParse(s: string | null | undefined): unknown {
   if (s == null || s === '') return s ?? null;
   try { return JSON.parse(s); } catch { return s; }
@@ -43,14 +37,13 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
 
   const hasResult = result != null;
   const statusLabel = hasResult ? 'ok' : 'pending';
-  const statusFg = hasResult ? CYAN : 'var(--warn)';
+  const statusFg = hasResult ? 'var(--teal)' : 'var(--warn)';
   const statusBg = hasResult ? 'color-mix(in srgb, var(--teal) 14%, transparent)' : 'color-mix(in srgb, var(--warn) 14%, transparent)';
   const statusTitle = hasResult ? 'Tool returned a response' : 'No response captured for this call';
 
   return (
     <div
-      className="rounded-[12px] overflow-hidden bg-card-2"
-      style={{ border: `1px solid ${EMERALD_BORDER}`, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}
+      className="rounded-[12px] overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
     >
       {/* Header */}
       <button
@@ -61,17 +54,16 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
       >
         <span
           aria-hidden
-          className={`inline-flex shrink-0 transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
-          style={{ color: EMERALD }}
+          className={`inline-flex shrink-0 transition-transform duration-150 text-success ${open ? 'rotate-90' : ''}`}
         >
           <ChevronRightIcon size={11} strokeWidth={2.5} />
         </span>
-        <span className="font-mono text-[10.5px] font-bold tracking-[0.06em]" style={{ color: EMERALD }}>TOOL</span>
-        <span className="font-mono text-[12.5px] font-semibold" style={{ color: 'var(--success)' }}>{request.name}</span>
+        <span className="font-mono text-[10.5px] font-bold tracking-[0.06em] text-success">TOOL</span>
+        <span className="font-mono text-[12.5px] font-semibold text-success">{request.name}</span>
         {argsPreview(args) && (
-          <span className="font-mono text-[11px] truncate min-w-0" style={{ color: 'var(--text-muted)' }}>
+          <span className="font-mono text-[11px] truncate min-w-0 text-muted">
             <span>(</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{argsPreview(args)}</span>
+            <span className="text-secondary">{argsPreview(args)}</span>
             <span>)</span>
           </span>
         )}
@@ -83,7 +75,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
           <span aria-hidden className="w-[5px] h-[5px] rounded-full" style={{ background: statusFg }} />
           {statusLabel}
         </span>
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] shrink-0" style={{ color: 'var(--text-muted)' }}>
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] shrink-0 text-muted">
           {request.id.slice(0, 16)}
         </span>
         {onJumpToDefinition && (
@@ -99,8 +91,7 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
               }
             }}
             title="View tool definition on Agents page"
-            className="ml-1 inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-[6px] text-[10.5px] font-semibold cursor-pointer transition-colors duration-150 shrink-0 hover:bg-success-subtle"
-            style={{ color: EMERALD }}
+            className="ml-1 inline-flex items-center gap-[3px] px-[7px] py-[3px] rounded-[6px] text-[10.5px] font-semibold cursor-pointer transition-colors duration-150 shrink-0 text-success hover:bg-success-subtle"
           >
             <ExternalLinkIcon size={10} strokeWidth={2.5} />
             Definition
@@ -112,28 +103,27 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
       {open && (
         <div className="border-t border-border-subtle">
           {/* Input panel */}
-          <div className="px-[14px] py-[10px]" style={{ background: EMERALD_BG }}>
+          <div className="px-[14px] py-[10px] bg-success-subtle">
             <div className="flex items-center gap-2 mb-[6px]">
-              <span aria-hidden className="w-[4px] h-[4px] rounded-full" style={{ background: EMERALD }} />
-              <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase" style={{ color: EMERALD }}>Input</span>
+              <span aria-hidden className="w-[4px] h-[4px] rounded-full bg-success" />
+              <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-success">Input</span>
             </div>
             <JsonBlock value={args} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
           </div>
 
           {/* Output panel */}
           {hasResult ? (
-            <div className="px-[14px] py-[10px] border-t border-border-subtle" style={{ background: CYAN_BG }}>
+            <div className="px-[14px] py-[10px] border-t border-border-subtle bg-[color-mix(in_srgb,var(--teal)_7%,transparent)]">
               <div className="flex items-center gap-2 mb-[6px]">
-                <span aria-hidden className="w-[4px] h-[4px] rounded-full" style={{ background: CYAN }} />
-                <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase" style={{ color: CYAN }}>Output</span>
-                <span className="ml-auto font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{resultBytes} B</span>
+                <span aria-hidden className="w-[4px] h-[4px] rounded-full bg-teal" />
+                <span className="text-[9.5px] font-bold tracking-[0.1em] uppercase text-teal">Output</span>
+                <span className="ml-auto font-mono text-[10px] text-muted">{resultBytes} B</span>
               </div>
               <JsonBlock value={resultParsed} hideCopy transparent maxHeight={280} className="!px-0 !py-0" />
             </div>
           ) : (
             <div
-              className="px-[14px] py-[9px] border-t border-border-subtle text-[11px] font-mono italic"
-              style={{ background: 'color-mix(in srgb, var(--warn) 5%, transparent)', color: 'var(--warn)', borderTopStyle: 'dashed' }}
+              className="px-[14px] py-[9px] border-t border-dashed border-border-subtle text-[11px] font-mono italic bg-[color-mix(in_srgb,var(--warn)_5%,transparent)] text-warn"
             >
               No response captured for this call.
             </div>

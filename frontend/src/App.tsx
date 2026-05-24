@@ -12,7 +12,7 @@ import { oidcConfig } from './auth/oidcConfig';
 import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 import { fetchAuthMode, useAuthMode } from './auth/authMode';
 import { LocalAuthProvider } from './auth/local/LocalAuthProvider';
-import { CurrentUserContext, type CurrentUser } from './auth/useCurrentUser';
+import { CurrentUserContext, useCurrentUser, type CurrentUser } from './auth/useCurrentUser';
 import { KioskContext } from './contexts/KioskContext';
 import useLocalAuth from './hooks/useLocalAuth';
 
@@ -112,8 +112,12 @@ function AppRoutes() {
     staleTime: Infinity,
   });
   const { data: authMode } = useAuthMode();
+  const currentUser = useCurrentUser();
 
   if (setupStatus === undefined || authMode === undefined) return <PageLoader />;
+
+  // Client-side route gating only — the backend must still enforce admin authorization.
+  const isAdmin = authMode.mode === 'local' && currentUser?.role === 'Admin';
 
   const wrap = (el: React.ReactNode) => (
     <ErrorBoundary><Suspense fallback={<PageLoader />}>{el}</Suspense></ErrorBoundary>
@@ -145,7 +149,7 @@ function AppRoutes() {
         <Route path="providers" element={wrap(<Providers />)} />
         <Route path="settings" element={wrap(<Settings />)} />
         <Route path="proposals" element={wrap(<Proposals />)} />
-        {authMode.mode === 'local' && <Route path="admin/invites" element={wrap(<Invites />)} />}
+        {isAdmin && <Route path="admin/invites" element={wrap(<Invites />)} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

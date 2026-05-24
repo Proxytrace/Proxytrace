@@ -28,7 +28,7 @@ export function SuitePassRatesWidget({ suitePassRates, className }: Props) {
       right={<span className="text-body-sm text-muted">{suitePassRates.length} suite{suitePassRates.length !== 1 ? 's' : ''}</span>}
       className={className}
     >
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
         {suitePassRates.map(s => {
           const pct = s.testCases > 0 ? (s.passed / s.testCases) * 100 : 0;
           return (

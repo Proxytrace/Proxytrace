@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto } from '../../../api/models';
 import { agentCallsApi } from '../../../api/agent-calls';
 import { QUERY_KEYS } from '../../../api/query-keys';
+import { WrenchIcon } from '../../../components/icons';
 import { fmtLatency, fmtRelative, fmtTokens } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { StatusDot } from '../../../components/ui/StatusDot';
 import { FilterDropdown } from '../../../components/ui/FilterDropdown';
@@ -47,14 +49,6 @@ function fmtClock(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function WrenchIcon({ size = 12 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-    </svg>
-  );
-}
-
 interface Props {
   agentId: string;
   selected: Set<string>;
@@ -67,7 +61,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
   const [search, setSearch] = useState<string>('');
   const [focusedIdState, setFocusedIdState] = useState<string | null>(null);
 
-  const from = useMemo(() => rangeFrom(range), [range]);
+  const from = rangeFrom(range);
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteCreate(agentId, from),
     queryFn: () => agentCallsApi.list({ agentId, pageSize: TRACE_PAGE_SIZE, from }),
@@ -83,10 +77,10 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
     return success.filter(t => searchHaystack(t).includes(q));
   }, [allTraces, search]);
 
-  const focusedId = useMemo(() => {
-    if (focusedIdState && traces.find(t => t.id === focusedIdState)) return focusedIdState;
-    return traces[0]?.id ?? null;
-  }, [traces, focusedIdState]);
+  const focusedId =
+    focusedIdState && traces.find(t => t.id === focusedIdState)
+      ? focusedIdState
+      : (traces[0]?.id ?? null);
   const setFocusedId = (id: string | null) => setFocusedIdState(id);
 
   const focused = traces.find(t => t.id === focusedId) ?? null;
@@ -124,12 +118,12 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
         <span className="text-[11.5px] text-muted ml-1">{traces.length} of {allTraces.length} shown</span>
         <div className="flex-1" />
         <span
-          className="px-3 py-[5px] rounded-full text-[12px] font-semibold"
-          style={{
-            background: selected.size > 0 ? 'var(--accent-subtle)' : 'var(--bg-card)',
-            color: selected.size > 0 ? 'var(--accent-hover)' : 'var(--text-muted)',
-            border: `1px solid ${selected.size > 0 ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-          }}
+          className={cn(
+            'px-3 py-[5px] rounded-full text-[12px] font-semibold border',
+            selected.size > 0
+              ? 'bg-accent-subtle text-accent-hover border-accent'
+              : 'bg-card text-muted border-border',
+          )}
         >
           {selected.size} selected
         </span>
@@ -147,7 +141,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
       <p className="text-[11.5px] text-muted m-0">Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</p>
 
       {/* Two-column body */}
-      <div className="grid gap-3 min-h-0" style={{ gridTemplateColumns: 'minmax(0, 1fr) 420px', height: 520 }}>
+      <div className="grid gap-3 min-h-0 grid-cols-[minmax(0,1fr)_420px] h-[520px]">
         {/* List */}
         <div className="flex flex-col min-h-0 rounded-[12px] border border-border bg-card overflow-hidden">
           <div className="flex-1 min-h-0 overflow-y-auto">
@@ -176,15 +170,16 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
                     <li
                       key={t.id}
                       onClick={() => { setFocusedId(t.id); onToggle(t.id); }}
-                      className="cursor-pointer transition-colors duration-100"
-                      style={{
-                        padding: '10px 12px',
-                        borderLeft: `3px solid ${sel ? 'var(--accent-primary)' : 'transparent'}`,
-                        background: sel ? 'var(--accent-subtle)' : 'transparent',
-                        borderBottom: '1px solid var(--hairline)',
-                        outline: focusedId === t.id && !sel ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                        outlineOffset: '-1px',
-                      }}
+                      className={cn(
+                        'cursor-pointer transition-colors duration-100',
+                        'p-[10px_12px] border-l-[3px] border-b border-b-hairline -outline-offset-1',
+                        sel
+                          ? 'border-l-accent bg-accent-subtle'
+                          : 'border-l-transparent bg-transparent',
+                        focusedId === t.id && !sel
+                          ? 'outline outline-1 outline-[rgba(255,255,255,0.08)]'
+                          : 'outline-none',
+                      )}
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="text-[11px] font-mono text-muted shrink-0 w-[44px]">{fmtClock(t.createdAt)}</span>
@@ -195,7 +190,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
                         </span>
                         <span className="text-[11px] font-mono text-muted shrink-0">{fmtLatency(t.durationMs)}</span>
                         {tools && (
-                          <span title="Used tools" className="inline-flex items-center" style={{ color: 'var(--accent-primary)' }}>
+                          <span title="Used tools" className="inline-flex items-center text-accent">
                             <WrenchIcon size={11} />
                           </span>
                         )}

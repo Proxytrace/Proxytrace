@@ -1,3 +1,6 @@
+import { CheckIcon } from '../icons';
+import { cn } from '../../lib/cn';
+
 interface Step {
   label: string;
   content: React.ReactNode;
@@ -37,9 +40,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
                   }`}
                 >
                   {isDone ? (
-                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 8.5l3.5 3.5L13 5" />
-                    </svg>
+                    <CheckIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
                   ) : (
                     i + 1
                   )}
@@ -55,8 +56,10 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
               {i < steps.length - 1 && (
                 <div className="flex-1 mx-3 h-px bg-border relative overflow-hidden">
                   <div
-                    className="absolute inset-y-0 left-0 bg-success transition-all duration-300"
-                    style={{ width: isDone ? '100%' : '0%' }}
+                    className={cn(
+                      'absolute inset-y-0 left-0 bg-success transition-all duration-300',
+                      isDone ? 'w-full' : 'w-0',
+                    )}
                   />
                 </div>
               )}

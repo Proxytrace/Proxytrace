@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PlusIcon, SearchIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 import type { PlaygroundRole } from '../state/types';
 
 interface Props {
@@ -36,12 +37,12 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="group w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[10px] cursor-pointer transition-colors"
-        style={{
-          background: open ? 'var(--accent-subtle)' : 'transparent',
-          border: `1px dashed ${open ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
-          color: open ? 'var(--accent-hover)' : 'var(--text-muted)',
-        }}
+        className={cn(
+          'group w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[10px] cursor-pointer transition-colors border border-dashed',
+          open
+            ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
+            : 'bg-transparent border-border text-muted',
+        )}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -51,12 +52,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
       {open && (
         <div
           role="menu"
-          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-[6px] z-30 w-[260px] rounded-[12px] py-[6px] fade-up"
-          style={{
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-float)',
-          }}
+          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-[6px] z-30 w-[260px] rounded-[12px] py-[6px] fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
         >
           <div className="px-[10px] pt-[2px] pb-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
             New message role
@@ -71,9 +67,8 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
             >
               <span
                 aria-hidden
-                className="inline-flex items-center justify-center size-[24px] rounded-full text-[11px] font-bold shrink-0"
+                className="inline-flex items-center justify-center size-[24px] rounded-full text-[11px] font-bold shrink-0 bg-[rgba(255,255,255,0.04)]"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
                   color: opt.accent,
                   border: `1px solid color-mix(in srgb, ${opt.accent} 22%, transparent)`,
                 }}
@@ -89,8 +84,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
           {onLoadFromTrace && (
             <>
               <div
-                className="my-[4px] mx-[10px]"
-                style={{ borderTop: '1px solid var(--border-color)' }}
+                className="my-[4px] mx-[10px] border-t border-border"
               />
               <button
                 type="button"
@@ -100,12 +94,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               >
                 <span
                   aria-hidden
-                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0"
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-color)',
-                  }}
+                  className="inline-flex items-center justify-center size-[24px] rounded-full shrink-0 bg-[rgba(255,255,255,0.04)] text-secondary border border-border"
                 >
                   <SearchIcon size={12} strokeWidth={2.2} />
                 </span>

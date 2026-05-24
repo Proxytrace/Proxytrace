@@ -1,10 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { projectsApi } from '../../api/projects';
-import { providersApi } from '../../api/providers';
-import { QUERY_KEYS } from '../../api/query-keys';
-import type { ProjectDto, ProjectMemberDto } from '../../api/models';
-import { LIST_PAGE_SIZE } from '../../lib/constants';
+import { useState } from 'react';
+import type { ProjectMemberDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
@@ -15,25 +10,16 @@ import { fmtDate } from '../../lib/format';
 import { NewProjectModal } from './NewProjectModal';
 import { AddMemberModal } from './AddMemberModal';
 import { formInputCls } from '../../components/ui/classes';
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function colorFor(id: string): string {
-  const palette = ['var(--accent-primary)', 'var(--success)', 'var(--teal)', 'var(--teal)', 'var(--warn)', 'var(--accent-hover)'];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  return palette[Math.abs(hash) % palette.length];
-}
+import { initials, colorFor, endpointLabel } from './projectsMeta';
+import {
+  useModelEndpoints, useProject,
+  useCreateProject, useUpdateProject, useDeleteProject, useAddMember, useRemoveMember,
+} from './hooks/useProjects';
+import { useProjectSelection } from './hooks/useProjectSelection';
 
 export function ProjectsTab() {
-  const qc = useQueryClient();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const { setSelectedId, search, setSearch, projects, filtered, effectiveId, projectsLoading } =
+    useProjectSelection();
 
   const [showNew, setShowNew] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -43,82 +29,20 @@ export function ProjectsTab() {
   const [editName, setEditName] = useState(false);
   const [editEndpoint, setEditEndpoint] = useState(false);
 
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
-    queryKey: QUERY_KEYS.projects,
-    queryFn: () => projectsApi.list({ pageSize: LIST_PAGE_SIZE }),
-  });
-  const { data: endpoints = [] } = useQuery({
-    queryKey: QUERY_KEYS.modelEndpoints,
-    queryFn: providersApi.getAllModels,
-  });
+  const { data: endpoints = [] } = useModelEndpoints();
 
-  const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter(p => p.name.toLowerCase().includes(q));
-  }, [projects, search]);
-
-  const fallbackId = filtered[0]?.id ?? null;
-  const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
-
-  const { data: selected } = useQuery({
-    queryKey: QUERY_KEYS.project(effectiveId ?? 'none'),
-    queryFn: () => projectsApi.get(effectiveId!),
-    enabled: !!effectiveId,
-  });
+  const { data: selected } = useProject(effectiveId);
 
   const [nameDraft, setNameDraft] = useState(selected?.name ?? '');
   const [endpointDraft, setEndpointDraft] = useState(selected?.systemEndpointId ?? '');
 
-  const invalidateAll = () => {
-    qc.invalidateQueries({ queryKey: QUERY_KEYS.projects });
-    if (effectiveId) qc.invalidateQueries({ queryKey: QUERY_KEYS.project(effectiveId) });
-  };
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+  const addMember = useAddMember();
+  const removeMemberMut = useRemoveMember();
 
-  const createProject = useMutation({
-    mutationFn: (req: { name: string; systemEndpointId: string }) => projectsApi.create(req),
-    onSuccess: (p: ProjectDto) => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.projects });
-      setShowNew(false);
-      setSelectedId(p.id);
-    },
-  });
-
-  const updateProject = useMutation({
-    mutationFn: (req: { name: string; systemEndpointId: string }) =>
-      projectsApi.update(selected!.id, req),
-    onSuccess: () => {
-      invalidateAll();
-      setEditName(false);
-      setEditEndpoint(false);
-    },
-  });
-
-  const deleteProject = useMutation({
-    mutationFn: () => projectsApi.delete(selected!.id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.projects });
-      setConfirmDelete(false);
-      setSelectedId(null);
-    },
-  });
-
-  const addMember = useMutation({
-    mutationFn: (userId: string) => projectsApi.addMember(selected!.id, userId),
-    onSuccess: () => {
-      invalidateAll();
-      setShowAddMember(false);
-    },
-  });
-
-  const removeMemberMut = useMutation({
-    mutationFn: (userId: string) => projectsApi.removeMember(selected!.id, userId),
-    onSuccess: () => {
-      invalidateAll();
-      setRemoveMember(null);
-    },
-  });
+  const finishEdit = () => { setEditName(false); setEditEndpoint(false); };
 
   return (
     <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0">
@@ -192,7 +116,10 @@ export function ProjectsTab() {
                       className="btn-icon"
                       data-write
                       onClick={() =>
-                        updateProject.mutate({ name: nameDraft.trim(), systemEndpointId: selected.systemEndpointId })
+                        updateProject.mutate(
+                          { id: selected.id, req: { name: nameDraft.trim(), systemEndpointId: selected.systemEndpointId } },
+                          { onSuccess: finishEdit },
+                        )
                       }
                       disabled={!nameDraft.trim() || nameDraft.trim() === selected.name}
                     >
@@ -205,7 +132,7 @@ export function ProjectsTab() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <h2 className="text-[20px] font-bold m-0 text-primary truncate">{selected.name}</h2>
-                    <button className="btn-icon" data-write onClick={() => setEditName(true)}>
+                    <button className="btn-icon" data-write onClick={() => { setNameDraft(selected.name); setEditName(true); }}>
                       <EditIcon size={14} />
                     </button>
                   </div>
@@ -245,7 +172,10 @@ export function ProjectsTab() {
                       className="btn-icon"
                       data-write
                       onClick={() =>
-                        updateProject.mutate({ name: selected.name, systemEndpointId: endpointDraft })
+                        updateProject.mutate(
+                          { id: selected.id, req: { name: selected.name, systemEndpointId: endpointDraft } },
+                          { onSuccess: finishEdit },
+                        )
                       }
                       disabled={endpointDraft === selected.systemEndpointId}
                     >
@@ -261,11 +191,9 @@ export function ProjectsTab() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] text-primary">
-                      {endpoints.find(e => e.id === selected.systemEndpointId)
-                        ? `${endpoints.find(e => e.id === selected.systemEndpointId)!.providerName} · ${endpoints.find(e => e.id === selected.systemEndpointId)!.modelName}`
-                        : selected.systemEndpointId}
+                      {endpointLabel(endpoints, selected.systemEndpointId)}
                     </span>
-                    <button className="btn-icon" data-write onClick={() => setEditEndpoint(true)}>
+                    <button className="btn-icon" data-write onClick={() => { setEndpointDraft(selected.systemEndpointId); setEditEndpoint(true); }}>
                       <EditIcon size={14} />
                     </button>
                   </div>
@@ -328,7 +256,7 @@ export function ProjectsTab() {
         <NewProjectModal
           endpoints={endpoints}
           onCancel={() => setShowNew(false)}
-          onSubmit={(req) => createProject.mutate(req)}
+          onSubmit={(req) => createProject.mutate(req, { onSuccess: p => { setShowNew(false); setSelectedId(p.id); } })}
           loading={createProject.isPending}
         />
       )}
@@ -336,15 +264,15 @@ export function ProjectsTab() {
         <AddMemberModal
           excludeIds={selected.members.map(m => m.id)}
           onCancel={() => setShowAddMember(false)}
-          onPick={(userId) => addMember.mutate(userId)}
+          onPick={(userId) => addMember.mutate({ projectId: selected.id, userId }, { onSuccess: () => setShowAddMember(false) })}
           loading={addMember.isPending}
         />
       )}
-      {removeMember && (
+      {removeMember && selected && (
         <ConfirmDialog
           entityName={removeMember.email}
           onCancel={() => setRemoveMember(null)}
-          onConfirm={() => removeMemberMut.mutate(removeMember.id)}
+          onConfirm={() => removeMemberMut.mutate({ projectId: selected.id, userId: removeMember.id }, { onSuccess: () => setRemoveMember(null) })}
           loading={removeMemberMut.isPending}
         />
       )}
@@ -352,7 +280,7 @@ export function ProjectsTab() {
         <ConfirmDialog
           entityName={selected.name}
           onCancel={() => setConfirmDelete(false)}
-          onConfirm={() => deleteProject.mutate()}
+          onConfirm={() => deleteProject.mutate(selected.id, { onSuccess: () => { setConfirmDelete(false); setSelectedId(null); } })}
           loading={deleteProject.isPending}
         />
       )}

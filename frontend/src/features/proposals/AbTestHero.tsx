@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ActivityIcon, CheckIcon, ClockIcon, ExternalLinkIcon, XIcon } from '../../components/icons';
+import { cn } from '../../lib/cn';
 import { Card } from '../../components/ui/Card';
 import type { AbTestRunSummaryDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
@@ -55,7 +56,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
     <Card
       elevation="raised"
       padding="none"
-      className={`overflow-hidden ${isRunning ? 'streaming-border' : ''}`}
+      className={cn('overflow-hidden', isRunning && 'streaming-border')}
     >
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
@@ -64,7 +65,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           style={{ background: TONE_SUBTLE[meta.tone], color: TONE_COLOR[meta.tone] }}
         >
           <span
-            className={`inline-block size-1.5 rounded-full ${meta.pulse ? 'pulse-dot' : ''}`}
+            className={cn('inline-block size-1.5 rounded-full', meta.pulse && 'pulse-dot')}
             style={{ background: TONE_COLOR[meta.tone] }}
           />
           A/B test · {meta.label}
@@ -89,12 +90,12 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
             >
               {hasResults ? `${passRate}%` : '—'}
             </span>
-            {deltaTone && (
+            {deltaTone && deltaPts != null && (
               <span
                 className="mono text-body-sm font-semibold"
                 style={{ color: TONE_COLOR[deltaTone] }}
               >
-                {deltaPts! > 0 ? '+' : '−'}{Math.abs(deltaPts!)}pt
+                {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>
             )}
             {!deltaTone && deltaPts == null && (
@@ -116,9 +117,9 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Segmented progress bar */}
       <div className="px-4 pb-4">
         <div className="flex h-1.5 rounded-full overflow-hidden bg-card-2">
-          {passPct > 0    && <div style={{ width: `${passPct}%`,    background: 'var(--success)' }}/>}
-          {failPct > 0    && <div style={{ width: `${failPct}%`,    background: 'var(--danger)' }}/>}
-          {pendingPct > 0 && <div style={{ width: `${pendingPct}%`, background: 'color-mix(in srgb, var(--text-muted) 30%, transparent)' }}/>}
+          {passPct > 0    && <div className="bg-success"                                                           style={{ width: `${passPct}%` }}/>}
+          {failPct > 0    && <div className="bg-danger"                                                            style={{ width: `${failPct}%` }}/>}
+          {pendingPct > 0 && <div className="bg-[color-mix(in_srgb,var(--text-muted)_30%,transparent)]"           style={{ width: `${pendingPct}%` }}/>}
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">

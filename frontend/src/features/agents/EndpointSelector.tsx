@@ -56,8 +56,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
       </button>
       {open && (
         <div
-          className="absolute z-50 mt-1 rounded-lg overflow-hidden bg-surface-2 border border-hairline shadow-[var(--shadow-float)]"
-          style={{ top: '100%', left: 0, minWidth: 220 }}
+          className="absolute top-full left-0 min-w-[220px] z-50 mt-1 rounded-lg overflow-hidden bg-surface-2 border border-hairline shadow-[var(--shadow-float)]"
         >
           {endpoints.length === 0 && (
             <div className="px-4 py-3 text-body text-muted">Loading…</div>

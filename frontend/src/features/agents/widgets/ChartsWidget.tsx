@@ -71,7 +71,7 @@ export function ChartsWidget({ overview, range, onRangeChange, className }: Prop
       expandContent={expanded}
       expandMaxWidth={760}
     >
-      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         <MiniChart title="Traces" data={traces} color="var(--accent-primary)" gradientId={`${uid}-traces`} />
         <MiniChart title="Tokens" data={tokens} color="var(--teal)" gradientId={`${uid}-tokens`} />
         <MiniChart title="Cost" data={costs} color="var(--warn)" gradientId={`${uid}-cost`} />

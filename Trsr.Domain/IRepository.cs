@@ -53,9 +53,19 @@ public interface IRepository<TDomainEntity>
     /// <exception cref="EntityAlreadyExistsException">Thrown when the entity already exists</exception>
     /// </summary>
     Task<TDomainEntity> AddAsync(
-        TDomainEntity entity, 
+        TDomainEntity entity,
         CancellationToken cancellationToken = default);
-    
+
+    /// <summary>
+    /// Adds all of the given <paramref name="entities"/> in a single batch.
+    /// More efficient than repeated <see cref="AddAsync"/> calls: validates and persists
+    /// the whole batch in one transaction with a single save and no per-entity round trips.
+    /// <exception cref="EntityAlreadyExistsException">Thrown when any entity already exists</exception>
+    /// </summary>
+    Task AddRangeAsync(
+        IReadOnlyCollection<TDomainEntity> entities,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Updates the given <paramref name="entity"/>
     /// <exception cref="EntityNotFoundException">Thrown when the entity does not exist</exception>

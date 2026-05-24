@@ -2,6 +2,7 @@ import { BeakerIcon, CpuIcon, ZapIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
 import type { OptimizationProposalDto } from '../../api/models';
 import { ProposalKind, TestRunStatus } from '../../api/models';
+import { cn } from '../../lib/cn';
 import { agentColor } from '../../lib/colors';
 import { fmtRelative } from '../../lib/format';
 import {
@@ -50,7 +51,7 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
       selected={isActive}
       interactive
       onClick={onClick}
-      className={`relative overflow-hidden transition-[box-shadow,opacity] ${terminal ? 'opacity-70' : ''}`}
+      className={cn('relative overflow-hidden transition-[box-shadow,opacity]', terminal && 'opacity-70')}
     >
       <div
         className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg"
@@ -75,7 +76,7 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
             style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
           >
             <span
-              className={`inline-block size-1.5 rounded-full ${status.pulse ? 'pulse-dot' : ''}`}
+              className={cn('inline-block size-1.5 rounded-full', status.pulse && 'pulse-dot')}
               style={{ background: TONE_COLOR[status.tone] }}
             />
             {status.label}
@@ -84,8 +85,10 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
 
         {/* Title */}
         <div
-          className="text-title font-semibold leading-snug line-clamp-2 mb-1.5"
-          style={{ color: terminal ? 'var(--text-secondary)' : 'var(--text-primary)' }}
+          className={cn(
+            'text-title font-semibold leading-snug line-clamp-2 mb-1.5',
+            terminal ? 'text-secondary' : 'text-primary',
+          )}
         >
           {titleFromRationale(dto.rationale)}
         </div>
@@ -132,11 +135,8 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
         {isRunning && ab && (
           <div className="mt-2 h-[3px] bg-card-2 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${progress * 100}%`,
-                background: 'linear-gradient(90deg, var(--teal), var(--accent-primary))',
-              }}
+              className="h-full rounded-full bg-[linear-gradient(90deg,var(--teal),var(--accent-primary))]"
+              style={{ width: `${progress * 100}%` }}
             />
           </div>
         )}

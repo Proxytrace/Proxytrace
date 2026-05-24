@@ -1,0 +1,40 @@
+import { Link } from 'react-router-dom';
+import { ChevronRightIcon, ExternalLinkIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
+import { Card } from '../../../components/ui/Card';
+
+interface Props {
+  ids: string[];
+}
+
+export function EvidenceList({ ids }: Props) {
+  return (
+    <Card elevation="raised" padding="none" className="overflow-hidden">
+      <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-hairline">
+        <span className="text-title font-semibold">Evidence</span>
+        <span className="text-body-sm text-muted">· {ids.length} failing run{ids.length !== 1 ? 's' : ''} motivated this</span>
+      </div>
+      {ids.map((id, i) => (
+        <Link
+          key={id}
+          to={`/runs?run=${id}`}
+          className={cn(
+            'grid grid-cols-[8px_1fr_auto_auto] w-full items-center gap-2.5 px-3.5 py-2.5 hover:bg-card-2/40 transition-colors',
+            i !== 0 && 'border-t border-hairline',
+          )}
+        >
+          <span className="size-1.5 rounded-full bg-warn"/>
+          <div className="min-w-0">
+            <div className="text-title font-medium mb-0.5 text-primary">Test run {id.slice(0, 8)}</div>
+            <div className="text-body-sm text-muted">Captured failing trace cluster</div>
+          </div>
+          <span className="mono text-caption text-muted">{id.slice(0, 8)}</span>
+          <span className="text-muted inline-flex items-center gap-1 text-caption">
+            <ExternalLinkIcon size={11}/>
+            <ChevronRightIcon size={12}/>
+          </span>
+        </Link>
+      ))}
+    </Card>
+  );
+}

@@ -1,3 +1,4 @@
+using System.Net;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Lucene.Net.QueryParsers.Classic;
@@ -88,6 +89,10 @@ internal sealed class LuceneSearchService : ISearchService
         var highlighter = new Highlighter(formatter, scorer)
         {
             TextFragmenter = new SimpleSpanFragmenter(scorer, snippetMax),
+            // HTML-encode the body text while inserting <mark> tags so user/LLM content
+            // (agent prompts, traces, test cases) can't inject markup into the snippet.
+            // The default encoder is a no-op, which is the stored-XSS source.
+            Encoder = new SimpleHTMLEncoder(),
         };
 
         var grouped = new Dictionary<SearchKind, List<SearchHit>>();
@@ -124,9 +129,9 @@ internal sealed class LuceneSearchService : ISearchService
             }
             if (string.IsNullOrEmpty(snippet))
             {
-                snippet = bodyText.Length <= snippetMax
-                    ? bodyText
-                    : bodyText[..snippetMax];
+                // No highlight fragment: HTML-encode the raw body so it's safe to render.
+                var fallback = bodyText.Length <= snippetMax ? bodyText : bodyText[..snippetMax];
+                snippet = WebUtility.HtmlEncode(fallback);
             }
 
             var metadata = ParseMetadata(doc.Get(SearchConstants.FieldMetadata));

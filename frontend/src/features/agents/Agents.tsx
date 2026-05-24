@@ -1,52 +1,33 @@
-import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { agentsApi } from '../../api/agents';
-import { QUERY_KEYS } from '../../api/query-keys';
-import useCurrentProject from '../../hooks/useCurrentProject';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { AgentList } from './AgentList';
 import { AgentDetail } from './AgentDetail';
+import { useAgents, useDeleteAgent } from './hooks/useAgents';
 
 export default function Agents() {
-  const qc = useQueryClient();
-  const { currentProjectId } = useCurrentProject();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselect = searchParams.get('id');
   const highlightTool = searchParams.get('tool');
 
-  const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined),
-    queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
-    enabled: currentProjectId !== null,
-  });
-  const allAgents = useMemo(() => data?.items ?? [], [data]);
+  const { allAgents, isLoading } = useAgents();
 
   const [showSystem, setShowSystem] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const preselectIsSystem = useMemo(
-    () => preselect ? allAgents.some(a => a.id === preselect && a.isSystemAgent) : false,
-    [preselect, allAgents],
-  );
+  const preselectIsSystem = preselect
+    ? allAgents.some(a => a.id === preselect && a.isSystemAgent)
+    : false;
 
-  const agents = useMemo(
-    () => (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent),
-    [allAgents, showSystem, preselectIsSystem],
-  );
+  const agents = (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent);
 
-  const effectiveSelectedId = useMemo(() => {
-    if (selectedId && agents.some(a => a.id === selectedId)) return selectedId;
-    return agents[0]?.id ?? null;
-  }, [agents, selectedId]);
+  const effectiveSelectedId = (selectedId && agents.some(a => a.id === selectedId))
+    ? selectedId
+    : agents[0]?.id ?? null;
 
-  const selected = useMemo(
-    () => agents.find(a => a.id === effectiveSelectedId) ?? null,
-    [agents, effectiveSelectedId],
-  );
+  const selected = agents.find(a => a.id === effectiveSelectedId) ?? null;
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -56,14 +37,10 @@ export default function Agents() {
     setSearchParams(next, { replace: true });
   };
 
-  const delAgent = useMutation({
-    mutationFn: () => agentsApi.delete(selected!.id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined) });
-      const remaining = agents.filter(a => a.id !== selected!.id);
-      setSelectedId(remaining[0]?.id ?? null);
-      setDeleteOpen(false);
-    },
+  const delAgent = useDeleteAgent(id => {
+    const remaining = agents.filter(a => a.id !== id);
+    setSelectedId(remaining[0]?.id ?? null);
+    setDeleteOpen(false);
   });
 
   const hasSystemAgents = allAgents.some(a => a.isSystemAgent);
@@ -77,8 +54,7 @@ export default function Agents() {
 
       {(isLoading || allAgents.length > 0) && (
         <div
-          className="fade-up flex-1 min-h-0 grid gap-4"
-          style={{ gridTemplateColumns: 'minmax(260px, 300px) minmax(0, 1fr)', animationDelay: '20ms' }}
+          className="fade-up flex-1 min-h-0 grid gap-4 grid-cols-[minmax(260px,300px)_minmax(0,1fr)] [animation-delay:20ms]"
         >
           <aside className="min-h-0 flex flex-col">
             <AgentList
@@ -109,7 +85,7 @@ export default function Agents() {
       {deleteOpen && selected && (
         <ConfirmDialog
           entityName={selected.name}
-          onConfirm={() => delAgent.mutate()}
+          onConfirm={() => delAgent.mutate(selected.id)}
           onCancel={() => setDeleteOpen(false)}
           loading={delAgent.isPending}
         />

@@ -14,8 +14,24 @@ namespace Trsr.Application.Tests.Demo;
 [TestClass]
 public class DemoSeedingTests : BaseTest<Module>
 {
-    private async Task RunAllScenariosAsync(IServiceProvider services)
+    // Seeding the full demo dataset is expensive (hundreds of entities), so it runs once
+    // for the whole class and every test asserts read-only against the shared result.
+    private static IContainer? sharedContainer;
+    private static IServiceProvider services = null!;
+
+    [ClassInitialize]
+    public static async Task SeedOnce(TestContext testContext)
     {
+        sharedContainer = BuildContainer(builder =>
+            builder.RegisterInstance(new KioskOptions
+            {
+                Enabled = true,
+                DemoUserEmail = "demo@trsr.dev",
+                DemoUserName = "Demo Visitor",
+            }).AsSelf());
+
+        services = sharedContainer.Resolve<IServiceProvider>();
+
         var scenarios = services.GetServices<IDemoScenario>()
             .OrderBy(s => s.Order)
             .ToList();
@@ -23,27 +39,19 @@ public class DemoSeedingTests : BaseTest<Module>
         scenarios.Should().NotBeEmpty("the test container must register every IDemoScenario");
 
         foreach (var scenario in scenarios)
-            await scenario.SeedAsync(CancellationToken);
+            await scenario.SeedAsync(testContext.CancellationToken);
     }
 
-    private IServiceProvider BuildSeededServices()
-        => GetServices(builder =>
-        {
-            builder.RegisterInstance(new KioskOptions
-            {
-                Enabled = true,
-                DemoUserEmail = "demo@trsr.dev",
-                DemoUserName = "Demo Visitor",
-            }).AsSelf();
-        });
+    [ClassCleanup]
+    public static void DisposeOnce()
+    {
+        sharedContainer?.Dispose();
+        sharedContainer = null;
+    }
 
     [TestMethod]
     public async Task Seed_All_Scenarios_Populates_Expected_Entity_Counts()
     {
-        var services = BuildSeededServices();
-
-        await RunAllScenariosAsync(services);
-
         var ctx = services.GetRequiredService<DemoSeedContext>();
         ctx.Helpfulness.Should().NotBeNull();
         ctx.Politeness.Should().NotBeNull();
@@ -61,7 +69,7 @@ public class DemoSeedingTests : BaseTest<Module>
 
         var proposals = await services.GetRequiredService<IRepository<IOptimizationProposal>>()
             .GetAllAsync(CancellationToken);
-        proposals.Should().HaveCount(5);
+        proposals.Should().HaveCount(8);
         proposals.Select(p => p.Status).Should().Contain(
             [ProposalStatus.Draft, ProposalStatus.Accepted, ProposalStatus.Rejected]);
         proposals.Select(p => p.Kind).Should().Contain(
@@ -71,10 +79,6 @@ public class DemoSeedingTests : BaseTest<Module>
     [TestMethod]
     public async Task Proposals_Reference_Valid_TestRuns()
     {
-        var services = BuildSeededServices();
-
-        await RunAllScenariosAsync(services);
-
         var runRepo = services.GetRequiredService<IRepository<ITestRun>>();
         var proposals = await services.GetRequiredService<IRepository<IOptimizationProposal>>()
             .GetAllAsync(CancellationToken);
@@ -95,10 +99,6 @@ public class DemoSeedingTests : BaseTest<Module>
     [TestMethod]
     public async Task Suites_Reference_Only_Seeded_Evaluators()
     {
-        var services = BuildSeededServices();
-
-        await RunAllScenariosAsync(services);
-
         var evaluators = await services.GetRequiredService<IRepository<IEvaluator>>()
             .GetAllAsync(CancellationToken);
         var evaluatorIds = evaluators.Select(e => e.Id).ToHashSet();

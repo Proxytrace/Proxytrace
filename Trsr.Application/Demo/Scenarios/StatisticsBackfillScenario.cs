@@ -131,19 +131,22 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                 AnalyticsPool),
         };
 
+        var calls = new List<IAgentCall>();
         foreach (var profile in profiles)
         {
-            await SeedAgentCallsAsync(profile, windowStart, now, cancellationToken);
+            CollectAgentCalls(profile, windowStart, now, calls);
         }
+
+        await agentCallRepo.AddRangeAsync(calls, cancellationToken);
 
         await StaggerTestRunsAsync(now, cancellationToken);
     }
 
-    private async Task SeedAgentCallsAsync(
+    private void CollectAgentCalls(
         BackfillProfile profile,
         DateTimeOffset windowStart,
         DateTimeOffset now,
-        CancellationToken cancellationToken)
+        List<IAgentCall> calls)
     {
         for (int day = 0; day < WindowDays; day++)
         {
@@ -194,7 +197,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                     existing: new BackdatedData(id, createdAt, createdAt),
                     conversationId: null);
 
-                await agentCallRepo.AddAsync(call, cancellationToken);
+                calls.Add(call);
             }
         }
     }

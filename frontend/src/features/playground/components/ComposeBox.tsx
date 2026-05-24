@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
 import { providersApi } from '../../../api/providers';
+import { cn } from '../../../lib/cn';
 
 interface Props {
   disabled: boolean;
@@ -76,13 +77,12 @@ export function ComposeBox({
   return (
     <div className="border-t border-border p-[12px] flex flex-col gap-[8px] bg-[rgba(0,0,0,0.12)]">
       <div
-        className="rounded-[12px] flex flex-col"
-        style={{
-          background: 'var(--bg-card)',
-          border: `1px solid ${canSend ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
-          boxShadow: canSend ? '0 0 0 3px color-mix(in srgb, var(--accent-primary) 12%, transparent)' : 'var(--shadow-pill)',
-          transition: 'border-color 0.15s, box-shadow 0.15s',
-        }}
+        className={cn(
+          'rounded-[12px] flex flex-col bg-card border transition-[border-color,box-shadow] duration-150 ease-[ease]',
+          canSend
+            ? 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent-primary)_12%,transparent)]'
+            : 'border-border shadow-[var(--shadow-pill)]',
+        )}
       >
         <textarea
           ref={taRef}
@@ -103,12 +103,12 @@ export function ComposeBox({
               <button
                 type="button"
                 onClick={() => setPickerOpen(o => !o)}
-                className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary"
-                style={{
-                  background: pickerOpen ? 'var(--accent-subtle)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${pickerOpen ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'var(--border-color)'}`,
-                  color: pickerOpen ? 'var(--accent-hover)' : 'var(--text-secondary)',
-                }}
+                className={cn(
+                  'inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary border',
+                  pickerOpen
+                    ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
+                    : 'bg-[rgba(255,255,255,0.04)] border-border text-secondary',
+                )}
                 title="Switch endpoint"
                 aria-haspopup="listbox"
                 aria-expanded={pickerOpen}
@@ -119,20 +119,14 @@ export function ComposeBox({
                   <span
                     aria-label="modified"
                     title="Modified from agent default"
-                    className="ml-[2px] size-[5px] rounded-full bg-accent"
-                    style={{ boxShadow: '0 0 0 2px var(--bg-card)' }}
+                    className="ml-[2px] size-[5px] rounded-full bg-accent shadow-[0_0_0_2px_var(--bg-card)]"
                   />
                 )}
               </button>
               {pickerOpen && (
                 <div
                   role="listbox"
-                  className="absolute left-0 bottom-full mb-[6px] z-30 w-[280px] rounded-[12px] py-[6px] max-h-[320px] overflow-y-auto fade-up"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow-float)',
-                  }}
+                  className="absolute left-0 bottom-full mb-[6px] z-30 w-[280px] rounded-[12px] py-[6px] max-h-[320px] overflow-y-auto fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
                 >
                   <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Endpoint</span>
@@ -156,8 +150,10 @@ export function ComposeBox({
                         role="option"
                         aria-selected={active}
                         onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
-                        className="w-full flex items-center gap-[8px] px-[10px] py-[6px] text-left cursor-pointer hover:bg-card transition-colors"
-                        style={active ? { background: 'var(--accent-subtle)' } : undefined}
+                        className={cn(
+                          'w-full flex items-center gap-[8px] px-[10px] py-[6px] text-left cursor-pointer hover:bg-card transition-colors',
+                          active && 'bg-accent-subtle',
+                        )}
                       >
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className={`text-[12px] truncate ${active ? 'text-primary font-semibold' : 'text-secondary'}`}>

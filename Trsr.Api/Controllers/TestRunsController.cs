@@ -9,6 +9,7 @@ using Trsr.Domain;
 using Trsr.Domain.Evaluation;
 using Trsr.Domain.Message;
 using Trsr.Domain.TestRun;
+using Trsr.Domain.Usage;
 
 namespace Trsr.Api.Controllers;
 
@@ -181,10 +182,27 @@ public class TestRunsController : ControllerBase
             UpdatedAt: r.UpdatedAt);
     }
     
-    // TODO: aggregate cost + token usage across the run's test results (per-result token
-    // usage already surfaces in the fixture endpoints). Stubbed pending backend implementation.
     private static (double? CostUsd, long? TokensIn, long? TokensOut) CalculateRunTotals(ITestRun run)
-        => throw new NotImplementedException();
+    {
+        var usages = run.TestResults
+            .Select(r => r.Usage)
+            .OfType<TokenUsage>()
+            .ToArray();
+        if (usages.Length == 0)
+            return (null, null, null);
+
+        ulong tokensIn = 0;
+        ulong tokensOut = 0;
+        foreach (var usage in usages)
+        {
+            tokensIn += usage.InputTokenCount;
+            tokensOut += usage.OutputTokenCount;
+        }
+
+        var total = new TokenUsage(tokensIn, tokensOut);
+        decimal? cost = run.Endpoint.CalculateCost(total);
+        return ((double?)cost, (long)tokensIn, (long)tokensOut);
+    }
 
     private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
     {

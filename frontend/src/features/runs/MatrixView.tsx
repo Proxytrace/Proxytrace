@@ -22,7 +22,7 @@ export function MatrixView({ group, activeCaseIds }: {
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
   const allRows = useMemo(() => buildMatrixRows(runs), [runs]);
-  const counts = useMemo(() => matrixCounts(allRows), [allRows]);
+  const counts = matrixCounts(allRows);
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort), [allRows, filter, sort]);
 
   const multi = runs.length > 1;
@@ -89,7 +89,7 @@ export function MatrixView({ group, activeCaseIds }: {
               return (
                 <Fragment key={row.caseId}>
                   {/* Full-width row separator */}
-                  {ri > 0 && <div aria-hidden className="h-px bg-hairline" style={{ gridColumn: '1 / -1' }} />}
+                  {ri > 0 && <div aria-hidden className="h-px bg-hairline col-span-full" />}
 
                   {/* Test case + verdict / divergence indicator */}
                   <button

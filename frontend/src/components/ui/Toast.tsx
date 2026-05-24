@@ -1,7 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '../overlays/Modal';
+import { XIcon } from '../icons';
 import { FormField } from './FormField';
 import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
+import { cn } from '../../lib/cn';
+
+type ToastType = ToastItem['type'];
+
+// Finite-state styling (DESIGN §6): each type maps to a fixed border + text class.
+// Tokens resolve to the same CSS vars as the previous inline typeColor():
+//   success -> var(--success), error -> var(--danger), info -> var(--accent-primary).
+// Border keeps the identical 32% color-mix so pixels are unchanged.
+const TOAST_BORDER: Record<ToastType, string> = {
+  success: 'border-[color-mix(in_srgb,var(--success)_32%,transparent)]',
+  error: 'border-[color-mix(in_srgb,var(--danger)_32%,transparent)]',
+  info: 'border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]',
+};
+const TOAST_TEXT: Record<ToastType, string> = {
+  success: 'text-success',
+  error: 'text-danger',
+  info: 'text-accent',
+};
 
 let globalShow: ((message: string, type: ToastItem['type'], options?: ErrorToastOptions) => void) | null = null;
 
@@ -34,9 +53,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const isDev = import.meta.env.DEV;
 
-  const typeColor = (t: ToastItem['type']) =>
-    t === 'success' ? 'var(--success)' : t === 'error' ? 'var(--danger)' : 'var(--accent-primary)';
-
   // Error report modal state
   const [reportTarget, setReportTarget] = useState<{
     toastId: number;
@@ -50,7 +66,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [description, setDescription] = useState('');
   const [sending, setSending] = useState(false);
 
-  const handleSend = useCallback(async () => {
+  const handleSend = async () => {
     if (!reportTarget) return;
     setSending(true);
     await reportTarget.sendReport?.({ description, timestamp: new Date().toISOString() });
@@ -58,9 +74,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setReportTarget(null);
     setDescription('');
     dismiss(reportTarget.toastId);
-  }, [reportTarget, description, dismiss]);
+  };
 
-  const openReport = useCallback((t: ToastItem) => {
+  const openReport = (t: ToastItem) => {
     setReportTarget({
       toastId: t.id,
       message: t.message,
@@ -70,12 +86,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       sendReport: t.sendReport,
     });
     setDescription('');
-  }, []);
+  };
 
-  const closeReport = useCallback(() => {
+  const closeReport = () => {
     setReportTarget(null);
     setDescription('');
-  }, []);
+  };
 
   return (
     <ToastContext.Provider value={{ show }}>
@@ -85,14 +101,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           t.type === 'error' ? (
             <div
               key={t.id}
-              className="fade-up bg-card rounded-lg px-4 py-3 shadow-[var(--shadow-float)] pointer-events-auto"
-              style={{
-                border: `1px solid color-mix(in srgb, ${typeColor(t.type)} 32%, transparent)`,
-                maxWidth: 420,
-              }}
+              className={cn(
+                'fade-up bg-card rounded-lg px-4 py-3 shadow-[var(--shadow-float)] pointer-events-auto max-w-[420px] border',
+                TOAST_BORDER[t.type],
+              )}
             >
               <div className="flex items-start gap-2">
-                <span className="flex-1 text-[14px] font-semibold min-w-0 leading-snug" style={{ color: typeColor(t.type) }}>
+                <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[t.type])}>
                   {t.message}
                 </span>
                 <div className="flex items-center gap-2 shrink-0 mt-0.5">
@@ -109,9 +124,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     className="text-muted hover:text-primary transition-colors leading-none cursor-pointer"
                     aria-label="Dismiss"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M4 4l8 8M12 4l-8 8" />
-                    </svg>
+                    <XIcon size={16} strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -129,11 +142,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           ) : (
             <div
               key={t.id}
-              className="fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)]"
-              style={{
-                border: `1px solid color-mix(in srgb, ${typeColor(t.type)} 32%, transparent)`,
-                color: typeColor(t.type),
-              }}
+              className={cn(
+                'fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
+                TOAST_BORDER[t.type],
+                TOAST_TEXT[t.type],
+              )}
             >
               {t.message}
             </div>

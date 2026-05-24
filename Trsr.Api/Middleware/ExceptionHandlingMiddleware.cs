@@ -27,7 +27,12 @@ internal sealed class ExceptionHandlingMiddleware
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogError(ex, "Unhandled exception");
+            // NotImplementedException marks an intentional stub — surface it as 501
+            // without the alarming error-level log.
+            if (ex is NotImplementedException)
+                logger.LogInformation("Not-implemented endpoint called: {Path}", context.Request.Path);
+            else
+                logger.LogError(ex, "Unhandled exception");
 
             context.Response.ContentType = "application/json";
 
@@ -35,6 +40,7 @@ internal sealed class ExceptionHandlingMiddleware
             {
                 EntityNotFoundException or EntitiesNotFoundException => StatusCodes.Status404NotFound,
                 EntityAlreadyExistsException or OptimisticConcurrencyException => StatusCodes.Status409Conflict,
+                NotImplementedException => StatusCodes.Status501NotImplemented,
                 _ => StatusCodes.Status500InternalServerError,
             };
 
