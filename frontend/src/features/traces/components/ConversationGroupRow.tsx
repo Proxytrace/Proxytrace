@@ -33,8 +33,8 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
       <div
         role="row"
         onClick={onToggle}
-        className="grid items-center px-4 py-[10px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]"
-        style={{ gridTemplateColumns: GRID_TEMPLATE, minHeight: 44 }}
+        className="grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]"
+        style={{ gridTemplateColumns: GRID_TEMPLATE }}
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
@@ -45,8 +45,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           >
             {turns.length} turns
             <MiniChevronIcon
-              className="shrink-0 transition-transform duration-[150ms]"
-              style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+              className={cn('shrink-0 transition-transform duration-[150ms]', expanded ? 'rotate-90' : 'rotate-0')}
             />
           </span>
         </span>
@@ -85,11 +84,11 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           data-trace-id={turn.id}
           onClick={() => onSelectTrace(turn)}
           className={cn(
-            'grid items-center pl-8 pr-4 py-[10px] cursor-pointer transition-colors duration-[100ms]',
+            'grid items-center pl-8 pr-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
             'border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)]',
             turn.id === selectedId && 'bg-[rgba(255,255,255,0.04)]',
           )}
-          style={{ gridTemplateColumns: GRID_TEMPLATE, minHeight: 44, borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
+          style={{ gridTemplateColumns: GRID_TEMPLATE, borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
         >
           <span className="flex items-center gap-2 min-w-0">
             <span className="mono text-caption text-muted shrink-0">Turn {turns.length - i}</span>

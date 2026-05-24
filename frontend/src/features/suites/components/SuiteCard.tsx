@@ -5,6 +5,7 @@ import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EditIcon, TrashIcon, PlayFilledIcon } from '../../../components/icons';
 import { sparklinePath } from '../../../lib/charts';
 import { passRateColor } from '../suitesMeta';
+import { cn } from '../../../lib/cn';
 
 interface Props {
   suite: TestSuiteDto;
@@ -96,8 +97,10 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
               </span>
               {delta !== null && (
                 <span
-                  className="text-[11px] font-semibold inline-flex items-center gap-[2px]"
-                  style={{ color: delta >= 0 ? 'var(--success)' : 'var(--danger)' }}
+                  className={cn(
+                    'text-[11px] font-semibold inline-flex items-center gap-[2px]',
+                    delta >= 0 ? 'text-success' : 'text-danger',
+                  )}
                 >
                   {delta >= 0 ? '↗' : '↘'}
                   {Math.abs(Math.round(delta))}pt
@@ -140,8 +143,10 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
               Last run
             </div>
             <div
-              className="text-h2 font-semibold mt-[2px]"
-              style={{ color: hasRuns ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              className={cn(
+                'text-h2 font-semibold mt-[2px]',
+                hasRuns ? 'text-primary' : 'text-muted',
+              )}
             >
               {suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'Never'}
             </div>

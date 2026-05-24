@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckIcon, ChevronDownIcon } from '../icons';
+import { cn } from '../../lib/cn';
 
 export interface FilterDropdownOption {
   key: string;
@@ -81,8 +82,12 @@ export function FilterDropdown({
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150 ${active ? 'bg-card-2 text-primary' : 'bg-card text-secondary hover:text-primary'}`}
-        style={{ boxShadow: active ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3)' : 'var(--shadow-pill)' }}
+        className={cn(
+          'inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
+          active
+            ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
+            : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
+        )}
       >
         {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
         <span className="text-muted font-medium">{label}</span>
@@ -98,12 +103,11 @@ export function FilterDropdown({
         <div
           ref={menuRef}
           role="listbox"
-          className="fixed z-[60] bg-card-2 rounded-[10px] py-1 max-h-[280px] overflow-y-auto"
+          className="fixed z-[60] bg-card-2 rounded-[10px] py-1 max-h-[280px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
           style={{
             top: pos.top,
             left: pos.left,
             minWidth: width,
-            boxShadow: '0 12px 32px -8px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)',
           }}
         >
           {options.map(opt => {
@@ -118,7 +122,7 @@ export function FilterDropdown({
               >
                 {opt.accent && <span className="w-[8px] h-[8px] rounded-[2px] shrink-0" style={{ background: opt.accent }} />}
                 <span className="flex-1 truncate">{opt.label}</span>
-                {isSel && <CheckIcon size={12} strokeWidth={2.5} className="text-accent-primary shrink-0" />}
+                {isSel && <CheckIcon size={12} strokeWidth={2.5} className="text-accent shrink-0" />}
               </button>
             );
           })}

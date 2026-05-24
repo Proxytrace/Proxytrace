@@ -89,7 +89,7 @@ export function MatrixView({ group, activeCaseIds }: {
               return (
                 <Fragment key={row.caseId}>
                   {/* Full-width row separator */}
-                  {ri > 0 && <div aria-hidden className="h-px bg-hairline" style={{ gridColumn: '1 / -1' }} />}
+                  {ri > 0 && <div aria-hidden className="h-px bg-hairline col-span-full" />}
 
                   {/* Test case + verdict / divergence indicator */}
                   <button

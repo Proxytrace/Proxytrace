@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ActivityIcon, CheckIcon, ClockIcon, ExternalLinkIcon, XIcon } from '../../components/icons';
+import { cn } from '../../lib/cn';
 import { Card } from '../../components/ui/Card';
 import type { AbTestRunSummaryDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
@@ -55,7 +56,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
     <Card
       elevation="raised"
       padding="none"
-      className={`overflow-hidden ${isRunning ? 'streaming-border' : ''}`}
+      className={cn('overflow-hidden', isRunning && 'streaming-border')}
     >
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
@@ -64,7 +65,7 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           style={{ background: TONE_SUBTLE[meta.tone], color: TONE_COLOR[meta.tone] }}
         >
           <span
-            className={`inline-block size-1.5 rounded-full ${meta.pulse ? 'pulse-dot' : ''}`}
+            className={cn('inline-block size-1.5 rounded-full', meta.pulse && 'pulse-dot')}
             style={{ background: TONE_COLOR[meta.tone] }}
           />
           A/B test · {meta.label}

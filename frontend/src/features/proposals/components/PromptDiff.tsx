@@ -1,5 +1,26 @@
 import type { SystemPromptDetailsDto } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { buildPromptDiff } from '../proposalsMeta';
+
+type DiffKind = 'same' | 'add' | 'del';
+
+// Per-line diff styling. Each branch is a static token, selected by the
+// (data-driven) line kind — byte-identical to the previous inline values.
+const LINE_TEXT: Record<DiffKind, string> = {
+  add: 'text-success',
+  del: 'text-danger',
+  same: 'text-secondary',
+};
+const LINE_BG: Record<DiffKind, string> = {
+  add: 'bg-[color-mix(in_srgb,var(--success)_8%,transparent)]',
+  del: 'bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]',
+  same: '',
+};
+const SIGIL_TEXT: Record<DiffKind, string> = {
+  add: 'text-success',
+  del: 'text-danger',
+  same: 'text-muted',
+};
 
 interface PromptDiffProps {
   before: string;
@@ -20,23 +41,12 @@ function PromptDiffView({ before, after }: PromptDiffProps) {
       </div>
       <div className="mono text-body leading-[1.65]">
         {rendered.map((r, i) => {
-          const color = r.kind === 'add'
-            ? 'var(--success)'
-            : r.kind === 'del'
-            ? 'var(--danger)'
-            : 'var(--text-secondary)';
-          const bg = r.kind === 'add'
-            ? 'color-mix(in srgb, var(--success) 8%, transparent)'
-            : r.kind === 'del'
-            ? 'color-mix(in srgb, var(--danger) 8%, transparent)'
-            : 'transparent';
           const sigil = r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' ';
-          const sigilColor = r.kind === 'add' ? 'var(--success)' : r.kind === 'del' ? 'var(--danger)' : 'var(--text-muted)';
           return (
-            <div key={i} className="flex" style={{ background: bg, padding: '1px 0' }}>
+            <div key={i} className={cn('flex py-px', LINE_BG[r.kind])}>
               <span className="text-caption text-right select-none shrink-0 text-muted opacity-50 w-9 pl-3.5 pr-2">{i + 1}</span>
-              <span className="font-bold shrink-0 text-center w-[18px]" style={{ color: sigilColor }}>{sigil}</span>
-              <span className="flex-1 whitespace-pre-wrap break-words pr-3.5" style={{ color }}>{r.text || ' '}</span>
+              <span className={cn('font-bold shrink-0 text-center w-[18px]', SIGIL_TEXT[r.kind])}>{sigil}</span>
+              <span className={cn('flex-1 whitespace-pre-wrap break-words pr-3.5', LINE_TEXT[r.kind])}>{r.text || ' '}</span>
             </div>
           );
         })}

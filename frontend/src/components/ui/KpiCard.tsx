@@ -1,5 +1,6 @@
 import { Sparkline } from '../charts';
 import { ArrowUpIcon, ArrowDownIcon } from '../icons';
+import { cn } from '../../lib/cn';
 
 interface KpiCardProps {
   icon?: React.ReactNode;
@@ -50,20 +51,16 @@ export function KpiCard({
 
   return (
     <div
-      style={{
-        background: accent
-          ? 'linear-gradient(155deg, var(--accent-subtle), transparent 60%), var(--bg-card)'
-          : 'var(--bg-card)',
-        boxShadow: accent
-          ? '0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 32px -12px var(--accent-glow)'
-          : 'var(--shadow-card)',
-      }}
-      className="rounded-xl p-5 relative overflow-hidden"
+      className={cn(
+        'rounded-xl p-5 relative overflow-hidden',
+        accent
+          ? 'bg-[linear-gradient(155deg,var(--accent-subtle),transparent_60%),var(--bg-card)] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_2px_4px_rgba(0,0,0,0.25),0_12px_32px_-12px_var(--accent-glow)]'
+          : 'bg-card shadow-[var(--shadow-card)]',
+      )}
     >
       {accent && (
         <div
-          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, var(--accent-glow), transparent 70%)' }}
+          className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] rounded-full pointer-events-none bg-[radial-gradient(circle,var(--accent-glow),transparent_70%)]"
         />
       )}
 

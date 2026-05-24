@@ -54,8 +54,7 @@ export default function Agents() {
 
       {(isLoading || allAgents.length > 0) && (
         <div
-          className="fade-up flex-1 min-h-0 grid gap-4"
-          style={{ gridTemplateColumns: 'minmax(260px, 300px) minmax(0, 1fr)', animationDelay: '20ms' }}
+          className="fade-up flex-1 min-h-0 grid gap-4 grid-cols-[minmax(260px,300px)_minmax(0,1fr)] [animation-delay:20ms]"
         >
           <aside className="min-h-0 flex flex-col">
             <AgentList

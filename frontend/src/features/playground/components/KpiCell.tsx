@@ -23,8 +23,8 @@ export function KpiCell({ icon, label, value, tone = 'neutral', tooltip }: Props
   return (
     <div
       title={tooltip}
-      className="flex items-center gap-[8px] px-[10px] py-[6px] rounded-[10px] border min-w-0"
-      style={{ background: t.bg, borderColor: t.border, boxShadow: 'var(--shadow-pill)' }}
+      className="flex items-center gap-[8px] px-[10px] py-[6px] rounded-[10px] border min-w-0 shadow-[var(--shadow-pill)]"
+      style={{ background: t.bg, borderColor: t.border }}
       role="status"
       aria-label={`${label}: ${value}`}
     >

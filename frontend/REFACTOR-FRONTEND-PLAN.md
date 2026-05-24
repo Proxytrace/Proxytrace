@@ -246,3 +246,37 @@ append/rebuild lists; `ModelSwitchSection` color/tint props (data-driven runtime
 
 - `components/ui/CodeBlock.tsx` `!` count — the `'Copied!'` string literal, not a
   non-null assertion (see P1.2). Scanner false positive.
+
+---
+
+## SIS — Static inline-style sweep (2026-05-24, user-requested: "inline styles we can refactor?")
+
+Fresh scan: 294 total `style={{}}`, ~52 files still carry **static** values the
+earlier polish pass didn't reach (literal `var(--…)`, `color-mix`, gradients,
+`rgba`, `display/width/cursor/zIndex/fontSize/gridColumn` keywords, static
+`gridTemplateColumns`/`animationDelay`). Convert these to Tailwind utilities /
+arbitrary-value syntax. **Keep** runtime-computed styles (data widths,
+`modelColor()`/`agentColor()`/`scoreColor()`/`TONE_COLOR[...]`, ternaries whose
+branch is a runtime variable, chart SVG geometry).
+
+### var → Tailwind map (from src/index.css @theme)
+- `color: 'var(--text-primary|secondary|muted)'` → `text-primary|secondary|muted`
+- `'var(--accent-primary)'`→`text-accent`/`bg-accent`; `'var(--accent-hover)'`→`text-accent-hover`/`bg-accent-hover`; `'var(--accent-subtle)'`→`bg-accent-subtle`
+- `'var(--success|warn|danger|teal)'`→`text-*`/`bg-*`; `'var(--*-subtle)'`→`bg-*-subtle`
+- `background:'var(--bg-card)'`→`bg-card`; `'var(--bg-card-2)'`→`bg-card-2`; `'var(--bg-primary)'`→`bg-surface`; `'var(--bg-secondary)'`→`bg-surface-2`
+- `border:'1px solid var(--border-color)'`→`border border-border`; `borderColor:'var(--border-color)'`→`border-border`; `'var(--border-subtle)'`→`border-border-subtle`; `'var(--hairline)'`→`border-hairline`
+- `boxShadow:'var(--shadow-pill|card|float)'`→`shadow-[var(--shadow-pill|card|float)]`
+- non-token literals → arbitrary value, **spaces→`_`**: `bg-[rgba(0,0,0,0.18)]`, `bg-[radial-gradient(ellipse,var(--accent-subtle),transparent_70%)]`, `bg-[linear-gradient(90deg,var(--teal),transparent)]`, `border-t border-dashed border-t-[color-mix(in_srgb,var(--teal)_22%,transparent)]`
+- keywords: `display:'block'`→`block`; `overflow:'visible'`→`overflow-visible`; `width:'100%'`→`w-full`; `cursor:'grab'`→`cursor-grab`; `gridColumn:'1 / -1'`→`col-span-full`; `zIndex:100`→`z-[100]`; `fontSize:16`→`text-[16px]`; `scrollbarGutter:'stable'`→`[scrollbar-gutter:stable]`; static `animationDelay:'40ms'`→`[animation-delay:40ms]`; static `gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))'`→`grid-cols-[repeat(auto-fill,minmax(160px,1fr))]`
+- conditional w/ BOTH branches static → `cn()` + arbitrary classes; mixed (one branch runtime) → keep `style`.
+
+### Waves (disjoint file sets; behavior+appearance preserved; no commit)
+- [x] **SIS-A1** `components/charts/` — MiniArea, ChartTooltip, StackedBar, SegmentedGauge, Histogram, BarChart, AreaChart
+- [x] **SIS-A2** `components/ui/` + `components/overlays/` — KpiCard, FilterDropdown, FilterChip, MessageBubble, StepWizard
+- [x] **SIS-B1** `features/playground/components/` — ToolEditor, ParameterSlider, EditableMessageBubble, ConversationView, KpiCell, ComposeBox, AddMessageBar
+- [x] **SIS-B2** `features/traces/` — AgentFilterCards, ToolResultBlock, ConversationGroupRow, TraceTable, TraceDetailPanel, FlatTraceRow, components/DrawerStat, PromoteModal
+- [x] **SIS-B3** `features/proposals/` — PredictedImpactBand, ProposalCard, ProposalTerminalNote, PromptDiff, ModelSwitchSection, EvidenceList, Proposals, ProposalDetail, AbTestHero
+- [x] **SIS-B4** `features/suites/` — CreateSuiteWizard/TracePreviewPanel, components/SuiteCard, components/RunForm, EditSuiteDialog/components/DiscardConfirm, RunConfirmModal
+- [x] **SIS-B5** `features/dashboard/components/` — HeroTokenCard, TelemetryStrip, StatTile, PassRateGauge, AgentsSection
+- [x] **SIS-B6** `features/agents/` — EndpointSelector, widgets/SuitePassRatesWidget, widgets/ChartsWidget, Agents, AgentList
+- [x] **SIS-B7** `features/runs/MatrixView.tsx` + `features/evaluator-playground/components/TestBenchResult.tsx`

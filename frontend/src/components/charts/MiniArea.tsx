@@ -44,9 +44,9 @@ export function MiniArea({ data, color, width = 240, height = 26, fillOpacity = 
   const fmt = formatValue ?? ((v: number) => String(Math.round(v)));
 
   return (
-    <div ref={ref} className="relative" style={{ width: '100%' }} onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
+    <div ref={ref} className="relative w-full" onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
       {geom && (
-        <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} style={{ display: 'block', overflow: 'visible' }}>
+        <svg width="100%" height={height} viewBox={`0 0 ${w} ${height}`} className="block overflow-visible">
           <defs>
             <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={fillOpacity} />

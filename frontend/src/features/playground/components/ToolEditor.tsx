@@ -65,8 +65,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
 
   return (
     <div
-      className="rounded-[10px] overflow-hidden"
-      style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid var(--border-color)' }}
+      className="rounded-[10px] overflow-hidden bg-[rgba(0,0,0,0.18)] border border-border"
     >
       <div className="flex items-center gap-[6px] px-[10px] py-[8px]">
         <button
@@ -84,8 +83,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             {tool.name || '(unnamed)'}
           </span>
           <span
-            className="text-[10px] mono px-[6px] py-[1px] rounded-full"
-            style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)' }}
+            className="text-[10px] mono px-[6px] py-[1px] rounded-full bg-[rgba(255,255,255,0.04)] text-muted"
           >
             {argCount} arg{argCount === 1 ? '' : 's'}
           </span>
@@ -126,8 +124,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                 return (
                   <div
                     key={ai}
-                    className="rounded-[8px] p-[8px] flex flex-col gap-[6px]"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)' }}
+                    className="rounded-[8px] p-[8px] flex flex-col gap-[6px] bg-[rgba(255,255,255,0.02)] border border-border"
                   >
                     <div className="flex items-center gap-[6px] flex-wrap">
                       <span className="mono text-[12px] font-semibold text-primary">{arg.name}</span>
@@ -175,8 +172,7 @@ export function ToolEditor({ tools, onChange }: Props) {
   if (tools.length === 0) {
     return (
       <div
-        className="rounded-[10px] border border-dashed text-[11.5px] text-muted px-[10px] py-[12px] text-center"
-        style={{ borderColor: 'var(--border-color)' }}
+        className="rounded-[10px] border border-dashed border-border text-[11.5px] text-muted px-[10px] py-[12px] text-center"
       >
         Agent has no tools.
       </div>

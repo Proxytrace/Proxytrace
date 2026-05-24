@@ -1,4 +1,5 @@
 import type { ModelSwitchDetailsDto } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { modelColor } from '../../../lib/colors';
 
 interface ModelBoxProps {
@@ -15,8 +16,10 @@ function ModelBox({ label, name, color, tint }: ModelBoxProps) {
       style={{ background: tint }}
     >
       <div
-        className="text-caption font-semibold uppercase tracking-[0.07em] mb-1"
-        style={{ color: label === 'To' ? 'var(--success)' : 'var(--text-muted)' }}
+        className={cn(
+          'text-caption font-semibold uppercase tracking-[0.07em] mb-1',
+          label === 'To' ? 'text-success' : 'text-muted',
+        )}
       >
         {label}
       </div>

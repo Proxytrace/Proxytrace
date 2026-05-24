@@ -84,8 +84,7 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
   return (
     <div className="py-[10px] text-center">
       <div
-        className="w-[52px] h-[52px] rounded-[15px] bg-success-subtle flex items-center justify-center mx-auto mb-4 text-success text-[24px]"
-        style={{ border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)' }}
+        className="w-[52px] h-[52px] rounded-[15px] bg-success-subtle flex items-center justify-center mx-auto mb-4 text-success text-[24px] border border-[color-mix(in_srgb,var(--success)_30%,transparent)]"
       >
         ✓
       </div>

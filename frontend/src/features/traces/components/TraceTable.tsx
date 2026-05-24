@@ -16,8 +16,8 @@ interface Props {
 
 export function TraceTable({ rows, isFetching, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
   return (
-    <div className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)]" style={{ animationDelay: '120ms' }}>
-      <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarGutter: 'stable' }}>
+    <div className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)] [animation-delay:120ms]">
+      <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {/* Sticky column header */}
         <div
           className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] sticky top-0 z-10 bg-card"

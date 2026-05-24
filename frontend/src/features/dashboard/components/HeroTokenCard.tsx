@@ -23,14 +23,8 @@ export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRange
 
   return (
     <div className="relative overflow-hidden rounded-lg bg-card px-4 pt-3 pb-3.5 flex flex-col gap-2.5 shadow-[var(--shadow-card)]">
-      <div
-        className="absolute -top-20 -left-16 w-[420px] h-[280px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, var(--accent-subtle), transparent 70%)' }}
-      />
-      <div
-        className="absolute -bottom-24 -right-16 w-[380px] h-[260px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, color-mix(in srgb, var(--teal) 6%, transparent), transparent 70%)' }}
-      />
+      <div className="absolute -top-20 -left-16 w-[420px] h-[280px] pointer-events-none bg-[radial-gradient(ellipse,var(--accent-subtle),transparent_70%)]" />
+      <div className="absolute -bottom-24 -right-16 w-[380px] h-[260px] pointer-events-none bg-[radial-gradient(ellipse,color-mix(in_srgb,var(--teal)_6%,transparent),transparent_70%)]" />
 
       {/* Header: value + range picker */}
       <div className="relative flex items-start justify-between">

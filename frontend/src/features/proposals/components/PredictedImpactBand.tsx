@@ -1,3 +1,4 @@
+import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 import type { OptimizationProposalDto } from '../../../api/models';
 import { TONE_COLOR, deltaTone, formatCostDelta, formatLatencyDelta } from '../shared';
@@ -12,8 +13,8 @@ function DeltaBigCell({ label, value, tone }: { label: string; value: string; to
     <div className="bg-card-2 rounded-md px-3 py-2.5">
       <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">{label}</div>
       <div
-        className="mono font-bold tracking-[-0.02em] leading-none"
-        style={{ color: TONE_COLOR[tone], fontSize: 22 }}
+        className="mono font-bold tracking-[-0.02em] leading-none text-[22px]"
+        style={{ color: TONE_COLOR[tone] }}
       >
         {value}
       </div>
@@ -33,20 +34,20 @@ export function PredictedImpactBand({ dto }: Props) {
       <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-2.5">
         Predicted impact
       </div>
-      <div className={`grid gap-2.5 ${ms ? 'grid-cols-3' : 'grid-cols-1'}`}>
+      <div className={cn('grid gap-2.5', ms ? 'grid-cols-3' : 'grid-cols-1')}>
         {/* Pass rate cell — current → proposed */}
         <div className="bg-card-2 rounded-md px-3 py-2.5">
           <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">
             Pass rate
           </div>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="mono font-bold tracking-[-0.02em] leading-none text-muted" style={{ fontSize: 16 }}>
+            <span className="mono font-bold tracking-[-0.02em] leading-none text-muted text-[16px]">
               {fmtPct(dto.currentPassRate)}
             </span>
             <span className="text-body-sm text-muted">→</span>
             <span
-              className="mono font-bold tracking-[-0.02em] leading-none"
-              style={{ color: TONE_COLOR[passDeltaTone], fontSize: 22 }}
+              className="mono font-bold tracking-[-0.02em] leading-none text-[22px]"
+              style={{ color: TONE_COLOR[passDeltaTone] }}
             >
               {fmtPct(dto.proposedPassRate)}
             </span>

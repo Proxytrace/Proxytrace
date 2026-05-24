@@ -17,17 +17,14 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="fade-up rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]" style={{ animationDelay: '200ms' }}>
+    <div className="fade-up rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)] [animation-delay:200ms]">
       <header className="flex items-center justify-between gap-3 px-3 pt-2.5 pb-1.5">
         <div className="min-w-0">
           <h3 className="text-h2 font-semibold">Agents</h3>
           <p className="text-body-sm text-muted mt-0.5 font-mono">{agents.length} detected · tap to inspect</p>
         </div>
         <div className="flex items-center gap-2">
-          <div
-            className="px-2.5 py-1.5 rounded-md text-body-sm font-semibold text-accent-hover inline-flex items-center gap-1.5"
-            style={{ background: 'linear-gradient(135deg, var(--accent-subtle), color-mix(in srgb, var(--teal) 8%, transparent))' }}
-          >
+          <div className="px-2.5 py-1.5 rounded-md text-body-sm font-semibold text-accent-hover inline-flex items-center gap-1.5 bg-[linear-gradient(135deg,var(--accent-subtle),color-mix(in_srgb,var(--teal)_8%,transparent))]">
             <SparklesIcon size={11} /> 2 proposals
           </div>
           <button

@@ -23,15 +23,13 @@ export function ResultPill({ result, loading }: { result?: EvaluationResultDto; 
   if (!result) return null;
 
   if (result.errorMessage !== null) {
-    const color = 'var(--warn)';
     return (
       <div className="flex items-center gap-1.5">
         <span
-          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
-          style={{ background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
+          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn"
           title={result.errorMessage ?? 'Evaluator errored'}
         >
-          <span className="w-2 h-2 rounded-full" style={{ background: color }} />
+          <span className="w-2 h-2 rounded-full bg-warn" />
           Error
         </span>
         {result.errorMessage && <ReasoningTip text={result.errorMessage} />}
@@ -93,8 +91,8 @@ export function ReasoningTip({ text }: { text: string }) {
       {open && pos && createPortal(
         <div
           role="tooltip"
-          style={{ position: 'fixed', top: pos.top, left: pos.left, width: 'min(22rem, 80vw)', transform: 'translateY(-100%)' }}
-          className="pointer-events-none z-[1000] max-h-72 overflow-auto p-3 rounded-md bg-card border border-border shadow-[var(--shadow-card)] text-[11.5px] leading-[1.55] text-primary whitespace-pre-wrap text-left"
+          style={{ top: pos.top, left: pos.left }}
+          className="fixed w-[min(22rem,80vw)] -translate-y-full pointer-events-none z-[1000] max-h-72 overflow-auto p-3 rounded-md bg-card border border-border shadow-[var(--shadow-card)] text-[11.5px] leading-[1.55] text-primary whitespace-pre-wrap text-left"
         >
           <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-1.5">
             Reasoning

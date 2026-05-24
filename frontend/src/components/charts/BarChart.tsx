@@ -55,7 +55,7 @@ export function BarChart({
         viewBox={`0 0 ${w} ${height}`}
         width="100%"
         height={height}
-        style={{ display: 'block' }}
+        className="block"
       >
         <line x1="38" x2={w - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="var(--border-color)" />
         <path d={bars.barsPath} fill={color} opacity="0.85" />

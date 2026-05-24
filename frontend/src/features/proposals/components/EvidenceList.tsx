@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ChevronRightIcon, ExternalLinkIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 
 interface Props {
@@ -17,8 +18,10 @@ export function EvidenceList({ ids }: Props) {
         <Link
           key={id}
           to={`/runs?run=${id}`}
-          className="grid grid-cols-[8px_1fr_auto_auto] w-full items-center gap-2.5 px-3.5 py-2.5 hover:bg-card-2/40 transition-colors"
-          style={{ borderTop: i === 0 ? 'none' : '1px solid var(--hairline)' }}
+          className={cn(
+            'grid grid-cols-[8px_1fr_auto_auto] w-full items-center gap-2.5 px-3.5 py-2.5 hover:bg-card-2/40 transition-colors',
+            i !== 0 && 'border-t border-hairline',
+          )}
         >
           <span className="size-1.5 rounded-full bg-warn"/>
           <div className="min-w-0">

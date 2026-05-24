@@ -20,11 +20,11 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
       data-trace-id={trace.id}
       onClick={onClick}
       className={cn(
-        'grid items-center px-4 py-[10px] cursor-pointer transition-colors duration-[100ms]',
+        'grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
         'border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)]',
         selected && 'bg-[rgba(255,255,255,0.04)]',
       )}
-      style={{ gridTemplateColumns: GRID_TEMPLATE, minHeight: 44 }}
+      style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
       <TraceIdCell trace={trace} />
       <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">

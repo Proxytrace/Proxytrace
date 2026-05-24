@@ -1,6 +1,7 @@
 // A single hero/2×2 KPI stat tile with an optional sparkline.
 
 import { MiniArea } from '../../../components/charts';
+import { cn } from '../../../lib/cn';
 
 interface StatTileProps {
   icon: React.ReactNode;
@@ -31,14 +32,13 @@ export function StatTile({
 }: StatTileProps) {
   return (
     <div
-      className="relative overflow-hidden rounded-xl px-3 pt-[10px] flex flex-col gap-[5px] min-h-[88px] bg-card shadow-[var(--shadow-card)]"
-      style={accent ? { background: 'linear-gradient(155deg, var(--accent-subtle), transparent 55%), var(--bg-card)' } : undefined}
+      className={cn(
+        'relative overflow-hidden rounded-xl px-3 pt-[10px] flex flex-col gap-[5px] min-h-[88px] bg-card shadow-[var(--shadow-card)]',
+        accent && 'bg-[image:linear-gradient(155deg,var(--accent-subtle),transparent_55%)]',
+      )}
     >
       {accent && (
-        <div
-          className="absolute -top-10 -right-10 w-[140px] h-[140px] rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, var(--accent-subtle), transparent 65%)' }}
-        />
+        <div className="absolute -top-10 -right-10 w-[140px] h-[140px] rounded-full pointer-events-none bg-[radial-gradient(circle,var(--accent-subtle),transparent_65%)]" />
       )}
       <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-[7px]">

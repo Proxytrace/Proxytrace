@@ -16,7 +16,7 @@ export function SegmentedGauge({ value, size = 180, label }: SegmentedGaugeProps
   const labelSize = 8 * s + 3;
 
   return (
-    <svg width={size} height={size} style={{ display: 'block' }} role="img" aria-label={`${value}% pass rate`}>
+    <svg width={size} height={size} className="block" role="img" aria-label={`${value}% pass rate`}>
       <defs>
         <filter id={glowId}>
           <feGaussianBlur stdDeviation="2" result="b" />

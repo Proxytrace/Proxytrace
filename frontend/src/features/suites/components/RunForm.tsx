@@ -1,6 +1,7 @@
 import type { ModelEndpointDto, TestSuiteDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { PlayFilledIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
 
 interface Props {
   suite: TestSuiteDto;
@@ -29,8 +30,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
           Model endpoints to evaluate
           {isMulti && (
             <span
-              className="px-2 py-[2px] bg-accent-subtle text-[color:var(--accent-hover)] rounded-full text-[10px] font-semibold normal-case tracking-normal"
-              style={{ border: '1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent)' }}
+              className="px-2 py-[2px] bg-accent-subtle text-[color:var(--accent-hover)] rounded-full text-[10px] font-semibold normal-case tracking-normal border border-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]"
             >
               Parallel · {selectedEndpoints.size} selected
             </span>
@@ -54,10 +54,8 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
                 }}
               >
                 <div
-                  className="flex items-center justify-center shrink-0 rounded-[4px] transition-all duration-[120ms]"
+                  className="flex items-center justify-center shrink-0 rounded-[4px] transition-all duration-[120ms] w-4 h-4"
                   style={{
-                    width: 16,
-                    height: 16,
                     border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`,
                     background: isOn ? mc : 'transparent',
                   }}
@@ -95,13 +93,13 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
         <button
           onClick={onSubmit}
           disabled={loading || !hasSelection}
-          className="px-5 py-[9px] rounded-[10px] text-body font-semibold inline-flex items-center gap-[7px] transition-all duration-[150ms]"
-          style={{
-            background: hasSelection ? 'var(--grad-accent)' : 'var(--bg-card-2)',
-            color: hasSelection ? '#fff' : 'var(--text-muted)',
-            opacity: loading ? 0.7 : 1,
-            boxShadow: hasSelection ? 'var(--shadow-btn)' : 'none',
-          }}
+          className={cn(
+            'px-5 py-[9px] rounded-[10px] text-body font-semibold inline-flex items-center gap-[7px] transition-all duration-[150ms]',
+            hasSelection
+              ? 'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)]'
+              : 'bg-card-2 text-muted shadow-none',
+            loading ? 'opacity-70' : 'opacity-100',
+          )}
         >
           {loading ? (
             <>

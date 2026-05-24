@@ -100,15 +100,13 @@ export function EditableMessageBubble(props: Props) {
       onDragEnd={() => onDragEnd?.()}
       onDragOver={e => onDragOverBubble?.(e)}
       onDrop={e => onDrop?.(e)}
-      className={`group rounded-[14px] overflow-hidden focus-within:outline focus-within:outline-1${isStreaming ? ' streaming-border' : ''}`}
+      className={`group rounded-[14px] overflow-hidden focus-within:outline focus-within:outline-1 shadow-[var(--shadow-card)] transition-[opacity] duration-150 ease-[ease]${isStreaming ? ' streaming-border' : ''}`}
       style={{
         background: style.bg,
         border: `1px solid ${style.border}`,
-        boxShadow: 'var(--shadow-card)',
         outlineColor: style.border,
         opacity: isDragging ? 0.4 : 1,
         cursor: draggable ? 'grab' : 'default',
-        transition: 'opacity 0.15s',
         ['--streaming-color' as string]: style.accent,
       }}
     >
@@ -117,8 +115,7 @@ export function EditableMessageBubble(props: Props) {
           <span
             aria-hidden
             title="Drag to reorder"
-            className="text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-            style={{ cursor: 'grab' }}
+            className="text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-grab"
           >
             <GripVerticalIcon size={12} />
           </span>
@@ -179,12 +176,8 @@ export function EditableMessageBubble(props: Props) {
                 {showCursor && (
                   <span
                     aria-hidden
-                    className="inline-block w-[8px] h-[15px] align-text-bottom ml-[1px] motion-reduce:animate-none"
-                    style={{
-                      background: style.accent,
-                      animation: 'pulse-dot 0.9s ease-in-out infinite',
-                      borderRadius: '1px',
-                    }}
+                    className="inline-block w-[8px] h-[15px] align-text-bottom ml-[1px] motion-reduce:animate-none rounded-[1px] animate-[pulse-dot_0.9s_ease-in-out_infinite]"
+                    style={{ background: style.accent }}
                   />
                 )}
               </div>
@@ -197,19 +190,14 @@ export function EditableMessageBubble(props: Props) {
                 {message.toolRequests.map(tr => (
                   <div
                     key={tr.id}
-                    className="rounded-md p-[10px]"
-                    style={{
-                      border: '1px solid color-mix(in srgb, var(--success) 25%, transparent)',
-                      background: 'var(--success-subtle)',
-                    }}
+                    className="rounded-md p-[10px] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle"
                   >
                     <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
-                      <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold"
-                        style={{ background: 'color-mix(in srgb, var(--success) 18%, transparent)', color: 'var(--success)' }}
+                      <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success"
                       >
                         tool call
                       </span>
-                      <span className="font-bold" style={{ color: 'var(--success)' }}>{tr.name}</span>
+                      <span className="font-bold text-success">{tr.name}</span>
                       <span className="text-muted text-[10px]">{tr.id.slice(0, 12)}</span>
                     </div>
                     <JsonBlock value={tr.arguments} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
@@ -219,12 +207,7 @@ export function EditableMessageBubble(props: Props) {
             )}
             {message.toolError && (
               <div
-                className="mt-[10px] text-[12px] mono px-[10px] py-[8px] rounded-[8px]"
-                style={{
-                  background: 'var(--danger-subtle)',
-                  border: '1px solid color-mix(in srgb, var(--danger) 28%, transparent)',
-                  color: 'var(--danger)',
-                }}
+                className="mt-[10px] text-[12px] mono px-[10px] py-[8px] rounded-[8px] bg-danger-subtle border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] text-danger"
               >
                 {message.toolError}
               </div>

@@ -33,7 +33,7 @@ export function ProposalDetail({ dto }: Props) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full">
-      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4 [&>*]:shrink-0" style={{ scrollbarGutter: 'stable' }}>
+      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4 [&>*]:shrink-0 [scrollbar-gutter:stable]">
         <ProposalHeader dto={dto} status={status} titleLine={titleLine}/>
 
         {restOfRationale && (

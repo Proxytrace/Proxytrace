@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AgentDto } from '../../api/models';
 import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
+import { cn } from '../../lib/cn';
 import { fmtRelative } from '../../lib/format';
 import { SkeletonList } from '../../components/ui/Skeleton';
 
@@ -58,16 +59,22 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           aria-checked={showSystem}
           onClick={onToggleSystem}
           title={showSystem ? 'Hide system agents' : 'Show system agents'}
-          className={`self-start inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none ${showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card'}`}
-          style={{ boxShadow: showSystem ? 'inset 0 0 0 1px var(--accent-primary), var(--shadow-pill)' : 'var(--shadow-pill)' }}
+          className={cn(
+            'self-start inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+            showSystem
+              ? 'text-accent bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent-primary),var(--shadow-pill)]'
+              : 'text-secondary bg-card shadow-[var(--shadow-pill)]',
+          )}
         >
           <span
             className={`w-7 h-4 rounded-full relative transition-colors duration-200 ${showSystem ? 'bg-accent' : 'bg-[rgba(255,255,255,0.12)]'}`}
             aria-hidden="true"
           >
             <span
-              className="absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200"
-              style={{ left: showSystem ? '14px' : '2px' }}
+              className={cn(
+                'absolute top-[2px] w-3 h-3 rounded-full bg-white transition-[left] duration-200',
+                showSystem ? 'left-[14px]' : 'left-[2px]',
+              )}
             />
           </span>
           System Agents

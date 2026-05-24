@@ -42,7 +42,7 @@ export function Histogram({
 
   return (
     <div ref={ref} className="relative" onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
-      <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} style={{ display: 'block' }}>
+      <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} className="block">
         <line x1="38" x2={w - 10} y1={hist.baselineY} y2={hist.baselineY} stroke="var(--border-color)" />
         <path d={hist.barsPath} fill={color} opacity="0.85" />
         {hoverRect && hoverRect.h > 0 && (

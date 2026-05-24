@@ -6,6 +6,7 @@ import { testSuitesApi } from '../../../api/test-suites';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../../lib/format';
+import { cn } from '../../../lib/cn';
 import {
   PlusIcon, ChevronRightIcon, ClockIcon, CoinsIcon,
   ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon,
@@ -123,11 +124,11 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
               <span className="mono text-body-title font-semibold">{trace.id.slice(0, 18)}…</span>
               <span
-                className="inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono"
-                style={{
-                  background: statusOk ? 'var(--success-subtle)' : statusErr ? 'var(--danger-subtle)' : 'color-mix(in srgb, var(--warn) 15%, transparent)',
-                  color: statusColor,
-                }}
+                className={cn(
+                  'inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono',
+                  statusOk ? 'bg-success-subtle' : statusErr ? 'bg-danger-subtle' : 'bg-[color-mix(in_srgb,var(--warn)_15%,transparent)]',
+                )}
+                style={{ color: statusColor }}
               >
                 <span className="w-[5px] h-[5px] rounded-full" style={{ background: statusColor }} />
                 {trace.httpStatus} {statusLabel}
@@ -207,7 +208,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             <button key={t} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-body font-medium bg-transparent -mb-px inline-flex items-center gap-1.5 transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-accent' : 'text-muted border-b-transparent'}`}>
               {t}
               {count !== null && (
-                <span className="px-1.5 py-px rounded-full text-caption font-mono font-semibold" style={{ background: tab === t ? 'var(--accent-subtle)' : 'var(--bg-card-2)', color: tab === t ? 'var(--accent-hover)' : 'var(--text-muted)' }}>{count}</span>
+                <span className={cn('px-1.5 py-px rounded-full text-caption font-mono font-semibold', tab === t ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-muted')}>{count}</span>
               )}
             </button>
           ))}

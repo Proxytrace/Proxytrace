@@ -14,10 +14,7 @@ export function AgentFilterCards({ agents, agentBreakdown, agentFilter, p95, onF
   if (agents.length === 0) return null;
 
   return (
-    <div
-      className="fade-up grid gap-2 p-1 shrink-0"
-      style={{ animationDelay: '40ms', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))' }}
-    >
+    <div className="fade-up grid gap-2 p-1 shrink-0 [animation-delay:40ms] grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
       {agents.map(a => {
         const c = agentColor(a.id);
         const isActive = agentFilter === a.id;
@@ -55,10 +52,7 @@ export function AgentFilterCards({ agents, agentBreakdown, agentFilter, p95, onF
 
       {p95 != null && (
         <div className="bg-card rounded-xl px-[14px] py-3 relative overflow-hidden shadow-[var(--shadow-card)]">
-          <div
-            className="absolute top-0 left-0 right-0 h-[2px]"
-            style={{ background: 'linear-gradient(90deg, var(--teal), transparent)' }}
-          />
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-[linear-gradient(90deg,var(--teal),transparent)]" />
           <div className="text-[11.5px] font-semibold mb-[6px] text-muted">p95 Latency</div>
           <div className="flex items-baseline gap-[5px]">
             <span className="text-[20px] font-bold tracking-[-0.02em] font-mono text-teal">{fmtLatency(p95)}</span>

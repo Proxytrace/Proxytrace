@@ -4,6 +4,7 @@ import type { AgentCallDto, MessageDto, TestSuiteDto } from '../../api/models';
 import { testSuitesApi } from '../../api/test-suites';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct } from '../../lib/format';
+import { cn } from '../../lib/cn';
 import { PlusIcon, XIcon, CheckIcon } from '../../components/icons';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { MessageBubble } from '../../components/ui/MessageBubble';
@@ -153,26 +154,25 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                     key={s.id}
                     type="button"
                     onClick={() => setSuiteId(s.id)}
-                    className="text-left rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 flex items-start gap-2"
-                    style={{
-                      background: isSel ? 'var(--accent-subtle)' : 'var(--bg-card-2)',
-                      boxShadow: isSel
-                        ? 'inset 0 0 0 1.5px color-mix(in srgb, var(--accent-primary) 67%, transparent)'
-                        : 'inset 0 0 0 1px var(--border-color)',
-                    }}
+                    className={cn(
+                      'text-left rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 flex items-start gap-2',
+                      isSel
+                        ? 'bg-accent-subtle shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--accent-primary)_67%,transparent)]'
+                        : 'bg-card-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
+                    )}
                   >
                     <span
-                      className="w-[14px] h-[14px] rounded-full mt-[2px] shrink-0 flex items-center justify-center transition-all duration-150"
-                      style={{
-                        background: isSel ? 'var(--accent-primary)' : 'transparent',
-                        border: isSel ? '1.5px solid var(--accent-primary)' : '1.5px solid var(--border-color)',
-                        boxShadow: isSel ? '0 0 8px var(--accent-glow)' : 'none',
-                      }}
+                      className={cn(
+                        'w-[14px] h-[14px] rounded-full mt-[2px] shrink-0 flex items-center justify-center transition-all duration-150',
+                        isSel
+                          ? 'bg-accent border-[1.5px] border-accent shadow-[0_0_8px_var(--accent-glow)]'
+                          : 'bg-transparent border-[1.5px] border-border shadow-none',
+                      )}
                     >
                       {isSel && <span className="text-white inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[12.5px] font-semibold truncate" style={{ color: isSel ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                      <span className={cn('block text-[12.5px] font-semibold truncate', isSel ? 'text-primary' : 'text-secondary')}>
                         {s.name}
                       </span>
                       <span className="block text-[10.5px] text-muted mt-[2px]">

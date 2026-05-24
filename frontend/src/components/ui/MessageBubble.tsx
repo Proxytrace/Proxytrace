@@ -54,8 +54,8 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
 
   return (
     <div
-      className="rounded-[12px] overflow-hidden bg-card-2"
-      style={{ border: `1px solid ${role.border}`, boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset' }}
+      className="rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
+      style={{ borderColor: role.border }}
     >
       <button
         type="button"
@@ -88,7 +88,7 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
       </button>
 
       {open && (
-        <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="border-t border-t-[rgba(255,255,255,0.05)]">
           <div className="px-[14px] py-[12px]" style={{ background: role.bodyBg }}>
             <div className={`text-[13px] leading-[1.65] whitespace-pre-wrap ${isSystem ? 'text-secondary italic' : 'text-primary'}`}>
               {content}

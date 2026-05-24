@@ -35,7 +35,7 @@ export function StackedBar({ data, width = 640, height = 200, formatValue }: Sta
 
   return (
     <div ref={ref} className="relative" onMouseMove={handleMove} onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} style={{ display: 'block' }}>
+      <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} className="block">
         <path d={chart.solidGridPath} stroke="var(--border-color)" strokeWidth="1" fill="none" />
         <path d={chart.dashedGridPath} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="3 4" fill="none" />
         {chart.grid.map((g, i) => (
