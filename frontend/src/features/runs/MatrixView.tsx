@@ -98,9 +98,9 @@ export function MatrixView({ group, activeCaseIds }: {
                     title={`Compare all models — ${row.summary}`}
                   >
                     {multi ? (
-                      <span className="mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0" style={divChipStyle(row.divergent, passes, total)}>{passes}/{total}</span>
+                      <span className={cn('mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0', divChipClass(row.divergent, passes, total))}>{passes}/{total}</span>
                     ) : (
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: verdictDot(withResult[0]?.pass) }} />
+                      <span className={cn('w-2 h-2 rounded-full shrink-0', verdictDotClass(withResult[0]?.pass))} />
                     )}
                     <span className="flex flex-col min-w-0">
                       <span className="truncate text-body">{row.summary}</span>
@@ -189,12 +189,12 @@ function EvalDots({ evaluations }: { evaluations: EvaluationResultDto[] }) {
   );
 }
 
-function verdictDot(pass: boolean | null | undefined): string {
-  return pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
+function verdictDotClass(pass: boolean | null | undefined): string {
+  return pass === true ? 'bg-success' : pass === false ? 'bg-danger' : 'bg-[var(--text-muted)]';
 }
 
-function divChipStyle(divergent: boolean, passes: number, total: number): React.CSSProperties {
-  if (divergent) return { background: 'color-mix(in srgb, var(--warn) 18%, transparent)', color: 'var(--warn)' };
-  if (passes === total) return { color: 'var(--text-muted)' };
-  return { background: 'color-mix(in srgb, var(--danger) 18%, transparent)', color: 'var(--danger)' };
+function divChipClass(divergent: boolean, passes: number, total: number): string {
+  if (divergent) return 'bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn';
+  if (passes === total) return 'text-muted';
+  return 'bg-[color-mix(in_srgb,var(--danger)_18%,transparent)] text-danger';
 }

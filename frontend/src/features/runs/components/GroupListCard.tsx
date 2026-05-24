@@ -17,33 +17,38 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   const runCount = group.runs.length;
 
   return (
-    <button
-      onClick={onSelect}
-      aria-pressed={isSelected}
-      className={`relative w-full text-left rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 cursor-pointer shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
-      style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
-    >
-      <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
+    // Wrapper is a positioning + hover context so the delete control is a real
+    // sibling button, not nested inside the card button (invalid HTML / a11y).
+    <div className="group/card relative">
+      <button
+        onClick={onSelect}
+        aria-pressed={isSelected}
+        className={`relative w-full text-left rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 cursor-pointer shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
+        style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
+      >
+        <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
 
-      <div className="flex items-center justify-between gap-2 mb-1.5">
-        <div className="min-w-0">
+        <div className="truncate text-title font-semibold mb-2 pr-6">{group.suiteName}</div>
+
+        <div className="flex items-center gap-1.5 mb-2.5 min-w-0">
+          <Pill label={group.agentName} color={c} />
           {runCount > 1 && (
-            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted">{runCount} models</span>
+            <span className="mono px-1.5 py-px rounded-sm text-[9.5px] font-semibold bg-white/[0.06] text-muted shrink-0">{runCount} models</span>
           )}
+          <span className="text-caption text-muted ml-auto shrink-0">{fmtRelative(group.createdAt)}</span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-caption text-muted">{fmtRelative(group.createdAt)}</span>
-          <button onClick={e => { e.stopPropagation(); onDelete(); }} className="btn-icon btn-icon-danger" aria-label="Delete run group"><TrashIcon size={13} /></button>
-        </div>
-      </div>
 
-      <div className="truncate text-title font-semibold mb-1.5">{group.suiteName}</div>
-      <div className="mb-2">
-        <Pill label={group.agentName} color={c} />
-      </div>
+        <ModelStack runs={group.runs} />
+      </button>
 
-      <ModelStack runs={group.runs} />
-    </button>
+      <button
+        onClick={onDelete}
+        className={`btn-icon btn-icon-danger absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
+        aria-label="Delete run group"
+      >
+        <TrashIcon size={13} />
+      </button>
+    </div>
   );
 }
 

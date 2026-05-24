@@ -1,8 +1,9 @@
 import type { TestRunGroupDto } from '../../../api/models';
-import { agentColor, tint } from '../../../lib/colors';
+import { agentColor } from '../../../lib/colors';
 import { fmtDuration, fmtRelative } from '../../../lib/format';
 import { TrashIcon } from '../../../components/icons';
 import { Pill } from '../../../components/ui/Pill';
+import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
 import { passRateColor, passRatePercent, avgLatency, isActive, runStatusColor } from '../results';
 
@@ -33,7 +34,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
         <div className="flex items-center gap-2 flex-wrap">
           <h2 className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{group.suiteName}</h2>
           <Pill label={group.agentName} color={c} />
-          <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(sc, 18), color: sc }}>{group.status}</span>
+          <ColoredBadge color={sc} label={group.status} dot />
           {active && (
             <span className="inline-flex items-center gap-1.5 text-caption text-muted shrink-0">
               <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-accent inline-block" />
