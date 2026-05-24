@@ -36,7 +36,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
 
         {done ? (
           <div style={{ padding: '40px 32px', textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--success-subtle)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--success)', fontSize: 24 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--success-subtle)', border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--success)', fontSize: 24 }}>
               ✓
             </div>
             <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{isMulti ? 'Parallel evaluation started' : 'Evaluation started'}</h3>

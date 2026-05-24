@@ -12,10 +12,10 @@ interface Props {
 
 const TONE: Record<Tone, { color: string; bg: string; border: string }> = {
   neutral: { color: 'var(--text-primary)', bg: 'rgba(255,255,255,0.03)', border: 'var(--border-color)' },
-  good: { color: 'var(--success)', bg: 'var(--success-subtle)', border: 'rgba(61,170,111,0.20)' },
-  warn: { color: 'var(--warn)', bg: 'var(--warn-subtle)', border: 'rgba(212,145,92,0.22)' },
-  danger: { color: 'var(--danger)', bg: 'var(--danger-subtle)', border: 'rgba(217,85,85,0.22)' },
-  live: { color: 'var(--accent-hover)', bg: 'var(--accent-subtle)', border: 'rgba(201,148,74,0.22)' },
+  good: { color: 'var(--success)', bg: 'var(--success-subtle)', border: 'color-mix(in srgb, var(--success) 28%, transparent)' },
+  warn: { color: 'var(--warn)', bg: 'var(--warn-subtle)', border: 'color-mix(in srgb, var(--warn) 28%, transparent)' },
+  danger: { color: 'var(--danger)', bg: 'var(--danger-subtle)', border: 'color-mix(in srgb, var(--danger) 28%, transparent)' },
+  live: { color: 'var(--accent-hover)', bg: 'var(--accent-subtle)', border: 'var(--accent-glow)' },
 };
 
 export function KpiCell({ icon, label, value, tone = 'neutral', tooltip }: Props) {

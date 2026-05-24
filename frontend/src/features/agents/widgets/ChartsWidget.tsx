@@ -56,9 +56,9 @@ export function ChartsWidget({ overview, range, onRangeChange, className }: Prop
   const expanded = (
     <div className="flex flex-col gap-3">
       <div className="text-body-sm text-muted">{rangeLabel(range)}</div>
-      <MiniChart title="Traces" data={traces} color="#c9944a" gradientId={`${uid}-tracesXL`} height={200} />
-      <MiniChart title="Tokens" data={tokens} color="#6b9eaa" gradientId={`${uid}-tokensXL`} height={200} />
-      <MiniChart title="Cost" data={costs} color="#d4915c" gradientId={`${uid}-costXL`} height={200} />
+      <MiniChart title="Traces" data={traces} color="var(--accent-primary)" gradientId={`${uid}-tracesXL`} height={200} />
+      <MiniChart title="Tokens" data={tokens} color="var(--teal)" gradientId={`${uid}-tokensXL`} height={200} />
+      <MiniChart title="Cost" data={costs} color="var(--warn)" gradientId={`${uid}-costXL`} height={200} />
     </div>
   );
 
@@ -72,9 +72,9 @@ export function ChartsWidget({ overview, range, onRangeChange, className }: Prop
       expandMaxWidth={760}
     >
       <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-        <MiniChart title="Traces" data={traces} color="#c9944a" gradientId={`${uid}-traces`} />
-        <MiniChart title="Tokens" data={tokens} color="#6b9eaa" gradientId={`${uid}-tokens`} />
-        <MiniChart title="Cost" data={costs} color="#d4915c" gradientId={`${uid}-cost`} />
+        <MiniChart title="Traces" data={traces} color="var(--accent-primary)" gradientId={`${uid}-traces`} />
+        <MiniChart title="Tokens" data={tokens} color="var(--teal)" gradientId={`${uid}-tokens`} />
+        <MiniChart title="Cost" data={costs} color="var(--warn)" gradientId={`${uid}-cost`} />
       </div>
     </Widget>
   );

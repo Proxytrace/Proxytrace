@@ -113,6 +113,40 @@ public class StatisticsController : ControllerBase
         return results.Select(r => new AgentBreakdownDto(r.AgentId, r.CallCount)).ToArray();
     }
 
+    [HttpGet("live-telemetry")]
+    public async Task<LiveTelemetryDto> GetLiveTelemetry(
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new StatisticsFilter(ProjectId: projectId);
+        var result = await statistics.GetLiveTelemetryAsync(filter, cancellationToken);
+        return new LiveTelemetryDto(result.TracesPerMinute, result.TokensPerSecond, result.QueueDepth, result.ErrorRate, result.P95Ms, result.ProxyVersion);
+    }
+
+    [HttpGet("token-usage-by-agent")]
+    public async Task<IReadOnlyList<AgentTokenUsageDto>> GetTokenUsageByAgent(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new StatisticsFilter(from, to, projectId);
+        var results = await statistics.GetTokenUsageByAgentAsync(filter, cancellationToken);
+        return results.Select(r => new AgentTokenUsageDto(r.Date, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray();
+    }
+
+    [HttpGet("dashboard-trends")]
+    public async Task<DashboardTrendsDto> GetDashboardTrends(
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new StatisticsFilter(from, to, projectId);
+        var result = await statistics.GetDashboardTrendsAsync(filter, cancellationToken);
+        return new DashboardTrendsDto(result.Traces, result.LatencyMs, result.Throughput, result.PassRate);
+    }
+
     [HttpGet("cost-estimate")]
     public async Task<IReadOnlyList<CostEstimateDto>> GetCostEstimate(
         [FromQuery] DateTimeOffset? from = null,

@@ -33,7 +33,7 @@ export function DangerZoneTab() {
     mutationFn: () => setupApi.cleanupNonModelData(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agent-calls'] });
-      qc.invalidateQueries({ queryKey: ['test-run-groups'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
       qc.invalidateQueries({ queryKey: ['proposals'] });
       qc.invalidateQueries({ queryKey: ['statistics-summary'] });
       qc.invalidateQueries({ queryKey: ['statistics-latency'] });
@@ -51,9 +51,9 @@ export function DangerZoneTab() {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto">
       <div className="max-w-[760px] flex flex-col gap-4">
-        <div className="bg-card border border-[rgba(217,85,85,0.3)] rounded-[14px] p-5 flex flex-col gap-4">
+        <div className="bg-card border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] rounded-[14px] p-5 flex flex-col gap-4">
           <div>
-            <h2 className="text-[16px] font-bold text-[#d95555] m-0 mb-1">Delete all non-model data</h2>
+            <h2 className="text-[16px] font-bold text-danger m-0 mb-1">Delete all non-model data</h2>
             <p className="text-[13px] text-secondary m-0">
               Wipes runtime/trace data while preserving configuration. This action cannot be undone.
             </p>
@@ -61,7 +61,7 @@ export function DangerZoneTab() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-card-2 border border-hairline rounded-[10px] p-3">
-              <div className="text-[12px] font-semibold text-[#d95555] mb-2 uppercase tracking-wide">Will be deleted</div>
+              <div className="text-[12px] font-semibold text-danger mb-2 uppercase tracking-wide">Will be deleted</div>
               <ul className="m-0 pl-4 flex flex-col gap-1">
                 {DELETED.map(x => (
                   <li key={x} className="text-[12.5px] text-primary">{x}</li>
@@ -69,7 +69,7 @@ export function DangerZoneTab() {
               </ul>
             </div>
             <div className="bg-card-2 border border-hairline rounded-[10px] p-3">
-              <div className="text-[12px] font-semibold text-[#3daa6f] mb-2 uppercase tracking-wide">Will be kept</div>
+              <div className="text-[12px] font-semibold text-success mb-2 uppercase tracking-wide">Will be kept</div>
               <ul className="m-0 pl-4 flex flex-col gap-1">
                 {KEPT.map(x => (
                   <li key={x} className="text-[12.5px] text-primary">{x}</li>
@@ -82,7 +82,7 @@ export function DangerZoneTab() {
             <button
               onClick={() => setConfirm(true)}
               data-write
-              className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[rgba(217,85,85,0.3)] text-[#d95555] hover:bg-[rgba(217,85,85,0.08)]"
+              className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle"
             >
               <TrashIcon size={14} />
               Delete all non-model data

@@ -1,0 +1,37 @@
+import { fmtDuration } from '../../../../lib/format';
+import { tint } from '../../../../lib/colors';
+import type { RuntimeBreakdownDto } from '../../../../api/models';
+import { SECTION_LABEL, RUNTIME_SEGMENTS } from './constants';
+
+export function RuntimePanel({ runtime }: { runtime: RuntimeBreakdownDto }) {
+  const segments = RUNTIME_SEGMENTS.filter(s => (runtime[s.key] as number | null | undefined) != null && (runtime[s.key] as number) > 0);
+  const total = runtime.total || segments.reduce((acc, s) => acc + ((runtime[s.key] as number) ?? 0), 0);
+  return (
+    <div>
+      <div className={SECTION_LABEL}>Runtime</div>
+      <div className="flex h-[5px] rounded-full overflow-hidden mb-2.5 bg-white/[0.04]">
+        {segments.map(s => (
+          <div
+            key={s.key}
+            style={{ width: `${(((runtime[s.key] as number) ?? 0) / total * 100).toFixed(1)}%`, background: s.color }}
+          />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {segments.map(s => (
+          <div key={s.key} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md" style={{ background: tint(s.color, 14), border: `1px solid ${tint(s.color, 33)}` }}>
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.color }} />
+            <span className="text-body-sm text-secondary font-medium">{s.label}</span>
+            <span className="mono text-body-sm font-semibold" style={{ color: s.color }}>
+              {fmtDuration((runtime[s.key] as number) ?? 0)}
+            </span>
+          </div>
+        ))}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-wash-hover)]">
+          <span className="text-body-sm text-muted font-medium">Total</span>
+          <span className="mono text-body-sm text-primary font-semibold">{fmtDuration(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}

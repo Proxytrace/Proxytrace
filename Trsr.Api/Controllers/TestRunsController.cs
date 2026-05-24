@@ -139,6 +139,8 @@ public class TestRunsController : ControllerBase
             ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
             : null;
 
+        var (costUsd, tokensIn, tokensOut) = CalculateRunTotals(r);
+
         return new TestRunDto(
             Id: r.Id,
             GroupId: r.Group.Id,
@@ -153,6 +155,9 @@ public class TestRunsController : ControllerBase
             PassedCases: passed,
             FailedCases: completed - passed,
             PassRate: passRate,
+            CostUsd: costUsd,
+            TokensIn: tokensIn,
+            TokensOut: tokensOut,
             Evaluators: r.Group.Suite.Evaluators.Select(e => new RunEvaluatorDto(e.Id, e.Kind, e.Name)).ToArray(),
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
@@ -176,6 +181,11 @@ public class TestRunsController : ControllerBase
             UpdatedAt: r.UpdatedAt);
     }
     
+    // TODO: aggregate cost + token usage across the run's test results (per-result token
+    // usage already surfaces in the fixture endpoints). Stubbed pending backend implementation.
+    private static (double? CostUsd, long? TokensIn, long? TokensOut) CalculateRunTotals(ITestRun run)
+        => throw new NotImplementedException();
+
     private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
     {
         var firstUserMessage = tc.Input.Messages

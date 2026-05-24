@@ -3,13 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Trsr.Api.Controllers;
 using Trsr.Api.Dto.Evaluators;
-using Trsr.Application.Evaluator;
 using Trsr.Domain;
-using Trsr.Domain.Agent;
 using Trsr.Domain.Evaluator;
-using Trsr.Domain.Inference;
 using Trsr.Domain.Project;
-using Trsr.Domain.Prompt;
 using Trsr.Testing;
 
 namespace Trsr.Api.Tests;
@@ -196,21 +192,6 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         result.Should().BeOfType<NotFoundResult>();
     }
 
-    private static EvaluatorsController ResolveController(IServiceProvider services) => new(
-        services.GetRequiredService<IAgent.CreateNew>(),
-        services.GetRequiredService<IAgent.CreateExisting>(),
-        services.GetRequiredService<IEvaluatorRepository>(),
-        services.GetRequiredService<IProjectRepository>(),
-        services.GetRequiredService<IModelParameters.Create>(),
-        services.GetRequiredService<IPromptTemplate.Create>(),
-        services.GetRequiredService<IAgenticEvaluator.CreateNew>(),
-        services.GetRequiredService<IAgenticEvaluator.CreateExisting>(),
-        services.GetRequiredService<IExactMatchEvaluator.CreateNew>(),
-        services.GetRequiredService<IExactMatchEvaluator.CreateExisting>(),
-        services.GetRequiredService<INumericMatchEvaluator.CreateNew>(),
-        services.GetRequiredService<INumericMatchEvaluator.CreateExisting>(),
-        services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateNew>(),
-        services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateExisting>(),
-        services.GetRequiredService<IAgenticEvaluatorPresets>(),
-        services.GetRequiredService<ITransaction>());
+    private static EvaluatorsController ResolveController(IServiceProvider services) =>
+        services.GetRequiredService<EvaluatorsController>();
 }

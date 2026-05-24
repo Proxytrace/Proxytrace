@@ -1,3 +1,5 @@
+const TEST_RUN_GROUPS = 'test-run-groups';
+
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
@@ -12,6 +14,9 @@ export const QUERY_KEYS = {
   statisticsPassRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-pass-rates', from, agentId, projectId ?? null] as const,
   statisticsErrorRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-error-rates', from, agentId, projectId ?? null] as const,
   statisticsCostEstimate: (from?: string, agentId?: string, projectId?: string) => ['statistics-cost-estimate', from, agentId, projectId ?? null] as const,
+  statisticsLiveTelemetry: (projectId?: string) => ['statistics-live-telemetry', projectId ?? null] as const,
+  statisticsTokenUsageByAgent: (from?: string, projectId?: string) => ['statistics-token-usage-by-agent', from, projectId ?? null] as const,
+  statisticsDashboardTrends: (from?: string, projectId?: string) => ['statistics-dashboard-trends', from, projectId ?? null] as const,
 
   agentStatsOverview: (agentId: string, rangeKey: string) => ['agent-stats-overview', agentId, rangeKey] as const,
   agentSuitePassRates: (agentId: string) => ['agent-suite-pass-rates', agentId] as const,
@@ -31,12 +36,16 @@ export const QUERY_KEYS = {
   providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
   providerKeys: (providerId: string | null) => ['provider-keys', providerId] as const,
 
-  testRunGroups: (agentFilter?: string, projectId?: string) => ['test-run-groups', agentFilter, projectId ?? null] as const,
+  testRunGroups: (agentFilter?: string, projectId?: string) => [TEST_RUN_GROUPS, agentFilter, projectId ?? null] as const,
+  /** Prefix matching every test-run-groups query — use for invalidation. */
+  testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
 
   search: (projectId: string, q: string) => ['search', projectId, q] as const,
+  searchRecent: (projectId: string, kinds: string[], limit: number) =>
+    ['search-recent', projectId, [...kinds].sort().join(','), limit] as const,
   searchSettings: (projectId: string) => ['search-settings', projectId] as const,
   searchStatus: (projectId: string) => ['search-status', projectId] as const,
 
@@ -46,4 +55,6 @@ export const QUERY_KEYS = {
     ['evaluator-test-bench-default', evaluatorId] as const,
   evaluatorTestBenchRecent: (evaluatorId: string, count: number) =>
     ['evaluator-test-bench-recent', evaluatorId, count] as const,
+  evaluatorRecentEvaluations: (evaluatorId: string, count: number) =>
+    ['evaluator-recent-evaluations', evaluatorId, count] as const,
 };

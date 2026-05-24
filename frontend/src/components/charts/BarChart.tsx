@@ -57,13 +57,13 @@ export function BarChart({
         height={height}
         style={{ display: 'block' }}
       >
-        <line x1="38" x2={w - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="#343438" />
+        <line x1="38" x2={w - 10} y1={bars.baselineY} y2={bars.baselineY} stroke="var(--border-color)" />
         <path d={bars.barsPath} fill={color} opacity="0.85" />
         {hoverRect && (
           <rect x={hoverRect.x} y={hoverRect.y} width={hoverRect.w} height={hoverRect.h} fill={color} />
         )}
         {bars.rects.map((r, i) => (
-          <text key={i} x={r.labelX} y={bars.baselineY + 14} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
+          <text key={i} x={r.labelX} y={bars.baselineY + 14} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{r.label}</text>
         ))}
       </svg>
       {hoverRect && (

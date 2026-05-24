@@ -21,14 +21,14 @@ export function FilterTabs({ options, value, onChange }: FilterTabsProps) {
             onClick={() => onChange(opt.value)}
             className={`flex items-center gap-[5px] px-3 py-[5px] rounded-lg text-xs font-semibold transition-colors border ${
               active
-                ? 'bg-accent-subtle text-accent border-[rgba(201,148,74,0.3)]'
+                ? 'bg-accent-subtle text-accent border-[color-mix(in_srgb,_var(--accent-primary)_30%,_transparent)]'
                 : 'bg-card text-secondary border-border'
             }`}
           >
             {opt.label}
             {opt.count != null && (
               <span
-                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded-full ${active ? 'text-accent bg-[rgba(201,148,74,0.2)]' : 'text-muted bg-card-2'}`}
+                className={`text-[10px] font-semibold px-[5px] py-[1px] rounded-full ${active ? 'text-accent bg-[color-mix(in_srgb,_var(--accent-primary)_20%,_transparent)]' : 'text-muted bg-card-2'}`}
               >
                 {opt.count}
               </span>

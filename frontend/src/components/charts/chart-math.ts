@@ -100,6 +100,74 @@ export function computeHistogram(
   return { rects, barsPath, baselineY: padT + h };
 }
 
+export interface StackedSegment { value: number; color: string; label?: string; }
+export interface StackedDatum { label: string; segments: StackedSegment[]; }
+export interface StackedRect { x: number; y: number; w: number; h: number; color: string; top: boolean; value: number; label: string; }
+export interface StackedBar { rects: StackedRect[]; centerX: number; label: string; total: number; }
+export interface StackedBarData { bars: StackedBar[]; grid: GridLine[]; solidGridPath: string; dashedGridPath: string; baselineY: number; plotL: number; plotR: number; }
+
+export function computeStackedBar(data: StackedDatum[], width: number, height: number): StackedBarData {
+  const padL = 38, padR = 10, padT = 14, padB = 28;
+  const w = width - padL - padR, h = height - padT - padB;
+  const totals = data.map(d => d.segments.reduce((s, x) => s + x.value, 0));
+  const max = Math.max(...totals, 0) * 1.1 || 1;
+  const slot = data.length > 0 ? w / data.length : w;
+  const bw = slot * 0.58, gap = slot * 0.42;
+  const yTicks = 4;
+  const grid: GridLine[] = Array.from({ length: yTicks }, (_, i) => ({
+    y: padT + (i / (yTicks - 1)) * h,
+    val: String(Math.round(max * (1 - i / (yTicks - 1)) / 1000)) + 'k',
+    isDashed: i !== yTicks - 1,
+  }));
+  const bars: StackedBar[] = data.map((d, i) => {
+    const x = padL + i * (bw + gap) + gap / 2;
+    let cursor = padT + h;
+    const positive = d.segments.filter(s => s.value > 0);
+    const rects: StackedRect[] = positive.map((seg, j) => {
+      const segH = (seg.value / max) * h;
+      const y = cursor - segH;
+      cursor = y;
+      return { x, y, w: bw, h: Math.max(segH, 0), color: seg.color, top: j === positive.length - 1, value: seg.value, label: seg.label ?? d.label };
+    });
+    return { rects, centerX: x + bw / 2, label: d.label, total: totals[i] };
+  });
+  const { solidGridPath, dashedGridPath } = buildGridPaths(grid, padL, padL + w);
+  return { bars, grid, solidGridPath, dashedGridPath, baselineY: padT + h, plotL: padL, plotR: padL + w };
+}
+
+/** Path for a rect with only its top two corners rounded. */
+export function roundedTopRectPath(x: number, y: number, w: number, h: number, r: number): string {
+  if (h <= 0) return '';
+  const rr = Math.min(r, h, w / 2);
+  return `M ${x.toFixed(1)} ${(y + h).toFixed(1)} L ${x.toFixed(1)} ${(y + rr).toFixed(1)} Q ${x.toFixed(1)} ${y.toFixed(1)} ${(x + rr).toFixed(1)} ${y.toFixed(1)} L ${(x + w - rr).toFixed(1)} ${y.toFixed(1)} Q ${(x + w).toFixed(1)} ${y.toFixed(1)} ${(x + w).toFixed(1)} ${(y + rr).toFixed(1)} L ${(x + w).toFixed(1)} ${(y + h).toFixed(1)} Z`;
+}
+
+export interface GaugeSegment { x1: number; y1: number; x2: number; y2: number; color: string; active: boolean; glow: boolean; }
+export interface SegmentedGaugeData { segments: GaugeSegment[]; cx: number; cy: number; }
+
+export function computeSegmentedGauge(value: number, size: number): SegmentedGaugeData {
+  const SEGS = 44;
+  const filled = Math.round((value / 100) * SEGS);
+  const s = size / 220;
+  const r = size / 2 - 16 * s - 6;
+  const cx = size / 2, cy = size / 2;
+  const startAngle = -210, endAngle = 30;
+  const range = endAngle - startAngle;
+  const armLen = 7 * s + 1;
+  const segments: GaugeSegment[] = Array.from({ length: SEGS }, (_, i) => {
+    const t = i / (SEGS - 1);
+    const ang = (startAngle + t * range) * Math.PI / 180;
+    const active = i < filled;
+    const color = t < 0.35 ? 'var(--warn)' : t < 0.7 ? 'var(--accent-primary)' : 'var(--success)';
+    return {
+      x1: cx + Math.cos(ang) * (r - armLen), y1: cy + Math.sin(ang) * (r - armLen),
+      x2: cx + Math.cos(ang) * (r + armLen), y2: cy + Math.sin(ang) * (r + armLen),
+      color, active, glow: active && i > filled - 4,
+    };
+  });
+  return { segments, cx, cy };
+}
+
 export function computeModelBars(
   data: { label: string; value: number }[],
   width: number,

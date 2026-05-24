@@ -19,6 +19,22 @@ public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount
 
 public record AgentBreakdownDto(Guid AgentId, int CallCount);
 
+public record LiveTelemetryDto(
+    double TracesPerMinute,
+    double TokensPerSecond,
+    int QueueDepth,
+    double ErrorRate,
+    double P95Ms,
+    string ProxyVersion);
+
+public record AgentTokenUsageDto(DateOnly Date, Guid AgentId, long InputTokens, long OutputTokens);
+
+public record DashboardTrendsDto(
+    IReadOnlyList<double> Traces,
+    IReadOnlyList<double> LatencyMs,
+    IReadOnlyList<double> Throughput,
+    IReadOnlyList<double> PassRate);
+
 public record CostEstimateDto(Guid EndpointId, decimal? InputCostEur, decimal? OutputCostEur, decimal? TotalCostEur);
 
 public record AgentTimeSeriesPointDto(

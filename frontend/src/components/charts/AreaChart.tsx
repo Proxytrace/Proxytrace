@@ -80,10 +80,10 @@ export function AreaChart({
         </defs>
         {showAxis && (
           <>
-            <path d={chart.solidGridPath} stroke="#343438" strokeWidth="1" fill="none" />
-            <path d={chart.dashedGridPath} stroke="#343438" strokeWidth="1" strokeDasharray="3 4" fill="none" />
+            <path d={chart.solidGridPath} stroke="var(--border-color)" strokeWidth="1" fill="none" />
+            <path d={chart.dashedGridPath} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="3 4" fill="none" />
             {chart.grid.map((g, i) => (
-              <text key={i} x={padL - 8} y={g.y + 4} textAnchor="end" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{g.val}</text>
+              <text key={i} x={padL - 8} y={g.y + 4} textAnchor="end" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{g.val}</text>
             ))}
           </>
         )}
@@ -110,7 +110,7 @@ export function AreaChart({
           </>
         )}
         {showAxis && chart.xLabels.map((l, i) => (
-          <text key={i} x={l.x} y={height - 6} textAnchor="middle" fill="#67645e" fontSize="10" fontFamily="JetBrains Mono, monospace">{l.label}</text>
+          <text key={i} x={l.x} y={height - 6} textAnchor="middle" fill="var(--text-muted)" fontSize="10" fontFamily="JetBrains Mono, monospace">{l.label}</text>
         ))}
       </svg>
       {hoverPt && hoverIdx !== null && (

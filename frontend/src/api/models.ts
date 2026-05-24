@@ -7,7 +7,6 @@ export enum TestRunStatus {
 }
 
 export enum EvaluationScore { Terrible = 'Terrible', Bad = 'Bad', Acceptable = 'Acceptable', Good = 'Good', Excellent = 'Excellent' }
-export enum EvaluationStatus { Succeeded = 'Succeeded', Errored = 'Errored' }
 
 export enum EvaluatorKind {
   Agentic = 'Agentic',
@@ -129,6 +128,26 @@ export interface ModelBreakdownDto {
 export interface AgentBreakdownDto {
   agentId: string;
   callCount: number;
+}
+export interface LiveTelemetryDto {
+  tracesPerMinute: number;
+  tokensPerSecond: number;
+  queueDepth: number;
+  errorRate: number;
+  p95Ms: number;
+  proxyVersion: string;
+}
+export interface AgentTokenUsageDto {
+  date: string;
+  agentId: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+export interface DashboardTrendsDto {
+  traces: number[];
+  latencyMs: number[];
+  throughput: number[];
+  passRate: number[];
 }
 export interface LatencyStatDto {
   endpointId: string;
@@ -279,7 +298,6 @@ export interface EvaluationResultDto {
   evaluatorId: string;
   evaluatorKind: EvaluatorKind;
   evaluatorName: string;
-  status: EvaluationStatus;
   score: EvaluationScore | null;
   reasoning: string | null;
   errorMessage: string | null;
@@ -308,6 +326,10 @@ export interface TestRunDto {
   passedCases: number;
   failedCases: number;
   passRate: number;
+  /** Run-level totals aggregated across every test result (null until completed). */
+  costUsd: number | null;
+  tokensIn: number | null;
+  tokensOut: number | null;
   evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;

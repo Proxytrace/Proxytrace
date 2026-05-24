@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { EvaluationScore, EvaluationStatus, type EvaluationResultDto, type MessageDto } from '../../api/models';
+import { EvaluationScore, type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Card } from '../../components/ui/Card';
@@ -10,11 +10,11 @@ import { TestResultPicker } from './TestResultPicker';
 import type { SearchHit } from '../../api/search';
 
 const SCORE_COLOR: Record<EvaluationScore, string> = {
-  [EvaluationScore.Terrible]: '#ef4444',
-  [EvaluationScore.Bad]: '#f97316',
-  [EvaluationScore.Acceptable]: '#eab308',
-  [EvaluationScore.Good]: '#84cc16',
-  [EvaluationScore.Excellent]: '#22c55e',
+  [EvaluationScore.Terrible]: 'var(--danger)',
+  [EvaluationScore.Bad]: 'var(--warn)',
+  [EvaluationScore.Acceptable]: 'var(--accent-primary)',
+  [EvaluationScore.Good]: 'var(--teal)',
+  [EvaluationScore.Excellent]: 'var(--success)',
 };
 
 export interface EvaluatorTestBenchHandle {
@@ -32,7 +32,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     const [pickedHit, setPickedHit] = useState<SearchHit | null>(null);
     const [actualOverride, setActualOverride] = useState<string | null>(null);
     const [lastResult, setLastResult] = useState<EvaluationResultDto | null>(null);
-    const [prevEvaluatorId] = useState(evaluatorId);
+    const [prevEvaluatorId, setPrevEvaluatorId] = useState(evaluatorId);
 
     useImperativeHandle(ref, () => ({
       focus() {
@@ -47,6 +47,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     });
 
     if (evaluatorId !== prevEvaluatorId) {
+      setPrevEvaluatorId(evaluatorId);
       setPickedHit(null);
       setActualOverride(null);
       setLastResult(null);
@@ -271,7 +272,7 @@ function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading
     );
   }
   if (!result) return null;
-  if (result.status === EvaluationStatus.Errored) {
+  if (result.errorMessage !== null) {
     const color = 'var(--warn)';
     return (
       <div className="flex items-center gap-1.5">

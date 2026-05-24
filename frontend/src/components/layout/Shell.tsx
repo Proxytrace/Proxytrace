@@ -6,33 +6,69 @@ import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { checkHealth } from '../../api/health';
-import { SearchBar } from '../search/SearchBar';
+import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon,
+  SettingsIcon, BeakerIcon, TargetIcon,
   LayoutSidebarIcon,
 } from '../icons';
 
-const primaryNavItems = [
-  { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
-  { label: 'Traces', icon: 'activity', to: '/traces' },
-  { label: 'Agents', icon: 'users', to: '/agents' },
-  { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
-  { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
-  { label: 'Test Runs', icon: 'play', to: '/runs' },
-  { label: 'Playground', icon: 'beaker', to: '/playground' },
-  { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
-] as const;
+type NavIconName =
+  | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings';
 
-const systemNavItems = [
-  { label: 'Providers', icon: 'server', to: '/providers' },
-  { label: 'Settings', icon: 'settings', to: '/settings' },
-] as const;
+interface NavEntry {
+  label: string;
+  icon: NavIconName;
+  to: string;
+}
 
-const navItems = [...primaryNavItems, ...systemNavItems] as const;
+interface NavGroup {
+  label: string | null;
+  items: NavEntry[];
+}
 
-type NavIconName = typeof navItems[number]['icon'];
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [
+      { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
+      { label: 'Traces', icon: 'activity', to: '/traces' },
+    ],
+  },
+  {
+    label: 'Agents',
+    items: [
+      { label: 'Agents', icon: 'users', to: '/agents' },
+      { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
+      { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
+    ],
+  },
+  {
+    label: 'Evaluators',
+    items: [
+      { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
+      { label: 'Evaluator Playground', icon: 'target', to: '/evaluator-playground' },
+    ],
+  },
+  {
+    label: 'Benchmarks',
+    items: [
+      { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
+      { label: 'Test Runs', icon: 'play', to: '/runs' },
+    ],
+  },
+  {
+    label: 'Configure',
+    items: [
+      { label: 'Providers', icon: 'server', to: '/providers' },
+      { label: 'Settings', icon: 'settings', to: '/settings' },
+    ],
+  },
+];
+
+const navItems: NavEntry[] = navGroups.flatMap(g => g.items);
 
 const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   grid: <GridIcon size={16} />,
@@ -42,6 +78,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   scale: <ScaleIcon size={16} />,
   play: <PlayIcon size={16} />,
   beaker: <BeakerIcon size={16} />,
+  target: <TargetIcon size={16} />,
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,
@@ -52,8 +89,8 @@ export function Shell() {
   const [online, setOnline] = useState<boolean | null>(null);
   const location = useLocation();
   const { currentProject } = useCurrentProject();
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const focusSearch = useCallback(() => searchInputRef.current?.focus(), []);
+  const searchRef = useRef<UnifiedSearchHandle>(null);
+  const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
 
   useEffect(() => {
@@ -66,7 +103,9 @@ export function Shell() {
     const timer = setInterval(poll, 10_000);
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
-  const pageLabel = navItems.find(n => location.pathname.startsWith(n.to))?.label ?? 'Dashboard';
+  const pageLabel = [...navItems]
+    .sort((a, b) => b.to.length - a.to.length)
+    .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
   const currentUser = useCurrentUser();
   const userName = currentUser?.email ?? 'User';
   const userInitials = userName
@@ -87,7 +126,7 @@ export function Shell() {
           className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
         >
           <div
-            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[linear-gradient(135deg,#c9944a,#a57038)] shadow-[0_4px_16px_-4px_rgba(201,148,74,0.55),inset_0_1px_0_rgba(255,255,255,0.15)]"
+            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
           >T</div>
           {!collapsed && (
             <div className="ml-[10px]">
@@ -97,45 +136,30 @@ export function Shell() {
           )}
         </div>
 
-        {/* Section label */}
-        {!collapsed && (
-          <div className="px-[18px] pt-[18px] pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-            Workspace
-          </div>
-        )}
-
         {/* Nav */}
         <nav
-          className={`flex-1 flex flex-col gap-[2px] overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-1.5'}`}
+          className={`flex-1 flex flex-col overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
-          {primaryNavItems.map(item => (
-            <NavItem
-              key={item.to}
-              label={item.label}
-              icon={NAV_ICONS[item.icon]}
-              to={item.to}
-              badge={'badge' in item ? item.badge : undefined}
-              badgeAccent={'badgeAccent' in item ? item.badgeAccent : undefined}
-              collapsed={collapsed}
-            />
-          ))}
-
-          <div className={`my-2 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
-
-          {!collapsed && (
-            <div className="px-[6px] pt-1 pb-[6px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
-              System
+          {navGroups.map((group, gIdx) => (
+            <div key={group.label ?? `__g${gIdx}`} className="flex flex-col gap-[2px]">
+              {gIdx > 0 && (
+                <div className={`my-1.5 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
+              )}
+              {!collapsed && group.label && (
+                <div className="px-[6px] pt-1 pb-[4px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
+                  {group.label}
+                </div>
+              )}
+              {group.items.map(item => (
+                <NavItem
+                  key={item.to}
+                  label={item.label}
+                  icon={NAV_ICONS[item.icon]}
+                  to={item.to}
+                  collapsed={collapsed}
+                />
+              ))}
             </div>
-          )}
-
-          {systemNavItems.map(item => (
-            <NavItem
-              key={item.to}
-              label={item.label}
-              icon={NAV_ICONS[item.icon]}
-              to={item.to}
-              collapsed={collapsed}
-            />
           ))}
         </nav>
 
@@ -149,7 +173,7 @@ export function Shell() {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         {/* Topbar */}
         <header
-          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[rgba(30,30,34,0.75)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
+          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
           <button onClick={() => setCollapsed(c => !c)} className="btn-icon">
             <LayoutSidebarIcon size={16} />
@@ -162,22 +186,22 @@ export function Shell() {
           </div>
 
           {currentProject?.id ? (
-            <SearchBar projectId={currentProject.id} inputRef={searchInputRef} />
+            <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
           ) : (
             <div className="flex-1 max-w-[460px] mx-auto" />
           )}
 
           <div
             style={{
-              background: online === false ? 'rgba(217,85,85,0.12)' : online === true ? 'rgba(61,170,111,0.12)' : 'var(--warn-subtle)',
-              border: `1px solid ${online === false ? 'rgba(217,85,85,0.25)' : online === true ? 'rgba(61,170,111,0.25)' : 'rgba(245,158,11,0.25)'}`,
-              color: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)',
+              background: online === false ? 'var(--danger-subtle)' : online === true ? 'var(--success-subtle)' : 'var(--warn-subtle)',
+              border: `1px solid ${online === false ? 'color-mix(in srgb, var(--danger) 25%, transparent)' : online === true ? 'color-mix(in srgb, var(--success) 25%, transparent)' : 'color-mix(in srgb, var(--warn) 25%, transparent)'}`,
+              color: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)',
             }}
             className="flex items-center gap-1.5 px-[10px] py-[6px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0"
           >
             <span
               className={`size-[6px] rounded-full inline-block ${online === true ? 'pulse-dot' : ''}`}
-              style={{ background: online === false ? '#d95555' : online === true ? '#3daa6f' : 'var(--warn)' }}
+              style={{ background: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)' }}
             />
             {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
           </div>
@@ -188,7 +212,7 @@ export function Shell() {
             title={`Sign out (${userName})`}
             className="cursor-pointer"
           >
-            <Avatar initials={userInitials} color="#c9944a" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+            <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
           </button>
         </header>
 

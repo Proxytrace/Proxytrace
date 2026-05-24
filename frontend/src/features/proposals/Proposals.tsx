@@ -61,7 +61,9 @@ export default function Proposals() {
     return true;
   }), [proposals, statusFilter, kindFilter]);
 
-  const selected = selectedId ? proposals.find(p => p.id === selectedId) ?? null : null;
+  const explicitSelected = selectedId ? filtered.find(p => p.id === selectedId) ?? null : null;
+  const selected = explicitSelected ?? filtered[0] ?? null;
+  const effectiveSelectedId = selected?.id ?? null;
 
   // :noExpectedPassRateDelta
   // expectedPassRateDelta doesn't seem to exist on ModelSwitchDetailsDto
@@ -205,12 +207,11 @@ export default function Proposals() {
 
       {/* Master-detail */}
       <div
-        className="fade-up flex-1 min-h-0 overflow-hidden grid gap-3.5"
-        style={{ animationDelay: '60ms', gridTemplateColumns: '340px minmax(0, 1fr)' }}
+        className="fade-up flex-1 min-h-[420px] overflow-hidden grid gap-3.5"
+        style={{ animationDelay: '60ms', gridTemplateColumns: '340px minmax(0, 1fr)', gridTemplateRows: 'minmax(0, 1fr)' }}
       >
         {/* Left list */}
-        <div className="relative">
-          <div className="absolute overflow-y-auto inset-[0_-20px_0_0] pr-5 pt-1 pb-6">
+        <div className="min-h-0 overflow-y-auto pr-2 pt-1 pb-6">
             <div className="flex flex-col gap-2">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
@@ -221,7 +222,7 @@ export default function Proposals() {
                   <ProposalCard
                     key={p.id}
                     dto={p}
-                    isActive={selectedId === p.id}
+                    isActive={effectiveSelectedId === p.id}
                     onClick={() => setSelectedId(p.id)}
                   />
                 ))
@@ -232,7 +233,6 @@ export default function Proposals() {
                 />
               )}
             </div>
-          </div>
         </div>
 
         {/* Right detail */}

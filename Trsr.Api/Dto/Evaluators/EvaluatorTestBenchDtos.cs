@@ -21,3 +21,13 @@ public record EvaluatorTestBenchDefaultDto(
 public record EvaluatorTestBenchRecentItemDto(
     Guid TestCaseId,
     string Label);
+
+public record RecentEvaluationItemDto(
+    Guid TestResultId,
+    Guid TestCaseId,
+    string CaseSummary,
+    string? Score,
+    bool Passed,
+    string? Reasoning,
+    int LatencyMs,
+    DateTimeOffset EvaluatedAt);

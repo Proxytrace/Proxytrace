@@ -1,20 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { evaluatorsApi } from '../../api/evaluators';
 import { testSuitesApi } from '../../api/test-suites';
 import { statisticsApi } from '../../api/statistics';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { EvaluatorKind, type CreateEvaluatorPayload, type EvaluatorDetailDto } from '../../api/models';
+import {
+  EvaluatorKind,
+  EvaluationScore,
+  type CreateEvaluatorPayload,
+  type EvaluatorDetailDto,
+  type EvaluatorOverviewDto,
+  type EvaluatorScoreBucketDto,
+} from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
-import { fmtRelative } from '../../lib/format';
+import { fmtRelative, fmtPct, fmtTokens, fmtLatency } from '../../lib/format';
 import { rangeFrom, bucketFor, type RangeKey } from '../../lib/time-range';
-import { Sparkline } from '../../components/charts';
+import { Sparkline, AreaChart } from '../../components/charts';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
 import { EvaluatorForm } from './EvaluatorForm';
-import { EvaluatorStatsBlock } from './EvaluatorStatsBlock';
-import { EvaluatorTestBench, type EvaluatorTestBenchHandle } from './EvaluatorTestBench';
 import { META, KIND_ORDER, initForm, type EvaluatorFormState } from './evaluators';
 
 // ── Type categories ──────────────────────────────────────────────────────────
@@ -32,7 +38,30 @@ const KIND_CATEGORY: Record<EvaluatorKind, TypeCategory> = {
 const TYPE_META: Record<TypeCategory, { label: string; short: string; color: string }> = {
   llm:     { label: 'LLM-as-judge',    short: 'LLM judge', color: 'var(--accent-primary)' },
   rule:    { label: 'Rule-based',      short: 'Rule',      color: 'var(--teal)' },
-  numeric: { label: 'Numeric extract', short: 'Numeric',   color: '#8ec0cc' },
+  numeric: { label: 'Numeric extract', short: 'Numeric',   color: 'var(--teal)' },
+};
+
+// Distinct hex per category for color-mix and dynamic backgrounds
+const TYPE_HEX: Record<TypeCategory, string> = {
+  llm: 'var(--accent-primary)',
+  rule: 'var(--teal)',
+  numeric: 'var(--teal)',
+};
+
+const SCORE_ORDER: EvaluationScore[] = [
+  EvaluationScore.Terrible,
+  EvaluationScore.Bad,
+  EvaluationScore.Acceptable,
+  EvaluationScore.Good,
+  EvaluationScore.Excellent,
+];
+
+const SCORE_LABEL: Record<EvaluationScore, string> = {
+  [EvaluationScore.Terrible]: 'Terrible',
+  [EvaluationScore.Bad]: 'Bad',
+  [EvaluationScore.Acceptable]: 'Acceptable',
+  [EvaluationScore.Good]: 'Good',
+  [EvaluationScore.Excellent]: 'Excellent',
 };
 
 // ── Inline SVG icons ─────────────────────────────────────────────────────────
@@ -66,20 +95,6 @@ function CopyIcon({ size = 11 }: { size?: number }) {
     </svg>
   );
 }
-function ActivityIcon({ size = 13 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-    </svg>
-  );
-}
-function CodeIcon({ size = 13 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-    </svg>
-  );
-}
 function CheckboxIcon({ size = 11 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -110,99 +125,497 @@ function EditPencilIcon({ size = 11 }: { size?: number }) {
     </svg>
   );
 }
+function SearchIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  );
+}
+function ArrowUpRightIcon({ size = 11 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>
+    </svg>
+  );
+}
+function ActivityIcon({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+  );
+}
 
-function TypeIcon({ kind, size = 14 }: { kind: EvaluatorKind; size?: number }) {
-  const cat = KIND_CATEGORY[kind];
-  const m = TYPE_META[cat];
+function CategoryIcon({ category, size = 14 }: { category: TypeCategory; size?: number }) {
+  return category === 'llm' ? <BeakerIcon size={size}/> : category === 'rule' ? <FilterIcon size={size}/> : <HashIcon size={size}/>;
+}
+
+function TypeIconBox({ category, size = 14 }: { category: TypeCategory; size?: number }) {
+  const m = TYPE_META[category];
   const box = size + 14;
   return (
     <span style={{
       width: box, height: box, borderRadius: 'var(--radius-md)',
-      background: m.color + '1a', color: m.color,
+      background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color,
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
-      {cat === 'llm' ? <BeakerIcon size={size}/> : cat === 'rule' ? <FilterIcon size={size}/> : <HashIcon size={size}/>}
+      <CategoryIcon category={category} size={size}/>
     </span>
   );
 }
 
+// ── Format helpers ───────────────────────────────────────────────────────────
+
+function fmtScoreShort(v: number | null | undefined, kind: EvaluatorKind): string {
+  if (v == null) return '—';
+  if (kind === EvaluatorKind.Agentic) return v.toFixed(2);
+  return fmtPct(v);
+}
+
 // ── Left rail row ────────────────────────────────────────────────────────────
 
-function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline }: {
+interface RailRow {
   evaluator: EvaluatorDetailDto;
   isSelected: boolean;
   onSelect: (id: string) => void;
   sparkline?: number[];
-}) {
-  const m = TYPE_META[KIND_CATEGORY[e.kind]];
+  avgScore?: number | null;
+}
+
+function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, avgScore }: RailRow) {
+  const cat = KIND_CATEGORY[e.kind];
+  const m = TYPE_META[cat];
+  const hex = TYPE_HEX[cat];
   return (
     <button
       onClick={() => onSelect(e.id)}
       style={{
         textAlign: 'left',
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 12px',
-        borderRadius: 'var(--radius-md)',
-        background: isSelected ? `${m.color}10` : 'transparent',
-        borderLeft: isSelected ? `3px solid ${m.color}` : '3px solid transparent',
+        padding: '9px 10px',
+        borderRadius: 9,
+        background: isSelected ? `color-mix(in srgb, ${hex} 12%, transparent)` : 'transparent',
+        boxShadow: isSelected ? `inset 0 0 0 1px color-mix(in srgb, ${hex} 35%, transparent)` : 'none',
         cursor: 'pointer',
         transition: 'background 0.12s',
         width: '100%',
+        border: 'none',
       }}
       onMouseEnter={ev => { if (!isSelected) ev.currentTarget.style.background = 'var(--bg-card-2)'; }}
       onMouseLeave={ev => { if (!isSelected) ev.currentTarget.style.background = 'transparent'; }}
     >
-      <TypeIcon kind={e.kind} size={12} />
+      <span style={{
+        width: 3, alignSelf: 'stretch', borderRadius: 100,
+        background: isSelected ? m.color : 'transparent', flexShrink: 0,
+      }}/>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>{e.name}</div>
-        <div style={{
-          fontSize: 10.5, color: 'var(--text-muted)', marginTop: 1,
-          display: 'flex', gap: 6, alignItems: 'center',
-        }}>
-          <span style={{ color: m.color, fontWeight: 600 }}>{m.short}</span>
-          <span>·</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)', flexShrink: 0 }}/>
+          <span style={{
+            fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{e.name}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+          <span style={{ color: avgScore == null ? 'var(--text-muted)' : 'var(--text-secondary)' }}>
+            {fmtScoreShort(avgScore ?? null, e.kind)}
+          </span>
+          <span style={{ opacity: 0.4 }}>·</span>
           <span>{fmtRelative(e.updatedAt)}</span>
         </div>
       </div>
       {sparkline && sparkline.length >= 2 && (
-        <Sparkline data={sparkline} color={m.color} width={48} height={20} strokeWidth={1.25} />
+        <Sparkline data={sparkline} color={m.color} width={42} height={16} strokeWidth={1.3} />
       )}
     </button>
   );
 }
 
-// ── Config panel ─────────────────────────────────────────────────────────────
+// ── Left rail ────────────────────────────────────────────────────────────────
 
-function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; onEdit: () => void }) {
-  const m = TYPE_META[KIND_CATEGORY[e.kind]];
+interface RailProps {
+  evaluators: EvaluatorDetailDto[];
+  isLoading: boolean;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onNew: () => void;
+  sparklineById: Map<string, number[]>;
+  avgScoreById: Map<string, number | null>;
+}
+
+function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, sparklineById, avgScoreById }: RailProps) {
+  const [q, setQ] = useState('');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+
+  const filtered = evaluators.filter(e => {
+    if (typeFilter !== 'all' && KIND_CATEGORY[e.kind] !== typeFilter) return false;
+    if (q && !e.name.toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  });
+
+  const groups: { type: TypeCategory; items: EvaluatorDetailDto[] }[] = (['llm', 'rule', 'numeric'] as TypeCategory[])
+    .map(type => ({ type, items: filtered.filter(e => KIND_CATEGORY[e.kind] === type) }))
+    .filter(g => g.items.length > 0);
+
+  const typeFilterOptions: { key: TypeFilter; label: string; color: string | null }[] = [
+    { key: 'all', label: 'All', color: null },
+    { key: 'llm', label: 'LLM', color: TYPE_HEX.llm },
+    { key: 'rule', label: 'Rule', color: TYPE_HEX.rule },
+    { key: 'numeric', label: 'Num', color: TYPE_HEX.numeric },
+  ];
+
+  return (
+    <aside style={{
+      background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',
+      display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
+    }}>
+      <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: 9 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.015em' }}>Evaluators</span>
+          <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{evaluators.length}</span>
+        </div>
+        <button
+          onClick={onNew}
+          data-write
+          style={{
+            width: '100%', padding: '8px 12px',
+            background: 'var(--grad-accent)',
+            borderRadius: 'var(--radius-md)', fontSize: 12.5, fontWeight: 600, color: '#fff',
+            boxShadow: 'var(--shadow-btn)',
+            border: 'none',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer',
+          }}
+        >
+          <PlusIcon size={12}/> New evaluator
+        </button>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '6px 9px',
+          background: 'var(--bg-card-2)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--text-muted)',
+        }}>
+          <SearchIcon size={12}/>
+          <input
+            value={q}
+            onChange={ev => setQ(ev.target.value)}
+            placeholder="Search…"
+            style={{
+              flex: 1, minWidth: 0,
+              background: 'transparent', border: 'none', outline: 'none',
+              color: 'var(--text-primary)', fontSize: 12,
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--hairline)' }}>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {typeFilterOptions.map(opt => {
+            const active = typeFilter === opt.key;
+            const count = opt.key === 'all'
+              ? evaluators.length
+              : evaluators.filter(e => KIND_CATEGORY[e.kind] === opt.key).length;
+            return (
+              <button
+                key={opt.key}
+                onClick={() => setTypeFilter(opt.key)}
+                style={{
+                  flex: 1,
+                  padding: '5px 6px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                  background: active ? 'var(--bg-card-2)' : 'transparent',
+                  color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {opt.color && <span style={{ width: 5, height: 5, borderRadius: 1, background: opt.color, opacity: active ? 1 : 0.5 }}/>}
+                {opt.label}
+                <span style={{
+                  padding: '0 5px', borderRadius: 100, fontSize: 9.5,
+                  fontFamily: 'JetBrains Mono, monospace', fontWeight: 600,
+                  background: active ? 'var(--accent-subtle)' : 'transparent',
+                  color: active ? 'var(--accent-hover)' : 'var(--text-muted)',
+                }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {isLoading ? (
+          <SkeletonList rows={6} height={48} gap={4} />
+        ) : groups.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+            {evaluators.length === 0 ? 'No evaluators yet.' : 'No matches.'}
+          </div>
+        ) : (
+          groups.map(g => (
+            <div key={g.type} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px', marginBottom: 2 }}>
+                <span style={{ width: 5, height: 5, borderRadius: 1, background: TYPE_HEX[g.type] }}/>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+                  {TYPE_META[g.type].short}
+                </span>
+                <span style={{ fontSize: 9.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace', marginLeft: 'auto' }}>
+                  {g.items.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {g.items.map(e => (
+                  <EvaluatorRow
+                    key={e.id}
+                    evaluator={e}
+                    isSelected={e.id === selectedId}
+                    onSelect={onSelect}
+                    sparkline={sparklineById.get(e.id)}
+                    avgScore={avgScoreById.get(e.id) ?? null}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// ── Workspace header (sticky) ────────────────────────────────────────────────
+
+function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }: {
+  evaluator: EvaluatorDetailDto;
+  onEdit: () => void;
+  onDelete: () => void;
+  onTestBench: () => void;
+}) {
+  const cat = KIND_CATEGORY[e.kind];
+  const m = TYPE_META[cat];
+  const hex = TYPE_HEX[cat];
+  return (
+    <header style={{
+      background: `linear-gradient(135deg, color-mix(in srgb, ${hex} 12%, transparent), transparent 60%), var(--bg-card)`,
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-card)',
+    }}>
+      <div style={{
+        padding: '14px 18px',
+        display: 'flex', alignItems: 'center', gap: 14,
+      }}>
+        <TypeIconBox category={cat} size={18}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>{e.name}</h1>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', borderRadius: 100,
+              background: 'var(--success-subtle)', color: 'var(--success)',
+              fontSize: 10.5, fontWeight: 600,
+            }}>
+              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>
+              Active
+            </span>
+            <span style={{
+              padding: '3px 9px', borderRadius: 5,
+              background: `color-mix(in srgb, ${hex} 14%, transparent)`, color: m.color,
+              fontSize: 10.5, fontWeight: 600,
+            }}>{m.label}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 14, marginTop: 5, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap', fontFamily: 'JetBrains Mono, monospace' }}>
+            <span><span style={{ opacity: 0.7 }}>id</span> {e.id.slice(0, 12)}…</span>
+            <span><span style={{ opacity: 0.7 }}>kind</span> {e.kind}</span>
+            {e.endpointName && <span><span style={{ opacity: 0.7 }}>model</span> {e.endpointName}</span>}
+            <span>
+              <span style={{ opacity: 0.7 }}>updated</span>{' '}
+              <span style={{ fontFamily: 'Inter, sans-serif' }}>{fmtRelative(e.updatedAt)}</span>
+            </span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button
+            onClick={onTestBench}
+            style={{
+              padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12,
+              color: 'var(--text-primary)',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              border: '1px solid var(--border-subtle)', background: 'var(--bg-card-2)',
+              cursor: 'pointer',
+            }}
+          >
+            <PlayIcon size={11}/> Test
+          </button>
+          <button
+            onClick={onDelete}
+            data-write
+            style={{
+              padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12,
+              color: 'var(--danger)',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)',
+              background: 'var(--danger-subtle)',
+              cursor: 'pointer',
+            }}
+          >
+            Delete
+          </button>
+          <button
+            onClick={onEdit}
+            data-write
+            style={{
+              padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600,
+              color: '#fff', background: 'var(--grad-accent)',
+              boxShadow: 'var(--shadow-btn)',
+              border: 'none',
+              display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+            }}
+          >
+            <EditPencilIcon size={11}/> Edit
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ── Performance panel ────────────────────────────────────────────────────────
+
+function PerformancePanel({ evaluator: e, overview, range, onRangeChange, color }: {
+  evaluator: EvaluatorDetailDto;
+  overview: EvaluatorOverviewDto | null;
+  range: RangeKey;
+  onRangeChange: (r: RangeKey) => void;
+  color: string;
+}) {
+  const summary = overview?.summary;
+  const passSeries = useMemo(
+    () => (overview?.passRateTrend ?? []).map(p => (p.total > 0 ? p.passed / p.total : 0)),
+    [overview?.passRateTrend],
+  );
+  const hasTrend = passSeries.length >= 2;
+
+  const ranges: RangeKey[] = ['1h', '24h', '7d', '30d'];
+
+  return (
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          Performance
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+          {(summary?.totalEvaluations ?? 0).toLocaleString()} runs · {range}
+        </span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 2, padding: 3, background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
+          {ranges.map(r => (
+            <button
+              key={r}
+              onClick={() => onRangeChange(r)}
+              aria-pressed={range === r}
+              style={{
+                padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500,
+                background: range === r ? 'var(--bg-card)' : 'transparent',
+                color: range === r ? 'var(--text-primary)' : 'var(--text-muted)',
+                border: 'none',
+                fontFamily: 'JetBrains Mono, monospace',
+                boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
+                cursor: 'pointer',
+              }}
+            >{r}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '1px solid var(--hairline)' }}>
+        <StatCell
+          label={e.kind === EvaluatorKind.Agentic ? 'Avg score' : 'Pass rate'}
+          value={e.kind === EvaluatorKind.Agentic
+            ? (summary?.avgScore != null ? summary.avgScore.toFixed(2) : '—')
+            : (summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—')}
+          sub="vs prev period"
+          color={color}
+          big
+        />
+        <StatCell label="Evaluations" value={(summary?.totalEvaluations ?? 0).toLocaleString()} sub="executed" color="var(--text-primary)"/>
+        <StatCell label="Pass rate" value={summary?.overallPassRate != null ? fmtPct(summary.overallPassRate) : '—'} sub="score ≥ acceptable" color="var(--success)"/>
+        <StatCell label="Avg latency" value={summary?.avgLatencyMs != null ? fmtLatency(summary.avgLatencyMs) : '—'} sub="per evaluation" color="var(--teal)" last/>
+      </div>
+
+      <div style={{ padding: '14px 18px 14px' }}>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 8 }}>
+          Pass rate trend
+        </div>
+        {hasTrend ? (
+          <AreaChart
+            data={passSeries}
+            width={860}
+            height={130}
+            color={color}
+            gradientId={`evalTrend-${e.id.slice(0, 8)}`}
+            showAxis={false}
+            showEndMarker
+            formatValue={v => fmtPct(v)}
+            tooltipLabelFn={i => new Date((overview?.passRateTrend ?? [])[i]?.bucketStart ?? '').toLocaleDateString()}
+          />
+        ) : (
+          <div style={{ height: 130, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 11.5 }}>
+            Not enough data
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function StatCell({ label, value, sub, color, big = false, last = false }: {
+  label: string; value: string; sub: string; color: string; big?: boolean; last?: boolean;
+}) {
+  return (
+    <div style={{
+      padding: '16px 18px',
+      borderRight: last ? 'none' : '1px solid var(--hairline)',
+      display: 'flex', flexDirection: 'column', gap: 4,
+    }}>
+      <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{label}</div>
+      <div style={{
+        fontSize: big ? 26 : 20, fontWeight: 700,
+        fontFamily: 'JetBrains Mono, monospace', letterSpacing: '-0.03em', color, lineHeight: 1.1,
+      }}>{value}</div>
+      <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>{sub}</div>
+    </div>
+  );
+}
+
+// ── Definition panel ─────────────────────────────────────────────────────────
+
+function DefinitionPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; onEdit: () => void }) {
+  const cat = KIND_CATEGORY[e.kind];
+  const m = TYPE_META[cat];
+  const hex = TYPE_HEX[cat];
+
   let body: React.ReactNode;
+  let vars: string[] = [];
+
   if (e.systemMessage) {
-    body = (
-      <pre style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, lineHeight: 1.65, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0 }}>
-        {e.systemMessage}
-      </pre>
-    );
+    vars = Array.from(new Set(e.systemMessage.match(/\{\{[a-z_]+\}\}/gi) ?? []));
+    body = <NumberedCode text={e.systemMessage} color={m.color} highlightVars/>;
   } else if (e.jsonSchema) {
-    body = (
-      <pre style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, lineHeight: 1.6, color: 'var(--text-secondary)', whiteSpace: 'pre', margin: 0, overflow: 'auto' }}>
-        {e.jsonSchema}
-      </pre>
-    );
+    body = <NumberedCode text={e.jsonSchema} color={m.color}/>;
   } else if (e.extractionPattern || e.tolerance != null) {
     body = (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {e.extractionPattern && (
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>extract pattern</div>
-            <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#8ec0cc' }}>{e.extractionPattern}</code>
+          <div style={{ padding: '12px 14px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)', gridColumn: '1 / -1' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>extract pattern</div>
+            <code style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'var(--teal)' }}>/{e.extractionPattern}/</code>
           </div>
         )}
         {e.tolerance != null && (
-          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>tolerance</div>
+          <div style={{ padding: '12px 14px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>tolerance</div>
             <div style={{ fontSize: 12.5, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)' }}>± {e.tolerance}</div>
           </div>
         )}
@@ -210,24 +623,40 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
     );
   } else {
     body = (
-      <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+      <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
         Preset configuration — no user-defined settings.
       </div>
     );
   }
+
   return (
-    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <CodeIcon size={13}/>
-          <span style={{ fontSize: 12.5, fontWeight: 600 }}>Configuration</span>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>· {m.label}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
+    <section style={{
+      background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',
+      display: 'flex', flexDirection: 'column', minWidth: 0,
+    }}>
+      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          Definition
+        </span>
+        <span style={{
+          padding: '2px 8px', borderRadius: 4,
+          background: `color-mix(in srgb, ${hex} 14%, transparent)`, color: m.color,
+          fontSize: 10.5, fontWeight: 600,
+        }}>{e.kind}</span>
+        {e.endpointName && (
+          <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>
+            · {e.endpointName}
+          </span>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           {e.systemMessage && (
             <button
               onClick={() => navigator.clipboard.writeText(e.systemMessage!)}
-              style={{ padding: '5px 10px', borderRadius: 6, fontSize: 11, color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', cursor: 'pointer' }}
+              style={{
+                padding: '5px 9px', borderRadius: 6, fontSize: 11,
+                color: 'var(--text-secondary)', background: 'transparent', border: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer',
+              }}
             >
               <CopyIcon size={11}/> Copy
             </button>
@@ -235,179 +664,395 @@ function ConfigPanel({ evaluator: e, onEdit }: { evaluator: EvaluatorDetailDto; 
           <button
             onClick={onEdit}
             data-write
-            style={{ padding: '5px 10px', borderRadius: 6, fontSize: 11, color: 'var(--accent-hover)', background: 'var(--accent-subtle)', fontWeight: 600, cursor: 'pointer' }}
-          >
-            Edit
-          </button>
+            style={{
+              padding: '5px 11px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+              color: m.color, background: `color-mix(in srgb, ${hex} 18%, transparent)`,
+              border: 'none', cursor: 'pointer',
+            }}
+          >Edit</button>
         </div>
       </header>
-      <div style={{ padding: '14px 16px', maxHeight: 360, overflow: 'auto' }}>{body}</div>
+      <div style={{ padding: '14px 18px', maxHeight: 460, overflow: 'auto', flex: 1 }}>{body}</div>
+      {vars.length > 0 && (
+        <div style={{ padding: '10px 16px', borderTop: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 10.5, color: 'var(--text-muted)' }}>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>variables</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {vars.map(v => (
+              <span key={v} style={{
+                padding: '2px 7px', borderRadius: 4,
+                background: `color-mix(in srgb, ${hex} 18%, transparent)`, color: m.color,
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5,
+              }}>{v}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function NumberedCode({ text, color, highlightVars = false }: { text: string; color: string; highlightVars?: boolean }) {
+  const lines = text.split('\n');
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '36px 1fr', gap: 0,
+      fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, lineHeight: 1.65,
+    }}>
+      {lines.map((ln, i) => (
+        <div key={i} style={{ display: 'contents' }}>
+          <span style={{ color: 'var(--text-muted)', textAlign: 'right', paddingRight: 12, fontSize: 10, opacity: 0.55, userSelect: 'none' }}>{i + 1}</span>
+          <span style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {highlightVars
+              ? ln.split(/(\{\{[a-z_]+\}\})/gi).map((part, j) =>
+                  /\{\{[a-z_]+\}\}/i.test(part)
+                    ? <span key={j} style={{
+                        background: `color-mix(in srgb, ${color} 22%, transparent)`,
+                        color, padding: '0 4px', borderRadius: 3,
+                      }}>{part}</span>
+                    : <span key={j}>{part}</span>,
+                )
+              : (ln || ' ')}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Score distribution panel ─────────────────────────────────────────────────
+
+function ScoreDistributionPanel({ buckets, color, totalRuns, range }: {
+  buckets: EvaluatorScoreBucketDto[];
+  color: string;
+  totalRuns: number;
+  range: RangeKey;
+}) {
+  const byScore = new Map(buckets.map(b => [b.score, b.count]));
+  const data = SCORE_ORDER.map(s => ({ score: s, label: SCORE_LABEL[s], count: byScore.get(s) ?? 0 }));
+  const total = data.reduce((a, b) => a + b.count, 0);
+  const max = Math.max(...data.map(d => d.count), 1);
+  const empty = total === 0;
+
+  return (
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>
+      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          Score distribution
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          {range} · {totalRuns.toLocaleString()} runs
+        </span>
+      </header>
+      <div style={{ padding: '16px 18px' }}>
+        {empty ? (
+          <div style={{ height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 11.5, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+            No data in range
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {data.map((d, i) => {
+              const pct = total > 0 ? (d.count / total) * 100 : 0;
+              const w = Math.max(2, (d.count / max) * 100);
+              const intensity = 0.45 + (i / Math.max(1, data.length - 1)) * 0.55;
+              return (
+                <div key={d.score} style={{
+                  display: 'grid', gridTemplateColumns: '90px 1fr 52px',
+                  alignItems: 'center', gap: 10, fontSize: 11,
+                }}>
+                  <span style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.label}</span>
+                  <div style={{ height: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{
+                      width: w + '%', height: '100%',
+                      background: color, opacity: intensity, borderRadius: 4,
+                      transition: 'width 0.3s var(--ease-standard, ease)',
+                    }}/>
+                  </div>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-muted)', textAlign: 'right', fontSize: 10.5 }}>
+                    {pct.toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── LLM judge cost panel ─────────────────────────────────────────────────────
+
+function fmtEur(v: number | null | undefined): string {
+  if (v == null) return '—';
+  if (v < 0.01) return '<€0.01';
+  return `€${v.toFixed(2)}`;
+}
+
+function CostPanel({ overview, color, modelName, range }: {
+  overview: EvaluatorOverviewDto | null;
+  color: string;
+  modelName: string | null;
+  range: RangeKey;
+}) {
+  const s = overview?.summary;
+  return (
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>
+      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          LLM judge cost
+        </span>
+        {modelName && (
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace' }}>· {modelName}</span>
+        )}
+      </header>
+      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span style={{
+            fontSize: 26, fontWeight: 700,
+            fontFamily: 'JetBrains Mono, monospace', letterSpacing: '-0.03em', color,
+          }}>{fmtEur(s?.totalCost ?? null)}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>past {range}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
+              Input tokens
+            </div>
+            <div style={{ fontSize: 14, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)', fontWeight: 600 }}>
+              {s?.inputTokens != null ? fmtTokens(s.inputTokens) : '—'}
+            </div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'var(--bg-card-2)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
+              Output tokens
+            </div>
+            <div style={{ fontSize: 14, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)', fontWeight: 600 }}>
+              {s?.outputTokens != null ? fmtTokens(s.outputTokens) : '—'}
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+          Reduce by trimming the rubric or sampling test cases.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Attached panel ───────────────────────────────────────────────────────────
+
+function AttachedPanel({ suites, agentNames }: {
+  suites: { id: string; name: string; agentName: string }[];
+  agentNames: string[];
+}) {
+  return (
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)' }}>
+      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          Attached to
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+          {suites.length} suite{suites.length !== 1 ? 's' : ''} · {agentNames.length} agent{agentNames.length !== 1 ? 's' : ''}
+        </span>
+      </header>
+      <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, marginBottom: 8 }}>
+            Test suites
+          </div>
+          {suites.length ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {suites.map(s => (
+                <div key={s.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', background: 'var(--bg-card-2)',
+                  borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)',
+                }}>
+                  <CheckboxIcon size={11}/>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                  <ArrowUpRightIcon size={10}/>
+                </div>
+              ))}
+            </div>
+          ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Not attached to any suite yet.</span>}
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600, marginBottom: 8 }}>
+            Agents
+          </div>
+          {agentNames.length ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {agentNames.map(a => (
+                <div key={a} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', background: 'var(--bg-card-2)',
+                  borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)',
+                }}>
+                  <span style={{
+                    width: 18, height: 18, borderRadius: 5,
+                    background: 'color-mix(in srgb, var(--accent-primary) 22%, transparent)',
+                    color: 'var(--accent-primary)',
+                    fontSize: 10, fontWeight: 700,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'JetBrains Mono, monospace',
+                  }}>{a.charAt(0).toUpperCase()}</span>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
+                  <ArrowUpRightIcon size={10}/>
+                </div>
+              ))}
+            </div>
+          ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Not used by any agent yet.</span>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Recent evaluations table ─────────────────────────────────────────────────
+
+function RecentEvaluationsTable({ evaluatorId }: { evaluatorId: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: QUERY_KEYS.evaluatorRecentEvaluations(evaluatorId, 8),
+    queryFn: () => evaluatorsApi.recentEvaluations(evaluatorId, 8),
+    retry: false,
+  });
+
+  const rows = data ?? [];
+
+  return (
+    <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
+      <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <ActivityIcon size={13}/>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600 }}>
+          Recent evaluations
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>last 8</span>
+      </header>
+      {isLoading ? (
+        <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Loading…</div>
+      ) : isError ? (
+        <div style={{ padding: '32px 16px' }}>
+          <EmptyState title="Not yet wired" description="Recent evaluations endpoint is not implemented yet."/>
+        </div>
+      ) : rows.length === 0 ? (
+        <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
+          No evaluations yet. Attach this evaluator to a suite and run it.
+        </div>
+      ) : (
+        <div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: '90px 1fr 70px 70px 70px',
+            padding: '8px 16px', fontSize: 9.5, color: 'var(--text-muted)',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
+            borderBottom: '1px solid var(--hairline)', fontWeight: 600,
+          }}>
+            <span>Time</span>
+            <span>Case · reason</span>
+            <span style={{ textAlign: 'right' }}>Latency</span>
+            <span style={{ textAlign: 'right' }}>Score</span>
+            <span style={{ textAlign: 'right' }}>Verdict</span>
+          </div>
+          {rows.map((s, i) => (
+            <div key={s.testResultId} style={{
+              display: 'grid', gridTemplateColumns: '90px 1fr 70px 70px 70px',
+              padding: '11px 16px',
+              borderBottom: i < rows.length - 1 ? '1px solid var(--hairline)' : 'none',
+              alignItems: 'center', gap: 12, fontSize: 11.5,
+            }}>
+              <span style={{ color: 'var(--text-muted)' }}>{fmtRelative(s.evaluatedAt)}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.caseSummary}</div>
+                {s.reasoning && (
+                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.reasoning}</div>
+                )}
+              </div>
+              <span style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-muted)', fontSize: 11 }}>
+                {s.latencyMs ? fmtLatency(s.latencyMs) : '—'}
+              </span>
+              <span style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {s.score ?? '—'}
+              </span>
+              <span style={{ textAlign: 'right' }}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '2px 8px', borderRadius: 100,
+                  fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+                  background: s.passed ? 'var(--success-subtle)' : 'var(--danger-subtle)',
+                  color: s.passed ? 'var(--success)' : 'var(--danger)',
+                }}>{s.passed ? 'PASS' : 'FAIL'}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 // ── Detail pane ──────────────────────────────────────────────────────────────
 
-function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeChange, projectId, onEdit, onDelete }: {
+function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeChange, onEdit, onDelete }: {
   evaluator: EvaluatorDetailDto;
   attachedSuites: { id: string; name: string; agentName: string }[];
   range: RangeKey;
   onRangeChange: (r: RangeKey) => void;
-  projectId: string | null;
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const benchRef = useRef<EvaluatorTestBenchHandle | null>(null);
+  const navigate = useNavigate();
   const cat = KIND_CATEGORY[e.kind];
   const m = TYPE_META[cat];
-  const agentNames = [...new Set(attachedSuites.map(s => s.agentName))];
+  const showCost = e.kind === EvaluatorKind.Agentic;
+  const agentNames = Array.from(new Set(attachedSuites.map(s => s.agentName)));
+
+  const overviewParams = useMemo(() => ({
+    from: rangeFrom(range),
+    to: new Date().toISOString(),
+    bucket: bucketFor(range),
+  }), [range]);
+
+  const overviewQuery = useQuery({
+    queryKey: QUERY_KEYS.statisticsEvaluatorOverview(e.id, range),
+    queryFn: () => statisticsApi.evaluatorOverview(e.id, overviewParams),
+    retry: false,
+    placeholderData: keepPreviousData,
+  });
+
+  const overview = overviewQuery.data ?? null;
 
   return (
     <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Header band */}
-      <div style={{
-        background: `linear-gradient(135deg, ${m.color}14, transparent 60%), var(--bg-card)`,
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 14,
-        padding: '18px 22px',
-        boxShadow: 'var(--shadow-card)',
-        display: 'flex', alignItems: 'flex-start', gap: 16,
-      }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: 'var(--radius-lg)',
-          background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
-          flexShrink: 0,
-        }}>
-          {cat === 'llm' ? <BeakerIcon size={22}/> : cat === 'rule' ? <FilterIcon size={22}/> : <HashIcon size={22}/>}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>{e.name}</h2>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 100, background: 'var(--success-subtle)', color: '#5cc98a', fontSize: 10.5, fontWeight: 600 }}>
-              <span className="pulse-dot" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>
-              Active
-            </span>
-            <span style={{ padding: '2px 8px', borderRadius: 6, background: m.color + '14', color: m.color, fontSize: 10.5, fontWeight: 600 }}>{m.label}</span>
-          </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 6, maxWidth: 720 }}>
-            {META[e.kind]?.desc}
-          </div>
-          <div style={{ display: 'flex', gap: 18, marginTop: 12, fontSize: 11.5, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>id</span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{e.id.slice(0, 12)}…</span>
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>kind</span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{e.kind}</span>
-            </span>
-            {e.endpointName && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: 'var(--text-muted)' }}>model</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{e.endpointName}</span>
-              </span>
-            )}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ color: 'var(--text-muted)' }}>updated</span>
-              {fmtRelative(e.updatedAt)}
-            </span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button
-            onClick={() => benchRef.current?.focus()}
-            title="Test this evaluator against a past test result"
-            style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-card-2)', cursor: 'pointer' }}
-          >
-            <PlayIcon size={11}/> Test evaluator
-          </button>
-          <button
-            onClick={onDelete}
-            data-write
-            style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid color-mix(in srgb, var(--danger) 22%, transparent)', background: 'var(--danger-subtle)', cursor: 'pointer' }}
-          >
-            Delete
-          </button>
-          <button
-            onClick={onEdit}
-            data-write
-            style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 600, color: '#fff', background: 'var(--grad-accent)', boxShadow: 'var(--shadow-btn)', display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          >
-            <EditPencilIcon size={11}/> Edit
-          </button>
-        </div>
+      <WorkspaceHeader
+        evaluator={e}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onTestBench={() => navigate(`/evaluator-playground?id=${e.id}`)}
+      />
+
+      <PerformancePanel evaluator={e} overview={overview} range={range} onRangeChange={onRangeChange} color={m.color}/>
+
+      <DefinitionPanel evaluator={e} onEdit={onEdit}/>
+
+      <div style={{ display: 'grid', gridTemplateColumns: showCost ? '1.4fr 1fr' : '1fr', gap: 14 }}>
+        <ScoreDistributionPanel
+          buckets={overview?.scoreDistribution ?? []}
+          color={m.color}
+          totalRuns={overview?.summary.totalEvaluations ?? 0}
+          range={range}
+        />
+        {showCost && (
+          <CostPanel
+            overview={overview}
+            color={m.color}
+            modelName={e.endpointName ?? null}
+            range={range}
+          />
+        )}
       </div>
 
-      {/* Configuration */}
-      <ConfigPanel evaluator={e} onEdit={onEdit}/>
+      <AttachedPanel suites={attachedSuites} agentNames={agentNames}/>
 
-      {/* Test bench */}
-      <EvaluatorTestBench ref={benchRef} evaluatorId={e.id} projectId={projectId}/>
-
-      {/* Metrics block */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: -6 }}>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Statistics</div>
-        <div className="flex gap-1 p-1 bg-card-2 rounded-[9px]" role="group" aria-label="Time range">
-          {(['1h', '24h', '7d', '30d'] as const).map(r => (
-            <button
-              key={r}
-              onClick={() => onRangeChange(r)}
-              aria-pressed={range === r}
-              style={{ boxShadow: range === r ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none' }}
-              className={`px-[10px] py-[3px] text-[11px] font-medium rounded-[6px] cursor-pointer transition-colors duration-150 ${
-                range === r ? 'bg-card text-primary' : 'bg-transparent text-muted hover:text-secondary'
-              }`}
-            >{r}</button>
-          ))}
-        </div>
-      </div>
-      <EvaluatorStatsBlock evaluatorId={e.id} kind={e.kind} range={range} color={m.color}/>
-
-      {/* Attached to */}
-      <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', padding: '16px 18px' }}>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 12 }}>Attached to</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 6 }}>Test suites</div>
-            {attachedSuites.length ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {attachedSuites.map(s => (
-                  <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: 'var(--bg-card-2)', borderRadius: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
-                    <CheckboxIcon size={9}/> {s.name}
-                  </span>
-                ))}
-              </div>
-            ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>none</span>}
-          </div>
-          <div>
-            <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 6 }}>Agents</div>
-            {agentNames.length ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {agentNames.map(a => (
-                  <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', background: 'var(--bg-card-2)', borderRadius: 6, fontSize: 11, color: 'var(--text-secondary)' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: 2, background: 'var(--accent-primary)' }}/>
-                    {a}
-                  </span>
-                ))}
-              </div>
-            ) : <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>none</span>}
-          </div>
-        </div>
-      </section>
-
-      {/* Recent evaluations */}
-      <section style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)', overflow: 'hidden' }}>
-        <header style={{ padding: '12px 16px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <ActivityIcon size={13}/>
-          <span style={{ fontSize: 12.5, fontWeight: 600 }}>Recent evaluations</span>
-        </header>
-        <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-          No evaluations yet. Attach this evaluator to a suite and run it.
-        </div>
-      </section>
-
+      <RecentEvaluationsTable evaluatorId={e.id}/>
     </div>
   );
 }
@@ -421,7 +1066,7 @@ function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => vo
       padding: 40, textAlign: 'center', color: 'var(--text-muted)', gap: 14,
     }}>
       <div style={{
-        width: 56, height: 56, borderRadius: 14, background: 'var(--bg-card-2)',
+        width: 56, height: 56, borderRadius: 'var(--radius-lg)', background: 'var(--bg-card-2)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)',
       }}>
         <BeakerIcon size={24}/>
@@ -432,7 +1077,7 @@ function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => vo
         </div>
         <div style={{ fontSize: 12, marginTop: 4, maxWidth: 320 }}>
           {hasAny
-            ? 'Pick one from the list to view its configuration, attached suites, and metrics.'
+            ? "Pick one from the list to view its definition, attached suites, and performance."
             : 'Create your first evaluator to start scoring agent responses.'}
         </div>
       </div>
@@ -444,6 +1089,7 @@ function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => vo
           background: 'var(--grad-accent)',
           borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 600, color: '#fff',
           boxShadow: 'var(--shadow-btn)',
+          border: 'none',
           display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer',
         }}
       >
@@ -470,7 +1116,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 50,
-        background: 'rgba(8, 8, 11, 0.7)', backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
@@ -489,7 +1135,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
               {pickedKind ? 'Configure your evaluator.' : 'Choose how this evaluator scores agent responses.'}
             </div>
           </div>
-          <button onClick={onClose} style={{ color: 'var(--text-muted)', padding: 6, borderRadius: 6, fontSize: 18, cursor: 'pointer' }}>×</button>
+          <button onClick={onClose} style={{ color: 'var(--text-muted)', padding: 6, borderRadius: 6, fontSize: 18, background: 'transparent', border: 'none', cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ padding: 20 }}>
@@ -497,6 +1143,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
               {KIND_ORDER.map(k => {
                 const cat = KIND_CATEGORY[k];
+                const hex = TYPE_HEX[cat];
                 const m = TYPE_META[cat];
                 const meta = META[k];
                 return (
@@ -505,11 +1152,21 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
                     background: 'var(--bg-card-2)', border: '1px solid var(--border-subtle)',
                     display: 'flex', gap: 12, cursor: 'pointer', transition: 'all 0.15s',
                   }}
-                    onMouseEnter={ev => { ev.currentTarget.style.background = m.color + '10'; ev.currentTarget.style.borderColor = m.color + '44'; }}
-                    onMouseLeave={ev => { ev.currentTarget.style.background = 'var(--bg-card-2)'; ev.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+                    onMouseEnter={ev => {
+                      ev.currentTarget.style.background = `color-mix(in srgb, ${hex} 10%, var(--bg-card-2))`;
+                      ev.currentTarget.style.borderColor = `color-mix(in srgb, ${hex} 44%, transparent)`;
+                    }}
+                    onMouseLeave={ev => {
+                      ev.currentTarget.style.background = 'var(--bg-card-2)';
+                      ev.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    }}
                   >
-                    <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: `color-mix(in srgb, ${m.color} 14%, transparent)`, color: m.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {cat === 'llm' ? <BeakerIcon size={16}/> : cat === 'rule' ? <FilterIcon size={16}/> : <HashIcon size={16}/>}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 'var(--radius-md)',
+                      background: `color-mix(in srgb, ${hex} 14%, transparent)`, color: m.color,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <CategoryIcon category={cat} size={16}/>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 3 }}>{meta.label}</div>
@@ -524,7 +1181,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 6,
-                  background: TYPE_META[KIND_CATEGORY[pickedKind]].color + '18',
+                  background: `color-mix(in srgb, ${TYPE_HEX[KIND_CATEGORY[pickedKind]]} 18%, transparent)`,
                   color: TYPE_META[KIND_CATEGORY[pickedKind]].color, fontSize: 12, fontWeight: 600,
                 }}>
                   {META[pickedKind].label}
@@ -539,7 +1196,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
         <div style={{ padding: '14px 20px', borderTop: '1px solid var(--hairline)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>You can change the configuration later from the evaluator's settings.</span>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)', fontSize: 12, color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer' }}>Cancel</button>
             <button
               onClick={onSubmit}
               data-write
@@ -549,6 +1206,7 @@ function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, 
                 color: pickedKind ? '#fff' : 'var(--text-muted)',
                 background: pickedKind ? 'var(--grad-accent)' : 'var(--bg-card-2)',
                 boxShadow: pickedKind ? 'var(--shadow-btn)' : 'none',
+                border: 'none',
                 cursor: pickedKind ? 'pointer' : 'not-allowed',
                 opacity: loading ? 0.6 : 1,
               }}
@@ -570,7 +1228,6 @@ export default function Evaluators() {
   const { id: routeId } = useParams<{ id: string }>();
   const { currentProjectId } = useCurrentProject();
 
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [range, setRange] = useState<RangeKey>('7d');
   const SPARKLINE_RANGE: RangeKey = '7d';
   const [showNew, setShowNew] = useState(false);
@@ -619,14 +1276,26 @@ export default function Evaluators() {
     return m;
   }, [sparklineRows]);
 
-  const visible = evaluators.filter(e => typeFilter === 'all' || KIND_CATEGORY[e.kind] === typeFilter);
+  // Derive a coarse avg from the sparkline tail so rail rows have a number.
+  const avgScoreById = useMemo(() => {
+    const m = new Map<string, number | null>();
+    for (const row of sparklineRows ?? []) {
+      const pts = row.points;
+      const lastN = pts.slice(-7);
+      const totalPass = lastN.reduce((a, p) => a + p.passed, 0);
+      const totalAll = lastN.reduce((a, p) => a + p.total, 0);
+      m.set(row.evaluatorId, totalAll > 0 ? totalPass / totalAll : null);
+    }
+    return m;
+  }, [sparklineRows]);
+
   const selected = routeId ? evaluators.find(e => e.id === routeId) ?? null : null;
 
   useEffect(() => {
-    if (!routeId && visible.length > 0) {
-      navigate(`/evaluators/${visible[0].id}`, { replace: true });
+    if (!routeId && evaluators.length > 0) {
+      navigate(`/evaluators/${evaluators[0].id}`, { replace: true });
     }
-  }, [routeId, visible, navigate]);
+  }, [routeId, evaluators, navigate]);
   const editTarget = evaluators.find(e => e.id === editTargetId) ?? null;
   const deleteTarget = evaluators.find(e => e.id === deleteTargetId) ?? null;
 
@@ -679,89 +1348,19 @@ export default function Evaluators() {
 
   function openNew() { setShowNew(true); setPickedKind(null); setCreateForm(initForm()); }
 
-  const typeFilterOptions: [TypeFilter, string, string | null][] = [
-    ['all', 'All', null],
-    ['llm', 'LLM judge', 'var(--accent-primary)'],
-    ['rule', 'Rule', 'var(--teal)'],
-    ['numeric', 'Numeric', '#8ec0cc'],
-  ];
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '300px 1fr', gap: 14, minHeight: 0 }}>
-        {/* Left rail */}
-        <aside style={{
-          background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-card)',
-          display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
-        }}>
-          <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--hairline)' }}>
-            <button
-              onClick={openNew}
-              data-write
-              style={{
-                width: '100%', padding: '9px 14px',
-                background: 'var(--grad-accent)',
-                borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 600, color: '#fff',
-                boxShadow: 'var(--shadow-btn)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer',
-              }}
-            >
-              <PlusIcon size={13}/> New evaluator
-            </button>
-          </div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '288px 1fr', gap: 14, minHeight: 0 }}>
+        <EvalRail
+          evaluators={evaluators}
+          isLoading={isLoading}
+          selectedId={routeId ?? null}
+          onSelect={(id) => navigate(`/evaluators/${id}`)}
+          onNew={openNew}
+          sparklineById={sparklineById}
+          avgScoreById={avgScoreById}
+        />
 
-          <div style={{ padding: '10px 12px 10px', borderBottom: '1px solid var(--hairline)' }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {typeFilterOptions.map(([k, label, color]) => {
-                const isActive = typeFilter === k;
-                const count = k === 'all' ? evaluators.length : evaluators.filter(e => KIND_CATEGORY[e.kind] === k).length;
-                return (
-                  <button
-                    key={k}
-                    onClick={() => setTypeFilter(k)}
-                    style={{
-                      padding: '5px 9px', borderRadius: 7, fontSize: 11, fontWeight: 500,
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
-                      background: isActive ? 'var(--bg-card-2)' : 'transparent',
-                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {color && <span style={{ width: 6, height: 6, borderRadius: 2, background: color, opacity: isActive ? 1 : 0.5 }}/>}
-                    {label}
-                    <span style={{ padding: '0 5px', background: isActive ? 'var(--accent-subtle)' : 'var(--bg-card)', color: isActive ? '#e8c99a' : 'var(--text-muted)', borderRadius: 100, fontSize: 9.5, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
-            {isLoading ? (
-              <SkeletonList rows={6} height={56} gap={4} />
-            ) : visible.length === 0 ? (
-              <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-                {evaluators.length === 0 ? 'No evaluators yet.' : 'No evaluators match this filter.'}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {visible.map(e => (
-                  <EvaluatorRow
-                    key={e.id}
-                    evaluator={e}
-                    isSelected={e.id === routeId}
-                    onSelect={(id) => navigate(`/evaluators/${id}`)}
-                    sparkline={sparklineById.get(e.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
-
-        {/* Right pane */}
         <main style={{ minWidth: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           {selected ? (
             <EvaluatorDetail
@@ -769,7 +1368,6 @@ export default function Evaluators() {
               attachedSuites={attachedSuites}
               range={range}
               onRangeChange={setRange}
-              projectId={currentProjectId}
               onEdit={() => openEdit(selected)}
               onDelete={() => setDeleteTargetId(selected.id)}
             />
@@ -779,7 +1377,6 @@ export default function Evaluators() {
         </main>
       </div>
 
-      {/* New evaluator modal */}
       {showNew && (
         <NewEvaluatorModal
           pickedKind={pickedKind}
@@ -793,7 +1390,6 @@ export default function Evaluators() {
         />
       )}
 
-      {/* Edit modal */}
       {editOpen && editTarget && (
         <Modal
           title={`Edit ${META[editTarget.kind]?.label ?? 'Evaluator'}`}
@@ -812,7 +1408,6 @@ export default function Evaluators() {
         </Modal>
       )}
 
-      {/* Delete confirm */}
       {deleteTargetId && deleteTarget && (
         <Modal
           title={`Delete "${deleteTarget.name}"`}

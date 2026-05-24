@@ -27,7 +27,7 @@ export function Pagination({ page, total, pageSize, onChange }: PaginationProps)
       disabled={disabled || p == null}
       className={`min-w-[30px] h-[30px] px-[6px] rounded-md text-xs font-medium transition-colors border ${
         p === page
-          ? 'bg-accent-subtle text-accent border-[rgba(201,148,74,0.3)]'
+          ? 'bg-accent-subtle text-accent border-[color-mix(in_srgb,_var(--accent-primary)_30%,_transparent)]'
           : 'bg-card text-secondary border-border'
       } ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
     >

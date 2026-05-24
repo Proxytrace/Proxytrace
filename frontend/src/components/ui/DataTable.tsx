@@ -42,7 +42,7 @@ export function DataTable<T>({
       {/* Rows */}
       {rows.map((row, index) => {
         const selected = isSelected?.(row) ?? false;
-        const bg = selected ? 'rgba(201,148,74,0.06)' : 'transparent';
+        const bg = selected ? 'color-mix(in srgb, var(--accent-primary) 6%, transparent)' : 'transparent';
         if (onRowClick) {
           return (
             <button
@@ -51,7 +51,7 @@ export function DataTable<T>({
               onClick={() => onRowClick(row, index)}
               className={`${sharedRowClass} bg-transparent border-x-0 border-t-0 transition-[background] duration-[100ms] cursor-pointer`}
               style={{ gridTemplateColumns: gridCols, background: bg }}
-              onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'rgba(201,148,74,0.04)'; }}
+              onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-primary) 4%, transparent)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = bg; }}
             >
               {columns.map(c => <span key={c.key} className={c.className}>{c.render(row, index)}</span>)}

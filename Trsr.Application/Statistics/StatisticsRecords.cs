@@ -55,6 +55,43 @@ public record AgentBreakdownStat(
     Guid AgentId,
     int CallCount);
 
+/// <summary>
+/// Real-time proxy telemetry surfaced on the dashboard "mission control" strip.
+/// </summary>
+public record LiveTelemetry(
+    double TracesPerMinute,
+    double TokensPerSecond,
+    int QueueDepth,
+    double ErrorRate,
+    double P95Ms,
+    string ProxyVersion);
+
+/// <summary>
+/// Token usage attributed to a single agent for one calendar day (for the stacked token-by-agent chart).
+/// </summary>
+public record AgentTokenUsageStat(
+    DateOnly Date,
+    Guid AgentId,
+    long InputTokens,
+    long OutputTokens);
+
+/// <summary>
+/// Bucketed trend series powering the dashboard stat-tile sparklines.
+/// </summary>
+public record DashboardTrends(
+    IReadOnlyList<double> Traces,
+    IReadOnlyList<double> LatencyMs,
+    IReadOnlyList<double> Throughput,
+    IReadOnlyList<double> PassRate);
+
+/// <summary>
+/// Equal-width bucketed call-traffic series (excludes pass rate, which comes from run stats).
+/// </summary>
+public record CallTrends(
+    IReadOnlyList<double> Traces,
+    IReadOnlyList<double> LatencyMs,
+    IReadOnlyList<double> Throughput);
+
 public record CostEstimateStat(
     Guid EndpointId,
     decimal? InputCostEur,

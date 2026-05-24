@@ -22,7 +22,7 @@ export function KpiTraces({ overview, range, className }: KpiProps) {
         value={String(overview.summary.totalTraces)}
         subtitle={`in ${rangeShort(range)}`}
         sparkline={data}
-        sparklineColor="#c9944a"
+        sparklineColor="var(--accent-primary)"
       />
     </div>
   );
@@ -38,7 +38,7 @@ export function KpiTokens({ overview, className }: KpiProps) {
         value={fmtTokens(total)}
         subtitle={`${fmtTokens(overview.summary.totalInputTokens)} in · ${fmtTokens(overview.summary.totalOutputTokens)} out`}
         sparkline={data}
-        sparklineColor="#6b9eaa"
+        sparklineColor="var(--teal)"
       />
     </div>
   );
@@ -53,7 +53,7 @@ export function KpiCost({ overview, className }: KpiProps) {
         value={fmtCost(overview.summary.totalCostEur)}
         subtitle="cumulative across endpoints"
         sparkline={data}
-        sparklineColor="#d4915c"
+        sparklineColor="var(--warn)"
       />
     </div>
   );
@@ -68,7 +68,7 @@ export function KpiLatency({ overview, className }: KpiProps) {
         value={fmtLatency(overview.summary.avgLatencyMs)}
         subtitle="per call"
         sparkline={data}
-        sparklineColor="#3daa6f"
+        sparklineColor="var(--success)"
       />
     </div>
   );

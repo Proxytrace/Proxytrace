@@ -1,0 +1,279 @@
+# Trsr Frontend Best Practices
+
+**Required reading before writing any React/TypeScript in `frontend/`.** This is the source of truth for **code architecture** — how components, data, state, and types are structured.
+
+It is the sibling of [`DESIGN.md`](./DESIGN.md), which owns the **visual system** (tokens, colors, spacing, components-as-pixels). The split is sharp:
+
+- **DESIGN.md** → what it looks like. Read it for anything about color, type scale, spacing, shadows, which UI primitive to render.
+- **BEST_PRACTICES.md (this file)** → how it's built. Read it for file structure, hooks, data fetching, state, typing, performance.
+
+When the two touch (e.g. "no inline styles"), DESIGN.md states the visual rule and this file states the code mechanics. Neither overrides the other; they cover different axes.
+
+This document describes the **target state**. Parts of the current codebase violate it — those are debt, not precedent. When you touch a file that violates a rule here, leave it at least no worse, and prefer to fix it. Do not copy an anti-pattern just because a neighbor does it.
+
+---
+
+## 0. The one principle everything else serves
+
+**A component should be small, single-purpose, and obvious at a glance.** Every rule below is downstream of that. If a file takes more than ~30 seconds to understand its shape, it is too big or doing too much.
+
+Concrete current violations to learn from:
+
+- `features/evaluators/Evaluators.tsx` — **1432 lines, 27 component functions, 185 inline `style={{}}` blocks** in a single file. This is the canonical example of what *not* to do.
+- `features/dashboard/Dashboard.tsx` (591), `features/providers/Providers.tsx` (555), `features/traces/Traces.tsx` (554), `features/setup/Setup.tsx` (598) — all over budget.
+
+The well-structured counter-examples already in the repo: `api/agents.ts`, `api/query-keys.ts`, `lib/cn.ts`, `components/ui/classes.ts`, the `features/runs/` and `features/playground/` feature folders that decompose into `components/`, `state/`, `lib/`, `drawers/`. Copy *those*.
+
+---
+
+## 1. File & component size limits
+
+These are hard limits, not suggestions. CI-grep them if you have to.
+
+| Unit | Soft limit | Hard limit | Action at hard limit |
+|------|-----------|-----------|----------------------|
+| Any `.tsx`/`.ts` file | 200 lines | **300 lines** | Split before merging |
+| A single component function | 80 lines of JSX/logic | **150 lines** | Extract subcomponents |
+| Component props | 5 props | **8 props** | Group into an object, or split the component |
+| Hook (`use*`) | 60 lines | **120 lines** | Extract helpers / split concerns |
+
+**One exported page component per feature folder; everything it needs lives beside it, not inside it.** When a page grows subcomponents, they become files in a `components/` subfolder, not nested functions. `features/runs/` and `features/playground/` already do this correctly:
+
+```
+features/playground/
+  Playground.tsx              ← thin orchestrator
+  components/                 ← presentational pieces
+  state/usePlaygroundSession.ts  ← logic/state
+  lib/seed.ts                 ← pure helpers
+```
+
+**Rule:** more than 2 component functions in one file → they belong in separate files (exception: a tiny private render-helper used once, < 20 lines).
+
+---
+
+## 2. Feature folder structure (the standard layout)
+
+Every non-trivial route folder under `features/` follows this shape:
+
+```
+features/<feature>/
+  <Feature>.tsx            # default-exported page, lazy-loaded in App.tsx. Orchestration only.
+  components/              # presentational subcomponents (dumb where possible)
+  hooks/ or use*.ts        # data + behavior hooks (see §3, §4)
+  <feature>.ts             # pure constants, enums, label maps, form initializers
+  *.spec.ts                # tests for the pure logic
+```
+
+- The page component **wires things together**: reads route params, calls feature hooks, lays out subcomponents. It should contain almost no business logic and no raw `fetch`/`useQuery`.
+- Constants, label maps, and `Record<Enum, …>` lookups go in the plain `.ts` file (like `features/evaluators/evaluators.ts`), never inline at the top of a 1400-line component.
+- Cross-feature reusable UI → promote to `components/ui/`. Cross-feature logic → `hooks/` or `lib/`. Don't import one feature's internals from another feature.
+
+---
+
+## 3. Data fetching — TanStack Query is the only data layer
+
+There is no `useEffect`-to-fetch, no fetch-in-component, no manual loading booleans. The stack is already correct (`api/client.ts` wrapper, typed `api/*.ts` services, centralized `api/query-keys.ts`). Use it as designed.
+
+### 3.1 Layering
+
+```
+component  →  feature query hook (useXxx)  →  api/<service>.ts  →  api/client.ts
+```
+
+- **`api/<service>.ts`** — thin typed functions returning DTOs. One per resource (see `api/agents.ts`). No React, no query logic. New endpoints get a function here first.
+- **Query hooks** — wrap `useQuery`/`useMutation`. This is the layer that is **currently missing** and the biggest structural gap: `useQuery`/`useMutation` is called raw in **33 feature files**. That couples components to query keys, stale times, and invalidation. Extract them.
+
+```ts
+// features/evaluators/hooks/useEvaluators.ts
+export function useEvaluators() {
+  const { projectId } = useCurrentProject();
+  return useQuery({
+    queryKey: QUERY_KEYS.evaluators(projectId),
+    queryFn: () => evaluatorsApi.list(projectId),
+    enabled: !!projectId,
+  });
+}
+```
+
+Components then read `const { data, isLoading } = useEvaluators();` and stay declarative. Stale time, `enabled`, `select`, and placeholder data live in the hook, in one place.
+
+### 3.2 Rules
+
+- **Every query key comes from `QUERY_KEYS`** in `api/query-keys.ts`. Never inline a string array `['evaluators', id]` in a component. (This file is already good — keep it the single registry.)
+- **Mutations invalidate, components don't refetch.** After a mutation, `queryClient.invalidateQueries({ queryKey: QUERY_KEYS.xxx })`. Prefer the documented prefix keys (e.g. `testRunGroupsRoot`) for broad invalidation.
+- **SSE patches the cache; it does not trigger refetches.** Per DESIGN.md §8 and the `event-stream.ts` broadcasters, live updates use `queryClient.setQueryData` to patch the cached query. Never refetch a page on an SSE event.
+- **No data fetching in a component that an SSE broadcaster already streams.** (Also a DESIGN.md anti-pattern.)
+- **`enabled` guards dependent queries** — never fetch with an undefined id; gate with `enabled: !!id`.
+- **Server state ≠ client state.** Anything from the API lives in Query's cache, never copied into `useState`. Copying server data into local state to "edit" it is the most common bug source — derive instead, or use an explicit draft state that's clearly separate.
+
+---
+
+## 4. State management & `useEffect`
+
+`useEffect` is a code smell until proven otherwise. The repo has hotspots — `features/playground/Playground.tsx` has **6**, several files have 3–4. Most are avoidable.
+
+### 4.1 The `useEffect` decision rule
+
+Reach for `useEffect` **only** to synchronize with something *outside* React: DOM events, subscriptions (SSE), timers, focus/measurement, `localStorage`, the document title. For everything else:
+
+| Instead of `useEffect` to… | Do this |
+|---|---|
+| Fetch data | TanStack Query (§3) |
+| Compute a value from props/state | Compute it inline, or `useMemo` if expensive |
+| Reset state when a prop changes | `key` prop on the component, or derive |
+| Sync two pieces of state | Lift to one source of truth; derive the other |
+| Respond to a user event | Do it in the event handler, not an effect |
+
+Acceptable effects already in the repo, for reference: `hooks/useElementWidth.ts` (ResizeObserver), `hooks/useGlobalShortcut.ts` (keydown listener), `api/event-stream.ts` (SSE subscription). These wrap a genuinely external system in a custom hook — that's the right shape. Any effect more than a few lines belongs in its own `use*` hook, not inline in a component.
+
+### 4.2 State placement
+
+- **Local UI state** (open/closed, hovered, active tab) → `useState` in the lowest component that needs it.
+- **Server state** → Query cache (§3).
+- **Cross-route / app state** (current project, toasts, auth, kiosk) → the existing Contexts (`contexts/ProjectContext`, `ToastContext`, `KioskContext`). Do not add a new global state library; React Context + Query covers this app's needs.
+- **Derive, don't store.** If a value can be computed from existing state/props, compute it. Don't mirror it into another `useState`.
+
+### 4.3 Forms
+
+Controlled inputs with a single `useState` object for the form, an `initForm()` factory in the feature's `.ts` file (pattern exists in `features/evaluators/evaluators.ts`), and `FormField` for every input (DESIGN.md §7). No uncontrolled `ref` reads for form values.
+
+---
+
+## 5. Component design: presentational vs container
+
+Split components by responsibility:
+
+- **Container** — calls hooks (§3), holds state, handles events. Few of these. Usually the page + a couple of section orchestrators.
+- **Presentational** — props in, JSX out. No data fetching, no `QUERY_KEYS`, ideally no `useState` beyond trivial local UI. Easy to read, easy to test, reusable.
+
+The more presentational components you have, the healthier the tree. A 1400-line file is almost always a container that absorbed all its presentational children.
+
+### 5.1 Props
+
+- **Pass data, not styling primitives.** A recurring anti-pattern in `Evaluators.tsx`: passing `color: 'var(--accent-primary)'` strings down through props and into `style={{ color }}`. Instead pass a **semantic** prop (`variant="llm"`, `kind={EvaluatorKind.Agentic}`) and let the leaf map it to a class via DESIGN.md tokens / `lib/colors.ts`. Color decisions belong at the leaf, expressed as classes — not threaded through the tree as CSS-variable strings.
+- **Discriminated unions over boolean soup.** `{ status: 'loading' } | { status: 'error', error } | { status: 'ready', data }` beats `isLoading`/`isError`/`data` triplets where they're mutually exclusive.
+- **No `any`. No `as any`. No `!` non-null assertion** (the last is also forbidden in CLAUDE.md for backend; hold the same line here). The repo is nearly clean — keep it that way. Type DTOs in `api/models.ts`, narrow with type guards.
+- Destructure props in the signature; default values there too (`{ size = 16 }`).
+
+---
+
+## 6. Icons — one source, zero inline SVG
+
+This is the single most duplicated thing in the codebase and must be fixed going forward.
+
+**Current state (broken three ways):**
+1. DESIGN.md §5 mandates **Lucide** (`lucide-react`) — but `lucide-react` is **not installed** and imported **0 times**.
+2. A hand-rolled central set exists at `components/icons/index.tsx`.
+3. Features *still* re-declare their own inline `<svg>` icon functions — `Evaluators.tsx`, `RightRail.tsx`, `EvaluatorTestBench.tsx`, `TracesStep.tsx`, `EditableMessageBubble.tsx`, `TestResultPicker.tsx`, even `Button.tsx`. The same `BeakerIcon`/`SearchIcon`/`PlusIcon` shapes are copy-pasted across files.
+
+**The rule going forward:**
+
+- **Never declare an `<svg>` icon inside a feature file.** Zero exceptions. An inline `function XIcon()` returning `<svg>` in a feature is a bug.
+- **One icon module.** Resolve the DESIGN.md-vs-reality gap by either (a) installing `lucide-react` and using it directly, or (b) treating `components/icons/index.tsx` as the canonical set and importing only from there. Pick one in a tracked change and update DESIGN.md §5 to match. Until then, **import from `components/icons`** — do not add new inline SVGs.
+- Icons take `size`/`className`/`strokeWidth` props and inherit color via `currentColor` (the `Svg` wrapper in `icons/index.tsx` already does this). Color the icon by setting text color on the parent, never by hardcoding `stroke`/`fill`.
+
+---
+
+## 7. Styling mechanics (code side)
+
+DESIGN.md owns *which* tokens to use. This section owns *how* you apply them in code.
+
+- **`cn()` for all conditional/composed class strings** (`lib/cn.ts`). Never build className with template-string `if` soup.
+- **Extract repeated class strings to `components/ui/classes.ts`** when a class recipe is reused (the file already does this for inputs). A class string copy-pasted 3+ times is a missing `classes.ts` entry or a missing component.
+- **Inline `style={{}}` only for genuinely runtime-computed values** — a percent width from data, a runtime hex from `colors.ts`. Static values are Tailwind utilities (DESIGN.md §6). The 185 inline styles in `Evaluators.tsx` are almost all static and wrong; do not reproduce that.
+- **No new primitive when one exists.** Before writing a button/card/pill/modal, check `components/ui/` and `components/overlays/` (DESIGN.md §3 has the inventory). Reuse beats re-implement.
+
+---
+
+## 8. Performance — measure, don't sprinkle
+
+- **`useMemo`/`useCallback` are not decoration.** Add them only for (a) genuinely expensive computation, or (b) referential stability that a downstream `memo`/dependency array actually needs. Wrapping every value is noise that hides the ones that matter.
+- **Stable, meaningful `key`s** on lists — entity ids, never array index for dynamic/reorderable lists.
+- **`React.memo` only on presentational leaves that re-render hot** (list rows, chart cells) and receive stable props. Pointless on containers.
+- **Don't create new object/array/function literals in props** of memoized children — that defeats the memo. This is the usual reason a `memo` "doesn't work."
+- **Long lists must virtualize or paginate.** High-volume scrolling lists (traces, runs) follow the `trace-row`/`DataTable` pattern (DESIGN.md §3.4) and use `Pagination`; don't render thousands of rows.
+- **Charts:** reuse `components/charts/*` and `chart-math.ts`. Don't compute SVG paths inline in a feature.
+
+---
+
+## 9. Loading, empty, and error states are not optional
+
+Every async view ships all three (DESIGN.md §3.5 owns the visuals; the code mechanics):
+
+- **Loading:** render `Skeleton` shaped like the final layout (reserve height to prevent layout jump). `Spinner` only for inline/button loading. Drive off Query's `isLoading`/`isPending`.
+- **Empty:** `EmptyState` when `data` is empty (distinct from loading). Never show an empty grid as if loaded-with-nothing is the same as loading.
+- **Error:** Query's `isError` → inline `text-danger` near the control, or `EmptyState` danger variant for full-page. App-level crashes are caught by `components/ErrorBoundary.tsx` — keep one at the route boundary; don't let a render throw blank the app.
+- The global `api/client.ts` already surfaces API errors as toasts. Don't double-report; let a mutation's `onError` add context only when it adds value.
+
+---
+
+## 10. TypeScript & API contracts
+
+- **DTOs live in `api/models.ts`** and are the contract with the backend. Components consume DTO types, never redefine ad-hoc shapes.
+- **Enums from the backend** (`EvaluatorKind`, `EvaluationScore`, …) are imported, and exhaustive `Record<Enum, …>` maps get every member (TS will catch a missing key — lean on it).
+- `import type { … }` for type-only imports (keeps them out of the JS bundle; the codebase already does this — stay consistent).
+- No `any`, no `as any`, no `!`. Narrow with guards. If a type fights you, fix the type, don't escape it.
+
+---
+
+## 11. Accessibility (code mechanics)
+
+DESIGN.md §7 states the requirements; enforce them in code:
+
+- Clickable thing → a real `<button>`/`<a>`/`Button`/`IconButton`. **Never `<div onClick>`** (DESIGN.md anti-pattern).
+- Icon-only control → `aria-label`.
+- Form input → wrapped in `FormField` (label association handled).
+- Keyboard: modals/drawers trap focus + close on Esc — reuse `Modal`/`Drawer`, which already do; don't hand-roll an overlay.
+- New keyframe animation → ship its `prefers-reduced-motion` guard in the same change.
+
+---
+
+## 12. Testing
+
+- **Pure logic is extracted and unit-tested with Vitest** (`*.spec.ts`). The pattern exists: `features/runs/results.ts` + `results.spec.ts`, `lib/format.ts` + `format.test.ts`, `features/setup/Setup.spec.ts`. Computation living in a 1400-line component is computation that can't be tested — extract it to a `.ts` file, then test it.
+- Test the **logic** (selectors, formatters, reducers, derivations), not the framework. Don't snapshot-test whole pages.
+- A bug fix in pure logic gets a failing test first.
+- `npm test` (Vitest) and `npm run build` (tsc typecheck) and `npm run lint` must pass before a PR. Run `npm run lint` frequently during work (CLAUDE.md).
+
+---
+
+## 13. Naming & imports
+
+- Components `PascalCase`, hooks `useCamelCase`, utilities/constants `camelCase`, files match their default export (`AgentDetail.tsx` exports `AgentDetail`).
+- Boolean props/state read as predicates: `isLoading`, `hasError`, `canEdit`.
+- Don't import across feature boundaries (`features/a` importing `features/b/components/...`). Shared code moves up to `components/`, `hooks/`, or `lib/`.
+- Keep import groups ordered: external → `api`/`lib`/`hooks` → `components` → local. (The codebase loosely follows this; ESLint can enforce it.)
+
+---
+
+## 14. Pre-merge checklist (code)
+
+Pair this with DESIGN.md §10 (visual checklist). Both must pass.
+
+- [ ] No file over 300 lines; no component function over 150.
+- [ ] No more than 2 component functions per file.
+- [ ] Page component is orchestration only — no raw `useQuery`/`fetch`, no inline business logic.
+- [ ] `useQuery`/`useMutation` live in a `use*` hook, not inline in the page.
+- [ ] Every query key comes from `QUERY_KEYS`; mutations invalidate, don't refetch.
+- [ ] No `useEffect` that should be Query, a derivation, an event handler, or a `key` reset.
+- [ ] No server data copied into `useState`.
+- [ ] No inline `<svg>` icon — imported from the one icon module.
+- [ ] No static value in `style={{}}`; `cn()` + Tailwind / `classes.ts` instead.
+- [ ] No `any`, no `as any`, no `!`.
+- [ ] Loading + empty + error states all present for async views.
+- [ ] Clickable = real button/anchor; icon-only has `aria-label`.
+- [ ] Pure logic extracted to a `.ts` file and unit-tested.
+- [ ] `npm run build`, `npm run lint`, `npm test` all green.
+
+---
+
+## 15. When you touch a debt file
+
+You will open files that violate this guide (`Evaluators.tsx` chief among them). The rule:
+
+1. **Don't make it worse.** No new inline SVG, no new 200-line addition, no new `style={{}}`.
+2. **Leave a clean seam.** If you add a subcomponent, put it in `components/` as a new file, not as function #28 in the monster.
+3. **Opportunistically extract** the slice you're working in — pull its logic to a hook or `.ts`, its render to a component file. Boy-scout it.
+4. Large rewrites of a debt file are a **tracked refactor** (see the repo's `REFACTORING-TODO.md` flow), not a drive-by inside an unrelated feature PR.
+
+Drift in unowned files is the enemy (DESIGN.md §11 says the same for tokens). The way out of a messy frontend is a thousand small correct decisions, enforced here.

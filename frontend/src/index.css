@@ -199,6 +199,14 @@ a { text-decoration: none; color: inherit; }
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+@keyframes slide-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.slide-in { animation: slide-in 0.45s var(--ease-standard, ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .slide-in { animation: none; }
+}
 
 @property --streaming-angle {
   syntax: '<angle>';

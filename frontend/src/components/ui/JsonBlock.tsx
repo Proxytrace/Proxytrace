@@ -8,13 +8,13 @@ const trsrJsonTheme: PrismTheme = {
     backgroundColor: 'transparent',
   },
   styles: [
-    { types: ['string'],                style: { color: '#86efac' } },
-    { types: ['number'],                style: { color: '#fbbf24' } },
-    { types: ['boolean'],               style: { color: '#f472b6' } },
-    { types: ['null', 'keyword'],       style: { color: '#f472b6' } },
-    { types: ['property', 'tag'],       style: { color: '#93c5fd' } },
-    { types: ['punctuation', 'operator'], style: { color: '#71717a' } },
-    { types: ['comment'],               style: { color: '#52525b', fontStyle: 'italic' } },
+    { types: ['string'],                style: { color: 'var(--success)' } },
+    { types: ['number'],                style: { color: 'var(--warn)' } },
+    { types: ['boolean'],               style: { color: 'var(--danger)' } },
+    { types: ['null', 'keyword'],       style: { color: 'var(--danger)' } },
+    { types: ['property', 'tag'],       style: { color: 'var(--teal)' } },
+    { types: ['punctuation', 'operator'], style: { color: 'var(--text-muted)' } },
+    { types: ['comment'],               style: { color: 'var(--text-muted)', fontStyle: 'italic' } },
   ],
 };
 

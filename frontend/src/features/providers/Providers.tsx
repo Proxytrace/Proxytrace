@@ -32,10 +32,10 @@ function kindLabel(k: ModelProviderKind) {
   return PROVIDER_KIND_OPTIONS.find(o => o.value === k)?.label ?? 'Unknown';
 }
 function kindColor(k: ModelProviderKind) {
-  if (k === ModelProviderKind.Anthropic) return '#d4915c';
-  if (k === ModelProviderKind.OpenAi) return '#3daa6f';
-  if (k === ModelProviderKind.OpenAiCompatible) return '#6b9eaa';
-  return '#67645e';
+  if (k === ModelProviderKind.Anthropic) return 'var(--warn)';
+  if (k === ModelProviderKind.OpenAi) return 'var(--success)';
+  if (k === ModelProviderKind.OpenAiCompatible) return 'var(--teal)';
+  return 'var(--text-muted)';
 }
 function maskKey(k: string) {
   return k.length <= 8 ? '••••••••' : k.slice(0, 7) + '••••••••••••' + k.slice(-4);

@@ -34,6 +34,14 @@ export const searchApi = {
       `/api/projects/${encodeURIComponent(projectId)}/search?q=${encodeURIComponent(q)}`
     );
   },
+  recent(projectId: string, kinds: SearchKind[], limit = 6): Promise<SearchResponse> {
+    const params = new URLSearchParams();
+    if (kinds.length > 0) params.set('kinds', kinds.join(','));
+    params.set('limit', String(limit));
+    return api.get<SearchResponse>(
+      `/api/projects/${encodeURIComponent(projectId)}/search/recent?${params.toString()}`
+    );
+  },
   reindex(projectId: string): Promise<unknown> {
     return api.post(`/api/projects/${encodeURIComponent(projectId)}/search/reindex`);
   },

@@ -73,7 +73,7 @@ function IconButton({ active, modified, title, onClick, children }: IconButtonPr
       style={{
         background: active ? 'var(--accent-subtle)' : 'transparent',
         color: active ? 'var(--accent-hover)' : 'var(--text-secondary)',
-        border: `1px solid ${active ? 'rgba(201,148,74,0.32)' : 'transparent'}`,
+        border: `1px solid ${active ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'transparent'}`,
       }}
     >
       {children}
@@ -81,7 +81,7 @@ function IconButton({ active, modified, title, onClick, children }: IconButtonPr
         <span
           aria-hidden
           className="absolute top-[6px] right-[6px] size-[7px] rounded-full bg-accent"
-          style={{ boxShadow: '0 0 0 2px var(--bg-card-2)' }}
+          style={{ boxShadow: '0 0 0 2px var(--bg-card)' }}
         />
       )}
     </button>
@@ -246,7 +246,7 @@ export function RightRail({
                     style={{
                       background: sel ? 'var(--accent-subtle)' : 'transparent',
                       color: sel ? 'var(--accent-hover)' : 'var(--text-secondary)',
-                      border: `1px solid ${sel ? 'rgba(201,148,74,0.32)' : 'transparent'}`,
+                      border: `1px solid ${sel ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'transparent'}`,
                     }}
                   >
                     {opt.label}
@@ -276,7 +276,7 @@ export function RightRail({
         <div
           className="w-[340px] rounded-[14px] flex flex-col overflow-hidden mr-[8px] fade-up"
           style={{
-            background: 'var(--bg-card-2)',
+            background: 'var(--bg-card)',
             border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow-card)',
           }}
@@ -310,7 +310,7 @@ export function RightRail({
       <div
         className="w-[56px] rounded-[14px] flex flex-col items-center py-[10px] gap-[6px]"
         style={{
-          background: 'var(--bg-card-2)',
+          background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           boxShadow: 'var(--shadow-card)',
         }}
@@ -352,7 +352,7 @@ export function RightRail({
           style={{
             color: anyModified ? 'var(--accent-hover)' : 'var(--text-muted)',
             background: anyModified ? 'var(--accent-subtle)' : 'transparent',
-            border: `1px solid ${anyModified ? 'rgba(201,148,74,0.32)' : 'transparent'}`,
+            border: `1px solid ${anyModified ? 'color-mix(in srgb, var(--accent-primary) 32%, transparent)' : 'transparent'}`,
             opacity: !hasAgentDefaults ? 0.4 : 1,
           }}
         >

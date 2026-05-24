@@ -27,6 +27,7 @@ const Providers = lazy(() => import('./features/providers/Providers'));
 const Proposals = lazy(() => import('./features/proposals/Proposals'));
 const Settings = lazy(() => import('./features/settings/Settings'));
 const Playground = lazy(() => import('./features/playground/Playground'));
+const EvaluatorPlayground = lazy(() => import('./features/evaluator-playground/EvaluatorPlayground'));
 const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
 const Invites = lazy(() => import('./features/admin/Invites'));
@@ -140,6 +141,7 @@ function AppRoutes() {
         <Route path="evaluators/:id" element={wrap(<Evaluators />)} />
         <Route path="runs" element={wrap(<Runs />)} />
         <Route path="playground" element={wrap(<Playground />)} />
+        <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
         <Route path="providers" element={wrap(<Providers />)} />
         <Route path="settings" element={wrap(<Settings />)} />
         <Route path="proposals" element={wrap(<Proposals />)} />

@@ -18,8 +18,8 @@ export function ChartTooltip({ leftPct, topPct, label, value, color, align = 'to
         left: `${leftPct}%`,
         top: `${topPct}%`,
         transform,
-        background: 'rgba(20,20,22,0.95)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'color-mix(in srgb, var(--bg-secondary) 95%, transparent)',
+        border: '1px solid var(--border-color)',
         backdropFilter: 'blur(6px)',
       }}
     >
