@@ -12,13 +12,14 @@ import { AddMemberModal } from './AddMemberModal';
 import { formInputCls } from '../../components/ui/classes';
 import { initials, colorFor, endpointLabel } from './projectsMeta';
 import {
-  useProjects, useModelEndpoints, useProject,
+  useModelEndpoints, useProject,
   useCreateProject, useUpdateProject, useDeleteProject, useAddMember, useRemoveMember,
 } from './hooks/useProjects';
+import { useProjectSelection } from './hooks/useProjectSelection';
 
 export function ProjectsTab() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const { setSelectedId, search, setSearch, projects, filtered, effectiveId, projectsLoading } =
+    useProjectSelection();
 
   const [showNew, setShowNew] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -28,15 +29,7 @@ export function ProjectsTab() {
   const [editName, setEditName] = useState(false);
   const [editEndpoint, setEditEndpoint] = useState(false);
 
-  const { data: projectsData, isLoading: projectsLoading } = useProjects();
   const { data: endpoints = [] } = useModelEndpoints();
-
-  const projects = projectsData?.items ?? [];
-  const q = search.trim().toLowerCase();
-  const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
-
-  const fallbackId = filtered[0]?.id ?? null;
-  const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
 
   const { data: selected } = useProject(effectiveId);
 

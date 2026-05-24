@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { SearchHit } from '../../api/search';
-import { UnifiedSearch } from '../../components/search/UnifiedSearch';
-import { SearchIcon } from '../../components/icons';
+import type { SearchHit } from '../../../api/search';
+import { UnifiedSearch } from '../../../components/search/UnifiedSearch';
+import { SearchIcon } from '../../../components/icons';
 
 interface Props {
   evaluatorId: string;

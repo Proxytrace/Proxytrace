@@ -1,15 +1,11 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { type EvaluationResultDto, type MessageDto } from '../../api/models';
-import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
-import { QUERY_KEYS } from '../../api/query-keys';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { Card } from '../../components/ui/Card';
 import { MessageBubble } from '../../components/ui/MessageBubble';
-import { TestResultPicker } from './TestResultPicker';
-import type { SearchHit } from '../../api/search';
+import { TestResultPicker } from './components/TestResultPicker';
 import { ResponsePane, EmptyBench, ErrorState } from './components/TestBenchPanes';
 import { ResultPill } from './components/TestBenchResult';
 import { TestBenchChevronIcon, TestBenchPlayIcon } from '../../components/icons';
+import { useEvaluatorTestBench } from './hooks/useEvaluatorTestBench';
 
 export interface EvaluatorTestBenchHandle {
   focus(): void;
@@ -23,10 +19,7 @@ interface Props {
 export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
   function EvaluatorTestBench({ evaluatorId, projectId }, ref) {
     const rootRef = useRef<HTMLDivElement | null>(null);
-    const [pickedHit, setPickedHit] = useState<SearchHit | null>(null);
-    const [actualOverride, setActualOverride] = useState<string | null>(null);
-    const [lastResult, setLastResult] = useState<EvaluationResultDto | null>(null);
-    const [prevEvaluatorId, setPrevEvaluatorId] = useState(evaluatorId);
+    const bench = useEvaluatorTestBench(evaluatorId);
 
     useImperativeHandle(ref, () => ({
       focus() {
@@ -34,80 +27,11 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
       },
     }));
 
-    const defaultQuery = useQuery({
-      queryKey: QUERY_KEYS.evaluatorTestBenchDefault(evaluatorId),
-      queryFn: () => evaluatorTestBenchApi.default(evaluatorId),
-      staleTime: 60_000,
-    });
-
-    if (evaluatorId !== prevEvaluatorId) {
-      setPrevEvaluatorId(evaluatorId);
-      setPickedHit(null);
-      setActualOverride(null);
-      setLastResult(null);
-    }
-
-    const defaultData = defaultQuery.data;
-    const autoHit: SearchHit | null =
-      pickedHit != null || defaultData?.testCaseId == null
-        ? null
-        : {
-            kind: 'testCase' as const,
-            entityId: defaultData.testCaseId,
-            title: defaultData.label ?? 'Test case',
-            snippet: '',
-            score: 0,
-            metadata: {} as Record<string, string>,
-          };
-
-    const effectivePickedHit = pickedHit ?? autoHit;
-    const testCaseId = effectivePickedHit?.entityId ?? null;
-
-    const payloadQuery = useQuery({
-      queryKey: QUERY_KEYS.evaluatorTestBench(evaluatorId, testCaseId ?? ''),
-      queryFn: () => evaluatorTestBenchApi.load(evaluatorId, testCaseId ?? ''),
-      enabled: testCaseId != null,
-      retry: false,
-      staleTime: 60_000,
-    });
-
-    const payload = payloadQuery.data;
-    const originalActual = payload?.actualResponse ?? '';
-    const currentActual = actualOverride ?? originalActual;
-    const isModified = actualOverride != null && actualOverride !== originalActual;
-
-    const runMutation = useMutation({
-      mutationFn: () => evaluatorTestBenchApi.run(evaluatorId, {
-        testCaseId: testCaseId ?? '',
-        actualResponseOverride: isModified ? currentActual : null,
-      }),
-      onSuccess: (r) => setLastResult(r),
-    });
-
-    function onPick(hit: SearchHit) {
-      setPickedHit(hit);
-      setActualOverride(null);
-      setLastResult(null);
-    }
-
-    function onResetActual() {
-      setActualOverride(null);
-    }
-
-    const conversationMessages: MessageDto[] = (payload?.conversation ?? []).map(m => ({
-      role: m.role,
-      content: m.content,
-      toolRequests: [],
-      toolCallId: null,
-    }));
-
-    const selectedLabel = effectivePickedHit?.title ?? null;
-    const runDisabled = testCaseId == null || payloadQuery.isLoading || runMutation.isPending;
-    const runLabel = runMutation.isPending
-      ? 'Running…'
-      : lastResult != null
-        ? 'Re-run'
-        : 'Run evaluator';
+    const {
+      selectedLabel, testCaseId, payload, payloadLoading, payloadError, payloadErrorMessage,
+      conversationMessages, currentActual, isModified, setActualOverride, onPick, onResetActual,
+      run, runDisabled, runLabel, runPending, runError, lastResult,
+    } = bench;
 
     return (
       <div ref={rootRef}>
@@ -134,10 +58,10 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
 
             {testCaseId == null ? (
               <EmptyBench />
-            ) : payloadQuery.isLoading ? (
+            ) : payloadLoading ? (
               <div className="text-[12px] text-muted py-6 text-center">Loading test result…</div>
-            ) : payloadQuery.isError ? (
-              <ErrorState message={String((payloadQuery.error as Error)?.message ?? 'Failed to load')} />
+            ) : payloadError ? (
+              <ErrorState message={payloadErrorMessage} />
             ) : payload ? (
               <div className="flex flex-col gap-3">
                 <details className="group rounded-lg border border-hairline bg-card-2">
@@ -202,7 +126,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                       type="button"
                       disabled={runDisabled}
                       data-write
-                      onClick={() => runMutation.mutate()}
+                      onClick={() => run()}
                       className="px-4 py-2 rounded-md text-[12.5px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-[image:var(--grad-accent)]"
                     >
                       <TestBenchPlayIcon /> {runLabel}
@@ -213,11 +137,11 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                       Result
                     </span>
                     <div className="min-w-0 flex items-center">
-                      {runMutation.isPending ? (
+                      {runPending ? (
                         <ResultPill loading />
                       ) : lastResult ? (
                         <ResultPill result={lastResult} />
-                      ) : runMutation.isError ? (
+                      ) : runError ? (
                         <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-danger">failed</span>
                       ) : (
                         <span className="text-[11.5px] text-muted">

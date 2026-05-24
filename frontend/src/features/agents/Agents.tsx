@@ -1,28 +1,17 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { agentsApi } from '../../api/agents';
-import { QUERY_KEYS } from '../../api/query-keys';
-import useCurrentProject from '../../hooks/useCurrentProject';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { LIST_PAGE_SIZE } from '../../lib/constants';
 import { AgentList } from './AgentList';
 import { AgentDetail } from './AgentDetail';
+import { useAgents, useDeleteAgent } from './hooks/useAgents';
 
 export default function Agents() {
-  const qc = useQueryClient();
-  const { currentProjectId } = useCurrentProject();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselect = searchParams.get('id');
   const highlightTool = searchParams.get('tool');
 
-  const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined),
-    queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
-    enabled: currentProjectId !== null,
-  });
-  const allAgents = data?.items ?? [];
+  const { allAgents, isLoading } = useAgents();
 
   const [showSystem, setShowSystem] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
@@ -48,14 +37,10 @@ export default function Agents() {
     setSearchParams(next, { replace: true });
   };
 
-  const delAgent = useMutation({
-    mutationFn: (id: string) => agentsApi.delete(id),
-    onSuccess: (_result, id) => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined) });
-      const remaining = agents.filter(a => a.id !== id);
-      setSelectedId(remaining[0]?.id ?? null);
-      setDeleteOpen(false);
-    },
+  const delAgent = useDeleteAgent(id => {
+    const remaining = agents.filter(a => a.id !== id);
+    setSelectedId(remaining[0]?.id ?? null);
+    setDeleteOpen(false);
   });
 
   const hasSystemAgents = allAgents.some(a => a.isSystemAgent);

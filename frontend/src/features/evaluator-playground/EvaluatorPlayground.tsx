@@ -1,13 +1,10 @@
-import { useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import useCurrentProject from '../../hooks/useCurrentProject';
-import { evaluatorsApi } from '../../api/evaluators';
-import { QUERY_KEYS } from '../../api/query-keys';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../api/models';
-import { EvaluatorTestBench } from '../evaluators/EvaluatorTestBench';
+import { EvaluatorTestBench } from './EvaluatorTestBench';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ScaleIcon, BeakerIcon } from '../../components/icons';
+import { useEvaluatorList } from './hooks/useEvaluatorList';
 
 const KIND_LABEL: Record<EvaluatorKind, string> = {
   [EvaluatorKind.Agentic]: 'Agentic',
@@ -17,21 +14,9 @@ const KIND_LABEL: Record<EvaluatorKind, string> = {
 };
 
 export default function EvaluatorPlayground() {
-  const { currentProject } = useCurrentProject();
-  const projectId = currentProject?.id ?? null;
+  const { evaluators: sorted, isLoading, projectId } = useEvaluatorList();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedId = searchParams.get('id');
-
-  const { data: evaluators = [], isLoading } = useQuery({
-    queryKey: QUERY_KEYS.evaluators(projectId ?? undefined),
-    queryFn: () => evaluatorsApi.list(projectId ? { projectId } : undefined),
-    enabled: projectId != null,
-  });
-
-  const sorted = useMemo(
-    () => [...evaluators].sort((a, b) => a.name.localeCompare(b.name)),
-    [evaluators],
-  );
 
   useEffect(() => {
     if (!sorted.length) return;

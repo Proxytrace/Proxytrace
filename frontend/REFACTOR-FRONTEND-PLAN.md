@@ -170,6 +170,55 @@ For files NOT already covered by a P2 split:
 - Agent D: `features/runs/*` + `features/suites/*` + `features/setup/*` + `features/settings/*`
 - Agent E: shared — `components/*` (charts/ui/layout/search) + `contexts/*` + `auth/*` + `api/*`
 
+## Re-evaluation pass (2026-05-24) — scanner-blind smells the first pass missed
+
+Found by reading files (not scanner). All fixed; build+lint+test green.
+
+- [x] **RE.1 — `Agents.tsx` raw `useQuery`+`useMutation` in page.** Extracted
+  `features/agents/hooks/useAgents.ts` (`useAgents` + `useDeleteAgent(onSuccess)`).
+  Page is orchestration only now; delete-then-select logic stays in the page via
+  the hook's `onSuccess(id)` callback. §3.1/§14.
+- [x] **RE.2 — `Proposals.tsx` raw `useQuery` in page.** Extracted
+  `features/proposals/hooks/useProposals.ts`. (P2.8 had only done ProposalDetail.)
+- [x] **RE.3 — `SuiteCard.tsx` imperative hover + emoji icon.** Replaced
+  `onMouseEnter/Leave` DOM `style.boxShadow` mutation with a runtime `--suite-accent`
+  CSS var + Tailwind `hover:shadow-[…var(--suite-accent)…]`. Replaced `▶`
+  emoji-as-icon with `PlayFilledIcon` (DESIGN §5). Same fix to `RunForm.tsx` `▶`.
+- [x] **RE.4 — `ProjectsTab`/`SearchIndexingTab` duplicated selection logic.**
+  Extracted shared `features/settings/hooks/useProjectSelection.ts` (search filter +
+  sticky-with-fallback effectiveId). Both tabs consume it. §3 cross-file dup.
+- [x] **RE.5 — `NameStep.tsx` static `style={{}}` gated on boolean.** Preset/custom
+  chip buttons → `cn()` + Tailwind (`border-accent bg-accent-subtle text-accent-hover`
+  active recipe, matching TracesStep). §7.
+
+- [x] **RE.6 — `EvaluatorPlayground.tsx` raw `useQuery` in route page.** Extracted
+  `features/evaluator-playground/hooks/useEvaluatorList.ts` (list + name sort).
+  Page is orchestration only now; dropped the redundant `useMemo` (sort lives in
+  the hook). §3.1/§14.
+
+### Tracked follow-ups — DONE
+
+- [x] **RE.F1 — `EvaluatorTestBench.tsx` 3 raw queries extracted.** All data +
+  derived state (`defaultData → autoHit → testCaseId → payloadQuery → runMutation`,
+  plus pick/override/lastResult state and the evaluatorId-change reset) moved into
+  `hooks/useEvaluatorTestBench.ts` (112 lines). Component is presentational now
+  (237 → 161): keeps only `rootRef`/`useImperativeHandle` for focus + JSX. §3.1.
+- [x] **RE.F2 — Cross-feature import resolved (§13).** Discovery: the bench cluster
+  (`EvaluatorTestBench`, `TestResultPicker`, `TestBenchPanes`, `TestBenchResult`)
+  was imported by **only** `EvaluatorPlayground` — the evaluators feature never used
+  it. So it didn't need promoting to `components/`; it was simply mis-filed.
+  `git mv`'d the whole cluster into `features/evaluator-playground/` (+`components/`),
+  fixed import depths, repointed the page to `./EvaluatorTestBench`. Zero
+  cross-feature imports remain in `features/` (verified by grep).
+
+Noted, left as-is (out of scope / acceptable): `Signup` invite-preview single
+scoped `useQuery` (1 query, form-local — same tolerance as drawer/modal scoped
+queries); `RunForm` submit-button static
+styles gated on `hasSelection`/`loading` (minor §7, same shape as several buttons —
+candidate for a future `classes.ts` button recipe); set-state-during-render prev-id
+resets (React-endorsed derive, §4.1 alternative to `key`); index keys on
+append/rebuild lists; `ModelSwitchSection` color/tint props (data-driven runtime).
+
 ## Documented exceptions (not violations)
 
 - `App.tsx` (218) — root router/composition; 7 tiny route-guard wrapper

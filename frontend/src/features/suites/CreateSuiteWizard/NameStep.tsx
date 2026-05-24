@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { cn } from '../../../lib/cn';
 import { FormField } from '../../../components/ui/FormField';
 import { formInputCls } from '../../../components/ui/classes';
 
@@ -49,13 +50,12 @@ export function NameStep({ value, onChange }: Props) {
                 key={p.key}
                 type="button"
                 onClick={() => { setActive(p.key); onChange(p.name); inputRef.current?.focus(); }}
-                className="cursor-pointer rounded-full text-[12px] font-semibold transition-colors duration-150"
-                style={{
-                  padding: '6px 12px',
-                  border: `1px solid ${selected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                  background: selected ? 'var(--accent-subtle)' : 'var(--bg-card)',
-                  color: selected ? 'var(--accent-hover)' : 'var(--text-secondary)',
-                }}
+                className={cn(
+                  'cursor-pointer rounded-full text-[12px] font-semibold transition-colors duration-150 px-3 py-1.5 border',
+                  selected
+                    ? 'border-accent bg-accent-subtle text-accent-hover'
+                    : 'border-border bg-card text-secondary',
+                )}
               >
                 {p.name}
               </button>
@@ -64,13 +64,10 @@ export function NameStep({ value, onChange }: Props) {
           <button
             type="button"
             onClick={() => { setActive(null); onChange(''); inputRef.current?.focus(); }}
-            className="cursor-pointer rounded-full text-[12px] font-semibold transition-colors duration-150"
-            style={{
-              padding: '6px 12px',
-              border: `1px dashed ${active === null && !value ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-              background: 'transparent',
-              color: 'var(--text-muted)',
-            }}
+            className={cn(
+              'cursor-pointer rounded-full text-[12px] font-semibold transition-colors duration-150 px-3 py-1.5 border border-dashed bg-transparent text-muted',
+              active === null && !value ? 'border-accent' : 'border-border',
+            )}
           >
             Custom…
           </button>

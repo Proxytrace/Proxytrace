@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { cn } from '../../lib/cn';
 import { SparklesIcon } from '../../components/icons';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { proposalsApi } from '../../api/proposals';
-import { QUERY_KEYS } from '../../api/query-keys';
-import useCurrentProject from '../../hooks/useCurrentProject';
 import type { OptimizationProposalDto } from '../../api/models';
 import { ProposalKind, ProposalStatus, TestRunStatus } from '../../api/models';
 import { ProposalCard } from './ProposalCard';
 import { ProposalDetail } from './ProposalDetail';
+import { useProposals } from './hooks/useProposals';
 import { KIND_META } from './shared';
 
 type StatusFilter = 'open' | 'all' | 'new' | 'ab_running' | 'ready' | 'promoted' | 'dismissed';
@@ -51,19 +48,11 @@ const KIND_FILTER_DOT: Record<ProposalKind, string> = {
 };
 
 export default function Proposals() {
-  const { currentProjectId } = useCurrentProject();
-  const projectId = currentProjectId ?? undefined;
-  const enabled = currentProjectId !== null;
-
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
   const [kindFilter, setKindFilter]     = useState<KindFilter>('all');
   const [selectedId, setSelectedId]     = useState<string | null>(null);
 
-  const { data: proposals = [], isLoading } = useQuery({
-    queryKey: QUERY_KEYS.proposals(undefined, projectId),
-    queryFn: () => proposalsApi.getAll({ projectId }),
-    enabled,
-  });
+  const { proposals, isLoading } = useProposals();
 
   const isAbRunning = (p: OptimizationProposalDto) =>
     p.abTestRun?.status === TestRunStatus.Running || p.abTestRun?.status === TestRunStatus.Pending;

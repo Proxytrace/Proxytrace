@@ -6,8 +6,8 @@ import { FormField } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
 import { formInputCls } from '../../components/ui/classes';
-import { useProjects } from './hooks/useProjects';
 import { useReindex, useSearchSettings, useSearchStatus, useUpdateSearchSettings } from './hooks/useSearchIndexing';
+import { useProjectSelection } from './hooks/useProjectSelection';
 import { StatusCell } from './components/StatusCell';
 import { ToggleRow } from './components/ToggleRow';
 
@@ -20,17 +20,8 @@ const KIND_OPTIONS: { value: SearchKind; label: string }[] = [
 ];
 
 export function SearchIndexingTab() {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-
-  const { data: projectsData, isLoading: projectsLoading } = useProjects();
-  const projects = projectsData?.items ?? [];
-
-  const q = search.trim().toLowerCase();
-  const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
-
-  const fallbackId = filtered[0]?.id ?? null;
-  const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
+  const { setSelectedId, search, setSearch, projects, filtered, effectiveId, projectsLoading } =
+    useProjectSelection();
   const selectedProject = projects.find(p => p.id === effectiveId);
 
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useSearchSettings(effectiveId);

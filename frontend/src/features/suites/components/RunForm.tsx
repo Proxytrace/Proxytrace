@@ -1,5 +1,6 @@
 import type { ModelEndpointDto, TestSuiteDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
+import { PlayFilledIcon } from '../../../components/icons';
 
 interface Props {
   suite: TestSuiteDto;
@@ -108,7 +109,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
               Running…
             </>
           ) : (
-            <>▶ {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}</>
+            <><PlayFilledIcon size={12} /> {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}</>
           )}
         </button>
       </div>

@@ -2,7 +2,7 @@ import type { TestSuiteDto } from '../../../api/models';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { fmtRelative, fmtDate } from '../../../lib/format';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
-import { EditIcon, TrashIcon } from '../../../components/icons';
+import { EditIcon, TrashIcon, PlayFilledIcon } from '../../../components/icons';
 import { sparklinePath } from '../../../lib/charts';
 import { passRateColor } from '../suitesMeta';
 
@@ -24,11 +24,8 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
 
   return (
     <div
-      className="bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms]"
-      onMouseEnter={e =>
-        (e.currentTarget.style.boxShadow = `0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, ${c} 25%, transparent)`)
-      }
-      onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-card)')}
+      className="bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--suite-accent)_25%,transparent)]"
+      style={{ ['--suite-accent' as string]: c }}
     >
       {/* Accent bar — runtime colour */}
       <div
@@ -67,7 +64,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
               data-write
               className="inline-flex items-center gap-[6px] px-[14px] py-2 rounded-md text-[12.5px] font-semibold bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] whitespace-nowrap hover:opacity-[0.88] transition-opacity duration-[120ms]"
             >
-              ▶ {hasRuns ? 'Run again' : 'Run now'}
+              <PlayFilledIcon size={11} /> {hasRuns ? 'Run again' : 'Run now'}
             </button>
             <button onClick={onEdit} data-write className="btn-icon" aria-label="Edit suite">
               <EditIcon size={13} />
