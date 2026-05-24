@@ -22,7 +22,7 @@ export function MatrixView({ group, activeCaseIds }: {
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
   const allRows = useMemo(() => buildMatrixRows(runs), [runs]);
-  const counts = useMemo(() => matrixCounts(allRows), [allRows]);
+  const counts = matrixCounts(allRows);
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort), [allRows, filter, sort]);
 
   const multi = runs.length > 1;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../../components/overlays/Modal';
 import { Avatar } from '../../components/ui/Avatar';
@@ -38,12 +38,10 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
     queryFn: () => usersApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
 
-  const candidates = useMemo(() => {
-    const all = usersData?.items ?? [];
-    const filtered = all.filter(u => !excludeIds.includes(u.id));
-    const q = query.trim().toLowerCase();
-    return q ? filtered.filter(u => u.email.toLowerCase().includes(q)) : filtered;
-  }, [usersData, excludeIds, query]);
+  const all = usersData?.items ?? [];
+  const withoutExcluded = all.filter(u => !excludeIds.includes(u.id));
+  const q = query.trim().toLowerCase();
+  const candidates = q ? withoutExcluded.filter(u => u.email.toLowerCase().includes(q)) : withoutExcluded;
 
   return (
     <Modal title="Add member" onClose={onCancel}>

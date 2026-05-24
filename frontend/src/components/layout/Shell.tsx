@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { checkHealth } from '../../api/health';
+import { useHealth } from '../../hooks/useHealth';
+import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
@@ -84,25 +85,36 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   settings: <SettingsIcon size={16} />,
 };
 
+type HealthStatus = 'online' | 'offline' | 'connecting';
+
+const HEALTH_PILL: Record<HealthStatus, string> = {
+  online: 'bg-success-subtle border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success',
+  offline: 'bg-danger-subtle border-[color-mix(in_srgb,var(--danger)_25%,transparent)] text-danger',
+  connecting: 'bg-warn-subtle border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-warn',
+};
+
+const HEALTH_DOT: Record<HealthStatus, string> = {
+  online: 'bg-success',
+  offline: 'bg-danger',
+  connecting: 'bg-warn',
+};
+
+const HEALTH_LABEL: Record<HealthStatus, string> = {
+  online: 'Online',
+  offline: 'Offline',
+  connecting: 'Connecting…',
+};
+
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
-  const [online, setOnline] = useState<boolean | null>(null);
+  const { data: online } = useHealth();
   const location = useLocation();
   const { currentProject } = useCurrentProject();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
 
-  useEffect(() => {
-    let cancelled = false;
-    const poll = async () => {
-      const ok = await checkHealth();
-      if (!cancelled) setOnline(ok);
-    };
-    poll();
-    const timer = setInterval(poll, 10_000);
-    return () => { cancelled = true; clearInterval(timer); };
-  }, []);
+  const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
   const pageLabel = [...navItems]
     .sort((a, b) => b.to.length - a.to.length)
     .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
@@ -192,18 +204,19 @@ export function Shell() {
           )}
 
           <div
-            style={{
-              background: online === false ? 'var(--danger-subtle)' : online === true ? 'var(--success-subtle)' : 'var(--warn-subtle)',
-              border: `1px solid ${online === false ? 'color-mix(in srgb, var(--danger) 25%, transparent)' : online === true ? 'color-mix(in srgb, var(--success) 25%, transparent)' : 'color-mix(in srgb, var(--warn) 25%, transparent)'}`,
-              color: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)',
-            }}
-            className="flex items-center gap-1.5 px-[10px] py-[6px] rounded-full text-xs font-semibold whitespace-nowrap shrink-0"
+            className={cn(
+              'flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
+              HEALTH_PILL[healthStatus],
+            )}
           >
             <span
-              className={`size-[6px] rounded-full inline-block ${online === true ? 'pulse-dot' : ''}`}
-              style={{ background: online === false ? 'var(--danger)' : online === true ? 'var(--success)' : 'var(--warn)' }}
+              className={cn(
+                'size-[6px] rounded-full inline-block',
+                HEALTH_DOT[healthStatus],
+                healthStatus === 'online' && 'pulse-dot',
+              )}
             />
-            {online === false ? 'Offline' : online === true ? 'Online' : 'Connecting…'}
+            {HEALTH_LABEL[healthStatus]}
           </div>
 
           <button

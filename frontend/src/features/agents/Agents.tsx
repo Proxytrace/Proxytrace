@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { agentsApi } from '../../api/agents';
@@ -22,31 +22,23 @@ export default function Agents() {
     queryFn: () => agentsApi.list({ projectId: currentProjectId ?? undefined, pageSize: LIST_PAGE_SIZE }),
     enabled: currentProjectId !== null,
   });
-  const allAgents = useMemo(() => data?.items ?? [], [data]);
+  const allAgents = data?.items ?? [];
 
   const [showSystem, setShowSystem] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const preselectIsSystem = useMemo(
-    () => preselect ? allAgents.some(a => a.id === preselect && a.isSystemAgent) : false,
-    [preselect, allAgents],
-  );
+  const preselectIsSystem = preselect
+    ? allAgents.some(a => a.id === preselect && a.isSystemAgent)
+    : false;
 
-  const agents = useMemo(
-    () => (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent),
-    [allAgents, showSystem, preselectIsSystem],
-  );
+  const agents = (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent);
 
-  const effectiveSelectedId = useMemo(() => {
-    if (selectedId && agents.some(a => a.id === selectedId)) return selectedId;
-    return agents[0]?.id ?? null;
-  }, [agents, selectedId]);
+  const effectiveSelectedId = (selectedId && agents.some(a => a.id === selectedId))
+    ? selectedId
+    : agents[0]?.id ?? null;
 
-  const selected = useMemo(
-    () => agents.find(a => a.id === effectiveSelectedId) ?? null,
-    [agents, effectiveSelectedId],
-  );
+  const selected = agents.find(a => a.id === effectiveSelectedId) ?? null;
 
   const handleSelect = (id: string) => {
     setSelectedId(id);

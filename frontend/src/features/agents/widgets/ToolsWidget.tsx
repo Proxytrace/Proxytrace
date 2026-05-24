@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { ToolSpecDto, ToolArgumentDto } from '../../../api/models';
 import { DataTable } from '../../../components/ui/DataTable';
 import type { DataColumn } from '../../../components/ui/DataTable';
@@ -89,11 +89,8 @@ function ToolDetailBody({ tool }: { tool: ToolSpecDto }) {
 export function ToolsWidget({ tools, highlightTool, className }: Props) {
   const [openToolState, setOpenTool] = useState<string | null>(null);
 
-  const openTool = useMemo(() => {
-    if (openToolState) return openToolState;
-    if (highlightTool && tools.some(t => t.name === highlightTool)) return highlightTool;
-    return null;
-  }, [openToolState, highlightTool, tools]);
+  const openTool = openToolState
+    ?? (highlightTool && tools.some(t => t.name === highlightTool) ? highlightTool : null);
 
   if (tools.length === 0) {
     return (

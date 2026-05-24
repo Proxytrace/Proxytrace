@@ -150,8 +150,25 @@ For files NOT already covered by a P2 split:
   queries.
 - [x] **P4 — dead code:** deleted `features/evaluators/EvaluatorStatsBlock.tsx`
   (no importers; its sub-components stay, used by `EvaluatorDetail`).
-- [ ] **P4 — redundant `useMemo`/`useCallback` sweep.** Optional/low-value;
-  lint is clean and import ordering is eslint-enforced. Left as a future nicety.
+- [x] **P4 — redundant `useMemo`/`useCallback` sweep.** DONE (Wave F1, 5 parallel
+  agents, disjoint sets). Audited all 155 sites / 42 files. Removed ~65 that
+  provably guarded nothing (cheap derivations consumed only by non-memoized JSX,
+  not in any dep array): totals `useMemo` 103→54, `useCallback` 52→36. KEPT all
+  load-bearing memoization with documented reasons — context `value` memos
+  (ProjectProvider, LocalAuthProvider), chart SVG-path/scale math (all 6 charts +
+  StatsBlockBody/PerformancePanel consumers were the *callers*, not the math),
+  SSE/effect-dep callbacks (event-stream, useTraceSseStream, GroupDetail, setup
+  hooks, useFreshTraces), and hook public APIs (usePlaygroundStream/Session,
+  searchGrouping, useSearchQuery, useEvaluatorQueries). `npm run build && lint &&
+  test` green. Key insight that justified several removals: `useEventStream`
+  routes handlers through a ref, so callback identity never re-subscribes a stream.
+
+### Wave F1 — memoization sweep (parallel, disjoint sets)
+- Agent A: `features/agents/*` + `features/dashboard/*`
+- Agent B: `features/traces/*` + `features/proposals/*`
+- Agent C: `features/playground/*` + `features/evaluators/*` + `features/evaluator-playground/*`
+- Agent D: `features/runs/*` + `features/suites/*` + `features/setup/*` + `features/settings/*`
+- Agent E: shared — `components/*` (charts/ui/layout/search) + `contexts/*` + `auth/*` + `api/*`
 
 ## Documented exceptions (not violations)
 
@@ -164,3 +181,19 @@ For files NOT already covered by a P2 split:
 - `api/models.ts` (609) — pure DTO type declarations, no logic; type files are
   exempt from the component size limit.
 - `features/evaluators/evaluatorMeta.ts` naming — see P0 note.
+
+- `features/traces/components/TraceTableCells.tsx` (58) — 5 component fns flagged
+  by the scanner, but each is a <20-line stateless presentational *cell* renderer
+  (LatencyBar/TraceIdCell/TokenCell/ToolsCell/LatencyCell) shared by both
+  `FlatTraceRow` and `ConversationGroupRow`. Cohesive cluster of tiny shared
+  leaves; splitting into 5 one-cell files would hurt readability, not help it. Its
+  2 inline `style={{}}` are runtime-computed (data-driven width %, runtime
+  agent/model hex) — legit per §7. Kept as one file.
+
+- The high-`QRY` hook files (`useDashboardQueries`, `useProjects`,
+  `useProviderMutations`, `useEvaluatorQueries`, …) — these ARE the §3.1 extracted
+  query-hook layer; many `useQuery`/`useMutation` in one such hook module is the
+  *target* state, not a smell. Scanner `QRY` column flags them as false positives.
+
+- `components/ui/CodeBlock.tsx` `!` count — the `'Copied!'` string literal, not a
+  non-null assertion (see P1.2). Scanner false positive.

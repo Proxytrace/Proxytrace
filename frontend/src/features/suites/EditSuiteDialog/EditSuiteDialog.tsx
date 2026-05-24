@@ -101,10 +101,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
   return createPortal(
     <>
       <div className="modal-overlay" onClick={e => e.target === e.currentTarget && attemptClose()}>
-        <div
-          className="modal-panel fade-up flex flex-col"
-          style={{ maxWidth: 'min(1180px, 94vw)', width: '100%', maxHeight: '92vh' }}
-        >
+        <div className="modal-panel fade-up flex flex-col max-w-[min(1180px,94vw)] w-full max-h-[92vh]">
           <EditSuiteHeader suite={suite} agentColorHex={c} onClose={attemptClose} />
 
           <div className="mt-4 mb-4 flex items-center justify-between gap-3">
@@ -119,10 +116,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
             <DirtyIndicator count={dirtyCount} />
           </div>
 
-          <div
-            className="flex-1 min-h-0 grid gap-4"
-            style={{ gridTemplateColumns: 'minmax(0, 1fr) 540px', height: '60vh' }}
-          >
+          <div className="flex-1 min-h-0 grid gap-4 grid-cols-[minmax(0,1fr)_540px] h-[60vh]">
             {tab === 'cases' ? (
               <>
                 <TestCasesPanel

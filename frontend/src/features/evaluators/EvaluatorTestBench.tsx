@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
@@ -47,19 +47,18 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
       setLastResult(null);
     }
 
-    const autoHit = useMemo(() => {
-      if (pickedHit != null) return null;
-      const d = defaultQuery.data;
-      if (d?.testCaseId == null) return null;
-      return {
-        kind: 'testCase' as const,
-        entityId: d.testCaseId,
-        title: d.label ?? 'Test case',
-        snippet: '',
-        score: 0,
-        metadata: {} as Record<string, string>,
-      };
-    }, [defaultQuery.data, pickedHit]);
+    const defaultData = defaultQuery.data;
+    const autoHit: SearchHit | null =
+      pickedHit != null || defaultData?.testCaseId == null
+        ? null
+        : {
+            kind: 'testCase' as const,
+            entityId: defaultData.testCaseId,
+            title: defaultData.label ?? 'Test case',
+            snippet: '',
+            score: 0,
+            metadata: {} as Record<string, string>,
+          };
 
     const effectivePickedHit = pickedHit ?? autoHit;
     const testCaseId = effectivePickedHit?.entityId ?? null;
@@ -95,15 +94,12 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
       setActualOverride(null);
     }
 
-    const conversationMessages = useMemo<MessageDto[]>(
-      () => (payload?.conversation ?? []).map(m => ({
-        role: m.role,
-        content: m.content,
-        toolRequests: [],
-        toolCallId: null,
-      })),
-      [payload?.conversation],
-    );
+    const conversationMessages: MessageDto[] = (payload?.conversation ?? []).map(m => ({
+      role: m.role,
+      content: m.content,
+      toolRequests: [],
+      toolCallId: null,
+    }));
 
     const selectedLabel = effectivePickedHit?.title ?? null;
     const runDisabled = testCaseId == null || payloadQuery.isLoading || runMutation.isPending;
@@ -160,7 +156,8 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                     ) : (
                       <div className="flex flex-col gap-2">
                         {conversationMessages.map((m, i) => (
-                          <MessageBubble key={i} msg={m} defaultOpen={i === conversationMessages.length - 1} />
+                          // MessageDto has no id; key off the message's own content (role + content), not array index.
+                          <MessageBubble key={`${m.role}:${m.content}`} msg={m} defaultOpen={i === conversationMessages.length - 1} />
                         ))}
                       </div>
                     )}

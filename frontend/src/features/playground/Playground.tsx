@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { PlayIcon, SearchIcon, TrashIcon } from '../../components/icons';
 import { UnifiedSearch } from '../../components/search/UnifiedSearch';
@@ -38,15 +38,15 @@ export default function Playground() {
     setStreamingId,
   });
 
-  const sendUserMessage = useCallback((text: string) => {
+  const sendUserMessage = (text: string) => {
     const userMsg = makeMessage('user', text);
     const placeholder = makeMessage('assistant', '');
     const next = [...state.messages, userMsg, placeholder];
     dispatch({ type: 'setMessages', messages: next });
     startStream(next.slice(0, -1), placeholder.localId);
-  }, [state.messages, dispatch, startStream]);
+  };
 
-  const onToolResult = useCallback((result: { content: string; success: boolean; error?: string }) => {
+  const onToolResult = (result: { content: string; success: boolean; error?: string }) => {
     const pending = state.pendingToolRequest;
     if (!pending) return;
     const toolMsg = makeMessage('tool', result.content, {
@@ -83,20 +83,20 @@ export default function Playground() {
     dispatch({ type: 'setPendingTool', request: null });
     dispatch({ type: 'setMessages', messages: withPlaceholder });
     startStream(next, placeholder.localId);
-  }, [state.pendingToolRequest, state.messages, dispatch, startStream]);
+  };
 
-  const onRunCompletion = useCallback(() => {
+  const onRunCompletion = () => {
     const placeholder = makeMessage('assistant', '');
     const next = [...state.messages, placeholder];
     dispatch({ type: 'setMessages', messages: next });
     startStream(state.messages, placeholder.localId);
-  }, [state.messages, dispatch, startStream]);
+  };
 
-  const onInsert = useCallback((atIndex: number, role: PlaygroundRole) => {
+  const onInsert = (atIndex: number, role: PlaygroundRole) => {
     dispatch({ type: 'insertAt', index: atIndex, message: makeMessage(role, '') });
-  }, [dispatch]);
+  };
 
-  const onMove = useCallback((fromId: string, toIndex: number) => {
+  const onMove = (fromId: string, toIndex: number) => {
     const from = state.messages.findIndex(m => m.localId === fromId);
     if (from < 0) return;
     if (toIndex === from || toIndex === from + 1) return;
@@ -105,17 +105,17 @@ export default function Playground() {
     const insertAt = toIndex > from ? toIndex - 1 : toIndex;
     next.splice(insertAt, 0, moved);
     dispatch({ type: 'reorderMessages', messages: next });
-  }, [state.messages, dispatch]);
+  };
 
-  const onClearConversation = useCallback(() => {
+  const onClearConversation = () => {
     abortStream();
     setStreamingId(null);
     dispatch({ type: 'reset' });
-  }, [dispatch, abortStream]);
+  };
 
-  const onLoadFromSearch = useCallback((messages: PlaygroundMessage[]) => {
+  const onLoadFromSearch = (messages: PlaygroundMessage[]) => {
     dispatch({ type: 'setMessages', messages });
-  }, [dispatch]);
+  };
 
   const canRunCompletion =
     !!state.agentId &&

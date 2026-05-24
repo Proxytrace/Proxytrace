@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { type SearchIndexingSettings, type SearchKind } from '../../api/search';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
@@ -24,13 +24,10 @@ export function SearchIndexingTab() {
   const [search, setSearch] = useState('');
 
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
-  const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
+  const projects = projectsData?.items ?? [];
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter(p => p.name.toLowerCase().includes(q));
-  }, [projects, search]);
+  const q = search.trim().toLowerCase();
+  const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
 
   const fallbackId = filtered[0]?.id ?? null;
   const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
@@ -53,16 +50,15 @@ export function SearchIndexingTab() {
   const updateSettings = useUpdateSearchSettings();
   const reindex = useReindex();
 
-  const dirty = useMemo(() => {
-    if (!draft || !settings) return false;
-    return (
+  const dirty = !draft || !settings
+    ? false
+    : (
       draft.enabled !== settings.enabled ||
       draft.autoReindexOnChange !== settings.autoReindexOnChange ||
       draft.snippetLength !== settings.snippetLength ||
       draft.indexedKinds.length !== settings.indexedKinds.length ||
       draft.indexedKinds.some(k => !settings.indexedKinds.includes(k))
     );
-  }, [draft, settings]);
 
   function toggleKind(kind: SearchKind) {
     if (!draft) return;

@@ -33,7 +33,7 @@ export function SegmentedGauge({ value, size = 180, label }: SegmentedGaugeProps
           filter={seg.glow ? `url(#${glowId})` : undefined}
         />
       ))}
-      <text x={gauge.cx} y={gauge.cy + numSize * 0.12} textAnchor="middle" fontSize={numSize} fontWeight={800} fill="var(--text-primary)" style={{ letterSpacing: '-0.04em' }}>
+      <text x={gauge.cx} y={gauge.cy + numSize * 0.12} textAnchor="middle" fontSize={numSize} fontWeight={700} fill="var(--text-primary)" letterSpacing="-0.04em">
         {value}
         <tspan fontSize={pctSize} fill="var(--text-secondary)" dx="2" dy={-pctSize * 0.18}>%</tspan>
       </text>

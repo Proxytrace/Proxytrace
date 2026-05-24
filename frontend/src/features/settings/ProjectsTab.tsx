@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { ProjectMemberDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -31,12 +31,9 @@ export function ProjectsTab() {
   const { data: projectsData, isLoading: projectsLoading } = useProjects();
   const { data: endpoints = [] } = useModelEndpoints();
 
-  const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter(p => p.name.toLowerCase().includes(q));
-  }, [projects, search]);
+  const projects = projectsData?.items ?? [];
+  const q = search.trim().toLowerCase();
+  const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
 
   const fallbackId = filtered[0]?.id ?? null;
   const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;

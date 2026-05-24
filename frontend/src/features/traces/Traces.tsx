@@ -24,7 +24,7 @@ export default function Traces() {
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 200);
-  const from = useMemo(() => rangeFrom(range), [range]);
+  const from = rangeFrom(range);
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,
@@ -35,18 +35,12 @@ export default function Traces() {
     from,
   });
 
-  const agents = useMemo(
-    () => showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent),
-    [allAgents, showSystem],
-  );
+  const agents = showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent);
 
   const rows = useMemo(() => buildRows(traces), [traces]);
 
   // Flat list of all individual traces for prev/next navigation in the drawer
-  const flatTraces = useMemo(
-    () => rows.flatMap(r => r.type === 'flat' ? [r.trace] : r.turns),
-    [rows],
-  );
+  const flatTraces = rows.flatMap(r => r.type === 'flat' ? [r.trace] : r.turns);
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   const handleExpandConversation = useCallback((conversationId: string) => {

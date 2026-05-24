@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { AgentDto } from '../../api/models';
 import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
@@ -17,15 +17,14 @@ interface Props {
 export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem, onToggleSystem }: Props) {
   const [search, setSearch] = useState('');
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return agents;
-    return agents.filter(a =>
-      a.name.toLowerCase().includes(q)
-      || a.projectName.toLowerCase().includes(q)
-      || a.endpointName.toLowerCase().includes(q),
-    );
-  }, [agents, search]);
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? agents.filter(a =>
+        a.name.toLowerCase().includes(q)
+        || a.projectName.toLowerCase().includes(q)
+        || a.endpointName.toLowerCase().includes(q),
+      )
+    : agents;
 
   return (
     <div className="flex flex-col gap-3 min-h-0">

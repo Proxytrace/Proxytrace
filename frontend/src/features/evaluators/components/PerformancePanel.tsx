@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { cn } from '../../../lib/cn';
 import { fmtPct, fmtLatency } from '../../../lib/format';
 import { AreaChart } from '../../../components/charts';
@@ -23,10 +22,7 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
   const summary = overview?.summary;
   const isAgentic = e.kind === EvaluatorKind.Agentic;
 
-  const passSeries = useMemo(
-    () => passFractionSeries(overview?.passRateTrend ?? []),
-    [overview?.passRateTrend],
-  );
+  const passSeries = passFractionSeries(overview?.passRateTrend ?? []);
   const hasTrend = passSeries.length >= 2;
 
   return (

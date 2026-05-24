@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { AreaChart, BarChart } from '../../../components/charts';
 import { fmtPct, fmtTokens, fmtLatency } from '../../../lib/format';
 import { EvaluatorKind, type EvaluatorOverviewDto } from '../../../api/models';
@@ -19,15 +18,10 @@ const sectionLabelCls = 'text-[12px] text-muted uppercase tracking-[0.06em] font
 export function StatsBlockBody({ data, kind, color }: { data: EvaluatorOverviewDto; kind: EvaluatorKind; color: string }) {
   const { summary, passRateTrend, scoreDistribution, costTrend } = data;
 
-  const passRateSeries = useMemo(
-    () => passRateTrend.map(p => (p.total > 0 ? p.passed / p.total : 0)),
-    [passRateTrend],
-  );
-  const costSeries = useMemo(() => costTrend.map(p => Number(p.cost ?? 0)), [costTrend]);
-  const distData = useMemo(() => {
-    const byScore = new Map(scoreDistribution.map(b => [b.score, b.count]));
-    return SCORE_ORDER.map(s => ({ label: s.slice(0, 4), value: byScore.get(s) ?? 0 }));
-  }, [scoreDistribution]);
+  const passRateSeries = passRateTrend.map(p => (p.total > 0 ? p.passed / p.total : 0));
+  const costSeries = costTrend.map(p => Number(p.cost ?? 0));
+  const distByScore = new Map(scoreDistribution.map(b => [b.score, b.count]));
+  const distData = SCORE_ORDER.map(s => ({ label: s.slice(0, 4), value: distByScore.get(s) ?? 0 }));
 
   const showCost = kind === EvaluatorKind.Agentic;
   const hasTrend = passRateSeries.length >= 2;

@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
+import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { rangeFrom, type RangeKey } from '../../lib/time-range';
 import {
@@ -37,7 +38,7 @@ import { AgentsSection } from './components/AgentsSection';
 export default function Dashboard() {
   const qc = useQueryClient();
   const [range, setRange] = useState<RangeKey>('24h');
-  const from = useMemo(() => rangeFrom(range), [range]);
+  const from = rangeFrom(range);
   const { currentProjectId, currentProject } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -61,26 +62,23 @@ export default function Dashboard() {
 
   // ── SSE: invalidate on new traces ───────────────────────────────────────────
 
-  useTraceStream(useCallback(() => {
-    qc.invalidateQueries({ queryKey: ['agent-calls'] });
-    qc.invalidateQueries({ queryKey: ['statistics-agent-breakdown'] });
-  }, [qc]));
+  useTraceStream(() => {
+    qc.invalidateQueries({ queryKey: QUERY_KEYS.agentCallsRoot });
+    qc.invalidateQueries({ queryKey: QUERY_KEYS.statisticsAgentBreakdownRoot });
+  });
 
   // ── Derived data ────────────────────────────────────────────────────────────
 
-  const recentTraces = useMemo(() => tracesData?.items ?? [], [tracesData]);
-  const agents = useMemo(() => agentsData?.items ?? [], [agentsData]);
+  const recentTraces = tracesData?.items ?? [];
+  const agents = agentsData?.items ?? [];
   const freshIds = useFreshTraces(recentTraces);
 
-  const latencyStats = useMemo(() => computeLatencyStats(latencyData ?? []), [latencyData]);
-  const tokenVolume = useMemo(() => computeTokenVolume(tokenUsageData ?? []), [tokenUsageData]);
-  const modelSplit = useMemo(() => computeModelSplit(modelBreakdown ?? []), [modelBreakdown]);
-  const latencyHist = useMemo(() => computeLatencyHist(latencyData ?? []), [latencyData]);
-  const agentNameById = useMemo(() => buildAgentNameMap(agents), [agents]);
-  const tokenByAgent = useMemo(
-    () => computeTokenByAgent(tokenByAgentData ?? [], agentNameById),
-    [tokenByAgentData, agentNameById],
-  );
+  const latencyStats = computeLatencyStats(latencyData ?? []);
+  const tokenVolume = computeTokenVolume(tokenUsageData ?? []);
+  const modelSplit = computeModelSplit(modelBreakdown ?? []);
+  const latencyHist = computeLatencyHist(latencyData ?? []);
+  const agentNameById = buildAgentNameMap(agents);
+  const tokenByAgent = computeTokenByAgent(tokenByAgentData ?? [], agentNameById);
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-2">
