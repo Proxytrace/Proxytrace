@@ -35,6 +35,15 @@ internal sealed class IndexingRepositoryDecorator<TDomain> : IRepository<TDomain
         return result;
     }
 
+    public async Task AddRangeAsync(IReadOnlyCollection<TDomain> entities, CancellationToken cancellationToken = default)
+    {
+        await inner.AddRangeAsync(entities, cancellationToken);
+        foreach (var entity in entities)
+        {
+            await IndexIfAllowedAsync(entity, cancellationToken);
+        }
+    }
+
     public async Task<TDomain> UpdateAsync(TDomain entity, CancellationToken cancellationToken = default)
     {
         var result = await inner.UpdateAsync(entity, cancellationToken);

@@ -32,19 +32,31 @@ public abstract class BaseTest<TModule> where TModule : Autofac.Module, new()
 
     protected IServiceProvider GetServices(Action<ContainerBuilder>? action = null)
     {
-        ContainerBuilder builder = new ContainerBuilder();
-        builder.RegisterModule<Module>();
-        builder.RegisterModule<TModule>();
-        ConfigureContainer(builder);
-        action?.Invoke(builder);
+        IContainer container = BuildContainer(builder =>
+        {
+            ConfigureContainer(builder);
+            action?.Invoke(builder);
+        });
 
-        IContainer container = builder.Build();
-
-        // register container in test context
+        // register container in test context so it is disposed in Cleanup
         var containers = GetTestContainers();
         containers.Add(container);
 
         return container.Resolve<IServiceProvider>();
+    }
+
+    /// <summary>
+    /// Builds a DI container without registering it for per-test cleanup. Useful from a
+    /// static <c>[ClassInitialize]</c> to share an expensive fixture (e.g. seeded data)
+    /// across the tests of a class; the caller owns disposal.
+    /// </summary>
+    protected static IContainer BuildContainer(Action<ContainerBuilder>? action = null)
+    {
+        ContainerBuilder builder = new ContainerBuilder();
+        builder.RegisterModule<Module>();
+        builder.RegisterModule<TModule>();
+        action?.Invoke(builder);
+        return builder.Build();
     }
 
     private List<IContainer> GetTestContainers()

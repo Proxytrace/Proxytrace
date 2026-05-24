@@ -239,6 +239,54 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         });
 
     /// <inheritdoc />
+    public async Task AddRangeAsync(
+        IReadOnlyCollection<TDomainEntity> entities,
+        CancellationToken cancellationToken = default)
+    {
+        if (entities.Count == 0)
+        {
+            return;
+        }
+
+        await transaction.InvokeAsync(async () =>
+        {
+            StorageDbContext context = contextFactory();
+
+            foreach (TDomainEntity entity in entities)
+            {
+                Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
+            }
+
+            Guid[] ids = entities.Select(e => e.Id).ToArray();
+            Guid existingId = await context
+                .Set<TStoredEntity>()
+                .AsNoTracking()
+                .Where(e => ids.Contains(e.Id))
+                .Select(e => e.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (existingId != Guid.Empty)
+            {
+                throw new EntityAlreadyExistsException(existingId, typeof(TDomainEntity));
+            }
+
+            var stored = new List<TStoredEntity>(entities.Count);
+            foreach (TDomainEntity entity in entities)
+            {
+                stored.Add(await mapper.Map(entity, cancellationToken));
+            }
+
+            context.Set<TStoredEntity>().AddRange(stored);
+            await context.SaveChangesAsync(cancellationToken);
+        });
+
+        foreach (TDomainEntity entity in entities)
+        {
+            cache?.Invalidate(entity.Id);
+            Notify(entity.Id, EntityChangeType.Added);
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<TDomainEntity> UpsertAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
         (TDomainEntity result, EntityChangeType change) = await transaction.InvokeAsync(async () =>
