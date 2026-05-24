@@ -6,6 +6,7 @@ interface KpiCardProps {
   label?: string;
   title?: string;
   value: string;
+  valueColor?: string;
   sub?: string;
   subtitle?: string;
   trend?: string | { direction: 'up' | 'down'; pct: string; positive?: boolean };
@@ -20,6 +21,7 @@ export function KpiCard({
   label,
   title,
   value,
+  valueColor,
   sub,
   subtitle,
   trend,
@@ -96,7 +98,7 @@ export function KpiCard({
 
       <div className="flex items-end justify-between relative">
         <div>
-          <div className="text-display font-bold tracking-[-0.025em] leading-none">{value}</div>
+          <div className="text-display font-bold tracking-[-0.025em] leading-none" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
           {displaySub && (
             <div className="text-body-sm text-muted mt-1.5">{displaySub}</div>
           )}

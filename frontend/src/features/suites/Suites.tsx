@@ -203,7 +203,7 @@ export default function Suites() {
 
   const startRun = useMutation({
     mutationFn: (endpointIds: string[]) => testRunGroupsApi.create(runSuite!.id, endpointIds),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['test-run-groups'] }); setRunDone(true); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot }); setRunDone(true); },
   });
 
   const delSuite = useMutation({

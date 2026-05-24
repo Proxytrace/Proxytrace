@@ -33,7 +33,7 @@ export function DangerZoneTab() {
     mutationFn: () => setupApi.cleanupNonModelData(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['agent-calls'] });
-      qc.invalidateQueries({ queryKey: ['test-run-groups'] });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
       qc.invalidateQueries({ queryKey: ['proposals'] });
       qc.invalidateQueries({ queryKey: ['statistics-summary'] });
       qc.invalidateQueries({ queryKey: ['statistics-latency'] });

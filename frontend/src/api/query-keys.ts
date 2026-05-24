@@ -1,3 +1,5 @@
+const TEST_RUN_GROUPS = 'test-run-groups';
+
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
@@ -34,7 +36,9 @@ export const QUERY_KEYS = {
   providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
   providerKeys: (providerId: string | null) => ['provider-keys', providerId] as const,
 
-  testRunGroups: (agentFilter?: string, projectId?: string) => ['test-run-groups', agentFilter, projectId ?? null] as const,
+  testRunGroups: (agentFilter?: string, projectId?: string) => [TEST_RUN_GROUPS, agentFilter, projectId ?? null] as const,
+  /** Prefix matching every test-run-groups query — use for invalidation. */
+  testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
