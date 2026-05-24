@@ -61,7 +61,7 @@ public class DemoSeedingTests : BaseTest<Module>
 
         var proposals = await services.GetRequiredService<IRepository<IOptimizationProposal>>()
             .GetAllAsync(CancellationToken);
-        proposals.Should().HaveCount(5);
+        proposals.Should().HaveCount(8);
         proposals.Select(p => p.Status).Should().Contain(
             [ProposalStatus.Draft, ProposalStatus.Accepted, ProposalStatus.Rejected]);
         proposals.Select(p => p.Kind).Should().Contain(
