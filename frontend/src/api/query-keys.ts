@@ -2,6 +2,7 @@ const TEST_RUN_GROUPS = 'test-run-groups';
 
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
+  agent: (id: string | null) => ['agent', id ?? null] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
   agentCallsForSuiteCreate: (agentId: string, from?: string) => ['agent-calls', 'suite-create', agentId, from ?? null] as const,
   agentCallsForSuiteEdit: (agentId?: string) => ['agent-calls', 'suite-edit', agentId] as const,

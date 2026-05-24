@@ -3,20 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
 import type { ModelEndpointDto, TestSuiteDto } from '../../api/models';
-import { agentColor, modelColor } from '../../lib/colors';
+import { agentColor } from '../../lib/colors';
 import { QUERY_KEYS } from '../../api/query-keys';
+import { Modal } from '../../components/overlays/Modal';
+import { RunForm } from './components/RunForm';
 
-export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
+interface Props {
   suite: TestSuiteDto;
   onClose: () => void;
   onSubmit: (endpointIds: string[]) => void;
   loading: boolean;
   done: boolean;
-}) {
+}
+
+export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Props) {
   const navigate = useNavigate();
-  const { data: modelsData = [] } = useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
+  const { data: modelsData = [] } = useQuery({
+    queryKey: QUERY_KEYS.modelEndpoints,
+    queryFn: providersApi.getAllModels,
+  });
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const c = agentColor(suite.agentId);
+  const isMulti = selectedEndpoints.size > 1;
 
   function toggle(id: string) {
     setSelectedEndpoints(s => {
@@ -27,89 +35,78 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: {
     });
   }
 
-  const isMulti = selectedEndpoints.size > 1;
+  return (
+    <Modal onClose={onClose} maxWidth={480}>
+      {/* Accent bar — runtime colour. Modal padding is 28px (7 × 4px Tailwind units). */}
+      <div
+        className="h-[3px] -mx-7 -mt-7 mb-5 rounded-t-xl"
+        style={{ background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 38%, transparent))` }}
+      />
+
+      {done ? (
+        <DoneState
+          suite={suite}
+          agentColor={c}
+          isMulti={isMulti}
+          selectedEndpoints={selectedEndpoints}
+          modelsData={modelsData as ModelEndpointDto[]}
+          onNavigate={() => { navigate('/runs'); onClose(); }}
+        />
+      ) : (
+        <RunForm
+          suite={suite}
+          modelsData={modelsData as ModelEndpointDto[]}
+          selectedEndpoints={selectedEndpoints}
+          loading={loading}
+          isMulti={isMulti}
+          onToggle={toggle}
+          onCancel={onClose}
+          onSubmit={() => onSubmit(Array.from(selectedEndpoints))}
+        />
+      )}
+    </Modal>
+  );
+}
+
+interface DoneStateProps {
+  suite: TestSuiteDto;
+  agentColor: string;
+  isMulti: boolean;
+  selectedEndpoints: Set<string>;
+  modelsData: ModelEndpointDto[];
+  onNavigate: () => void;
+}
+
+function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsData, onNavigate }: DoneStateProps) {
+  const selectedModelName =
+    modelsData.find(ep => selectedEndpoints.has(ep.id))?.modelName ?? 'selected model';
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'fade-up 0.18s ease-out' }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 480, background: 'var(--bg-card)', borderRadius: 20, boxShadow: 'var(--shadow-float)', overflow: 'hidden' }}>
-        <div style={{ height: 3, background: `linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 38%, transparent))` }} />
-
-        {done ? (
-          <div style={{ padding: '40px 32px', textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 15, background: 'var(--success-subtle)', border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'var(--success)', fontSize: 24 }}>
-              ✓
-            </div>
-            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{isMulti ? 'Parallel evaluation started' : 'Evaluation started'}</h3>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 24 }}>
-              Running <strong style={{ color: 'var(--text-primary)' }}>{suite.testCases.length} test cases</strong>
-              {isMulti
-                ? <> across <strong style={{ color: c }}>{selectedEndpoints.size} models</strong> in parallel</>
-                : selectedEndpoints.size === 1
-                  ? <> against <strong style={{ color: c }}>{[...modelsData].find((ep: ModelEndpointDto) => selectedEndpoints.has(ep.id))?.modelName ?? 'selected model'}</strong></>
-                  : null
-              }.
-            </p>
-            <button
-              onClick={() => { navigate('/runs'); onClose(); }}
-              style={{ padding: '10px 28px', background: 'var(--grad-accent)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#fff', boxShadow: 'var(--shadow-btn)' }}
-            >
-              View Test Runs →
-            </button>
-          </div>
-        ) : (
-          <div style={{ padding: '24px 28px' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Start new test run</h3>
-            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 20, lineHeight: 1.55 }}>
-              Run <strong style={{ color: 'var(--text-primary)' }}>{suite.testCases.length} test cases</strong> from <strong style={{ color: 'var(--text-primary)' }}>{suite.name}</strong> and compare results.
-            </p>
-
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                Model endpoints to evaluate
-                {isMulti && (
-                  <span style={{ padding: '2px 8px', background: 'var(--accent-subtle)', color: 'var(--accent-hover)', borderRadius: 100, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 0, border: '1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent)' }}>
-                    Parallel · {selectedEndpoints.size} selected
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
-                {modelsData.map((ep: ModelEndpointDto) => {
-                  const mc = modelColor(ep.modelName);
-                  const isOn = selectedEndpoints.has(ep.id);
-                  return (
-                    <button key={ep.id} onClick={() => toggle(ep.id)} className="flex items-center transition-all duration-[120ms] cursor-pointer" style={{ gap: 10, padding: '9px 12px', borderRadius: 'var(--radius-md)', textAlign: 'left', background: isOn ? `color-mix(in srgb, ${mc} 8%, transparent)` : 'var(--bg-card-2)', boxShadow: isOn ? `inset 0 0 0 1.5px color-mix(in srgb, ${mc} 28%, transparent)` : 'var(--shadow-pill)' }}>
-                      <div className="flex items-center justify-center shrink-0 transition-all duration-[120ms]" style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${isOn ? mc : 'var(--text-muted)'}`, background: isOn ? mc : 'transparent' }}>
-                        {isOn && <span style={{ color: '#000', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
-                      </div>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5, fontWeight: 600, color: isOn ? mc : 'var(--text-secondary)', flex: 1 }}>{ep.modelName}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ep.providerName}</span>
-                    </button>
-                  );
-                })}
-                {modelsData.length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: 20 }}>
-                    No endpoints configured. Add providers first.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={onClose} style={{ padding: '9px 18px', background: 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', boxShadow: 'var(--shadow-pill)' }}>Cancel</button>
-              <button
-                onClick={() => onSubmit(Array.from(selectedEndpoints))}
-                disabled={loading || selectedEndpoints.size === 0}
-                style={{ padding: '9px 20px', background: selectedEndpoints.size > 0 ? 'var(--grad-accent)' : 'var(--bg-card-2)', borderRadius: 10, fontSize: 13, fontWeight: 600, color: selectedEndpoints.size > 0 ? '#fff' : 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: 7, opacity: loading ? 0.7 : 1, transition: 'all 0.15s', boxShadow: selectedEndpoints.size > 0 ? 'var(--shadow-btn)' : 'none' }}
-              >
-                {loading
-                  ? <><span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.7s linear infinite', display: 'block' }} /> Running…</>
-                  : <>▶ {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}</>
-                }
-              </button>
-            </div>
-          </div>
-        )}
+    <div className="py-[10px] text-center">
+      <div
+        className="w-[52px] h-[52px] rounded-[15px] bg-success-subtle flex items-center justify-center mx-auto mb-4 text-success text-[24px]"
+        style={{ border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)' }}
+      >
+        ✓
       </div>
+      <h3 className="text-[17px] font-bold mb-2">
+        {isMulti ? 'Parallel evaluation started' : 'Evaluation started'}
+      </h3>
+      <p className="text-body text-muted leading-[1.6] mb-6">
+        Running <strong className="text-primary">{suite.testCases.length} test cases</strong>
+        {isMulti ? (
+          <> across <strong style={{ color: c }}>{selectedEndpoints.size} models</strong> in parallel</>
+        ) : selectedEndpoints.size === 1 ? (
+          <> against <strong style={{ color: c }}>{selectedModelName}</strong></>
+        ) : null}
+        .
+      </p>
+      <button
+        onClick={onNavigate}
+        className="px-7 py-[10px] bg-[image:var(--grad-accent)] rounded-md text-body font-semibold text-white shadow-[var(--shadow-btn)]"
+      >
+        View Test Runs →
+      </button>
     </div>
   );
 }

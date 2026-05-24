@@ -43,27 +43,24 @@ export function Badge({
   className,
   title,
 }: BadgeProps) {
-  const isTinted = variant === 'tinted' && color;
-  const tokens = !isTinted && variant !== 'tinted'
-    ? VARIANT_TOKEN[variant]
-    : undefined;
-
-  const style: React.CSSProperties = isTinted
+  const tintColor = variant === 'tinted' && color ? color : undefined;
+  const palette = tintColor
     ? {
-        background: `color-mix(in srgb, ${color} 14%, transparent)`,
-        color,
-        border: `1px solid color-mix(in srgb, ${color} 32%, transparent)`,
-        boxShadow: 'var(--shadow-pill)',
+        bg: `color-mix(in srgb, ${tintColor} 14%, transparent)`,
+        fg: tintColor,
+        border: `color-mix(in srgb, ${tintColor} 32%, transparent)`,
       }
-    : {
-        background: tokens!.bg,
-        color: tokens!.fg,
-        border: `1px solid ${tokens!.border}`,
-        boxShadow: 'var(--shadow-pill)',
-      };
+    : VARIANT_TOKEN[variant === 'tinted' ? 'neutral' : variant];
+
+  const style: React.CSSProperties = {
+    background: palette.bg,
+    color: palette.fg,
+    border: `1px solid ${palette.border}`,
+    boxShadow: 'var(--shadow-pill)',
+  };
 
   if (selected) {
-    style.outline = `2px solid ${isTinted ? color : tokens!.fg}`;
+    style.outline = `2px solid ${palette.fg}`;
     style.outlineOffset = '1px';
   }
   if (onClick) style.cursor = 'pointer';
@@ -84,7 +81,7 @@ export function Badge({
         <span
           aria-hidden
           className="w-[5px] h-[5px] rounded-full shrink-0"
-          style={{ background: isTinted ? color : tokens!.fg }}
+          style={{ background: palette.fg }}
         />
       )}
       {label}

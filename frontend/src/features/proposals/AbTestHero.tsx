@@ -89,12 +89,12 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
             >
               {hasResults ? `${passRate}%` : '—'}
             </span>
-            {deltaTone && (
+            {deltaTone && deltaPts != null && (
               <span
                 className="mono text-body-sm font-semibold"
                 style={{ color: TONE_COLOR[deltaTone] }}
               >
-                {deltaPts! > 0 ? '+' : '−'}{Math.abs(deltaPts!)}pt
+                {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>
             )}
             {!deltaTone && deltaPts == null && (
@@ -116,9 +116,9 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Segmented progress bar */}
       <div className="px-4 pb-4">
         <div className="flex h-1.5 rounded-full overflow-hidden bg-card-2">
-          {passPct > 0    && <div style={{ width: `${passPct}%`,    background: 'var(--success)' }}/>}
-          {failPct > 0    && <div style={{ width: `${failPct}%`,    background: 'var(--danger)' }}/>}
-          {pendingPct > 0 && <div style={{ width: `${pendingPct}%`, background: 'color-mix(in srgb, var(--text-muted) 30%, transparent)' }}/>}
+          {passPct > 0    && <div className="bg-success"                                                           style={{ width: `${passPct}%` }}/>}
+          {failPct > 0    && <div className="bg-danger"                                                            style={{ width: `${failPct}%` }}/>}
+          {pendingPct > 0 && <div className="bg-[color-mix(in_srgb,var(--text-muted)_30%,transparent)]"           style={{ width: `${pendingPct}%` }}/>}
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">

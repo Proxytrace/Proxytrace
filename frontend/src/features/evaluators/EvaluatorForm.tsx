@@ -3,7 +3,7 @@ import { FormField } from '../../components/ui/FormField';
 import { formInputCls } from '../../components/ui/classes';
 import { Pill } from '../../components/ui/Pill';
 import { CodeBlock } from '../../components/ui/CodeBlock';
-import type { EvaluatorFormState } from './evaluators';
+import type { EvaluatorFormState } from './evaluatorMeta';
 
 export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker = true }: {
   form: EvaluatorFormState;

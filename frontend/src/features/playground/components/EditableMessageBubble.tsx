@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   CopyIcon,
   EditIcon,
+  GripVerticalIcon,
   TrashIcon,
 } from '../../../components/icons';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
@@ -119,7 +120,7 @@ export function EditableMessageBubble(props: Props) {
             className="text-muted opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
             style={{ cursor: 'grab' }}
           >
-            <GripIcon />
+            <GripVerticalIcon size={12} />
           </span>
         )}
         <span
@@ -235,15 +236,3 @@ export function EditableMessageBubble(props: Props) {
   );
 }
 
-function GripIcon() {
-  return (
-    <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <circle cx="9" cy="6" r="1.5" />
-      <circle cx="15" cy="6" r="1.5" />
-      <circle cx="9" cy="12" r="1.5" />
-      <circle cx="15" cy="12" r="1.5" />
-      <circle cx="9" cy="18" r="1.5" />
-      <circle cx="15" cy="18" r="1.5" />
-    </svg>
-  );
-}

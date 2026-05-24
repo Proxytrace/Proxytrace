@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { projectsApi } from '../../api/projects';
-import { searchApi, type SearchIndexingSettings, type SearchKind } from '../../api/search';
-import { QUERY_KEYS } from '../../api/query-keys';
-import { LIST_PAGE_SIZE } from '../../lib/constants';
-import useToast from '../../hooks/useToast';
+import { type SearchIndexingSettings, type SearchKind } from '../../api/search';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 import { FormField } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
 import { formInputCls } from '../../components/ui/classes';
+import { useProjects } from './hooks/useProjects';
+import { useReindex, useSearchSettings, useSearchStatus, useUpdateSearchSettings } from './hooks/useSearchIndexing';
+import { StatusCell } from './components/StatusCell';
+import { ToggleRow } from './components/ToggleRow';
 
 const KIND_OPTIONS: { value: SearchKind; label: string }[] = [
   { value: 'agent', label: 'Agents' },
@@ -21,15 +20,10 @@ const KIND_OPTIONS: { value: SearchKind; label: string }[] = [
 ];
 
 export function SearchIndexingTab() {
-  const qc = useQueryClient();
-  const { show: toast } = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
-    queryKey: QUERY_KEYS.projects,
-    queryFn: () => projectsApi.list({ pageSize: LIST_PAGE_SIZE }),
-  });
+  const { data: projectsData, isLoading: projectsLoading } = useProjects();
   const projects = useMemo(() => projectsData?.items ?? [], [projectsData]);
 
   const filtered = useMemo(() => {
@@ -42,38 +36,14 @@ export function SearchIndexingTab() {
   const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
   const selectedProject = projects.find(p => p.id === effectiveId);
 
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
-    queryKey: QUERY_KEYS.searchSettings(effectiveId ?? 'none'),
-    queryFn: () => searchApi.getSettings(effectiveId!),
-    enabled: !!effectiveId,
-    retry: false,
-  });
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useSearchSettings(effectiveId);
 
   const [draft, setDraft] = useState<SearchIndexingSettings | null>(settings ?? null);
 
-  const { data: status, isLoading: statusLoading } = useQuery({
-    queryKey: QUERY_KEYS.searchStatus(effectiveId ?? 'none'),
-    queryFn: () => searchApi.getStatus(effectiveId!),
-    enabled: !!effectiveId,
-    refetchInterval: 5000,
-    retry: false,
-  });
+  const { data: status, isLoading: statusLoading } = useSearchStatus(effectiveId);
 
-  const updateSettings = useMutation({
-    mutationFn: (next: SearchIndexingSettings) => searchApi.updateSettings(effectiveId!, next),
-    onSuccess: (saved) => {
-      qc.setQueryData(QUERY_KEYS.searchSettings(effectiveId!), saved);
-      toast('Search settings saved', 'success');
-    },
-  });
-
-  const reindex = useMutation({
-    mutationFn: () => searchApi.reindex(effectiveId!),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.searchStatus(effectiveId!) });
-      toast('Reindex started', 'success');
-    },
-  });
+  const updateSettings = useUpdateSearchSettings();
+  const reindex = useReindex();
 
   const dirty = useMemo(() => {
     if (!draft || !settings) return false;
@@ -164,7 +134,7 @@ export function SearchIndexingTab() {
               <div className="flex items-center justify-between">
                 <h3 className="text-[14px] font-bold m-0 text-primary">Index status</h3>
                 <button
-                  onClick={() => reindex.mutate()}
+                  onClick={() => reindex.mutate(selectedProject.id)}
                   data-write
                   disabled={reindex.isPending || status?.isReindexing}
                   className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -268,7 +238,7 @@ export function SearchIndexingTab() {
                   {/* Save bar */}
                   <div className="flex items-center gap-2 pt-2 border-t border-hairline">
                     <button
-                      onClick={() => updateSettings.mutate(draft)}
+                      onClick={() => updateSettings.mutate({ projectId: selectedProject.id, next: draft })}
                       data-write
                       disabled={!dirty || updateSettings.isPending}
                       className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -293,64 +263,5 @@ export function SearchIndexingTab() {
         )}
       </section>
     </div>
-  );
-}
-
-function StatusCell({
-  label,
-  value,
-  icon,
-  valueClassName,
-}: {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-  valueClassName?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] uppercase tracking-wide text-muted font-semibold">{label}</span>
-      <span className={`text-[14px] font-semibold text-primary flex items-center gap-1 ${valueClassName ?? ''}`}>
-        {icon}
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-start justify-between gap-4 cursor-pointer">
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-[13px] font-semibold text-primary">{label}</span>
-        <span className="text-[12px] text-muted">{description}</span>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        onClick={() => onChange(!checked)}
-        className={`relative shrink-0 w-10 h-6 rounded-full transition-colors cursor-pointer ${
-          checked ? 'bg-[image:var(--grad-accent)]' : 'bg-card-2 border border-hairline'
-        }`}
-      >
-        <span
-          className={`absolute top-[2px] left-[2px] w-[18px] h-[18px] rounded-full bg-white shadow transition-transform ${
-            checked ? 'translate-x-4' : 'translate-x-0'
-          }`}
-        />
-      </button>
-    </label>
   );
 }

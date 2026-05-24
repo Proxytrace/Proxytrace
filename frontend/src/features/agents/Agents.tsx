@@ -57,10 +57,10 @@ export default function Agents() {
   };
 
   const delAgent = useMutation({
-    mutationFn: () => agentsApi.delete(selected!.id),
-    onSuccess: () => {
+    mutationFn: (id: string) => agentsApi.delete(id),
+    onSuccess: (_result, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(currentProjectId ?? undefined) });
-      const remaining = agents.filter(a => a.id !== selected!.id);
+      const remaining = agents.filter(a => a.id !== id);
       setSelectedId(remaining[0]?.id ?? null);
       setDeleteOpen(false);
     },
@@ -109,7 +109,7 @@ export default function Agents() {
       {deleteOpen && selected && (
         <ConfirmDialog
           entityName={selected.name}
-          onConfirm={() => delAgent.mutate()}
+          onConfirm={() => delAgent.mutate(selected.id)}
           onCancel={() => setDeleteOpen(false)}
           loading={delAgent.isPending}
         />

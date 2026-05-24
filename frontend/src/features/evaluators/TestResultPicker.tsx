@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SearchHit } from '../../api/search';
 import { UnifiedSearch } from '../../components/search/UnifiedSearch';
+import { SearchIcon } from '../../components/icons';
 
 interface Props {
   evaluatorId: string;
@@ -38,7 +39,7 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
         aria-expanded={open}
         disabled={projectId == null}
       >
-        <SearchIcon />
+        <SearchIcon size={13} className="text-muted shrink-0" />
         <span className={`flex-1 truncate ${selectedLabel ? 'text-primary' : 'text-muted'}`}>
           {selectedLabel ?? (projectId == null ? 'Pick a project first.' : 'Search a past test result…')}
         </span>
@@ -60,14 +61,5 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
         </div>
       )}
     </div>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted shrink-0" aria-hidden>
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-    </svg>
   );
 }

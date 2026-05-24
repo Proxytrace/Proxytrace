@@ -1,21 +1,15 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { EvaluationScore, type EvaluationResultDto, type MessageDto } from '../../api/models';
+import { type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Card } from '../../components/ui/Card';
 import { MessageBubble } from '../../components/ui/MessageBubble';
 import { TestResultPicker } from './TestResultPicker';
 import type { SearchHit } from '../../api/search';
-
-const SCORE_COLOR: Record<EvaluationScore, string> = {
-  [EvaluationScore.Terrible]: 'var(--danger)',
-  [EvaluationScore.Bad]: 'var(--warn)',
-  [EvaluationScore.Acceptable]: 'var(--accent-primary)',
-  [EvaluationScore.Good]: 'var(--teal)',
-  [EvaluationScore.Excellent]: 'var(--success)',
-};
+import { ResponsePane, EmptyBench, ErrorState } from './components/TestBenchPanes';
+import { ResultPill } from './components/TestBenchResult';
+import { TestBenchChevronIcon, TestBenchPlayIcon } from '../../components/icons';
 
 export interface EvaluatorTestBenchHandle {
   focus(): void;
@@ -68,12 +62,11 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     }, [defaultQuery.data, pickedHit]);
 
     const effectivePickedHit = pickedHit ?? autoHit;
-
     const testCaseId = effectivePickedHit?.entityId ?? null;
 
     const payloadQuery = useQuery({
       queryKey: QUERY_KEYS.evaluatorTestBench(evaluatorId, testCaseId ?? ''),
-      queryFn: () => evaluatorTestBenchApi.load(evaluatorId, testCaseId!),
+      queryFn: () => evaluatorTestBenchApi.load(evaluatorId, testCaseId ?? ''),
       enabled: testCaseId != null,
       retry: false,
       staleTime: 60_000,
@@ -86,7 +79,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
 
     const runMutation = useMutation({
       mutationFn: () => evaluatorTestBenchApi.run(evaluatorId, {
-        testCaseId: testCaseId!,
+        testCaseId: testCaseId ?? '',
         actualResponseOverride: isModified ? currentActual : null,
       }),
       onSuccess: (r) => setLastResult(r),
@@ -153,7 +146,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
               <div className="flex flex-col gap-3">
                 <details className="group rounded-lg border border-hairline bg-card-2">
                   <summary className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none list-none">
-                    <ChevronIcon />
+                    <TestBenchChevronIcon />
                     <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
                       Input conversation
                     </span>
@@ -174,10 +167,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                   </div>
                 </details>
 
-                <div
-                  className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch"
-                  style={{ height: 'min(60vh, 480px)' }}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch h-[min(60vh,480px)]">
                   <ResponsePane title="Expected response">
                     <pre className="w-full min-h-0 flex-1 m-0 px-3 py-2.5 rounded-lg bg-surface border border-border text-xs text-primary font-mono leading-relaxed overflow-auto whitespace-pre-wrap break-words">
                       {payload.expectedResponse || '—'}
@@ -216,10 +206,9 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                       disabled={runDisabled}
                       data-write
                       onClick={() => runMutation.mutate()}
-                      className="px-4 py-2 rounded-md text-[12.5px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                      style={{ background: 'var(--grad-accent)' }}
+                      className="px-4 py-2 rounded-md text-[12.5px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-[image:var(--grad-accent)]"
                     >
-                      <PlayIcon /> {runLabel}
+                      <TestBenchPlayIcon /> {runLabel}
                     </button>
                   </div>
                   <div className="min-w-0 flex items-center gap-2 px-3 rounded-lg border border-hairline bg-card-2 h-[40px]">
@@ -249,147 +238,3 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
     );
   },
 );
-
-function ResponsePane({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 p-3 rounded-lg border border-hairline bg-card-2 min-w-0 h-full overflow-hidden">
-      <div className="flex items-center justify-between gap-2 min-h-[20px] shrink-0">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">{title}</span>
-        {badge}
-      </div>
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col">{children}</div>
-    </div>
-  );
-}
-
-function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading?: boolean }) {
-  if (loading) {
-    return (
-      <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold bg-card-2 text-muted">
-        <span className="w-2 h-2 rounded-full bg-muted animate-pulse" />
-        Scoring…
-      </span>
-    );
-  }
-  if (!result) return null;
-  if (result.errorMessage !== null) {
-    const color = 'var(--warn)';
-    return (
-      <div className="flex items-center gap-1.5">
-        <span
-          className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
-          style={{ background: `color-mix(in srgb, ${color} 18%, transparent)`, color }}
-          title={result.errorMessage ?? 'Evaluator errored'}
-        >
-          <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-          Error
-        </span>
-        {result.errorMessage && <ReasoningTip text={result.errorMessage} />}
-      </div>
-    );
-  }
-  const color = result.score ? (SCORE_COLOR[result.score] ?? 'var(--accent-primary)') : 'var(--accent-primary)';
-  const hasReasoning = !!result.reasoning;
-  return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-[11.5px] font-semibold"
-        style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}
-      >
-        <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-        {result.score}
-      </span>
-      {hasReasoning && <ReasoningTip text={result.reasoning!} />}
-    </div>
-  );
-}
-
-function ReasoningTip({ text }: { text: string }) {
-  const anchorRef = useRef<HTMLSpanElement | null>(null);
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  function show() {
-    const el = anchorRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const width = Math.min(352, window.innerWidth * 0.8);
-    const left = Math.max(8, rect.right - width);
-    const top = rect.top - 8;
-    setPos({ top, left });
-    setOpen(true);
-  }
-
-  function hide() {
-    setOpen(false);
-  }
-
-  return (
-    <>
-      <span
-        ref={anchorRef}
-        tabIndex={0}
-        role="button"
-        aria-label="Show reasoning"
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
-        className="w-5 h-5 inline-flex items-center justify-center rounded-full border border-hairline bg-card-2 text-[10.5px] font-semibold text-muted hover:text-accent hover:border-accent focus:text-accent focus:border-accent cursor-help transition-colors outline-none"
-      >
-        ?
-      </span>
-      {open && pos && createPortal(
-        <div
-          role="tooltip"
-          style={{
-            position: 'fixed',
-            top: pos.top,
-            left: pos.left,
-            width: 'min(22rem, 80vw)',
-            transform: 'translateY(-100%)',
-          }}
-          className="pointer-events-none z-[1000] max-h-72 overflow-auto p-3 rounded-md bg-card border border-border shadow-[var(--shadow-card)] text-[11.5px] leading-[1.55] text-primary whitespace-pre-wrap text-left"
-        >
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-muted mb-1.5">
-            Reasoning
-          </span>
-          {text}
-        </div>,
-        document.body,
-      )}
-    </>
-  );
-}
-
-function EmptyBench() {
-  return (
-    <div className="py-10 text-center text-[12.5px] text-muted">
-      Pick a past test result to start testing this evaluator.
-    </div>
-  );
-}
-
-function ErrorState({ message }: { message: string }) {
-  return (
-    <div className="p-3 rounded-md border border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-[var(--danger-subtle)] text-[12px] text-danger">
-      {message}
-    </div>
-  );
-}
-
-function ChevronIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted transition-transform group-open:rotate-90" aria-hidden>
-      <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function PlayIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M8 5v14l11-7z" />
-    </svg>
-  );
-}

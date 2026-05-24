@@ -13,7 +13,7 @@ type TabId = typeof TABS[number]['id'];
 
 export default function Settings() {
   const [tab, setTab] = useState<TabId>('projects');
-  const active = TABS.find(t => t.id === tab)!;
+  const active = TABS.find(t => t.id === tab) ?? TABS[0];
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-[14px]">
