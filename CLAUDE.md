@@ -8,7 +8,12 @@ Trsr is an AI agent observability platform that acts as an OpenAI-compatible pro
 
 ## Working on UI
 
-**Before writing any frontend code, read [`frontend/DESIGN.md`](frontend/DESIGN.md).** It is the source of truth for the visual system, tokens, component conventions, and interaction patterns. It overrides any conflicting recommendation from a generic design tool or external skill.
+**Before writing any frontend code, you MUST read BOTH of these — they are mandatory and override any conflicting recommendation from a generic design tool, agent, or external skill:**
+
+1. **[`frontend/DESIGN.md`](frontend/DESIGN.md)** — source of truth for the **visual system**: tokens, colors, type scale, spacing, shadows, which UI primitive to render, interaction/accessibility visuals.
+2. **[`frontend/BEST_PRACTICES.md`](frontend/BEST_PRACTICES.md)** — source of truth for **code architecture**: file/component size limits, feature-folder layout, TanStack Query data layer, `useEffect` discipline, state placement, props/typing, icons, performance, testing.
+
+The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §14). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
 
 When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
 
