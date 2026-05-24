@@ -67,3 +67,11 @@ export function statusColor(httpStatus: number): string {
   if (httpStatus >= 400 && httpStatus < 500) return '#d4915c';
   return '#d95555';
 }
+
+/**
+ * Mixes a runtime color toward transparent — `pct` is the opacity of the color.
+ * For static token bases (constant color + constant pct) prefer a Tailwind
+ * arbitrary class (`bg-[color-mix(...)]`); use this only for data-driven colors.
+ */
+export const tint = (color: string, pct: number): string =>
+  `color-mix(in srgb, ${color} ${pct}%, transparent)`;

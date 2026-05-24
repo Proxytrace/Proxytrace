@@ -1,16 +1,16 @@
 import { useState, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { TestRunGroupDto, TestRunEvent } from '../../api/models';
-import { testRunGroupsApi } from '../../api/test-run-groups';
+import { useQueryClient } from '@tanstack/react-query';
+import type { PagedResult, TestRunGroupDto, TestRunEvent } from '../../api/models';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { useTestRunGroupStream } from '../../api/event-stream';
-import { agentColor } from '../../lib/colors';
+import { agentColor, tint } from '../../lib/colors';
 import { fmtRelative } from '../../lib/format';
 import { TrashIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
 import { Pill } from '../../components/ui/Pill';
 import { Button } from '../../components/ui/Button';
-import { runStatusColor, isActive } from './results';
+import { runStatusColor, isActive, patchGroupsWithResult } from './results';
+import { useCancelTestRunGroup } from './hooks/useCancelTestRunGroup';
 import { SegmentedToggle } from './components/SegmentedToggle';
 import { EndpointCompareCard } from './components/EndpointCompareCard';
 import { MatrixView } from './MatrixView';
@@ -30,20 +30,20 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
     [qc],
   );
 
-  const cancelGroup = useMutation({
-    mutationFn: () => testRunGroupsApi.cancel(group.id),
-    onSuccess: invalidateGroups,
-  });
+  const cancelGroup = useCancelTestRunGroup(group.id);
 
-  // Live updates flow through SSE: patch the case-activity set and refetch the group list.
+  // Live updates flow through SSE: patch the cached group list in place — no refetch.
   const handleStreamEvent = useCallback((e: TestRunEvent) => {
     if (e.type === 'test-case-started') {
       setActiveCaseIds(prev => new Set([...prev, e.testCaseId]));
     } else if (e.type === 'test-result-arrived') {
       setActiveCaseIds(prev => { const next = new Set(prev); next.delete(e.testCaseId); return next; });
+      qc.setQueriesData<PagedResult<TestRunGroupDto>>(
+        { queryKey: QUERY_KEYS.testRunGroupsRoot },
+        page => (page ? patchGroupsWithResult(page, e) : page),
+      );
     }
-    invalidateGroups();
-  }, [invalidateGroups]);
+  }, [qc]);
 
   const handleStreamDone = useCallback(() => {
     setActiveCaseIds(new Set());
@@ -60,13 +60,13 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
   return (
     <div className="flex flex-col gap-3">
       {/* Unified header */}
-      <Card padding="none" accentBar={`linear-gradient(90deg, ${c}, color-mix(in srgb, ${c} 28%, transparent))`}>
+      <Card padding="none" accentBar={`linear-gradient(90deg, ${c}, ${tint(c, 28)})`}>
         <div className="px-[18px] py-3 flex items-center gap-3 flex-wrap">
           <div className="flex flex-col gap-[3px] min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{group.suiteName}</h2>
               <Pill label={group.agentName} color={c} />
-              <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: `color-mix(in srgb, ${sc} 18%, transparent)`, color: sc }}>{group.status}</span>
+              <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(sc, 18), color: sc }}>{group.status}</span>
               {active && (
                 <span className="inline-flex items-center gap-1.5 text-caption text-muted shrink-0">
                   <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-accent inline-block" />

@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { testRunGroupsApi } from '../../api/test-run-groups';
-import { agentsApi } from '../../api/agents';
-import { QUERY_KEYS } from '../../api/query-keys';
-import useCurrentProject from '../../hooks/useCurrentProject';
 import { agentColor } from '../../lib/colors';
-import { REFETCH_INTERVAL_LIVE, LIST_PAGE_SIZE } from '../../lib/constants';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { Card } from '../../components/ui/Card';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
@@ -13,30 +7,18 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { GroupListCard } from './components/GroupListCard';
 import { GroupDetail } from './GroupDetail';
+import { useTestRunGroups } from './hooks/useTestRunGroups';
+import { useProjectAgents } from './hooks/useProjectAgents';
+import { useDeleteTestRunGroup } from './hooks/useDeleteTestRunGroup';
 
 export default function Runs() {
-  const qc = useQueryClient();
-  const { currentProjectId } = useCurrentProject();
-  const projectId = currentProjectId ?? undefined;
-  const enabled = currentProjectId !== null;
   const [agentFilter, setAgentFilter] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.testRunGroups(agentFilter, projectId),
-    queryFn: () => testRunGroupsApi.list({ agentId: agentFilter || undefined, projectId: agentFilter ? undefined : projectId, pageSize: 100 }),
-    refetchInterval: REFETCH_INTERVAL_LIVE,
-    enabled,
-  });
-  const { data: agentsData } = useQuery({
-    queryKey: QUERY_KEYS.agents(projectId),
-    queryFn: () => agentsApi.list({ projectId, pageSize: LIST_PAGE_SIZE }),
-    enabled,
-  });
-
-  const groups = data?.items ?? [];
-  const agents = agentsData?.items ?? [];
+  const { groups, isLoading } = useTestRunGroups(agentFilter);
+  const { agents } = useProjectAgents();
+  const delGroup = useDeleteTestRunGroup();
 
   const selectedGroup = groups.find(g => g.id === selectedGroupId) ?? groups[0] ?? null;
   const agentOptions = [
@@ -46,14 +28,16 @@ export default function Runs() {
 
   const deleteTarget = groups.find(g => g.id === deleteGroupId);
 
-  const delGroup = useMutation({
-    mutationFn: (id: string) => testRunGroupsApi.delete(id),
-    onSuccess: (_data, id) => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
-      setDeleteGroupId(null);
-      if (id === selectedGroupId) setSelectedGroupId(null);
-    },
-  });
+  const confirmDelete = () => {
+    if (!deleteGroupId) return;
+    const id = deleteGroupId;
+    delGroup.mutate(id, {
+      onSuccess: () => {
+        setDeleteGroupId(null);
+        if (id === selectedGroupId) setSelectedGroupId(null);
+      },
+    });
+  };
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-3.5">
@@ -99,7 +83,7 @@ export default function Runs() {
       </div>
 
       {deleteGroupId && deleteTarget && (
-        <ConfirmDialog entityName={deleteTarget.suiteName} onConfirm={() => delGroup.mutate(deleteGroupId)} onCancel={() => setDeleteGroupId(null)} loading={delGroup.isPending} />
+        <ConfirmDialog entityName={deleteTarget.suiteName} onConfirm={confirmDelete} onCancel={() => setDeleteGroupId(null)} loading={delGroup.isPending} />
       )}
     </div>
   );

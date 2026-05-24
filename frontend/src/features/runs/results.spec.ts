@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { EvaluationScore, EvaluatorKind, TestRunStatus } from '../../api/models';
-import type { EvaluationResultDto, TestResultDto, TestRunDto } from '../../api/models';
+import type {
+  EvaluationResultDto,
+  PagedResult,
+  TestCaseFixtureDto,
+  TestResultArrivedEvent,
+  TestResultDto,
+  TestRunDto,
+  TestRunGroupDto,
+} from '../../api/models';
 import {
   isErrored,
   isEvalPass,
@@ -10,6 +18,9 @@ import {
   avgLatency,
   isActive,
   isDivergent,
+  buildMatrixRows,
+  fixtureSummary,
+  patchGroupsWithResult,
 } from './results';
 
 function evaluation(over: Partial<EvaluationResultDto> = {}): EvaluationResultDto {
@@ -115,5 +126,115 @@ describe('isDivergent', () => {
     expect(isDivergent([true, true])).toBe(false);
     expect(isDivergent([false, false])).toBe(false);
     expect(isDivergent([])).toBe(false);
+  });
+});
+
+describe('fixtureSummary', () => {
+  function fixture(evals: boolean[], endpoints: { costUsd: number; tokIn: number; tokOut: number }[]): TestCaseFixtureDto {
+    return {
+      evaluators: evals.map(pass => ({ pass })),
+      endpoints,
+    } as unknown as TestCaseFixtureDto;
+  }
+
+  it('zeroes everything when the fixture is undefined', () => {
+    expect(fixtureSummary(undefined)).toEqual({
+      passed: 0, total: 0, allPass: false, composite: null, totalCost: 0, totalTokens: 0,
+    });
+  });
+
+  it('marks allPass and 100% only when every evaluator passes', () => {
+    const s = fixtureSummary(fixture([true, true], []));
+    expect(s).toMatchObject({ passed: 2, total: 2, allPass: true, composite: 100 });
+  });
+
+  it('computes a partial composite and sums cost and tokens', () => {
+    const s = fixtureSummary(fixture([true, false], [
+      { costUsd: 0.01, tokIn: 10, tokOut: 5 },
+      { costUsd: 0.02, tokIn: 20, tokOut: 5 },
+    ]));
+    expect(s).toMatchObject({ passed: 1, total: 2, allPass: false, composite: 50 });
+    expect(s.totalCost).toBeCloseTo(0.03);
+    expect(s.totalTokens).toBe(40);
+  });
+});
+
+describe('buildMatrixRows', () => {
+  function caseResult(testCaseId: string, summary: string, evals: EvaluationResultDto[]): TestResultDto {
+    return { id: `${testCaseId}-r`, testCaseId, testCaseSummary: summary, actualResponse: '', evaluations: evals, durationMs: 100 };
+  }
+  function run(id: string, results: TestResultDto[], testCases: { id: string; summary: string }[] = []): TestRunDto {
+    return { id, endpointName: id, results, testCases } as TestRunDto;
+  }
+
+  it('orders divergent cases before agreeing ones', () => {
+    const r1 = run('m1', [caseResult('a', 'A', [PASS]), caseResult('b', 'B', [PASS])]);
+    const r2 = run('m2', [caseResult('a', 'A', [FAIL]), caseResult('b', 'B', [PASS])]);
+    const rows = buildMatrixRows([r1, r2]);
+    expect(rows.map(r => r.caseId)).toEqual(['a', 'b']);
+    expect(rows[0].divergent).toBe(true);
+    expect(rows[1].divergent).toBe(false);
+  });
+
+  it('breaks ties among non-divergent rows by fail count', () => {
+    const r1 = run('m1', [caseResult('ok', 'Zok', [PASS]), caseResult('bad', 'Abad', [FAIL])]);
+    const r2 = run('m2', [caseResult('ok', 'Zok', [PASS]), caseResult('bad', 'Abad', [FAIL])]);
+    const rows = buildMatrixRows([r1, r2]);
+    expect(rows.map(r => r.caseId)).toEqual(['bad', 'ok']);
+    expect(rows.every(r => r.divergent)).toBe(false);
+  });
+
+  it('emits null cells for a case missing from a run', () => {
+    const cases = [{ id: 'a', summary: 'A' }, { id: 'b', summary: 'B' }];
+    const r1 = run('m1', [caseResult('a', 'A', [PASS])], cases);
+    const r2 = run('m2', [caseResult('a', 'A', [PASS])], cases);
+    const bRow = buildMatrixRows([r1, r2]).find(r => r.caseId === 'b');
+    expect(bRow?.summary).toBe('B');
+    expect(bRow?.cells.every(c => c.result === null && c.pass === null)).toBe(true);
+  });
+});
+
+describe('patchGroupsWithResult', () => {
+  function page(run: Partial<TestRunDto>): PagedResult<TestRunGroupDto> {
+    const fullRun = {
+      id: 'run1', totalCases: 2, passedCases: 0, failedCases: 0, passRate: 0,
+      testCases: [{ id: 'c1', summary: 'Case one' }, { id: 'c2', summary: 'Case two' }],
+      results: [], ...run,
+    } as TestRunDto;
+    return { items: [{ id: 'g1', runs: [fullRun] } as TestRunGroupDto], total: 1, page: 1, pageSize: 20 };
+  }
+
+  function event(over: Partial<TestResultArrivedEvent> = {}): TestResultArrivedEvent {
+    return {
+      type: 'test-result-arrived', runId: 'run1', groupId: 'g1', testCaseId: 'c1',
+      overallScore: EvaluationScore.Good, evaluations: [PASS], durationMs: 120, ...over,
+    };
+  }
+
+  it('appends the result and recomputes pass/fail counts', () => {
+    const next = patchGroupsWithResult(page({}), event({ evaluations: [PASS] }));
+    const run = next.items[0].runs[0];
+    expect(run.results).toHaveLength(1);
+    expect(run.results[0]).toMatchObject({ testCaseId: 'c1', testCaseSummary: 'Case one', durationMs: 120 });
+    expect(run.passedCases).toBe(1);
+    expect(run.failedCases).toBe(0);
+    expect(run.passRate).toBe(50);
+  });
+
+  it('counts a failing result against failedCases', () => {
+    const run = patchGroupsWithResult(page({}), event({ evaluations: [FAIL] })).items[0].runs[0];
+    expect(run.passedCases).toBe(0);
+    expect(run.failedCases).toBe(1);
+  });
+
+  it('is idempotent when the result is already present', () => {
+    const existing = page({ results: [{ ...result([PASS]), testCaseId: 'c1' } as TestResultDto], passedCases: 1, passRate: 50 });
+    const next = patchGroupsWithResult(existing, event());
+    expect(next.items[0].runs[0].results).toHaveLength(1);
+  });
+
+  it('leaves the data unchanged when the group is absent', () => {
+    const input = page({});
+    expect(patchGroupsWithResult(input, event({ groupId: 'other' }))).toEqual(input);
   });
 });

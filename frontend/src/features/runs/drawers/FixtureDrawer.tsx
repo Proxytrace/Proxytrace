@@ -1,9 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { testRunsApi } from '../../../api/test-runs';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import { fmtDuration, fmtTokens } from '../../../lib/format';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
-import { compositePercent, compositeColor } from '../results';
+import { compositeColor, fixtureSummary } from '../results';
+import { useFixture } from '../hooks/useFixture';
 import { DrawerShell } from './DrawerShell';
 import {
   OutputBlock,
@@ -27,17 +25,8 @@ interface Props {
 }
 
 export function FixtureDrawer({ runId, caseId, caseIdx, total, caseSummary, onClose, onPrev, onNext }: Props) {
-  const { data: fixture, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.fixture(runId, caseId),
-    queryFn: () => testRunsApi.getFixture(runId, caseId),
-  });
-
-  const passed = fixture?.evaluators.filter(e => e.pass).length ?? 0;
-  const evalTotal = fixture?.evaluators.length ?? 0;
-  const allPass = evalTotal > 0 && passed === evalTotal;
-  const composite = compositePercent(passed, evalTotal);
-  const totalCost = fixture?.endpoints.reduce((s, ep) => s + ep.costUsd, 0) ?? 0;
-  const totalTokens = fixture?.endpoints.reduce((s, ep) => s + ep.tokIn + ep.tokOut, 0) ?? 0;
+  const { fixture, isLoading } = useFixture(runId, caseId);
+  const { passed, total: evalTotal, allPass, composite, totalCost, totalTokens } = fixtureSummary(fixture);
 
   const metrics = fixture
     ? [

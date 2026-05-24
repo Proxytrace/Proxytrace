@@ -1,8 +1,8 @@
 import type { TestRunDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtDuration } from '../../../lib/format';
-import { modelColor } from '../../../lib/colors';
-import { passRateColor, isActive, avgLatency } from '../results';
+import { modelColor, tint } from '../../../lib/colors';
+import { passRateColor, passRatePercent, isActive, avgLatency } from '../results';
 import { Minimap } from './Minimap';
 
 /** Per-endpoint summary card in the multi-run comparison strip. */
@@ -15,7 +15,7 @@ export function EndpointCompareCard({
   activeCaseIds?: Set<string>;
 }) {
   const mc = modelColor(run.endpointName);
-  const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : null;
+  const passRate = passRatePercent(run.passedCases, run.totalCases);
   const pc = passRateColor(passRate);
   const active = isActive(run.status);
   const avg = avgLatency(run);
@@ -27,7 +27,7 @@ export function EndpointCompareCard({
       className={`flex-[1_1_220px] min-w-[220px] text-left flex flex-col gap-2.5 rounded-lg bg-card px-3.5 py-3 overflow-hidden cursor-pointer shadow-[var(--shadow-card)] border transition-[border-color,box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
       style={{
         borderColor: isSelected ? mc : 'transparent',
-        boxShadow: isSelected ? `0 0 0 3px color-mix(in srgb, ${mc} 14%, transparent), var(--shadow-card)` : undefined,
+        boxShadow: isSelected ? `0 0 0 3px ${tint(mc, 14)}, var(--shadow-card)` : undefined,
       }}
     >
       <div className="flex items-center justify-between gap-2">

@@ -1,10 +1,8 @@
-import { useQueries } from '@tanstack/react-query';
-import { testRunsApi } from '../../../api/test-runs';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import { fmtDuration } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
-import { compositePercent, compositeColor } from '../results';
+import { compositeColor, fixtureSummary } from '../results';
+import { useComparisonFixtures } from '../hooks/useComparisonFixtures';
 import type { TestCaseFixtureDto, TestRunDto } from '../../../api/models';
 import { DrawerShell } from './DrawerShell';
 import {
@@ -35,12 +33,8 @@ function ComparisonColumn({ run, fixture, isLoading, focused }: {
   focused: boolean;
 }) {
   const mc = modelColor(run.endpointName);
-  const passed = fixture?.evaluators.filter(e => e.pass).length ?? 0;
-  const evalTotal = fixture?.evaluators.length ?? 0;
-  const composite = compositePercent(passed, evalTotal);
-  const allPass = evalTotal > 0 && passed === evalTotal;
-  const failed = evalTotal > 0 && !allPass;
-  const cost = fixture?.endpoints.reduce((s, ep) => s + ep.costUsd, 0) ?? 0;
+  const { total, allPass, composite, totalCost: cost } = fixtureSummary(fixture);
+  const failed = total > 0 && !allPass;
 
   const borderCls = focused
     ? ''
@@ -86,12 +80,7 @@ function ComparisonColumn({ run, fixture, isLoading, focused }: {
 }
 
 export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, focusRunId, onClose, onPrev, onNext }: Props) {
-  const queries = useQueries({
-    queries: runs.map(run => ({
-      queryKey: QUERY_KEYS.fixture(run.id, caseId),
-      queryFn: () => testRunsApi.getFixture(run.id, caseId),
-    })),
-  });
+  const queries = useComparisonFixtures(runs, caseId);
 
   // Shared context (input + expected) — identical across models for one case.
   const shared = queries.find(q => q.data)?.data;

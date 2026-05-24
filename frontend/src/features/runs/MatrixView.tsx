@@ -1,28 +1,13 @@
 import { useState, Fragment } from 'react';
-import type { TestRunGroupDto, TestRunDto, TestResultDto } from '../../api/models';
+import type { TestRunGroupDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
 import { fmtDuration } from '../../lib/format';
 import { modelColor } from '../../lib/colors';
 import { CheckIcon, XIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
-import { resultPass, resultScore, scoreColor, passRateColor, avgLatency, isDivergent } from './results';
+import { scoreColor, passRateColor, passRatePercent, avgLatency, buildMatrixRows } from './results';
 import { SegmentedToggle } from './components/SegmentedToggle';
 import { ComparisonDrawer } from './drawers';
-
-interface MatrixCell {
-  run: TestRunDto;
-  result: TestResultDto | null;
-  pass: boolean | null;
-  score: number | null;
-  idx: number;
-}
-interface MatrixRow {
-  caseId: string;
-  summary: string;
-  cells: MatrixCell[];
-  divergent: boolean;
-  failCount: number;
-}
 
 /** Cases × models grid, divergence-first. */
 export function MatrixView({ group, activeCaseIds, onSelectModel }: {
@@ -34,30 +19,10 @@ export function MatrixView({ group, activeCaseIds, onSelectModel }: {
   const [divergentOnly, setDivergentOnly] = useState(false);
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
-  // Pivot results into a (case × model) grid. testCaseId is shared across runs in a group.
-  const caseMap = new Map<string, string>();
-  runs.forEach(run => {
-    run.testCases.forEach(tc => { if (!caseMap.has(tc.id)) caseMap.set(tc.id, tc.summary); });
-    run.results.forEach(r => { if (!caseMap.has(r.testCaseId)) caseMap.set(r.testCaseId, r.testCaseSummary); });
-  });
-
-  let rows: MatrixRow[] = [...caseMap.entries()].map(([caseId, summary]) => {
-    const cells: MatrixCell[] = runs.map(run => {
-      const idx = run.results.findIndex(r => r.testCaseId === caseId);
-      const result = idx >= 0 ? run.results[idx] : null;
-      return { run, result, pass: result ? resultPass(result) : null, score: result ? resultScore(result) : null, idx };
-    });
-    const states = cells.flatMap(c => (c.result && c.pass !== null ? [c.pass] : []));
-    const divergent = isDivergent(states);
-    const failCount = cells.filter(c => c.pass === false).length;
-    return { caseId, summary, cells, divergent, failCount };
-  });
-
-  const totalCount = rows.length;
-  const divergentCount = rows.filter(r => r.divergent).length;
-  // Divergence first, then most failures, then alphabetical.
-  rows.sort((a, b) => (Number(b.divergent) - Number(a.divergent)) || (b.failCount - a.failCount) || a.summary.localeCompare(b.summary));
-  if (divergentOnly) rows = rows.filter(r => r.divergent);
+  const allRows = buildMatrixRows(runs);
+  const totalCount = allRows.length;
+  const divergentCount = allRows.filter(r => r.divergent).length;
+  const rows = divergentOnly ? allRows.filter(r => r.divergent) : allRows;
 
   const gridCols = `minmax(200px,2fr) repeat(${runs.length}, minmax(96px,1fr))`;
   const selIdx = selectedCase ? rows.findIndex(r => r.caseId === selectedCase.caseId) : -1;
@@ -143,7 +108,7 @@ export function MatrixView({ group, activeCaseIds, onSelectModel }: {
             {/* Footer: pass rate + avg latency per model */}
             <div className="sticky bottom-0 left-0 z-30 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary">Pass rate</div>
             {runs.map(run => {
-              const pr = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : null;
+              const pr = passRatePercent(run.passedCases, run.totalCases);
               const avg = avgLatency(run);
               return (
                 <div key={run.id} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-center justify-center gap-0.5">

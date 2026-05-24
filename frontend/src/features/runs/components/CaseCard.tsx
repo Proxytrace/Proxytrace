@@ -1,5 +1,6 @@
 import type { TestResultDto } from '../../../api/models';
 import { FOCUS_RING, ID_SHORT_LEN } from '../../../lib/constants';
+import { cn } from '../../../lib/cn';
 import { fmtDuration } from '../../../lib/format';
 import { resultPass, resultScore, scoreColor, dotColor, isErrored, isEvalPass } from '../results';
 import { EvalChip } from './EvalChip';
@@ -13,18 +14,17 @@ export function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelec
   const reasoning = erroredFirst
     ? erroredFirst.errorMessage
     : r.evaluations.find(e => !isEvalPass(e) && e.reasoning)?.reasoning;
-  const tint = pass === false
-    ? (isSelected ? 'color-mix(in srgb, var(--danger) 10%, transparent)' : 'color-mix(in srgb, var(--danger) 5%, transparent)')
-    : (isSelected ? 'color-mix(in srgb, var(--accent-primary) 6%, transparent)' : 'var(--bg-card-2)');
-  const borderColor = isSelected
-    ? (pass === false ? 'color-mix(in srgb, var(--danger) 45%, transparent)' : 'color-mix(in srgb, var(--accent-primary) 35%, transparent)')
-    : pass === false ? 'color-mix(in srgb, var(--danger) 28%, transparent)' : 'var(--hairline)';
+  const bgCls = pass === false
+    ? (isSelected ? 'bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]' : 'bg-[color-mix(in_srgb,var(--danger)_5%,transparent)]')
+    : (isSelected ? 'bg-[color-mix(in_srgb,var(--accent-primary)_6%,transparent)]' : 'bg-card-2');
+  const borderCls = isSelected
+    ? (pass === false ? 'border-[color-mix(in_srgb,var(--danger)_45%,transparent)]' : 'border-[color-mix(in_srgb,var(--accent-primary)_35%,transparent)]')
+    : pass === false ? 'border-[color-mix(in_srgb,var(--danger)_28%,transparent)]' : 'border-hairline';
 
   return (
     <button
       onClick={onClick}
-      className={`relative w-full text-left flex flex-col gap-1.5 rounded-md border px-3.5 py-3 overflow-hidden cursor-pointer transition-[background,border-color] duration-[var(--motion-fast)] ${FOCUS_RING}`}
-      style={{ background: tint, borderColor }}
+      className={cn('relative w-full text-left flex flex-col gap-1.5 rounded-md border px-3.5 py-3 overflow-hidden cursor-pointer transition-[background,border-color] duration-[var(--motion-fast)]', bgCls, borderCls, FOCUS_RING)}
     >
       <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: sColor }} />
 
@@ -51,7 +51,7 @@ export function CaseCard({ r, isSelected, onClick }: { r: TestResultDto; isSelec
 
       {r.evaluations.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {r.evaluations.map((e, i) => <EvalChip key={i} e={e} />)}
+          {r.evaluations.map(e => <EvalChip key={e.evaluatorId} e={e} />)}
         </div>
       )}
     </button>

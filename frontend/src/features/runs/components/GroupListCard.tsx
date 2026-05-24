@@ -2,10 +2,10 @@ import type { TestRunGroupDto } from '../../../api/models';
 import { TestRunStatus } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
-import { agentColor } from '../../../lib/colors';
+import { agentColor, tint } from '../../../lib/colors';
 import { TrashIcon } from '../../../components/icons';
 import { Pill } from '../../../components/ui/Pill';
-import { passRateColor, runStatusColor, isActive } from '../results';
+import { passRateColor, passRatePercent, runStatusColor, isActive } from '../results';
 
 /** Card in the left-hand run-group list. */
 export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
@@ -17,7 +17,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   const c = agentColor(group.agentId);
   const totalCases = group.runs.reduce((s, r) => s + r.totalCases, 0);
   const passedCases = group.runs.reduce((s, r) => s + r.passedCases, 0);
-  const passRate = totalCases > 0 ? Math.round((passedCases / totalCases) * 100) : null;
+  const passRate = passRatePercent(passedCases, totalCases);
   const pc = passRateColor(passRate);
   const sc = runStatusColor(group.status);
   const runCount = group.runs.length;
@@ -27,7 +27,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
       onClick={onSelect}
       aria-pressed={isSelected}
       className={`relative w-full text-left rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 cursor-pointer shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
-      style={isSelected ? { boxShadow: `0 0 0 1.5px color-mix(in srgb, ${c} 45%, transparent), var(--shadow-card)` } : undefined}
+      style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
     >
       <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
       <div className="flex items-center justify-between mb-1.5">

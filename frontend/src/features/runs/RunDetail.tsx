@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { TestRunDto, TestResultDto, EvaluatorKind } from '../../api/models';
+import type { TestRunDto, TestResultDto } from '../../api/models';
 import { ID_SHORT_LEN } from '../../lib/constants';
 import { fmtDuration } from '../../lib/format';
 import { EVALUATOR_KIND_COLOR } from '../../lib/colors';
@@ -10,7 +10,7 @@ import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { DataTable } from '../../components/ui/DataTable';
 import type { DataColumn } from '../../components/ui/DataTable';
 import {
-  resultPass, resultScore, scoreColor, dotColor, passRateColor, avgLatency, isActive, isErrored,
+  resultPass, resultScore, scoreColor, dotColor, passRateColor, passRatePercent, avgLatency, isActive, isErrored,
   type CaseFilter, type ViewMode,
 } from './results';
 import { Minimap } from './components/Minimap';
@@ -25,7 +25,7 @@ export function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseI
 
   const passed = run.results.filter(r => resultPass(r) === true).length;
   const failed = run.results.filter(r => resultPass(r) === false).length;
-  const passRate = run.totalCases > 0 ? Math.round((run.passedCases / run.totalCases) * 100) : 0;
+  const passRate = passRatePercent(run.passedCases, run.totalCases) ?? 0;
   const active = isActive(run.status);
   const avg = avgLatency(run);
   const hasResults = run.results.length > 0;
@@ -59,7 +59,7 @@ export function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseI
       key: 'evaluator', label: 'Evaluator', width: '1fr',
       render: r => {
         const primary = r.evaluations[0];
-        const c = primary ? (EVALUATOR_KIND_COLOR[primary.evaluatorKind as EvaluatorKind] ?? 'var(--text-muted)') : null;
+        const c = primary ? (EVALUATOR_KIND_COLOR[primary.evaluatorKind] ?? 'var(--text-muted)') : null;
         return c ? <ColoredBadge color={c} label={primary.evaluatorName} shape="rounded" /> : <span />;
       },
     },

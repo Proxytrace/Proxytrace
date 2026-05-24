@@ -1,5 +1,6 @@
 import type { TestRunDto, TestResultDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
+import { cn } from '../../../lib/cn';
 import { resultPass } from '../results';
 
 /** Grid of small squares — one per case — colored by pass/fail, dashed for pending. */
@@ -20,16 +21,19 @@ export function Minimap({
       {run.results.map((r, i) => {
         const pass = resultPass(r);
         const selected = selectedCaseId === r.testCaseId;
-        const fill = pass === true ? 'color-mix(in srgb, var(--success) 28%, transparent)' : pass === false ? 'color-mix(in srgb, var(--danger) 28%, transparent)' : 'rgba(255,255,255,0.07)';
-        const border = selected ? 'var(--text-primary)' : pass === true ? 'color-mix(in srgb, var(--success) 55%, transparent)' : pass === false ? 'color-mix(in srgb, var(--danger) 55%, transparent)' : 'var(--border-color)';
+        const fillCls = pass === true ? 'bg-[color-mix(in_srgb,var(--success)_28%,transparent)]'
+          : pass === false ? 'bg-[color-mix(in_srgb,var(--danger)_28%,transparent)]' : 'bg-white/[0.07]';
+        const borderCls = selected ? 'border-[var(--text-primary)]'
+          : pass === true ? 'border-[color-mix(in_srgb,var(--success)_55%,transparent)]'
+            : pass === false ? 'border-[color-mix(in_srgb,var(--danger)_55%,transparent)]' : 'border-[var(--border-color)]';
         return (
           <button
             key={r.id}
             onClick={onPick ? () => onPick(r, i) : undefined}
             title={r.testCaseSummary}
             aria-label={`${r.testCaseSummary} — ${pass === true ? 'passed' : pass === false ? 'failed' : 'no result'}`}
-            className={`shrink-0 rounded-sm border transition-[box-shadow] duration-[var(--motion-fast)] ${onPick ? `cursor-pointer hover:ring-1 hover:ring-white/40 ${FOCUS_RING}` : 'cursor-default'}`}
-            style={{ width: size, height: size, background: fill, borderColor: border }}
+            className={cn('shrink-0 rounded-sm border transition-[box-shadow] duration-[var(--motion-fast)]', fillCls, borderCls, onPick ? `cursor-pointer hover:ring-1 hover:ring-white/40 ${FOCUS_RING}` : 'cursor-default')}
+            style={{ width: size, height: size }}
           />
         );
       })}
