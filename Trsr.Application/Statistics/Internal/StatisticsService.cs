@@ -62,6 +62,36 @@ internal class StatisticsService : IStatisticsService
     public Task<IReadOnlyList<CostEstimateStat>> GetCostEstimateAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
         => callStats.GetCostEstimateAsync(filter, cancellationToken);
 
+    public async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        LiveTelemetry traffic = await callStats.GetLiveTelemetryAsync(filter, now.AddMinutes(-5), now, cancellationToken);
+        string version = typeof(StatisticsService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        return traffic with { ProxyVersion = "v" + version };
+    }
+
+    public Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+        => callStats.GetTokenUsageByAgentAsync(filter, cancellationToken);
+
+    public async Task<DashboardTrends> GetDashboardTrendsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        const int buckets = 20;
+        DateTimeOffset to = filter.To ?? DateTimeOffset.UtcNow;
+        DateTimeOffset from = filter.From ?? to.AddDays(-1);
+
+        CallTrends trends = await callStats.GetCallTrendsAsync(filter, buckets, from, to, cancellationToken);
+
+        TestRunStats.Filter runFilter = await ToRunFilterAsync(filter, cancellationToken);
+        IReadOnlyList<TestRunStats> runs = await runStats.QueryAsync(runFilter, cancellationToken);
+        double[] passRate = runs
+            .Where(r => r.TestCases > 0)
+            .OrderBy(r => r.RunCompletedAt)
+            .Select(r => r.Passed / (double)r.TestCases * 100d)
+            .ToArray();
+
+        return new DashboardTrends(trends.Traces, trends.LatencyMs, trends.Throughput, passRate);
+    }
+
     public Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(Guid agentId, DateTimeOffset from, DateTimeOffset to, StatisticsBucket bucket, CancellationToken cancellationToken = default)
         => callStats.GetAgentTimeSeriesAsync(agentId, from, to, bucket, cancellationToken);
 

@@ -203,6 +203,94 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .ToArray();
     }
 
+    public async Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+        IQueryable<AgentCallEntity> q = Query(context, filter);
+
+        var raw = await q
+            .Select(c => new { c.CreatedAt, c.AgentId, c.InputTokens, c.OutputTokens })
+            .ToListAsync(cancellationToken);
+
+        return raw
+            .GroupBy(c => new { Date = DateOnly.FromDateTime(c.CreatedAt.UtcDateTime), c.AgentId })
+            .Select(g => new AgentTokenUsageStat(
+                Date: g.Key.Date,
+                AgentId: g.Key.AgentId,
+                InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
+                OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
+            .OrderBy(s => s.Date)
+            .ThenBy(s => s.AgentId)
+            .ToArray();
+    }
+
+    public async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+        IQueryable<AgentCallEntity> q = Query(context, filter)
+            .Where(c => c.CreatedAt >= since && c.CreatedAt <= now);
+
+        var rows = await q
+            .Select(c => new { c.LatencyMs, c.InputTokens, c.OutputTokens, c.HttpStatus })
+            .ToListAsync(cancellationToken);
+
+        double windowMinutes = Math.Max((now - since).TotalMinutes, 1d);
+        double windowSeconds = Math.Max((now - since).TotalSeconds, 1d);
+        long tokens = rows.Sum(r => ((long?)r.InputTokens ?? 0L) + ((long?)r.OutputTokens ?? 0L));
+        int total = rows.Count;
+        int errors = rows.Count(r => r.HttpStatus >= 400);
+        double[] sorted = rows.Where(r => r.LatencyMs != null).Select(r => r.LatencyMs ?? 0d).OrderBy(v => v).ToArray();
+
+        return new LiveTelemetry(
+            TracesPerMinute: total / windowMinutes,
+            TokensPerSecond: tokens / windowSeconds,
+            QueueDepth: 0,
+            ErrorRate: total == 0 ? 0d : errors / (double)total,
+            P95Ms: Percentile(sorted, 0.95),
+            ProxyVersion: string.Empty);
+    }
+
+    public async Task<CallTrends> GetCallTrendsAsync(StatisticsFilter filter, int buckets, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
+    {
+        buckets = Math.Max(buckets, 1);
+        StorageDbContext context = contextFactory();
+        IQueryable<AgentCallEntity> q = Query(context, filter)
+            .Where(c => c.CreatedAt >= from && c.CreatedAt <= to);
+
+        var rows = await q
+            .Select(c => new { c.CreatedAt, c.LatencyMs, c.InputTokens, c.OutputTokens })
+            .ToListAsync(cancellationToken);
+
+        double bucketSeconds = Math.Max((to - from).TotalSeconds, 1d) / buckets;
+        var traces = new double[buckets];
+        var latencySum = new double[buckets];
+        var latencyCount = new int[buckets];
+        var tokenSum = new double[buckets];
+
+        foreach (var r in rows)
+        {
+            int idx = (int)((r.CreatedAt - from).TotalSeconds / bucketSeconds);
+            idx = Math.Clamp(idx, 0, buckets - 1);
+            traces[idx] += 1;
+            tokenSum[idx] += ((long?)r.InputTokens ?? 0L) + ((long?)r.OutputTokens ?? 0L);
+            if (r.LatencyMs is { } latency)
+            {
+                latencySum[idx] += latency;
+                latencyCount[idx] += 1;
+            }
+        }
+
+        var latencyMs = new double[buckets];
+        var throughput = new double[buckets];
+        for (int i = 0; i < buckets; i++)
+        {
+            latencyMs[i] = latencyCount[i] > 0 ? latencySum[i] / latencyCount[i] : 0d;
+            throughput[i] = tokenSum[i] / bucketSeconds;
+        }
+
+        return new CallTrends(traces, latencyMs, throughput);
+    }
+
     public async Task<IReadOnlyList<AgentTimeSeriesPoint>> GetAgentTimeSeriesAsync(
         Guid agentId,
         DateTimeOffset from,

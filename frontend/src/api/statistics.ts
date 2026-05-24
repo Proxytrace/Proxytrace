@@ -6,11 +6,14 @@ import type {
   AgentPassRatePointDto,
   AgentSuitePassRateDto,
   AgentTimeSeriesPointDto,
+  AgentTokenUsageDto,
   CostEstimateDto,
+  DashboardTrendsDto,
   ErrorRateDto,
   EvaluatorOverviewDto,
   EvaluatorSparklineDto,
   LatencyStatDto,
+  LiveTelemetryDto,
   ModelBreakdownDto,
   PassRateDto,
   SummaryDto,
@@ -37,6 +40,12 @@ export const statisticsApi = {
     api.get<ErrorRateDto[]>(`/api/statistics/error-rates${qs(params ?? {})}`),
   costEstimate: (params?: { from?: string; to?: string; agentId?: string; projectId?: string; endpointId?: string }) =>
     api.get<CostEstimateDto[]>(`/api/statistics/cost-estimate${qs(params ?? {})}`),
+  liveTelemetry: (params?: { projectId?: string }) =>
+    api.get<LiveTelemetryDto>(`/api/statistics/live-telemetry${qs(params ?? {})}`),
+  tokenUsageByAgent: (params?: { from?: string; to?: string; projectId?: string }) =>
+    api.get<AgentTokenUsageDto[]>(`/api/statistics/token-usage-by-agent${qs(params ?? {})}`),
+  dashboardTrends: (params?: { from?: string; to?: string; projectId?: string }) =>
+    api.get<DashboardTrendsDto>(`/api/statistics/dashboard-trends${qs(params ?? {})}`),
 
   agentOverview: (agentId: string, params: AgentRangeParams) =>
     api.get<AgentOverviewDto>(`/api/statistics/agents/${agentId}/overview${qs(params)}`),

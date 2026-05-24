@@ -12,6 +12,9 @@ export const QUERY_KEYS = {
   statisticsPassRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-pass-rates', from, agentId, projectId ?? null] as const,
   statisticsErrorRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-error-rates', from, agentId, projectId ?? null] as const,
   statisticsCostEstimate: (from?: string, agentId?: string, projectId?: string) => ['statistics-cost-estimate', from, agentId, projectId ?? null] as const,
+  statisticsLiveTelemetry: (projectId?: string) => ['statistics-live-telemetry', projectId ?? null] as const,
+  statisticsTokenUsageByAgent: (from?: string, projectId?: string) => ['statistics-token-usage-by-agent', from, projectId ?? null] as const,
+  statisticsDashboardTrends: (from?: string, projectId?: string) => ['statistics-dashboard-trends', from, projectId ?? null] as const,
 
   agentStatsOverview: (agentId: string, rangeKey: string) => ['agent-stats-overview', agentId, rangeKey] as const,
   agentSuitePassRates: (agentId: string) => ['agent-suite-pass-rates', agentId] as const,

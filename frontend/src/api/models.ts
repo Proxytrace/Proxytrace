@@ -130,6 +130,26 @@ export interface AgentBreakdownDto {
   agentId: string;
   callCount: number;
 }
+export interface LiveTelemetryDto {
+  tracesPerMinute: number;
+  tokensPerSecond: number;
+  queueDepth: number;
+  errorRate: number;
+  p95Ms: number;
+  proxyVersion: string;
+}
+export interface AgentTokenUsageDto {
+  date: string;
+  agentId: string;
+  inputTokens: number;
+  outputTokens: number;
+}
+export interface DashboardTrendsDto {
+  traces: number[];
+  latencyMs: number[];
+  throughput: number[];
+  passRate: number[];
+}
 export interface LatencyStatDto {
   endpointId: string;
   p50Ms: number;

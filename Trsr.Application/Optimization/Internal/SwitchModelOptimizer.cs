@@ -8,11 +8,16 @@ using Trsr.Domain.TestRunGroup;
 namespace Trsr.Application.Optimization.Internal;
 
 /// <summary>
-/// Optimizer implementation that checks whether a model switch is recommended
-/// (e.g. claude-sonnet-4.5 -> claude-sonnet-4.6)
+/// Optimizer implementation that recommends switching the agent's model endpoint
+/// when an alternative wins on cost or latency without regressing pass rate.
 /// </summary>
 internal sealed class SwitchModelOptimizer : IOptimizerImplementation
 {
+    /// <summary>
+    /// Minimum relative win (vs the runner-up) the best model must have on its winning metric.
+    /// </summary>
+    private const double MinMargin = 0.10;
+
     private readonly IModelSwitchProposal.CreateNew factory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
@@ -34,48 +39,71 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         var currentRun = testRuns.FirstOrDefault(x => x.Endpoint.Id == currentEndpointId);
         var alternativeRuns = testRuns.Where(x => x.Endpoint.Id != currentEndpointId).ToList();
 
-        // we need a run that indicates the currently used endpoint, as well as least 1 alternative
+        // we need a run for the currently used endpoint, plus at least one alternative
         if (currentRun is null || alternativeRuns.Count == 0)
         {
             return [];
         }
 
-        // get statistics for test runs
         IReadOnlyList<TestRunStats> groupStats = await runStats.QueryAsync(
             new TestRunStats.Filter(GroupId: testRunGroup.Id), cancellationToken);
-        
-        // remove stats where we dont have passrate 
+
+        // pass rate is the regression gate for every comparison; drop runs that lack it
         groupStats = groupStats.Where(x => x.PassRate.HasValue).ToList();
-        
-        // too few stats to compare
+
+        // need at least a winner and a runner-up to compare against
         if (groupStats.Count < 2)
         {
             return [];
         }
-        
-        var best = getBestStats(groupStats);
-        if(best.Stats.TestRunId == currentRun.Id)
+
+        var currentStats = groupStats.FirstOrDefault(x => x.TestRunId == currentRun.Id);
+        if (currentStats is null)
         {
-            // the current run is already the best, no optimization needed
-            return []; 
+            return [];
         }
 
-        var priority = best.Diff.PassRate switch
+        // evaluate both metric paths; pick the qualifying winner that saves most vs the current model
+        Candidate? chosen = new[] { Metric.Cost, Metric.Latency }
+            .Select(metric => Evaluate(metric, groupStats, currentRun.Id, currentStats))
+            .Where(c => c is not null)
+            .Cast<Candidate>()
+            .Select(c => c)
+            .OrderByDescending(c => c.RelativeSaving)
+            .FirstOrDefault();
+
+        if (chosen is null)
         {
-            > 0.20 => Priority.Critical,
-            > 0.10 => Priority.High,
-            > 0.05 => Priority.Medium,
-            _ => Priority.Low
+            return [];
+        }
+
+        TestRunStats winner = chosen.Winner;
+        ITestRun bestRun = testRuns.First(r => r.Id == winner.TestRunId);
+
+        Priority priority = chosen.RelativeSaving switch
+        {
+            >= 0.50 => Priority.High,
+            >= 0.25 => Priority.Medium,
+            _ => Priority.Low,
         };
 
-        var currentStats = groupStats.First(x => x.TestRunId == currentRun.Id);
-        ITestRun bestRun = testRuns.First(r => r.Id == best.Stats.TestRunId);
+        decimal? costDelta = winner.Cost.HasValue && currentStats.Cost.HasValue
+            ? winner.Cost.Value - currentStats.Cost.Value
+            : null;
+        TimeSpan? latencyDelta = winner.TotalDuration.HasValue && currentStats.TotalDuration.HasValue
+            ? winner.TotalDuration.Value - currentStats.TotalDuration.Value
+            : null;
+
+        var metricLabel = chosen.Metric == Metric.Cost ? "cost" : "latency";
+        var savingPct = chosen.RelativeSaving > double.MinValue
+            ? (chosen.RelativeSaving * 100).ToString("F1")
+            : "?";
         var currentName = currentRun.Endpoint.Model.Name;
         var bestName = bestRun.Endpoint.Model.Name;
-        var passRatePct = (best.Diff.PassRate * 100)?.ToString("F1") ?? "?";
-        var rationale = $"Switching from {currentName} to {bestName} improved the pass rate by {passRatePct}% in test run evidence."
-            + (best.Diff.Cost.HasValue ? $" Cost delta: {best.Diff.Cost:+0.####;-0.####}." : "")
-            + (best.Diff.TotalDuration.HasValue ? $" Latency delta: {best.Diff.TotalDuration.Value.TotalSeconds}s" : "");
+        var rationale =
+            $"Switching from {currentName} to {bestName} cuts {metricLabel} by {savingPct}% vs current "
+            + $"with no pass-rate regression. {metricLabel}: {FormatMetric(chosen.Metric, winner)} vs "
+            + $"{FormatMetric(chosen.Metric, currentStats)}.";
 
         var proposal = factory(
             agent: testRunGroup.Suite.Agent,
@@ -83,19 +111,99 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             rationale: rationale,
             proposedEndpoint: bestRun.Endpoint,
             currentPassRate: currentStats.PassRate,
-            proposedPassRate: best.Stats.PassRate,
-            expectedCostDelta: best.Diff.Cost,
-            expectedLatencyDelta: best.Diff.TotalDuration,
+            proposedPassRate: winner.PassRate,
+            expectedCostDelta: costDelta,
+            expectedLatencyDelta: latencyDelta,
             evidenceTestRunIds: [currentRun.Id, bestRun.Id],
             abTestRun: bestRun);
 
         return [proposal];
     }
 
-    private TestRunStatsWithDiff getBestStats(params IReadOnlyCollection<TestRunStats> stats)
+    /// <summary>
+    /// Ranks all runs by <paramref name="metric"/> (lower is better, current included) and returns a
+    /// qualifying candidate when the best alternative beats the runner-up by <see cref="MinMargin"/>,
+    /// does not regress the other metric, and does not regress pass rate — all measured against the runner-up.
+    /// </summary>
+    private static Candidate? Evaluate(
+        Metric metric,
+        IReadOnlyList<TestRunStats> stats,
+        Guid currentRunId,
+        TestRunStats currentStats)
     {
-        throw new NotImplementedException();
+        var ranked = stats
+            .Where(s => GetMetric(s, metric).HasValue)
+            .OrderBy(s => GetMetric(s, metric) ?? 0d)
+            .ToList();
+
+        if (ranked.Count < 2)
+        {
+            return null;
+        }
+
+        TestRunStats winner = ranked[0];
+        TestRunStats runnerUp = ranked[1];
+
+        // current model is already best on this metric: nothing to switch to
+        if (winner.TestRunId == currentRunId)
+        {
+            return null;
+        }
+
+        double winnerValue = GetMetric(winner, metric) ?? 0d;
+        double runnerValue = GetMetric(runnerUp, metric) ?? 0d;
+
+        // winning metric: at least MinMargin better than the runner-up
+        if (runnerValue <= 0 || (runnerValue - winnerValue) / runnerValue < MinMargin)
+        {
+            return null;
+        }
+
+        // other metric: not worse than the runner-up (both values required)
+        Metric other = metric == Metric.Cost ? Metric.Latency : Metric.Cost;
+        double? winnerOther = GetMetric(winner, other);
+        double? runnerOther = GetMetric(runnerUp, other);
+        if (!winnerOther.HasValue || !runnerOther.HasValue || winnerOther.Value > runnerOther.Value)
+        {
+            return null;
+        }
+
+        // pass rate: not worse than the runner-up
+        if (!winner.PassRate.HasValue || !runnerUp.PassRate.HasValue || winner.PassRate.Value < runnerUp.PassRate.Value)
+        {
+            return null;
+        }
+
+        double? currentValue = GetMetric(currentStats, metric);
+        double relativeSaving = currentValue is > 0
+            ? (currentValue.Value - winnerValue) / currentValue.Value
+            : double.MinValue;
+
+        return new Candidate(winner, metric, relativeSaving);
     }
-    
-    private record TestRunStatsWithDiff(TestRunStats Stats, TestRunStatsAggregate Diff);
+
+    private static double? GetMetric(TestRunStats stats, Metric metric) => metric switch
+    {
+        Metric.Cost => stats.Cost.HasValue ? (double)stats.Cost.Value : null,
+        Metric.Latency => stats.TotalDuration?.TotalMilliseconds,
+        _ => null,
+    };
+
+    private static string FormatMetric(Metric metric, TestRunStats stats) 
+        => metric switch
+        {
+            Metric.Cost => stats.Cost?.ToString("0.####") ?? "?",
+            Metric.Latency => stats.TotalDuration.HasValue
+                ? $"{stats.TotalDuration.Value.TotalSeconds:F2}s"
+                : "?",
+            _ => "?",
+        };
+
+    private enum Metric
+    {
+        Cost,
+        Latency,
+    }
+
+    private sealed record Candidate(TestRunStats Winner, Metric Metric, double RelativeSaving);
 }
