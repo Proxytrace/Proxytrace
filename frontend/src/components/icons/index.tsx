@@ -418,6 +418,14 @@ export function WrenchIcon(props: IconProps) {
   );
 }
 
+export function ChevronUpIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <polyline points="18 15 12 9 6 15"/>
+    </Svg>
+  );
+}
+
 /** Counter-clockwise reset / refresh arrow. */
 export function ResetIcon(props: IconProps) {
   return (

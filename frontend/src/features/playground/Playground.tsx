@@ -259,6 +259,7 @@ export default function Playground() {
           overrides={state.overrides}
           defaultSystemPrompt={agent?.systemMessage}
           defaultParameters={agent?.modelParameters ?? null}
+          defaultToolCount={agent?.tools?.length ?? 0}
           hasAgentDefaults={!!agent}
           onChange={overrides => dispatch({ type: 'setOverrides', overrides })}
           onResetAll={() => agent && dispatch({ type: 'setOverrides', overrides: overridesFromAgent(agent) })}

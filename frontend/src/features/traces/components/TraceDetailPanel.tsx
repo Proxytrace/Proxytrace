@@ -111,8 +111,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
       <div onClick={onClose} className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]" />
 
       <div
-        className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51]"
-        style={{ boxShadow: 'var(--shadow-float)', animation: 'fade-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)' }}
+        className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51] shadow-[var(--shadow-float)] [animation:fade-up_0.25s_cubic-bezier(0.2,0.8,0.2,1)]"
       >
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
@@ -186,7 +185,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Stat band */}
-        <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0" style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }}>
+        <div className="mx-5 mt-[14px] px-4 py-[14px] bg-card-2 rounded-xl grid grid-cols-5 gap-[14px] shrink-0 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
           <DrawerStat label="Latency" value={fmtLatency(trace.durationMs)} icon={<ClockIcon size={15} strokeWidth={2.2} />} color={trace.durationMs > 3000 ? 'var(--warn)' : 'var(--teal)'} valueColor={trace.durationMs > 3000 ? 'var(--warn)' : undefined} />
           <DrawerStat label="Input" value={fmtTokens(trace.inputTokens)} icon={<ArrowDownToLineIcon size={15} strokeWidth={2.2} />} color="var(--teal)" />
           <DrawerStat label="Output" value={fmtTokens(trace.outputTokens)} icon={<ArrowUpFromLineIcon size={15} strokeWidth={2.2} />} color="var(--success)" />

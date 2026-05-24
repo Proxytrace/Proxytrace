@@ -37,8 +37,7 @@ export function TestSuitePreview({ id, hit }: Props) {
             {s.evaluators.map(e => (
               <span
                 key={e.id}
-                className="px-2 py-[2px] rounded-full text-[10.5px] font-mono"
-                style={{ background: 'color-mix(in srgb, var(--warn) 18%, transparent)', color: 'var(--warn)', border: '1px solid color-mix(in srgb, var(--warn) 28%, transparent)' }}
+                className="px-2 py-[2px] rounded-full text-[10.5px] font-mono bg-[color-mix(in_srgb,var(--warn)_18%,transparent)] text-warn border border-[color-mix(in_srgb,var(--warn)_28%,transparent)]"
               >
                 {e.kind}
               </span>

@@ -52,19 +52,16 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up"
-      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-5 fade-up bg-[rgba(0,0,0,0.65)] backdrop-blur-[8px]"
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-[20px] flex flex-col overflow-hidden"
-        style={{ boxShadow: 'var(--shadow-float)' }}
+        className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-[20px] flex flex-col overflow-hidden shadow-[var(--shadow-float)]"
       >
         {/* Header */}
         <div className="px-6 py-[18px] flex items-center gap-[14px] border-b border-hairline shrink-0">
           <div
-            className="w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0"
-            style={{ background: 'var(--grad-accent)' }}
+            className="w-9 h-9 rounded-md flex items-center justify-center text-white shrink-0 bg-[image:var(--grad-accent)]"
           >
             <PlusIcon strokeWidth={2.5} size={18} />
           </div>
@@ -172,7 +169,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                         boxShadow: isSel ? '0 0 8px var(--accent-glow)' : 'none',
                       }}
                     >
-                      {isSel && <span style={{ color: '#fff', display: 'inline-flex' }}><CheckIcon size={9} strokeWidth={3} /></span>}
+                      {isSel && <span className="text-white inline-flex"><CheckIcon size={9} strokeWidth={3} /></span>}
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-[12.5px] font-semibold truncate" style={{ color: isSel ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
@@ -188,7 +185,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             </div>
 
             {/* Stats panel */}
-            <div className="px-5 py-4 border-t border-hairline shrink-0" style={{ background: 'rgba(0,0,0,0.18)' }}>
+            <div className="px-5 py-4 border-t border-hairline shrink-0 bg-[rgba(0,0,0,0.18)]">
               {selectedSuite ? (
                 <SuiteStats suite={selectedSuite} />
               ) : (
@@ -199,7 +196,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-[14px] border-t border-hairline flex items-center justify-between gap-3 shrink-0" style={{ background: 'rgba(0,0,0,0.15)' }}>
+        <div className="px-6 py-[14px] border-t border-hairline flex items-center justify-between gap-3 shrink-0 bg-[rgba(0,0,0,0.15)]">
           <div className="text-[11.5px] min-w-0 flex-1">
             {errorMsg && <span className="text-[var(--danger)]">{errorMsg}</span>}
           </div>
@@ -256,7 +253,7 @@ function SuiteStats({ suite }: { suite: TestSuiteDto }) {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="bg-card rounded-[8px] px-2 py-[8px] text-center" style={{ boxShadow: 'inset 0 0 0 1px var(--border-color)' }}>
+    <div className="bg-card rounded-[8px] px-2 py-[8px] text-center shadow-[inset_0_0_0_1px_var(--border-color)]">
       <div className="text-[15px] font-bold font-mono" style={{ color: accent }}>{value}</div>
       <div className="text-[9px] text-muted uppercase tracking-[0.06em] mt-[1px]">{label}</div>
     </div>

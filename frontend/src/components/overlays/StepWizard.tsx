@@ -1,3 +1,5 @@
+import { CheckIcon } from '../icons';
+
 interface Step {
   label: string;
   content: React.ReactNode;
@@ -37,9 +39,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
                   }`}
                 >
                   {isDone ? (
-                    <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 8.5l3.5 3.5L13 5" />
-                    </svg>
+                    <CheckIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
                   ) : (
                     i + 1
                   )}

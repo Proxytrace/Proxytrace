@@ -1,48 +1,21 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../api/client';
+import type { InviteRow } from '../../api/invites';
 import { SkeletonList } from '../../components/ui/Skeleton';
-
-interface InviteRow {
-  id: string;
-  email: string;
-  role: 'Viewer' | 'Member' | 'Admin';
-  expiresAt: string;
-  consumedAt: string | null;
-}
-
-interface CreateInviteResponse {
-  token: string;
-  url: string;
-  expiresAt: string;
-}
+import { useCreateInvite, useInvites, useRevokeInvite } from './hooks/useInvites';
 
 export default function Invites() {
-  const qc = useQueryClient();
-  const { data, isLoading } = useQuery({
-    queryKey: ['invites'],
-    queryFn: () => api.get<InviteRow[]>('/api/auth/invites'),
-  });
+  const { data, isLoading } = useInvites();
 
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'Viewer' | 'Member' | 'Admin'>('Viewer');
+  const [role, setRole] = useState<InviteRow['role']>('Viewer');
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const create = useMutation({
-    mutationFn: () =>
-      api.post<CreateInviteResponse>('/api/auth/invites', { email, role }),
-    onSuccess: (r) => {
-      setCreatedUrl(r.url);
-      setEmail('');
-      qc.invalidateQueries({ queryKey: ['invites'] });
-    },
-  });
+  const create = useCreateInvite();
+  const revoke = useRevokeInvite();
 
-  const revoke = useMutation({
-    mutationFn: (id: string) => api.del(`/api/auth/invites/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
-  });
+  const submit = () =>
+    create.mutate({ email, role }, { onSuccess: (r) => { setCreatedUrl(r.url); setEmail(''); } });
 
   const copy = async () => {
     if (!createdUrl) return;
@@ -59,7 +32,7 @@ export default function Invites() {
         className="flex flex-wrap items-end gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate();
+          submit();
         }}
       >
         <input

@@ -142,7 +142,7 @@ export function ProjectsTab() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <h2 className="text-[20px] font-bold m-0 text-primary truncate">{selected.name}</h2>
-                    <button className="btn-icon" data-write onClick={() => setEditName(true)}>
+                    <button className="btn-icon" data-write onClick={() => { setNameDraft(selected.name); setEditName(true); }}>
                       <EditIcon size={14} />
                     </button>
                   </div>
@@ -203,7 +203,7 @@ export function ProjectsTab() {
                     <span className="text-[13px] text-primary">
                       {endpointLabel(endpoints, selected.systemEndpointId)}
                     </span>
-                    <button className="btn-icon" data-write onClick={() => setEditEndpoint(true)}>
+                    <button className="btn-icon" data-write onClick={() => { setEndpointDraft(selected.systemEndpointId); setEditEndpoint(true); }}>
                       <EditIcon size={14} />
                     </button>
                   </div>

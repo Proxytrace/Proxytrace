@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '../overlays/Modal';
+import { XIcon } from '../icons';
 import { FormField } from './FormField';
 import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
 
@@ -109,9 +110,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     className="text-muted hover:text-primary transition-colors leading-none cursor-pointer"
                     aria-label="Dismiss"
                   >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M4 4l8 8M12 4l-8 8" />
-                    </svg>
+                    <XIcon size={16} strokeWidth={1.5} />
                   </button>
                 </div>
               </div>

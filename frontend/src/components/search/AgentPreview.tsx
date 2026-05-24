@@ -36,8 +36,7 @@ export function AgentPreview({ id, hit }: Props) {
             {a.tools.map(t => (
               <span
                 key={t.name}
-                className="px-2 py-[2px] rounded-full text-[10.5px] font-mono"
-                style={{ background: 'var(--success-subtle)', color: 'var(--success)', border: '1px solid color-mix(in srgb, var(--success) 28%, transparent)' }}
+                className="px-2 py-[2px] rounded-full text-[10.5px] font-mono bg-success-subtle text-success border border-[color-mix(in_srgb,var(--success)_28%,transparent)]"
                 title={t.description}
               >
                 {t.name}

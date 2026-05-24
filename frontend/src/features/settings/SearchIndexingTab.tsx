@@ -38,7 +38,15 @@ export function SearchIndexingTab() {
 
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useSearchSettings(effectiveId);
 
-  const [draft, setDraft] = useState<SearchIndexingSettings | null>(settings ?? null);
+  // Seed the editable draft from server settings whenever the loaded settings
+  // change identity (initial load, project switch, or post-save cache update).
+  // Derive-on-change instead of an effect (BEST_PRACTICES §4.1).
+  const [draft, setDraft] = useState<SearchIndexingSettings | null>(null);
+  const [syncedSettings, setSyncedSettings] = useState<SearchIndexingSettings | null>(null);
+  if (settings && settings !== syncedSettings) {
+    setSyncedSettings(settings);
+    setDraft(settings);
+  }
 
   const { data: status, isLoading: statusLoading } = useSearchStatus(effectiveId);
 

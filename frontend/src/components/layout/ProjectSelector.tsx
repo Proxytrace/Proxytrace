@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
+import { CheckIcon, ChevronUpIcon } from '../icons';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import type { ProjectDto } from '../../api/models';
 import { projectColor } from '../../lib/colors';
@@ -59,13 +60,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
                 {memberCount} {memberCount === 1 ? 'member' : 'members'}
               </div>
             </div>
-            <svg
-              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="text-muted shrink-0"
-            >
-              <polyline points="18 15 12 9 6 15" />
-            </svg>
+            <ChevronUpIcon size={12} className="text-muted shrink-0" />
           </>
         )}
       </button>
@@ -101,13 +96,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
                     />
                     <span className="flex-1 min-w-0 truncate">{p.name}</span>
                     {active && (
-                      <svg
-                        width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                        className="text-accent shrink-0"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+                      <CheckIcon size={14} strokeWidth={2.5} className="text-accent shrink-0" />
                     )}
                   </button>
                 </li>

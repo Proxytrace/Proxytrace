@@ -16,6 +16,7 @@ interface Props {
   overrides: PlaygroundOverrides;
   defaultSystemPrompt?: string;
   defaultParameters?: ModelParametersDto | null;
+  defaultToolCount: number;
   hasAgentDefaults: boolean;
   onChange: (next: PlaygroundOverrides) => void;
   onResetAll: () => void;
@@ -79,6 +80,7 @@ export function RightRail({
   overrides,
   defaultSystemPrompt,
   defaultParameters,
+  defaultToolCount,
   hasAgentDefaults,
   onChange,
   onResetAll,
@@ -88,7 +90,7 @@ export function RightRail({
 
   const systemPromptModified = defaultSystemPrompt != null && overrides.systemPrompt !== defaultSystemPrompt;
   const parametersModified = paramsModified(overrides.parameters, defaultParameters ?? null);
-  const toolsModifiedFlag = toolsModified(overrides.tools, overrides.tools.length);
+  const toolsModifiedFlag = toolsModified(overrides.tools, defaultToolCount);
   const anyModified = systemPromptModified || parametersModified || toolsModifiedFlag;
 
   const toggle = (key: SectionKey) => setActive(prev => (prev === key ? null : key));

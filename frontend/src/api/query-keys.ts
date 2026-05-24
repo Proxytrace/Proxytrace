@@ -29,6 +29,7 @@ export const QUERY_KEYS = {
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 
+  invites: ['invites'] as const,
   providers: ['providers'] as const,
   projects: ['projects'] as const,
   project: (id: string) => ['project', id] as const,

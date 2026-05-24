@@ -114,43 +114,44 @@ For files NOT already covered by a P2 split:
 
 ---
 
-## Pre-existing bugs found (NOT fixed — refactors preserve behavior)
+## Bugs found — NOW FIXED (deliberate behavior changes, on user request)
 
 - **B1 — `ProjectsTab` edit drafts never initialize.** `nameDraft`/`endpointDraft`
   are `useState(selected?.name ?? '')` — set once at mount before `selected` has
   loaded, and never synced after. First time you click "edit name"/"edit endpoint"
   the field shows an empty/stale value (until Cancel, which resets it correctly).
-  Preserved as-is in P2.10. Fix separately (e.g. seed the draft when entering edit
-  mode, or key a `ProjectDetail` subcomponent by project id).
+  **FIXED:** the "edit name"/"edit endpoint" buttons now seed the draft from
+  `selected` when entering edit mode.
 - **B2 — `SearchIndexingTab` settings form never populates.** `draft` is
   `useState(settings ?? null)` — set once at mount before the settings query
   resolves and never synced, so `draft` stays `null` and the entire settings
   form (gated on `draft ?`) appears not to render. Same server-data-in-`useState`
-  anti-pattern as B1. Preserved as-is in P2.11. Fixing it (seed `draft` from
-  `settings`, or derive) is a deliberate behavior change — do it as its own item.
+  anti-pattern as B1. **FIXED:** `draft` now derives-on-change from `settings`
+  (re-seeds whenever the loaded settings object changes identity — initial load,
+  project switch, post-save), via a set-during-render guard (no effect).
 - **B3 — `RightRail.toolsModified()` always returns false.** Compares
   `current.length !== defaultLength` but is passed `overrides.tools.length` as
-  `defaultLength`, so it can never differ. Preserved as-is in P2.9.
+  `defaultLength`, so it can never differ. **FIXED:** RightRail now takes a
+  `defaultToolCount` prop (the agent's `tools.length`) and compares against it.
 
-## Remaining polish (P3/P4 — no hard-limit breaches or forbidden constructs left)
+## Polish — DONE
 
-These are non-blocking; the tree is fully green and conforms on every hard rule.
-- [ ] **P3 — leftover inline `style={{}}` in leaf components.** A handful of
-  mostly-static styles remain in `traces/PromoteModal.tsx` (~11),
-  `ui/ToolMessageBubble.tsx` (~18, shared primitive), `proposals/AbTestHero.tsx`
-  (runtime tone colors — mostly legit), and a few search *Preview bodies
-  (`var(--success-subtle)` etc., flagged by the search subagent). Convert the
-  static ones to Tailwind.
-- [ ] **P3 — inline `<svg>` in shared primitives.** `ui/Toast.tsx`, `ui/Select.tsx`,
-  `overlays/StepWizard.tsx`, `layout/ProjectSelector.tsx` still declare small
-  inline glyphs. These are shared chrome (not feature files), pre-existing; move
-  them into the icon module for full §6 compliance. (`suites/SuiteCard.tsx` keeps
-  one inline `<svg>` — a data-driven sparkline, NOT an icon: legit exception.)
-- [ ] **P3 — `admin/Invites.tsx` (158 lines).** Small admin page with 3 raw
-  queries; optionally extract to a hook (under the size limit, low priority).
-- [ ] **P4 — dead code:** `features/evaluators/EvaluatorStatsBlock.tsx` has no
-  importers — recommend deletion.
-- [ ] **P4 — redundant `useMemo`/`useCallback` sweep; import ordering.**
+- [x] **P3 — static inline `style={{}}` in leaf/shared components.**
+  `ToolMessageBubble` (16 converted, 3 runtime kept), `Card` (both runtime),
+  `traces/PromoteModal` (7 converted), `TraceDetailPanel` (2), search
+  `AgentPreview`/`TestSuitePreview` token chips → Tailwind. All remaining inline
+  styles verified runtime (lib/colors hex, data-driven %/px, runtime color-mix).
+- [x] **P3 — inline `<svg>` in shared primitives.** `Select`→ChevronDownIcon,
+  `Toast`→XIcon, `StepWizard`→CheckIcon, `ProjectSelector`→ChevronUpIcon/CheckIcon
+  (added `ChevronUpIcon` to the icon module). Only remaining feature `<svg>` is
+  `SuiteCard`'s data-driven sparkline (legit, not an icon).
+- [x] **P3 — `admin/Invites.tsx` (158 → 130).** New `api/invites.ts` service +
+  `QUERY_KEYS.invites` + `features/admin/hooks/useInvites.ts`; page now has 0 raw
+  queries.
+- [x] **P4 — dead code:** deleted `features/evaluators/EvaluatorStatsBlock.tsx`
+  (no importers; its sub-components stay, used by `EvaluatorDetail`).
+- [ ] **P4 — redundant `useMemo`/`useCallback` sweep.** Optional/low-value;
+  lint is clean and import ordering is eslint-enforced. Left as a future nicety.
 
 ## Documented exceptions (not violations)
 
