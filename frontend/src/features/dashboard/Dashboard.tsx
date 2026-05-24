@@ -45,10 +45,11 @@ interface StatTileProps {
   deltaUp?: boolean;
   trace?: number[];
   traceColor: string;
+  traceFormat?: (v: number) => string;
   accent?: boolean;
 }
 
-function StatTile({ icon, label, value, unit, sub, delta, deltaUp = true, trace, traceColor, accent }: StatTileProps) {
+function StatTile({ icon, label, value, unit, sub, delta, deltaUp = true, trace, traceColor, traceFormat, accent }: StatTileProps) {
   return (
     <div
       className="relative overflow-hidden rounded-xl px-3 pt-[10px] flex flex-col gap-[5px] min-h-[88px] bg-card shadow-[var(--shadow-card)]"
@@ -79,8 +80,8 @@ function StatTile({ icon, label, value, unit, sub, delta, deltaUp = true, trace,
         <div className="text-[9.5px] text-muted mt-[3px] font-mono">{sub}</div>
       </div>
       {trace && trace.length >= 2 && (
-        <div className="mt-auto -mx-3 relative pointer-events-none">
-          <MiniArea data={trace} color={traceColor} height={26} fillOpacity={accent ? 0.22 : 0.14} />
+        <div className="mt-auto -mx-3 relative">
+          <MiniArea data={trace} color={traceColor} height={26} fillOpacity={accent ? 0.22 : 0.14} formatValue={traceFormat} />
         </div>
       )}
     </div>
@@ -275,10 +276,10 @@ export default function Dashboard() {
     const dates = [...byDate.keys()].sort();
     const data: StackedDatum[] = dates.map(d => ({
       label: new Date(d).toLocaleDateString('en-US', { weekday: 'short' }),
-      segments: ids.map(id => ({ value: byDate.get(d)?.get(id) ?? 0, color: agentColor(id) })),
+      segments: ids.map(id => ({ value: byDate.get(d)?.get(id) ?? 0, color: agentColor(id), label: agentNameById.get(id) ?? id.slice(0, 6) })),
     }));
     return { data, agentIds: ids };
-  }, [tokenByAgentData]);
+  }, [tokenByAgentData, agentNameById]);
 
   const tele = (v: string | number | undefined, fmt?: (n: number) => string) =>
     v === undefined || v === null ? '—' : typeof v === 'number' && fmt ? fmt(v) : String(v);
@@ -373,7 +374,7 @@ export default function Dashboard() {
               <>
                 <div className="flex h-2.5 rounded-sm overflow-hidden gap-0.5">
                   {modelSplit.models.map(m => (
-                    <div key={m.name} style={{ flexGrow: m.tokens / modelSplit.total, background: modelColor(m.name) }} />
+                    <div key={m.name} title={`${m.name}: ${fmtTokens(m.tokens)} tokens (${Math.round((m.tokens / modelSplit.total) * 100)}%)`} style={{ flexGrow: m.tokens / modelSplit.total, background: modelColor(m.name) }} />
                   ))}
                 </div>
                 <div className="flex gap-[18px] text-body-sm font-mono flex-wrap">
@@ -394,10 +395,10 @@ export default function Dashboard() {
 
         {/* 2×2 stat tiles */}
         <div className="grid grid-cols-2 grid-rows-2 gap-2">
-          <StatTile accent icon={<ActivityIcon size={11} />} label="Traces" value={(summary?.totalCalls ?? 0).toLocaleString()} sub="LLM calls captured" delta="+24%" trace={trends?.traces} traceColor="var(--accent-primary)" />
-          <StatTile icon={<ClockIcon size={11} />} label="Avg Latency" value={String(Math.round(summary?.avgLatencyMs ?? 0))} unit="ms" sub={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'} delta="-8%" trace={trends?.latencyMs} traceColor="var(--warn)" />
-          <StatTile icon={<ZapIcon size={11} />} label="Throughput" value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'} unit="t/s" sub={telemetry ? `p95 ${fmtLatency(telemetry.p95Ms)}` : 'awaiting telemetry'} delta="+18%" trace={trends?.throughput} traceColor="var(--teal)" />
-          <StatTile icon={<TargetIcon size={11} />} label="Pass Rate" value={String(passPct)} unit="%" sub="latest suite run" delta="+7pt" trace={trends?.passRate} traceColor="var(--success)" />
+          <StatTile accent icon={<ActivityIcon size={11} />} label="Traces" value={(summary?.totalCalls ?? 0).toLocaleString()} sub="LLM calls captured" delta="+24%" trace={trends?.traces} traceColor="var(--accent-primary)" traceFormat={v => `${Math.round(v)} traces`} />
+          <StatTile icon={<ClockIcon size={11} />} label="Avg Latency" value={String(Math.round(summary?.avgLatencyMs ?? 0))} unit="ms" sub={latencyStats ? `p95 ${fmtLatency(latencyStats.p95)} · p99 ${fmtLatency(latencyStats.p99)}` : '—'} delta="-8%" trace={trends?.latencyMs} traceColor="var(--warn)" traceFormat={v => fmtLatency(v)} />
+          <StatTile icon={<ZapIcon size={11} />} label="Throughput" value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'} unit="t/s" sub={telemetry ? `p95 ${fmtLatency(telemetry.p95Ms)}` : 'awaiting telemetry'} delta="+18%" trace={trends?.throughput} traceColor="var(--teal)" traceFormat={v => `${Math.round(v)} t/s`} />
+          <StatTile icon={<TargetIcon size={11} />} label="Pass Rate" value={String(passPct)} unit="%" sub="latest suite run" delta="+7pt" trace={trends?.passRate} traceColor="var(--success)" traceFormat={v => `${v.toFixed(0)}% pass`} />
         </div>
       </div>
 
@@ -497,7 +498,7 @@ export default function Dashboard() {
           </header>
           <div className="px-3 pb-3">
             {tokenByAgent.data.length > 0 ? (
-              <StackedBar data={tokenByAgent.data} height={160} />
+              <StackedBar data={tokenByAgent.data} height={160} formatValue={v => `${fmtTokens(v)} tokens`} />
             ) : (
               <div className="h-[160px] flex items-center justify-center"><EmptyState title="No agent token data" description="Per-agent token usage appears once the backend stat is implemented." /></div>
             )}
@@ -512,7 +513,7 @@ export default function Dashboard() {
           </header>
           <div className="px-3 pb-3">
             {latencyHist.length > 0 ? (
-              <Histogram data={latencyHist} height={130} color="var(--teal)" />
+              <Histogram data={latencyHist} height={130} color="var(--teal)" formatValue={v => `${v} sample${v === 1 ? '' : 's'}`} />
             ) : (
               <div className="h-[130px] flex items-center justify-center"><EmptyState title="No samples" description="Latency stats appear after traces arrive." /></div>
             )}

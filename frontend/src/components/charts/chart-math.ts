@@ -100,9 +100,9 @@ export function computeHistogram(
   return { rects, barsPath, baselineY: padT + h };
 }
 
-export interface StackedSegment { value: number; color: string; }
+export interface StackedSegment { value: number; color: string; label?: string; }
 export interface StackedDatum { label: string; segments: StackedSegment[]; }
-export interface StackedRect { x: number; y: number; w: number; h: number; color: string; top: boolean; }
+export interface StackedRect { x: number; y: number; w: number; h: number; color: string; top: boolean; value: number; label: string; }
 export interface StackedBar { rects: StackedRect[]; centerX: number; label: string; total: number; }
 export interface StackedBarData { bars: StackedBar[]; grid: GridLine[]; solidGridPath: string; dashedGridPath: string; baselineY: number; plotL: number; plotR: number; }
 
@@ -127,7 +127,7 @@ export function computeStackedBar(data: StackedDatum[], width: number, height: n
       const segH = (seg.value / max) * h;
       const y = cursor - segH;
       cursor = y;
-      return { x, y, w: bw, h: Math.max(segH, 0), color: seg.color, top: j === positive.length - 1 };
+      return { x, y, w: bw, h: Math.max(segH, 0), color: seg.color, top: j === positive.length - 1, value: seg.value, label: seg.label ?? d.label };
     });
     return { rects, centerX: x + bw / 2, label: d.label, total: totals[i] };
   });

@@ -4,12 +4,12 @@ import { testRunGroupsApi } from '../../api/test-run-groups';
 import { agentsApi } from '../../api/agents';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { TestRunStatus, EvaluatorKind, EvaluationScore, EvaluationStatus, type EvaluationResultDto, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
+import { TestRunStatus, EvaluatorKind, EvaluationScore, type EvaluationResultDto, type TestRunDto, type TestRunGroupDto, type TestResultDto, type TestRunEvent } from '../../api/models';
 
 const PASSING_SCORES = new Set<EvaluationScore>([EvaluationScore.Acceptable, EvaluationScore.Good, EvaluationScore.Excellent]);
+const isErrored = (e: EvaluationResultDto) => e.errorMessage !== null;
 const isPass = (e: EvaluationResultDto) =>
-  e.status === EvaluationStatus.Succeeded && e.score !== null && PASSING_SCORES.has(e.score);
-const isErrored = (e: EvaluationResultDto) => e.status === EvaluationStatus.Errored;
+  !isErrored(e) && e.score !== null && PASSING_SCORES.has(e.score);
 import { GridIcon, TableIcon, TrashIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { useTestRunGroupStream } from '../../api/event-stream';
@@ -51,7 +51,7 @@ function resultPass(r: TestResultDto): boolean | null {
 }
 
 function resultScore(r: TestResultDto): number | null {
-  const succeeded = r.evaluations.filter(e => e.status === EvaluationStatus.Succeeded);
+  const succeeded = r.evaluations.filter(e => !isErrored(e));
   if (succeeded.length === 0) return null;
   const passed = succeeded.filter(e => isPass(e)).length;
   return passed / succeeded.length;

@@ -7,7 +7,6 @@ export enum TestRunStatus {
 }
 
 export enum EvaluationScore { Terrible = 'Terrible', Bad = 'Bad', Acceptable = 'Acceptable', Good = 'Good', Excellent = 'Excellent' }
-export enum EvaluationStatus { Succeeded = 'Succeeded', Errored = 'Errored' }
 
 export enum EvaluatorKind {
   Agentic = 'Agentic',
@@ -299,7 +298,6 @@ export interface EvaluationResultDto {
   evaluatorId: string;
   evaluatorKind: EvaluatorKind;
   evaluatorName: string;
-  status: EvaluationStatus;
   score: EvaluationScore | null;
   reasoning: string | null;
   errorMessage: string | null;

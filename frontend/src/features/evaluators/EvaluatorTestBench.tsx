@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { EvaluationScore, EvaluationStatus, type EvaluationResultDto, type MessageDto } from '../../api/models';
+import { EvaluationScore, type EvaluationResultDto, type MessageDto } from '../../api/models';
 import { evaluatorTestBenchApi } from '../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Card } from '../../components/ui/Card';
@@ -272,7 +272,7 @@ function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading
     );
   }
   if (!result) return null;
-  if (result.status === EvaluationStatus.Errored) {
+  if (result.errorMessage !== null) {
     const color = 'var(--warn)';
     return (
       <div className="flex items-center gap-1.5">
