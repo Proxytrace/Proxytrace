@@ -22,6 +22,12 @@ import {
   fixtureSummary,
   patchGroupsWithResult,
 } from './results';
+import {
+  buildLeaderboard,
+  buildEvaluatorHeatmap,
+  matrixCounts,
+  filterSortMatrixRows,
+} from './comparison';
 
 function evaluation(over: Partial<EvaluationResultDto> = {}): EvaluationResultDto {
   return {
@@ -191,6 +197,106 @@ describe('buildMatrixRows', () => {
     const bRow = buildMatrixRows([r1, r2]).find(r => r.caseId === 'b');
     expect(bRow?.summary).toBe('B');
     expect(bRow?.cells.every(c => c.result === null && c.pass === null)).toBe(true);
+  });
+});
+
+describe('buildLeaderboard', () => {
+  function lbRun(over: Partial<TestRunDto>): TestRunDto {
+    return {
+      id: 'r', endpointName: 'm', status: TestRunStatus.Completed,
+      totalCases: 10, passedCases: 8, failedCases: 2, results: new Array(10).fill(0).map((_, i) => ({ testCaseId: `c${i}` })),
+      durationMs: 1000, costUsd: 0.5, tokensIn: 100, tokensOut: 50, ...over,
+    } as TestRunDto;
+  }
+
+  it('flags best pass rate, fastest and cheapest among completed runs', () => {
+    const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
+    const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
+    const [ea, eb] = buildLeaderboard([a, b]);
+    expect(ea.passRate).toBe(90);
+    expect(ea.isBest).toBe(true);
+    expect(eb.isFastest).toBe(true);
+    expect(eb.isCheapest).toBe(true);
+    expect(eb.deltaVsBest).toBe(30);
+    expect(ea.deltaVsBest).toBeNull();
+  });
+
+  it('derives pending from totalCases minus delivered results', () => {
+    const r = lbRun({ totalCases: 10, passedCases: 4, failedCases: 1, results: [{ testCaseId: 'c0' }, { testCaseId: 'c1' }, { testCaseId: 'c2' }, { testCaseId: 'c3' }, { testCaseId: 'c4' }] as TestResultDto[] });
+    const [e] = buildLeaderboard([r]);
+    expect(e.pending).toBe(5);
+    expect(e.passRate).toBe(80); // 4 / (4+1)
+  });
+
+  it('excludes non-completed runs from winner selection', () => {
+    const done = lbRun({ id: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
+    const running = lbRun({ id: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
+    const entries = buildLeaderboard([done, running]);
+    expect(entries.find(e => e.run.id === 'd')?.isBest).toBe(true);
+    expect(entries.find(e => e.run.id === 'x')?.isBest).toBe(false);
+  });
+});
+
+describe('buildEvaluatorHeatmap', () => {
+  function hmRun(id: string, evaluations: EvaluationResultDto[][]): TestRunDto {
+    return {
+      id, endpointName: id, status: TestRunStatus.Completed,
+      evaluators: [{ id: 'ev', kind: EvaluatorKind.ExactMatch, name: 'Exact' }],
+      results: evaluations.map((evals, i) => ({ id: `${id}-${i}`, testCaseId: `c${i}`, testCaseSummary: '', actualResponse: '', evaluations: evals, durationMs: 1 })),
+    } as TestRunDto;
+  }
+
+  it('tallies score buckets and pass rate per evaluator × model', () => {
+    const run = hmRun('m', [
+      [evaluation({ score: EvaluationScore.Excellent })],
+      [evaluation({ score: EvaluationScore.Bad })],
+      [evaluation({ score: null, errorMessage: 'boom' })],
+    ]);
+    const group = { runs: [run] } as TestRunGroupDto;
+    const [row] = buildEvaluatorHeatmap(group);
+    expect(row.evaluator.name).toBe('Exact');
+    const cell = row.cells[0];
+    expect(cell.total).toBe(3);
+    expect(cell.dist[EvaluationScore.Excellent]).toBe(1);
+    expect(cell.dist[EvaluationScore.Bad]).toBe(1);
+    expect(cell.dist.Error).toBe(1);
+    expect(cell.passRate).toBe(33); // 1 of 3 passing
+  });
+
+  it('returns a null pass rate for a model with no judgements', () => {
+    const group = { runs: [hmRun('m', [])] } as TestRunGroupDto;
+    const [row] = buildEvaluatorHeatmap(group);
+    expect(row.cells[0].passRate).toBeNull();
+  });
+});
+
+describe('matrixCounts / filterSortMatrixRows', () => {
+  function cr(testCaseId: string, evals: EvaluationResultDto[]): TestResultDto {
+    return { id: `${testCaseId}-r`, testCaseId, testCaseSummary: testCaseId, actualResponse: '', evaluations: evals, durationMs: 100 };
+  }
+  function run(id: string, results: TestResultDto[]): TestRunDto {
+    return { id, endpointName: id, results, testCases: [] as { id: string; summary: string }[] } as TestRunDto;
+  }
+  // a: divergent (pass/fail), b: all fail, c: all pass
+  const r1 = run('m1', [cr('a', [PASS]), cr('b', [FAIL]), cr('c', [PASS])]);
+  const r2 = run('m2', [cr('a', [FAIL]), cr('b', [FAIL]), cr('c', [PASS])]);
+  const rows = buildMatrixRows([r1, r2]);
+
+  it('counts each filter category', () => {
+    expect(matrixCounts(rows)).toEqual({ all: 3, divergent: 1, failing: 2, passing: 1 });
+  });
+
+  it('filters to divergent / failing / passing', () => {
+    expect(filterSortMatrixRows(rows, 'divergent', 'order').map(r => r.caseId)).toEqual(['a']);
+    expect(filterSortMatrixRows(rows, 'passing', 'order').map(r => r.caseId)).toEqual(['c']);
+    expect(filterSortMatrixRows(rows, 'failing', 'order').map(r => r.caseId).sort()).toEqual(['a', 'b']);
+  });
+
+  it('sorts worst-first by minimum cell score', () => {
+    // distinct per-cell scores: b → 0, a → 0.5, c → 1
+    const wr = run('m', [cr('a', [PASS, FAIL]), cr('b', [FAIL, FAIL]), cr('c', [PASS, PASS])]);
+    const worst = filterSortMatrixRows(buildMatrixRows([wr]), 'all', 'worst').map(r => r.caseId);
+    expect(worst).toEqual(['b', 'a', 'c']);
   });
 });
 

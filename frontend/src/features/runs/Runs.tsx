@@ -40,8 +40,8 @@ export default function Runs() {
   };
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-3.5">
-      <div className="fade-up grid gap-3.5 items-start grid-cols-[280px_1fr] [animation-delay:40ms]">
+    <div className="w-full min-w-0 flex flex-col gap-3.5 px-1 pt-1">
+      <div className="fade-up grid gap-4 items-start grid-cols-[280px_1fr] [animation-delay:40ms]">
         {/* Left: group list */}
         <div className="flex flex-col gap-2 min-w-0">
           <div className="flex">

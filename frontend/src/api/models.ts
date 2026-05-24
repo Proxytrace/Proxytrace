@@ -326,6 +326,10 @@ export interface TestRunDto {
   passedCases: number;
   failedCases: number;
   passRate: number;
+  /** Run-level totals aggregated across every test result (null until completed). */
+  costUsd: number | null;
+  tokensIn: number | null;
+  tokensOut: number | null;
   evaluators: RunEvaluatorDto[];
   startedAt: string;
   completedAt: string | null;

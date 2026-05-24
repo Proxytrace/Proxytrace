@@ -1,30 +1,32 @@
-import { useState, Fragment } from 'react';
-import type { TestRunGroupDto } from '../../api/models';
+import { useState, useMemo, Fragment } from 'react';
+import type { TestRunGroupDto, EvaluationResultDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
+import { cn } from '../../lib/cn';
 import { fmtDuration } from '../../lib/format';
-import { modelColor } from '../../lib/colors';
 import { CheckIcon, XIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
-import { scoreColor, passRateColor, passRatePercent, avgLatency, buildMatrixRows } from './results';
+import { passRateColor, passRatePercent, avgLatency, buildMatrixRows, isErrored, isEvalPass } from './results';
+import { matrixCounts, filterSortMatrixRows, type MatrixFilter, type MatrixSort } from './comparison';
+import { ModelTag } from './components/ModelTag';
 import { SegmentedToggle } from './components/SegmentedToggle';
 import { ComparisonDrawer } from './drawers';
 
 /** Cases × models grid, divergence-first. */
-export function MatrixView({ group, activeCaseIds, onSelectModel }: {
+export function MatrixView({ group, activeCaseIds }: {
   group: TestRunGroupDto;
   activeCaseIds?: Set<string>;
-  onSelectModel: (runId: string) => void;
 }) {
   const runs = group.runs;
-  const [divergentOnly, setDivergentOnly] = useState(false);
+  const [filter, setFilter] = useState<MatrixFilter>('all');
+  const [sort, setSort] = useState<MatrixSort>('order');
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
-  const allRows = buildMatrixRows(runs);
-  const totalCount = allRows.length;
-  const divergentCount = allRows.filter(r => r.divergent).length;
-  const rows = divergentOnly ? allRows.filter(r => r.divergent) : allRows;
+  const allRows = useMemo(() => buildMatrixRows(runs), [runs]);
+  const counts = useMemo(() => matrixCounts(allRows), [allRows]);
+  const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort), [allRows, filter, sort]);
 
-  const gridCols = `minmax(200px,2fr) repeat(${runs.length}, minmax(96px,1fr))`;
+  const multi = runs.length > 1;
+  const gridCols = `minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`;
   const selIdx = selectedCase ? rows.findIndex(r => r.caseId === selectedCase.caseId) : -1;
 
   return (
@@ -32,68 +34,101 @@ export function MatrixView({ group, activeCaseIds, onSelectModel }: {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-h2 font-semibold">Model comparison</span>
+          <span className="text-h2 font-semibold">Test case matrix</span>
           <span className="text-body-sm text-muted">
-            {divergentCount > 0
-              ? <><span className="text-accent font-semibold">{divergentCount}</span> of {totalCount} cases differ</>
-              : `${totalCount} cases — all models agree`}
+            {multi
+              ? <>{counts.all} cases × {runs.length} models — divergent rows striped</>
+              : `${counts.all} cases × 1 model`}
           </span>
         </div>
-        <SegmentedToggle
-          value={divergentOnly ? 'divergent' : 'all'}
-          onChange={v => setDivergentOnly(v === 'divergent')}
-          segments={[{ value: 'all', label: 'All cases' }, { value: 'divergent', label: 'Divergent', count: divergentCount }]}
-        />
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <SegmentedToggle
+            value={filter}
+            onChange={setFilter}
+            segments={[
+              { value: 'all', label: 'All', count: counts.all },
+              ...(multi ? [{ value: 'divergent' as const, label: 'Divergent', count: counts.divergent }] : []),
+              { value: 'failing', label: 'Failing', count: counts.failing },
+              { value: 'passing', label: 'Passing', count: counts.passing },
+            ]}
+          />
+          <SegmentedToggle
+            value={sort}
+            onChange={setSort}
+            segments={[{ value: 'order', label: 'Order' }, { value: 'worst', label: 'Worst' }]}
+          />
+        </div>
       </div>
 
       {/* Matrix */}
       {rows.length === 0 ? (
-        <div className="py-[60px] text-center text-muted text-body">No divergent cases — every model returned the same verdict.</div>
+        <div className="py-[60px] text-center text-muted text-body">No cases match this filter.</div>
       ) : (
         <div className="overflow-auto max-h-[70vh]">
-          <div className="grid" style={{ gridTemplateColumns: gridCols }}>
+          <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
             {/* Header */}
-            <div className="sticky top-0 left-0 z-30 bg-card px-4 py-2.5 border-b border-hairline text-title font-semibold text-secondary">Test case</div>
+            <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]">Test case</div>
+            <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right">Lat</div>
             {runs.map(run => (
-              <button
-                key={run.id}
-                onClick={() => onSelectModel(run.id)}
-                title={`Open ${run.endpointName}`}
-                className={`sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center justify-center gap-1.5 cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)] ${FOCUS_RING}`}
-              >
-                <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: modelColor(run.endpointName) }} />
-                <span className="mono text-body-sm font-semibold truncate">{run.endpointName}</span>
-              </button>
+              <div key={run.id} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
+                <ModelTag name={run.endpointName} size="xs" />
+              </div>
             ))}
 
             {/* Rows */}
-            {rows.map(row => {
-              const rowCls = row.divergent ? 'bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)]' : '';
+            {rows.map((row, ri) => {
+              const withResult = row.cells.filter(c => c.result);
+              const passes = withResult.filter(c => c.pass === true).length;
+              const total = withResult.length;
+              const isSelected = selectedCase?.caseId === row.caseId;
+              const stripe = row.divergent ? 'shadow-[inset_3px_0_0_var(--warn)]' : '';
+              const selBg = isSelected ? 'bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]' : '';
+              const avg = row.cells.map(c => c.result?.durationMs).filter((d): d is number => d != null);
+              const avgMs = avg.length ? avg.reduce((a, b) => a + b, 0) / avg.length : null;
+
               return (
                 <Fragment key={row.caseId}>
+                  {/* Full-width row separator */}
+                  {ri > 0 && <div aria-hidden className="h-px bg-hairline" style={{ gridColumn: '1 / -1' }} />}
+
+                  {/* Test case + verdict / divergence indicator */}
                   <button
                     onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary })}
-                    className={`sticky left-0 z-10 bg-card px-4 py-2.5 border-b border-hairline flex items-center min-w-0 text-left cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)] ${FOCUS_RING} ${row.divergent ? 'shadow-[inset_3px_0_0_var(--accent-primary)]' : ''}`}
+                    className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 text-left cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
                     title={`Compare all models — ${row.summary}`}
                   >
-                    <span className="truncate text-body">{row.summary}</span>
+                    {multi ? (
+                      <span className="mono text-caption font-bold px-1 py-0.5 rounded-sm shrink-0" style={divChipStyle(row.divergent, passes, total)}>{passes}/{total}</span>
+                    ) : (
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: verdictDot(withResult[0]?.pass) }} />
+                    )}
+                    <span className="flex flex-col min-w-0">
+                      <span className="truncate text-body">{row.summary}</span>
+                      <span className="mono text-caption text-muted truncate">{row.caseId.slice(0, 8)}</span>
+                    </span>
                   </button>
+
+                  {/* Avg latency */}
+                  <div className={cn('px-3 py-2.5 flex items-center justify-end', selBg)}>
+                    <span className="mono text-caption text-muted">{avgMs !== null ? fmtDuration(avgMs) : '—'}</span>
+                  </div>
+
+                  {/* Per-model cells */}
                   {row.cells.map((cell, ci) => (
-                    <div key={ci} className={`border-b border-hairline flex items-stretch ${rowCls}`}>
+                    <div key={ci} className={cn('flex items-stretch', selBg)}>
                       {cell.result ? (
                         <button
                           onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusRunId: cell.run.id })}
-                          title={`${cell.run.endpointName}: ${cell.pass === true ? 'pass' : cell.pass === false ? 'fail' : 'no result'} — click to compare all models`}
-                          className={`w-full px-3 py-2.5 flex items-center justify-center gap-1.5 cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)] ${FOCUS_RING}`}
+                          title={`${cell.run.endpointName}: ${cell.pass === true ? 'pass' : cell.pass === false ? 'fail' : 'no verdict'} — click to compare`}
+                          className={cn('w-full px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', FOCUS_RING)}
                         >
                           {cell.pass === true ? <CheckIcon size={12} strokeWidth={2.5} className="text-success shrink-0" />
                             : cell.pass === false ? <XIcon size={12} strokeWidth={2.5} className="text-danger shrink-0" /> : null}
-                          {cell.score !== null && (
-                            <span className="mono text-body-sm font-semibold" style={{ color: scoreColor(cell.score) }}>{cell.score.toFixed(2)}</span>
-                          )}
+                          <EvalDots evaluations={cell.result.evaluations} />
+                          <span className="mono text-caption text-muted shrink-0">{fmtDuration(cell.result.durationMs)}</span>
                         </button>
                       ) : (
-                        <span className="w-full px-3 py-2.5 flex items-center justify-center text-muted">
+                        <span className="w-full px-3 py-2.5 flex items-center text-muted">
                           {activeCaseIds?.has(row.caseId)
                             ? <span className="pulse-dot w-1.5 h-1.5 rounded-full bg-accent inline-block" />
                             : '—'}
@@ -106,12 +141,13 @@ export function MatrixView({ group, activeCaseIds, onSelectModel }: {
             })}
 
             {/* Footer: pass rate + avg latency per model */}
-            <div className="sticky bottom-0 left-0 z-30 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary">Pass rate</div>
+            <div className="sticky bottom-0 z-20 bg-card px-4 py-2.5 border-t border-hairline text-body-sm font-semibold text-secondary">Pass rate</div>
+            <div className="sticky bottom-0 z-20 bg-card border-t border-hairline" />
             {runs.map(run => {
-              const pr = passRatePercent(run.passedCases, run.totalCases);
+              const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);
               const avg = avgLatency(run);
               return (
-                <div key={run.id} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-center justify-center gap-0.5">
+                <div key={run.id} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-start justify-center gap-0.5">
                   <span className="mono text-title font-bold" style={{ color: passRateColor(pr) }}>{pr !== null ? `${pr}%` : '—'}</span>
                   <span className="mono text-caption text-muted">{avg !== null ? `~${fmtDuration(avg)}` : '—'}</span>
                 </div>
@@ -130,16 +166,35 @@ export function MatrixView({ group, activeCaseIds, onSelectModel }: {
           total={rows.length}
           focusRunId={selectedCase.focusRunId}
           onClose={() => setSelectedCase(null)}
-          onPrev={selIdx > 0 ? () => {
-            const prev = rows[selIdx - 1];
-            setSelectedCase({ caseId: prev.caseId, summary: prev.summary });
-          } : undefined}
-          onNext={selIdx < rows.length - 1 ? () => {
-            const next = rows[selIdx + 1];
-            setSelectedCase({ caseId: next.caseId, summary: next.summary });
-          } : undefined}
+          onPrev={selIdx > 0 ? () => { const p = rows[selIdx - 1]; setSelectedCase({ caseId: p.caseId, summary: p.summary }); } : undefined}
+          onNext={selIdx < rows.length - 1 ? () => { const n = rows[selIdx + 1]; setSelectedCase({ caseId: n.caseId, summary: n.summary }); } : undefined}
         />
       )}
     </Card>
   );
+}
+
+/** One dot per evaluator (left→right = suite order), colored pass/fail/error. */
+function EvalDots({ evaluations }: { evaluations: EvaluationResultDto[] }) {
+  return (
+    <span className="flex items-center gap-1">
+      {evaluations.map((e, i) => (
+        <span
+          key={i}
+          title={`${e.evaluatorName}: ${isErrored(e) ? 'error' : isEvalPass(e) ? 'pass' : 'fail'}`}
+          className={cn('w-2 h-2 rounded-full shrink-0', isErrored(e) ? 'bg-warn' : isEvalPass(e) ? 'bg-success' : 'bg-danger')}
+        />
+      ))}
+    </span>
+  );
+}
+
+function verdictDot(pass: boolean | null | undefined): string {
+  return pass === true ? 'var(--success)' : pass === false ? 'var(--danger)' : 'var(--text-muted)';
+}
+
+function divChipStyle(divergent: boolean, passes: number, total: number): React.CSSProperties {
+  if (divergent) return { background: 'color-mix(in srgb, var(--warn) 18%, transparent)', color: 'var(--warn)' };
+  if (passes === total) return { color: 'var(--text-muted)' };
+  return { background: 'color-mix(in srgb, var(--danger) 18%, transparent)', color: 'var(--danger)' };
 }
