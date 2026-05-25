@@ -2,7 +2,9 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Evaluators;
+using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Application.Evaluator;
+using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluator;
@@ -12,6 +14,7 @@ using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -36,6 +39,8 @@ public class EvaluatorsController : ControllerBase
     private readonly IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting;
     private readonly IAgenticEvaluatorPresets agenticPresets;
     private readonly ITestResultRepository testResults;
+    private readonly ITestSuiteRepository testSuites;
+    private readonly IEvaluatorStatsReader evaluatorStats;
     private readonly ITransaction transaction;
 
     public EvaluatorsController(
@@ -55,6 +60,8 @@ public class EvaluatorsController : ControllerBase
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting,
         IAgenticEvaluatorPresets agenticPresets,
         ITestResultRepository testResults,
+        ITestSuiteRepository testSuites,
+        IEvaluatorStatsReader evaluatorStats,
         ITransaction transaction)
     {
         this.createAgent = createAgent;
@@ -73,6 +80,8 @@ public class EvaluatorsController : ControllerBase
         this.createJsonSchemaMatchExisting = createJsonSchemaMatchExisting;
         this.agenticPresets = agenticPresets;
         this.testResults = testResults;
+        this.testSuites = testSuites;
+        this.evaluatorStats = evaluatorStats;
         this.transaction = transaction;
     }
 
@@ -100,6 +109,61 @@ public class EvaluatorsController : ControllerBase
             return NotFound();
         var evaluator = await evaluatorRepository.GetAsync(id, cancellationToken);
         return ToDto(evaluator);
+    }
+
+    [HttpGet("overview")]
+    public async Task<EvaluatorsOverviewDto> GetOverview(
+        [FromQuery] Guid? projectId = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        CancellationToken cancellationToken = default)
+    {
+        Task<IReadOnlyList<IEvaluator>> evaluatorsTask = projectId.HasValue
+            ? evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
+            : evaluatorRepository.GetAllAsync(cancellationToken);
+        Task<IReadOnlyList<ITestSuite>> suitesTask = projectId.HasValue
+            ? testSuites.GetByProjectAsync(projectId.Value, cancellationToken)
+            : testSuites.GetAllAsync(cancellationToken);
+        Task<IReadOnlyList<EvaluatorSparklineStat>> sparklinesTask = projectId.HasValue && from.HasValue && to.HasValue
+            ? evaluatorStats.GetSparklinesAsync(projectId.Value, from.Value, to.Value, bucket, cancellationToken)
+            : Task.FromResult<IReadOnlyList<EvaluatorSparklineStat>>([]);
+
+        await Task.WhenAll(evaluatorsTask, suitesTask, sparklinesTask);
+
+        return new EvaluatorsOverviewDto(
+            Evaluators: evaluatorsTask.Result.Select(ToDto).ToArray(),
+            Suites: suitesTask.Result.Select(s => new EvaluatorSuiteRefDto(
+                s.Id,
+                s.Name,
+                s.Agent.Name,
+                s.Evaluators.Select(e => e.Id).ToArray())).ToArray(),
+            Sparklines: sparklinesTask.Result.Select(EvaluatorStatsDtoMapper.ToDto).ToArray());
+    }
+
+    [HttpGet("{id:guid}/detail")]
+    public async Task<ActionResult<EvaluatorDetailViewDto>> GetDetailView(
+        Guid id,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] StatisticsBucket bucket = StatisticsBucket.Daily,
+        [FromQuery] int recentCount = 8,
+        CancellationToken cancellationToken = default)
+    {
+        if (from is null || to is null)
+            return BadRequest("Query parameters 'from' and 'to' are required.");
+        if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+
+        var capped = Math.Clamp(recentCount, 1, 50);
+        Task<EvaluatorOverviewStat> overviewTask = evaluatorStats.GetOverviewAsync(id, from.Value, to.Value, bucket, cancellationToken);
+        Task<IReadOnlyList<ITestResult>> recentTask = testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
+
+        await Task.WhenAll(overviewTask, recentTask);
+
+        return new EvaluatorDetailViewDto(
+            Overview: EvaluatorStatsDtoMapper.ToDto(overviewTask.Result),
+            RecentEvaluations: recentTask.Result.Select(r => ToRecentDto(r, id)).ToArray());
     }
 
     [HttpPost]
@@ -261,21 +325,21 @@ public class EvaluatorsController : ControllerBase
         var capped = Math.Clamp(count, 1, 50);
         var recent = await testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
 
-        return recent
-            .Select(r =>
-            {
-                var evaluation = r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == id);
-                return new RecentEvaluationItemDto(
-                    TestResultId: r.Id,
-                    TestCaseId: r.TestCase.Id,
-                    CaseSummary: Summarize(r.TestCase),
-                    Score: evaluation?.Score?.ToString(),
-                    Passed: evaluation?.Passed ?? r.Passed,
-                    Reasoning: evaluation?.Reasoning,
-                    LatencyMs: (int)r.Latency.TotalMilliseconds,
-                    EvaluatedAt: r.UpdatedAt);
-            })
-            .ToArray();
+        return recent.Select(r => ToRecentDto(r, id)).ToArray();
+    }
+
+    private static RecentEvaluationItemDto ToRecentDto(ITestResult r, Guid evaluatorId)
+    {
+        var evaluation = r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId);
+        return new RecentEvaluationItemDto(
+            TestResultId: r.Id,
+            TestCaseId: r.TestCase.Id,
+            CaseSummary: Summarize(r.TestCase),
+            Score: evaluation?.Score?.ToString(),
+            Passed: evaluation?.Passed ?? r.Passed,
+            Reasoning: evaluation?.Reasoning,
+            LatencyMs: (int)r.Latency.TotalMilliseconds,
+            EvaluatedAt: r.UpdatedAt);
     }
 
     private static string Summarize(ITestCase tc)

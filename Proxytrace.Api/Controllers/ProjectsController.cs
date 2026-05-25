@@ -111,7 +111,7 @@ public class ProjectsController : ControllerBase
         if (!await repository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var project = await repository.GetAsync(id, cancellationToken);
-        return project.Members.Select(ToMemberDto).ToArray();
+        return project.Members.Select(ProjectDtoMapper.ToMemberDto).ToArray();
     }
 
     [HttpPost("{id:guid}/members/{userId:guid}")]
@@ -171,14 +171,5 @@ public class ProjectsController : ControllerBase
         return await userRepository.GetManyAsync(distinct, cancellationToken);
     }
 
-    private static ProjectDto ToDto(IProject p) =>
-        new(p.Id,
-            p.Name,
-            p.SystemEndpoint.Id,
-            p.Members.Select(ToMemberDto).ToArray(),
-            p.CreatedAt,
-            p.UpdatedAt);
-
-    private static ProjectMemberDto ToMemberDto(IUser user) =>
-        new(user.Id, user.Email);
+    private static ProjectDto ToDto(IProject p) => ProjectDtoMapper.ToDto(p);
 }

@@ -2,7 +2,7 @@ import { cn } from '../../../lib/cn';
 import { type RangeKey } from '../../../lib/time-range';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../../api/models';
 import { KIND_CATEGORY } from '../evaluatorMeta';
-import { useEvaluatorOverview } from '../hooks/useEvaluatorQueries';
+import { useEvaluatorDetail } from '../hooks/useEvaluatorQueries';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { PerformancePanel } from './PerformancePanel';
 import { DefinitionPanel } from './DefinitionPanel';
@@ -27,7 +27,8 @@ export function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeCh
   const showCost = e.kind === EvaluatorKind.Agentic;
   const agentNames = Array.from(new Set(attachedSuites.map(s => s.agentName)));
 
-  const { data: overview = null } = useEvaluatorOverview(e.id, range);
+  const { data: detail, isLoading } = useEvaluatorDetail(e.id, range);
+  const overview = detail?.overview ?? null;
 
   return (
     <div className="fade-up flex flex-col gap-3.5">
@@ -51,7 +52,7 @@ export function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeCh
 
       <AttachedPanel suites={attachedSuites} agentNames={agentNames} />
 
-      <RecentEvaluationsTable evaluatorId={e.id} />
+      <RecentEvaluationsTable rows={detail?.recentEvaluations ?? []} isLoading={isLoading} />
     </div>
   );
 }

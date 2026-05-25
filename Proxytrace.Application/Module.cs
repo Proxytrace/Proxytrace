@@ -81,16 +81,31 @@ public sealed class Module : Autofac.Module
             .As<IOpenAiCallParser>()
             .SingleInstance();
 
-        builder.RegisterType<AgentCallIngestor>()
-            .AsImplementedInterfaces()
+        // Ingestion transport. A host running the proxy/app split registers the Redis-backed
+        // Messaging module itself (and sets this key) before this module loads; otherwise fall
+        // back to the in-process stream used by the test suite and single-process runs.
+        const string messagingModuleKey = "Proxytrace.Messaging.Registered";
+        if (!builder.Properties.ContainsKey(messagingModuleKey))
+        {
+            builder.Properties[messagingModuleKey] = true;
+            builder.RegisterModule(new Proxytrace.Messaging.Module());
+        }
+
+        builder.RegisterType<AgentCallProcessor>()
+            .As<IAgentCallProcessor>()
             .AsSelf()
             .SingleInstance()
-            .IfNotRegistered(typeof(AgentCallIngestor));
+            .IfNotRegistered(typeof(AgentCallProcessor));
 
-        const string agentCallIngestorHostedServiceKey = "Proxytrace.Application.AgentCallIngestor.Registered";
-        if (!builder.Properties.ContainsKey(agentCallIngestorHostedServiceKey))
+        builder.RegisterType<AgentCallIngestionWorker>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AgentCallIngestionWorker));
+
+        const string agentCallIngestionWorkerKey = "Proxytrace.Application.AgentCallIngestionWorker.Registered";
+        if (!builder.Properties.ContainsKey(agentCallIngestionWorkerKey))
         {
-            builder.Properties[agentCallIngestorHostedServiceKey] = true;
+            builder.Properties[agentCallIngestionWorkerKey] = true;
             builder.RegisterServiceCollection(services =>
             {
                 services.AddSingleton<IHostedService>(sc =>
@@ -98,7 +113,7 @@ public sealed class Module : Autofac.Module
                     var kiosk = sc.GetRequiredService<KioskOptions>();
                     return kiosk.Enabled
                         ? new NullHostedService()
-                        : sc.GetRequiredService<AgentCallIngestor>();
+                        : sc.GetRequiredService<AgentCallIngestionWorker>();
                 });
             });
         }

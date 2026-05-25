@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
-using Proxytrace.Api.Dto.Inference;
+using Proxytrace.Api.Dto.Statistics;
+using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
-using Proxytrace.Domain.Message;
-using Proxytrace.Domain.Tools;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -26,11 +26,19 @@ public class AgentCallsController : ControllerBase
     };
 
     private readonly IAgentCallRepository repository;
+    private readonly IAgentRepository agentRepository;
+    private readonly IDashboardStatistics statistics;
     private readonly ITraceBroadcaster traceBroadcaster;
 
-    public AgentCallsController(IAgentCallRepository repository, ITraceBroadcaster traceBroadcaster)
+    public AgentCallsController(
+        IAgentCallRepository repository,
+        IAgentRepository agentRepository,
+        IDashboardStatistics statistics,
+        ITraceBroadcaster traceBroadcaster)
     {
         this.repository = repository;
+        this.agentRepository = agentRepository;
+        this.statistics = statistics;
         this.traceBroadcaster = traceBroadcaster;
     }
 
@@ -51,7 +59,38 @@ public class AgentCallsController : ControllerBase
     {
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<AgentCallDto>(items.Select(ToDto).ToArray(), total, page, pageSize);
+        return new PagedResult<AgentCallDto>(items.Select(AgentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);
+    }
+
+    [HttpGet("overview")]
+    public async Task<TracesOverviewDto> GetOverview(
+        [FromQuery] Guid? projectId = null,
+        [FromQuery] Guid? agentId = null,
+        [FromQuery] DateTimeOffset? from = null,
+        CancellationToken cancellationToken = default)
+    {
+        var latencyFilter = new StatisticsFilter(from, null, projectId, agentId);
+        var breakdownFilter = new StatisticsFilter(from, null, projectId);
+
+        Task<IReadOnlyList<IAgent>> agentsTask = agentRepository.GetAllAsync(cancellationToken);
+        Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTask = repository.GetLastCallTimesAsync(cancellationToken);
+        Task<IReadOnlyList<AgentBreakdownStat>> breakdownTask = statistics.GetAgentBreakdownAsync(breakdownFilter, cancellationToken);
+        Task<IReadOnlyList<LatencyStat>> latencyTask = statistics.GetLatencyAsync(latencyFilter, cancellationToken);
+
+        await Task.WhenAll(agentsTask, lastCallTask, breakdownTask, latencyTask);
+
+        IReadOnlyDictionary<Guid, DateTimeOffset> lastCall = lastCallTask.Result;
+        AgentDto[] agents = agentsTask.Result
+            .Where(a => !projectId.HasValue || a.Project.Id == projectId.Value)
+            .OrderByDescending(a => lastCall.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
+            .ThenByDescending(a => a.UpdatedAt)
+            .Select(a => AgentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
+            .ToArray();
+
+        return new TracesOverviewDto(
+            agents,
+            breakdownTask.Result.Select(r => new AgentBreakdownDto(r.AgentId, r.CallCount)).ToArray(),
+            latencyTask.Result.Select(r => new LatencyDto(r.EndpointId, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray());
     }
 
     [HttpGet("{id:guid}")]
@@ -60,7 +99,7 @@ public class AgentCallsController : ControllerBase
         if (!await repository.ContainsAsync(id, cancellationToken))
             return NotFound();
         var call = await repository.GetAsync(id, cancellationToken);
-        return ToDto(call);
+        return AgentCallDtoMapper.ToDto(call);
     }
 
     [HttpGet("stream")]
@@ -86,93 +125,4 @@ public class AgentCallsController : ControllerBase
         var removed = await repository.RemoveAsync(id, cancellationToken);
         return removed ? NoContent() : NotFound();
     }
-
-    private static AgentCallDto ToDto(IAgentCall c) => new(
-        c.Id,
-        c.Agent.Id,
-        c.Agent.Name,
-        c.Endpoint.Model.Name,
-        c.Endpoint.Provider.Name,
-        c.Request.Messages.Select(ToMessageDto).ToArray(),
-        c.Response != null ? ToMessageDto(c.Response.Response) : null,
-        c.Agent.Tools.Select(ToToolSpecDto).ToArray(),
-        c.Response?.Usage?.InputTokenCount,
-        c.Response?.Usage?.OutputTokenCount,
-        c.Response?.Latency.TotalMilliseconds,
-        (int)c.HttpStatus,
-        c.FinishReason,
-        c.ErrorMessage,
-        ComputeCost(c),
-        ModelParametersDto.FromDomain(c.ModelParameters),
-        c.CreatedAt,
-        c.UpdatedAt,
-        c.ConversationId);
-
-    private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t) => new(
-        t.Name,
-        t.Description,
-        t.Arguments.Arguments.Select(ToToolArgumentDto).ToArray());
-
-    private static ToolArgumentDto ToToolArgumentDto(IToolArgument arg)
-    {
-        var type = "object";
-        List<string>? enumValues = null;
-        try
-        {
-            using var doc = JsonDocument.Parse(arg.JsonSchema);
-            var root = doc.RootElement;
-            if (root.TryGetProperty("type", out var typeEl))
-                type = typeEl.GetString() ?? "object";
-            if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
-                enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
-        }
-        catch
-        {
-            // ignored
-        }
-
-        return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
-    }
-
-    private static AgentCallMessageDto ToMessageDto(Message m) => m switch
-    {
-        AssistantMessage a => new AgentCallMessageDto(
-            "assistant",
-            GetText(a),
-            a.ToolRequests.Select(tr => new AgentCallToolRequestDto(tr.Id, tr.Name, tr.Arguments)).ToArray()),
-        ToolMessage t => new AgentCallMessageDto("tool", GetText(t), [], GetToolCallId(t)),
-        _ => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m), [])
-    };
-
-    private static string GetToolCallId(ToolMessage t)
-        => t.Contents.Count > 0 ? t.Contents[0].Text ?? "" : "";
-
-    private static AgentCallMessageDto ToMessageDto(AssistantMessage m) => new(
-        "assistant",
-        GetText(m),
-        m.ToolRequests.Select(tr => new AgentCallToolRequestDto(tr.Id, tr.Name, tr.Arguments)).ToArray());
-
-    private static decimal? ComputeCost(IAgentCall c)
-    {
-        var e = c.Endpoint;
-        if (e.InputTokenCost is null || e.OutputTokenCost is null)
-        {
-            return null;
-        }
-
-        var usage = c.Response?.Usage;
-        return usage != null ? c.Endpoint.CalculateCost(usage) : null;
-    }
-
-    private static string GetText(Message m) => m switch
-    {
-        UserMessage u => string.Concat(u.Contents.Select(c => c.Text ?? "")),
-        AssistantMessage a => string.Concat(a.Contents.Select(c => c.Text ?? "")),
-        SystemMessage s => string.Concat(s.Contents.Select(c => c.Text ?? "")),
-        ToolMessage t => t.Contents.Count > 1 ? t.Contents[1].Text ?? "" : "",
-        _ => ""
-    };
-
-    private static string GetText(AssistantMessage m)
-        => string.Concat(m.Contents.Select(c => c.Text ?? ""));
 }

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { Avatar } from '../ui/Avatar';
+import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useHealth } from '../../hooks/useHealth';
@@ -137,13 +138,13 @@ export function Shell() {
         <div
           className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
         >
-          <div
-            className="w-[30px] h-[30px] rounded-lg shrink-0 flex items-center justify-center text-white font-bold text-[13px] bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
-          >T</div>
+          <BrandMark size={30} />
           {!collapsed && (
             <div className="ml-[10px]">
-              <div className="font-bold text-sm tracking-[-0.01em]">Proxytrace</div>
-              <div className="text-[11px] text-muted mt-[-1px]">v0.1 · alpha</div>
+              <div className="font-bold text-sm tracking-[-0.02em] leading-none">
+                <span className="text-primary">proxy</span><span className="text-accent">trace</span>
+              </div>
+              <div className="font-mono text-[10.5px] text-muted mt-0.5">v0.1 · alpha</div>
             </div>
           )}
         </div>

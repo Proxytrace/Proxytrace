@@ -48,14 +48,14 @@ public class Module : Autofac.Module
             .As<IOpenAiCallParser>()
             .SingleInstance();
 
-        builder.RegisterType<AgentCallIngestor>()
+        builder.RegisterType<AgentCallProcessor>()
             .AsSelf()
             .AsImplementedInterfaces()
             .SingleInstance();
 
         builder
-            .Register(_ => NullLogger<AgentCallIngestor>.Instance)
-            .As<Microsoft.Extensions.Logging.ILogger<AgentCallIngestor>>()
+            .Register(_ => NullLogger<AgentCallProcessor>.Instance)
+            .As<Microsoft.Extensions.Logging.ILogger<AgentCallProcessor>>()
             .SingleInstance();
 
         builder.RegisterInstance(new Proxytrace.Application.Auth.Local.LocalAuthOptions

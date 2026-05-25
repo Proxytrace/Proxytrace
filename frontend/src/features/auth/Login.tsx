@@ -6,6 +6,7 @@ import { localAuthApi } from '../../auth/local/localAuthApi';
 import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
+import { BrandMark } from '../../components/ui/BrandMark';
 
 export default function Login() {
   const { data } = useAuthMode();
@@ -20,7 +21,12 @@ function OidcLogin() {
   const auth = useAuth();
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg text-fg">
-      <h1 className="text-2xl font-semibold">Proxytrace</h1>
+      <div className="flex items-center gap-3">
+        <BrandMark size={36} />
+        <span className="text-2xl font-bold tracking-[-0.02em] leading-none">
+          <span className="text-primary">proxy</span><span className="text-accent">trace</span>
+        </span>
+      </div>
       <p className="text-muted text-sm">Sign in to continue.</p>
       {auth.error && (
         <div className="rounded border border-danger px-3 py-2 text-sm text-danger">

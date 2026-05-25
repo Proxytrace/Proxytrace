@@ -1,4 +1,23 @@
+using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Dto.Agents;
+
 namespace Proxytrace.Api.Dto.Statistics;
+
+/// <summary>
+/// Single-call payload for the dashboard page; bundles every widget's data so the client
+/// makes one request instead of fanning out across the granular statistics endpoints.
+/// </summary>
+public record DashboardViewDto(
+    SummaryDto Summary,
+    LiveTelemetryDto LiveTelemetry,
+    DashboardTrendsDto Trends,
+    IReadOnlyList<AgentBreakdownDto> AgentBreakdown,
+    IReadOnlyList<LatencyDto> Latency,
+    IReadOnlyList<ModelBreakdownDto> ModelBreakdown,
+    IReadOnlyList<TokenUsageDto> TokenUsage,
+    IReadOnlyList<AgentTokenUsageDto> TokenUsageByAgent,
+    IReadOnlyList<AgentCallDto> RecentTraces,
+    IReadOnlyList<AgentDto> Agents);
 
 public record SummaryDto(
     long TotalCalls,
@@ -10,10 +29,6 @@ public record SummaryDto(
 public record TokenUsageDto(DateOnly Date, Guid EndPointId, long InputTokens, long OutputTokens);
 
 public record LatencyDto(Guid EndpointId, double P50Ms, double P95Ms, double P99Ms, double MinMs, double MaxMs, int SampleCount);
-
-public record PassRateDto(Guid SuiteId, DateTimeOffset RunTimestamp, int PassCount, int FailCount);
-
-public record ErrorRateDto(Guid EndpointId, int TotalCalls, int ErrorCalls, double ErrorRate);
 
 public record ModelBreakdownDto(Guid EndpointId, string ModelName, int CallCount, long TotalInputTokens, long TotalOutputTokens, double AvgDurationMs);
 
@@ -34,8 +49,6 @@ public record DashboardTrendsDto(
     IReadOnlyList<double> LatencyMs,
     IReadOnlyList<double> Throughput,
     IReadOnlyList<double> PassRate);
-
-public record CostEstimateDto(Guid EndpointId, decimal? InputCostEur, decimal? OutputCostEur, decimal? TotalCostEur);
 
 public record AgentTimeSeriesPointDto(
     DateTimeOffset BucketStart,

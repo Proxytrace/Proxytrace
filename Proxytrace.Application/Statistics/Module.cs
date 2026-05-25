@@ -17,8 +17,12 @@ internal class Module : Autofac.Module
             .As<IStatsProjector>()
             .SingleInstance();
 
-        builder.RegisterType<StatisticsService>()
-            .As<IStatisticsService>()
+        builder.RegisterType<DashboardStatistics>()
+            .As<IDashboardStatistics>()
+            .SingleInstance();
+
+        builder.RegisterType<AgentStatistics>()
+            .As<IAgentStatistics>()
             .SingleInstance();
 
         builder.RegisterType<StatisticsHostedService>()

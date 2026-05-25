@@ -4,7 +4,7 @@ import useCurrentProject from '../../hooks/useCurrentProject';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { PlusIcon } from '../../components/icons';
-import { useProviders, useProviderProjects } from './hooks/useProviderQueries';
+import { useProvidersOverview } from './hooks/useProviderQueries';
 import { ProviderList } from './components/ProviderList';
 import { ProviderDetail, type ProviderTab } from './components/ProviderDetail';
 import { AddProviderModal } from './components/AddProviderModal';
@@ -15,13 +15,14 @@ export default function Providers() {
   const [tab, setTab] = useState<ProviderTab>('models');
   const [showNewProvider, setShowNewProvider] = useState(false);
 
-  const { data: providersData, isLoading: providersLoading } = useProviders();
-  const { data: projectsData } = useProviderProjects();
+  const { data: overview, isLoading: providersLoading } = useProvidersOverview();
 
-  const providers = providersData?.items ?? [];
-  const projects = projectsData?.items ?? [];
-  const selected = providers.find(p => p.id === selectedId)
-    ?? (providers.length > 0 && !selectedId ? providers[0] : null);
+  const items = overview?.providers ?? [];
+  const providers = items.map(i => i.provider);
+  const projects = overview?.projects ?? [];
+  const selectedItem = items.find(i => i.provider.id === selectedId)
+    ?? (items.length > 0 && !selectedId ? items[0] : null);
+  const selected = selectedItem?.provider ?? null;
 
   function selectProvider(p: ProviderDto) {
     setSelectedId(p.id);
@@ -52,10 +53,12 @@ export default function Providers() {
           onSelect={selectProvider}
         />
 
-        {selected ? (
+        {selected && selectedItem ? (
           <ProviderDetail
             key={selected.id}
             provider={selected}
+            models={selectedItem.models}
+            keys={selectedItem.keys}
             projects={projects}
             defaultProjectId={currentProjectId ?? projects[0]?.id ?? ''}
             tab={tab}

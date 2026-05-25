@@ -11,7 +11,7 @@ export function useCreateProvider() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (req: CreateProviderRequest) => providersApi.create(req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -26,7 +26,7 @@ export function useUpdateProviderKind() {
         upstreamApiKey: args.provider.upstreamApiKey,
         kind: args.kind,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -35,7 +35,7 @@ export function useDeleteProvider() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (providerId: string) => providersApi.delete(providerId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providers }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -44,16 +44,16 @@ export function useCreateModel(providerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (req: CreateModelEndpointRequest) => providersApi.createModel(providerId, req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(providerId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
 /** Deletes a model endpoint by id. */
-export function useDeleteModel(providerId: string) {
+export function useDeleteModel() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (endpointId: string) => providersApi.deleteModel(endpointId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(providerId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -63,7 +63,7 @@ export function useUpdateModelPricing(providerId: string) {
   return useMutation({
     mutationFn: (args: { endpointId: string; req: UpdateModelEndpointPricingRequest }) =>
       providersApi.updateModelPricing(providerId, args.endpointId, args.req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providerModels(providerId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -72,7 +72,7 @@ export function useCreateKey(providerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (req: CreateApiKeyRequest) => providersApi.createKey(providerId, req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(providerId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
 
@@ -81,6 +81,6 @@ export function useDeleteKey(providerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (keyId: string) => providersApi.deleteKey(providerId, keyId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providerKeys(providerId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }

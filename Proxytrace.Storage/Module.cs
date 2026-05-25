@@ -24,10 +24,14 @@ namespace Proxytrace.Storage;
 public sealed class Module : Autofac.Module
 {
     private readonly Func<IServiceProvider, StorageConfiguration> configurationFactory;
+    private readonly bool registerApplicationServices;
 
-    public Module(Func<IServiceProvider, StorageConfiguration> configurationFactory)
+    public Module(
+        Func<IServiceProvider, StorageConfiguration> configurationFactory,
+        bool registerApplicationServices = true)
     {
         this.configurationFactory = configurationFactory;
+        this.registerApplicationServices = registerApplicationServices;
     }
 
     /// <summary>
@@ -39,18 +43,21 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterModule<Domain.Module>();
 
-        // Register DB initializer FIRST so its IHostedService starts before any other
-        // hosted service that may query the database on startup (e.g. StatisticsBackfillHostedService).
-        builder.RegisterServiceCollection(services =>
+        if (registerApplicationServices)
         {
-            services.AddHostedService<DatabaseInitializationService>();
-        });
+            // Register DB initializer FIRST so its IHostedService starts before any other
+            // hosted service that may query the database on startup (e.g. StatisticsBackfillHostedService).
+            builder.RegisterServiceCollection(services =>
+            {
+                services.AddHostedService<DatabaseInitializationService>();
+            });
 
-        builder.RegisterType<DatabaseInitializationService>()
-            .As<IDatabaseInitializer>()
-            .SingleInstance();
+            builder.RegisterType<DatabaseInitializationService>()
+                .As<IDatabaseInitializer>()
+                .SingleInstance();
 
-        builder.RegisterModule<Application.Module>();
+            builder.RegisterModule<Application.Module>();
+        }
 
         builder.Register<StorageConfiguration>(ct => configurationFactory(ct.Resolve<IServiceProvider>())).SingleInstance();
 

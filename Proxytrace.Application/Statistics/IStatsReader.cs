@@ -1,7 +1,7 @@
 namespace Proxytrace.Application.Statistics;
 
 /// <summary>
-/// Read access to per-run statistics projections. Consumed by <see cref="IStatisticsService"/>
+/// Read access to per-run statistics projections. Consumed by the statistics services.
 /// </summary>
 public interface IStatsReader<TStats, TFilter>
 {

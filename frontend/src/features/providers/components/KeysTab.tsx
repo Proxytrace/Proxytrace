@@ -5,24 +5,22 @@ import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { DataTable, type DataColumn } from '../../../components/ui/DataTable';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { FormField } from '../../../components/ui/FormField';
-import { SkeletonList } from '../../../components/ui/Skeleton';
 import { CopyIcon, PlusIcon, TrashIcon, XIcon } from '../../../components/icons';
 import { formInputCls } from '../../../components/ui/classes';
 import { fmtDate } from '../../../lib/format';
 import useToast from '../../../hooks/useToast';
 import { maskKey } from '../providerMeta';
-import { useProviderKeys } from '../hooks/useProviderQueries';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
 
 interface KeysTabProps {
   providerId: string;
+  keys: ApiKeyDto[];
   projects: ProjectDto[];
   defaultProjectId: string;
 }
 
-export function KeysTab({ providerId, projects, defaultProjectId }: KeysTabProps) {
+export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTabProps) {
   const { show: toast } = useToast();
-  const { data: keys = [], isLoading } = useProviderKeys(providerId);
   const [showNew, setShowNew] = useState(false);
   const [newKey, setNewKey] = useState({ name: '', projectId: '' });
   const [toDelete, setToDelete] = useState<ApiKeyDto | null>(null);
@@ -104,8 +102,7 @@ export function KeysTab({ providerId, projects, defaultProjectId }: KeysTabProps
         </div>
       )}
 
-      {isLoading && <SkeletonList rows={3} height={48} gap={8} />}
-      {!isLoading && keys.length === 0 && !showNew && (
+      {keys.length === 0 && !showNew && (
         <EmptyState title="No API keys yet" description="Generate one to start proxying requests." />
       )}
       {keys.length > 0 && (

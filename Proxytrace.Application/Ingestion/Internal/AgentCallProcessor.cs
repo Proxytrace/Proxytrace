@@ -1,19 +1,14 @@
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Channels;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
-using Proxytrace.Domain.ModelProvider;
-using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 
 namespace Proxytrace.Application.Ingestion.Internal;
 
-internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
+internal sealed class AgentCallProcessor : IAgentCallProcessor
 {
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IAgentCall.CreateNew createNewCall;
@@ -21,23 +16,16 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
     private readonly IOpenAiCallParser parser;
     private readonly IAgentRepository agentRepository;
     private readonly ITraceBroadcaster traceBroadcaster;
-    private readonly ILogger<AgentCallIngestor> logger;
+    private readonly ILogger<AgentCallProcessor> logger;
 
-    private readonly Channel<IngestJob> channel = Channel.CreateUnbounded<IngestJob>(
-        new UnboundedChannelOptions
-        {
-            SingleReader = true,
-            SingleWriter = false,
-        });
-
-    public AgentCallIngestor(
+    public AgentCallProcessor(
         IAgentCallRepository agentCallRepository,
         IAgentCall.CreateNew createNewCall,
         IPromptTemplate.Create createPromptTemplate,
         IOpenAiCallParser parser,
         IAgentRepository agentRepository,
         ITraceBroadcaster traceBroadcaster,
-        ILogger<AgentCallIngestor> logger)
+        ILogger<AgentCallProcessor> logger)
     {
         this.agentCallRepository = agentCallRepository;
         this.createNewCall = createNewCall;
@@ -48,49 +36,7 @@ internal class AgentCallIngestor : BackgroundService, IAgentCallIngestor
         this.logger = logger;
     }
 
-    public async Task IngestInBackgroundAsync(
-        IModelProvider provider,
-        IProject project,
-        string requestBody,
-        string? responseBody,
-        TimeSpan duration,
-        HttpStatusCode httpStatus,
-        string? sessionId = null,
-        CancellationToken cancellationToken = default)
-        => await channel.Writer.WriteAsync(
-            new IngestJob(
-                provider,
-                project,
-                requestBody,
-                responseBody,
-                duration,
-                httpStatus,
-                sessionId),
-            cancellationToken);
-
-    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await foreach (IngestJob job in channel.Reader.ReadAllAsync(cancellationToken))
-            {
-                try
-                {
-                    await IngestAsync(job, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Failed to process ingestion job (status={HttpStatus})", job.HttpStatus);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // graceful shutdown
-        }
-    }
-
-    internal async Task IngestAsync(
+    public async Task IngestAsync(
         IngestJob job,
         CancellationToken cancellationToken)
     {
