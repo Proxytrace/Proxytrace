@@ -51,34 +51,24 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(agentCallCleanupConfiguration)
             .SingleInstance();
 
-        var upstreamBaseUrl = configuration.GetSection("ModelProvider").GetValue<string>("UpstreamBaseUrl");
-        if (string.IsNullOrWhiteSpace(upstreamBaseUrl))
-        {
-            if (!kiosk.Enabled)
-            {
-                throw new InvalidOperationException("Configuration 'ModelProvider:UpstreamBaseUrl' is required. ");
-            }
-
-            upstreamBaseUrl = "http://localhost/disabled-in-kiosk";
-        }
-
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
 
         builder.RegisterServiceCollection(services =>
         {
-            services.AddHttpClient("openai", client =>
-            {
-                client.BaseAddress = new Uri(upstreamBaseUrl.TrimEnd('/') + "/");
-                client.Timeout = TimeSpan.FromMinutes(5);
-            });
-
             services.AddHttpClient("self", client =>
             {
                 client.BaseAddress = new Uri(selfBaseUrl.TrimEnd('/') + "/");
                 client.Timeout = TimeSpan.FromMinutes(10);
             });
         });
+
+        // Ingestion transport (consumer side). The standalone proxy service publishes captured
+        // calls onto this stream; the AgentCallIngestionWorker registered by Application.Module
+        // consumes and persists them. Registered before the storage/application modules so this
+        // configured stream wins over their in-process default.
+        builder.RegisterModule(new Proxytrace.Messaging.Module(BuildMessagingConfiguration(configuration)));
+        builder.Properties["Proxytrace.Messaging.Registered"] = true;
 
         StorageConfiguration storageConfig;
         if (kiosk.Enabled)
@@ -189,6 +179,25 @@ internal sealed class Module : Autofac.Module
                 }
             }
         });
+    }
+
+    private static Proxytrace.Messaging.MessagingConfiguration BuildMessagingConfiguration(IConfiguration configuration)
+    {
+        var messaging = configuration.GetSection("Messaging");
+        var provider = Enum.TryParse<Proxytrace.Messaging.MessagingProvider>(
+            messaging.GetValue<string>("Provider"), ignoreCase: true, out var parsed)
+            ? parsed
+            : Proxytrace.Messaging.MessagingProvider.Redis;
+
+        return new Proxytrace.Messaging.MessagingConfiguration
+        {
+            Provider = provider,
+            RedisConnectionString = configuration.GetSection("Redis").GetValue<string>("ConnectionString")
+                                    ?? "localhost:6379",
+            Stream = messaging.GetValue<string>("Stream") ?? "proxytrace:ingest",
+            ConsumerGroup = messaging.GetValue<string>("ConsumerGroup") ?? "proxytrace-app",
+            ConsumerName = messaging.GetValue<string>("ConsumerName") ?? Environment.MachineName,
+        };
     }
 
     private static StorageConfiguration DetermineStorageConfiguration(string connectionString)

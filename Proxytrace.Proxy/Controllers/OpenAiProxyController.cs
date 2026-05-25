@@ -4,18 +4,18 @@ using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Application.Demo;
-using Proxytrace.Application.Ingestion;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
+using Proxytrace.Messaging;
 
-namespace Proxytrace.Api.Controllers;
+namespace Proxytrace.Proxy.Controllers;
 
 /// <summary>
-/// Transparent reverse proxy for OpenAI-compatible APIs.
-/// Clients point their <c>base_url</c> to <c>/{orgName}/{projectName}/openai/v1</c>.
-/// The organization and project names are resolved to IDs; every call is forwarded upstream,
-/// captured, and persisted as an <c>IAgentCall</c> associated with the resolved project.
+/// Transparent reverse proxy for OpenAI-compatible APIs, hosted in the standalone ingestion proxy
+/// service. Authenticates the Proxytrace API key, forwards every call upstream, streams the
+/// response back to the client, then publishes the captured call to the ingestion stream for the
+/// main app to persist. Stays up independently of the rest of the backend.
 /// </summary>
 [ApiController]
 [Route("openai")]
@@ -34,31 +34,31 @@ public class OpenAiProxyController : ControllerBase
     private static readonly IReadOnlyCollection<string> ForwardedResponseHeaders = new HashSet<string>(
     [
         "content-type",
-        "openai-model", 
-        "openai-processing-ms", 
+        "openai-model",
+        "openai-processing-ms",
         "openai-version",
-        "x-request-id", 
-        "x-ratelimit-limit-requests", 
+        "x-request-id",
+        "x-ratelimit-limit-requests",
         "x-ratelimit-remaining-requests",
         "x-ratelimit-reset-requests"
     ]);
 
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IAgentCallIngestor ingestor;
-    private readonly IApiKeyRepository apiKeyRepository;
+    private readonly IIngestionStream stream;
+    private readonly IApiKeyResolver apiKeyResolver;
     private readonly KioskOptions kioskOptions;
     private readonly ILogger<OpenAiProxyController> logger;
 
     public OpenAiProxyController(
         IHttpClientFactory httpClientFactory,
-        IAgentCallIngestor ingestor,
-        IApiKeyRepository apiKeyRepository,
+        IIngestionStream stream,
+        IApiKeyResolver apiKeyResolver,
         KioskOptions kioskOptions,
         ILogger<OpenAiProxyController> logger)
     {
         this.httpClientFactory = httpClientFactory;
-        this.ingestor = ingestor;
-        this.apiKeyRepository = apiKeyRepository;
+        this.stream = stream;
+        this.apiKeyResolver = apiKeyResolver;
         this.kioskOptions = kioskOptions;
         this.logger = logger;
     }
@@ -154,7 +154,7 @@ public class OpenAiProxyController : ControllerBase
             return null;
         }
 
-        return await apiKeyRepository.FindByKeyAsync(rawKey, cancellationToken);
+        return await apiKeyResolver.ResolveAsync(rawKey, cancellationToken);
     }
 
     // ── Non-streaming ─────────────────────────────────────────────────────────
@@ -226,19 +226,20 @@ public class OpenAiProxyController : ControllerBase
     {
         try
         {
-            await ingestor.IngestInBackgroundAsync(
-                provider: provider,
-                project: project,
-                requestBody: requestBody,
-                responseBody: responseBody,
-                duration: duration,
-                httpStatus: httpStatus,
-                sessionId: sessionId,
-                cancellationToken: cancellationToken);
+            await stream.PublishAsync(
+                new IngestMessage(
+                    ProviderId: provider.Id,
+                    ProjectId: project.Id,
+                    RequestBody: requestBody,
+                    ResponseBody: responseBody,
+                    DurationMs: (long)duration.TotalMilliseconds,
+                    HttpStatus: (int)httpStatus,
+                    SessionId: sessionId),
+                cancellationToken);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to enqueue ingestion job after proxy call");
+            logger.LogWarning(ex, "Failed to publish ingestion message after proxy call");
         }
     }
 

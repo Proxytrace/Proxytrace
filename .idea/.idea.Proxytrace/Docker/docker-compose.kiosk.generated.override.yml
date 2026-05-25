@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  api:
+    build:
+      context: "/home/daniel/Proxytrace"
+      dockerfile: "Proxytrace.Api/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net10.0/Proxytrace.Api.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "proxytrace.api:dev"
+    ports: []
+    volumes:
+    - "/home/daniel/Proxytrace/Proxytrace.Api:/app:rw"
+    - "/home/daniel/Proxytrace:/src:rw"
+    - "/home/daniel/.nuget/packages:/home/app/.nuget/packages"
+    working_dir: "/app"

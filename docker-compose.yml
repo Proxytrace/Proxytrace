@@ -1,15 +1,63 @@
+# Distinct project name so the full split stack does not collide with the single-process
+# demo stack in docker-compose.kiosk.yml (which would otherwise share the default "proxytrace"
+# project and recreate/orphan each other's containers).
+name: proxytrace
+
 services:
+  # Shared database for both the app and the ingestion proxy. The app owns the schema
+  # (runs initialization/migrations); the proxy connects read-only for API-key lookups.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=proxytrace
+      - POSTGRES_PASSWORD=proxytrace
+      - POSTGRES_DB=proxytrace
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Ingestion transport between the proxy (producer) and the app (consumer).
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Main application: REST API, SSE, test runner, optimizer, search — and the ingestion
+  # consumer worker. Does NOT forward agent traffic.
   api:
     build:
       context: .
       dockerfile: Proxytrace.Api/Dockerfile
     ports:
       - "5100:8080"
+    depends_on:
+      - postgres
+      - redis
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Data Source=/tmp/proxytrace.db
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace
+      - Kiosk__Enabled=false
       - Self__BaseUrl=http://localhost:5100
       - Frontend__AllowedOrigin=http://localhost:5101
+      - Redis__ConnectionString=redis:6379
+      - Messaging__Provider=Redis
+
+  # Standalone ingestion proxy: authenticates, forwards agent traffic upstream, and publishes
+  # captured calls to Redis. Stays up independently of the app; scale this horizontally.
+  proxy:
+    build:
+      context: .
+      dockerfile: Proxytrace.Proxy/Dockerfile
+    ports:
+      - "5102:8080"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace
+      - Redis__ConnectionString=redis:6379
 
   frontend:
     build:
@@ -21,3 +69,6 @@ services:
       - api
     volumes:
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  pgdata:

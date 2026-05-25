@@ -2,6 +2,7 @@ using System.Net;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Ingestion.Internal;
+using Proxytrace.Messaging;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelProvider;
@@ -162,10 +163,63 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Worker_ConsumesPublishedMessage_RehydratesProviderAndProject_AndPersistsCall()
+    {
+        var services = GetServices();
+        var stream = services.GetRequiredService<IIngestionStream>();
+        var worker = services.GetRequiredService<AgentCallIngestionWorker>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await worker.StartAsync(CancellationToken);
+        try
+        {
+            // Producer side ships only ids; the worker must re-hydrate the provider/project.
+            await stream.PublishAsync(
+                new IngestMessage(
+                    ProviderId: provider.Id,
+                    ProjectId: project.Id,
+                    RequestBody: ChatTurn1RequestBody,
+                    ResponseBody: ChatTurn1ResponseBody,
+                    DurationMs: 100,
+                    HttpStatus: (int)HttpStatusCode.OK,
+                    SessionId: null),
+                CancellationToken);
+
+            await WaitUntilAsync(async () => await callRepo.CountAsync(CancellationToken) == 1);
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken);
+        }
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls.Should().HaveCount(1);
+        calls[0].Endpoint.Provider.Id.Should().Be(provider.Id);
+    }
+
+    private async Task WaitUntilAsync(Func<Task<bool>> condition)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(5);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (await condition())
+            {
+                return;
+            }
+
+            await Task.Delay(50, CancellationToken);
+        }
+
+        throw new TimeoutException("Condition not met within the timeout.");
+    }
+
+    [TestMethod]
     public async Task IngestAsync_WhenSessionIdProvided_GroupsCallsUnderSameConversationId()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
         var sessionId = Guid.NewGuid().ToString();
@@ -206,7 +260,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WhenSessionIdAndToolsNotResent_InheritsAgentFromPriorCall()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();
         var agentRepo = services.GetRequiredService<IRepository<Proxytrace.Domain.Agent.IAgent>>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
@@ -302,7 +356,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WithModelParameters_StoresParametersOnAgentAndCall()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 
@@ -339,7 +393,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WhenParametersChange_UpdatesAgentParameters_ButFingerprintUnchanged()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();
         var agentRepo = services.GetRequiredService<Proxytrace.Domain.Agent.IAgentRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
@@ -387,7 +441,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WhenParametersUnchanged_DoesNotUpdateAgent()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var agentRepo = services.GetRequiredService<Proxytrace.Domain.Agent.IAgentRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 
@@ -412,7 +466,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WhenParametersAbsent_AgentParametersAreEmpty()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var callRepo = services.GetRequiredService<IAgentCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 
@@ -435,7 +489,7 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
     public async Task IngestAsync_WhenContinuationDoesNotMatch_CreatesNewAgentCall()
     {
         var services = GetServices();
-        var ingestion = services.GetRequiredService<AgentCallIngestor>();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
         var repository = services.GetRequiredService<IAgentCallRepository>();
         var (provider, project) = await GetProviderAndProjectAsync(services);
 

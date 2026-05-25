@@ -1,3 +1,7 @@
+# Isolated project name so the demo stack does not collide with the full split stack
+# in docker-compose.yml.
+name: proxytrace-kiosk
+
 services:
   api:
     build:
@@ -11,6 +15,8 @@ services:
       - Kiosk__Enabled=true
       - Self__BaseUrl=http://localhost:5200
       - Frontend__AllowedOrigin=http://localhost:5201
+      # Demo mode runs single-process with no proxy/Redis: ingestion stays in-process.
+      - Messaging__Provider=InProcess
 
   frontend:
     build:
