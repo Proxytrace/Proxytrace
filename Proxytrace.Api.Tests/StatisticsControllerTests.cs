@@ -1,7 +1,5 @@
 using AwesomeAssertions;
-using Autofac;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Application.Statistics;
@@ -17,11 +15,11 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task GetDashboardView_DelegatesToService_AndMapsDto()
     {
-        var stats = Substitute.For<IStatisticsService>();
+        var dashboard = Substitute.For<IDashboardStatistics>();
         var agentId = Guid.NewGuid();
         var endpointId = Guid.NewGuid();
         var date = DateOnly.FromDateTime(DateTime.UtcNow);
-        stats.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
                 Summary: new StatisticsSummary(TotalCalls: 42, TotalInputTokens: 100, TotalOutputTokens: 200, AvgLatencyMs: 12.5, OverallPassRate: 0.95),
                 LiveTelemetry: new LiveTelemetry(TracesPerMinute: 1, TokensPerSecond: 2, QueueDepth: 3, ErrorRate: 0.1, P95Ms: 55, ProxyVersion: "v1"),
@@ -35,7 +33,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 Agents: Array.Empty<IAgent>(),
                 AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>()));
 
-        var controller = ResolveController(stats);
+        var controller = ResolveController(dashboard);
 
         var dto = await controller.GetDashboardView(cancellationToken: CancellationToken);
 
@@ -53,21 +51,21 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task GetDashboardView_PassesFilterAndLimits()
     {
-        var stats = Substitute.For<IStatisticsService>();
-        stats.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        var dashboard = Substitute.For<IDashboardStatistics>();
+        dashboard.GetDashboardViewAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(new DashboardView(
                 new StatisticsSummary(0, 0, 0, 0, null),
                 new LiveTelemetry(0, 0, 0, 0, 0, "v"),
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
                 Array.Empty<IAgentCall>(), Array.Empty<IAgent>(), new Dictionary<Guid, DateTimeOffset>()));
-        var controller = ResolveController(stats);
+        var controller = ResolveController(dashboard);
         var projectId = Guid.NewGuid();
         var from = DateTimeOffset.UtcNow.AddDays(-1);
 
         await controller.GetDashboardView(from, null, projectId, recentTraceCount: 3, agentLimit: 4, CancellationToken);
 
-        await stats.Received(1).GetDashboardViewAsync(
+        await dashboard.Received(1).GetDashboardViewAsync(
             Arg.Is<StatisticsFilter>(f => f.From == from && f.ProjectId == projectId),
             3, 4, Arg.Any<CancellationToken>());
     }
@@ -75,7 +73,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task GetAgentOverview_MissingFromTo_ReturnsBadRequest()
     {
-        var controller = ResolveController(Substitute.For<IStatisticsService>());
+        var controller = ResolveController(agentStatistics: Substitute.For<IAgentStatistics>());
 
         var result = await controller.GetAgentOverview(Guid.NewGuid(), from: null, to: null, cancellationToken: CancellationToken);
 
@@ -85,17 +83,17 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
     [TestMethod]
     public async Task GetAgentOverview_WithFromTo_MapsDto()
     {
-        var stats = Substitute.For<IStatisticsService>();
+        var agentStatistics = Substitute.For<IAgentStatistics>();
         var bucketStart = DateTimeOffset.UtcNow;
         var suiteId = Guid.NewGuid();
-        stats.GetAgentOverviewAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+        agentStatistics.GetAgentOverviewAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
             .Returns(new AgentOverviewStat(
                 Summary: new AgentTimeSummary(10, 100, 200, 5.5m, 12.5),
                 TimeSeries: [new AgentTimeSeriesPoint(bucketStart, 1, 10, 20, 0.5m, 50)],
                 PassRateTrend: [new AgentPassRatePoint(bucketStart, 4, 5)],
                 SuitePassRates: [new AgentSuitePassRate(suiteId, "Suite A", bucketStart, 3, 3)],
                 Counts: new AgentEntityCounts(SuiteCount: 2, TestCaseCount: 6, OpenProposalCount: 1, TotalProposalCount: 4)));
-        var controller = ResolveController(stats);
+        var controller = ResolveController(agentStatistics: agentStatistics);
 
         var result = await controller.GetAgentOverview(Guid.NewGuid(), from: bucketStart, to: bucketStart, bucket: StatisticsBucket.Daily, cancellationToken: CancellationToken);
 
@@ -112,9 +110,10 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         dto.Counts.TotalProposalCount.Should().Be(4);
     }
 
-    private StatisticsController ResolveController(IStatisticsService stats)
-    {
-        IServiceProvider services = GetServices(b => b.RegisterInstance(stats).As<IStatisticsService>());
-        return new StatisticsController(services.GetRequiredService<IStatisticsService>());
-    }
+    private StatisticsController ResolveController(
+        IDashboardStatistics? dashboard = null,
+        IAgentStatistics? agentStatistics = null)
+        => new(
+            dashboard ?? Substitute.For<IDashboardStatistics>(),
+            agentStatistics ?? Substitute.For<IAgentStatistics>());
 }

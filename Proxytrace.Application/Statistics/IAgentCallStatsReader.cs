@@ -3,7 +3,7 @@ namespace Proxytrace.Application.Statistics;
 /// <summary>
 /// Read-only aggregations over <c>AgentCallEntity</c> rows.
 /// Insert-only call data aggregates cheaply at read time, so no projection table is required.
-/// Consumed only by <see cref="IStatisticsService"/>; not part of the public read API.
+/// Consumed by <see cref="IDashboardStatistics"/> and <see cref="IAgentStatistics"/>; not part of the public read API.
 /// </summary>
 public interface IAgentCallStatsReader
 {

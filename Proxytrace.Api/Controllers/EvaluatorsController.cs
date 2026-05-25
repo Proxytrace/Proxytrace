@@ -40,7 +40,7 @@ public class EvaluatorsController : ControllerBase
     private readonly IAgenticEvaluatorPresets agenticPresets;
     private readonly ITestResultRepository testResults;
     private readonly ITestSuiteRepository testSuites;
-    private readonly IStatisticsService statistics;
+    private readonly IEvaluatorStatsReader evaluatorStats;
     private readonly ITransaction transaction;
 
     public EvaluatorsController(
@@ -61,7 +61,7 @@ public class EvaluatorsController : ControllerBase
         IAgenticEvaluatorPresets agenticPresets,
         ITestResultRepository testResults,
         ITestSuiteRepository testSuites,
-        IStatisticsService statistics,
+        IEvaluatorStatsReader evaluatorStats,
         ITransaction transaction)
     {
         this.createAgent = createAgent;
@@ -81,7 +81,7 @@ public class EvaluatorsController : ControllerBase
         this.agenticPresets = agenticPresets;
         this.testResults = testResults;
         this.testSuites = testSuites;
-        this.statistics = statistics;
+        this.evaluatorStats = evaluatorStats;
         this.transaction = transaction;
     }
 
@@ -126,7 +126,7 @@ public class EvaluatorsController : ControllerBase
             ? testSuites.GetByProjectAsync(projectId.Value, cancellationToken)
             : testSuites.GetAllAsync(cancellationToken);
         Task<IReadOnlyList<EvaluatorSparklineStat>> sparklinesTask = projectId.HasValue && from.HasValue && to.HasValue
-            ? statistics.GetEvaluatorSparklinesAsync(projectId.Value, from.Value, to.Value, bucket, cancellationToken)
+            ? evaluatorStats.GetSparklinesAsync(projectId.Value, from.Value, to.Value, bucket, cancellationToken)
             : Task.FromResult<IReadOnlyList<EvaluatorSparklineStat>>([]);
 
         await Task.WhenAll(evaluatorsTask, suitesTask, sparklinesTask);
@@ -156,7 +156,7 @@ public class EvaluatorsController : ControllerBase
             return NotFound();
 
         var capped = Math.Clamp(recentCount, 1, 50);
-        Task<EvaluatorOverviewStat> overviewTask = statistics.GetEvaluatorOverviewAsync(id, from.Value, to.Value, bucket, cancellationToken);
+        Task<EvaluatorOverviewStat> overviewTask = evaluatorStats.GetOverviewAsync(id, from.Value, to.Value, bucket, cancellationToken);
         Task<IReadOnlyList<ITestResult>> recentTask = testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
 
         await Task.WhenAll(overviewTask, recentTask);

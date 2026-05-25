@@ -12,11 +12,13 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/statistics")]
 public class StatisticsController : ControllerBase
 {
-    private readonly IStatisticsService statistics;
+    private readonly IDashboardStatistics dashboard;
+    private readonly IAgentStatistics agentStatistics;
 
-    public StatisticsController(IStatisticsService statistics)
+    public StatisticsController(IDashboardStatistics dashboard, IAgentStatistics agentStatistics)
     {
-        this.statistics = statistics;
+        this.dashboard = dashboard;
+        this.agentStatistics = agentStatistics;
     }
 
     [HttpGet("dashboard")]
@@ -29,7 +31,7 @@ public class StatisticsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var filter = new StatisticsFilter(from, to, projectId);
-        DashboardView view = await statistics.GetDashboardViewAsync(filter, recentTraceCount, agentLimit, cancellationToken);
+        DashboardView view = await dashboard.GetDashboardViewAsync(filter, recentTraceCount, agentLimit, cancellationToken);
 
         return new DashboardViewDto(
             Summary: new SummaryDto(view.Summary.TotalCalls, view.Summary.TotalInputTokens, view.Summary.TotalOutputTokens, view.Summary.AvgLatencyMs, view.Summary.OverallPassRate),
@@ -55,7 +57,7 @@ public class StatisticsController : ControllerBase
         if (from is null || to is null)
             return BadRequest("Query parameters 'from' and 'to' are required.");
 
-        var result = await statistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
+        var result = await agentStatistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
         return new AgentOverviewDto(
             Summary: ToDto(result.Summary),
             TimeSeries: result.TimeSeries.Select(ToDto).ToArray(),

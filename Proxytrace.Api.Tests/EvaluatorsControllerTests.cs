@@ -217,6 +217,6 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<IAgenticEvaluatorPresets>(),
         services.GetRequiredService<ITestResultRepository>(),
         services.GetRequiredService<ITestSuiteRepository>(),
-        services.GetRequiredService<IStatisticsService>(),
+        services.GetRequiredService<IEvaluatorStatsReader>(),
         services.GetRequiredService<ITransaction>());
 }

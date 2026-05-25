@@ -88,6 +88,6 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
     private static AgentCallsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IAgentCallRepository>(),
         services.GetRequiredService<IAgentRepository>(),
-        services.GetRequiredService<IStatisticsService>(),
+        services.GetRequiredService<IDashboardStatistics>(),
         services.GetRequiredService<ITraceBroadcaster>());
 }

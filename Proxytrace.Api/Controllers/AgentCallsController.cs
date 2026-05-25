@@ -27,13 +27,13 @@ public class AgentCallsController : ControllerBase
 
     private readonly IAgentCallRepository repository;
     private readonly IAgentRepository agentRepository;
-    private readonly IStatisticsService statistics;
+    private readonly IDashboardStatistics statistics;
     private readonly ITraceBroadcaster traceBroadcaster;
 
     public AgentCallsController(
         IAgentCallRepository repository,
         IAgentRepository agentRepository,
-        IStatisticsService statistics,
+        IDashboardStatistics statistics,
         ITraceBroadcaster traceBroadcaster)
     {
         this.repository = repository;
