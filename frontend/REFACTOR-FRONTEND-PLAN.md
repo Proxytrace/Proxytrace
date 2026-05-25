@@ -280,3 +280,48 @@ branch is a runtime variable, chart SVG geometry).
 - [x] **SIS-B5** `features/dashboard/components/` — HeroTokenCard, TelemetryStrip, StatTile, PassRateGauge, AgentsSection
 - [x] **SIS-B6** `features/agents/` — EndpointSelector, widgets/SuitePassRatesWidget, widgets/ChartsWidget, Agents, AgentList
 - [x] **SIS-B7** `features/runs/MatrixView.tsx` + `features/evaluator-playground/components/TestBenchResult.tsx`
+
+---
+
+## Security + maintainability pass (2026-05-25)
+
+Focus: **security and maintainability.** Tree was already green at baseline
+(`build`/`lint`/`test` ✅, `npm audit` ✅ 0 vulns, zero real `any`/`as any`/`!`).
+Only genuinely-new, behavior-preserving findings below; documented exceptions from
+earlier runs (App.tsx, api/models.ts, icons/index.tsx, TraceTableCells.tsx) left
+intact — re-splitting them would contradict prior decisions and add risk.
+
+### Security findings
+
+- **SEC.1 — `dangerouslySetInnerHTML` in `components/search/SearchGenericBody.tsx`:
+  SAFE, no change.** Goes through `lib/sanitize.ts` → DOMPurify
+  (`ALLOWED_TAGS:['mark']`, `ALLOWED_ATTR:[]`) — the sanctioned sanitizer exception
+  (BEST_PRACTICES §12.1). Only `dangerouslySetInnerHTML` site in the app.
+- **SEC.2 — JWT persisted to `localStorage` (`auth/local/LocalAuthProvider.tsx`):
+  FLAGGED for the user, NOT changed.** Real §12.3 concern (localStorage is
+  script-readable → XSS-exfiltratable). Switching to httpOnly cookies is a
+  **backend + behavior change**, out of scope for a behavior-preserving refactor.
+  Needs a product/backend decision. (Mitigations already present: DOMPurify on the
+  one HTML sink; error stacktraces gated to DEV in `api/client.ts`; Bearer token
+  held in-memory by `auth/token.ts` for requests.)
+- **SEC.3 — No `eval`/`new Function`; no unsanitized data-derived `href`/`src`;
+  `npm audit` clean.** No action.
+
+### Maintainability — DONE
+
+- [x] **MNT.1 — Centralize bootstrap query keys (§3.2).** `auth-mode`,
+  `app-config`, `setup-status` were raw inline string keys duplicated across **7**
+  call sites (`App.tsx` module prefetch ×2 + `AppRoutes` + `ModeShell`,
+  `auth/authMode.ts`, `features/setup/Setup.tsx`, `setup/hooks/useSetupWizard.ts`).
+  A typo in any one silently misses the cache. Added
+  `QUERY_KEYS.authMode`/`appConfig`/`setupStatus`; every site now sources from the
+  one registry. Same key tuples → identical cache behavior.
+- [x] **MNT.2 — Static `animationDelay` inline styles → Tailwind (§13).** Slipped
+  the earlier SIS sweep (page-level files, not `components/`): `Dashboard.tsx` ×3,
+  `traces/components/TraceToolbar.tsx`, `agents/AgentDetail.tsx`. The AgentDetail
+  style object was *entirely* static — folded into classes byte-identically:
+  `gridTemplateColumns:'repeat(12,minmax(0,1fr))'`→`grid-cols-12`,
+  `gridAutoRows:'min-content'`→`auto-rows-min`, `animationDelay`→`[animation-delay:Nms]`.
+  No remaining `animationDelay:` inline styles in `src/`.
+
+Verified: `npm run build && npm run lint && npm test` all green. Not committed.

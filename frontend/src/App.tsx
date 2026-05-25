@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import ProjectProvider  from './contexts/ProjectProvider';
 import { setupApi } from './api/setup';
 import { configApi } from './api/config';
+import { QUERY_KEYS } from './api/query-keys';
 import { oidcConfig } from './auth/oidcConfig';
 import { setAccessToken, setUnauthorizedHandler } from './auth/token';
 import { fetchAuthMode, useAuthMode } from './auth/authMode';
@@ -37,8 +38,8 @@ const queryClient = new QueryClient({
 });
 
 // Prefetch auth-mode so children can render synchronously.
-queryClient.prefetchQuery({ queryKey: ['auth-mode'], queryFn: fetchAuthMode, staleTime: Infinity });
-queryClient.prefetchQuery({ queryKey: ['app-config'], queryFn: configApi.get, staleTime: Infinity });
+queryClient.prefetchQuery({ queryKey: QUERY_KEYS.authMode, queryFn: fetchAuthMode, staleTime: Infinity });
+queryClient.prefetchQuery({ queryKey: QUERY_KEYS.appConfig, queryFn: configApi.get, staleTime: Infinity });
 
 function PageLoader() {
   return (
@@ -107,7 +108,7 @@ function LocalAuthGate({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { data: setupStatus } = useQuery({
-    queryKey: ['setup-status'],
+    queryKey: QUERY_KEYS.setupStatus,
     queryFn: setupApi.getStatus,
     staleTime: Infinity,
   });
@@ -174,7 +175,7 @@ function KioskShell() {
 
 function ModeShell() {
   const { data: appConfig } = useQuery({
-    queryKey: ['app-config'],
+    queryKey: QUERY_KEYS.appConfig,
     queryFn: configApi.get,
     staleTime: Infinity,
   });

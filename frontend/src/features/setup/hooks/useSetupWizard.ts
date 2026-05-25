@@ -1,6 +1,7 @@
 import { useCallback, useState, type KeyboardEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { setupApi } from '../../../api/setup';
+import { QUERY_KEYS } from '../../../api/query-keys';
 import { ModelProviderKind } from '../../../api/models';
 import { PROVIDER_ENDPOINTS, PROVIDER_KIND_OPTIONS } from '../setupMeta';
 import { useModelLoader } from './useModelLoader';
@@ -101,7 +102,7 @@ export function useSetupWizard() {
 
   async function handleSubmit() {
     if (done) {
-      qc.setQueryData(['setup-status'], { isConfigured: true });
+      qc.setQueryData(QUERY_KEYS.setupStatus, { isConfigured: true });
       window.location.assign('/traces');
       return;
     }

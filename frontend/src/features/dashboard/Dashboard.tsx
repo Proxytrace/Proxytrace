@@ -104,8 +104,7 @@ export default function Dashboard() {
 
       {/* Hero bento: token card + 2×2 stat tiles */}
       <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2"
-        style={{ animationDelay: '80ms' }}
+        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:80ms]"
       >
         <HeroTokenCard
           summary={summary}
@@ -124,8 +123,7 @@ export default function Dashboard() {
 
       {/* Live stream + pass-rate gauge */}
       <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2"
-        style={{ animationDelay: '120ms' }}
+        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:120ms]"
       >
         <LiveTraceStream traces={recentTraces} isLoading={tracesLoading} freshIds={freshIds} />
         <PassRateGauge summary={summary} />
@@ -133,8 +131,7 @@ export default function Dashboard() {
 
       {/* Token usage by agent + latency distribution */}
       <div
-        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2"
-        style={{ animationDelay: '160ms' }}
+        className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]"
       >
         <TokenByAgentSection tokenByAgent={tokenByAgent} agentNameById={agentNameById} range={range} />
         <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} />

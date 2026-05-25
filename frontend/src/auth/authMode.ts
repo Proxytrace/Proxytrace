@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '../api/query-keys';
 
 export type AuthMode = 'oidc' | 'local';
 export interface AuthModeResponse {
@@ -15,7 +16,7 @@ export async function fetchAuthMode(): Promise<AuthModeResponse> {
 
 export function useAuthMode() {
   return useQuery({
-    queryKey: ['auth-mode'],
+    queryKey: QUERY_KEYS.authMode,
     queryFn: fetchAuthMode,
     staleTime: Infinity,
   });
