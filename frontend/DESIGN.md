@@ -241,6 +241,8 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 - `<div>` with onClick instead of a real button or anchor.
 - `useEffect` to run a one-time fetch — use TanStack Query.
 - Fetching inside a component when an SSE broadcaster already streams the data.
+- `dangerouslySetInnerHTML` to render captured prompts / model output — render as text (`CodeBlock`, `<pre>`). See BEST_PRACTICES.md §12.
+- Unsanitized data-derived `href`/`src` (allow only `http`/`https`/`mailto`); `target="_blank"` without `rel="noopener noreferrer"`.
 
 ---
 
@@ -249,7 +251,7 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 Before opening a frontend PR, verify:
 
 - [ ] No new hex values, no new px sizes outside the scale, no ad-hoc shadows.
-- [ ] All static styles are Tailwind utilities; inline `style` only for runtime-computed values.
+- [ ] All static styles are Tailwind utilities; inline `style` only for runtime-computed values. Complex statics use arbitrary-value syntax (`shadow-[var(--shadow-card)]`), never inline `style`.
 - [ ] Tokens used via `bg-card` / `text-primary` / `rounded-lg` / `shadow-[var(--shadow-…)]`, not raw hex or px.
 - [ ] Reused existing component (`Button`, `Card`, `Pill`, `Modal`, `Drawer`, etc.) — no duplicate primitives.
 - [ ] Cursor, hover, focus-visible all present on interactive elements.
@@ -259,6 +261,7 @@ Before opening a frontend PR, verify:
 - [ ] No emoji-as-icon. Lucide only.
 - [ ] No `prefers-reduced-motion`-blind animations.
 - [ ] No light-mode classes.
+- [ ] Untrusted content (prompts, model output, tool args) rendered as text — no `dangerouslySetInnerHTML`. Data-derived URLs scheme-checked; external links have `rel="noopener noreferrer"`. (Full rules: BEST_PRACTICES.md §12.)
 - [ ] Streaming/live state uses `streaming-border` / `pulse-dot` where applicable.
 - [ ] List/table layout matches `trace-row` / `DataTable` conventions.
 - [ ] Visually scanned at 1280px and 1440px widths; nothing horizontally scrolls.

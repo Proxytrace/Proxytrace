@@ -228,7 +228,51 @@ DESIGN.md §7 states the requirements; enforce them in code:
 
 ---
 
-## 12. Testing
+## 12. Secure programming
+
+A trace/observability tool renders untrusted data: captured prompts, model output, tool arguments, user-supplied names. Treat everything from the API or the network as hostile until proven safe.
+
+### 12.1 Rendering untrusted content
+
+- **Never `dangerouslySetInnerHTML`.** React escapes text by default — keep it that way. Render captured prompts, completions, and tool payloads as text (`<pre>`, `CodeBlock`), not HTML. If markdown rendering is genuinely required, run it through a sanitizer (e.g. DOMPurify) and never feed raw model output to an HTML parser.
+- **No `eval`, `new Function`, or `setTimeout`/`setInterval` with a string body.** Ever. Not for "just parsing" JSON — use `JSON.parse`.
+- **Validate before `JSON.parse` of network data**, and wrap in try/catch. A malformed trace payload must not blank the app — that's what `ErrorBoundary` (§9) backstops, but parse defensively too.
+
+### 12.2 Links, URLs, and navigation
+
+- **Sanitize any URL that comes from data** before putting it in `href`/`src`. Allow only `http:`/`https:` (and `mailto:` where intended); reject `javascript:`, `data:`, and `vbscript:` schemes — these are stored-XSS vectors when a model or user controls the string.
+- **External links carry `rel="noopener noreferrer"`** with `target="_blank"` (prevents reverse-tabnabbing and referrer leakage).
+- **Never build a route by string-concatenating untrusted input** into a redirect; route through the router with typed params.
+
+### 12.3 Secrets & sensitive data
+
+- **No secrets in frontend code or the bundle.** API keys, provider tokens, and connection strings live server-side. Anything in the SPA is public — `import.meta.env` values shipped to the client are not secret. The Trsr-issued client `ApiKey` is the *only* credential the browser holds, and it's scoped per project/provider by design.
+- **Don't log sensitive data.** No `console.log` of tokens, full request bodies, or captured prompt content in production paths. Strip debug logging before merge.
+- **Don't persist sensitive data to `localStorage`/`sessionStorage`** (readable by any script). Auth/session handling stays with the existing Context + httpOnly cookies the backend sets; don't hand-roll token storage.
+
+### 12.4 Dependencies & input
+
+- **`npm audit` clean (no high/critical) before a PR.** Don't add a dependency to save 20 lines of code; each one is attack surface and bundle weight.
+- **Validate user input at the boundary** (form submit, query param parse) — length caps, expected shape — even though the backend re-validates. Defense in depth; never trust the client *or* the server alone.
+- **Respect the same `!`/`any`/`as any` ban (§10):** an unchecked cast that lies about a shape is a security bug waiting to deref `undefined` on attacker-shaped data.
+
+---
+
+## 13. Styling — Tailwind only, no inline styles
+
+DESIGN.md §6 owns *which* tokens; this restates the **hard code rule** because it is the single most violated one (185 inline `style={{}}` blocks in `Evaluators.tsx` alone).
+
+- **Static styles are Tailwind utility classes. Full stop.** Color, spacing, radius, shadow, gradient, layout — all expressed as classes.
+- **Complex static values use Tailwind arbitrary-value syntax**, not inline style: `shadow-[var(--shadow-card)]`, `bg-[linear-gradient(...)]`, `rounded-[10px]` — never `style={{ boxShadow: 'var(--shadow-card)' }}`.
+- **`style={{}}` is allowed only for genuinely runtime-computed values** — a percent width from data (`style={{ width: ${pct}% }}`), a runtime hex resolved from `lib/colors.ts`. If the value is knowable at author time, it is a class, not a style.
+- **Compose conditional classes with `cn()`** (`lib/cn.ts`), never template-string `if` soup. Reused class recipes go to `components/ui/classes.ts` (§7).
+- **Don't thread CSS-variable strings through props** (`color="var(--accent-primary)"`). Pass a semantic prop and map to a class at the leaf (§5.1).
+
+(The code mechanics of *how* you apply tokens — `cn()`, `classes.ts`, no new primitives — are in §7; this section is the flat prohibition on inline styles.)
+
+---
+
+## 14. Testing
 
 - **Pure logic is extracted and unit-tested with Vitest** (`*.spec.ts`). The pattern exists: `features/runs/results.ts` + `results.spec.ts`, `lib/format.ts` + `format.test.ts`, `features/setup/Setup.spec.ts`. Computation living in a 1400-line component is computation that can't be tested — extract it to a `.ts` file, then test it.
 - Test the **logic** (selectors, formatters, reducers, derivations), not the framework. Don't snapshot-test whole pages.
@@ -237,7 +281,7 @@ DESIGN.md §7 states the requirements; enforce them in code:
 
 ---
 
-## 13. Naming & imports
+## 15. Naming & imports
 
 - Components `PascalCase`, hooks `useCamelCase`, utilities/constants `camelCase`, files match their default export (`AgentDetail.tsx` exports `AgentDetail`).
 - Boolean props/state read as predicates: `isLoading`, `hasError`, `canEdit`.
@@ -246,7 +290,7 @@ DESIGN.md §7 states the requirements; enforce them in code:
 
 ---
 
-## 14. Pre-merge checklist (code)
+## 16. Pre-merge checklist (code)
 
 Pair this with DESIGN.md §10 (visual checklist). Both must pass.
 
@@ -259,6 +303,9 @@ Pair this with DESIGN.md §10 (visual checklist). Both must pass.
 - [ ] No server data copied into `useState`.
 - [ ] No inline `<svg>` icon — imported from the one icon module.
 - [ ] No static value in `style={{}}`; `cn()` + Tailwind / `classes.ts` instead.
+- [ ] No `dangerouslySetInnerHTML`, `eval`, or `new Function`; untrusted content rendered as text.
+- [ ] Data-derived URLs scheme-checked; external links have `rel="noopener noreferrer"`.
+- [ ] No secrets/tokens in bundle, logs, or `localStorage`; `npm audit` clean (no high/critical).
 - [ ] No `any`, no `as any`, no `!`.
 - [ ] Loading + empty + error states all present for async views.
 - [ ] Clickable = real button/anchor; icon-only has `aria-label`.
@@ -267,7 +314,7 @@ Pair this with DESIGN.md §10 (visual checklist). Both must pass.
 
 ---
 
-## 15. When you touch a debt file
+## 17. When you touch a debt file
 
 You will open files that violate this guide (`Evaluators.tsx` chief among them). The rule:
 
