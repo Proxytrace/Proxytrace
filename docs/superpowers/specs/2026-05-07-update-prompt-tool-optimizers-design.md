@@ -15,14 +15,14 @@ Both are LLM-driven: they call a system agent on `IProject.SystemEndpoint`, feed
 
 ## Context (existing state)
 
-- `IOptimizerImplementation` (`Trsr.Application/Optimization/Internal/IOptimizerImplementation.cs`): contract — `Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(ITestRunGroup, IReadOnlyList<ITestRun>, CancellationToken)`.
+- `IOptimizerImplementation` (`Proxytrace.Application/Optimization/Internal/IOptimizerImplementation.cs`): contract — `Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(ITestRunGroup, IReadOnlyList<ITestRun>, CancellationToken)`.
 - `CompositeOptimizer` aggregates all registered implementations and persists the proposals.
 - `SwitchModelOptimizer` is registered and complete.
 - `RebuildPromptOptimizer` is a stub (throws `NotImplementedException`, not registered) — will be **renamed** to `UpdateSystemPromptOptimizer` and filled in.
 - `ProposalDetails` already has the records we need:
   - `SystemPromptDetails(SystemMessage ProposedSystemMessage)`
   - `ToolDetails(IReadOnlyCollection<ToolSpecification> ProposedTools)`
-- LLM-call pattern is established in `Trsr.Application/Agent/AgentNameGenerator.cs`: get-or-create a system agent (`isSystemAgent: true`) on `project.SystemEndpoint`, prompt template loaded by name from `Trsr.Application/Prompts.resx`, call `agent.CompleteAsync(UserMessage)`.
+- LLM-call pattern is established in `Proxytrace.Application/Agent/AgentNameGenerator.cs`: get-or-create a system agent (`isSystemAgent: true`) on `project.SystemEndpoint`, prompt template loaded by name from `Proxytrace.Application/Prompts.resx`, call `agent.CompleteAsync(UserMessage)`.
 - `ToolArguments.FromJsonSchema(JsonElement)` is public and is the same path `OpenAiCallParser` uses to construct `ToolSpecification` from external JSON schema input.
 
 ## Out of scope
@@ -40,22 +40,22 @@ Both are LLM-driven: they call a system agent on `IProject.SystemEndpoint`, feed
 
 | File | Purpose |
 |---|---|
-| `Trsr.Application/Optimization/Internal/UpdateSystemPromptOptimizer.cs` | Replaces `RebuildPromptOptimizer.cs` (rename file/class). Implements `IOptimizerImplementation`. |
-| `Trsr.Application/Optimization/Internal/UpdateToolDefinitionOptimizer.cs` | New. Implements `IOptimizerImplementation`. |
-| `Trsr.Application/Optimization/Internal/OptimizerEvidenceBuilder.cs` | Shared utility. Picks failing + a small sample of passing `ITestResult`s, renders them to text the LLM can reason over. |
-| `Trsr.Application.Tests/UpdateSystemPromptOptimizerTests.cs` | Unit tests. |
-| `Trsr.Application.Tests/UpdateToolDefinitionOptimizerTests.cs` | Unit tests. |
+| `Proxytrace.Application/Optimization/Internal/UpdateSystemPromptOptimizer.cs` | Replaces `RebuildPromptOptimizer.cs` (rename file/class). Implements `IOptimizerImplementation`. |
+| `Proxytrace.Application/Optimization/Internal/UpdateToolDefinitionOptimizer.cs` | New. Implements `IOptimizerImplementation`. |
+| `Proxytrace.Application/Optimization/Internal/OptimizerEvidenceBuilder.cs` | Shared utility. Picks failing + a small sample of passing `ITestResult`s, renders them to text the LLM can reason over. |
+| `Proxytrace.Application.Tests/UpdateSystemPromptOptimizerTests.cs` | Unit tests. |
+| `Proxytrace.Application.Tests/UpdateToolDefinitionOptimizerTests.cs` | Unit tests. |
 
 ### Modified files
 
 | File | Change |
 |---|---|
-| `Trsr.Application/Optimization/Module.cs` | Register `UpdateSystemPromptOptimizer` and `UpdateToolDefinitionOptimizer` as `IOptimizerImplementation`. |
-| `Trsr.Application/Prompts.resx` (+ generated `Prompts.Designer.cs`) | Add two prompt resources: `update_system_prompt_optimizer`, `update_tool_definition_optimizer`. |
+| `Proxytrace.Application/Optimization/Module.cs` | Register `UpdateSystemPromptOptimizer` and `UpdateToolDefinitionOptimizer` as `IOptimizerImplementation`. |
+| `Proxytrace.Application/Prompts.resx` (+ generated `Prompts.Designer.cs`) | Add two prompt resources: `update_system_prompt_optimizer`, `update_tool_definition_optimizer`. |
 
 ### Removed files
 
-- `Trsr.Application/Optimization/Internal/RebuildPromptOptimizer.cs` — replaced by `UpdateSystemPromptOptimizer.cs`.
+- `Proxytrace.Application/Optimization/Internal/RebuildPromptOptimizer.cs` — replaced by `UpdateSystemPromptOptimizer.cs`.
 
 ## Common flow (both optimizers)
 
@@ -234,7 +234,7 @@ IAgentRepository agents
 ILogger<TOptimizer> logger
 ```
 
-Registered in `Trsr.Application/Optimization/Module.cs`:
+Registered in `Proxytrace.Application/Optimization/Module.cs`:
 
 ```csharp
 builder.RegisterType<UpdateSystemPromptOptimizer>().As<IOptimizerImplementation>();
@@ -252,7 +252,7 @@ builder.RegisterType<UpdateToolDefinitionOptimizer>().As<IOptimizerImplementatio
 
 ## Testing
 
-In `Trsr.Application.Tests/`, both new test classes extend `BaseTest<Module>` and override `ConfigureContainer` to:
+In `Proxytrace.Application.Tests/`, both new test classes extend `BaseTest<Module>` and override `ConfigureContainer` to:
 - Replace `IAgentRepository` with a fake whose `GetOrCreateAsync` returns a pre-stubbed `IAgent` whose `CompleteAsync` returns canned `ICompletion` JSON.
 - Replace `IPromptTemplateRepository` with a fake returning a no-op template (the prompt content does not matter for these tests; only the path through the optimizer does).
 
@@ -275,9 +275,9 @@ Per CLAUDE.md, write failing tests first before implementation.
 
 ## Acceptance criteria
 
-- `dotnet build Trsr.sln` succeeds.
-- `dotnet test Trsr.sln` succeeds.
-- `Trsr.Application.Optimization.Module` registers both optimizers.
+- `dotnet build Proxytrace.sln` succeeds.
+- `dotnet test Proxytrace.sln` succeeds.
+- `Proxytrace.Application.Optimization.Module` registers both optimizers.
 - Running `OptimizerService` against a `TestRunGroup` with at least one failing test against the agent's current endpoint produces, in addition to any `ModelSwitchDetails` proposal:
   - One `IOptimizationProposal` with `Kind == ProposalKind.SystemPrompt`.
   - One `IOptimizationProposal` with `Kind == ProposalKind.Tool` (only if the agent has tools).

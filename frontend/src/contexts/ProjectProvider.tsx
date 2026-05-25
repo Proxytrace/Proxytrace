@@ -4,7 +4,7 @@ import { projectsApi } from "../api/projects";
 import { QUERY_KEYS } from "../api/query-keys";
 import ProjectContext, { type ProjectContextValue } from "./ProjectContext";
 
-const STORAGE_KEY = "trsr:current-project-id";
+const STORAGE_KEY = "proxytrace:current-project-id";
 
 function readStored(): string | null {
   try {

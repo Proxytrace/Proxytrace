@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan the Trsr frontend for refactoring candidates.
+"""Scan the Proxytrace frontend for refactoring candidates.
 
 Emits a ranked table of files that violate BEST_PRACTICES.md, scored by the
 smells the guide cares about (oversized files, multiple components per file,

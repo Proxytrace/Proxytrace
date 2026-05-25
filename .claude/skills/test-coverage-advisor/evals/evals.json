@@ -32,14 +32,14 @@
     {
       "id": 3,
       "name": "narrow-layer-question",
-      "prompt": "How well is Trsr.Application tested? Anything in there that's totally untouched by tests?",
-      "expected_output": "Full analysis runs but interpretation focuses on Trsr.Application. Provides layer coverage %, calls out zero-coverage files in that layer.",
+      "prompt": "How well is Proxytrace.Application tested? Anything in there that's totally untouched by tests?",
+      "expected_output": "Full analysis runs but interpretation focuses on Proxytrace.Application. Provides layer coverage %, calls out zero-coverage files in that layer.",
       "files": [],
       "assertions": [
-        "Provides a coverage % specifically for Trsr.Application",
-        "Lists at least one Trsr.Application file with zero or near-zero coverage",
-        "Interpretation focuses on Trsr.Application, not other layers",
-        "Mentions specific public types/services in Trsr.Application by name"
+        "Provides a coverage % specifically for Proxytrace.Application",
+        "Lists at least one Proxytrace.Application file with zero or near-zero coverage",
+        "Interpretation focuses on Proxytrace.Application, not other layers",
+        "Mentions specific public types/services in Proxytrace.Application by name"
       ]
     }
   ]

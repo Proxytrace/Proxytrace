@@ -1,0 +1,31 @@
+using Proxytrace.Common.Random;
+using Proxytrace.Domain.Internal;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.User;
+
+namespace Proxytrace.Domain.Project.Internal;
+
+internal class ProjectGenerator : DomainEntityGenerator<IProject>
+{
+    private readonly IProject.CreateNew factory;
+    private readonly IDomainEntityGenerator<IModelEndpoint> endpointGenerator;
+
+    public ProjectGenerator(
+        IProject.CreateNew factory,
+        IRepository<IProject> repository,
+        IDomainEntityGenerator<IModelEndpoint> endpointGenerator,
+        IRandom random) : base(repository, random)
+    {
+        this.factory = factory;
+        this.endpointGenerator = endpointGenerator;
+    }
+
+    public override async Task<IProject> GenerateAsync(CancellationToken cancellationToken = default)
+    {
+        var endpoint = await endpointGenerator.GetOrCreateAsync(cancellationToken);
+        return factory(
+            name: random.String(),
+            systemEndpoint: endpoint,
+            members: Array.Empty<IUser>());
+    }
+}

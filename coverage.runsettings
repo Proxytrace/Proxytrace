@@ -10,7 +10,7 @@
           <Format>cobertura</Format>
           <ExcludeByFile>**/Migrations/**/*.cs,**/*.Designer.cs,**/Program.cs</ExcludeByFile>
           <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
-          <Exclude>[*]*.Migrations.*,[Trsr.*.Tests]*</Exclude>
+          <Exclude>[*]*.Migrations.*,[Proxytrace.*.Tests]*</Exclude>
         </Configuration>
       </DataCollector>
     </DataCollectors>

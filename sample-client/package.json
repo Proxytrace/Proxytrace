@@ -1,7 +1,7 @@
 {
-  "name": "trsr-sample-chatbot",
+  "name": "proxytrace-sample-chatbot",
   "version": "1.0.0",
-  "description": "Sample chatbot demonstrating Trsr proxy integration",
+  "description": "Sample chatbot demonstrating Proxytrace proxy integration",
   "main": "server.js",
   "type": "module",
   "scripts": {

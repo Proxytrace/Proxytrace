@@ -7,7 +7,7 @@ import LocalAuthContext, {
   type LocalAuthContextValue,
 } from "./LocalAuthContext";
 
-const STORAGE_KEY = "trsr.token";
+const STORAGE_KEY = "proxytrace.token";
 
 export function LocalAuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();

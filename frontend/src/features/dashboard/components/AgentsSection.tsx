@@ -39,7 +39,7 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
         {agents.length === 0 ? (
           <EmptyState
             title="No agents yet"
-            description="Agents are detected automatically when you route traffic through the Trsr proxy."
+            description="Agents are detected automatically when you route traffic through the Proxytrace proxy."
           />
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">

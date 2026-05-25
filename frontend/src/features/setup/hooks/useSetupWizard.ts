@@ -120,7 +120,7 @@ export function useSetupWizard() {
         projectName: projectName.trim(),
         apiKeyName: keyName.trim(),
       });
-      try { localStorage.setItem('trsr:current-project-id', result.projectId); } catch { /* ignore */ }
+      try { localStorage.setItem('proxytrace:current-project-id', result.projectId); } catch { /* ignore */ }
       setApiKeyValue(result.apiKeyValue);
       setDone(true);
     } catch (e) {

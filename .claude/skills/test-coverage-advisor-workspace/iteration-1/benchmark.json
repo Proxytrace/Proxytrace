@@ -41,7 +41,7 @@
         {
           "text": "Includes a per-layer coverage breakdown",
           "passed": true,
-          "evidence": "Per-layer table shows all 8 Trsr.* projects with line+branch %"
+          "evidence": "Per-layer table shows all 8 Proxytrace.* projects with line+branch %"
         },
         {
           "text": "Top recommendations cite a concrete signal (churn / complexity / untested public API / coverage %)",
@@ -79,7 +79,7 @@
         {
           "text": "Skill triggers despite no 'coverage' keyword \u2014 uses actual coverage data",
           "passed": true,
-          "evidence": "Skill triggered. Report includes concrete cobertura-derived %: '8.3% line / 5.8% branch' for Trsr.Api"
+          "evidence": "Skill triggered. Report includes concrete cobertura-derived %: '8.3% line / 5.8% branch' for Proxytrace.Api"
         },
         {
           "text": "Output is risk/release framed, ties low-coverage files to recent churn",
@@ -115,22 +115,22 @@
       },
       "expectations": [
         {
-          "text": "Provides a coverage % specifically for Trsr.Application",
+          "text": "Provides a coverage % specifically for Proxytrace.Application",
           "passed": true,
-          "evidence": "'51.7% line coverage, 3.8% branch coverage across 65 files' for Trsr.Application"
+          "evidence": "'51.7% line coverage, 3.8% branch coverage across 65 files' for Proxytrace.Application"
         },
         {
-          "text": "Lists at least one Trsr.Application file with zero or near-zero coverage",
+          "text": "Lists at least one Proxytrace.Application file with zero or near-zero coverage",
           "passed": true,
           "evidence": "Table of 0% files: StatisticsService.cs, PlaygroundService.cs, AgentNameGenerator.cs, hosted services, etc."
         },
         {
-          "text": "Interpretation focuses on Trsr.Application, not other layers",
+          "text": "Interpretation focuses on Proxytrace.Application, not other layers",
           "passed": true,
-          "evidence": "Entire report scoped to Trsr.Application; other layers appear only in the relative-comparison table"
+          "evidence": "Entire report scoped to Proxytrace.Application; other layers appear only in the relative-comparison table"
         },
         {
-          "text": "Mentions specific public types/services in Trsr.Application by name",
+          "text": "Mentions specific public types/services in Proxytrace.Application by name",
           "passed": true,
           "evidence": "StatisticsService, TestRunnerService, OpenAiCallParser, PlaygroundService all named in top-3"
         }
@@ -165,7 +165,7 @@
         {
           "text": "Includes a per-layer coverage breakdown",
           "passed": true,
-          "evidence": "Per-layer table covers all Trsr.* projects"
+          "evidence": "Per-layer table covers all Proxytrace.* projects"
         },
         {
           "text": "Top recommendations cite a concrete signal (churn / complexity / untested public API / coverage %)",
@@ -239,22 +239,22 @@
       },
       "expectations": [
         {
-          "text": "Provides a coverage % specifically for Trsr.Application",
+          "text": "Provides a coverage % specifically for Proxytrace.Application",
           "passed": true,
-          "evidence": "'1670 / 3144 lines = 53.1%' for Trsr.Application"
+          "evidence": "'1670 / 3144 lines = 53.1%' for Proxytrace.Application"
         },
         {
-          "text": "Lists at least one Trsr.Application file with zero or near-zero coverage",
+          "text": "Lists at least one Proxytrace.Application file with zero or near-zero coverage",
           "passed": true,
           "evidence": "Big '0% coverage' table: PlaygroundService.cs (156 lines), StatisticsService.cs (139), etc."
         },
         {
-          "text": "Interpretation focuses on Trsr.Application, not other layers",
+          "text": "Interpretation focuses on Proxytrace.Application, not other layers",
           "passed": true,
-          "evidence": "Entire report scoped to Trsr.Application. Sub-namespace breakdown is a strong addition not present in skill output"
+          "evidence": "Entire report scoped to Proxytrace.Application. Sub-namespace breakdown is a strong addition not present in skill output"
         },
         {
-          "text": "Mentions specific public types/services in Trsr.Application by name",
+          "text": "Mentions specific public types/services in Proxytrace.Application by name",
           "passed": true,
           "evidence": "StatisticsService, PlaygroundService, LuceneSearchService, SwitchModelOptimizer named"
         }

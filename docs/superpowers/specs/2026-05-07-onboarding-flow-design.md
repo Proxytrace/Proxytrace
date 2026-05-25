@@ -5,20 +5,20 @@
 
 ## Context
 
-Trsr has no first-run experience. A new installation exposes a full app shell with empty state, no admin user, no provider, and no API key — nothing works out of the box. This design adds a guided 5-step onboarding wizard that initializes a fresh installation and leaves users with a working proxy endpoint they can immediately point their LLM clients at.
+Proxytrace has no first-run experience. A new installation exposes a full app shell with empty state, no admin user, no provider, and no API key — nothing works out of the box. This design adds a guided 5-step onboarding wizard that initializes a fresh installation and leaves users with a working proxy endpoint they can immediately point their LLM clients at.
 
 ## Architecture
 
 ### Backend — SetupController
 
-One new controller: `Trsr.Api/Controllers/SetupController.cs`
+One new controller: `Proxytrace.Api/Controllers/SetupController.cs`
 
 - `GET /api/setup/status` → `{ isConfigured: bool }`
   - Resolves `IRepository<IUser>` and calls `GetAllAsync(ct)` (or count query)
   - Returns `isConfigured: true` if any user exists
   - No auth required (unauthenticated endpoint, needed before any user exists)
 
-New DTO: `Trsr.Api/Dto/Setup/SetupStatusDto.cs`
+New DTO: `Proxytrace.Api/Dto/Setup/SetupStatusDto.cs`
 ```csharp
 public record SetupStatusDto
 {
@@ -67,7 +67,7 @@ Wizard uses the existing `StepWizard` component (`src/components/overlays/StepWi
 
 ### Step 1 — Welcome & Admin User
 
-- Hero welcome message explaining Trsr
+- Hero welcome message explaining Proxytrace
 - `FormField label="Your name"` → `<input>` with `formInputCls`
 - On Next: `POST /api/users { name }` → `userId`
 
@@ -99,7 +99,7 @@ Wizard uses the existing `StepWizard` component (`src/components/overlays/StepWi
     Authorization: Bearer <apiKeyValue>
     Content-Type: application/json
     ```
-  - Brief explanation: "Point any OpenAI-compatible client at this endpoint with your Trsr key."
+  - Brief explanation: "Point any OpenAI-compatible client at this endpoint with your Proxytrace key."
 - "Go to Traces" button → `navigate('/traces')`
 
 ## Error Handling
@@ -130,7 +130,7 @@ const { data: setupStatus } = useQuery({
 ## Testing
 
 ### Backend
-- `Trsr.Api.Tests/Controllers/SetupControllerTests.cs`
+- `Proxytrace.Api.Tests/Controllers/SetupControllerTests.cs`
 - Test: `GetStatus_WhenNoUsersExist_ReturnsNotConfigured`
 - Test: `GetStatus_AfterUserCreated_ReturnsConfigured`
 
@@ -143,9 +143,9 @@ const { data: setupStatus } = useQuery({
 ## Files to Create/Modify
 
 **New files:**
-- `Trsr.Api/Controllers/SetupController.cs`
-- `Trsr.Api/Dto/Setup/SetupStatusDto.cs`
-- `Trsr.Api.Tests/Controllers/SetupControllerTests.cs`
+- `Proxytrace.Api/Controllers/SetupController.cs`
+- `Proxytrace.Api/Dto/Setup/SetupStatusDto.cs`
+- `Proxytrace.Api.Tests/Controllers/SetupControllerTests.cs`
 - `frontend/src/api/setup.ts`
 - `frontend/src/features/setup/Setup.tsx`
 - `frontend/src/features/setup/Setup.spec.ts`
@@ -155,8 +155,8 @@ const { data: setupStatus } = useQuery({
 
 ## Verification
 
-1. `dotnet build Trsr.sln` — no errors
-2. `dotnet test Trsr.sln` — all tests pass including new `SetupControllerTests`
+1. `dotnet build Proxytrace.sln` — no errors
+2. `dotnet test Proxytrace.sln` — all tests pass including new `SetupControllerTests`
 3. `./dev.sh` — open `http://localhost:4201`; verify redirect to `/setup` on fresh DB
 4. Complete all 5 steps; verify redirect to `/traces` after finish
 5. Reload app; verify redirect to `/dashboard` (not `/setup`) since setup is now complete

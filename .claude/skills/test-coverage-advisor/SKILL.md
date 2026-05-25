@@ -68,7 +68,7 @@ The script emits Markdown to stdout: an overall summary table, per-layer breakdo
 The script gives data; **you** give the recommendation. After printing the table, add a short narrative section:
 
 - Name the **top 3 concrete files or types** the user should tackle first, and **why** — phrase it in terms of the actual signals (e.g., "public surface of `OptimizationProposalService` is 80% untested and it changed in 6 of the last 20 commits").
-- Call out **layer-level imbalances** ("Trsr.Application is at 42% but Trsr.Domain is at 91% — the orchestration layer is doing the most and is least tested").
+- Call out **layer-level imbalances** ("Proxytrace.Application is at 42% but Proxytrace.Domain is at 91% — the orchestration layer is doing the most and is least tested").
 - If churn is concentrated in a low-coverage area, flag it as a **regression risk**, not a coverage chore.
 - If a high-complexity file has zero tests, treat it as **higher priority than a larger file with light tests** — uncovered branches in dense code hide real bugs.
 

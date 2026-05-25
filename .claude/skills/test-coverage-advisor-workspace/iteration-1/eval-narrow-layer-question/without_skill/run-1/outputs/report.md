@@ -1,6 +1,6 @@
-# Trsr.Application Test Coverage
+# Proxytrace.Application Test Coverage
 
-Computed from the freshly regenerated cobertura artifacts under `TestResults/` (covers Trsr.Application source files only; Migrations and the test project itself excluded).
+Computed from the freshly regenerated cobertura artifacts under `TestResults/` (covers Proxytrace.Application source files only; Migrations and the test project itself excluded).
 
 ## Headline
 
@@ -82,6 +82,6 @@ If you discount the records/interfaces (~52 lines), there are still **~565 lines
 
 ## Notes / caveats
 
-- The coverage run completed for most projects, but the Infrastructure test run aborted with file-lock errors against `Trsr.Application.dll` (parallel test execution colliding with coverlet). The numbers above still aggregate every cobertura file written this morning, so Application coverage from the other test projects (Api.Tests, Application.Tests, Domain.Tests, Storage.Tests) is included.
+- The coverage run completed for most projects, but the Infrastructure test run aborted with file-lock errors against `Proxytrace.Application.dll` (parallel test execution colliding with coverlet). The numbers above still aggregate every cobertura file written this morning, so Application coverage from the other test projects (Api.Tests, Application.Tests, Domain.Tests, Storage.Tests) is included.
 - "0%" on interfaces and record-only files is expected and not a real gap — they're flagged above with *(noise)*.
-- Source: `/Users/eberharter/Trsr/TestResults/*/coverage.cobertura.xml` (generated 2026-05-13 07:00-07:03).
+- Source: `/Users/eberharter/Proxytrace/TestResults/*/coverage.cobertura.xml` (generated 2026-05-13 07:00-07:03).

@@ -1,0 +1,27 @@
+using System.Text.Json;
+using Proxytrace.Common.Async;
+using Proxytrace.Common.Random;
+using Proxytrace.Domain.Internal;
+
+namespace Proxytrace.Domain.Tools.Internal;
+
+internal class ToolArgumentGenerator : DomainObjectGenerator<IToolArgument>
+{
+    public ToolArgumentGenerator(IRandom random) : base(random)
+    {
+    }
+
+    public override Task<IToolArgument> CreateAsync(CancellationToken cancellationToken = default)
+    {
+        var schema = JsonSerializer.SerializeToElement(new
+        {
+            type = "string",
+            description = random.String()
+        });
+        return ((IToolArgument)new JsonToolArgument(
+                name: random.String(),
+                isRequired: random.Bool(),
+                json: schema))
+            .ToTaskResult();
+    }
+}

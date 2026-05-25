@@ -49,10 +49,10 @@ jobs:
             **/*.csproj
 
       - name: Restore
-        run: dotnet restore Trsr.sln --nologo
+        run: dotnet restore Proxytrace.sln --nologo
 
       - name: Build
-        run: dotnet build Trsr.sln --nologo --no-restore
+        run: dotnet build Proxytrace.sln --nologo --no-restore
 
       - name: Test
-        run: dotnet test Trsr.sln --nologo --verbosity minimal --no-restore
+        run: dotnet test Proxytrace.sln --nologo --verbosity minimal --no-restore

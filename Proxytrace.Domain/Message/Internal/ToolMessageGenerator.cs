@@ -1,0 +1,22 @@
+using Proxytrace.Common.Random;
+using Proxytrace.Domain.Internal;
+
+namespace Proxytrace.Domain.Message.Internal;
+
+internal class ToolMessageGenerator : DomainObjectGenerator<ToolMessage>
+{
+    private readonly IDomainObjectGenerator<ToolResponse> toolResponseGenerator;
+
+    public ToolMessageGenerator(
+        IRandom random,
+        IDomainObjectGenerator<ToolResponse> toolResponseGenerator) : base(random)
+    {
+        this.toolResponseGenerator = toolResponseGenerator;
+    }
+
+    public override async Task<ToolMessage> CreateAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await toolResponseGenerator.CreateAsync(cancellationToken);
+        return new ToolMessage(response);
+    }
+}

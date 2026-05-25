@@ -1,0 +1,49 @@
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Proxytrace.Common.Async;
+using Proxytrace.Domain;
+using Proxytrace.Domain.Events;
+using Proxytrace.Domain.Model;
+
+namespace Proxytrace.Storage.Internal.Entities.Model;
+
+[UsedImplicitly]
+internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModelRepository
+{
+    private readonly IModel.CreateNew factory;
+    private readonly IAsyncLock locker;
+
+    public ModelRepository(
+        IMapper<IModel, ModelEntity> mapper,
+        IModel.CreateNew factory,
+        Func<StorageDbContext> contextFactory,
+        ITransaction transaction,
+        IEntityEventService entityEvents,
+        IAsyncLock locker,
+        IEntityCache<IModel> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+    {
+        this.factory = factory;
+        this.locker = locker;
+    }
+
+    public async Task<IModel> GetOrCreateAsync(string name, CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var loweredName = name.ToLowerInvariant();
+        using IDisposable lockObj = await locker.LockAsync(loweredName, cancellationToken);
+        
+        var existing = await context
+            .Set<ModelEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Name.ToLower() == loweredName, cancellationToken);
+
+        if (existing is not null)
+        {
+            return await mapper.Map(existing, cancellationToken);
+        }
+
+        var model = factory(name: name);
+        return await AddAsync(context, model, cancellationToken);
+    }
+}
+

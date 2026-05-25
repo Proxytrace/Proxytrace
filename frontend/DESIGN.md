@@ -1,4 +1,4 @@
-# Trsr UI Design Guide
+# Proxytrace UI Design Guide
 
 **Required reading before any frontend work.** This document is the source of truth for visual style, component conventions, and interaction patterns. Skim if you've read it before; obey it always. The codebase already implements these rules — your job is to extend the system, not invent a parallel one.
 
@@ -8,7 +8,7 @@ If a rule here conflicts with a generic design recommendation (from a tool, agen
 
 ## 1. Product context
 
-Trsr is an AI-agent observability + benchmarking platform. The user is a developer or ML engineer staring at traces, test runs, evaluations, and proposals — often for long stretches. That dictates everything below:
+Proxytrace is an AI-agent observability + benchmarking platform. The user is a developer or ML engineer staring at traces, test runs, evaluations, and proposals — often for long stretches. That dictates everything below:
 
 - **Information density over whitespace luxury.** Body text is 12px, not 16px. Cards stack tightly. Whitespace earns its place.
 - **Calm, not flashy.** Dark surface, single warm accent. No rainbows, no glassmorphism flourishes, no animated gradients on idle UI.
@@ -233,7 +233,7 @@ Inline `style={{ ... }}` is acceptable **only** for genuinely runtime-computed v
 
 - Glassmorphism, frosted blur on regular cards (only modal overlay uses backdrop-blur, and only at 4px).
 - Vibrant rainbow gradients, neon glows, or animated gradients on idle UI.
-- Light-mode styles. Trsr is dark-only today; do not add light-mode classes "just in case." If/when light mode happens, it'll be a tracked initiative with new tokens.
+- Light-mode styles. Proxytrace is dark-only today; do not add light-mode classes "just in case." If/when light mode happens, it'll be a tracked initiative with new tokens.
 - Custom shadows / radii / type sizes outside the scale.
 - `border-2` or thicker borders on UI chrome — our borders are 1px hairlines. Thicker borders only on focus rings (2px) and explicit dividers.
 - Decorative emoji in copy, headings, or buttons.

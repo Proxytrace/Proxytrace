@@ -5,7 +5,7 @@ const env = import.meta.env as Record<string, string | undefined>;
 
 export const oidcConfig: AuthProviderProps = {
   authority: env.VITE_OIDC_AUTHORITY ?? '',
-  client_id: env.VITE_OIDC_CLIENT_ID ?? 'trsr-spa',
+  client_id: env.VITE_OIDC_CLIENT_ID ?? 'proxytrace-spa',
   redirect_uri: env.VITE_OIDC_REDIRECT_URI ?? `${window.location.origin}/auth/callback`,
   post_logout_redirect_uri: env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI ?? window.location.origin,
   scope: env.VITE_OIDC_SCOPE ?? 'openid profile email',

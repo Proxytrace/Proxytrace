@@ -165,7 +165,7 @@ function KioskShell() {
   return (
     <KioskContext.Provider value={{ enabled: true }}>
       <BrowserRouter>
-        <CurrentUserContext.Provider value={{ email: 'demo@trsr.dev', signOut: () => {} }}>
+        <CurrentUserContext.Provider value={{ email: 'demo@proxytrace.dev', signOut: () => {} }}>
           <AppRoutes />
         </CurrentUserContext.Provider>
       </BrowserRouter>

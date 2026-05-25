@@ -45,7 +45,7 @@ describe('setupApi', () => {
         providerId: 'p1',
         endpointId: 'e1',
         projectId: 'pr1',
-        apiKeyValue: 'trsr-abc',
+        apiKeyValue: 'proxytrace-abc',
       };
       const fetch = mockFetch(response);
       vi.stubGlobal('fetch', fetch);
@@ -64,7 +64,7 @@ describe('setupApi', () => {
       };
       const result = await setupApi.complete(req);
 
-      expect(result.apiKeyValue).toBe('trsr-abc');
+      expect(result.apiKeyValue).toBe('proxytrace-abc');
       expect(fetch).toHaveBeenCalledWith(
         '/api/setup/complete',
         expect.objectContaining({ method: 'POST', body: JSON.stringify(req) }),

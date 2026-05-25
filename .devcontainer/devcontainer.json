@@ -1,5 +1,5 @@
 {
-  "name": "Trsr",
+  "name": "Proxytrace",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -16,7 +16,7 @@
   },
   "forwardPorts": [5000, 5001, 4201],
   "portsAttributes": {
-    "5001": { "label": "Trsr API", "onAutoForward": "notify" },
+    "5001": { "label": "Proxytrace API", "onAutoForward": "notify" },
     "5000": { "label": "Swagger", "onAutoForward": "silent" },
     "4201": { "label": "Frontend (Vite)", "onAutoForward": "openPreview" }
   },
@@ -41,7 +41,7 @@
       ],
       "settings": {
         "editor.formatOnSave": true,
-        "dotnet.defaultSolution": "Trsr.sln",
+        "dotnet.defaultSolution": "Proxytrace.sln",
         "omnisharp.enableRoslynAnalyzers": true
       }
     }

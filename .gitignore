@@ -23,4 +23,4 @@ sample-client/.claude/settings.local.json
 *.local.json
 .DS_Store
 *.DotSettings.user
-Trsr.Api/trsr.db
+Proxytrace.Api/proxytrace.db

@@ -18,7 +18,7 @@ description: >-
 
 # Refactor Frontend (autonomous)
 
-Drive the Trsr frontend toward the target state defined in
+Drive the Proxytrace frontend toward the target state defined in
 [`frontend/BEST_PRACTICES.md`](../../../frontend/BEST_PRACTICES.md): small,
 single-purpose, obvious components; TanStack Query as the only data layer; no
 inline SVG, no inline static styles, no `any`/`!`; logic extracted and tested.

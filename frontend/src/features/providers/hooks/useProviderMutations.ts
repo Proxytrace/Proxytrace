@@ -67,7 +67,7 @@ export function useUpdateModelPricing(providerId: string) {
   });
 }
 
-/** Generates a new Trsr API key for a provider. */
+/** Generates a new Proxytrace API key for a provider. */
 export function useCreateKey(providerId: string) {
   const qc = useQueryClient();
   return useMutation({

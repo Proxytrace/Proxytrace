@@ -43,13 +43,13 @@ async function main() {
   }
 
   const openai = new OpenAI({
-    apiKey: process.env.TRSR_API_KEY,
-    baseURL: process.env.TRSR_BASE_URL ?? "https://api.openai.com/v1",
+    apiKey: process.env.PROXYTRACE_API_KEY,
+    baseURL: process.env.PROXYTRACE_BASE_URL ?? "https://api.openai.com/v1",
   });
   const model = process.env.MODEL ?? "gpt-4o-mini";
 
-  const trsrUrl = process.env.TRSR_BASE_URL ?? "(not set — using OpenAI directly)";
-  console.log(`Trsr proxy: ${trsrUrl}`);
+  const proxytraceUrl = process.env.PROXYTRACE_BASE_URL ?? "(not set — using OpenAI directly)";
+  console.log(`Proxytrace proxy: ${proxytraceUrl}`);
   console.log(`Model:      ${model}`);
   console.log(`Agents:     ${targets.map((a) => a.id).join(", ")}`);
   console.log(`Delay:      ${args.delay}ms between examples`);
@@ -78,7 +78,7 @@ async function main() {
           messages: [{ role: "user", content: ex.prompt }],
           openai,
           model,
-          sessionHeaders: { "x-trsr-session-id": sessionId },
+          sessionHeaders: { "x-proxytrace-session-id": sessionId },
           onEvent: (event) => {
             if (event.toolCall) {
               tools.push(event.toolCall.name);

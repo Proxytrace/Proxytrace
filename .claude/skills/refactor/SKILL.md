@@ -27,7 +27,7 @@ Carry out the refactoring described in the Approach bullets. Follow all conventi
 - Do not expand scope beyond what the item describes.
 - Do not fix unrelated issues you notice along the way — if they are worth fixing, they belong in the todo list.
 - Do not add comments explaining what you changed; the code should be self-explanatory.
-- If the item touches backend code, verify the build still passes: `dotnet build Trsr.sln`
+- If the item touches backend code, verify the build still passes: `dotnet build Proxytrace.sln`
 - If the item touches frontend code, verify the TypeScript compiles: `npm run build` inside `frontend/`
 
 ## Step 4 — Remove the item from the list

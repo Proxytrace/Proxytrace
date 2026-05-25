@@ -17,7 +17,7 @@ const settingsResetBtn = document.getElementById("settings-reset");
 
 // Per-agent conversation history: agentId → message[]
 const histories = {};
-// Per-agent session ID sent as X-Trsr-Session-Id; null until the first message is sent
+// Per-agent session ID sent as X-Proxytrace-Session-Id; null until the first message is sent
 const sessionIds = {};
 let agents = [];
 let activeAgentId = null;
@@ -37,7 +37,7 @@ const PARAM_DEFAULTS = {
   frequency_penalty: 0,
   presence_penalty: 0,
 };
-const PARAM_STORAGE_KEY = "trsr-sample-model-params";
+const PARAM_STORAGE_KEY = "proxytrace-sample-model-params";
 
 function loadModelParams() {
   try {
@@ -150,7 +150,7 @@ function selectAgent(id) {
 
   const agent = agents.find((a) => a.id === id);
   if (agent) {
-    emptyTextEl.textContent = `${agent.icon} ${agent.name} — ${agent.description}. Start chatting; all interactions will appear as traces in your Trsr dashboard.`;
+    emptyTextEl.textContent = `${agent.icon} ${agent.name} — ${agent.description}. Start chatting; all interactions will appear as traces in your Proxytrace dashboard.`;
     inputEl.placeholder = `Ask the ${agent.name}… (Enter to send, Shift+Enter for new line)`;
   }
   inputEl.focus();
@@ -430,7 +430,7 @@ async function playPlaylist() {
       if (stopRequested) break;
       setPlayingState(true, `Playing ${i + 1} / ${agent.shortcuts.length}…`);
       // Each example starts with a clean transcript + fresh session so traces
-      // appear as distinct conversations in the Trsr dashboard. sendPrompt
+      // appear as distinct conversations in the Proxytrace dashboard. sendPrompt
       // assigns a new sessionId on the first turn after the reset.
       resetActiveAgent();
       try {

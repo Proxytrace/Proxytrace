@@ -12,7 +12,7 @@ import {
   type PlaygroundToolRequest,
 } from './types';
 
-const STORAGE_KEY = 'trsr.playground.session.v1';
+const STORAGE_KEY = 'proxytrace.playground.session.v1';
 
 function loadFromStorage(): PlaygroundSession {
   try {

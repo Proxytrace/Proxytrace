@@ -2,12 +2,12 @@ services:
   api:
     build:
       context: .
-      dockerfile: Trsr.Api/Dockerfile
+      dockerfile: Proxytrace.Api/Dockerfile
     ports:
       - "5200:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Data Source=/tmp/trsr.db
+      - ConnectionStrings__Default=Data Source=/tmp/proxytrace.db
       - Kiosk__Enabled=true
       - Self__BaseUrl=http://localhost:5200
       - Frontend__AllowedOrigin=http://localhost:5201

@@ -92,7 +92,7 @@ export function SetupWizard() {
               T
             </div>
             <div>
-              <div className="font-bold text-[15px] tracking-[-0.01em] text-primary leading-tight">Trsr</div>
+              <div className="font-bold text-[15px] tracking-[-0.01em] text-primary leading-tight">Proxytrace</div>
               <div className="text-[11px] text-muted">Agent observability platform</div>
             </div>
           </div>

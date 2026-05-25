@@ -1,4 +1,4 @@
-# Creating a New Domain Entity in Trsr
+# Creating a New Domain Entity in Proxytrace
 
 Use this guide when implementing a new domain concept end-to-end. Follow the steps in order.
 `ITestRunGroup` is the canonical reference implementation — read it when a pattern is unclear.
@@ -7,21 +7,21 @@ Use this guide when implementing a new domain concept end-to-end. Follow the ste
 
 ## Checklist
 
-- [ ] Domain interface (`Trsr.Domain/[Entity]/I[Entity].cs`)
-- [ ] Domain implementation (`Trsr.Domain/[Entity]/Internal/[Entity].cs`)
-- [ ] Generator (`Trsr.Domain/[Entity]/Internal/[Entity]Generator.cs`)
-- [ ] Repository interface if needed (`Trsr.Domain/[Entity]/I[Entity]Repository.cs`)
-- [ ] Storage entity (`Trsr.Storage/Internal/Entities/[Entity]/[Entity]Entity.cs`)
-- [ ] Storage config + mapper (`Trsr.Storage/Internal/Entities/[Entity]/[Entity]Config.cs`)
-- [ ] Storage repository if needed (`Trsr.Storage/Internal/Entities/[Entity]/[Entity]Repository.cs`)
+- [ ] Domain interface (`Proxytrace.Domain/[Entity]/I[Entity].cs`)
+- [ ] Domain implementation (`Proxytrace.Domain/[Entity]/Internal/[Entity].cs`)
+- [ ] Generator (`Proxytrace.Domain/[Entity]/Internal/[Entity]Generator.cs`)
+- [ ] Repository interface if needed (`Proxytrace.Domain/[Entity]/I[Entity]Repository.cs`)
+- [ ] Storage entity (`Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Entity.cs`)
+- [ ] Storage config + mapper (`Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Config.cs`)
+- [ ] Storage repository if needed (`Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Repository.cs`)
 - [ ] EF Core migration
-- [ ] Tests (`Trsr.Domain.Tests/[Entity]ValidationTests.cs`)
+- [ ] Tests (`Proxytrace.Domain.Tests/[Entity]ValidationTests.cs`)
 
 ---
 
 ## Step 1 — Domain interface
 
-File: `Trsr.Domain/[Entity]/I[Entity].cs`
+File: `Proxytrace.Domain/[Entity]/I[Entity].cs`
 
 Rules:
 - `public interface` extending `IDomainEntity` (gives `Id`, `CreatedAt`, `UpdatedAt` for free — do not redeclare them)
@@ -31,10 +31,10 @@ Rules:
 - No `IData` sub-interface — all properties live directly on the interface
 
 ```csharp
-using Trsr.Domain.TestRun;
-using Trsr.Domain.TestSuite;
+using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestSuite;
 
-namespace Trsr.Domain.TestRunGroup;
+namespace Proxytrace.Domain.TestRunGroup;
 
 public interface ITestRunGroup : IDomainEntity
 {
@@ -60,7 +60,7 @@ public interface ITestRunGroup : IDomainEntity
 
 ## Step 2 — Domain implementation
 
-File: `Trsr.Domain/[Entity]/Internal/[Entity].cs`
+File: `Proxytrace.Domain/[Entity]/Internal/[Entity].cs`
 
 Rules:
 - `internal sealed record` extending `DomainEntity<I[Entity]>` and implementing `I[Entity]`
@@ -134,7 +134,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
 }
 ```
 
-### Validation helpers (from `Trsr.Common.Validation`)
+### Validation helpers (from `Proxytrace.Common.Validation`)
 
 ```csharp
 yield return Validation.NotNullOrWhiteSpace(Name);  // note capital S
@@ -149,7 +149,7 @@ yield return Validation.NotBefore(UpdatedAt, CreatedAt);
 
 ## Step 3 — Generator
 
-File: `Trsr.Domain/[Entity]/Internal/[Entity]Generator.cs`
+File: `Proxytrace.Domain/[Entity]/Internal/[Entity]Generator.cs`
 
 The generator is used exclusively by the test infrastructure. 
 It must be able to produce a valid, self-contained instance.
@@ -189,7 +189,7 @@ Rules:
 
 ## Step 4 — Repository interface (only if needed)
 
-File: `Trsr.Domain/[Entity]/I[Entity]Repository.cs`
+File: `Proxytrace.Domain/[Entity]/I[Entity]Repository.cs`
 
 Only create this if you need queries beyond the standard CRUD that `IRepository<T>` already provides — e.g. filtering by a parent entity:
 
@@ -208,7 +208,7 @@ If you only need `GetAsync`, `AddAsync`, `UpdateAsync`, etc., skip this file and
 
 ## Step 5 — Storage entity
 
-File: `Trsr.Storage/Internal/Entities/[Entity]/[Entity]Entity.cs`
+File: `Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Entity.cs`
 
 Rules:
 - `internal record` extending `Entity`
@@ -231,7 +231,7 @@ internal record TestRunGroupEntity : Entity
 
 ## Step 6 — Storage config and mapper
 
-File: `Trsr.Storage/Internal/Entities/[Entity]/[Entity]Config.cs`
+File: `Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Config.cs`
 
 Rules:
 - Extends `AbstractEntityConfiguration<[Entity]Entity>`
@@ -307,7 +307,7 @@ public async Task<IMyEntity> Map(MyEntity stored, CancellationToken ct = default
 
 ## Step 7 — Storage repository (only if needed)
 
-File: `Trsr.Storage/Internal/Entities/[Entity]/[Entity]Repository.cs`
+File: `Proxytrace.Storage/Internal/Entities/[Entity]/[Entity]Repository.cs`
 
 Rules:
 - `internal class` extending `AbstractRepository<I[Entity], [Entity]Entity>`
@@ -351,7 +351,7 @@ internal class TestRunGroupRepository
 
 ## Step 8 — EF Core migration
 
-Run from `Trsr.Storage/`:
+Run from `Proxytrace.Storage/`:
 
 ```bash
 dotnet ef migrations add Add[Entity]
@@ -378,7 +378,7 @@ Always verify the generated migration file before applying it — check column t
 
 ## Step 9 — Tests
 
-File: `Trsr.Domain.Tests/[Entity]ValidationTests.cs`
+File: `Proxytrace.Domain.Tests/[Entity]ValidationTests.cs`
 
 See `/test` for the full test-writing guide. For a new domain entity, cover: `CreateNew` happy path, null/invalid inputs, unique IDs, `CreateExisting` round-trip, state-machine transitions (valid and terminal-state violations), and persistence reloads. `TestRunGroupValidationTests` is the canonical reference.
 

@@ -53,8 +53,8 @@ export function KeysTab({ providerId, projects, defaultProjectId }: KeysTabProps
     <>
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-h2 font-semibold text-primary mb-0.5">Trsr API keys</div>
-          <div className="text-body-sm text-muted">Keys that authenticate clients at the Trsr proxy.</div>
+          <div className="text-h2 font-semibold text-primary mb-0.5">Proxytrace API keys</div>
+          <div className="text-body-sm text-muted">Keys that authenticate clients at the Proxytrace proxy.</div>
         </div>
         <Button
           variant="secondary"

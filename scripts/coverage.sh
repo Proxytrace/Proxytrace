@@ -10,7 +10,7 @@ OUT="$ROOT/TestResults"
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
-dotnet test Trsr.sln \
+dotnet test Proxytrace.sln \
   --settings "$ROOT/coverage.runsettings" \
   --collect:"XPlat Code Coverage" \
   --results-directory "$OUT" \
@@ -40,7 +40,7 @@ for f in glob.glob("TestResults/**/coverage.cobertura.xml", recursive=True):
 
 layers = defaultdict(lambda: [0, 0])
 for fname, t in total.items():
-    layer = next((p for p in fname.split("/") if p.startswith("Trsr.")), "other")
+    layer = next((p for p in fname.split("/") if p.startswith("Proxytrace.")), "other")
     layers[layer][0] += len(covered[fname])
     layers[layer][1] += len(t)
 

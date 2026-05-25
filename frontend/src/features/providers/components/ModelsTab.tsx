@@ -112,7 +112,7 @@ export function ModelsTab({ providerId }: ModelsTabProps) {
 
       {isLoading && <SkeletonList rows={3} height={48} gap={8} />}
       {!isLoading && models.length === 0 && !showNew && (
-        <EmptyState title="No models yet" description="Add one or let Trsr auto-discover them from traces." />
+        <EmptyState title="No models yet" description="Add one or let Proxytrace auto-discover them from traces." />
       )}
       {models.length > 0 && (
         <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">

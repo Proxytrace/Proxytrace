@@ -1,6 +1,6 @@
 # Database Configuration
 
-The Trsr API supports multiple database providers. The database provider is automatically detected based on the connection string format.
+The Proxytrace API supports multiple database providers. The database provider is automatically detected based on the connection string format.
 
 ## Supported Database Providers
 
@@ -12,7 +12,7 @@ SQLite is a lightweight, file-based database that requires no separate server in
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Data Source=trsr.db"
+    "Default": "Data Source=proxytrace.db"
   }
 }
 ```
@@ -42,7 +42,7 @@ Microsoft SQL Server is the default database provider.
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Server=localhost;Database=Trsr;Trusted_Connection=True;TrustServerCertificate=True;"
+    "Default": "Server=localhost;Database=Proxytrace;Trusted_Connection=True;TrustServerCertificate=True;"
   }
 }
 ```
@@ -57,7 +57,7 @@ Open-source relational database with advanced features.
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Host=localhost;Database=Trsr;Username=postgres;Password=yourpassword"
+    "Default": "Host=localhost;Database=Proxytrace;Username=postgres;Password=yourpassword"
   }
 }
 ```
@@ -67,16 +67,16 @@ Open-source relational database with advanced features.
 ## Configuration File Location
 
 Update the connection string in:
-- `Trsr.Api/appsettings.json` (default configuration)
-- `Trsr.Api/appsettings.development.json` (development override)
+- `Proxytrace.Api/appsettings.json` (default configuration)
+- `Proxytrace.Api/appsettings.development.json` (development override)
 
 ## Migrations
 
 To create and apply database migrations:
 
 ```bash
-# Create a new migration (from Trsr.Storage directory)
-cd Trsr.Storage
+# Create a new migration (from Proxytrace.Storage directory)
+cd Proxytrace.Storage
 dotnet ef migrations add MigrationName
 
 # Apply migrations (automatic on API startup, or manual)
@@ -87,20 +87,20 @@ The API automatically applies pending migrations on startup for all database pro
 
 ## Quick Start with SQLite
 
-1. Update `Trsr.Api/appsettings.json`:
+1. Update `Proxytrace.Api/appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Data Source=trsr.db"
+    "Default": "Data Source=proxytrace.db"
   }
 }
 ```
 
 2. Run the API:
 ```bash
-cd Trsr.Api
+cd Proxytrace.Api
 dotnet run
 ```
 
-The database file `trsr.db` will be created automatically in the API directory.
+The database file `proxytrace.db` will be created automatically in the API directory.
 

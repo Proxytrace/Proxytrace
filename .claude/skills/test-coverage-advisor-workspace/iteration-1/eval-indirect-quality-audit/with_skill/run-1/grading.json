@@ -3,7 +3,7 @@
     {
       "text": "Skill triggers despite no 'coverage' keyword \u2014 uses actual coverage data",
       "passed": true,
-      "evidence": "Skill triggered. Report includes concrete cobertura-derived %: '8.3% line / 5.8% branch' for Trsr.Api"
+      "evidence": "Skill triggered. Report includes concrete cobertura-derived %: '8.3% line / 5.8% branch' for Proxytrace.Api"
     },
     {
       "text": "Output is risk/release framed, ties low-coverage files to recent churn",

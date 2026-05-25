@@ -1,4 +1,4 @@
-# Writing Tests for Trsr
+# Writing Tests for Proxytrace
 
 Use this guide whenever writing new tests or reviewing existing ones. It covers every layer of the stack.
 
@@ -8,16 +8,16 @@ Use this guide whenever writing new tests or reviewing existing ones. It covers 
 
 | Project | What it tests | Base class |
 |---|---|---|
-| `Trsr.Domain.Tests` | Domain entity construction, validation, state-machine transitions | `DomainTest<Module>` (extends `BaseTest<Module>`) |
-| `Trsr.Storage.Tests` | Repository persistence and round-trip mapping via EF Core (in-memory SQLite) | `BaseTest<Module>` |
-| `Trsr.Application.Tests` | Application services end-to-end (e.g. `TestRunnerService`) with faked infrastructure | `BaseTest<Module>` |
-| `Trsr.Api.Tests` | HTTP controllers / routing | `BaseTest<Module>` |
+| `Proxytrace.Domain.Tests` | Domain entity construction, validation, state-machine transitions | `DomainTest<Module>` (extends `BaseTest<Module>`) |
+| `Proxytrace.Storage.Tests` | Repository persistence and round-trip mapping via EF Core (in-memory SQLite) | `BaseTest<Module>` |
+| `Proxytrace.Application.Tests` | Application services end-to-end (e.g. `TestRunnerService`) with faked infrastructure | `BaseTest<Module>` |
+| `Proxytrace.Api.Tests` | HTTP controllers / routing | `BaseTest<Module>` |
 
 ---
 
 ## The base test harness
 
-All tests extend `BaseTest<TModule>` from `Trsr.Testing`:
+All tests extend `BaseTest<TModule>` from `Proxytrace.Testing`:
 
 ```csharp
 [TestClass]
@@ -47,7 +47,7 @@ Key points:
 
 ---
 
-## Domain tests (`Trsr.Domain.Tests`)
+## Domain tests (`Proxytrace.Domain.Tests`)
 
 Extend `DomainTest<Module>` for the convenient `GetOrCreate<T>` helper.
 
@@ -118,7 +118,7 @@ public async Task SetCompleted_FromRunning_TransitionsToCompletedWithTimestamp()
 
 ---
 
-## Application tests (`Trsr.Application.Tests`)
+## Application tests (`Proxytrace.Application.Tests`)
 
 Use `BaseTest<Module>` and substitute infrastructure (model clients, external APIs) with NSubstitute.
 

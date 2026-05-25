@@ -13,7 +13,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "=== Trsr Dev Mode ==="
+echo "=== Proxytrace Dev Mode ==="
 
 # Install frontend dependencies if node_modules is missing
 if [ ! -d "$REPO_ROOT/frontend/node_modules" ]; then
@@ -23,7 +23,7 @@ fi
 
 # Start backend in development mode
 echo "Starting backend on http://localhost:5001 ..."
-(cd "$REPO_ROOT/Trsr.Api" && ASPNETCORE_ENVIRONMENT=Development dotnet run --urls "http://localhost:5001") &
+(cd "$REPO_ROOT/Proxytrace.Api" && ASPNETCORE_ENVIRONMENT=Development dotnet run --urls "http://localhost:5001") &
 
 # Give the backend a moment to bind its port before the frontend proxy tries to connect
 sleep 2

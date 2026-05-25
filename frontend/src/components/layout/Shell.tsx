@@ -142,7 +142,7 @@ export function Shell() {
           >T</div>
           {!collapsed && (
             <div className="ml-[10px]">
-              <div className="font-bold text-sm tracking-[-0.01em]">Trsr</div>
+              <div className="font-bold text-sm tracking-[-0.01em]">Proxytrace</div>
               <div className="text-[11px] text-muted mt-[-1px]">v0.1 · alpha</div>
             </div>
           )}

@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What Trsr Is
+## What Proxytrace Is
 
-Trsr is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
+Proxytrace is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
 ## Working on UI
 
@@ -21,11 +21,11 @@ When implementing frontend features that require backend endpoints or methods th
 
 ### Backend (.NET 10)
 ```bash
-dotnet restore Trsr.sln          # Restore packages
-dotnet build Trsr.sln            # Build all projects
-dotnet test Trsr.sln             # Run all tests
-dotnet test Trsr.Domain.Tests    # Run a single test project
-cd Trsr.Api && dotnet run        # Start API on http://localhost:5001
+dotnet restore Proxytrace.sln          # Restore packages
+dotnet build Proxytrace.sln            # Build all projects
+dotnet test Proxytrace.sln             # Run all tests
+dotnet test Proxytrace.Domain.Tests    # Run a single test project
+cd Proxytrace.Api && dotnet run        # Start API on http://localhost:5001
 ```
 
 Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
@@ -45,7 +45,7 @@ Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 - Supressing nullable warnings with `!` is strictly forbidden everywhere!
 - Injecting `IServiceProvider` shall be strongly avoided
 
-### EF Core Migrations (run from Trsr.Storage/)
+### EF Core Migrations (run from Proxytrace.Storage/)
 ```bash
 dotnet ef migrations add <MigrationName>
 dotnet ef database update
@@ -71,25 +71,25 @@ The `./dev.sh` flow does not auto-seed; use the `/setup` page (or `SetupControll
 Strict layered dependency flow — each layer may only depend on layers below it:
 
 ```
-Trsr.Api  →  Trsr.Application  →  Trsr.Domain  →  Trsr.Common
-            →  Trsr.Infrastructure  →  Trsr.Serialization  →  Trsr.Common
-            →  Trsr.Storage  →  Trsr.Application / Trsr.Domain
+Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxytrace.Common
+            →  Proxytrace.Infrastructure  →  Proxytrace.Serialization  →  Proxytrace.Common
+            →  Proxytrace.Storage  →  Proxytrace.Application / Proxytrace.Domain
 ```
 
-- **Trsr.Api** — ASP.NET Core controllers, DTOs, the OpenAI-compatible proxy endpoint, composition root (`Trsr.Api.Module`)
-- **Trsr.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
-- **Trsr.Domain** — Business entities, interfaces, value objects, repository contracts. Pure C#, no I/O.
-- **Trsr.Infrastructure** — External service integration. `ModelClient` wraps `Microsoft.Extensions.AI` + the OpenAI SDK to invoke LLMs.
-- **Trsr.Serialization** — JSON serializers and output formats (`ISerializer`, `IOutputFormat`, `ObjectToInferredTypesConverter`).
-- **Trsr.Storage** — EF Core entities, configurations, mappers, migrations. Provider auto-detected (SQLite / PostgreSQL / SQL Server).
-- **Trsr.Common** — Shared utilities: validation helpers, async/type extensions, DI extensions, randomness.
-- **Trsr.Testing** — `BaseTest<TModule>` and shared test infrastructure (MSTest + AwesomeAssertions + NSubstitute).
-- **Trsr.Client.Sample** — Console app demonstrating client-side usage of the API.
+- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, the OpenAI-compatible proxy endpoint, composition root (`Proxytrace.Api.Module`)
+- **Proxytrace.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
+- **Proxytrace.Domain** — Business entities, interfaces, value objects, repository contracts. Pure C#, no I/O.
+- **Proxytrace.Infrastructure** — External service integration. `ModelClient` wraps `Microsoft.Extensions.AI` + the OpenAI SDK to invoke LLMs.
+- **Proxytrace.Serialization** — JSON serializers and output formats (`ISerializer`, `IOutputFormat`, `ObjectToInferredTypesConverter`).
+- **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations. Provider auto-detected (SQLite / PostgreSQL / SQL Server).
+- **Proxytrace.Common** — Shared utilities: validation helpers, async/type extensions, DI extensions, randomness.
+- **Proxytrace.Testing** — `BaseTest<TModule>` and shared test infrastructure (MSTest + AwesomeAssertions + NSubstitute).
+- **Proxytrace.Client.Sample** — Console app demonstrating client-side usage of the API.
 - **frontend/** — React 19 + Vite + Tailwind CSS 4 SPA.
 
-DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Trsr.Domain.Module`, `Trsr.Application.Module`, `Trsr.Storage.Module`, `Trsr.Infrastructure.Module`, `Trsr.Serialization.Module`, `Trsr.Common.Module`, `Trsr.Api.Module`, `Trsr.Testing.Module`). `Trsr.Domain.Module` and `Trsr.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations for the standard entity pattern. The API serves the compiled React app from `wwwroot/` in production.
+DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Proxytrace.Domain.Module`, `Proxytrace.Application.Module`, `Proxytrace.Storage.Module`, `Proxytrace.Infrastructure.Module`, `Proxytrace.Serialization.Module`, `Proxytrace.Common.Module`, `Proxytrace.Api.Module`, `Proxytrace.Testing.Module`). `Proxytrace.Domain.Module` and `Proxytrace.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations for the standard entity pattern. The API serves the compiled React app from `wwwroot/` in production.
 
-`Trsr.Application.Module` takes `(bool isDevelopment, IConfiguration? configuration)` and registers hosted services for ingestion + test running plus the optimization sub-module. `Trsr.Storage.Module` takes a `StorageConfiguration` (auto-detected by `Trsr.Api.Module`).
+`Proxytrace.Application.Module` takes `(bool isDevelopment, IConfiguration? configuration)` and registers hosted services for ingestion + test running plus the optimization sub-module. `Proxytrace.Storage.Module` takes a `StorageConfiguration` (auto-detected by `Proxytrace.Api.Module`).
 
 ## Domain Entity Pattern
 
@@ -97,13 +97,13 @@ Every domain concept requires **five files**:
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `I[Entity].cs` | `Trsr.Domain/[Entity]/` | Public interface declaring properties + `CreateNew`/`CreateExisting` delegates (extends `IDomainEntity`) |
-| `[Entity].cs` | `Trsr.Domain/[Entity]/Internal/` | Immutable `internal record` implementing `I[Entity]`, extends `DomainEntity` |
-| `[Entity]Generator.cs` | `Trsr.Domain/[Entity]/Internal/` | Test data factory, extends `DomainEntityGenerator<I[Entity]>` |
-| `[Entity]Entity.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | EF `internal record` extending `Entity`, decorated with `[StoredDomainEntity(typeof(I[Entity]))]` |
-| `[Entity]Config.cs` | `Trsr.Storage/Internal/Entities/[Entity]/` | Extends `AbstractEntityConfiguration<[Entity]Entity>`, implements `IMapper<I[Entity], [Entity]Entity>` |
+| `I[Entity].cs` | `Proxytrace.Domain/[Entity]/` | Public interface declaring properties + `CreateNew`/`CreateExisting` delegates (extends `IDomainEntity`) |
+| `[Entity].cs` | `Proxytrace.Domain/[Entity]/Internal/` | Immutable `internal record` implementing `I[Entity]`, extends `DomainEntity` |
+| `[Entity]Generator.cs` | `Proxytrace.Domain/[Entity]/Internal/` | Test data factory, extends `DomainEntityGenerator<I[Entity]>` |
+| `[Entity]Entity.cs` | `Proxytrace.Storage/Internal/Entities/[Entity]/` | EF `internal record` extending `Entity`, decorated with `[StoredDomainEntity(typeof(I[Entity]))]` |
+| `[Entity]Config.cs` | `Proxytrace.Storage/Internal/Entities/[Entity]/` | Extends `AbstractEntityConfiguration<[Entity]Entity>`, implements `IMapper<I[Entity], [Entity]Entity>` |
 
-A `I[Entity]Repository.cs` interface (in `Trsr.Domain/[Entity]/`) plus `[Entity]Repository.cs` (in `Trsr.Storage/Internal/Entities/[Entity]/`) is only needed for N:M relationships or non-trivial queries. Decorate the storage repository with `[UsedImplicitly]` so reflection-based DI picks it up.
+A `I[Entity]Repository.cs` interface (in `Proxytrace.Domain/[Entity]/`) plus `[Entity]Repository.cs` (in `Proxytrace.Storage/Internal/Entities/[Entity]/`) is only needed for N:M relationships or non-trivial queries. Decorate the storage repository with `[UsedImplicitly]` so reflection-based DI picks it up.
 
 `IDomainEntity` already provides `Id`, `CreatedAt`, `UpdatedAt` — do not redeclare them and do not introduce a separate `I[Entity]Data` interface.
 
@@ -138,7 +138,7 @@ public Project(string name, IModelEndpoint systemEndpoint, IDomainEntityData exi
 ```
 
 ### Validation
-Domain entities are validated by Autofac on activation (`OnActivated` runs `Validator.ValidateObject`) and again before repository `Add`/`Update`. Override `Validate(ValidationContext)` and yield `base.Validate(...)` first. Use helpers from `Trsr.Common.Validation`:
+Domain entities are validated by Autofac on activation (`OnActivated` runs `Validator.ValidateObject`) and again before repository `Add`/`Update`. Override `Validate(ValidationContext)` and yield `base.Validate(...)` first. Use helpers from `Proxytrace.Common.Validation`:
 ```csharp
 Validation.NotNullOrWhiteSpace(Name, nameof(Name))   // note: capital S in "WhiteSpace"
 Validation.NotNull(SystemEndpoint, nameof(SystemEndpoint))
@@ -152,7 +152,7 @@ For referenced entities, cascade validation: `foreach (var r in SystemEndpoint.V
 The boundary is sharp: **domain layer references the full entity, storage layer holds the `Guid`.**
 
 - **1:N** — domain holds the parent as `IModelEndpoint SystemEndpoint { get; }`; storage holds `Guid SystemEndpoint`; mapper resolves the parent via the parent's repository in `Map(stored, ct)`. Configure with `HasOne<ModelEndpointEntity>().WithMany().HasForeignKey(e => e.SystemEndpoint).OnDelete(DeleteBehavior.Restrict)`.
-- **N:M** — domain holds `IReadOnlyCollection<IEvaluator> Evaluators { get; }`; storage uses a junction entity (e.g. `TestSuiteEvaluatorEntity` with `TestSuiteId`/`EvaluatorId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Trsr.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `TestSuiteRepository`).
+- **N:M** — domain holds `IReadOnlyCollection<IEvaluator> Evaluators { get; }`; storage uses a junction entity (e.g. `TestSuiteEvaluatorEntity` with `TestSuiteId`/`EvaluatorId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Proxytrace.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `TestSuiteRepository`).
 - **Delete behavior** — `Restrict` for optional references, `Cascade` for owned children.
 
 ## Testing Conventions
@@ -205,11 +205,11 @@ await FluentActions
 
 ## Database Configuration
 
-Provider is auto-detected from the connection string in `Trsr.Api/appsettings.json`:
+Provider is auto-detected from the connection string in `Proxytrace.Api/appsettings.json`:
 
 | Provider | Connection string pattern |
 |----------|--------------------------|
-| SQLite | `Data Source=trsr.db` or `:memory:` |
+| SQLite | `Data Source=proxytrace.db` or `:memory:` |
 | PostgreSQL | contains `Host=` or `Port=` |
 | SQL Server | anything else (default) |
 
@@ -217,13 +217,13 @@ SQLite is the default for local development (zero config). Migrations support is
 
 ## Domain Concepts
 
-The domain (`Trsr.Domain/`) currently models:
+The domain (`Proxytrace.Domain/`) currently models:
 
 - **User, Project** — Tenancy. `Project` references one `IModelEndpoint` (`SystemEndpoint`) used by built-in system agents (e.g. agent-name generation, optimizers).
 - **Agent** — An AI agent: `Name`, `SystemPrompt` (`IPromptTemplate`), `Tools` (`IReadOnlyList<ToolSpecification>`), `Endpoint` (`IModelEndpoint`), `Project`, `IsSystemAgent` flag.
 - **AgentCall** — A captured LLM interaction (one trace entry).
 - **ModelProvider, Model, ModelEndpoint** — `ModelProvider` is the upstream API (OpenAI, Anthropic, …). `ModelEndpoint` pairs a `Model` with a `ModelProvider` and stores per-token costs (`InputTokenCost`, `OutputTokenCost`); has `CalculateCost(TokenUsage)`.
-- **ApiKey** — Trsr-issued key for clients hitting the OpenAI proxy. Tied to a `Project` + `ModelProvider`.
+- **ApiKey** — Proxytrace-issued key for clients hitting the OpenAI proxy. Tied to a `Project` + `ModelProvider`.
 - **TestSuite, TestCase** — Curated benchmark inputs. `TestSuite` has N:M with `IEvaluator` (junction `TestSuiteEvaluatorEntity`).
 - **TestRun, TestRunGroup, TestResult** — Execution records of a suite against an agent.
 - **Evaluator** (base) + concrete subtypes (`IExactMatchEvaluator`, `INumericMatchEvaluator`, `IJsonSchemaMatchEvaluator`, `IToolUsageEvaluator`, `IHelpfulnessEvaluator`, `ISafetyClassifier`, `IPolitenessEvaluator`, `ICustomEvaluator`, plus the LLM-based `IAgenticEvaluator` group). Each `EvaluateAsync(ITestResult)` returns an `IEvaluation` (domain object).
@@ -244,7 +244,7 @@ React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code live
 - Tailwind CSS 4 via `@tailwindcss/vite`; use Tailwind utility classes for all static styles. Inline `style={{}}` is only acceptable for genuinely dynamic values (e.g. runtime-computed colors, percentage widths from data, a numeric `borderRadius` prop). Complex static values — gradients, shadows, CSS-variable references — must use Tailwind's arbitrary-value syntax: `bg-[linear-gradient(...)]`, `shadow-[var(--shadow-card)]`, `shadow-[0_4px_16px_...]`, etc.
 - Tests use Vitest (`*.spec.ts`)
 
-Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Trsr.Application` and consumed via `event-stream.ts`.
+Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
 
 ### Commands
 - `npm run build` -– build the frontend, use this to verify there are no typing issues (output in `dist/`)

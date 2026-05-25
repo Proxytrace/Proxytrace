@@ -7,16 +7,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-// ─── The only change needed to route through Trsr ──────────────────────────
-// Replace `baseURL` with your Trsr proxy URL. Every chat request will be
+// ─── The only change needed to route through Proxytrace ──────────────────────────
+// Replace `baseURL` with your Proxytrace proxy URL. Every chat request will be
 // captured automatically — no other code changes required.
 //
-// Proxy URL format: http://<trsr-host>/<org>/<project>/openai/v1
-// To call OpenAI directly instead, set TRSR_BASE_URL=https://api.openai.com/v1
+// Proxy URL format: http://<proxytrace-host>/<org>/<project>/openai/v1
+// To call OpenAI directly instead, set PROXYTRACE_BASE_URL=https://api.openai.com/v1
 // ───────────────────────────────────────────────────────────────────────────
 const openai = new OpenAI({
-  apiKey: process.env.TRSR_API_KEY,
-  baseURL: process.env.TRSR_BASE_URL ?? "https://api.openai.com/v1",
+  apiKey: process.env.PROXYTRACE_API_KEY,
+  baseURL: process.env.PROXYTRACE_BASE_URL ?? "https://api.openai.com/v1",
 });
 
 const MODEL = process.env.MODEL ?? "gpt-4o-mini";
@@ -70,7 +70,7 @@ app.post("/chat", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
 
   const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
-  const sessionHeaders = sessionId ? { "x-trsr-session-id": sessionId } : {};
+  const sessionHeaders = sessionId ? { "x-proxytrace-session-id": sessionId } : {};
   const paramSummary = Object.keys(params).length ? ` params=${JSON.stringify(params)}` : "";
   console.log(`[chat] agent=${agent.id} session=${sessionId ?? "none"} → ${MODEL}  messages=${messages.length + 1}${paramSummary}`);
 
@@ -102,8 +102,8 @@ app.post("/chat", async (req, res) => {
 
 const PORT = process.env.PORT ?? 3000;
 app.listen(PORT, () => {
-  const trsrUrl = process.env.TRSR_BASE_URL ?? "(not set — using OpenAI directly)";
+  const proxytraceUrl = process.env.PROXYTRACE_BASE_URL ?? "(not set — using OpenAI directly)";
   console.log(`Chatbot running at http://localhost:${PORT}`);
-  console.log(`Trsr proxy: ${trsrUrl}`);
+  console.log(`Proxytrace proxy: ${proxytraceUrl}`);
   console.log(`Model: ${MODEL}`);
 });

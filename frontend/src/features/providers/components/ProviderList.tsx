@@ -20,7 +20,7 @@ export function ProviderList({ providers, loading, selectedId, onSelect }: Provi
     <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1">
       {loading && <SkeletonList rows={5} height={52} gap={6} />}
       {!loading && providers.length === 0 && (
-        <EmptyState title="No providers yet" description="Add a provider to route traffic through Trsr." />
+        <EmptyState title="No providers yet" description="Add a provider to route traffic through Proxytrace." />
       )}
       {providers.map(p => {
         const active = selectedId === p.id;

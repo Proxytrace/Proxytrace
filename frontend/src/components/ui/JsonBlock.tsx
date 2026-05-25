@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Highlight, type PrismTheme } from 'prism-react-renderer';
 import { CopyIcon, CheckIcon } from '../icons';
 
-const trsrJsonTheme: PrismTheme = {
+const proxytraceJsonTheme: PrismTheme = {
   plain: {
     color: 'var(--text-primary)',
     backgroundColor: 'transparent',
@@ -50,7 +50,7 @@ export function JsonBlock({ value, className, maxHeight, hideCopy, transparent }
 
   return (
     <div role="region" aria-label="JSON" className={containerClass} style={containerStyle}>
-      <Highlight code={text} language="json" theme={trsrJsonTheme}>
+      <Highlight code={text} language="json" theme={proxytraceJsonTheme}>
         {({ tokens, getLineProps, getTokenProps }) => (
           <pre className="m-0 font-mono text-[11.5px] leading-[1.55] whitespace-pre-wrap break-words">
             {tokens.map((line, i) => {

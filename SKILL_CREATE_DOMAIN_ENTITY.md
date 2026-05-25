@@ -1,6 +1,6 @@
 # Skill: Creating a New Domain Entity with Storage
 
-This guide provides a step-by-step process for implementing new domain entities in the Trsr codebase, following the established architecture patterns.
+This guide provides a step-by-step process for implementing new domain entities in the Proxytrace codebase, following the established architecture patterns.
 
 ## Prerequisites
 
@@ -10,11 +10,11 @@ This guide provides a step-by-step process for implementing new domain entities 
 
 ## Step 1: Create Domain Interface and Data Interface
 
-**Location:** `Trsr.Domain/[EntityName]/`
+**Location:** `Proxytrace.Domain/[EntityName]/`
 
 ### 1.1 Create `I[EntityName]Data.cs`
 ```csharp
-namespace Trsr.Domain.[EntityName];
+namespace Proxytrace.Domain.[EntityName];
 
 public interface I[EntityName]Data : IDomainEntityData
 {
@@ -27,7 +27,7 @@ public interface I[EntityName]Data : IDomainEntityData
 
 ### 1.2 Create `I[EntityName].cs`
 ```csharp
-namespace Trsr.Domain.[EntityName];
+namespace Proxytrace.Domain.[EntityName];
 
 public interface I[EntityName] : IDomainEntity, I[EntityName]Data
 {
@@ -45,15 +45,15 @@ public interface I[EntityName] : IDomainEntity, I[EntityName]Data
 
 ## Step 2: Implement Internal Domain Entity
 
-**Location:** `Trsr.Domain/[EntityName]/Internal/`
+**Location:** `Proxytrace.Domain/[EntityName]/Internal/`
 
 ### 2.1 Create `[EntityName].cs`
 ```csharp
 using System.ComponentModel.DataAnnotations;
-using Trsr.Common.Validation;
-using Trsr.Domain.Internal;
+using Proxytrace.Common.Validation;
+using Proxytrace.Domain.Internal;
 
-namespace Trsr.Domain.[EntityName].Internal;
+namespace Proxytrace.Domain.[EntityName].Internal;
 
 internal record [EntityName] : DomainEntity, I[EntityName]
 {
@@ -109,14 +109,14 @@ internal record [EntityName] : DomainEntity, I[EntityName]
 
 ## Step 3: Create Domain Entity Generator
 
-**Location:** `Trsr.Domain/[EntityName]/Internal/`
+**Location:** `Proxytrace.Domain/[EntityName]/Internal/`
 
 ### 3.1 Create `[EntityName]Generator.cs`
 ```csharp
-using Trsr.Common.Async;
-using Trsr.Domain.Internal;
+using Proxytrace.Common.Async;
+using Proxytrace.Domain.Internal;
 
-namespace Trsr.Domain.[EntityName].Internal;
+namespace Proxytrace.Domain.[EntityName].Internal;
 
 internal class [EntityName]Generator : DomainEntityGenerator<I[EntityName]>
 {
@@ -141,17 +141,17 @@ internal class [EntityName]Generator : DomainEntityGenerator<I[EntityName]>
 - Extend `DomainEntityGenerator<I[EntityName]>`
 - Inject `CreateNew` delegate and repository
 - `GenerateAsync()` creates test data for unit tests
-- Auto-registered by `Trsr.Domain.Module`
+- Auto-registered by `Proxytrace.Domain.Module`
 
 ## Step 4: Create Storage Entity
 
-**Location:** `Trsr.Storage/Internal/Entities/[EntityName]/`
+**Location:** `Proxytrace.Storage/Internal/Entities/[EntityName]/`
 
 ### 4.1 Create `[EntityName]Entity.cs`
 ```csharp
-using Trsr.Domain.[EntityName];
+using Proxytrace.Domain.[EntityName];
 
-namespace Trsr.Storage.Internal.Entities.[EntityName];
+namespace Proxytrace.Storage.Internal.Entities.[EntityName];
 
 [StoredDomainEntity(typeof(I[EntityName]))]
 internal record [EntityName]Entity : Entity, I[EntityName]
@@ -184,7 +184,7 @@ internal record [EntityName]Entity : Entity, I[EntityName]
 
 ## Step 5: Create EF Core Configuration and Mapper
 
-**Location:** `Trsr.Storage/Internal/Entities/[EntityName]/`
+**Location:** `Proxytrace.Storage/Internal/Entities/[EntityName]/`
 
 ### 5.1 Create `[EntityName]Config.cs`
 
@@ -192,9 +192,9 @@ internal record [EntityName]Entity : Entity, I[EntityName]
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Trsr.Domain.[EntityName];
+using Proxytrace.Domain.[EntityName];
 
-namespace Trsr.Storage.Internal.Entities.[EntityName];
+namespace Proxytrace.Storage.Internal.Entities.[EntityName];
 
 /// <summary>
 /// Entity Framework configuration for <see cref="[EntityName]Entity"/>
@@ -243,9 +243,9 @@ internal class [EntityName]Config : AbstractEntityConfiguration<[EntityName]Enti
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Trsr.Domain.[EntityName];
+using Proxytrace.Domain.[EntityName];
 
-namespace Trsr.Storage.Internal.Entities.[EntityName];
+namespace Proxytrace.Storage.Internal.Entities.[EntityName];
 
 internal class [EntityName]Config : AbstractEntityConfiguration<[EntityName]Entity>, IMapper<I[EntityName], [EntityName]Entity>
 {
@@ -311,15 +311,15 @@ internal class [EntityName]Config : AbstractEntityConfiguration<[EntityName]Enti
 - Configure indexes, foreign keys, and relationships in `Configure()`
 - Use `DeleteBehavior.Restrict` for optional relationships, `Cascade` for owned
 - For N:M relationships, ignore computed properties
-- Auto-registered by `Trsr.Storage.Module`
+- Auto-registered by `Proxytrace.Storage.Module`
 
 ## Step 6: Create Junction Table Entity (N:M Only)
 
-**Location:** `Trsr.Storage/Internal/Entities/[EntityName]/`
+**Location:** `Proxytrace.Storage/Internal/Entities/[EntityName]/`
 
 ### 6.1 Create `[EntityName]RelatedEntity.cs`
 ```csharp
-namespace Trsr.Storage.Internal.Entities.[EntityName];
+namespace Proxytrace.Storage.Internal.Entities.[EntityName];
 
 /// <summary>
 /// Junction table for N:M relationship between [EntityName] and Related
@@ -333,16 +333,16 @@ internal record [EntityName]RelatedEntity
 
 ## Step 7: Create Custom Repository (Optional - N:M or Complex Queries)
 
-**Location:** `Trsr.Storage/Internal/Entities/[EntityName]/`
+**Location:** `Proxytrace.Storage/Internal/Entities/[EntityName]/`
 
 ### 7.1 Create `[EntityName]Repository.cs`
 ```csharp
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Trsr.Domain;
-using Trsr.Domain.[EntityName];
+using Proxytrace.Domain;
+using Proxytrace.Domain.[EntityName];
 
-namespace Trsr.Storage.Internal.Entities.[EntityName];
+namespace Proxytrace.Storage.Internal.Entities.[EntityName];
 
 /// <summary>
 /// Repository for [EntityName] entities
@@ -435,7 +435,7 @@ protected override async Task<I[EntityName]> AddAsync(
 
 ## Validation Patterns
 
-Common validation helpers from `Trsr.Common.Validation`:
+Common validation helpers from `Proxytrace.Common.Validation`:
 
 ```csharp
 // Not null or whitespace
@@ -470,7 +470,7 @@ yield return Validation.NotBefore(UpdatedAt, CreatedAt, nameof(UpdatedAt));
 
 ## Auto-Registration
 
-Both `Trsr.Domain.Module` and `Trsr.Storage.Module` use reflection-based auto-registration:
+Both `Proxytrace.Domain.Module` and `Proxytrace.Storage.Module` use reflection-based auto-registration:
 
 - **Domain:** Classes implementing `IDomainEntity` in `*/Internal/` folders
 - **Storage:** Classes with `[StoredDomainEntity]` attribute

@@ -35,7 +35,7 @@ export function useAvailableModels(providerId: string, enabled: boolean) {
   });
 }
 
-/** Trsr-issued API keys for one provider. */
+/** Proxytrace-issued API keys for one provider. */
 export function useProviderKeys(providerId: string) {
   return useQuery({
     queryKey: QUERY_KEYS.providerKeys(providerId),

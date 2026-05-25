@@ -1,0 +1,132 @@
+using System.Net;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Proxytrace.Common.Async;
+using Proxytrace.Common.Serialization;
+using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Inference;
+using Proxytrace.Domain.Message;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Usage;
+using Proxytrace.Storage.Internal.Entities.Agent;
+using Proxytrace.Storage.Internal.Entities.Inference;
+using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
+
+namespace Proxytrace.Storage.Internal.Entities.AgentCall;
+
+internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, IMapper<IAgentCall, AgentCallEntity>
+{
+    private readonly IAgentCall.CreateExisting factory;
+    private readonly IModelParameters.Create modelParametersFactory;
+    private readonly ISerializer serializer;
+    private readonly IRepository<IAgent> agents;
+    private readonly ICompletion.Create completionFactory;
+    private readonly IRepository<IModelEndpoint> endpoints;
+
+    public AgentCallConfig(
+        IAgentCall.CreateExisting factory,
+        IModelParameters.Create modelParametersFactory,
+        ISerializer serializer,
+        IRepository<IAgent> agents,
+        ICompletion.Create completionFactory,
+        IRepository<IModelEndpoint> endpoints)
+    {
+        this.factory = factory;
+        this.modelParametersFactory = modelParametersFactory;
+        this.serializer = serializer;
+        this.agents = agents;
+        this.completionFactory = completionFactory;
+        this.endpoints = endpoints;
+    }
+
+    public override void Configure(EntityTypeBuilder<AgentCallEntity> builder)
+    {
+        builder.HasIndex(e => e.AgentId);
+        builder.HasIndex(e => e.EndpointId);
+
+        builder
+            .HasOne<AgentEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AgentId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasIndex(e => e.CreatedAt);
+        builder.Property(e => e.FinishReason).HasMaxLength(64);
+        builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
+        builder.HasIndex(e => e.ConversationId);
+
+        builder
+            .Property(e => e.Request)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.DeserializeRequired<Conversation>(v)
+            );
+
+        builder
+            .Property(e => e.Response)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.DeserializeRequired<AssistantMessage>(v)
+            );
+
+        builder
+            .Property(e => e.ModelParameters)
+            .HasConversion(
+                v => serializer.Serialize(v),
+                v => serializer.Deserialize<ModelParametersData>(v) ?? ModelParametersData.Empty
+            );
+
+        builder
+            .HasOne<ModelEndpointEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.EndpointId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    public async Task<IAgentCall> Map(AgentCallEntity stored, CancellationToken cancellationToken = default)
+    {
+        IAgent agent = await agents.GetAsync(stored.AgentId, cancellationToken);
+        IModelEndpoint endpoint = await endpoints.GetAsync(stored.EndpointId, cancellationToken);
+        var completion =
+            stored.Response is not null
+                ? completionFactory(
+                    stored.Response,
+                    usage: TokenUsage.Create(stored.InputTokens, stored.OutputTokens),
+                    latency: TimeSpan.FromMilliseconds(stored.LatencyMs ?? 0))
+                : null;
+        var modelParameters = AgentConfig.ToDomain(stored.ModelParameters, modelParametersFactory);
+        return factory(
+            agent: agent,
+            endpoint: endpoint,
+            request: stored.Request,
+            response: completion,
+            httpStatus: (HttpStatusCode)stored.HttpStatus,
+            finishReason: stored.FinishReason,
+            errorMessage: stored.ErrorMessage,
+            modelParameters: modelParameters,
+            existing: stored,
+            conversationId: stored.ConversationId);
+    }
+
+    public Task<AgentCallEntity> Map(IAgentCall domain, CancellationToken cancellationToken = default)
+        => new AgentCallEntity
+        {
+            Id = domain.Id,
+            AgentId = domain.Agent.Id,
+            EndpointId = domain.Endpoint.Id,
+            Request = domain.Request,
+            Response = domain.Response?.Response,
+            InputTokens = domain.Response?.Usage?.InputTokenCount,
+            OutputTokens = domain.Response?.Usage?.OutputTokenCount,
+            LatencyMs = domain.Response?.Latency.TotalMilliseconds,
+            HttpStatus = (int)domain.HttpStatus,
+            FinishReason = domain.FinishReason,
+            ErrorMessage = domain.ErrorMessage,
+            ModelParameters = AgentConfig.ToData(domain.ModelParameters),
+            ConversationId = domain.ConversationId,
+            CreatedAt = domain.CreatedAt,
+            UpdatedAt = domain.UpdatedAt,
+        }.ToTaskResult();
+}

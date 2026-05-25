@@ -13,7 +13,7 @@
     {
       "text": "Includes a per-layer coverage breakdown",
       "passed": true,
-      "evidence": "Per-layer table covers all Trsr.* projects"
+      "evidence": "Per-layer table covers all Proxytrace.* projects"
     },
     {
       "text": "Top recommendations cite a concrete signal (churn / complexity / untested public API / coverage %)",

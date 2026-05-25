@@ -46,7 +46,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         <div className="py-10">
           <EmptyState
             title="No traces yet"
-            description="Route your agent through the Trsr proxy to start capturing traces."
+            description="Route your agent through the Proxytrace proxy to start capturing traces."
           />
         </div>
       ) : (

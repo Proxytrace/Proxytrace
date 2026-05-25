@@ -552,7 +552,7 @@ export function executeTool(name, argsJson) {
 }
 
 // Runs one chat exchange against the OpenAI-compatible endpoint, replicating
-// the Trsr-friendly two-turn tool-call flow:
+// the Proxytrace-friendly two-turn tool-call flow:
 //   Turn 1 — non-streaming with tools so tool_calls can be detected
 //   Turn 2 — streaming, with executed tool results appended (only if tools
 //            were called)

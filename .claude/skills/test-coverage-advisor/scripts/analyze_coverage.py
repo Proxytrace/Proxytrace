@@ -183,7 +183,7 @@ def gather_churn(stats_by_path: dict[str, FileStats], repo_root: str, days: int)
 
 def layer_of(path: str) -> str:
     for part in path.split("/"):
-        if part.startswith("Trsr."):
+        if part.startswith("Proxytrace."):
             return part
     return "other"
 

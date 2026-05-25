@@ -29,7 +29,7 @@ export function ApiKeyStep({ done, apiKeyValue, keyName, error, onKeyNameChange,
           </div>
         </div>
         <CodeBlock
-          heading="Your Trsr API key"
+          heading="Your Proxytrace API key"
           content={apiKeyValue}
           maxLines={1}
         />
@@ -56,7 +56,7 @@ export function ApiKeyStep({ done, apiKeyValue, keyName, error, onKeyNameChange,
       </FormField>
       <p className="text-[11px] text-muted leading-relaxed">
         Use this key in your application instead of your upstream provider key.
-        Trsr will forward the request and record the trace.
+        Proxytrace will forward the request and record the trace.
       </p>
     </div>
   );

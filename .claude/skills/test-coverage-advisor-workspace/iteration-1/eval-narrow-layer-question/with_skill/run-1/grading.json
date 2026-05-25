@@ -1,22 +1,22 @@
 {
   "expectations": [
     {
-      "text": "Provides a coverage % specifically for Trsr.Application",
+      "text": "Provides a coverage % specifically for Proxytrace.Application",
       "passed": true,
-      "evidence": "'51.7% line coverage, 3.8% branch coverage across 65 files' for Trsr.Application"
+      "evidence": "'51.7% line coverage, 3.8% branch coverage across 65 files' for Proxytrace.Application"
     },
     {
-      "text": "Lists at least one Trsr.Application file with zero or near-zero coverage",
+      "text": "Lists at least one Proxytrace.Application file with zero or near-zero coverage",
       "passed": true,
       "evidence": "Table of 0% files: StatisticsService.cs, PlaygroundService.cs, AgentNameGenerator.cs, hosted services, etc."
     },
     {
-      "text": "Interpretation focuses on Trsr.Application, not other layers",
+      "text": "Interpretation focuses on Proxytrace.Application, not other layers",
       "passed": true,
-      "evidence": "Entire report scoped to Trsr.Application; other layers appear only in the relative-comparison table"
+      "evidence": "Entire report scoped to Proxytrace.Application; other layers appear only in the relative-comparison table"
     },
     {
-      "text": "Mentions specific public types/services in Trsr.Application by name",
+      "text": "Mentions specific public types/services in Proxytrace.Application by name",
       "passed": true,
       "evidence": "StatisticsService, TestRunnerService, OpenAiCallParser, PlaygroundService all named in top-3"
     }

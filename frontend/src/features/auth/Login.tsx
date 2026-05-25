@@ -20,7 +20,7 @@ function OidcLogin() {
   const auth = useAuth();
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg text-fg">
-      <h1 className="text-2xl font-semibold">Trsr</h1>
+      <h1 className="text-2xl font-semibold">Proxytrace</h1>
       <p className="text-muted text-sm">Sign in to continue.</p>
       {auth.error && (
         <div className="rounded border border-danger px-3 py-2 text-sm text-danger">

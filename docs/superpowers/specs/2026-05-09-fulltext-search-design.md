@@ -31,23 +31,23 @@ Most searchable text lives inside JSON-serialized columns (`Conversation`, `IPro
 
 ## Architecture
 
-### New namespace: `Trsr.Application.Search`
+### New namespace: `Proxytrace.Application.Search`
 
-Lives inside the existing `Trsr.Application` project under `Trsr.Application/Search/`. No new csproj. Registered through the existing `Trsr.Application.Module` (sub-module pattern, same as the optimization sub-module already used by Application).
+Lives inside the existing `Proxytrace.Application` project under `Proxytrace.Application/Search/`. No new csproj. Registered through the existing `Proxytrace.Application.Module` (sub-module pattern, same as the optimization sub-module already used by Application).
 
-Domain stays pure: only the contracts (`ISearchService`, `ISearchIndexer`, `SearchHit`, `SearchKind`, `SearchResults`) live in `Trsr.Domain/Search/`. The Lucene-backed implementation is `internal` inside `Trsr.Application/Search/Internal/`.
+Domain stays pure: only the contracts (`ISearchService`, `ISearchIndexer`, `SearchHit`, `SearchKind`, `SearchResults`) live in `Proxytrace.Domain/Search/`. The Lucene-backed implementation is `internal` inside `Proxytrace.Application/Search/Internal/`.
 
 ### Layers
 
 ```
-Trsr.Api  (SearchController)
+Proxytrace.Api  (SearchController)
    ↓
-Trsr.Application.Search  (LuceneSearchService, LuceneIndexWriter, mappers, repo decorators)
+Proxytrace.Application.Search  (LuceneSearchService, LuceneIndexWriter, mappers, repo decorators)
    ↓
-Trsr.Domain  (ISearchService, ISearchIndexer, SearchHit, SearchKind)
+Proxytrace.Domain  (ISearchService, ISearchIndexer, SearchHit, SearchKind)
 ```
 
-### Domain contracts (`Trsr.Domain/Search/`)
+### Domain contracts (`Proxytrace.Domain/Search/`)
 
 ```csharp
 public enum SearchKind { Agent, TestSuite, AgentCall, Evaluator }
@@ -95,7 +95,7 @@ Single index, single document schema (typed via `kind` field):
 
 Analyzer: `StandardAnalyzer` (Lucene 4.8). Lowercase, tokenize, basic stopword removal. Sufficient for English technical text. Customisable later.
 
-### Document mappers (`Trsr.Application/Search/Internal/Mappers/`)
+### Document mappers (`Proxytrace.Application/Search/Internal/Mappers/`)
 
 One mapper per entity kind, all extracting the relevant text. Mappers depend on the domain repositories, **not** on storage entities:
 
@@ -172,7 +172,7 @@ Returns:
 
 ### DTO + controller
 
-`SearchController.cs` in `Trsr.Api/Controllers/`. Calls `ISearchService`, maps `SearchHit` → `SearchHitDto` (frontend-friendly: lowercase enum string, ISO timestamps in metadata).
+`SearchController.cs` in `Proxytrace.Api/Controllers/`. Calls `ISearchService`, maps `SearchHit` → `SearchHitDto` (frontend-friendly: lowercase enum string, ISO timestamps in metadata).
 
 ## Frontend
 
@@ -250,7 +250,7 @@ Pruner path:
 
 ## Testing
 
-- **`Trsr.Search.Tests`** — new project. Inherits `BaseTest<Module>`. Uses an in-memory `RAMDirectory` Lucene index per test (no disk).
+- **`Proxytrace.Search.Tests`** — new project. Inherits `BaseTest<Module>`. Uses an in-memory `RAMDirectory` Lucene index per test (no disk).
 - Unit: each `DocumentMapper` correctly extracts and concatenates text from a generated entity (use existing `IDomainEntityGenerator`s).
 - Integration: round-trip — generate Agent + AgentCall, index, query, assert hit / score / snippet.
 - Edge cases: empty query (400), special chars (`a/b/c`, `"unbalanced`), wildcard suffix (`auth*`), retention pruner deletes traces past window.
@@ -281,25 +281,25 @@ Pruner path:
 
 **New:**
 
-- `Trsr.Application/Search/SearchModule.cs` (Autofac sub-module loaded by `Trsr.Application.Module`)
-- `Trsr.Application/Search/Internal/LuceneSearchService.cs`
-- `Trsr.Application/Search/Internal/LuceneIndexWriter.cs` (singleton wrapper around Lucene `IndexWriter` + `SearcherManager`)
-- `Trsr.Application/Search/Internal/IndexingRepositoryDecorator.cs`
-- `Trsr.Application/Search/Internal/Mappers/AgentDocumentMapper.cs`
-- `Trsr.Application/Search/Internal/Mappers/TestSuiteDocumentMapper.cs`
-- `Trsr.Application/Search/Internal/Mappers/AgentCallDocumentMapper.cs`
-- `Trsr.Application/Search/Internal/Mappers/EvaluatorDocumentMapper.cs`
-- `Trsr.Application/Search/Internal/TraceIndexPrunerService.cs`
-- `Trsr.Application/Search/Internal/SearchConstants.cs`
-- `Trsr.Application/Search/Internal/SearchConfiguration.cs`
-- `Trsr.Domain/Search/ISearchService.cs`
-- `Trsr.Domain/Search/ISearchIndexer.cs`
-- `Trsr.Domain/Search/SearchHit.cs`
-- `Trsr.Domain/Search/SearchKind.cs`
-- `Trsr.Domain/Search/SearchResults.cs`
-- `Trsr.Api/Controllers/SearchController.cs`
-- `Trsr.Api/Dtos/SearchHitDto.cs`
-- `Trsr.Application.Tests/Search/` (mapper + service tests inside existing test project)
+- `Proxytrace.Application/Search/SearchModule.cs` (Autofac sub-module loaded by `Proxytrace.Application.Module`)
+- `Proxytrace.Application/Search/Internal/LuceneSearchService.cs`
+- `Proxytrace.Application/Search/Internal/LuceneIndexWriter.cs` (singleton wrapper around Lucene `IndexWriter` + `SearcherManager`)
+- `Proxytrace.Application/Search/Internal/IndexingRepositoryDecorator.cs`
+- `Proxytrace.Application/Search/Internal/Mappers/AgentDocumentMapper.cs`
+- `Proxytrace.Application/Search/Internal/Mappers/TestSuiteDocumentMapper.cs`
+- `Proxytrace.Application/Search/Internal/Mappers/AgentCallDocumentMapper.cs`
+- `Proxytrace.Application/Search/Internal/Mappers/EvaluatorDocumentMapper.cs`
+- `Proxytrace.Application/Search/Internal/TraceIndexPrunerService.cs`
+- `Proxytrace.Application/Search/Internal/SearchConstants.cs`
+- `Proxytrace.Application/Search/Internal/SearchConfiguration.cs`
+- `Proxytrace.Domain/Search/ISearchService.cs`
+- `Proxytrace.Domain/Search/ISearchIndexer.cs`
+- `Proxytrace.Domain/Search/SearchHit.cs`
+- `Proxytrace.Domain/Search/SearchKind.cs`
+- `Proxytrace.Domain/Search/SearchResults.cs`
+- `Proxytrace.Api/Controllers/SearchController.cs`
+- `Proxytrace.Api/Dtos/SearchHitDto.cs`
+- `Proxytrace.Application.Tests/Search/` (mapper + service tests inside existing test project)
 - `frontend/src/api/search.ts`
 - `frontend/src/components/search/SearchPalette.tsx`
 - `frontend/src/components/search/SearchResultGroup.tsx`
@@ -309,8 +309,8 @@ Pruner path:
 
 **Modified:**
 
-- `Trsr.Application/Trsr.Application.csproj` — add Lucene.NET package reference.
-- `Trsr.Application/Module.cs` — load `SearchModule` sub-module.
-- `Trsr.Api/appsettings.json` — `Search` section.
+- `Proxytrace.Application/Proxytrace.Application.csproj` — add Lucene.NET package reference.
+- `Proxytrace.Application/Module.cs` — load `SearchModule` sub-module.
+- `Proxytrace.Api/appsettings.json` — `Search` section.
 - `frontend/src/components/layout/Shell.tsx` — replace dummy bar, mount palette, wire shortcut.
 - `frontend/src/api/query-keys.ts` — add `search` factory entry.

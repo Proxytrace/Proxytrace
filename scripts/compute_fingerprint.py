@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Computes the SHA-256 agent fingerprint that matches Trsr's AgentRepository.GetAgentFingerprint.
+Computes the SHA-256 agent fingerprint that matches Proxytrace's AgentRepository.GetAgentFingerprint.
 
 Algorithm (mirrors AgentRepository.cs lines 51-74):
   input = <system_prompt_text>

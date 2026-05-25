@@ -1,12 +1,12 @@
 {
   "eval_id": 3,
   "eval_name": "narrow-layer-question",
-  "prompt": "How well is Trsr.Application tested? Anything in there that's totally untouched by tests?",
+  "prompt": "How well is Proxytrace.Application tested? Anything in there that's totally untouched by tests?",
   "assertions": [
-    {"text": "Report provides a coverage percentage specifically for the Trsr.Application layer"},
-    {"text": "Report lists at least one file in Trsr.Application with zero or near-zero coverage (if any exist)"},
-    {"text": "Interpretation is focused on Trsr.Application — not dominated by other layers like Trsr.Api"},
-    {"text": "Report mentions specific public types or services in Trsr.Application by name"},
+    {"text": "Report provides a coverage percentage specifically for the Proxytrace.Application layer"},
+    {"text": "Report lists at least one file in Proxytrace.Application with zero or near-zero coverage (if any exist)"},
+    {"text": "Interpretation is focused on Proxytrace.Application — not dominated by other layers like Proxytrace.Api"},
+    {"text": "Report mentions specific public types or services in Proxytrace.Application by name"},
     {"text": "Does not just paste the full table — surfaces the layer-specific signal"}
   ]
 }

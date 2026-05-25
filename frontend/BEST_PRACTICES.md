@@ -1,4 +1,4 @@
-# Trsr Frontend Best Practices
+# Proxytrace Frontend Best Practices
 
 **Required reading before writing any React/TypeScript in `frontend/`.** This is the source of truth for **code architecture** — how components, data, state, and types are structured.
 
@@ -246,7 +246,7 @@ A trace/observability tool renders untrusted data: captured prompts, model outpu
 
 ### 12.3 Secrets & sensitive data
 
-- **No secrets in frontend code or the bundle.** API keys, provider tokens, and connection strings live server-side. Anything in the SPA is public — `import.meta.env` values shipped to the client are not secret. The Trsr-issued client `ApiKey` is the *only* credential the browser holds, and it's scoped per project/provider by design.
+- **No secrets in frontend code or the bundle.** API keys, provider tokens, and connection strings live server-side. Anything in the SPA is public — `import.meta.env` values shipped to the client are not secret. The Proxytrace-issued client `ApiKey` is the *only* credential the browser holds, and it's scoped per project/provider by design.
 - **Don't log sensitive data.** No `console.log` of tokens, full request bodies, or captured prompt content in production paths. Strip debug logging before merge.
 - **Don't persist sensitive data to `localStorage`/`sessionStorage`** (readable by any script). Auth/session handling stays with the existing Context + httpOnly cookies the backend sets; don't hand-roll token storage.
 
