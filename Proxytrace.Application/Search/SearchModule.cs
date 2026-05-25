@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Search.Internal;
 using Proxytrace.Application.Search.Internal.Mappers;
 using Proxytrace.Common.DependencyInjection;
@@ -24,7 +25,8 @@ internal sealed class SearchModule : Autofac.Module
             {
                 var cfg = ctx.Resolve<SearchConfiguration>();
                 ctx.TryResolve<IHostEnvironment>(out var env);
-                return new LuceneDirectoryFactory(cfg, env);
+                ctx.TryResolve<ILogger<LuceneDirectoryFactory>>(out var log);
+                return new LuceneDirectoryFactory(cfg, env, log);
             })
             .As<ILuceneDirectoryFactory>()
             .SingleInstance();

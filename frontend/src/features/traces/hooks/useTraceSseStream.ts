@@ -3,8 +3,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../../api/event-stream';
 
 /**
- * Subscribes to the trace SSE stream and invalidates the agent-calls and
- * statistics-agent-breakdown caches when a new trace arrives.
+ * Subscribes to the trace SSE stream and invalidates the agent-calls caches
+ * (the paginated list and the filter-bar overview share the 'agent-calls' prefix)
+ * when a new trace arrives.
  *
  * NOTE: The TraceCreatedEvent only carries partial data (id, agentId, model,
  * provider, createdAt) — not the full AgentCallDto needed for a setQueryData
@@ -19,7 +20,6 @@ export function useTraceSseStream() {
 
   const handleTrace = useCallback(() => {
     qc.invalidateQueries({ queryKey: ['agent-calls'] });
-    qc.invalidateQueries({ queryKey: ['statistics-agent-breakdown'] });
   }, [qc]);
 
   useTraceStream(handleTrace);

@@ -11,10 +11,8 @@ import { EvaluatorDetail } from './components/EvaluatorDetail';
 import { EmptyDetail } from './components/EmptyDetail';
 import { NewEvaluatorModal } from './components/NewEvaluatorModal';
 import {
-  useEvaluators,
-  useProjectTestSuites,
+  useEvaluatorsOverview,
   useAgenticPresets,
-  useEvaluatorSparklines,
 } from './hooks/useEvaluatorQueries';
 import {
   useCreateEvaluator,
@@ -36,11 +34,9 @@ export default function Evaluators() {
   const [editForm, setEditForm] = useState<EvaluatorFormState>(initForm());
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const { data: evaluators = [], isLoading } = useEvaluators(currentProjectId);
-  const { data: suitesResult } = useProjectTestSuites(currentProjectId);
+  const { evaluators, suites, sparklines, isLoading } = useEvaluatorsOverview(currentProjectId);
   const { data: presets = [] } = useAgenticPresets();
-  const { sparklineById, avgScoreById } = useEvaluatorSparklines(currentProjectId);
-  const suites = suitesResult?.items ?? [];
+  const { sparklineById, avgScoreById } = sparklines;
 
   const selected = routeId ? evaluators.find(e => e.id === routeId) ?? null : null;
   const editTarget = evaluators.find(e => e.id === editTargetId) ?? null;
@@ -54,7 +50,7 @@ export default function Evaluators() {
 
   const attachedSuites = selected
     ? suites
-        .filter(s => s.evaluators.some(ev => ev.id === selected.id))
+        .filter(s => s.evaluatorIds.includes(selected.id))
         .map(s => ({ id: s.id, name: s.name, agentName: s.agentName }))
     : [];
 

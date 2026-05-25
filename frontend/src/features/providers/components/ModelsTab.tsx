@@ -4,20 +4,19 @@ import { Button, IconButton } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { FormField } from '../../../components/ui/FormField';
-import { SkeletonList } from '../../../components/ui/Skeleton';
 import { EditIcon, PlusIcon, TrashIcon } from '../../../components/icons';
 import { formInputCls } from '../../../components/ui/classes';
-import { useAvailableModels, useProviderModels } from '../hooks/useProviderQueries';
+import { useAvailableModels } from '../hooks/useProviderQueries';
 import { useCreateModel, useDeleteModel, useUpdateModelPricing } from '../hooks/useProviderMutations';
 
 const GRID = 'grid grid-cols-[2fr_1fr_1fr_auto]';
 
 interface ModelsTabProps {
   providerId: string;
+  models: ModelEndpointDto[];
 }
 
-export function ModelsTab({ providerId }: ModelsTabProps) {
-  const { data: models = [], isLoading } = useProviderModels(providerId);
+export function ModelsTab({ providerId, models }: ModelsTabProps) {
   const [showNew, setShowNew] = useState(false);
   const [newModel, setNewModel] = useState({ modelName: '', inputTokenCost: '', outputTokenCost: '' });
   const [editing, setEditing] = useState<ModelEndpointDto | null>(null);
@@ -29,7 +28,7 @@ export function ModelsTab({ providerId }: ModelsTabProps) {
   const selectable = (availableModels ?? []).filter(n => !existingNames.has(n));
 
   const createModel = useCreateModel(providerId);
-  const deleteModel = useDeleteModel(providerId);
+  const deleteModel = useDeleteModel();
   const updatePricing = useUpdateModelPricing(providerId);
 
   function submitNew() {
@@ -110,8 +109,7 @@ export function ModelsTab({ providerId }: ModelsTabProps) {
         </div>
       )}
 
-      {isLoading && <SkeletonList rows={3} height={48} gap={8} />}
-      {!isLoading && models.length === 0 && !showNew && (
+      {models.length === 0 && !showNew && (
         <EmptyState title="No models yet" description="Add one or let Proxytrace auto-discover them from traces." />
       )}
       {models.length > 0 && (

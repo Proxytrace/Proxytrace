@@ -1,5 +1,6 @@
 using Lucene.Net.Store;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Proxytrace.Application.Search.Internal;
 
@@ -12,11 +13,16 @@ internal sealed class LuceneDirectoryFactory : ILuceneDirectoryFactory
 {
     private readonly SearchConfiguration configuration;
     private readonly IHostEnvironment? environment;
+    private readonly ILogger<LuceneDirectoryFactory>? logger;
 
-    public LuceneDirectoryFactory(SearchConfiguration configuration, IHostEnvironment? environment = null)
+    public LuceneDirectoryFactory(
+        SearchConfiguration configuration,
+        IHostEnvironment? environment = null,
+        ILogger<LuceneDirectoryFactory>? logger = null)
     {
         this.configuration = configuration;
         this.environment = environment;
+        this.logger = logger;
     }
 
     public Lucene.Net.Store.Directory Open()
@@ -33,7 +39,43 @@ internal sealed class LuceneDirectoryFactory : ILuceneDirectoryFactory
             ? configuration.IndexPath
             : Path.Combine(environment.ContentRootPath, configuration.IndexPath);
 
-        System.IO.Directory.CreateDirectory(path);
-        return FSDirectory.Open(path);
+        return FSDirectory.Open(EnsureWritable(path));
+    }
+
+    /// <summary>
+    /// Returns <paramref name="path"/> if it can be created and written to; otherwise falls back to a
+    /// temp directory. This keeps the app from failing to start when the content root is read-only or
+    /// owned by another user (e.g. a host-owned bind mount), at the cost of a non-persistent index.
+    /// </summary>
+    private string EnsureWritable(string path)
+    {
+        if (TryProbe(path))
+        {
+            return path;
+        }
+
+        string fallback = Path.Combine(Path.GetTempPath(), "proxytrace", "searchindex");
+        logger?.LogWarning(
+            "Search index path '{Path}' is not writable; falling back to '{Fallback}'. " +
+            "The index will not persist across restarts — mount a volume writable by the app user to fix this.",
+            path, fallback);
+        TryProbe(fallback);
+        return fallback;
+    }
+
+    private static bool TryProbe(string path)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(path);
+            string probe = Path.Combine(path, ".write-probe");
+            using (System.IO.File.Create(probe)) { }
+            System.IO.File.Delete(probe);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

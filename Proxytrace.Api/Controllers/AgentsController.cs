@@ -4,13 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Agents;
-using Proxytrace.Api.Dto.Inference;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelEndpoint;
-using Proxytrace.Domain.Tools;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -62,7 +60,7 @@ public class AgentsController : ControllerBase
             .ToArray();
 
         var items = sorted.Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(a => ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => AgentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
 
         return new PagedResult<AgentDto>(items, filtered.Count(), page, pageSize);
@@ -75,7 +73,7 @@ public class AgentsController : ControllerBase
             return NotFound();
         var agent = await repository.GetAsync(id, cancellationToken);
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
-        return ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
+        return AgentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
     }
 
     [HttpGet("{id:guid}/proposals/stream")]
@@ -117,45 +115,5 @@ public class AgentsController : ControllerBase
         IModelEndpoint endpoint = await endpoints.GetAsync(request.EndpointId, cancellationToken);
         await agent.ChangeEndpoint(endpoint, cancellationToken);
         return NoContent();
-    }
-
-    private static AgentDto ToDto(IAgent a, DateTimeOffset? lastUsedAt) => new(
-        a.Id,
-        a.Project.Id,
-        a.Project.Name,
-        a.Name,
-        a.SystemPrompt.Template,
-        a.Tools.Select(t => new ToolSpecificationDto(
-            t.Name,
-            t.Description,
-            t.Arguments.Arguments.Select(ToArgumentDto).ToArray()
-        )).ToArray(),
-        a.Endpoint.Id,
-        $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
-        ModelParametersDto.FromDomain(a.ModelParameters),
-        a.IsSystemAgent,
-        a.CreatedAt,
-        a.UpdatedAt,
-        lastUsedAt);
-
-    private static ToolArgumentDto ToArgumentDto(IToolArgument arg)
-    {
-        var type = "object";
-        List<string>? enumValues = null;
-        try
-        {
-            using var doc = JsonDocument.Parse(arg.JsonSchema);
-            var root = doc.RootElement;
-            if (root.TryGetProperty("type", out var typeEl))
-                type = typeEl.GetString() ?? "object";
-            if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
-                enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
-        }
-        catch
-        {
-            // ignored
-        }
-
-        return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
     }
 }

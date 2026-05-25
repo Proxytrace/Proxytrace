@@ -7,6 +7,12 @@ public interface IStatisticsService
 {
     Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Composes the entire dashboard payload in a single call by fanning out to the granular
+    /// statistics readers in parallel. Replaces the client's per-widget request waterfall.
+    /// </summary>
+    Task<DashboardView> GetDashboardViewAsync(StatisticsFilter filter, int recentTraceCount, int agentLimit, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);

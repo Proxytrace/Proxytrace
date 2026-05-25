@@ -1,16 +1,17 @@
 import { cn } from '../../../lib/cn';
 import { fmtRelative, fmtLatency } from '../../../lib/format';
 import { ActivityIcon } from '../../../components/icons';
-import { EmptyState } from '../../../components/ui/EmptyState';
-import { useRecentEvaluations } from '../hooks/useEvaluatorQueries';
+import type { RecentEvaluationItemDto } from '../../../api/evaluators';
 
 const GRID = 'grid grid-cols-[90px_1fr_70px_70px_70px]';
 
-/** Recent evaluations table for one evaluator (last 8), with its own loading/empty/error states. */
-export function RecentEvaluationsTable({ evaluatorId }: { evaluatorId: string }) {
-  const { data, isLoading, isError } = useRecentEvaluations(evaluatorId, 8);
-  const rows = data ?? [];
+interface Props {
+  rows: RecentEvaluationItemDto[];
+  isLoading: boolean;
+}
 
+/** Recent evaluations table for one evaluator (last 8). Data is supplied by the parent detail view. */
+export function RecentEvaluationsTable({ rows, isLoading }: Props) {
   return (
     <section className="bg-card rounded-lg shadow-[var(--shadow-card)] overflow-hidden">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
@@ -20,10 +21,6 @@ export function RecentEvaluationsTable({ evaluatorId }: { evaluatorId: string })
       </header>
       {isLoading ? (
         <div className="px-4 py-8 text-center text-muted text-[12px]">Loading…</div>
-      ) : isError ? (
-        <div className="px-4 py-8">
-          <EmptyState title="Not yet wired" description="Recent evaluations endpoint is not implemented yet." />
-        </div>
       ) : rows.length === 0 ? (
         <div className="px-4 py-10 text-center text-muted text-[12px]">
           No evaluations yet. Attach this evaluator to a suite and run it.

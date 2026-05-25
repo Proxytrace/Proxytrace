@@ -1,6 +1,7 @@
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestSuite;
 
@@ -12,6 +13,7 @@ internal class StatisticsService : IStatisticsService
     private readonly IAgentCallStatsReader callStats;
     private readonly IEvaluatorStatsReader evaluatorStats;
     private readonly IRepository<IAgent> agents;
+    private readonly IAgentCallRepository agentCalls;
     private readonly IRepository<ITestSuite> testSuites;
     private readonly IRepository<IOptimizationProposal> proposals;
 
@@ -20,6 +22,7 @@ internal class StatisticsService : IStatisticsService
         IAgentCallStatsReader callStats,
         IEvaluatorStatsReader evaluatorStats,
         IRepository<IAgent> agents,
+        IAgentCallRepository agentCalls,
         IRepository<ITestSuite> testSuites,
         IRepository<IOptimizationProposal> proposals)
     {
@@ -27,8 +30,53 @@ internal class StatisticsService : IStatisticsService
         this.callStats = callStats;
         this.evaluatorStats = evaluatorStats;
         this.agents = agents;
+        this.agentCalls = agentCalls;
         this.testSuites = testSuites;
         this.proposals = proposals;
+    }
+
+    public async Task<DashboardView> GetDashboardViewAsync(StatisticsFilter filter, int recentTraceCount, int agentLimit, CancellationToken cancellationToken = default)
+    {
+        Task<StatisticsSummary> summaryTask = GetSummaryAsync(filter, cancellationToken);
+        Task<LiveTelemetry> telemetryTask = GetLiveTelemetryAsync(filter, cancellationToken);
+        Task<DashboardTrends> trendsTask = GetDashboardTrendsAsync(filter, cancellationToken);
+        Task<IReadOnlyList<AgentBreakdownStat>> agentBreakdownTask = GetAgentBreakdownAsync(filter, cancellationToken);
+        Task<IReadOnlyList<LatencyStat>> latencyTask = GetLatencyAsync(filter, cancellationToken);
+        Task<IReadOnlyList<ModelBreakdownStat>> modelBreakdownTask = GetModelBreakdownAsync(filter, cancellationToken);
+        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, cancellationToken);
+        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, cancellationToken);
+        Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = agentCalls.GetFilteredAsync(
+            new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From),
+            page: 1,
+            pageSize: recentTraceCount,
+            cancellationToken);
+        Task<IReadOnlyList<IAgent>> agentsTask = agents.GetAllAsync(cancellationToken);
+        Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTimesTask = agentCalls.GetLastCallTimesAsync(cancellationToken);
+
+        await Task.WhenAll(
+            summaryTask, telemetryTask, trendsTask, agentBreakdownTask, latencyTask,
+            modelBreakdownTask, tokenUsageTask, tokenByAgentTask, recentTask, agentsTask, lastCallTimesTask);
+
+        IReadOnlyDictionary<Guid, DateTimeOffset> lastCallTimes = lastCallTimesTask.Result;
+        IReadOnlyList<IAgent> topAgents = agentsTask.Result
+            .Where(a => filter.ProjectId is not { } pid || a.Project.Id == pid)
+            .OrderByDescending(a => lastCallTimes.TryGetValue(a.Id, out DateTimeOffset t) ? t : DateTimeOffset.MinValue)
+            .ThenByDescending(a => a.UpdatedAt)
+            .Take(agentLimit)
+            .ToArray();
+
+        return new DashboardView(
+            Summary: summaryTask.Result,
+            LiveTelemetry: telemetryTask.Result,
+            Trends: trendsTask.Result,
+            AgentBreakdown: agentBreakdownTask.Result,
+            Latency: latencyTask.Result,
+            ModelBreakdown: modelBreakdownTask.Result,
+            TokenUsage: tokenUsageTask.Result,
+            TokenUsageByAgent: tokenByAgentTask.Result,
+            RecentTraces: recentTask.Result.Items,
+            Agents: topAgents,
+            AgentLastCallTimes: lastCallTimes);
     }
 
     public async Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)

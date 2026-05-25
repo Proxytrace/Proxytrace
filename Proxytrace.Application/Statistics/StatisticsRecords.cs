@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Usage;
 
 namespace Proxytrace.Application.Statistics;
@@ -83,6 +85,23 @@ public record DashboardTrends(
     IReadOnlyList<double> LatencyMs,
     IReadOnlyList<double> Throughput,
     IReadOnlyList<double> PassRate);
+
+/// <summary>
+/// Everything the dashboard ("mission control") page needs, composed into a single payload so the
+/// client fetches it in one round trip instead of fanning out across the granular statistics endpoints.
+/// </summary>
+public record DashboardView(
+    StatisticsSummary Summary,
+    LiveTelemetry LiveTelemetry,
+    DashboardTrends Trends,
+    IReadOnlyList<AgentBreakdownStat> AgentBreakdown,
+    IReadOnlyList<LatencyStat> Latency,
+    IReadOnlyList<ModelBreakdownStat> ModelBreakdown,
+    IReadOnlyList<TokenUsageStat> TokenUsage,
+    IReadOnlyList<AgentTokenUsageStat> TokenUsageByAgent,
+    IReadOnlyList<IAgentCall> RecentTraces,
+    IReadOnlyList<IAgent> Agents,
+    IReadOnlyDictionary<Guid, DateTimeOffset> AgentLastCallTimes);
 
 /// <summary>
 /// Equal-width bucketed call-traffic series (excludes pass rate, which comes from run stats).

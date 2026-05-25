@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
+using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Model;
@@ -69,6 +70,31 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(id, cancellationToken))
             return NotFound();
         return ToDto(await providerRepository.GetAsync(id, cancellationToken));
+    }
+
+    [HttpGet("overview")]
+    public async Task<ProvidersOverviewDto> GetOverview(CancellationToken cancellationToken = default)
+    {
+        Task<IReadOnlyList<IModelProvider>> providersTask = providerRepository.GetAllAsync(cancellationToken);
+        Task<IReadOnlyList<IModelEndpoint>> endpointsTask = endpointRepository.GetAllAsync(cancellationToken);
+        Task<IReadOnlyList<IApiKey>> keysTask = apiKeyRepository.GetAllAsync(cancellationToken);
+        Task<IReadOnlyList<IProject>> projectsTask = projectRepository.GetAllAsync(cancellationToken);
+
+        await Task.WhenAll(providersTask, endpointsTask, keysTask, projectsTask);
+
+        ILookup<Guid, IModelEndpoint> endpointsByProvider = endpointsTask.Result.ToLookup(e => e.Provider.Id);
+        ILookup<Guid, IApiKey> keysByProvider = keysTask.Result.ToLookup(k => k.Provider.Id);
+
+        var providers = providersTask.Result
+            .Select(p => new ProviderWithDetailsDto(
+                ToDto(p),
+                endpointsByProvider[p.Id].Select(ToEndpointDto).ToArray(),
+                keysByProvider[p.Id].Select(ToKeyDto).ToArray()))
+            .ToArray();
+
+        return new ProvidersOverviewDto(
+            providers,
+            projectsTask.Result.Select(ProjectDtoMapper.ToDto).ToArray());
     }
 
     [HttpPost]

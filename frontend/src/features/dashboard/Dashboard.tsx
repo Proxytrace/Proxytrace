@@ -12,18 +12,7 @@ import {
   computeTokenByAgent,
   buildAgentNameMap,
 } from './dashboardMeta';
-import {
-  useDashboardSummary,
-  useLiveTelemetry,
-  useDashboardTrends,
-  useRecentTraces,
-  useDashboardAgents,
-  useAgentBreakdown,
-  useLatencyStats,
-  useModelBreakdown,
-  useTokenUsage,
-  useTokenUsageByAgent,
-} from './hooks/useDashboardQueries';
+import { useDashboardView } from './hooks/useDashboardQueries';
 import { useLiveClock } from './hooks/useLiveClock';
 import { useFreshTraces } from './hooks/useFreshTraces';
 import { TelemetryStrip } from './components/TelemetryStrip';
@@ -51,36 +40,30 @@ export default function Dashboard() {
 
   const queryOpts = { from, projectId, enabled };
 
-  const { data: summary } = useDashboardSummary(queryOpts);
-  const { data: telemetry } = useLiveTelemetry({ projectId, enabled });
-  const { data: trends } = useDashboardTrends(queryOpts);
-  const { data: tracesData, isLoading: tracesLoading } = useRecentTraces(queryOpts);
-  const { data: agentsData } = useDashboardAgents({ projectId, enabled });
-  const { data: agentBreakdown } = useAgentBreakdown(queryOpts);
-  const { data: latencyData } = useLatencyStats(queryOpts);
-  const { data: modelBreakdown } = useModelBreakdown(queryOpts);
-  const { data: tokenUsageData } = useTokenUsage(queryOpts);
-  const { data: tokenByAgentData } = useTokenUsageByAgent(queryOpts);
+  const { data: dashboard, isLoading: dashboardLoading } = useDashboardView(queryOpts);
 
   // ── SSE: invalidate on new traces ───────────────────────────────────────────
 
   useTraceStream(() => {
-    qc.invalidateQueries({ queryKey: QUERY_KEYS.agentCallsRoot });
-    qc.invalidateQueries({ queryKey: QUERY_KEYS.statisticsAgentBreakdownRoot });
+    qc.invalidateQueries({ queryKey: QUERY_KEYS.statisticsDashboard(from, projectId) });
   });
 
   // ── Derived data ────────────────────────────────────────────────────────────
 
-  const recentTraces = tracesData?.items ?? [];
-  const agents = agentsData?.items ?? [];
+  const summary = dashboard?.summary;
+  const telemetry = dashboard?.liveTelemetry;
+  const trends = dashboard?.trends;
+  const agentBreakdown = dashboard?.agentBreakdown;
+  const recentTraces = dashboard?.recentTraces ?? [];
+  const agents = dashboard?.agents ?? [];
   const freshIds = useFreshTraces(recentTraces);
 
-  const latencyStats = computeLatencyStats(latencyData ?? []);
-  const tokenVolume = computeTokenVolume(tokenUsageData ?? []);
-  const modelSplit = computeModelSplit(modelBreakdown ?? []);
-  const latencyHist = computeLatencyHist(latencyData ?? []);
+  const latencyStats = computeLatencyStats(dashboard?.latency ?? []);
+  const tokenVolume = computeTokenVolume(dashboard?.tokenUsage ?? []);
+  const modelSplit = computeModelSplit(dashboard?.modelBreakdown ?? []);
+  const latencyHist = computeLatencyHist(dashboard?.latency ?? []);
   const agentNameById = buildAgentNameMap(agents);
-  const tokenByAgent = computeTokenByAgent(tokenByAgentData ?? [], agentNameById);
+  const tokenByAgent = computeTokenByAgent(dashboard?.tokenUsageByAgent ?? [], agentNameById);
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-2">
@@ -127,7 +110,7 @@ export default function Dashboard() {
       <div
         className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:120ms]"
       >
-        <LiveTraceStream traces={recentTraces} isLoading={tracesLoading} freshIds={freshIds} />
+        <LiveTraceStream traces={recentTraces} isLoading={dashboardLoading} freshIds={freshIds} />
         <PassRateGauge summary={summary} />
       </div>
 

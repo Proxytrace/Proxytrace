@@ -5,6 +5,7 @@ using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestSuite;
@@ -27,9 +28,10 @@ public sealed class StatisticsServiceTests : BaseTest<Module>
         callStats = Substitute.For<IAgentCallStatsReader>();
         evaluatorStats = Substitute.For<IEvaluatorStatsReader>();
         agents = Substitute.For<IRepository<IAgent>>();
+        var agentCalls = Substitute.For<IAgentCallRepository>();
         testSuites = Substitute.For<IRepository<ITestSuite>>();
         proposals = Substitute.For<IRepository<IOptimizationProposal>>();
-        return new StatisticsService(runStats, callStats, evaluatorStats, agents, testSuites, proposals);
+        return new StatisticsService(runStats, callStats, evaluatorStats, agents, agentCalls, testSuites, proposals);
     }
 
     private static TestRunStats Stat(Guid suiteId, int cases, int passed, DateTimeOffset completed) =>

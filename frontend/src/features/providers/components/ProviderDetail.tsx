@@ -1,7 +1,6 @@
-import type { ProjectDto, ProviderDto } from '../../../api/models';
+import type { ApiKeyDto, ModelEndpointDto, ProjectDto, ProviderDto } from '../../../api/models';
 import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
-import { useProviderKeys, useProviderModels } from '../hooks/useProviderQueries';
 import { ProviderDetailHeader } from './ProviderDetailHeader';
 import { ModelsTab } from './ModelsTab';
 import { KeysTab } from './KeysTab';
@@ -10,6 +9,8 @@ export type ProviderTab = 'models' | 'keys';
 
 interface ProviderDetailProps {
   provider: ProviderDto;
+  models: ModelEndpointDto[];
+  keys: ApiKeyDto[];
   projects: ProjectDto[];
   defaultProjectId: string;
   tab: ProviderTab;
@@ -17,9 +18,7 @@ interface ProviderDetailProps {
   onDeleted: () => void;
 }
 
-export function ProviderDetail({ provider, projects, defaultProjectId, tab, onTabChange, onDeleted }: ProviderDetailProps) {
-  const { data: models = [] } = useProviderModels(provider.id);
-  const { data: keys = [] } = useProviderKeys(provider.id);
+export function ProviderDetail({ provider, models, keys, projects, defaultProjectId, tab, onTabChange, onDeleted }: ProviderDetailProps) {
 
   return (
     <Card elevation="raised" padding="none" className="flex flex-col overflow-hidden">
@@ -56,10 +55,10 @@ export function ProviderDetail({ provider, projects, defaultProjectId, tab, onTa
 
       <div className="flex-1 overflow-y-auto p-5">
         <div className={cn('flex flex-col gap-4', tab !== 'models' && 'hidden')}>
-          <ModelsTab providerId={provider.id} />
+          <ModelsTab providerId={provider.id} models={models} />
         </div>
         <div className={cn('flex flex-col gap-4', tab !== 'keys' && 'hidden')}>
-          <KeysTab providerId={provider.id} projects={projects} defaultProjectId={defaultProjectId} />
+          <KeysTab providerId={provider.id} keys={keys} projects={projects} defaultProjectId={defaultProjectId} />
         </div>
       </div>
     </Card>

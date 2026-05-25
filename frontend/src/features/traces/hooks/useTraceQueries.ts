@@ -1,7 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { agentsApi } from '../../../api/agents';
-import { statisticsApi } from '../../../api/statistics';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import { DEFAULT_PAGE_SIZE } from '../../../lib/constants';
@@ -18,7 +16,11 @@ interface TraceFilter {
   from: string | undefined;
 }
 
-/** All four queries needed by the Traces page. */
+/**
+ * Two queries serve the Traces page: the paginated call list (changes per page/search) and a
+ * filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
+ * survives pagination).
+ */
 export function useTraceQueries({ page, agentFilter, debouncedSearch, showSystem, from }: TraceFilter) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
@@ -42,21 +44,10 @@ export function useTraceQueries({ page, agentFilter, debouncedSearch, showSystem
     enabled,
   });
 
-  const agentsQuery = useQuery({
-    queryKey: QUERY_KEYS.agents(projectId),
-    queryFn: () => agentsApi.list({ projectId, pageSize: 200 }),
-    enabled,
-  });
-
-  const agentBreakdownQuery = useQuery({
-    queryKey: QUERY_KEYS.statisticsAgentBreakdown(from, projectId),
-    queryFn: () => statisticsApi.agentBreakdown({ from, projectId }),
-    enabled,
-  });
-
-  const latencyQuery = useQuery({
-    queryKey: QUERY_KEYS.statisticsLatency(from, agentFilter || undefined, projectId),
-    queryFn: () => statisticsApi.latency({ from, agentId: agentFilter || undefined, projectId }),
+  const overviewQuery = useQuery({
+    queryKey: QUERY_KEYS.agentCallsOverview(from, agentFilter || undefined, projectId),
+    queryFn: () => agentCallsApi.overview({ from, agentId: agentFilter || undefined, projectId }),
+    placeholderData: keepPreviousData,
     enabled,
   });
 
@@ -64,8 +55,8 @@ export function useTraceQueries({ page, agentFilter, debouncedSearch, showSystem
     traces: tracesQuery.data?.items ?? [],
     total: tracesQuery.data?.total ?? 0,
     isFetching: tracesQuery.isFetching,
-    allAgents: agentsQuery.data?.items ?? [],
-    agentBreakdown: agentBreakdownQuery.data ?? [],
-    p95: latencyQuery.data?.[0]?.p95Ms ?? null,
+    allAgents: overviewQuery.data?.agents ?? [],
+    agentBreakdown: overviewQuery.data?.agentBreakdown ?? [],
+    p95: overviewQuery.data?.latency?.[0]?.p95Ms ?? null,
   };
 }

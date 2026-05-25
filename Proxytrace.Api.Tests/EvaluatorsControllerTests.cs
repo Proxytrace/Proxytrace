@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Application.Evaluator;
+using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluator;
@@ -11,6 +12,7 @@ using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestSuite;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -214,5 +216,7 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<IJsonSchemaMatchEvaluator.CreateExisting>(),
         services.GetRequiredService<IAgenticEvaluatorPresets>(),
         services.GetRequiredService<ITestResultRepository>(),
+        services.GetRequiredService<ITestSuiteRepository>(),
+        services.GetRequiredService<IStatisticsService>(),
         services.GetRequiredService<ITransaction>());
 }

@@ -110,6 +110,25 @@ export interface AgentDto {
 }
 
 /* ── Statistics ── */
+/** Filter-bar metadata for the Traces page (agents, per-agent counts, latency). */
+export interface TracesOverviewDto {
+  agents: AgentDto[];
+  agentBreakdown: AgentBreakdownDto[];
+  latency: LatencyStatDto[];
+}
+/** Single-call dashboard payload bundling every widget's data. */
+export interface DashboardViewDto {
+  summary: SummaryDto;
+  liveTelemetry: LiveTelemetryDto;
+  trends: DashboardTrendsDto;
+  agentBreakdown: AgentBreakdownDto[];
+  latency: LatencyStatDto[];
+  modelBreakdown: ModelBreakdownDto[];
+  tokenUsage: TokenUsageDto[];
+  tokenUsageByAgent: AgentTokenUsageDto[];
+  recentTraces: AgentCallDto[];
+  agents: AgentDto[];
+}
 export interface SummaryDto {
   totalCalls: number;
   totalInputTokens: number;
@@ -388,6 +407,17 @@ export interface ProviderDto {
   kind: ModelProviderKind;
   createdAt: string;
   updatedAt: string;
+}
+/** A provider with its model endpoints and API keys embedded. */
+export interface ProviderWithDetailsDto {
+  provider: ProviderDto;
+  models: ModelEndpointDto[];
+  keys: ApiKeyDto[];
+}
+/** Single-call payload for the Providers page. */
+export interface ProvidersOverviewDto {
+  providers: ProviderWithDetailsDto[];
+  projects: ProjectDto[];
 }
 export interface ModelEndpointDto {
   id: string;
