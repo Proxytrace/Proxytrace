@@ -1,0 +1,60 @@
+/*
+ * Proxytrace brand for VitePress. Values mirror frontend/DESIGN.md tokens —
+ * dark-only surface with a single warm-amber accent. Do not introduce new hexes.
+ * Vars set on both :root and .dark so force-dark renders identically regardless
+ * of which scope VitePress reads.
+ */
+
+:root,
+:root.dark {
+  /* Surfaces */
+  --vp-c-bg: #1b1b1f;
+  --vp-c-bg-alt: #1e1e22;
+  --vp-c-bg-elv: #212125;
+  --vp-c-bg-soft: #27272c;
+
+  /* Text */
+  --vp-c-text-1: #f0ede8;
+  --vp-c-text-2: #9e9a94;
+  --vp-c-text-3: #67645e;
+
+  /* Dividers / borders — hairline */
+  --vp-c-divider: #303036;
+  --vp-c-border: #303036;
+  --vp-c-gutter: #1b1b1f;
+
+  /* Brand ramp → warm amber. brand-1 is link/active text (lighter for contrast),
+     brand-2/3 are hover/solid surfaces. */
+  --vp-c-brand-1: #deb073;
+  --vp-c-brand-2: #c9944a;
+  --vp-c-brand-3: #c9944a;
+  --vp-c-brand-soft: color-mix(in srgb, #c9944a 14%, transparent);
+
+  /* Solid amber buttons get dark text for contrast */
+  --vp-button-brand-bg: #c9944a;
+  --vp-button-brand-hover-bg: #deb073;
+  --vp-button-brand-active-bg: #c9944a;
+  --vp-button-brand-text: #1b1b1f;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-text: #1b1b1f;
+
+  /* Semantic colors */
+  --vp-c-success-1: #3daa6f;
+  --vp-c-success-2: #3daa6f;
+  --vp-c-success-3: #3daa6f;
+  --vp-c-warning-1: #d4915c;
+  --vp-c-warning-2: #d4915c;
+  --vp-c-warning-3: #d4915c;
+  --vp-c-danger-1: #d95555;
+  --vp-c-danger-2: #d95555;
+  --vp-c-danger-3: #d95555;
+
+  /* Home hero brand tint */
+  --vp-home-hero-name-color: #deb073;
+}
+
+/* Inline code uses the soft surface, amber-tinted text */
+:root {
+  --vp-code-color: #deb073;
+  --vp-code-bg: color-mix(in srgb, #c9944a 12%, transparent);
+}

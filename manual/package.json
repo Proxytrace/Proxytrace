@@ -1,0 +1,15 @@
+{
+  "name": "proxytrace-manual",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Proxytrace user & operator manual (VitePress)",
+  "scripts": {
+    "docs:dev": "vitepress dev --port 4202",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview --port 4202"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}

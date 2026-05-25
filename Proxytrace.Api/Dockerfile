@@ -23,11 +23,13 @@ COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
 RUN dotnet restore "Proxytrace.Api/Proxytrace.Api.csproj"
 COPY . .
 WORKDIR "/src/Proxytrace.Api"
-RUN dotnet build "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# SkipManualBuild: the SDK image has no npm, and in the Docker setup the VitePress manual
+# is served by the nginx frontend, not the API's wwwroot. So skip the manual build here.
+RUN dotnet build "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:SkipManualBuild=true
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:SkipManualBuild=true
 
 FROM base AS final
 WORKDIR /app

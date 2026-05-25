@@ -72,6 +72,12 @@ app.UseAuthorization();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapControllers();
+// The bundled VitePress manual lives under wwwroot/docs. Existing files (e.g.
+// /docs/guide/x.html) are served by the static middleware above. A bare directory
+// request like /docs or /docs/ has no file to match and UseDefaultFiles is skipped
+// once an endpoint is selected, so route any unmatched /docs path to the manual's
+// index instead of letting it fall through to the SPA fallback below.
+app.MapFallbackToFile("/docs/{*path}", "docs/index.html");
 app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -6,6 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Proxytrace is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
+## User Manual
+
+The user & operator manual is a VitePress project in [`manual/`](manual/) (markdown source,
+built to searchable static HTML, served by the app at `/docs`). **You MUST keep it up to
+date with the product.** Whenever you add, change, or remove a user-facing feature, update
+the relevant page(s) in `manual/guide/` (end users) or `manual/admin/` (operators) in the
+same change — treat the manual like tests: a feature change is not complete until its docs
+match. New top-level features get a new page wired into the sidebar in
+`manual/.vitepress/config.ts`. Run `cd manual && npm run docs:dev` (http://localhost:4202)
+to preview; `npm run docs:build` to verify it builds.
+
 ## Working on UI
 
 **Before writing any frontend code, you MUST read BOTH of these — they are mandatory and override any conflicting recommendation from a generic design tool, agent, or external skill:**

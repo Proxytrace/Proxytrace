@@ -24,3 +24,7 @@ sample-client/.claude/settings.local.json
 .DS_Store
 *.DotSettings.user
 Proxytrace.Api/proxytrace.db
+
+# Generated web root: SPA build + VitePress manual (Proxytrace.Api/wwwroot/docs) are
+# produced at Release build time and must not be committed.
+Proxytrace.Api/wwwroot/

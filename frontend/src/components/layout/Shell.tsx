@@ -13,7 +13,7 @@ import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
   SettingsIcon, BeakerIcon, TargetIcon,
-  LayoutSidebarIcon,
+  LayoutSidebarIcon, ExternalLinkIcon,
 } from '../icons';
 
 type NavIconName =
@@ -175,6 +175,20 @@ export function Shell() {
             </div>
           ))}
         </nav>
+
+        {/* Docs link — opens the bundled manual served at /docs */}
+        <div className={`${collapsed ? 'px-2' : 'px-3'}`}>
+          <a
+            href="/docs/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={collapsed ? 'Documentation' : undefined}
+            className={`nav-item${collapsed ? ' justify-center' : ''}`}
+          >
+            <span className="flex shrink-0"><ExternalLinkIcon size={16} /></span>
+            {!collapsed && <span className="flex-1 text-left">Documentation</span>}
+          </a>
+        </div>
 
         {/* Project footer */}
         <div className={`border-t border-hairline ${collapsed ? 'p-2' : 'p-3'}`}>

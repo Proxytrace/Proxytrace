@@ -173,6 +173,9 @@ docker compose -f docker-compose.kiosk.yml up --build   # Kiosk mode, API :5200,
 
 ## Documentation
 
+- **User & operator manual** — a searchable HTML manual built from markdown in [`manual/`](manual/)
+  (VitePress). It is served by the app at **`/docs`** in both deployment shapes. Run it
+  locally with `cd manual && npm install && npm run docs:dev` (http://localhost:4202).
 - [CLAUDE.md](CLAUDE.md) — architecture, conventions, and the domain entity pattern
 - [DATABASE.md](DATABASE.md) — database providers and migrations
 - [frontend/DESIGN.md](frontend/DESIGN.md) — frontend visual system

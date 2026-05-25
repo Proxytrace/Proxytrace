@@ -12,6 +12,14 @@ internal sealed class SecurityHeadersMiddleware
         "img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:; " +
         "base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'";
 
+    // The bundled VitePress manual at /docs emits a few static inline scripts (dark-mode
+    // probe, page hash map). These are trusted, build-time content, so /docs gets a CSP
+    // that allows inline scripts while the rest of the app keeps the strict policy above.
+    private const string DocsContentSecurityPolicy =
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:; " +
+        "base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'";
+
     private readonly RequestDelegate next;
 
     public SecurityHeadersMiddleware(RequestDelegate next)
@@ -28,7 +36,15 @@ internal sealed class SecurityHeadersMiddleware
         headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
         // Skip CSP for Swagger UI, which relies on inline scripts/styles (Development only).
-        if (!context.Request.Path.StartsWithSegments("/swagger"))
+        if (context.Request.Path.StartsWithSegments("/swagger"))
+        {
+            // no CSP
+        }
+        else if (context.Request.Path.StartsWithSegments("/docs"))
+        {
+            headers["Content-Security-Policy"] = DocsContentSecurityPolicy;
+        }
+        else
         {
             headers["Content-Security-Policy"] = ContentSecurityPolicy;
         }

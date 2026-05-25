@@ -44,12 +44,27 @@
   </ItemGroup>
 
   <!--<Target Name="BuildAngularFrontend" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="npm run build" 
+    <Exec Command="npm run build"
           WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
     <ItemGroup>
       <FrontendFiles Include="$(MSBuildThisFileDirectory)../frontend/dist/frontend/browser/**" />
     </ItemGroup>
     <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot/%(RecursiveDir)" />
   </Target>-->
+
+  <!-- Kiosk mode: build the VitePress manual and copy it into wwwroot/docs so the API
+       serves it at /docs via UseStaticFiles. Release only, and requires Node/npm on the
+       build machine. Skipped via -p:SkipManualBuild=true in the API Docker image (the SDK
+       image has no npm; in Docker the manual is served by the nginx frontend instead). -->
+  <Target Name="BuildUserManual" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release' and '$(SkipManualBuild)' != 'true'">
+    <Exec Command="npm ci"
+          WorkingDirectory="$(MSBuildThisFileDirectory)../manual" />
+    <Exec Command="npm run docs:build"
+          WorkingDirectory="$(MSBuildThisFileDirectory)../manual" />
+    <ItemGroup>
+      <ManualFiles Include="$(MSBuildThisFileDirectory)../manual/.vitepress/dist/**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ManualFiles)" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot/docs/%(RecursiveDir)" />
+  </Target>
 
 </Project>
