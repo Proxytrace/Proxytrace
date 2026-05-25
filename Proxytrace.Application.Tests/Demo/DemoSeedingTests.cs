@@ -17,6 +17,7 @@ public class DemoSeedingTests : BaseTest<Module>
     // Seeding the full demo dataset is expensive (hundreds of entities), so it runs once
     // for the whole class and every test asserts read-only against the shared result.
     private static IContainer? sharedContainer;
+    // ReSharper disable once NullableWarningSuppressionIsUsed
     private static IServiceProvider services = null!;
 
     [ClassInitialize]

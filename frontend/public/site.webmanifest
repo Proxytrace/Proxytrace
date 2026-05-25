@@ -1,6 +1,6 @@
 {
-  "name": "Proxy Trace",
-  "short_name": "Proxy Trace",
+  "name": "Proxytrace",
+  "short_name": "Proxytrace",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
