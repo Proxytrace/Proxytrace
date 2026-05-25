@@ -21,14 +21,7 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
   const { overview, isLoading, range, setRange } = useAgentStats(agent.id);
 
   return (
-    <div
-      className="fade-up grid gap-3 min-w-0"
-      style={{
-        gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
-        gridAutoRows: 'min-content',
-        animationDelay: '40ms',
-      }}
-    >
+    <div className="fade-up grid grid-cols-12 auto-rows-min gap-3 min-w-0 [animation-delay:40ms]">
       <IdentityWidget agent={agent} onDelete={onDelete} className="col-span-12" />
 
       <SystemPromptWidget systemMessage={agent.systemMessage} className="col-span-12 lg:col-span-7" />

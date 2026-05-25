@@ -22,7 +22,7 @@ export function TraceToolbar({
   onSearchChange, onRangeChange, onAgentFilterChange, onShowSystemChange,
 }: Props) {
   return (
-    <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0" style={{ animationDelay: '80ms' }}>
+    <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0 [animation-delay:80ms]">
       <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-body-title text-muted shadow-[var(--shadow-pill)]">
         <SearchIcon size={13} className="shrink-0" />
         <input

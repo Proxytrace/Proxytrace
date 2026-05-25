@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '../../api/query-keys';
 import { useAuthMode } from '../../auth/authMode';
 import { FirstAdminStep } from './components/FirstAdminStep';
 import { SetupWizard } from './components/SetupWizard';
@@ -11,7 +12,7 @@ export default function Setup() {
     return (
       <FirstAdminStep
         onDone={() => {
-          qc.invalidateQueries({ queryKey: ['auth-mode'] });
+          qc.invalidateQueries({ queryKey: QUERY_KEYS.authMode });
         }}
       />
     );

@@ -34,6 +34,9 @@ export const QUERY_KEYS = {
   modelEndpoints: ['model-endpoints'] as const,
 
   health: ['health'] as const,
+  authMode: ['auth-mode'] as const,
+  appConfig: ['app-config'] as const,
+  setupStatus: ['setup-status'] as const,
   invites: ['invites'] as const,
   providers: ['providers'] as const,
   projects: ['projects'] as const,
