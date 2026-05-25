@@ -24,7 +24,9 @@ export default function Traces() {
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 200);
-  const from = rangeFrom(range);
+  // Memoize so `from` is stable across renders; recomputing `Date.now()` each
+  // render would churn the queryKeys below and cause an infinite refetch loop.
+  const from = useMemo(() => rangeFrom(range), [range]);
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,

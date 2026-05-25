@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
@@ -38,7 +38,9 @@ import { AgentsSection } from './components/AgentsSection';
 export default function Dashboard() {
   const qc = useQueryClient();
   const [range, setRange] = useState<RangeKey>('24h');
-  const from = rangeFrom(range);
+  // Memoize so `from` is stable across renders; recomputing `new Date()` each
+  // render would churn every queryKey below and cause an infinite refetch loop.
+  const from = useMemo(() => rangeFrom(range), [range]);
   const { currentProjectId, currentProject } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;

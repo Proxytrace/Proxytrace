@@ -61,7 +61,9 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
   const [search, setSearch] = useState<string>('');
   const [focusedIdState, setFocusedIdState] = useState<string | null>(null);
 
-  const from = rangeFrom(range);
+  // Memoize so `from` is stable across renders; recomputing `Date.now()` each
+  // render would churn the queryKey and cause an infinite refetch loop.
+  const from = useMemo(() => rangeFrom(range), [range]);
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteCreate(agentId, from),
     queryFn: () => agentCallsApi.list({ agentId, pageSize: TRACE_PAGE_SIZE, from }),
