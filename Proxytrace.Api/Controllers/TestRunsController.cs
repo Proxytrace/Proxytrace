@@ -42,6 +42,7 @@ public class TestRunsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var all = agentId.HasValue
             ? await repository.GetByAgentAsync(agentId.Value, cancellationToken)
             : await repository.GetAllAsync(cancellationToken);

@@ -57,6 +57,7 @@ public class AgentCallsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
         return new PagedResult<AgentCallDto>(items.Select(AgentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);

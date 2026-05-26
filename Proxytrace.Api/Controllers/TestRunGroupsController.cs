@@ -60,6 +60,7 @@ public class TestRunGroupsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         IReadOnlyList<ITestRunGroup> all;
         if (agentId.HasValue)
             all = await groupRepository.GetByAgentAsync(agentId.Value, cancellationToken);

@@ -60,6 +60,7 @@ public class TestSuitesController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         IReadOnlyList<ITestSuite> all;
         if (agentId.HasValue)
             all = await suiteRepository.GetByAgentAsync(agentId.Value, cancellationToken);
@@ -85,6 +86,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] CreateTestSuiteRequest request,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required.");
+
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
@@ -92,7 +96,8 @@ public class TestSuitesController : ControllerBase
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
         {
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            var distinctEvalIds = request.EvaluatorIds.Distinct().ToArray();
+            evaluators = await evaluatorRepository.GetManyAsync(distinctEvalIds, cancellationToken);
         }
         else
         {
@@ -132,11 +137,11 @@ public class TestSuitesController : ControllerBase
 
         IReadOnlyCollection<IEvaluator> evaluators = existing.Evaluators;
         if (request.EvaluatorIds is not null)
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds.Distinct().ToArray(), cancellationToken);
 
         IReadOnlyCollection<ITestCase> testCases = existing.TestCases;
         if (request.TestCaseIds is not null)
-            testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds, cancellationToken);
+            testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds.Distinct().ToArray(), cancellationToken);
 
         var updated = createSuiteExisting(existing.Name, agent, evaluators, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
@@ -160,17 +165,19 @@ public class TestSuitesController : ControllerBase
         [FromBody] PromoteTracesRequest request,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required.");
+        if (request.AgentCallIds.Count == 0)
+            return BadRequest("At least one agent call ID must be provided.");
+
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
 
-        if (request.AgentCallIds.Count == 0)
-            return BadRequest("At least one agent call ID must be provided.");
-
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
         {
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds.Distinct().ToArray(), cancellationToken);
         }
         else
         {
@@ -180,7 +187,7 @@ public class TestSuitesController : ControllerBase
         }
 
         var testCases = new List<ITestCase>();
-        foreach (var callId in request.AgentCallIds)
+        foreach (var callId in request.AgentCallIds.Distinct())
         {
             var call = await agentCallRepository.FindAsync(callId, cancellationToken);
             if (call is null)

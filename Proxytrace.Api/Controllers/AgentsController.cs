@@ -47,6 +47,7 @@ public class AgentsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var all = await repository.GetAllAsync(cancellationToken);
         var filtered = projectId.HasValue
             ? all.Where(a => a.Project.Id == projectId.Value).ToArray()

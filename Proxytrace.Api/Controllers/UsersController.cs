@@ -30,6 +30,7 @@ public class UsersController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var all = await repository.GetAllAsync(cancellationToken);
         var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
         return new PagedResult<UserDto>(items, all.Count, page, pageSize);

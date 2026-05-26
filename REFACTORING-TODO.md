@@ -2,19 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 3. Validate input bounds at controller boundaries consistently
-
-**Scope:** `SearchController.cs`, `StatisticsController.cs`, `TestSuitesController.cs`, `ProjectsController.cs`
-**Priority:** P1
-
-Page/pageSize, `recentTraceCount`, `agentLimit`, etc. are clamped in some endpoints (`EvaluatorsController:158, 325`) and silently trusted in others. `TestSuitesController.cs:105-112` validates `testCases` empty *after* iterating. `ProjectsController.ResolveMembersAsync` (line 158) doesn't dedupe user IDs.
-
-**Approach:**
-- Introduce shared `PagingRequest` (or extension) that clamps `page >= 1`, `pageSize ∈ [1, 100]`.
-- Move per-endpoint guards (`recentTraceCount`, `agentLimit`) to clamp at the top of each action.
-- Pre-validate request DTOs before any work: emptiness, max-length, duplicates.
-- Add `[Required]` / `[StringLength]` data annotations on request DTOs.
-
 ## 4. Extract a shared message-text / test-case-summary utility
 
 **Scope:** new `Proxytrace.Domain` (or `Proxytrace.Application`) helper; callers in `EvaluatorsController.cs:345-351`, `TestRunsController.cs:207-215`, `TestSuitesController.cs:305-311`, `EvaluatorTestBenchController.cs:142-148`, `Dto/AgentCalls/AgentCallDtoMapper.cs:88-95`

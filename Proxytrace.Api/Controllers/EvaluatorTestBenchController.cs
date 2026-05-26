@@ -86,7 +86,8 @@ public class EvaluatorTestBenchController : ControllerBase
         if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
 
-        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, count, cancellationToken);
+        var capped = Math.Clamp(count, 1, 50);
+        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken);
         return recent
             .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, Summarize(r.TestCase)))
             .ToArray();

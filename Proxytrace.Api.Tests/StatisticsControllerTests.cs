@@ -35,7 +35,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
 
         var controller = ResolveController(dashboard);
 
-        var dto = await controller.GetDashboardView(cancellationToken: CancellationToken);
+        var result = await controller.GetDashboardView(cancellationToken: CancellationToken);
+        var dto = result.Value!;
 
         dto.Summary.TotalCalls.Should().Be(42);
         dto.LiveTelemetry.P95Ms.Should().Be(55);
@@ -95,7 +96,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 Counts: new AgentEntityCounts(SuiteCount: 2, TestCaseCount: 6, OpenProposalCount: 1, TotalProposalCount: 4)));
         var controller = ResolveController(agentStatistics: agentStatistics);
 
-        var result = await controller.GetAgentOverview(Guid.NewGuid(), from: bucketStart, to: bucketStart, bucket: StatisticsBucket.Daily, cancellationToken: CancellationToken);
+        var result = await controller.GetAgentOverview(Guid.NewGuid(), from: bucketStart, to: bucketStart.AddDays(1), bucket: StatisticsBucket.Daily, cancellationToken: CancellationToken);
 
         var dto = result.Value;
         dto.Should().NotBeNull();

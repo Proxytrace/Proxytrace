@@ -22,7 +22,7 @@ public class StatisticsController : ControllerBase
     }
 
     [HttpGet("dashboard")]
-    public async Task<DashboardViewDto> GetDashboardView(
+    public async Task<ActionResult<DashboardViewDto>> GetDashboardView(
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
@@ -30,6 +30,10 @@ public class StatisticsController : ControllerBase
         [FromQuery] int agentLimit = 10,
         CancellationToken cancellationToken = default)
     {
+        if (from is not null && to is not null && from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
+        recentTraceCount = Math.Clamp(recentTraceCount, 1, 50);
+        agentLimit = Math.Clamp(agentLimit, 1, 100);
         var filter = new StatisticsFilter(from, to, projectId);
         DashboardView view = await dashboard.GetDashboardViewAsync(filter, recentTraceCount, agentLimit, cancellationToken);
 
@@ -56,6 +60,8 @@ public class StatisticsController : ControllerBase
     {
         if (from is null || to is null)
             return BadRequest("Query parameters 'from' and 'to' are required.");
+        if (from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
 
         var result = await agentStatistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
         return new AgentOverviewDto(
