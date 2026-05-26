@@ -10,6 +10,9 @@ using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Search;
+using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Storage;
@@ -90,6 +93,10 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
+
+        builder.RegisterType<ToolDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<AgentDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<AgentCallDtoMapper>().AsSelf().SingleInstance();
 
         ConfigureAuth(builder, configuration, kiosk);
 

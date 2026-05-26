@@ -1,14 +1,11 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Domain;
-using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestRun;
-using Proxytrace.Domain.Tools;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -21,17 +18,20 @@ public class ProposalsController : ControllerBase
     private readonly IModelSwitchProposal.CreateExisting createModelSwitch;
     private readonly ISystemPromptProposal.CreateExisting createSystemPrompt;
     private readonly IToolUpdateProposal.CreateExisting createToolUpdate;
+    private readonly ToolDtoMapper toolDtoMapper;
 
     public ProposalsController(
         IOptimizationProposalRepository repository,
         IModelSwitchProposal.CreateExisting createModelSwitch,
         ISystemPromptProposal.CreateExisting createSystemPrompt,
-        IToolUpdateProposal.CreateExisting createToolUpdate)
+        IToolUpdateProposal.CreateExisting createToolUpdate,
+        ToolDtoMapper toolDtoMapper)
     {
         this.repository = repository;
         this.createModelSwitch = createModelSwitch;
         this.createSystemPrompt = createSystemPrompt;
         this.createToolUpdate = createToolUpdate;
+        this.toolDtoMapper = toolDtoMapper;
     }
 
     [HttpGet]
@@ -81,7 +81,7 @@ public class ProposalsController : ControllerBase
         return Ok(ToDto(updated));
     }
 
-    private static OptimizationProposalDto ToDto(IOptimizationProposal p)
+    private OptimizationProposalDto ToDto(IOptimizationProposal p)
         => new(
             p.Id,
             p.Kind,
@@ -123,7 +123,7 @@ public class ProposalsController : ControllerBase
             DurationMs: durationMs);
     }
 
-    private static ProposalDetailsDto ToDetailsDto(IOptimizationProposal p)
+    private ProposalDetailsDto ToDetailsDto(IOptimizationProposal p)
         => p switch
         {
             IModelSwitchProposal ms => ToModelSwitchDto(ms),
@@ -143,32 +143,8 @@ public class ProposalsController : ControllerBase
     private static SystemPromptDetailsDto ToSystemPromptDto(ISystemPromptProposal sp)
         => new(sp.Agent.SystemPrompt.Template, sp.ProposedSystemMessage);
 
-    private static ToolDetailsDto ToToolDto(IToolUpdateProposal tu)
+    private ToolDetailsDto ToToolDto(IToolUpdateProposal tu)
         => new(
-            [.. tu.Agent.Tools.Select(ToToolSpecDto)],
-            [.. tu.ProposedTools.Select(ToToolSpecDto)]);
-
-    private static ToolSpecificationDto ToToolSpecDto(ToolSpecification t)
-        => new(t.Name, t.Description, [.. t.Arguments.Arguments.Select(ToArgumentDto)]);
-
-    private static ToolArgumentDto ToArgumentDto(IToolArgument arg)
-    {
-        var type = "object";
-        List<string>? enumValues = null;
-        try
-        {
-            using var doc = JsonDocument.Parse(arg.JsonSchema);
-            var root = doc.RootElement;
-            if (root.TryGetProperty("type", out var typeEl))
-                type = typeEl.GetString() ?? "object";
-            if (root.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
-                enumValues = [.. enumEl.EnumerateArray().Select(e => e.GetString() ?? "")];
-        }
-        catch
-        {
-            // ignored
-        }
-
-        return new ToolArgumentDto(arg.Name, arg.Description, type, arg.IsRequired, enumValues);
-    }
+            [.. tu.Agent.Tools.Select(toolDtoMapper.ToToolSpecDto)],
+            [.. tu.ProposedTools.Select(toolDtoMapper.ToToolSpecDto)]);
 }

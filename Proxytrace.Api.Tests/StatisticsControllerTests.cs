@@ -2,6 +2,9 @@ using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -114,7 +117,12 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
     private StatisticsController ResolveController(
         IDashboardStatistics? dashboard = null,
         IAgentStatistics? agentStatistics = null)
-        => new(
+    {
+        var toolDtoMapper = new ToolDtoMapper();
+        return new StatisticsController(
             dashboard ?? Substitute.For<IDashboardStatistics>(),
-            agentStatistics ?? Substitute.For<IAgentStatistics>());
+            agentStatistics ?? Substitute.For<IAgentStatistics>(),
+            new AgentCallDtoMapper(toolDtoMapper),
+            new AgentDtoMapper(toolDtoMapper));
+    }
 }

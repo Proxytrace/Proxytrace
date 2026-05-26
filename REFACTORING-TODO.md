@@ -2,18 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 5. Centralize tool-argument / tool-spec DTO mapping
-
-**Scope:** `Dto/Agents/AgentDtoMapper.cs:33-52`, `Dto/AgentCalls/AgentCallDtoMapper.cs:42-61`, `Controllers/ProposalsController.cs:151-173`
-**Priority:** P2
-
-`ToArgumentDto` / `ToToolArgumentDto` / `ToToolSpecDto` are implemented three times with the same JsonSchema parsing of `type` and `enum`. Diverging implementations are already visible.
-
-**Approach:**
-- Create `Dto/Tools/ToolDtoMapper.cs` with the canonical `ToToolSpecDto`, `ToToolArgumentDto`.
-- Delete the duplicates in the three sites and route through the new mapper.
-- Consider whether JSON-schema parsing belongs in `Proxytrace.Serialization` instead — JsonSchema interpretation is a serialization concern, not a DTO mapping concern.
-
 ## 6. Split bloated controllers; move inline mapping into `Dto/*Mapper.cs`
 
 **Scope:** `EvaluatorsController.cs` (394), `TestSuitesController.cs` (317), `TestRunsController.cs` (300), `ModelProvidersController.cs` (259), `TestRunGroupsController.cs` (203), `ProposalsController.cs` (174)

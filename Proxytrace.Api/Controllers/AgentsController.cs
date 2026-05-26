@@ -27,17 +27,20 @@ public class AgentsController : ControllerBase
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
+    private readonly AgentDtoMapper agentDtoMapper;
 
     public AgentsController(
         IAgentRepository repository,
         IRepository<IModelEndpoint> endpoints,
         IAgentCallRepository agentCallRepository,
-        IProposalBroadcaster proposalBroadcaster)
+        IProposalBroadcaster proposalBroadcaster,
+        AgentDtoMapper agentDtoMapper)
     {
         this.repository = repository;
         this.endpoints = endpoints;
         this.agentCallRepository = agentCallRepository;
         this.proposalBroadcaster = proposalBroadcaster;
+        this.agentDtoMapper = agentDtoMapper;
     }
 
     [HttpGet]
@@ -61,7 +64,7 @@ public class AgentsController : ControllerBase
             .ToArray();
 
         var items = sorted.Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(a => AgentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
 
         return new PagedResult<AgentDto>(items, filtered.Count(), page, pageSize);
@@ -74,7 +77,7 @@ public class AgentsController : ControllerBase
         if (agent is null)
             return NotFound();
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
-        return AgentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
+        return agentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
     }
 
     [HttpGet("{id:guid}/proposals/stream")]

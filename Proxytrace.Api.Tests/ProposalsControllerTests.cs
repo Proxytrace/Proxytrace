@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
@@ -187,5 +188,6 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         services.GetRequiredService<IOptimizationProposalRepository>(),
         services.GetRequiredService<IModelSwitchProposal.CreateExisting>(),
         services.GetRequiredService<ISystemPromptProposal.CreateExisting>(),
-        services.GetRequiredService<IToolUpdateProposal.CreateExisting>());
+        services.GetRequiredService<IToolUpdateProposal.CreateExisting>(),
+        services.GetRequiredService<ToolDtoMapper>());
 }

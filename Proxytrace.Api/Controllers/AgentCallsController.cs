@@ -29,17 +29,23 @@ public class AgentCallsController : ControllerBase
     private readonly IAgentRepository agentRepository;
     private readonly IDashboardStatistics statistics;
     private readonly ITraceBroadcaster traceBroadcaster;
+    private readonly AgentCallDtoMapper agentCallDtoMapper;
+    private readonly AgentDtoMapper agentDtoMapper;
 
     public AgentCallsController(
         IAgentCallRepository repository,
         IAgentRepository agentRepository,
         IDashboardStatistics statistics,
-        ITraceBroadcaster traceBroadcaster)
+        ITraceBroadcaster traceBroadcaster,
+        AgentCallDtoMapper agentCallDtoMapper,
+        AgentDtoMapper agentDtoMapper)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
         this.statistics = statistics;
         this.traceBroadcaster = traceBroadcaster;
+        this.agentCallDtoMapper = agentCallDtoMapper;
+        this.agentDtoMapper = agentDtoMapper;
     }
 
     [HttpGet]
@@ -60,7 +66,7 @@ public class AgentCallsController : ControllerBase
         (page, pageSize) = Paging.Clamp(page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<AgentCallDto>(items.Select(AgentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);
+        return new PagedResult<AgentCallDto>(items.Select(agentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);
     }
 
     [HttpGet("overview")]
@@ -85,7 +91,7 @@ public class AgentCallsController : ControllerBase
             .Where(a => !projectId.HasValue || a.Project.Id == projectId.Value)
             .OrderByDescending(a => lastCall.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
-            .Select(a => AgentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
 
         return new TracesOverviewDto(
@@ -100,7 +106,7 @@ public class AgentCallsController : ControllerBase
         var call = await repository.FindAsync(id, cancellationToken);
         if (call is null)
             return NotFound();
-        return AgentCallDtoMapper.ToDto(call);
+        return agentCallDtoMapper.ToDto(call);
     }
 
     [HttpGet("stream")]
