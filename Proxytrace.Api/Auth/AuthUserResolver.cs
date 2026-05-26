@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.User;
@@ -14,7 +13,14 @@ internal interface IAuthUserResolver
 
 internal class LocalUserResolver : IAuthUserResolver
 {
-    public async Task<IUser?> Resolve(TokenValidatedContext context,ClaimsPrincipal principal )
+    private readonly IRepository<IUser> users;
+
+    public LocalUserResolver(IRepository<IUser> users)
+    {
+        this.users = users;
+    }
+
+    public async Task<IUser?> Resolve(TokenValidatedContext context, ClaimsPrincipal principal)
     {
         var sub = principal.FindFirstValue("sub")
                   ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -24,7 +30,6 @@ internal class LocalUserResolver : IAuthUserResolver
             return null;
         }
 
-        var users = context.HttpContext.RequestServices.GetRequiredService<IRepository<IUser>>();
         var user = await users.FindAsync(userId, context.HttpContext.RequestAborted);
         if (user is null)
         {
@@ -38,11 +43,17 @@ internal class LocalUserResolver : IAuthUserResolver
 
 internal class JitUserResolver : IAuthUserResolver
 {
+    private readonly IJitUserProvisioner provisioner;
+    private readonly AuthOptions options;
+
+    public JitUserResolver(IJitUserProvisioner provisioner, AuthOptions options)
+    {
+        this.provisioner = provisioner;
+        this.options = options;
+    }
+
     public async Task<IUser?> Resolve(TokenValidatedContext context, ClaimsPrincipal principal)
     {
-        var options = context.HttpContext.RequestServices
-            .GetRequiredService<IOptions<AuthOptions>>().Value;
-
         var issuer = principal.FindFirstValue("iss")
                      ?? principal.Claims.FirstOrDefault(c => c.Type == "iss")?.Value
                      ?? options.Oidc.Authority;
@@ -59,9 +70,6 @@ internal class JitUserResolver : IAuthUserResolver
                     ?? $"{subject}@unknown";
 
         var externalSubject = $"{issuer.TrimEnd('/')}|{subject}";
-
-        var provisioner = context.HttpContext.RequestServices
-            .GetRequiredService<IJitUserProvisioner>();
 
         return await provisioner.EnsureProvisionedAsync(
             externalSubject,
