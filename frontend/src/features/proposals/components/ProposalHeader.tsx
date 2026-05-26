@@ -5,13 +5,17 @@ import {
 } from '../../../components/icons';
 import type { OptimizationProposalDto } from '../../../api/models';
 import { ProposalKind } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { agentColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
 import {
+  KIND_HERO_BOX,
   KIND_META,
+  KIND_PILL_BG,
   PRIORITY_META,
-  TONE_COLOR,
-  TONE_SUBTLE,
+  TONE_DOT_BG,
+  TONE_SUBTLE_BG,
+  TONE_TEXT,
 } from '../shared';
 import type { DisplayStatus } from '../shared';
 
@@ -41,13 +45,11 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
   return (
     <div className="flex items-start gap-3.5">
       <div
-        className="size-11 rounded-lg flex items-center justify-center shrink-0"
-        style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${kind.color} 20%, transparent), color-mix(in srgb, ${kind.color} 7%, transparent))`,
-          border: `1px solid color-mix(in srgb, ${kind.color} 27%, transparent)`,
-          color: kind.color,
-          boxShadow: `0 0 24px color-mix(in srgb, ${kind.color} 13%, transparent)`,
-        }}
+        className={cn(
+          'size-11 rounded-lg flex items-center justify-center shrink-0',
+          KIND_HERO_BOX[dto.kind],
+          kind.colorClass,
+        )}
       >
         {KIND_HERO_ICON[dto.kind]}
       </div>
@@ -55,22 +57,23 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
         <div className="flex items-center gap-2 flex-wrap mb-1.5">
           <span className="mono text-body-sm text-muted">{dto.id.slice(0, 8)}</span>
           <span
-            className="inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border"
-            style={{
-              background: `color-mix(in srgb, ${kind.color} 9%, transparent)`,
-              color: kind.color,
-              borderColor: `color-mix(in srgb, ${kind.color} 20%, transparent)`,
-            }}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border',
+              KIND_PILL_BG[dto.kind],
+              kind.colorClass,
+            )}
           >
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
-            style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold',
+              TONE_SUBTLE_BG[status.tone],
+              TONE_TEXT[status.tone],
+            )}
           >
             <span
-              className={`inline-block size-1.5 rounded-full ${status.pulse ? 'pulse-dot' : ''}`}
-              style={{ background: TONE_COLOR[status.tone] }}
+              className={cn('inline-block size-1.5 rounded-full', TONE_DOT_BG[status.tone], status.pulse && 'pulse-dot')}
             />
             {status.label}
           </span>
@@ -89,11 +92,8 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
           >
             {dto.agentName}
           </span>
-          <span
-            className="inline-flex items-center gap-1 font-medium"
-            style={{ color: prio.color }}
-          >
-            <span className="inline-block size-1.5 rounded-full" style={{ background: prio.color }}/>
+          <span className={cn('inline-flex items-center gap-1 font-medium', prio.colorClass)}>
+            <span className={cn('inline-block size-1.5 rounded-full', prio.bgClass)}/>
             {prio.label} priority
           </span>
           {dto.evidenceTestRunIds.length > 0 && (

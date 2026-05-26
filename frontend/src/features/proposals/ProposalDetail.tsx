@@ -1,7 +1,7 @@
 import type { OptimizationProposalDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
-import { KIND_META } from './shared';
-import { displayStatus, isTerminal, titleFromRationale } from './shared';
+import { cn } from '../../lib/cn';
+import { KIND_RATIONALE, displayStatus, isTerminal, titleFromRationale } from './shared';
 import { useUpdateProposalStatus } from './hooks/useUpdateProposalStatus';
 import { ProposalHeader } from './components/ProposalHeader';
 import { PredictedImpactBand } from './components/PredictedImpactBand';
@@ -19,7 +19,6 @@ interface Props {
 
 export function ProposalDetail({ dto }: Props) {
   const updateStatus = useUpdateProposalStatus(dto.id);
-  const kind = KIND_META[dto.kind];
   const status = displayStatus(dto);
   const terminal = isTerminal(dto);
   const ab = dto.abTestRun;
@@ -38,11 +37,10 @@ export function ProposalDetail({ dto }: Props) {
 
         {restOfRationale && (
           <p
-            className="text-body text-secondary leading-relaxed m-0 px-3.5 py-3 rounded-md whitespace-pre-wrap"
-            style={{
-              background: `color-mix(in srgb, ${kind.color} 4%, transparent)`,
-              borderLeft: `2px solid color-mix(in srgb, ${kind.color} 40%, transparent)`,
-            }}
+            className={cn(
+              'text-body text-secondary leading-relaxed m-0 px-3.5 py-3 rounded-md whitespace-pre-wrap',
+              KIND_RATIONALE[dto.kind],
+            )}
           >
             {restOfRationale}
           </p>

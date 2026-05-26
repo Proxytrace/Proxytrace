@@ -7,8 +7,10 @@ import { agentColor } from '../../lib/colors';
 import { fmtRelative } from '../../lib/format';
 import {
   KIND_META,
-  TONE_COLOR,
-  TONE_SUBTLE,
+  KIND_PILL_BG,
+  TONE_DOT_BG,
+  TONE_SUBTLE_BG,
+  TONE_TEXT,
   deltaTone,
   displayStatus,
   formatCostDelta,
@@ -54,30 +56,31 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
       className={cn('relative overflow-hidden transition-[box-shadow,opacity]', terminal && 'opacity-70')}
     >
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg"
-        style={{ background: kind.color, opacity: terminal ? 0.4 : 1 }}
+        className={cn('absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg', kind.bgClass)}
+        style={{ opacity: terminal ? 0.4 : 1 }}
       />
 
       <div className="pl-4 pr-3.5 py-3">
         {/* Top: type + status */}
         <div className="flex items-center gap-1.5 mb-2">
           <span
-            className="inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border"
-            style={{
-              background: `color-mix(in srgb, ${kind.color} 9%, transparent)`,
-              color: kind.color,
-              borderColor: `color-mix(in srgb, ${kind.color} 20%, transparent)`,
-            }}
+            className={cn(
+              'inline-flex items-center gap-1 rounded-sm px-2 py-[2px] text-caption font-semibold border',
+              KIND_PILL_BG[dto.kind],
+              kind.colorClass,
+            )}
           >
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
-            style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
+            className={cn(
+              'ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold',
+              TONE_SUBTLE_BG[status.tone],
+              TONE_TEXT[status.tone],
+            )}
           >
             <span
-              className={cn('inline-block size-1.5 rounded-full', status.pulse && 'pulse-dot')}
-              style={{ background: TONE_COLOR[status.tone] }}
+              className={cn('inline-block size-1.5 rounded-full', TONE_DOT_BG[status.tone], status.pulse && 'pulse-dot')}
             />
             {status.label}
           </span>
@@ -148,8 +151,11 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
 function ImpactPill({ label, value, tone }: { label: string; value: string; tone: ReturnType<typeof deltaTone> }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-caption font-semibold mono"
-      style={{ background: TONE_SUBTLE[tone], color: TONE_COLOR[tone] }}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-caption font-semibold mono',
+        TONE_SUBTLE_BG[tone],
+        TONE_TEXT[tone],
+      )}
     >
       <span className="opacity-60 font-medium">{label}</span>
       {value}

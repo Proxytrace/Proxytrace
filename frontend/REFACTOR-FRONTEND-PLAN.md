@@ -28,16 +28,20 @@ The codebase has clearly been hardened by prior refactoring. Verified clean:
 
 ## Actionable items
 
-### Wave 1 (parallel — disjoint file sets)
+### Wave 1 (parallel — disjoint file sets) — ✅ DONE, build/lint/test green (164 tests)
 
-- [ ] **P2-1 — Decompose `App.tsx`** (`src/App.tsx` + new `src/app/`).
+- [x] **P2-1 — Decompose `App.tsx`** (`src/App.tsx` + new `src/app/`).
   Smell: 7 component functions in one file (BEST_PRACTICES §1 ">2 → split", §2 feature/structure). The 3 `useEffect`s are legitimate external-system syncs (token, unauthorized handler, body class) — keep them. Pure extraction, behavior- and appearance-neutral.
   Approach: move `PageLoader`, `OidcAuthGate`, `LocalAuthGate`, `AppRoutes`, `KioskShell`, `ModeShell` into individual files under `src/app/`; leave `App.tsx` as a thin orchestrator (providers + `<ModeShell/>`). Move the `QueryClient` config to `src/app/queryClient.ts`. No logic changes.
 
-- [ ] **P3-1 — Remove threaded CSS-var color props in `features/proposals/`** (`features/proposals/**` only).
+- [x] **P3-1 — Remove threaded CSS-var color props in `features/proposals/`** (`features/proposals/**` only).
   Smell: `shared.ts` exposes `TONE_COLOR`/`TONE_SUBTLE`/`KIND_META`/`PRIORITY_META` as `Record<Enum, 'var(--…)'>` strings that are threaded through props and applied via inline `style={{ color/background: var(--…) }}` (BEST_PRACTICES §5.1 "pass data, not styling primitives", §13 "don't thread CSS-variable strings"; 9 inline styles in `AbTestHero.tsx`, 7 in `ProposalHeader.tsx`, 7 in `ProposalCard.tsx`, +`PredictedImpactBand`, `ProposalDetail`, `Proposals`).
   Approach: replace the CSS-var maps with `Record<Enum, string>` **Tailwind class** maps (text/bg), e.g. `success → 'text-success'`, subtle bg → existing `bg-success-subtle`/`bg-warn-subtle`/`bg-danger-subtle`/`bg-accent-subtle` tokens, and arbitrary-value classes for `teal`/`secondary`/`muted` subtle (`bg-[color-mix(...)]`). Components take a semantic `tone`/`kind`/`priority` prop and apply the mapped class via `cn()`. Keep genuinely data-driven inline styles (segmented bar `width:${pct}%`). Appearance must be identical (the CSS vars and Tailwind tokens resolve to the same hex).
   Constraint: edit only `features/proposals/**`. `components/search/*` has its own same-named constant and must NOT be touched (no cross-feature import exists). Add/extend a `*.spec.ts` for any pure map/derivation extracted.
+
+### Wave 2 (follow-ups surfaced during Wave 1 — optional, lower value)
+
+- [ ] **P3-2 — Static threaded color in remaining `features/proposals/components/`.** `ToolUpdateSection.tsx` threads static `color = 'var(--success)'/'var(--danger)'` + color-mix bg strings into `style={{}}` (add/del kind is a finite set → class maps). `ModelSwitchSection.tsx` static `tint` color-mix via `style` (its `color` prop is genuine runtime `modelColor()` — keep). `ProposalActionBar.tsx` two buttons with static `var(--teal)`/`var(--grad-success)`/shadow strings in `style` — arguably belong on the `Button` primitive (`variant`); converting touches button semantics, so treat as a small tracked item, not a drive-by.
 
 ## Notes / deliberate non-goals
 

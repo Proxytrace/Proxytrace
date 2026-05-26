@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import type { AbTestRunSummaryDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
 import { fmtDuration } from '../../lib/format';
-import { TONE_COLOR, TONE_SUBTLE, type DisplayTone } from './shared';
+import { TONE_DOT_BG, TONE_SUBTLE_BG, TONE_TEXT, type DisplayTone } from './shared';
 
 interface Props {
   ab: AbTestRunSummaryDto | null;
@@ -61,12 +61,14 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold"
-          style={{ background: TONE_SUBTLE[meta.tone], color: TONE_COLOR[meta.tone] }}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold',
+            TONE_SUBTLE_BG[meta.tone],
+            TONE_TEXT[meta.tone],
+          )}
         >
           <span
-            className={cn('inline-block size-1.5 rounded-full', meta.pulse && 'pulse-dot')}
-            style={{ background: TONE_COLOR[meta.tone] }}
+            className={cn('inline-block size-1.5 rounded-full', TONE_DOT_BG[meta.tone], meta.pulse && 'pulse-dot')}
           />
           A/B test · {meta.label}
         </span>
@@ -85,15 +87,13 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">Pass rate</div>
           <div className="flex items-baseline gap-2.5">
             <span
-              className="text-display font-bold tracking-[-0.02em] mono leading-none"
-              style={{ color: TONE_COLOR[passTone] }}
+              className={cn('text-display font-bold tracking-[-0.02em] mono leading-none', TONE_TEXT[passTone])}
             >
               {hasResults ? `${passRate}%` : '—'}
             </span>
             {deltaTone && deltaPts != null && (
               <span
-                className="mono text-body-sm font-semibold"
-                style={{ color: TONE_COLOR[deltaTone] }}
+                className={cn('mono text-body-sm font-semibold', TONE_TEXT[deltaTone])}
               >
                 {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>
@@ -109,8 +109,8 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 items-center">
           <Stat label="Sample"   value={`${ab.completedCases}/${ab.totalCases}`}/>
           <Stat label="Duration" value={fmtDuration(ab.durationMs)}/>
-          <Stat label="Passed"   value={ab.passedCases} color="var(--success)"/>
-          <Stat label="Failed"   value={ab.failedCases} color="var(--danger)"/>
+          <Stat label="Passed"   value={ab.passedCases} tone="success"/>
+          <Stat label="Failed"   value={ab.failedCases} tone="danger"/>
         </div>
       </div>
 
@@ -123,11 +123,11 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">
-            <LegendDot color="var(--success)" label={`${ab.passedCases} passed`}/>
-            <LegendDot color="var(--danger)"  label={`${ab.failedCases} failed`}/>
+            <LegendDot tone="success" label={`${ab.passedCases} passed`}/>
+            <LegendDot tone="danger"  label={`${ab.failedCases} failed`}/>
             {ab.totalCases - ab.completedCases > 0 && (
               <LegendDot
-                color="color-mix(in srgb, var(--text-muted) 60%, transparent)"
+                tone="pending"
                 label={`${ab.totalCases - ab.completedCases} pending`}
               />
             )}
@@ -138,21 +138,28 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
+function Stat({ label, value, tone }: { label: string; value: string | number; tone?: DisplayTone }) {
   return (
     <>
       <span className="text-caption text-muted font-medium uppercase tracking-[0.07em]">{label}</span>
-      <span className="mono text-body font-semibold" style={{ color: color ?? 'var(--text-primary)' }}>
+      <span className={cn('mono text-body font-semibold', tone ? TONE_TEXT[tone] : 'text-primary')}>
         {value}
       </span>
     </>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+// 'pending' reproduces the previous one-off `color-mix(in srgb, var(--text-muted) 60%, transparent)`
+// legend dot; the standard tones map to the shared solid dot backgrounds.
+const LEGEND_DOT_BG: Record<DisplayTone | 'pending', string> = {
+  ...TONE_DOT_BG,
+  pending: 'bg-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]',
+};
+
+function LegendDot({ tone, label }: { tone: DisplayTone | 'pending'; label: string }) {
   return (
     <span className="inline-flex items-center gap-1 mono">
-      <span className="inline-block size-1.5 rounded-full" style={{ background: color }}/>
+      <span className={cn('inline-block size-1.5 rounded-full', LEGEND_DOT_BG[tone])}/>
       {label}
     </span>
   );
