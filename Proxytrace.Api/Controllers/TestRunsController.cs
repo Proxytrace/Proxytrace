@@ -57,9 +57,9 @@ public class TestRunsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestRunDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
             return NotFound();
-        var run = await repository.GetAsync(id, cancellationToken);
         return ToDto(run);
     }
 
@@ -67,9 +67,9 @@ public class TestRunsController : ControllerBase
     public async Task<ActionResult<TestCaseFixtureDto>> GetCaseFixture(
         Guid id, Guid caseId, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
             return NotFound();
-        var run = await repository.GetAsync(id, cancellationToken);
         var result = run.TestResults.FirstOrDefault(r => r.TestCase.Id == caseId);
         if (result is null)
             return NotFound();
@@ -79,7 +79,8 @@ public class TestRunsController : ControllerBase
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
         {
             Response.StatusCode = 404;
             return;
@@ -90,8 +91,6 @@ public class TestRunsController : ControllerBase
         Response.Headers.Append("X-Accel-Buffering", "no");
 
         var reader = broadcaster.Subscribe(id, cancellationToken);
-
-        var run = await repository.GetAsync(id, cancellationToken);
         if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = RunCompleteEvent.Create(run);

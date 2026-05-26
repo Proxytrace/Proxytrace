@@ -105,9 +105,9 @@ public class EvaluatorsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<EvaluatorDetailDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+        var evaluator = await evaluatorRepository.FindAsync(id, cancellationToken);
+        if (evaluator is null)
             return NotFound();
-        var evaluator = await evaluatorRepository.GetAsync(id, cancellationToken);
         return ToDto(evaluator);
     }
 
@@ -172,9 +172,9 @@ public class EvaluatorsController : ControllerBase
         CancellationToken cancellationToken)
         => await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
         {
-            if (!await projectRepository.ContainsAsync(request.ProjectId, cancellationToken))
+            var project = await projectRepository.FindAsync(request.ProjectId, cancellationToken);
+            if (project is null)
                 return BadRequest($"Project {request.ProjectId} not found.");
-            var project = await projectRepository.GetAsync(request.ProjectId, cancellationToken);
 
             IEvaluator evaluator;
             switch (request.Kind)
@@ -234,10 +234,10 @@ public class EvaluatorsController : ControllerBase
         CancellationToken cancellationToken)
         => await transaction.InvokeAsync<ActionResult<EvaluatorDetailDto>>(async () =>
         {
-            if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
+            var existing = await evaluatorRepository.FindAsync(id, cancellationToken);
+            if (existing is null)
                 return NotFound();
 
-            var existing = await evaluatorRepository.GetAsync(id, cancellationToken);
             var project = existing.Project;
 
             IEvaluator updated;

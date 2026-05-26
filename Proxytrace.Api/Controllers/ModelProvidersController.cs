@@ -67,9 +67,10 @@ public class ModelProvidersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ModelProviderDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(id, cancellationToken))
+        var provider = await providerRepository.FindAsync(id, cancellationToken);
+        if (provider is null)
             return NotFound();
-        return ToDto(await providerRepository.GetAsync(id, cancellationToken));
+        return ToDto(provider);
     }
 
     [HttpGet("overview")]
@@ -113,9 +114,9 @@ public class ModelProvidersController : ControllerBase
         [FromBody] UpdateModelProviderRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(id, cancellationToken))
+        var existing = await providerRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await providerRepository.GetAsync(id, cancellationToken);
         var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
         return ToDto(saved);
@@ -163,9 +164,9 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateModelEndpointRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+        var provider = await providerRepository.FindAsync(providerId, cancellationToken);
+        if (provider is null)
             return NotFound("Provider not found.");
-        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
 
         var all = await endpointRepository.GetAllAsync(cancellationToken);
         if (all.Any(e => e.Provider.Id == providerId && e.Model.Name == request.ModelName))
@@ -197,10 +198,10 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
             return NotFound("Provider not found.");
 
-        if (!await endpointRepository.ContainsAsync(endpointId, cancellationToken))
+        var existing = await endpointRepository.FindAsync(endpointId, cancellationToken);
+        if (existing is null)
             return NotFound("Model endpoint not found.");
 
-        var existing = await endpointRepository.GetAsync(endpointId, cancellationToken);
         if (existing.Provider.Id != providerId)
             return NotFound("Model endpoint not found.");
 
@@ -224,13 +225,12 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateApiKeyRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+        var provider = await providerRepository.FindAsync(providerId, cancellationToken);
+        if (provider is null)
             return NotFound("Provider not found.");
-        if (!await projectRepository.ContainsAsync(request.ProjectId, cancellationToken))
+        var project = await projectRepository.FindAsync(request.ProjectId, cancellationToken);
+        if (project is null)
             return BadRequest($"Project {request.ProjectId} not found.");
-
-        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
-        var project = await projectRepository.GetAsync(request.ProjectId, cancellationToken);
 
         var keyValue = $"proxytrace-{Guid.NewGuid():N}";
         var key = createApiKey(request.Name, keyValue, project, provider);

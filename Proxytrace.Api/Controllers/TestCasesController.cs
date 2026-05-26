@@ -22,8 +22,8 @@ public class TestCasesController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestCaseDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken)) return NotFound();
-        var tc = await repository.GetAsync(id, cancellationToken);
+        var tc = await repository.FindAsync(id, cancellationToken);
+        if (tc is null) return NotFound();
         return new TestCaseDto(
             tc.Id,
             tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),

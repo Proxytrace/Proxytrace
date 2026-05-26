@@ -44,10 +44,10 @@ public class EvaluatorTestBenchController : ControllerBase
     {
         if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
-        if (!await testCases.ContainsAsync(testCaseId, cancellationToken))
+        var testCase = await testCases.FindAsync(testCaseId, cancellationToken);
+        if (testCase is null)
             return NotFound($"Test case {testCaseId} not found.");
 
-        var testCase = await testCases.GetAsync(testCaseId, cancellationToken);
         var latest = await testResults.GetLatestByTestCaseAsync(testCaseId, cancellationToken);
         if (latest is null)
             return NotFound($"No test result exists for test case {testCaseId}.");
@@ -98,13 +98,12 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromBody] RunEvaluatorOnBenchRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        var evaluator = await evaluators.FindAsync(evaluatorId, cancellationToken);
+        if (evaluator is null)
             return NotFound($"Evaluator {evaluatorId} not found.");
-        if (!await testCases.ContainsAsync(request.TestCaseId, cancellationToken))
+        var testCase = await testCases.FindAsync(request.TestCaseId, cancellationToken);
+        if (testCase is null)
             return NotFound($"Test case {request.TestCaseId} not found.");
-
-        var evaluator = await evaluators.GetAsync(evaluatorId, cancellationToken);
-        var testCase = await testCases.GetAsync(request.TestCaseId, cancellationToken);
 
         AssistantMessage actual;
         TimeSpan latency;

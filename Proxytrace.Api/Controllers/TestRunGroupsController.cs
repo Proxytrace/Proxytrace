@@ -81,9 +81,9 @@ public class TestRunGroupsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestRunGroupDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await groupRepository.ContainsAsync(id, cancellationToken))
+        var group = await groupRepository.FindAsync(id, cancellationToken);
+        if (group is null)
             return NotFound();
-        var group = await groupRepository.GetAsync(id, cancellationToken);
         return await ToDtoAsync(group, cancellationToken);
     }
 
@@ -92,13 +92,13 @@ public class TestRunGroupsController : ControllerBase
         [FromBody] CreateTestRunGroupRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(request.TestSuiteId, cancellationToken))
+        var suite = await suiteRepository.FindAsync(request.TestSuiteId, cancellationToken);
+        if (suite is null)
             return BadRequest($"Test suite {request.TestSuiteId} not found.");
 
         if (request.ModelEndpointIds.Count == 0)
             return BadRequest("At least one endpoint must be specified.");
 
-        var suite = await suiteRepository.GetAsync(request.TestSuiteId, cancellationToken);
         var endpointList = await Task.WhenAll(
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 
@@ -111,7 +111,8 @@ public class TestRunGroupsController : ControllerBase
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
-        if (!await groupRepository.ContainsAsync(id, cancellationToken))
+        var group = await groupRepository.FindAsync(id, cancellationToken);
+        if (group is null)
         {
             Response.StatusCode = 404;
             return;
@@ -122,8 +123,6 @@ public class TestRunGroupsController : ControllerBase
         Response.Headers.Append("X-Accel-Buffering", "no");
 
         var reader = broadcaster.SubscribeToGroup(id, cancellationToken);
-
-        var group = await groupRepository.GetAsync(id, cancellationToken);
         if (group.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = GroupRunCompleteEvent.Create(group);
@@ -142,9 +141,9 @@ public class TestRunGroupsController : ControllerBase
     [HttpPost("{id:guid}/optimize")]
     public async Task<IActionResult> Optimize(Guid id, CancellationToken cancellationToken)
     {
-        if (!await groupRepository.ContainsAsync(id, cancellationToken))
+        var group = await groupRepository.FindAsync(id, cancellationToken);
+        if (group is null)
             return NotFound();
-        var group = await groupRepository.GetAsync(id, cancellationToken);
         if (group.Status is not TestRunStatus.Completed)
             return BadRequest("Only completed test run groups can be optimized.");
         await optimizerService.EnqueueAsync(group, cancellationToken);
@@ -154,9 +153,9 @@ public class TestRunGroupsController : ControllerBase
     [HttpPost("{id:guid}/cancel")]
     public async Task<ActionResult<TestRunGroupDto>> Cancel(Guid id, CancellationToken cancellationToken)
     {
-        if (!await groupRepository.ContainsAsync(id, cancellationToken))
+        var group = await groupRepository.FindAsync(id, cancellationToken);
+        if (group is null)
             return NotFound();
-        var group = await groupRepository.GetAsync(id, cancellationToken);
         group = await runner.CancelAsync(group, cancellationToken);
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
     }

@@ -2,18 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 2. Collapse `ContainsAsync` + `GetAsync` round-trips
-
-**Scope:** All controllers in `Proxytrace.Api/Controllers/`
-**Priority:** P1
-
-~49 sites follow `if (!await repo.ContainsAsync(id, ct)) return NotFound(); var e = await repo.GetAsync(id, ct);`. Two DB round-trips per request, and a race window between the two calls.
-
-**Approach:**
-- Add `FindAsync(Guid id, CancellationToken)` returning `T?` on `IRepository<T>` in `Proxytrace.Domain`.
-- Replace all controller call sites with a single `FindAsync` + `if (entity is null) return NotFound();`.
-- Sweep with grep over `ContainsAsync` to ensure no callers were missed.
-
 ## 3. Validate input bounds at controller boundaries consistently
 
 **Scope:** `SearchController.cs`, `StatisticsController.cs`, `TestSuitesController.cs`, `ProjectsController.cs`

@@ -74,9 +74,9 @@ public class TestSuitesController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestSuiteDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var suite = await suiteRepository.FindAsync(id, cancellationToken);
+        if (suite is null)
             return NotFound();
-        var suite = await suiteRepository.GetAsync(id, cancellationToken);
         return ToDto(suite);
     }
 
@@ -85,9 +85,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] CreateTestSuiteRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
+        var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
+        if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
-        var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
@@ -122,9 +122,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] UpdateTestSuiteRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
 
         var agent = request.AgentId.HasValue && request.AgentId.Value != existing.Agent.Id
             ? await agentRepository.GetAsync(request.AgentId.Value, cancellationToken)
@@ -160,13 +160,12 @@ public class TestSuitesController : ControllerBase
         [FromBody] PromoteTracesRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
+        var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
+        if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
 
         if (request.AgentCallIds.Count == 0)
             return BadRequest("At least one agent call ID must be provided.");
-        
-        var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
@@ -183,10 +182,9 @@ public class TestSuitesController : ControllerBase
         var testCases = new List<ITestCase>();
         foreach (var callId in request.AgentCallIds)
         {
-            if (!await agentCallRepository.ContainsAsync(callId, cancellationToken))
+            var call = await agentCallRepository.FindAsync(callId, cancellationToken);
+            if (call is null)
                 return BadRequest($"Agent call {callId} not found.");
-
-            var call = await agentCallRepository.GetAsync(callId, cancellationToken);
             if (call.Response is null)
             {
                 throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
@@ -208,9 +206,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] AddTestCaseRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
 
         var testCase = await BuildTestCase(request.FromAgentCallId, request.Input, request.ExpectedOutput, cancellationToken);
         if (testCase is null)
@@ -229,9 +227,9 @@ public class TestSuitesController : ControllerBase
         Guid caseId,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);

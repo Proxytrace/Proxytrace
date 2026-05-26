@@ -57,10 +57,10 @@ public class ProposalsController : ControllerBase
         [FromBody] UpdateProposalStatusRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var existing = await repository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
 
-        var existing = await repository.GetAsync(id, cancellationToken);
         IOptimizationProposal updated = existing switch
         {
             IModelSwitchProposal ms => createModelSwitch(

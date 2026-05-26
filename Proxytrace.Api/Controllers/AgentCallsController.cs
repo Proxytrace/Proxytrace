@@ -96,9 +96,9 @@ public class AgentCallsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<AgentCallDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var call = await repository.FindAsync(id, cancellationToken);
+        if (call is null)
             return NotFound();
-        var call = await repository.GetAsync(id, cancellationToken);
         return AgentCallDtoMapper.ToDto(call);
     }
 

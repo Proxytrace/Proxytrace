@@ -45,9 +45,9 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var user = await repository.FindAsync(id, cancellationToken);
+        if (user is null)
             return NotFound();
-        var user = await repository.GetAsync(id, cancellationToken);
         return ToDto(user);
     }
 
@@ -58,9 +58,9 @@ public class UsersController : ControllerBase
         [FromBody] UpdateUserRoleRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var user = await repository.FindAsync(id, cancellationToken);
+        if (user is null)
             return NotFound();
-        var user = await repository.GetAsync(id, cancellationToken);
         var updated = await user.ChangeRole(request.Role, cancellationToken);
         return ToDto(updated);
     }
