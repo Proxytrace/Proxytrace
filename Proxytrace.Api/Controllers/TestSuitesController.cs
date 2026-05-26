@@ -293,8 +293,8 @@ public class TestSuitesController : ControllerBase
         s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
         s.TestCases.Select(tc => new TestCaseDto(
             tc.Id,
-            tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new TestSuiteMessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
+            tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), m.GetText())).ToArray(),
+            new TestSuiteMessageDto("assistant", tc.ExpectedOutput.GetText())
         )).ToArray(),
         Description: null,
         Tags: [],
@@ -306,14 +306,6 @@ public class TestSuitesController : ControllerBase
         LastRunGroupId: null,
         s.CreatedAt,
         s.UpdatedAt);
-
-    private static string GetText(Message m) => m switch
-    {
-        UserMessage u => string.Concat(u.Contents.Select(c => c.Text ?? "")),
-        AssistantMessage a => string.Concat(a.Contents.Select(c => c.Text ?? "")),
-        SystemMessage sys => string.Concat(sys.Contents.Select(c => c.Text ?? "")),
-        _ => ""
-    };
 }
 
 public record UpdateTestSuiteRequest(

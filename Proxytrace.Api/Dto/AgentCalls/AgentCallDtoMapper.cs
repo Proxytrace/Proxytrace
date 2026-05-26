@@ -64,10 +64,10 @@ internal static class AgentCallDtoMapper
     {
         AssistantMessage a => new AgentCallMessageDto(
             "assistant",
-            GetText(a),
+            a.GetText(),
             a.ToolRequests.Select(tr => new AgentCallToolRequestDto(tr.Id, tr.Name, tr.Arguments)).ToArray()),
-        ToolMessage t => new AgentCallMessageDto("tool", GetText(t), [], GetToolCallId(t)),
-        _ => new AgentCallMessageDto(m.Role.ToString().ToLower(), GetText(m), [])
+        ToolMessage t => new AgentCallMessageDto("tool", t.GetText(), [], GetToolCallId(t)),
+        _ => new AgentCallMessageDto(m.Role.ToString().ToLower(), m.GetText(), [])
     };
 
     private static string GetToolCallId(ToolMessage t)
@@ -85,12 +85,4 @@ internal static class AgentCallDtoMapper
         return usage != null ? c.Endpoint.CalculateCost(usage) : null;
     }
 
-    private static string GetText(Message m) => m switch
-    {
-        UserMessage u => string.Concat(u.Contents.Select(c => c.Text ?? "")),
-        AssistantMessage a => string.Concat(a.Contents.Select(c => c.Text ?? "")),
-        SystemMessage s => string.Concat(s.Contents.Select(c => c.Text ?? "")),
-        ToolMessage t => t.Contents.Count > 1 ? t.Contents[1].Text ?? "" : "",
-        _ => ""
-    };
 }

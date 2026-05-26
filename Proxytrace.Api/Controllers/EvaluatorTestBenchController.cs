@@ -55,12 +55,12 @@ public class EvaluatorTestBenchController : ControllerBase
         return new EvaluatorTestBenchPayloadDto(
             SourceTestResultId: latest.Id,
             TestCaseId: testCase.Id,
-            TestCaseSummary: Summarize(testCase),
+            TestCaseSummary: testCase.GetSummary(),
             Conversation: testCase.Input.Messages
-                .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), ToText(m)))
+                .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), m.GetText()))
                 .ToArray(),
-            ExpectedResponse: ToText(testCase.ExpectedOutput),
-            ActualResponse: ToText(latest.ActualResponse));
+            ExpectedResponse: testCase.ExpectedOutput.GetText(),
+            ActualResponse: latest.ActualResponse.GetText());
     }
 
     [HttpGet("default")]
@@ -74,7 +74,7 @@ public class EvaluatorTestBenchController : ControllerBase
         var latest = await testResults.GetLatestByEvaluatorAsync(evaluatorId, cancellationToken);
         return latest is null
             ? new EvaluatorTestBenchDefaultDto(null, null) 
-            : new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, Summarize(latest.TestCase));
+            : new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, latest.TestCase.GetSummary());
     }
 
     [HttpGet("recent")]
@@ -89,7 +89,7 @@ public class EvaluatorTestBenchController : ControllerBase
         var capped = Math.Clamp(count, 1, 50);
         var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken);
         return recent
-            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, Summarize(r.TestCase)))
+            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, r.TestCase.GetSummary()))
             .ToArray();
     }
 
@@ -139,14 +139,4 @@ public class EvaluatorTestBenchController : ControllerBase
             evaluation.ErrorMessage);
     }
 
-    private static string Summarize(ITestCase tc)
-    {
-        var firstUser = tc.Input.Messages.OfType<UserMessage>().FirstOrDefault();
-        if (firstUser is null) return "Test case";
-        var text = string.Concat(firstUser.Contents.Select(c => c.Text ?? ""));
-        return text.Length > 80 ? text[..77] + "…" : text;
-    }
-
-    private static string ToText(Message msg)
-        => string.Concat(msg.Contents.Select(c => c.Text ?? ""));
 }

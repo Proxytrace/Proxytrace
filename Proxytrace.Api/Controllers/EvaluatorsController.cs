@@ -334,20 +334,12 @@ public class EvaluatorsController : ControllerBase
         return new RecentEvaluationItemDto(
             TestResultId: r.Id,
             TestCaseId: r.TestCase.Id,
-            CaseSummary: Summarize(r.TestCase),
+            CaseSummary: r.TestCase.GetSummary(),
             Score: evaluation?.Score?.ToString(),
             Passed: evaluation?.Passed ?? r.Passed,
             Reasoning: evaluation?.Reasoning,
             LatencyMs: (int)r.Latency.TotalMilliseconds,
             EvaluatedAt: r.UpdatedAt);
-    }
-
-    private static string Summarize(ITestCase tc)
-    {
-        var firstUser = tc.Input.Messages.OfType<UserMessage>().FirstOrDefault();
-        if (firstUser is null) return "Test case";
-        var text = string.Concat(firstUser.Contents.Select(c => c.Text ?? ""));
-        return text.Length > 80 ? text[..77] + "…" : text;
     }
 
     private static EvaluatorDetailDto ToDto(IEvaluator evaluator)

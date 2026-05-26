@@ -83,6 +83,13 @@ public sealed record ToolMessage : Message
             : (id, Contents.Skip(1).ToList());
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Skips the leading content slot which carries the tool-call id rather than payload text.
+    /// </remarks>
+    public override string GetText()
+        => Contents.Count > 1 ? Contents[1].Text ?? "" : "";
+
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))

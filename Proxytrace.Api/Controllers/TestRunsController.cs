@@ -8,6 +8,7 @@ using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Message;
+using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.Usage;
 
@@ -163,12 +164,12 @@ public class TestRunsController : ControllerBase
             StartedAt: r.CreatedAt,
             CompletedAt: r.CompletedAt,
             DurationMs: durationMs,
-            TestCases: r.Group.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, SummarizeTestCase(tc))).ToArray(),
+            TestCases: r.Group.Suite.TestCases.Select(tc => new TestCaseRowDto(tc.Id, tc.GetSummary())).ToArray(),
             Results: r.TestResults.Select(res => new TestResultDto(
                 res.Id,
                 res.TestCase.Id,
-                SummarizeTestCase(res.TestCase),
-                string.Concat(res.ActualResponse.Contents.Select(c => c.Text ?? "")),
+                res.TestCase.GetSummary(),
+                res.ActualResponse.GetText(),
                 res.Evaluations.Select(e => new EvaluationResultDto(
                     e.Evaluator.Id,
                     e.Evaluator.Kind,
@@ -204,17 +205,7 @@ public class TestRunsController : ControllerBase
         return ((double?)cost, (long)tokensIn, (long)tokensOut);
     }
 
-    private static string SummarizeTestCase(Domain.TestCase.ITestCase tc)
-    {
-        var firstUserMessage = tc.Input.Messages
-            .OfType<UserMessage>()
-            .FirstOrDefault();
-        if (firstUserMessage is null) return "Test case";
-        var text = string.Concat(firstUserMessage.Contents.Select(c => c.Text ?? ""));
-        return text.Length > 80 ? text[..77] + "…" : text;
-    }
-
-    private static TestCaseFixtureDto ToFixtureDto(ITestRun run, Domain.TestResult.ITestResult result)
+private static TestCaseFixtureDto ToFixtureDto(ITestRun run, Domain.TestResult.ITestResult result)
         => new(
             Input: new TestCaseInputDto(MapInputMessages(result.TestCase.Input)),
             Expected: MapOutput(result.TestCase.ExpectedOutput),
@@ -234,13 +225,12 @@ public class TestRunsController : ControllerBase
                 var content = string.Concat(contents.Select(c => c.Text ?? ""));
                 return new TestCaseMessageDto(role, content, id);
             }
-            var text = string.Concat(msg.Contents.Select(c => c.Text ?? ""));
-            return new TestCaseMessageDto(role, text, null);
+            return new TestCaseMessageDto(role, msg.GetText(), null);
         }).ToArray();
 
     private static OutputValueDto MapOutput(AssistantMessage msg)
     {
-        var text = string.Concat(msg.Contents.Select(c => c.Text ?? ""));
+        var text = msg.GetText();
         var firstTool = msg.ToolRequests.FirstOrDefault();
         if (firstTool is not null && string.IsNullOrWhiteSpace(text))
         {

@@ -2,18 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 4. Extract a shared message-text / test-case-summary utility
-
-**Scope:** new `Proxytrace.Domain` (or `Proxytrace.Application`) helper; callers in `EvaluatorsController.cs:345-351`, `TestRunsController.cs:207-215`, `TestSuitesController.cs:305-311`, `EvaluatorTestBenchController.cs:142-148`, `Dto/AgentCalls/AgentCallDtoMapper.cs:88-95`
-**Priority:** P2
-
-The "concatenate `Contents`, switch on message subtype, truncate at 77 chars" logic is duplicated five times with slight variations. Bug-fix in one place will not propagate.
-
-**Approach:**
-- Add `MessageText.From(Message)` and `TestCaseSummary.Of(ITestCase, int maxLength = 77)` helpers in the domain layer (these are pure functions over domain types, no I/O).
-- Replace all five sites with a single call.
-- Cover with unit tests including each `Message` subtype.
-
 ## 5. Centralize tool-argument / tool-spec DTO mapping
 
 **Scope:** `Dto/Agents/AgentDtoMapper.cs:33-52`, `Dto/AgentCalls/AgentCallDtoMapper.cs:42-61`, `Controllers/ProposalsController.cs:151-173`
