@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Controllers;
@@ -30,10 +30,8 @@ public class UsersController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        var all = await repository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<UserDto>(items, all.Count, page, pageSize);
+        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(ToDto);
     }
 
     [HttpGet("me")]

@@ -2,9 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.Streaming;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Api.Controllers;
@@ -41,17 +41,10 @@ public class TestRunsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        var all = agentId.HasValue
-            ? await repository.GetByAgentAsync(agentId.Value, cancellationToken)
-            : await repository.GetAllAsync(cancellationToken);
-        var items = all
-            .OrderByDescending(r => r.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(mapper.ToDto)
-            .ToArray();
-        return new PagedResult<TestRunDto>(items, all.Count, page, pageSize);
+        var paged = agentId.HasValue
+            ? await repository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken)
+            : await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(mapper.ToDto);
     }
 
     [HttpGet("{id:guid}")]

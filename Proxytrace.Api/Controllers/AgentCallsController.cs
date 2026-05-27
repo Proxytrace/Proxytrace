@@ -2,15 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
-using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -66,7 +65,7 @@ public class AgentCallsController : ControllerBase
         (page, pageSize) = Paging.Clamp(page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<AgentCallDto>(items.Select(agentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);
+        return new PagedResult<IAgentCall>(items, total, page, pageSize).Map(agentCallDtoMapper.ToDto);
     }
 
     [HttpGet("overview")]

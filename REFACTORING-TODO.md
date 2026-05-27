@@ -2,18 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 7. Extract paging helper
-
-**Scope:** all controllers (~95 `.Skip/.Take` sites)
-**Priority:** P2
-
-Every list endpoint open-codes `items.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray()` and constructs a `PagedResult<T>` by hand.
-
-**Approach:**
-- Add a `RepositoryExtensions` class in `Proxytrace.Domain` with a `PageAsync<T>(this IRepository<T>, int page, int pageSize, ...)` (and/or `Paginate<T>(this IEnumerable<T>, int page, int pageSize)`) returning a `PagedResult<T>` directly.
-- Replace all 95 controller sites; map DTOs at the call site via `PagedResult.Map(Func<TSrc, TDst>)` or `Select` over `Items`.
-- Verify with tests.
-
 ## 8. Consolidate duplicated `JsonSerializerOptions` constants
 
 **Scope:** `AgentCallsController.cs:22-26`, `AgentsController.cs:20-24`, `PlaygroundController.cs:16-20`, `TestRunGroupsController.cs:23-27`, and one more

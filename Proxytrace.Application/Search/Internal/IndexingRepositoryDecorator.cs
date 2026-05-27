@@ -1,4 +1,5 @@
 using Proxytrace.Domain;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Search;
 
 namespace Proxytrace.Application.Search.Internal;
@@ -25,6 +26,7 @@ internal sealed class IndexingRepositoryDecorator<TDomain> : IRepository<TDomain
     public Task<int> CountAsync(CancellationToken cancellationToken = default) => inner.CountAsync(cancellationToken);
     public IAsyncEnumerable<TDomain> EnumerateAsync(CancellationToken cancellationToken = default) => inner.EnumerateAsync(cancellationToken);
     public Task<IReadOnlyList<TDomain>> GetAllAsync(CancellationToken cancellationToken = default) => inner.GetAllAsync(cancellationToken);
+    public Task<PagedResult<TDomain>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default) => inner.GetPagedAsync(page, pageSize, cancellationToken);
     public Task<IReadOnlyList<TDomain>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default) => inner.GetManyAsync(primaryKeys, cancellationToken);
     public Task<TDomain?> FindFirstAsync(CancellationToken cancellationToken = default) => inner.FindFirstAsync(cancellationToken);
 

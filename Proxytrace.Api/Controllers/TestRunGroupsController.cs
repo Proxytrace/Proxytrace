@@ -2,13 +2,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
@@ -63,23 +63,16 @@ public class TestRunGroupsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        IReadOnlyList<ITestRunGroup> all;
+        PagedResult<ITestRunGroup> paged;
         if (agentId.HasValue)
-            all = await groupRepository.GetByAgentAsync(agentId.Value, cancellationToken);
+            paged = await groupRepository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
         else if (projectId.HasValue)
-            all = await groupRepository.GetByProjectAsync(projectId.Value, cancellationToken);
+            paged = await groupRepository.GetByProjectPagedAsync(projectId.Value, page, pageSize, cancellationToken);
         else
-            all = await groupRepository.GetAllAsync(cancellationToken);
+            paged = await groupRepository.GetPagedAsync(page, pageSize, cancellationToken);
 
-        var groups = all
-            .OrderByDescending(g => g.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToArray();
-
-        var items = await Task.WhenAll(groups.Select(g => ToDtoAsync(g, cancellationToken)));
-        return new PagedResult<TestRunGroupDto>(items, all.Count, page, pageSize);
+        var items = await Task.WhenAll(paged.Items.Select(g => ToDtoAsync(g, cancellationToken)));
+        return new PagedResult<TestRunGroupDto>(items, paged.Total, paged.Page, paged.PageSize);
     }
 
     [HttpGet("{id:guid}")]

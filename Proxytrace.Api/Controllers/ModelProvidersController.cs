@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
 using Proxytrace.Api.Dto.Projects;
@@ -9,6 +8,7 @@ using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 
 namespace Proxytrace.Api.Controllers;
@@ -62,10 +62,8 @@ public class ModelProvidersController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        var all = await providerRepository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(mapper.ToDto).ToArray();
-        return new PagedResult<ModelProviderDto>(items, all.Count, page, pageSize);
+        var paged = await providerRepository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(mapper.ToDto);
     }
 
     [HttpGet("{id:guid}")]

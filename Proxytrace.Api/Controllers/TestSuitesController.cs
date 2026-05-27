@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
 
@@ -63,16 +63,14 @@ public class TestSuitesController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        IReadOnlyList<ITestSuite> all;
+        PagedResult<ITestSuite> paged;
         if (agentId.HasValue)
-            all = await suiteRepository.GetByAgentAsync(agentId.Value, cancellationToken);
+            paged = await suiteRepository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
         else if (projectId.HasValue)
-            all = await suiteRepository.GetByProjectAsync(projectId.Value, cancellationToken);
+            paged = await suiteRepository.GetByProjectPagedAsync(projectId.Value, page, pageSize, cancellationToken);
         else
-            all = await suiteRepository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(mapper.ToDto).ToArray();
-        return new PagedResult<TestSuiteDto>(items, all.Count, page, pageSize);
+            paged = await suiteRepository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(mapper.ToDto);
     }
 
     [HttpGet("{id:guid}")]

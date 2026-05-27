@@ -7,6 +7,7 @@ using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Exceptions;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Storage.Internal.Entities;
 
 namespace Proxytrace.Storage.Internal;
@@ -132,6 +133,26 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             cache?.SetAll(mapped);
         }
         return mapped;
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<TDomainEntity>> GetPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+
+        var query = contextFactory().Set<TStoredEntity>().AsNoTracking();
+        int total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        IReadOnlyList<TDomainEntity> mapped = await Map(stored, cancellationToken);
+        return new PagedResult<TDomainEntity>(mapped, total, page, pageSize);
     }
 
     public async Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default)

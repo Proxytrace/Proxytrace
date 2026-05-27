@@ -2,13 +2,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -50,24 +50,26 @@ public class AgentsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        (page, pageSize) = Paging.Clamp(page, pageSize);
-        var all = await repository.GetAllAsync(cancellationToken);
+        var all = repository.EnumerateAsync(cancellationToken);
         var filtered = projectId.HasValue
-            ? all.Where(a => a.Project.Id == projectId.Value).ToArray()
+            ? all.Where(a => a.Project.Id == projectId.Value)
             : all;
 
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
 
-        var sorted = filtered
+        var materialized = await filtered.ToArrayAsync(cancellationToken);
+        var sorted = materialized
             .OrderByDescending(a => lastCallTimes.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
             .ToArray();
 
-        var items = sorted.Skip((page - 1) * pageSize).Take(pageSize)
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var items = sorted
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(a => agentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
-
-        return new PagedResult<AgentDto>(items, filtered.Count(), page, pageSize);
+        return new PagedResult<AgentDto>(items, sorted.Length, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]

@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Paging;
+
 namespace Proxytrace.Domain.TestRun;
 
 /// <summary>
@@ -8,4 +10,10 @@ public interface ITestRunRepository : IRepository<ITestRun>
     Task<IReadOnlyList<ITestRun>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ITestRun>> GetByGroupAsync(Guid groupId, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<ITestRun>> GetByAgentPagedAsync(
+        Guid agentId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }
