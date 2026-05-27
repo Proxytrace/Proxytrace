@@ -19,6 +19,17 @@ public record AgentDto(
 
 public record UpdateAgentEndpointRequest(Guid EndpointId);
 
+public record MoveVersionRequest(Guid TargetAgentId);
+
+public record AgentVersionDto(
+    Guid Id,
+    Guid AgentId,
+    int VersionNumber,
+    string SystemMessage,
+    IReadOnlyList<ToolSpecificationDto> Tools,
+    string Fingerprint,
+    DateTimeOffset CreatedAt);
+
 public record ToolSpecificationDto(
     string Name,
     string Description,

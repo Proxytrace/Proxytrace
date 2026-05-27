@@ -1,5 +1,5 @@
 import { api, qs } from './client';
-import type { AgentDto, PagedResult } from './models';
+import type { AgentDto, AgentVersionDto, PagedResult } from './models';
 
 export const agentsApi = {
   list: (params?: { projectId?: string; page?: number; pageSize?: number }) =>
@@ -8,4 +8,12 @@ export const agentsApi = {
   delete: (id: string) => api.del(`/api/agents/${id}`),
   updateEndpoint: (id: string, endpointId: string) =>
     api.patch<AgentDto>(`/api/agents/${id}/endpoint`, { endpointId }),
+  listVersions: (id: string) =>
+    api.get<AgentVersionDto[]>(`/api/agents/${id}/versions`),
+};
+
+export const agentVersionsApi = {
+  get: (id: string) => api.get<AgentVersionDto>(`/api/agent-versions/${id}`),
+  move: (id: string, targetAgentId: string) =>
+    api.post<void>(`/api/agent-versions/${id}/move`, { targetAgentId }),
 };

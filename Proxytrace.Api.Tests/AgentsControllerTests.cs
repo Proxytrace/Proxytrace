@@ -116,6 +116,7 @@ public sealed class AgentsControllerTests : BaseTest<Module>
         services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<IRepository<IModelEndpoint>>(),
         services.GetRequiredService<IAgentCallRepository>(),
+        services.GetRequiredService<Proxytrace.Domain.AgentVersion.IAgentVersionRepository>(),
         services.GetRequiredService<IProposalBroadcaster>(),
         services.GetRequiredService<AgentDtoMapper>());
 }

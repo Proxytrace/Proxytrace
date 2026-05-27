@@ -30,7 +30,7 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
 
         // Act
         var agentCall = factory(
-            agent: agent,
+            agent: agent, version: agent.CurrentVersion,
             endpoint: endpoint,
             request: request,
             response: response,
@@ -69,7 +69,7 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
 
         // Act
         var agentCall = factory(
-            agent: agent,
+            agent: agent, version: agent.CurrentVersion,
             endpoint: endpoint,
             request: request,
             response: response,
@@ -99,6 +99,7 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Act & Assert
         var action = () => factory.DynamicInvoke(
             agent,
+            agent.CurrentVersion,
             endpoint,
             null,
             response,
@@ -122,6 +123,7 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         // Act
         var agentCall = createExisting(
             existing.Agent,
+            existing.Version,
             existing.Endpoint,
             existing.Request,
             existing.Response,
@@ -157,8 +159,8 @@ public sealed class AgentCallValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
         // Act
-        var agentCall1 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop");
-        var agentCall2 = factory(agent, endpoint, request, response, HttpStatusCode.OK, "stop");
+        var agentCall1 = factory(agent, agent.CurrentVersion, endpoint, request, response, HttpStatusCode.OK, "stop");
+        var agentCall2 = factory(agent, agent.CurrentVersion, endpoint, request, response, HttpStatusCode.OK, "stop");
 
         // Assert
         agentCall1.Id.Should().NotBe(agentCall2.Id);

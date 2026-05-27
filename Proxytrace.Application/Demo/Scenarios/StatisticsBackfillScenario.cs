@@ -187,6 +187,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
                 var id = Guid.NewGuid();
                 var call = agentCallExisting(
                     agent: profile.Agent,
+                    version: profile.Agent.CurrentVersion,
                     endpoint: endpoint,
                     request: request,
                     response: response,

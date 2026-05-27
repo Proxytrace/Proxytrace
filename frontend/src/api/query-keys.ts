@@ -3,6 +3,8 @@ const TEST_RUN_GROUPS = 'test-run-groups';
 export const QUERY_KEYS = {
   agents: (projectId?: string) => ['agents', projectId ?? null] as const,
   agent: (id: string | null) => ['agent', id ?? null] as const,
+  agentVersions: (agentId: string) => ['agent', agentId, 'versions'] as const,
+  agentVersion: (versionId: string) => ['agent-version', versionId] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
   /** Prefix matching every agent-calls query — use for invalidation. */
   agentCallsRoot: ['agent-calls'] as const,

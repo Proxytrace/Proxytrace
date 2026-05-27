@@ -246,6 +246,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             agentEndpoint.Id.Returns(agentEndpointId);
 
             var project = Substitute.For<IProject>();
+            project.Id.Returns(Guid.NewGuid());
             project.SystemEndpoint.Returns(systemEndpoint);
 
             var systemPrompt = Substitute.For<IPromptTemplate>();

@@ -109,6 +109,16 @@ export interface AgentDto {
   lastUsedAt: string | null;
 }
 
+export interface AgentVersionDto {
+  id: string;
+  agentId: string;
+  versionNumber: number;
+  systemMessage: string;
+  tools: ToolSpecDto[];
+  fingerprint: string;
+  createdAt: string;
+}
+
 /* ── Statistics ── */
 /** Filter-bar metadata for the Traces page (agents, per-agent counts, latency). */
 export interface TracesOverviewDto {

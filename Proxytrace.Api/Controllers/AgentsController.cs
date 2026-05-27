@@ -7,6 +7,7 @@ using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
 
@@ -26,6 +27,7 @@ public class AgentsController : ControllerBase
     private readonly IAgentRepository repository;
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IAgentCallRepository agentCallRepository;
+    private readonly IAgentVersionRepository agentVersionRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
     private readonly AgentDtoMapper agentDtoMapper;
 
@@ -33,12 +35,14 @@ public class AgentsController : ControllerBase
         IAgentRepository repository,
         IRepository<IModelEndpoint> endpoints,
         IAgentCallRepository agentCallRepository,
+        IAgentVersionRepository agentVersionRepository,
         IProposalBroadcaster proposalBroadcaster,
         AgentDtoMapper agentDtoMapper)
     {
         this.repository = repository;
         this.endpoints = endpoints;
         this.agentCallRepository = agentCallRepository;
+        this.agentVersionRepository = agentVersionRepository;
         this.proposalBroadcaster = proposalBroadcaster;
         this.agentDtoMapper = agentDtoMapper;
     }
@@ -113,7 +117,7 @@ public class AgentsController : ControllerBase
 
     [HttpPatch("{id:guid}/endpoint")]
     public async Task<IActionResult> UpdateEndpoint(
-        Guid id, 
+        Guid id,
         [FromBody] UpdateAgentEndpointRequest request,
         CancellationToken cancellationToken)
     {
@@ -122,4 +126,22 @@ public class AgentsController : ControllerBase
         await agent.ChangeEndpoint(endpoint, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/versions")]
+    public async Task<ActionResult<IReadOnlyList<AgentVersionDto>>> ListVersions(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        IAgent? agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null)
+        {
+            return NotFound();
+        }
+        var versions = await agentVersionRepository.GetByAgentAsync(agent, cancellationToken);
+        return versions
+            .OrderByDescending(v => v.VersionNumber)
+            .Select(v => agentDtoMapper.ToDto(v, agentVersionRepository.GetStrictFingerprint(v.SystemPrompt, v.Tools)))
+            .ToArray();
+    }
+
 }

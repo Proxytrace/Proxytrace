@@ -4,11 +4,11 @@ using Proxytrace.Common.Async;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
-using Proxytrace.Domain.Prompt;
-using Proxytrace.Domain.Tools;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Inference;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 using Proxytrace.Storage.Internal.Entities.Project;
@@ -18,36 +18,34 @@ namespace Proxytrace.Storage.Internal.Entities.Agent;
 internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<IAgent, AgentEntity>
 {
     private readonly IAgent.CreateExisting factory;
-    private readonly IPromptTemplate.Create promptTemplateFactory;
     private readonly IModelParameters.Create modelParametersFactory;
     private readonly ISerializer serializer;
-    private readonly Lazy<IAgentRepository> repository;
     private readonly IRepository<IProject> projects;
     private readonly IRepository<IModelEndpoint> endpoints;
+    private readonly Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper;
+    private readonly Func<StorageDbContext> contextFactory;
 
     public AgentConfig(
         IAgent.CreateExisting factory,
-        IPromptTemplate.Create promptTemplateFactory,
         IModelParameters.Create modelParametersFactory,
         ISerializer serializer,
-        Lazy<IAgentRepository> repository,
         IRepository<IProject> projects,
-        IRepository<IModelEndpoint> endpoints)
+        IRepository<IModelEndpoint> endpoints,
+        Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper,
+        Func<StorageDbContext> contextFactory)
     {
         this.factory = factory;
-        this.promptTemplateFactory = promptTemplateFactory;
         this.modelParametersFactory = modelParametersFactory;
         this.serializer = serializer;
-        this.repository = repository;
         this.projects = projects;
         this.endpoints = endpoints;
+        this.versionMapper = versionMapper;
+        this.contextFactory = contextFactory;
     }
 
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
     {
-        builder.HasIndex(e => e.Fingerprint).IsUnique();
         builder.HasIndex(e => e.IsSystemAgent);
-        builder.Property(e => e.Fingerprint).HasMaxLength(64);
         builder.Property(e => e.Name).HasMaxLength(200);
 
         builder
@@ -63,20 +61,6 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
-            .Property(e => e.SystemPrompt)
-            .HasConversion(
-                v => serializer.Serialize(v),
-                v => serializer.Deserialize<SystemPromptData>(v) ?? new SystemPromptData(string.Empty, string.Empty)
-            );
-
-        builder
-            .Property(e => e.Tools)
-            .HasConversion(
-                v => serializer.Serialize(v),
-                v => serializer.Deserialize<IReadOnlyList<ToolSpecification>>(v) ?? Array.Empty<ToolSpecification>()
-            );
-
-        builder
             .Property(e => e.ModelParameters)
             .HasConversion(
                 v => serializer.Serialize(v),
@@ -88,16 +72,28 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
-        var systemPrompt = promptTemplateFactory(stored.SystemPrompt.Name, stored.SystemPrompt.Template);
         var modelParameters = ToDomain(stored.ModelParameters, modelParametersFactory);
+
+        AgentVersionEntity? currentVersionEntity = stored.CurrentVersionId is { } currentId
+            ? await contextFactory()
+                .Set<AgentVersionEntity>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == currentId, cancellationToken)
+            : null;
+        if (currentVersionEntity is null)
+        {
+            throw new InvalidOperationException(
+                $"Agent {stored.Id} ({stored.Name}) has no current version. The storage invariant was violated.");
+        }
+        IAgentVersion currentVersion = await versionMapper.Value.Map(currentVersionEntity, cancellationToken);
+
         return factory(
             name: stored.Name,
             project: project,
-            systemPrompt: systemPrompt,
-            tools: stored.Tools,
             endpoint: endpoint,
             isSystemAgent: stored.IsSystemAgent,
             modelParameters: modelParameters,
+            currentVersion: currentVersion,
             existing: stored);
     }
 
@@ -107,17 +103,25 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             Id = domain.Id,
             Name = domain.Name,
             Project = domain.Project.Id,
-            Fingerprint = repository.Value.GetAgentFingerprint(domain),
-            SystemPrompt = new SystemPromptData(
-                Name: domain.SystemPrompt.Name,
-                Template: domain.SystemPrompt.Template),
-            Tools = domain.Tools,
             ModelParameters = ToData(domain.ModelParameters),
             Endpoint = domain.Endpoint.Id,
             IsSystemAgent = domain.IsSystemAgent,
+            CurrentVersionId = TryGetCurrentVersionId(domain),
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
+
+    private static Guid? TryGetCurrentVersionId(IAgent domain)
+    {
+        try
+        {
+            return domain.CurrentVersion.Id;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
 
     internal static ModelParametersData ToData(IModelParameters domain)
         => new(

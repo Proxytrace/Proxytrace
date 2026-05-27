@@ -1,6 +1,7 @@
 using Proxytrace.Api.Dto.Inference;
 using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 
 namespace Proxytrace.Api.Dto.Agents;
 
@@ -31,4 +32,13 @@ public sealed class AgentDtoMapper
         a.CreatedAt,
         a.UpdatedAt,
         lastUsedAt);
+
+    public AgentVersionDto ToDto(IAgentVersion v, string fingerprint) => new(
+        v.Id,
+        v.AgentId,
+        v.VersionNumber,
+        v.SystemPrompt.Template,
+        [.. v.Tools.Select(toolDtoMapper.ToToolSpecDto)],
+        fingerprint,
+        v.CreatedAt);
 }

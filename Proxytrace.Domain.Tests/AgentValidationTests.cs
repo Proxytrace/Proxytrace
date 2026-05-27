@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
@@ -87,11 +88,10 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var agent = createExisting(
             existingAgent.Name,
             existingAgent.Project,
-            existingAgent.SystemPrompt,
-            existingAgent.Tools,
             existingAgent.Endpoint,
             existingAgent.IsSystemAgent,
             existingAgent.ModelParameters,
+            existingAgent.CurrentVersion,
             existingAgent);
 
         // Assert
@@ -114,7 +114,7 @@ public sealed class AgentValidationTests : DomainTest<Module>
         var existingAgent = await generator.CreateAsync(CancellationToken);
 
         // Act & Assert
-        var action = () => createExisting.DynamicInvoke(existingAgent.Name, null, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent);
+        var action = () => createExisting.DynamicInvoke(existingAgent.Name, null, existingAgent.Endpoint, existingAgent.IsSystemAgent, existingAgent.ModelParameters, existingAgent.CurrentVersion, existingAgent.SystemPrompt, existingAgent.Tools, existingAgent);
         action.Should().Throw<Exception>();
     }
 

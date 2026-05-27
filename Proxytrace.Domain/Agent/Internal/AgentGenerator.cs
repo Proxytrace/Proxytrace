@@ -10,6 +10,7 @@ namespace Proxytrace.Domain.Agent.Internal;
 internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
 {
     private readonly IAgent.CreateNew factory;
+    private readonly IAgentRepository agentRepository;
     private readonly IDomainEntityGenerator<IProject> projectGenerator;
     private readonly IDomainEntityGenerator<IModelEndpoint> endpointGenerator;
     private readonly IDomainObjectGenerator<IPromptTemplate> promptTemplateGenerator;
@@ -19,6 +20,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
     public AgentGenerator(
         IAgent.CreateNew factory,
         IRepository<IAgent> repository,
+        IAgentRepository agentRepository,
         IDomainEntityGenerator<IProject> projectGenerator,
         IDomainEntityGenerator<IModelEndpoint> endpointGenerator,
         IDomainObjectGenerator<IPromptTemplate> promptTemplateGenerator,
@@ -27,6 +29,7 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
         IRandom random) : base(repository, random)
     {
         this.factory = factory;
+        this.agentRepository = agentRepository;
         this.projectGenerator = projectGenerator;
         this.endpointGenerator = endpointGenerator;
         this.promptTemplateGenerator = promptTemplateGenerator;
@@ -50,6 +53,24 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
             modelParameters: modelParameters);
     }
 
+    public override async Task<IAgent> CreateAsync(CancellationToken cancellationToken = default)
+    {
+        var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
+        var endpoint = await endpointGenerator.GetOrCreateAsync(cancellationToken);
+        var promptTemplate = await promptTemplateGenerator.CreateAsync(cancellationToken);
+        var modelParameters = await modelParametersGenerator.CreateAsync(cancellationToken);
+
+        return await agentRepository.CreateWithInitialVersionAsync(
+            name: random.String(),
+            systemPrompt: promptTemplate,
+            tools: [],
+            project: project,
+            endpoint: endpoint,
+            modelParameters: modelParameters,
+            isSystemAgent: false,
+            cancellationToken: cancellationToken);
+    }
+
     public async Task<IAgent> CreateAsync(
         string name,
         string? systemPrompt = null,
@@ -58,19 +79,19 @@ internal class AgentGenerator : DomainEntityGenerator<IAgent>, IAgentGenerator
     {
         var project = await projectGenerator.GetOrCreateAsync(cancellationToken);
         var endpoint = await endpointGenerator.GetOrCreateAsync(cancellationToken);
-        var promptTemplate = systemPrompt != null 
+        var promptTemplate = systemPrompt != null
             ? createPrompt(name, systemPrompt)
             : await promptTemplateGenerator.CreateAsync(cancellationToken);
         var modelParameters = await modelParametersGenerator.CreateAsync(cancellationToken);
 
-        var agent = factory(
-            name: random.String(),
+        return await agentRepository.CreateWithInitialVersionAsync(
+            name: name,
             systemPrompt: promptTemplate,
             tools: [],
-            endpoint: endpoint,
             project: project,
+            endpoint: endpoint,
             modelParameters: modelParameters,
-            isSystemAgent: isSystemAgent);
-        return await agent.AddAsync(cancellationToken);
+            isSystemAgent: isSystemAgent,
+            cancellationToken: cancellationToken);
     }
 }

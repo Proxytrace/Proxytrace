@@ -7,7 +7,7 @@ namespace Proxytrace.Storage.Internal.Entities.AgentCall;
 [StoredDomainEntity(typeof(IAgentCall))]
 internal record AgentCallEntity : Entity
 {
-    public required Guid AgentId { get; init; }
+    public required Guid AgentVersionId { get; init; }
     public required Guid EndpointId { get; init; }
     public required Conversation Request { get; init; }
     public required AssistantMessage? Response { get; init; }

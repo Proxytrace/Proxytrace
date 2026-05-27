@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
@@ -9,8 +10,9 @@ using Proxytrace.Domain.Tools;
 namespace Proxytrace.Domain.Agent;
 
 /// <summary>
-/// Represents an AI agent defined by a system message, tools, model endpoint, and project.
-/// The combination of these fields forms a stable fingerprint that uniquely identifies an agent version.
+/// Represents an AI agent. Identity is the (project, name) pair. The agent's prompt and tool-set
+/// live on its <see cref="IAgentVersion"/> history; <see cref="CurrentVersion"/> is the version
+/// currently in effect (latest, unless pinned).
 /// </summary>
 public interface IAgent : IDomainEntity<IAgent>, ISearchable
 {
@@ -18,29 +20,35 @@ public interface IAgent : IDomainEntity<IAgent>, ISearchable
     string Name { get; }
 
     /// <summary>
-    /// The endpoint the agent completes against
+    /// The endpoint the agent completes against.
     /// </summary>
     IModelEndpoint Endpoint { get; }
 
-    /// <summary>The system message that defines this agent's behaviour.</summary>
+    /// <summary>
+    /// The latest version of this agent. Always non-null for agents observed by external callers:
+    /// the <see cref="CreateNew"/> factory stitches in v1 before returning, and agents loaded from
+    /// storage carry their current version (storage invariant).
+    /// </summary>
+    IAgentVersion CurrentVersion { get; }
+
+    /// <summary>The system prompt of <see cref="CurrentVersion"/>.</summary>
     IPromptTemplate SystemPrompt { get; }
 
-    /// <summary>The tools available to this agent.</summary>
+    /// <summary>The tools of <see cref="CurrentVersion"/>.</summary>
     IReadOnlyList<ToolSpecification> Tools { get; }
 
     /// <summary>
-    /// Sampling and decoding parameters last seen for this agent. Not part of the fingerprint.
+    /// Sampling and decoding parameters last seen for this agent. Not part of the version identity.
     /// </summary>
     IModelParameters ModelParameters { get; }
 
     /// <summary>
-    /// Whether the agent is a built-in agent (e.g. for prompt optimization)
+    /// Whether the agent is a built-in agent (e.g. for prompt optimization).
     /// </summary>
     bool IsSystemAgent { get; }
-    
+
     SearchKind ISearchable.SearchKind => SearchKind.Agent;
 
-    /// <summary>Factory delegate for creating a new agent.</summary>
     public delegate IAgent CreateNew(
         string name,
         IPromptTemplate systemPrompt,
@@ -50,32 +58,42 @@ public interface IAgent : IDomainEntity<IAgent>, ISearchable
         IModelParameters modelParameters,
         bool isSystemAgent = false);
 
-    /// <summary>Factory delegate for reconstituting an existing agent from persistence.</summary>
     public delegate IAgent CreateExisting(
         string name,
         IProject project,
-        IPromptTemplate systemPrompt,
-        IReadOnlyList<ToolSpecification> tools,
         IModelEndpoint endpoint,
         bool isSystemAgent,
         IModelParameters modelParameters,
+        IAgentVersion currentVersion,
         IDomainEntityData existing);
 
-    /// <summary>
-    /// Gets an chat client instance
-    /// </summary>
     IModelClient CreateClient(
         IModelEndpoint? customEndpoint = null,
         bool skipIngestion = false);
 
+    /// <summary>
+    /// Creates a new <see cref="IAgentVersion"/> for this agent with the given prompt and tools,
+    /// makes it the current version (unless the agent is pinned), and returns the updated agent.
+    /// </summary>
+    Task<IAgent> CreateNewVersionAsync(
+        IPromptTemplate systemPrompt,
+        IReadOnlyList<ToolSpecification> tools,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Backwards-compatible alias for <see cref="CreateNewVersionAsync"/> that updates only the prompt.
+    /// </summary>
     Task<IAgent> ChangeSystemMessage(
         IPromptTemplate systemPrompt,
         CancellationToken cancellationToken = default);
-    
+
+    /// <summary>
+    /// Backwards-compatible alias for <see cref="CreateNewVersionAsync"/> that updates only the tools.
+    /// </summary>
     Task<IAgent> ChangeTools(
         IReadOnlyList<ToolSpecification> tools,
         CancellationToken cancellationToken = default);
-    
+
     Task<IAgent> ChangeEndpoint(
         IModelEndpoint modelEndpoint,
         CancellationToken cancellationToken = default);

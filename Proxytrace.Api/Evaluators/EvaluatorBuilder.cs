@@ -18,7 +18,6 @@ namespace Proxytrace.Api.Evaluators;
 public sealed class EvaluatorBuilder
 {
     private readonly IAgent.CreateNew createAgent;
-    private readonly IAgent.CreateExisting createAgentExisting;
     private readonly IModelParameters.Create createModelParameters;
     private readonly IPromptTemplate.Create createPromptTemplate;
     private readonly IAgenticEvaluator.CreateNew createAgentic;
@@ -32,7 +31,6 @@ public sealed class EvaluatorBuilder
 
     public EvaluatorBuilder(
         IAgent.CreateNew createAgent,
-        IAgent.CreateExisting createAgentExisting,
         IModelParameters.Create createModelParameters,
         IPromptTemplate.Create createPromptTemplate,
         IAgenticEvaluator.CreateNew createAgentic,
@@ -45,7 +43,6 @@ public sealed class EvaluatorBuilder
         IJsonSchemaMatchEvaluator.CreateExisting createJsonSchemaMatchExisting)
     {
         this.createAgent = createAgent;
-        this.createAgentExisting = createAgentExisting;
         this.createModelParameters = createModelParameters;
         this.createPromptTemplate = createPromptTemplate;
         this.createAgentic = createAgentic;
@@ -123,16 +120,7 @@ public sealed class EvaluatorBuilder
         var name = request.Name ?? current.Name;
         var template = request.SystemMessage ?? current.Agent.SystemPrompt.Template;
         var prompt = createPromptTemplate(name, template);
-        var agent = createAgentExisting(
-            name: name,
-            systemPrompt: prompt,
-            tools: current.Agent.Tools,
-            endpoint: current.Agent.Endpoint,
-            project: current.Project,
-            modelParameters: current.Agent.ModelParameters,
-            isSystemAgent: current.Agent.IsSystemAgent,
-            existing: current.Agent);
-        await agent.UpdateAsync(cancellationToken);
+        var agent = await current.Agent.CreateNewVersionAsync(prompt, current.Agent.Tools, cancellationToken);
         return createAgenticExisting(agent, current);
     }
 }

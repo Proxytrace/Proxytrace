@@ -1,5 +1,4 @@
 using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.Tools;
 using Proxytrace.Storage.Internal.Entities.Inference;
 
 namespace Proxytrace.Storage.Internal.Entities.Agent;
@@ -10,40 +9,14 @@ internal record SystemPromptData(string Name, string Template);
 [Cacheable]
 internal record AgentEntity : Entity
 {
-    /// <summary>
-    /// <see cref="Proxytrace.Domain.Agent.IAgent.Name"/>
-    /// </summary>
     public required string Name { get; init; }
-
-    /// <summary>
-    /// <see cref="Proxytrace.Domain.Agent.IAgent.Project"/>
-    /// </summary>
     public required Guid Project { get; init; }
-
     public required Guid Endpoint { get; init; }
-
-    /// <summary>
-    /// SHA-256 fingerprint of system message + tools + model + provider, used for efficient get-or-create lookups.
-    /// </summary>
-    public required string Fingerprint { get; init; }
-
-    /// <summary>
-    /// <see cref="IAgent.SystemPrompt"/> - stored as JSON in the database
-    /// </summary>
-    public required SystemPromptData SystemPrompt { get; init; }
-
-    /// <summary>
-    /// <see cref="IAgent.IsSystemAgent"/>
-    /// </summary>
     public required bool IsSystemAgent { get; init; }
-
-    /// <summary>
-    /// <see cref="Proxytrace.Domain.Agent.IAgent.Tools"/> - stored as JSON in the database
-    /// </summary>
-    public required IReadOnlyList<ToolSpecification> Tools { get; init; }
-
-    /// <summary>
-    /// <see cref="IAgent.ModelParameters"/> - stored as JSON in the database
-    /// </summary>
     public required ModelParametersData ModelParameters { get; init; }
+
+    /// <summary>The id of the version currently in effect for this agent. Null only during the
+    /// brief window between agent insert and initial-version insert (see
+    /// <c>AgentRepository.CreateWithInitialVersionAsync</c>).</summary>
+    public Guid? CurrentVersionId { get; init; }
 }

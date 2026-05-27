@@ -1,3 +1,4 @@
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
@@ -12,9 +13,8 @@ namespace Proxytrace.Domain.Agent;
 public interface IAgentRepository : IRepository<IAgent>
 {
     /// <summary>
-    /// Returns the agent matching the given system message and tools, creating one if it does not yet exist.
-    /// When a new agent is created, its name is generated via <see cref="IAgentNameGenerator"/>
-    /// using the supplied <paramref name="endpoint"/>.
+    /// Returns the agent whose current version exactly matches the given system message + tools
+    /// (strict fingerprint), creating a new agent + v1 if none exists.
     /// </summary>
     Task<IAgent> GetOrCreateAsync(
         IPromptTemplate systemPrompt,
@@ -27,15 +27,27 @@ public interface IAgentRepository : IRepository<IAgent>
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Computes a stable fingerprint for an agent defined by the given fields.
-    /// The fingerprint changes when any of system message, tools, model, or provider changes.
+    /// Creates a new agent together with its initial <see cref="IAgentVersion"/> in a single
+    /// transactional unit. Returns the persisted agent with <see cref="IAgent.CurrentVersion"/> set.
     /// </summary>
-    string GetAgentFingerprint(
+    Task<IAgent> CreateWithInitialVersionAsync(
+        string name,
         IPromptTemplate systemPrompt,
-        IReadOnlyCollection<ToolSpecification> tools);
+        IReadOnlyList<ToolSpecification> tools,
+        IProject project,
+        IModelEndpoint endpoint,
+        IModelParameters modelParameters,
+        bool isSystemAgent,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Computes a stable fingerprint for the given <paramref name="agent"/>.
+    /// Strict fingerprint of an agent based on its current version's prompt + tools.
     /// </summary>
+    string GetAgentFingerprint(IPromptTemplate systemPrompt, IReadOnlyCollection<ToolSpecification> tools);
+
     string GetAgentFingerprint(IAgent agent);
+
+    /// <summary>Atomically point <paramref name="agentId"/> at a different
+    /// <see cref="IAgentVersion"/>. Callers must ensure the version belongs to the agent.</summary>
+    Task SetCurrentVersionAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken = default);
 }

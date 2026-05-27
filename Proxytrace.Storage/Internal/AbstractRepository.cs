@@ -17,7 +17,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     where TStoredEntity : Entity
 {
     protected readonly Func<StorageDbContext> contextFactory;
-    private readonly ITransaction transaction;
+    protected readonly ITransaction transaction;
     protected readonly IMapper<TDomainEntity, TStoredEntity> mapper;
     private readonly IEntityCache<TDomainEntity>? cache;
     private readonly IEntityEventService entityEvents;
@@ -38,6 +38,13 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
     private void Notify(Guid id, EntityChangeType change)
         => entityEvents.Notify(new EntityChangedEvent(id, typeof(TDomainEntity), change));
+
+    /// <summary>
+    /// Invalidate a single cached entity. Use after bypass writes that do not go through
+    /// the standard Add/Update path.
+    /// </summary>
+    protected void InvalidateCacheEntry(Guid id) 
+        => cache?.Invalidate(id);
 
     // The cache must never be read from or populated while an ambient transaction is active:
     // values read inside a transaction can reflect uncommitted writes, and populating from a
@@ -231,7 +238,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public async Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
+    public virtual async Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
         TDomainEntity result = await AddAsync(contextFactory(), entity, cancellationToken);
         Notify(result.Id, EntityChangeType.Added);
@@ -308,7 +315,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public async Task<TDomainEntity> UpsertAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
+    public virtual async Task<TDomainEntity> UpsertAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
         (TDomainEntity result, EntityChangeType change) = await transaction.InvokeAsync(async () =>
         {

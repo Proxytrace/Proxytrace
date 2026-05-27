@@ -2,6 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Autofac;
 using Proxytrace.Common.DependencyInjection;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.AgentVersion.Internal;
+using Proxytrace.Domain.Inference;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Evaluator.Internal;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Events.Internal;
@@ -80,6 +86,25 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<ResourcesPromptRepository>()
             .As<IPromptTemplateRepository>();
+
+        builder.RegisterType<AgentVersionFingerprinter>()
+            .As<IAgentVersionFingerprinter>()
+            .SingleInstance();
+
+        // IAgent.CreateNew is implemented manually because Agent's shell constructor produces
+        // an agent without an IAgentVersion, and the initial version is stitched in afterward.
+        // This factory hides the two-phase construction from callers.
+        builder.Register<IAgent.CreateNew>(c =>
+        {
+            var shellFactory = c.Resolve<Func<string, IModelEndpoint, IProject, IModelParameters, bool, IAgent>>();
+            var createVersion = c.Resolve<IAgentVersion.CreateNew>();
+            return (name, systemPrompt, tools, endpoint, project, modelParameters, isSystemAgent) =>
+            {
+                var shell = (Agent.Internal.Agent)shellFactory(name, endpoint, project, modelParameters, isSystemAgent);
+                var v1 = createVersion(project.Id, shell.Id, 1, systemPrompt, tools);
+                return shell.WithInitialVersion(v1);
+            };
+        });
     }
 
     private void ConfigureEntity(ContainerBuilder builder, Type domainInterfaceType)
