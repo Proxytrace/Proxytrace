@@ -53,14 +53,5 @@ public sealed class AgentCallDtoMapper
         => t.Contents.Count > 0 ? t.Contents[0].Text ?? "" : "";
 
     private static decimal? ComputeCost(IAgentCall c)
-    {
-        var e = c.Endpoint;
-        if (e.InputTokenCost is null || e.OutputTokenCost is null)
-        {
-            return null;
-        }
-
-        var usage = c.Response?.Usage;
-        return usage != null ? c.Endpoint.CalculateCost(usage) : null;
-    }
+        => c.Response?.Usage is { } usage ? c.Endpoint.CalculateCost(usage) : null;
 }

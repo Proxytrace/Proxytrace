@@ -1,11 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Proposals;
-using Proxytrace.Api.Dto.Tools;
-using Proxytrace.Domain;
-using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.OptimizationProposal;
-using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -18,20 +14,20 @@ public class ProposalsController : ControllerBase
     private readonly IModelSwitchProposal.CreateExisting createModelSwitch;
     private readonly ISystemPromptProposal.CreateExisting createSystemPrompt;
     private readonly IToolUpdateProposal.CreateExisting createToolUpdate;
-    private readonly ToolDtoMapper toolDtoMapper;
+    private readonly OptimizationProposalDtoMapper mapper;
 
     public ProposalsController(
         IOptimizationProposalRepository repository,
         IModelSwitchProposal.CreateExisting createModelSwitch,
         ISystemPromptProposal.CreateExisting createSystemPrompt,
         IToolUpdateProposal.CreateExisting createToolUpdate,
-        ToolDtoMapper toolDtoMapper)
+        OptimizationProposalDtoMapper mapper)
     {
         this.repository = repository;
         this.createModelSwitch = createModelSwitch;
         this.createSystemPrompt = createSystemPrompt;
         this.createToolUpdate = createToolUpdate;
-        this.toolDtoMapper = toolDtoMapper;
+        this.mapper = mapper;
     }
 
     [HttpGet]
@@ -48,7 +44,7 @@ public class ProposalsController : ControllerBase
         else
             proposals = await repository.GetAllAsync(cancellationToken);
 
-        return proposals.Select(ToDto).ToList();
+        return proposals.Select(mapper.ToDto).ToList();
     }
 
     [HttpPatch("{id:guid}/status")]
@@ -78,73 +74,6 @@ public class ProposalsController : ControllerBase
             _ => throw new ArgumentOutOfRangeException(nameof(existing))
         };
         await repository.UpdateAsync(updated, cancellationToken);
-        return Ok(ToDto(updated));
+        return Ok(mapper.ToDto(updated));
     }
-
-    private OptimizationProposalDto ToDto(IOptimizationProposal p)
-        => new(
-            p.Id,
-            p.Kind,
-            p.Status,
-            p.Agent.Id,
-            p.Agent.Name,
-            p.Priority,
-            p.Rationale,
-            ToDetailsDto(p),
-            [.. p.EvidenceTestRunIds],
-            p.ABTestRun is not null ? ToAbTestRunSummaryDto(p.ABTestRun) : null,
-            p.CurrentPassRate,
-            p.ProposedPassRate,
-            p.ExpectedPassRateDelta,
-            p.CreatedAt,
-            p.UpdatedAt);
-
-    private static AbTestRunSummaryDto ToAbTestRunSummaryDto(ITestRun r)
-    {
-        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
-        var completed = r.TestResults.Count;
-        var total = r.Group.Suite.TestCases.Count;
-        var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
-        long? durationMs = r.CompletedAt.HasValue
-            ? (long)(r.CompletedAt.Value - r.CreatedAt).TotalMilliseconds
-            : null;
-
-        return new AbTestRunSummaryDto(
-            Id: r.Id,
-            GroupId: r.Group.Id,
-            Status: r.Status,
-            TotalCases: total,
-            CompletedCases: completed,
-            PassedCases: passed,
-            FailedCases: completed - passed,
-            PassRate: passRate,
-            StartedAt: r.CreatedAt,
-            CompletedAt: r.CompletedAt,
-            DurationMs: durationMs);
-    }
-
-    private ProposalDetailsDto ToDetailsDto(IOptimizationProposal p)
-        => p switch
-        {
-            IModelSwitchProposal ms => ToModelSwitchDto(ms),
-            ISystemPromptProposal sp => ToSystemPromptDto(sp),
-            IToolUpdateProposal tu => ToToolDto(tu),
-            _ => throw new ArgumentOutOfRangeException(nameof(p)),
-        };
-
-    private static ModelSwitchDetailsDto ToModelSwitchDto(IModelSwitchProposal ms)
-        => new(
-            ms.ProposedEndpoint.Id,
-            ms.Agent.Endpoint.Model.Name,
-            ms.ProposedEndpoint.Model.Name,
-            ms.ExpectedCostDelta.HasValue ? (double)ms.ExpectedCostDelta.Value : null,
-            ms.ExpectedLatencyDelta.HasValue ? (long)ms.ExpectedLatencyDelta.Value.TotalMilliseconds : null);
-
-    private static SystemPromptDetailsDto ToSystemPromptDto(ISystemPromptProposal sp)
-        => new(sp.Agent.SystemPrompt.Template, sp.ProposedSystemMessage);
-
-    private ToolDetailsDto ToToolDto(IToolUpdateProposal tu)
-        => new(
-            [.. tu.Agent.Tools.Select(toolDtoMapper.ToToolSpecDto)],
-            [.. tu.ProposedTools.Select(toolDtoMapper.ToToolSpecDto)]);
 }

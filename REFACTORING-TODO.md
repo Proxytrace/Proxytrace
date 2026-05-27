@@ -2,19 +2,6 @@
 
 Scope: `Proxytrace.Api`. Items are ranked P1 (correctness/reliability) → P4 (nice-to-have). Work top-to-bottom within a priority band.
 
-## 6. Split bloated controllers; move inline mapping into `Dto/*Mapper.cs`
-
-**Scope:** `EvaluatorsController.cs` (394), `TestSuitesController.cs` (317), `TestRunsController.cs` (300), `ModelProvidersController.cs` (259), `TestRunGroupsController.cs` (203), `ProposalsController.cs` (174)
-**Priority:** P2
-
-Each of these embeds 50-150 lines of DTO mapping + helper methods at the bottom (e.g. `TestRunsController.cs:133-289` is ToDto + 5 private mappers + `CalculateRunTotals`). Other controllers already follow the split pattern (`AgentDtoMapper`, `AgentCallDtoMapper`, `ProjectDtoMapper`, `EvaluatorStatsDtoMapper`).
-
-**Approach:**
-- Per controller: create `Dto/<Feature>/<Feature>DtoMapper.cs` (static, internal) and move all private mapping/summarize helpers there.
-- For evaluator create/update, extract the per-subtype switch into a small factory class (`EvaluatorFactory`) to remove the 60-line switches from the controller.
-- Extract `CalculateRunTotals` to a domain or application service — token-cost aggregation is business logic, not a DTO concern. Reuse the same logic that `AgentCallDtoMapper.ComputeCost` (lines 76-86) reinvents.
-- Target: every controller ≤ 200 lines.
-
 ## 7. Extract paging helper
 
 **Scope:** all controllers (~95 `.Skip/.Take` sites)

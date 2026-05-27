@@ -27,6 +27,7 @@ public class TestSuitesController : ControllerBase
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
+    private readonly TestSuiteDtoMapper mapper;
 
     public TestSuitesController(
         ITestSuiteRepository suiteRepository,
@@ -38,7 +39,8 @@ public class TestSuitesController : ControllerBase
         ITestCase.CreateNewFromCall createTestCaseFromCall,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
-        ITestSuite.CreateExisting createSuiteExisting)
+        ITestSuite.CreateExisting createSuiteExisting,
+        TestSuiteDtoMapper mapper)
     {
         this.suiteRepository = suiteRepository;
         this.agentRepository = agentRepository;
@@ -50,6 +52,7 @@ public class TestSuitesController : ControllerBase
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
+        this.mapper = mapper;
     }
 
     [HttpGet]
@@ -68,7 +71,7 @@ public class TestSuitesController : ControllerBase
             all = await suiteRepository.GetByProjectAsync(projectId.Value, cancellationToken);
         else
             all = await suiteRepository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
+        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(mapper.ToDto).ToArray();
         return new PagedResult<TestSuiteDto>(items, all.Count, page, pageSize);
     }
 
@@ -78,7 +81,7 @@ public class TestSuitesController : ControllerBase
         var suite = await suiteRepository.FindAsync(id, cancellationToken);
         if (suite is null)
             return NotFound();
-        return ToDto(suite);
+        return mapper.ToDto(suite);
     }
 
     [HttpPost]
@@ -118,7 +121,7 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
+        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
     [HttpPut("{id:guid}")]
@@ -145,7 +148,7 @@ public class TestSuitesController : ControllerBase
 
         var updated = createSuiteExisting(existing.Name, agent, evaluators, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        return mapper.ToDto(saved);
     }
 
     [HttpDelete("{id:guid}")]
@@ -204,7 +207,7 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
+        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
     [HttpPost("{id:guid}/test-cases")]
@@ -225,7 +228,7 @@ public class TestSuitesController : ControllerBase
         var updatedCases = existing.TestCases.Append(saved).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(savedSuite);
+        return mapper.ToDto(savedSuite);
     }
 
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
@@ -240,7 +243,7 @@ public class TestSuitesController : ControllerBase
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        return mapper.ToDto(saved);
     }
 
     private async Task<ITestCase?> BuildTestCase(
@@ -257,55 +260,13 @@ public class TestSuitesController : ControllerBase
 
         if (inputMessages is not null && expectedOutput is not null)
         {
-            var conversation = BuildConversation(inputMessages);
-            var expected = BuildAssistantMessage(expectedOutput);
+            var conversation = mapper.BuildConversation(inputMessages);
+            var expected = mapper.BuildAssistantMessage(expectedOutput);
             return createTestCase(conversation, expected);
         }
 
         return null;
     }
-
-    private static Conversation BuildConversation(IReadOnlyList<TestSuiteMessageDto> messages)
-    {
-        var msgs = new List<Message>();
-        foreach (var m in messages)
-        {
-            Message msg = m.Role.ToLower() switch
-            {
-                "user" => new UserMessage([Domain.Message.Content.FromText(m.Content)]),
-                "assistant" => new AssistantMessage([Domain.Message.Content.FromText(m.Content)], []),
-                "system" => new SystemMessage([Domain.Message.Content.FromText(m.Content)]),
-                _ => new UserMessage([Domain.Message.Content.FromText(m.Content)])
-            };
-            msgs.Add(msg);
-        }
-        return new Conversation(msgs);
-    }
-
-    private static AssistantMessage BuildAssistantMessage(TestSuiteMessageDto m)
-        => new([Domain.Message.Content.FromText(m.Content)], []);
-
-    private static TestSuiteDto ToDto(ITestSuite s) => new(
-        s.Id,
-        s.Name,
-        s.Agent.Id,
-        s.Agent.Name,
-        s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
-        s.TestCases.Select(tc => new TestCaseDto(
-            tc.Id,
-            tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), m.GetText())).ToArray(),
-            new TestSuiteMessageDto("assistant", tc.ExpectedOutput.GetText())
-        )).ToArray(),
-        Description: null,
-        Tags: [],
-        TotalRuns: 0,
-        PassRate: null,
-        PrevPassRate: null,
-        PassRateTrend: [],
-        LastRunAt: null,
-        LastRunGroupId: null,
-        s.CreatedAt,
-        s.UpdatedAt);
 }
 
 public record UpdateTestSuiteRequest(

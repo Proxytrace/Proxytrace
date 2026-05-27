@@ -33,6 +33,7 @@ public class TestRunGroupsController : ControllerBase
     private readonly ITestRunnerService runner;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly IOptimizerService optimizerService;
+    private readonly TestRunDtoMapper runMapper;
 
     public TestRunGroupsController(
         ITestRunGroupRepository groupRepository,
@@ -41,7 +42,8 @@ public class TestRunGroupsController : ControllerBase
         IRepository<IModelEndpoint> endpoints,
         ITestRunnerService runner,
         ITestResultBroadcaster broadcaster,
-        IOptimizerService optimizerService)
+        IOptimizerService optimizerService,
+        TestRunDtoMapper runMapper)
     {
         this.groupRepository = groupRepository;
         this.runRepository = runRepository;
@@ -50,6 +52,7 @@ public class TestRunGroupsController : ControllerBase
         this.runner = runner;
         this.broadcaster = broadcaster;
         this.optimizerService = optimizerService;
+        this.runMapper = runMapper;
     }
 
     [HttpGet]
@@ -179,7 +182,7 @@ public class TestRunGroupsController : ControllerBase
             AgentName: group.Suite.Agent.Name,
             Status: group.Status,
             CompletedAt: group.CompletedAt,
-            Runs: runs.Select(TestRunsController.ToDto).ToArray(),
+            Runs: runs.Select(runMapper.ToDto).ToArray(),
             CreatedAt: group.CreatedAt,
             UpdatedAt: group.UpdatedAt);
     }

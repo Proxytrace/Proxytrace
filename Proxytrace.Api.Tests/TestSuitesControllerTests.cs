@@ -439,5 +439,6 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<ITestCase.CreateNewFromCall>(),
             services.GetRequiredService<IExactMatchEvaluator.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateNew>(),
-            services.GetRequiredService<ITestSuite.CreateExisting>());
+            services.GetRequiredService<ITestSuite.CreateExisting>(),
+            services.GetRequiredService<TestSuiteDtoMapper>());
 }

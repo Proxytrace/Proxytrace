@@ -189,5 +189,5 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelSwitchProposal.CreateExisting>(),
         services.GetRequiredService<ISystemPromptProposal.CreateExisting>(),
         services.GetRequiredService<IToolUpdateProposal.CreateExisting>(),
-        services.GetRequiredService<ToolDtoMapper>());
+        services.GetRequiredService<OptimizationProposalDtoMapper>());
 }

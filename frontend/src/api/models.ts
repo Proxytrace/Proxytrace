@@ -388,15 +388,17 @@ export interface EvaluatorDetailDto {
   createdAt: string;
   updatedAt: string;
 }
-export interface CreateEvaluatorPayload {
-  kind: EvaluatorKind;
-  projectId: string;
-  name?: string | null;
-  systemMessage?: string | null;
-  jsonSchema?: string | null;
-  extractionPattern?: string | null;
-  tolerance?: number | null;
-}
+export type CreateEvaluatorPayload =
+  | { kind: EvaluatorKind.Agentic; projectId: string; name: string; systemMessage: string }
+  | { kind: EvaluatorKind.ExactMatch; projectId: string }
+  | { kind: EvaluatorKind.NumericMatch; projectId: string; extractionPattern: string; tolerance: number }
+  | { kind: EvaluatorKind.JsonSchemaMatch; projectId: string; jsonSchema: string };
+
+export type UpdateEvaluatorPayload =
+  | { kind: EvaluatorKind.Agentic; name?: string; systemMessage?: string }
+  | { kind: EvaluatorKind.ExactMatch }
+  | { kind: EvaluatorKind.NumericMatch; extractionPattern?: string; tolerance?: number }
+  | { kind: EvaluatorKind.JsonSchemaMatch; jsonSchema?: string };
 
 /* ── Providers ── */
 export interface ProviderDto {
