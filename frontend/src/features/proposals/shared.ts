@@ -1,7 +1,7 @@
 import type { OptimizationProposalDto } from '../../api/models';
 import { Priority, ProposalKind, ProposalStatus, TestRunStatus } from '../../api/models';
 
-export type DisplayTone = 'accent' | 'success' | 'danger' | 'muted' | 'secondary' | 'teal';
+export type DisplayTone = 'accent' | 'success' | 'danger' | 'muted' | 'secondary' | 'teal' | 'mutedFaded';
 
 export interface DisplayStatus {
   label: string;
@@ -37,6 +37,7 @@ export const TONE_COLOR: Record<DisplayTone, string> = {
   muted: 'var(--text-muted)',
   secondary: 'var(--text-secondary)',
   teal: 'var(--teal)',
+  mutedFaded: 'color-mix(in srgb, var(--text-muted) 60%, transparent)',
 };
 
 export const TONE_SUBTLE: Record<DisplayTone, string> = {
@@ -46,6 +47,37 @@ export const TONE_SUBTLE: Record<DisplayTone, string> = {
   muted: 'rgba(255,255,255,0.04)',
   secondary: 'rgba(255,255,255,0.04)',
   teal: 'color-mix(in srgb, var(--teal) 14%, transparent)',
+  mutedFaded: 'rgba(255,255,255,0.04)',
+};
+
+export const TONE_TEXT_CLS: Record<DisplayTone, string> = {
+  accent: 'text-accent',
+  success: 'text-success',
+  danger: 'text-danger',
+  muted: 'text-muted',
+  secondary: 'text-secondary',
+  teal: 'text-teal',
+  mutedFaded: 'text-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]',
+};
+
+export const TONE_BG_SUBTLE_CLS: Record<DisplayTone, string> = {
+  accent: 'bg-accent-subtle',
+  success: 'bg-success-subtle',
+  danger: 'bg-danger-subtle',
+  muted: 'bg-[rgba(255,255,255,0.04)]',
+  secondary: 'bg-[rgba(255,255,255,0.04)]',
+  teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
+  mutedFaded: 'bg-[rgba(255,255,255,0.04)]',
+};
+
+export const TONE_BG_SOLID_CLS: Record<DisplayTone, string> = {
+  accent: 'bg-accent',
+  success: 'bg-success',
+  danger: 'bg-danger',
+  muted: 'bg-[var(--text-muted)]',
+  secondary: 'bg-[var(--text-secondary)]',
+  teal: 'bg-teal',
+  mutedFaded: 'bg-[color-mix(in_srgb,var(--text-muted)_60%,transparent)]',
 };
 
 export interface KindMeta {

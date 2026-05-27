@@ -31,11 +31,15 @@ work is medium- and low-impact maintainability + a focused security pass.
 - Scanner false positives for `!`: `CodeBlock.tsx`, `Invites.tsx` — those are logical
   NOT operators and `"Copied!"` string literals, not non-null assertions.
 
+## Status: completed
+
+All planned items are done. Final build green: `npm run build && npm run lint && npm test` → 154 tests pass. Scanner top-30 is now exclusively documented exceptions (icon module, DTO contract, hook-files, <20-line private helpers, ComposeBox/usePlaygroundAgent legit effects).
+
 ## Backlog (priority-ordered)
 
 ### Wave 0 — Security review (serial, runs first, mostly read-only)
 
-- [ ] **S1.** Sweep the frontend for §12 (secure programming) violations:
+- [x] **S1.** Sweep the frontend for §12 (secure programming) violations:
   `dangerouslySetInnerHTML`, `eval`/`new Function`, unsanitized data-derived
   `href`/`src`, `target="_blank"` without `rel="noopener noreferrer"`, sensitive data
   in `console.log` or `localStorage`/`sessionStorage`. Fix any real findings in
@@ -43,13 +47,13 @@ work is medium- and low-impact maintainability + a focused security pass.
 
 ### Wave 1 — Parallel feature refactors (disjoint files)
 
-- [ ] **P1.** Split `App.tsx` (223 lines, 7 components) into focused files.
+- [x] **P1.** Split `App.tsx` (223 lines, 7 components) into focused files.
   - Files in scope: `src/App.tsx`, new `src/auth/AuthGates.tsx`, new
     `src/auth/AppRoutes.tsx`, new `src/components/layout/PageLoader.tsx`,
     new `src/auth/KioskShell.tsx`, new `src/auth/ModeShell.tsx`.
   - Smell: BEST_PRACTICES §1 — more than 2 component functions per file.
 
-- [ ] **P2.** `PromoteModal.tsx` (262 lines, 3 components, inline query-key,
+- [x] **P2.** `PromoteModal.tsx` (262 lines, 3 components, inline query-key,
   threaded color prop).
   - Files in scope: `src/features/traces/PromoteModal.tsx`, new
     `src/features/traces/components/SuiteStats.tsx`, new
@@ -58,7 +62,7 @@ work is medium- and low-impact maintainability + a focused security pass.
     `QUERY_KEYS.testSuites`), §3 (raw `useMutation` in component), §5.1 (threaded
     `accent: 'var(--...)'` color prop on inner Stat).
 
-- [ ] **P3.** `EndpointSelector.tsx` — extract data layer, fix query key, fix
+- [x] **P3.** `EndpointSelector.tsx` — extract data layer, fix query key, fix
   invalidation predicate.
   - Files in scope: `src/features/agents/EndpointSelector.tsx`, new
     `src/features/agents/hooks/useEndpointSwitcher.ts`.
@@ -66,14 +70,14 @@ work is medium- and low-impact maintainability + a focused security pass.
     (raw `useQuery`/`useMutation` in component), invalidation predicate string
     `q.queryKey[0] === 'agents'` (use `QUERY_KEYS.agents` prefix).
 
-- [ ] **P4.** Split `RightRailDrawer.tsx` (264 lines, 4 components).
+- [x] **P4.** Split `RightRailDrawer.tsx` (264 lines, 4 components).
   - Files in scope: `src/features/playground/components/RightRailDrawer.tsx`, new
     `src/features/playground/components/SystemSection.tsx`,
     `src/features/playground/components/ParametersSection.tsx`,
     `src/features/playground/components/ReasoningEffortControl.tsx`.
   - Smell: §1 (>2 component functions per file).
 
-- [ ] **P5.** `TestCasesPanel.tsx` (256 lines, 3 components, `<li onClick>`,
+- [x] **P5.** `TestCasesPanel.tsx` (256 lines, 3 components, `<li onClick>`,
   static inline styles).
   - Files in scope: `src/features/suites/EditSuiteDialog/TestCasesPanel.tsx`,
     new `src/features/suites/EditSuiteDialog/CurrentCasesList.tsx`,
@@ -83,17 +87,17 @@ work is medium- and low-impact maintainability + a focused security pass.
     (`<li onClick>` for clickable list rows), §13 (static `style={{}}` with
     border-left/background that are class-expressible).
 
-- [ ] **P6.** `TraceDetailPanel.tsx` — extract suites data hook + button-ify backdrop.
+- [x] **P6.** `TraceDetailPanel.tsx` — extract suites data hook + button-ify backdrop.
   - Files in scope: `src/features/traces/components/TraceDetailPanel.tsx`,
     new `src/features/traces/hooks/useTraceSuites.ts`.
   - Smells: §3 (raw `useQuery` in component), §11 (`<div onClick>` backdrop —
     replace with `<button>` or aria attributes).
 
-- [ ] **P7.** `ComposeBox.tsx` — fix inline query key only (light touch).
+- [x] **P7.** `ComposeBox.tsx` — fix inline query key only (light touch).
   - Files in scope: `src/features/playground/components/ComposeBox.tsx`.
   - Smell: §3.2 (inline `['model-endpoints']` → `QUERY_KEYS.modelEndpoints`).
 
-- [ ] **P8.** Split `KpiWidgets.tsx` (4 component functions per file).
+- [x] **P8.** Split `KpiWidgets.tsx` (4 component functions per file).
   - Files in scope: `src/features/agents/widgets/KpiWidgets.tsx`, new
     `src/features/agents/widgets/KpiTraces.tsx`,
     `src/features/agents/widgets/KpiTokens.tsx`,
@@ -101,7 +105,7 @@ work is medium- and low-impact maintainability + a focused security pass.
     `src/features/agents/widgets/KpiLatency.tsx`. Update all importers.
   - Smell: §1 (>2 components per file).
 
-- [ ] **P9.** `AbTestHero.tsx` (160 lines, 3 components, 9 inline static styles).
+- [x] **P9.** `AbTestHero.tsx` (160 lines, 3 components, 9 inline static styles).
   - Files in scope: `src/features/proposals/AbTestHero.tsx`, new
     `src/features/proposals/AbTestStat.tsx`,
     `src/features/proposals/AbTestLegendDot.tsx` (or keep inline if cohesive).
@@ -109,7 +113,7 @@ work is medium- and low-impact maintainability + a focused security pass.
     §13 (inline `style={{ color: TONE_COLOR[tone] }}` — map tone → Tailwind class
     via a `TONE_CLASS` record).
 
-- [ ] **P10.** Split `Login.tsx` (171 lines, 4 components) + use `Button` primitive.
+- [x] **P10.** Split `Login.tsx` (171 lines, 4 components) + use `Button` primitive.
   - Files in scope: `src/features/auth/Login.tsx`, new
     `src/features/auth/OidcLogin.tsx`,
     `src/features/auth/LocalLogin.tsx`,
@@ -124,3 +128,30 @@ work is medium- and low-impact maintainability + a focused security pass.
   file sets are fully disjoint across feature folders).
 - Each wave ends with `npm run build && npm run lint && npm test` from
   `frontend/`. Re-scan after.
+
+## Findings + non-targets (deliberately not addressed in this pass)
+
+Multiple agents reported additional smells they did not touch (strict scope).
+Candidates for a follow-up pass:
+
+- `frontend/src/features/admin/Invites.tsx` and `frontend/src/features/auth/Signup.tsx`
+  use `bg-bg` / `text-fg` classes that resolve to **no-op utilities** (no such
+  tokens in `@theme`). Same fix as P10's Login pages: `bg-surface` / `text-primary`.
+- Form `<input>` styling is duplicated across `LocalLogin`, `LegacyClaim`,
+  `Invites`, `Signup` — extract a shared `TextInput` primitive in `components/ui/`.
+- `proposals/ProposalCard.tsx`, `proposals/ProposalHeader.tsx`,
+  `proposals/PredictedImpactBand.tsx` still use `style={{ color: TONE_COLOR[...] }}` —
+  the new `TONE_TEXT_CLS` / `TONE_BG_SUBTLE_CLS` maps in `shared.ts` are ready to
+  consume.
+- `PromoteModal.tsx` uses ad-hoc pixel sizes (`text-[16px]`, `rounded-[20px]`,
+  etc.) outside the DESIGN.md scale; a token-alignment pass would help.
+- `ErrorBoundary.tsx` uses a `⚠` emoji as a status icon (DESIGN.md §9 forbids
+  emoji-as-icon) and arbitrary text sizes.
+- `AppRoutes.tsx` and `ModeShell.tsx` still inline `useQuery` for setup-status /
+  app-config — small `useSetupStatus()` / `useAppConfig()` hooks would tighten the
+  routing layer.
+- `frontend/src/features/playground/components/ToolRequestPrompt.tsx` uses
+  inline static `style={{}}` blocks — convert to Tailwind classes.
+- Duplicated `safeParse`/`ToolResultBlock` pattern across
+  `features/traces/components/ToolResultBlock.tsx` and
+  `features/suites/CreateSuiteWizard/TracePreviewPanel.tsx`.

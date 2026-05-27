@@ -55,13 +55,30 @@ export function useEventStream<T>(
 
       for (const name of eventNames) {
         es.addEventListener(name, (e: MessageEvent) => {
-          onEventRef.current({ type: name, ...JSON.parse(e.data) } as T);
+          let payload: Record<string, unknown>;
+          try {
+            payload = JSON.parse(e.data);
+          } catch {
+            // Malformed SSE payload — drop it rather than blanking the app.
+            return;
+          }
+          onEventRef.current({ type: name, ...payload } as T);
         });
       }
 
       if (completeEvent) {
         es.addEventListener(completeEvent, (e: MessageEvent) => {
-          onEventRef.current({ type: completeEvent, ...JSON.parse(e.data) } as T);
+          let payload: Record<string, unknown>;
+          try {
+            payload = JSON.parse(e.data);
+          } catch {
+            // Malformed completion payload — still fire onComplete so the UI
+            // doesn't hang, but skip dispatching the bad event.
+            onCompleteRef.current?.();
+            es?.close();
+            return;
+          }
+          onEventRef.current({ type: completeEvent, ...payload } as T);
           onCompleteRef.current?.();
           es?.close();
         });

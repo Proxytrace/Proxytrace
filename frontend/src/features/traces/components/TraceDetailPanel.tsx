@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
-import { testSuitesApi } from '../../../api/test-suites';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
@@ -15,6 +12,7 @@ import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
 import { PromoteModal } from '../PromoteModal';
+import { useTraceSuites } from '../hooks/useTraceSuites';
 import { DrawerStat } from './DrawerStat';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
@@ -55,19 +53,14 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, onPrev, onNext, promoting]);
 
-  const suitesQuery = useQuery({
-    queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
-    queryFn: () => testSuitesApi.list({ agentId: trace.agentId ?? undefined, pageSize: 200 }),
-    enabled: !!trace.agentId,
-  });
-  const suites = suitesQuery.data?.items ?? [];
+  const { suites, isLoading: suitesLoading } = useTraceSuites(trace.agentId);
   const hasResponse = !!trace.response;
-  const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;
+  const promoteDisabled = !trace.agentId || !hasResponse || suitesLoading || suites.length === 0;
   const promoteTooltip = !trace.agentId
     ? 'This trace is not linked to an agent and cannot be promoted.'
     : !hasResponse
       ? 'This trace has no response and cannot be promoted.'
-      : suitesQuery.isLoading
+      : suitesLoading
         ? 'Loading test suites…'
         : suites.length === 0
           ? 'No test suite for this agent yet.'
@@ -109,7 +102,12 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]" />
+      <div
+        onClick={onClose}
+        role="presentation"
+        tabIndex={-1}
+        className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]"
+      />
 
       <div
         className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51] shadow-[var(--shadow-float)] [animation:fade-up_0.25s_cubic-bezier(0.2,0.8,0.2,1)]"
@@ -172,7 +170,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             >
               Promote to test case
             </Button>
-            {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
+            {trace.agentId && hasResponse && !suitesLoading && suites.length === 0 && (
               <button
                 type="button"
                 onClick={() => { onClose(); navigate('/suites'); }}

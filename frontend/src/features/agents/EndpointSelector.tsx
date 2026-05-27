@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { agentsApi } from '../../api/agents';
-import { providersApi } from '../../api/providers';
 import type { AgentDto } from '../../api/models';
 import { ChevronDownIcon } from '../../components/icons';
-import useToast from '../../hooks/useToast';
 import { modelColor } from '../../lib/colors';
+import { useEndpointSwitcher } from './hooks/useEndpointSwitcher';
 
 export function EndpointSelector({ agent }: { agent: AgentDto }) {
-  const qc = useQueryClient();
-  const { show: toast } = useToast();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  const { endpoints, switchEndpoint, isSwitching } = useEndpointSwitcher({
+    agent,
+    enabled: open,
+    onSuccess: () => setOpen(false),
+  });
+
+  // Legitimate external subscription (DOM event) per BEST_PRACTICES §4.1.
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -21,21 +23,6 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
-
-  const { data: endpoints = [] } = useQuery({
-    queryKey: ['all-endpoints'],
-    queryFn: () => providersApi.getAllModels(),
-    enabled: open,
-  });
-
-  const mutation = useMutation({
-    mutationFn: (endpointId: string) => agentsApi.updateEndpoint(agent.id, endpointId),
-    onSuccess: () => {
-      qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'agents' });
-      setOpen(false);
-      toast('Endpoint updated', 'success');
-    },
-  });
 
   const c = modelColor(agent.endpointName);
 
@@ -67,8 +54,8 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
             return (
               <button
                 key={ep.id}
-                onClick={() => !isCurrent && mutation.mutate(ep.id)}
-                disabled={mutation.isPending}
+                onClick={() => !isCurrent && switchEndpoint(ep.id)}
+                disabled={isSwitching}
                 className={`w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-[background-color] duration-100 border-0 border-b border-hairline last:border-b-0 ${
                   !isCurrent ? 'hover:bg-[var(--bg-wash-hover)] cursor-pointer' : 'cursor-default'
                 }`}
