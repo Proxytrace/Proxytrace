@@ -73,15 +73,19 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         string? name = null,
         bool isSystemAgent = false,
         IModelParameters? modelParameters = null,
+        bool skipStrictPreCheck = false,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemPrompt, tools);
         using IDisposable lockObj = await locker.LockAsync(fingerprint, cancellationToken);
 
-        var existingVersion = await versionQueries.FindByStrictFingerprintAsync(project, systemPrompt, tools, cancellationToken);
-        if (existingVersion is not null)
+        if (!skipStrictPreCheck)
         {
-            return await existingVersion.GetAgentAsync(cancellationToken);
+            var existingVersion = await versionQueries.FindByStrictFingerprintAsync(project, systemPrompt, tools, cancellationToken);
+            if (existingVersion is not null)
+            {
+                return await existingVersion.GetAgentAsync(cancellationToken);
+            }
         }
 
         name ??= await nameGenerator.Value.GenerateNameAsync(systemPrompt, project, cancellationToken);
@@ -168,15 +172,16 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         return await this.GetAsync(agentId, cancellationToken);
     }
 
-    private async Task SetCurrentVersionIdAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken)
-    {
-        var ctx = contextFactory();
-        var stored = await ctx.Set<AgentEntity>().FirstAsync(a => a.Id == agentId, cancellationToken);
-        ctx.Entry(stored).Property(e => e.CurrentVersionId).CurrentValue = versionId;
-        ctx.Entry(stored).Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;
-        await ctx.SaveChangesAsync(cancellationToken);
-        InvalidateCacheEntry(agentId);
-    }
+    private Task SetCurrentVersionIdAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken)
+        => transaction.InvokeAsync(async () =>
+        {
+            var ctx = contextFactory();
+            var stored = await ctx.Set<AgentEntity>().FirstAsync(a => a.Id == agentId, cancellationToken);
+            ctx.Entry(stored).Property(e => e.CurrentVersionId).CurrentValue = versionId;
+            ctx.Entry(stored).Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;
+            await ctx.SaveChangesAsync(cancellationToken);
+            InvalidateCacheEntry(agentId);
+        });
 
     public string GetAgentFingerprint(IPromptTemplate systemPrompt, IReadOnlyCollection<ToolSpecification> tools)
         => fingerprinter.Strict(systemPrompt, tools);

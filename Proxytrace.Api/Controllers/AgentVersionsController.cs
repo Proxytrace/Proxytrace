@@ -41,6 +41,14 @@ public class AgentVersionsController : ControllerBase
         return mapper.ToDto(version, fingerprint);
     }
 
+    /// <summary>
+    /// Re-parents an <see cref="IAgentVersion"/> from its current agent to <c>request.TargetAgentId</c>.
+    /// The moved version is renumbered to <c>max(target.VersionNumber) + 1</c>, becoming the target
+    /// agent's newest version, and is promoted to the target's current version. The source agent's
+    /// current version is rolled back to its remaining newest version, or the source agent is deleted
+    /// entirely if no versions remain. Calls referencing the moved version follow it via
+    /// <c>AgentCall.AgentVersionId</c> — no call rewriting needed.
+    /// </summary>
     [HttpPost("{id:guid}/move")]
     public async Task<IActionResult> Move(
         Guid id,

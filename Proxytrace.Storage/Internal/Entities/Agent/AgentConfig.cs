@@ -8,7 +8,6 @@ using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
-using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Inference;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 using Proxytrace.Storage.Internal.Entities.Project;
@@ -22,8 +21,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     private readonly ISerializer serializer;
     private readonly IRepository<IProject> projects;
     private readonly IRepository<IModelEndpoint> endpoints;
-    private readonly Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper;
-    private readonly Func<StorageDbContext> contextFactory;
+    private readonly Lazy<IRepository<IAgentVersion>> versions;
 
     public AgentConfig(
         IAgent.CreateExisting factory,
@@ -31,16 +29,14 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
         ISerializer serializer,
         IRepository<IProject> projects,
         IRepository<IModelEndpoint> endpoints,
-        Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper,
-        Func<StorageDbContext> contextFactory)
+        Lazy<IRepository<IAgentVersion>> versions)
     {
         this.factory = factory;
         this.modelParametersFactory = modelParametersFactory;
         this.serializer = serializer;
         this.projects = projects;
         this.endpoints = endpoints;
-        this.versionMapper = versionMapper;
-        this.contextFactory = contextFactory;
+        this.versions = versions;
     }
 
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
@@ -74,18 +70,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
         var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
         var modelParameters = ToDomain(stored.ModelParameters, modelParametersFactory);
 
-        AgentVersionEntity? currentVersionEntity = stored.CurrentVersionId is { } currentId
-            ? await contextFactory()
-                .Set<AgentVersionEntity>()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Id == currentId, cancellationToken)
-            : null;
-        if (currentVersionEntity is null)
-        {
-            throw new InvalidOperationException(
-                $"Agent {stored.Id} ({stored.Name}) has no current version. The storage invariant was violated.");
-        }
-        IAgentVersion currentVersion = await versionMapper.Value.Map(currentVersionEntity, cancellationToken);
+        IAgentVersion currentVersion = await versions.Value.GetAsync(stored.CurrentVersionId, cancellationToken);
 
         return factory(
             name: stored.Name,
@@ -106,22 +91,10 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             ModelParameters = ToData(domain.ModelParameters),
             Endpoint = domain.Endpoint.Id,
             IsSystemAgent = domain.IsSystemAgent,
-            CurrentVersionId = TryGetCurrentVersionId(domain),
+            CurrentVersionId = domain.CurrentVersion.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
-
-    private static Guid? TryGetCurrentVersionId(IAgent domain)
-    {
-        try
-        {
-            return domain.CurrentVersion.Id;
-        }
-        catch (InvalidOperationException)
-        {
-            return null;
-        }
-    }
 
     internal static ModelParametersData ToData(IModelParameters domain)
         => new(

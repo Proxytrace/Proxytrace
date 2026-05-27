@@ -68,6 +68,8 @@ internal record AgentVersion : DomainEntity<IAgentVersion>, IAgentVersion
 
     public async Task<IAgentVersion> MoveToAgentAsync(IAgent targetAgent, CancellationToken cancellationToken = default)
     {
+        // Process-local lock — same caveat as Agent.CreateNewVersionAsync: in multi-replica
+        // deployments, the unique (AgentId, VersionNumber) index is the actual safety net.
         using IDisposable lockObj = await locker.LockAsync($"agent-versions:{targetAgent.Id}", cancellationToken);
         var existing = await versionRepository.Value.GetByAgentAsync(targetAgent, cancellationToken);
         int next = existing.Count == 0

@@ -36,11 +36,11 @@ internal record Agent : DomainEntity<IAgent>, IAgent
                $"Agent {Id} ({Name}) has no current version. " +
                "This should only be observable inside the IAgent.CreateNew factory before WithInitialVersion is called.");
 
-    public IPromptTemplate SystemPrompt 
-        => CurrentVersion!.SystemPrompt;
+    public IPromptTemplate SystemPrompt
+        => ((IAgent)this).CurrentVersion.SystemPrompt;
 
-    public IReadOnlyList<ToolSpecification> Tools 
-        => CurrentVersion!.Tools;
+    public IReadOnlyList<ToolSpecification> Tools
+        => ((IAgent)this).CurrentVersion.Tools;
 
     /// <summary>
     /// Shell constructor used only by the <see cref="IAgent.CreateNew"/> factory in
@@ -125,6 +125,10 @@ internal record Agent : DomainEntity<IAgent>, IAgent
         IReadOnlyList<ToolSpecification> tools,
         CancellationToken cancellationToken = default)
     {
+        // Process-local lock only — coordinates concurrent CreateNewVersionAsync calls within one
+        // instance so we don't compute the same `next` twice. Multi-replica deployments rely on
+        // the unique (AgentId, VersionNumber) index + DbUpdateException-driven requeue in
+        // AgentCallProcessor.IsRetryable to handle cross-process races.
         using IDisposable lockObj = await locker.LockAsync($"agent-versions:{Id}", cancellationToken);
         var existingVersions = await versionRepository.Value.GetByAgentAsync(this, cancellationToken);
         int next = existingVersions.Count == 0 ? 1 : existingVersions.Max(v => v.VersionNumber) + 1;

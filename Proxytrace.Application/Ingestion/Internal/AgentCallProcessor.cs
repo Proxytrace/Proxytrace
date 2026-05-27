@@ -182,13 +182,17 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             return updatedAgent.CurrentVersion;
         }
 
-        // 3. No similar agent -> brand-new agent + v1 (delegates to repository).
+        // 3. No similar agent -> brand-new agent + v1 (delegates to repository). We already
+        // performed the strict-fingerprint lookup above; skip the redundant pre-check inside the
+        // repository while still benefiting from its fingerprint-keyed lock + post-write race
+        // recovery on the unique index.
         var newAgent = await agentRepository.GetOrCreateAsync(
             promptTemplate,
             parsed.Tools,
             job.Project,
             parsed.Endpoint,
             modelParameters: parsed.ModelParameters,
+            skipStrictPreCheck: true,
             cancellationToken: cancellationToken);
 
         return newAgent.CurrentVersion;

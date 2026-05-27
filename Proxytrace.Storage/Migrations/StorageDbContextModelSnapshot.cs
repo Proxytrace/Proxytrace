@@ -27,7 +27,7 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CurrentVersionId")
+                    b.Property<Guid>("CurrentVersionId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("Endpoint")
@@ -890,7 +890,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
                         .WithMany()
                         .HasForeignKey("AgentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", null)

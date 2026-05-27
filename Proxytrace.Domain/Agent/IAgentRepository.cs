@@ -14,7 +14,10 @@ public interface IAgentRepository : IRepository<IAgent>
 {
     /// <summary>
     /// Returns the agent whose current version exactly matches the given system message + tools
-    /// (strict fingerprint), creating a new agent + v1 if none exists.
+    /// (strict fingerprint), creating a new agent + v1 if none exists. Callers that have already
+    /// performed the strict-fingerprint lookup can pass <paramref name="skipStrictPreCheck"/> to
+    /// avoid a redundant query — the lock + post-write race check still protect against concurrent
+    /// inserts.
     /// </summary>
     Task<IAgent> GetOrCreateAsync(
         IPromptTemplate systemPrompt,
@@ -24,6 +27,7 @@ public interface IAgentRepository : IRepository<IAgent>
         string? name = null,
         bool isSystemAgent = false,
         IModelParameters? modelParameters = null,
+        bool skipStrictPreCheck = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

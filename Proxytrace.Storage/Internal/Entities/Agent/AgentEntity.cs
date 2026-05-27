@@ -15,8 +15,8 @@ internal record AgentEntity : Entity
     public required bool IsSystemAgent { get; init; }
     public required ModelParametersData ModelParameters { get; init; }
 
-    /// <summary>The id of the version currently in effect for this agent. Null only during the
-    /// brief window between agent insert and initial-version insert (see
-    /// <c>AgentRepository.CreateWithInitialVersionAsync</c>).</summary>
-    public Guid? CurrentVersionId { get; init; }
+    /// <summary>The id of the version currently in effect for this agent. Agents are persisted
+    /// together with their initial version in a single transaction
+    /// (<c>AgentRepository.PersistWithInitialVersionAsync</c>), so this is always populated.</summary>
+    public required Guid CurrentVersionId { get; init; }
 }

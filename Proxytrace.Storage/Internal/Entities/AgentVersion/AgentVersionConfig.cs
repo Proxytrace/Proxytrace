@@ -43,7 +43,7 @@ internal class AgentVersionConfig : AbstractEntityConfiguration<AgentVersionEnti
             .HasOne<AgentEntity>()
             .WithMany()
             .HasForeignKey(e => e.AgentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .HasOne<ProjectEntity>()

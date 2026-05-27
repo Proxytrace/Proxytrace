@@ -11,7 +11,7 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    [Migration("20260527183214_AddAgentVersions")]
+    [Migration("20260527194646_AddAgentVersions")]
     partial class AddAgentVersions
     {
         /// <inheritdoc />
@@ -30,7 +30,7 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("CurrentVersionId")
+                    b.Property<Guid>("CurrentVersionId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("Endpoint")
@@ -893,7 +893,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
                         .WithMany()
                         .HasForeignKey("AgentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", null)
