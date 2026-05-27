@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Paging;
+using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.TestSuite;
@@ -116,5 +117,25 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
             .ToListAsync(cancellationToken);
 
         return new PagedResult<ITestRunGroup>(await Map(stored, cancellationToken), total, page, pageSize);
+    }
+
+    public async Task<int> CountCompletedSinceAsync(
+        Guid agentId,
+        DateTimeOffset since,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        return await context
+            .Set<TestRunGroupEntity>()
+            .AsNoTracking()
+            .Join(context.Set<TestSuiteEntity>(),
+                g => g.Suite,
+                s => s.Id,
+                (g, s) => new { Group = g, Suite = s })
+            .Where(x => x.Suite.Agent == agentId
+                && x.Group.Status == TestRunStatus.Completed
+                && x.Group.CompletedAt != null
+                && x.Group.CompletedAt > since)
+            .CountAsync(cancellationToken);
     }
 }

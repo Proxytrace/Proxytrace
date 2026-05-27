@@ -57,9 +57,12 @@ internal class OptimizationProposalConfig :
             .HasForeignKey(e => e.ABTestRun)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(e => e.ContentHash).HasMaxLength(64);
+
         builder.HasIndex(e => e.Agent);
         builder.HasIndex(e => e.Status);
         builder.HasIndex(e => e.Kind);
+        builder.HasIndex(e => new { e.Agent, e.ContentHash });
     }
 
     public async Task<IOptimizationProposal> Map(OptimizationProposalEntity stored, CancellationToken cancellationToken = default)
@@ -100,6 +103,7 @@ internal class OptimizationProposalConfig :
             expectedLatencyDelta: data.ExpectedLatencyDelta,
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
+            contentHash: stored.ContentHash,
             existing: stored);
     }
 
@@ -120,8 +124,9 @@ internal class OptimizationProposalConfig :
             currentPassRate: stored.CurrentPassRate,
             proposedPassRate: stored.ProposedPassRate,
             evidenceTestRunIds: evidenceTestRunIds,
-            existing: stored,
-            abTestRun: abTestRun);
+            abTestRun: abTestRun,
+            contentHash: stored.ContentHash,
+            existing: stored);
     }
 
     private IToolUpdateProposal MapToolUpdate(
@@ -142,6 +147,7 @@ internal class OptimizationProposalConfig :
             proposedPassRate: stored.ProposedPassRate,
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
+            contentHash: stored.ContentHash,
             existing: stored);
     }
 
@@ -171,6 +177,7 @@ internal class OptimizationProposalConfig :
             EvidenceTestRunIds = serializer.Serialize(domain.EvidenceTestRunIds),
             CurrentPassRate = domain.CurrentPassRate,
             ProposedPassRate = domain.ProposedPassRate,
+            ContentHash = domain.ContentHash,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

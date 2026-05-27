@@ -43,5 +43,6 @@ public interface IModelSwitchProposal : IOptimizationProposal
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        string contentHash,
         IDomainEntityData existing);
 }

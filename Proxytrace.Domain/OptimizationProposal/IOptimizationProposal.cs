@@ -49,4 +49,10 @@ public interface IOptimizationProposal : IDomainEntity
         => ProposedPassRate.HasValue && CurrentPassRate.HasValue
             ? ProposedPassRate.Value - CurrentPassRate.Value
             : null;
+
+    /// <summary>
+    /// Deterministic fingerprint of <see cref="Agent"/> + <see cref="Kind"/> + proposed-change payload.
+    /// Used to suppress re-creation of an identical proposal that was already Accepted or Rejected.
+    /// </summary>
+    string ContentHash { get; }
 }

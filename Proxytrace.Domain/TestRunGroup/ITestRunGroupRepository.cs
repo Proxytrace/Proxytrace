@@ -19,4 +19,13 @@ public interface ITestRunGroupRepository : IRepository<ITestRunGroup>
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts completed test-run groups against the given agent whose <c>CompletedAt</c>
+    /// is strictly after the supplied threshold.
+    /// </summary>
+    Task<int> CountCompletedSinceAsync(
+        Guid agentId,
+        DateTimeOffset since,
+        CancellationToken cancellationToken = default);
 }

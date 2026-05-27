@@ -204,15 +204,15 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
                     IModelSwitchProposal ms => modelSwitchExisting(
                         ms.Agent, spec.Status, ms.Priority, ms.Rationale,
                         ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                        ms.EvidenceTestRunIds, ms.ABTestRun, ms),
+                        ms.EvidenceTestRunIds, ms.ABTestRun, ms.ContentHash, ms),
                     ISystemPromptProposal sp => systemPromptExisting(
                         sp.Agent, spec.Status, sp.Priority, sp.Rationale,
                         sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
-                        sp.EvidenceTestRunIds, sp.ABTestRun, sp),
+                        sp.EvidenceTestRunIds, sp.ABTestRun, sp.ContentHash, sp),
                     IToolUpdateProposal tu => toolUpdateExisting(
                         tu.Agent, spec.Status, tu.Priority, tu.Rationale,
                         tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
-                        tu.EvidenceTestRunIds, tu.ABTestRun, tu),
+                        tu.EvidenceTestRunIds, tu.ABTestRun, tu.ContentHash, tu),
                     _ => throw new ArgumentOutOfRangeException(nameof(saved))
                 };
                 await repo.UpdateAsync(transitioned, cancellationToken);
