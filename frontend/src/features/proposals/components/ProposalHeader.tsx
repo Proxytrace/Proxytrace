@@ -5,13 +5,15 @@ import {
 } from '../../../components/icons';
 import type { OptimizationProposalDto } from '../../../api/models';
 import { ProposalKind } from '../../../api/models';
+import { cn } from '../../../lib/cn';
 import { agentColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
 import {
   KIND_META,
   PRIORITY_META,
-  TONE_COLOR,
-  TONE_SUBTLE,
+  TONE_BG_CLS,
+  TONE_BG_SUBTLE_CLS,
+  TONE_TEXT_CLS,
 } from '../shared';
 import type { DisplayStatus } from '../shared';
 
@@ -65,12 +67,18 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
-            style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold',
+              TONE_BG_SUBTLE_CLS[status.tone],
+              TONE_TEXT_CLS[status.tone],
+            )}
           >
             <span
-              className={`inline-block size-1.5 rounded-full ${status.pulse ? 'pulse-dot' : ''}`}
-              style={{ background: TONE_COLOR[status.tone] }}
+              className={cn(
+                'inline-block size-1.5 rounded-full',
+                TONE_BG_CLS[status.tone],
+                status.pulse && 'pulse-dot',
+              )}
             />
             {status.label}
           </span>

@@ -7,8 +7,9 @@ import { agentColor } from '../../lib/colors';
 import { fmtRelative } from '../../lib/format';
 import {
   KIND_META,
-  TONE_COLOR,
-  TONE_SUBTLE,
+  TONE_BG_CLS,
+  TONE_BG_SUBTLE_CLS,
+  TONE_TEXT_CLS,
   deltaTone,
   displayStatus,
   formatCostDelta,
@@ -72,12 +73,18 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
-            style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
+            className={cn(
+              'ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold',
+              TONE_BG_SUBTLE_CLS[status.tone],
+              TONE_TEXT_CLS[status.tone],
+            )}
           >
             <span
-              className={cn('inline-block size-1.5 rounded-full', status.pulse && 'pulse-dot')}
-              style={{ background: TONE_COLOR[status.tone] }}
+              className={cn(
+                'inline-block size-1.5 rounded-full',
+                TONE_BG_CLS[status.tone],
+                status.pulse && 'pulse-dot',
+              )}
             />
             {status.label}
           </span>
@@ -148,8 +155,11 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
 function ImpactPill({ label, value, tone }: { label: string; value: string; tone: ReturnType<typeof deltaTone> }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-caption font-semibold mono"
-      style={{ background: TONE_SUBTLE[tone], color: TONE_COLOR[tone] }}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-[1px] text-caption font-semibold mono',
+        TONE_BG_SUBTLE_CLS[tone],
+        TONE_TEXT_CLS[tone],
+      )}
     >
       <span className="opacity-60 font-medium">{label}</span>
       {value}

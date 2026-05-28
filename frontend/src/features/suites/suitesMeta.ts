@@ -1,6 +1,12 @@
 import type { TestSuiteDto } from '../../api/models';
 import { PASS_RATE_WARN, PASS_RATE_DANGER } from '../../lib/constants';
 
+/** Snippet of the last user message in a captured conversation (whitespace-normalised). */
+export function lastUserSnippet(msgs: { role: string; content: string }[]): string {
+  const last = [...msgs].reverse().find(m => m.role === 'user');
+  return (last?.content ?? msgs[msgs.length - 1]?.content ?? '').replace(/\s+/g, ' ').trim();
+}
+
 /** Derive the CSS-variable colour string for a pass-rate value. */
 export function passRateColor(passRate: number | null): string {
   if (passRate === null) return 'var(--text-muted)';

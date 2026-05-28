@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
+import { QUERY_KEYS } from '../../../api/query-keys';
 import { formInputCls } from '../../../components/ui/classes';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
   const { data: endpoints = [], isLoading } = useQuery({
-    queryKey: ['model-endpoints'],
+    queryKey: QUERY_KEYS.modelEndpoints,
     queryFn: () => providersApi.getAllModels(),
   });
 

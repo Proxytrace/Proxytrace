@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
 import { providersApi } from '../../../api/providers';
+import { QUERY_KEYS } from '../../../api/query-keys';
 import { cn } from '../../../lib/cn';
 
 interface Props {
@@ -32,7 +33,7 @@ export function ComposeBox({
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const { data: endpoints = [] } = useQuery({
-    queryKey: ['model-endpoints'],
+    queryKey: QUERY_KEYS.modelEndpoints,
     queryFn: () => providersApi.getAllModels(),
     enabled: !!onEndpointChange,
   });

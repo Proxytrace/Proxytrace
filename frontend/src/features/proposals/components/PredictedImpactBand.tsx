@@ -1,7 +1,7 @@
 import { cn } from '../../../lib/cn';
 import { Card } from '../../../components/ui/Card';
 import type { OptimizationProposalDto } from '../../../api/models';
-import { TONE_COLOR, deltaTone, formatCostDelta, formatLatencyDelta } from '../shared';
+import { TONE_TEXT_CLS, deltaTone, formatCostDelta, formatLatencyDelta } from '../shared';
 import type { DisplayTone } from '../shared';
 
 interface Props {
@@ -13,8 +13,10 @@ function DeltaBigCell({ label, value, tone }: { label: string; value: string; to
     <div className="bg-card-2 rounded-md px-3 py-2.5">
       <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">{label}</div>
       <div
-        className="mono font-bold tracking-[-0.02em] leading-none text-[22px]"
-        style={{ color: TONE_COLOR[tone] }}
+        className={cn(
+          'mono font-bold tracking-[-0.02em] leading-none text-[22px]',
+          TONE_TEXT_CLS[tone],
+        )}
       >
         {value}
       </div>
@@ -46,15 +48,16 @@ export function PredictedImpactBand({ dto }: Props) {
             </span>
             <span className="text-body-sm text-muted">→</span>
             <span
-              className="mono font-bold tracking-[-0.02em] leading-none text-[22px]"
-              style={{ color: TONE_COLOR[passDeltaTone] }}
+              className={cn(
+                'mono font-bold tracking-[-0.02em] leading-none text-[22px]',
+                TONE_TEXT_CLS[passDeltaTone],
+              )}
             >
               {fmtPct(dto.proposedPassRate)}
             </span>
             {deltaPts != null && deltaPts !== 0 && (
               <span
-                className="mono text-body-sm font-semibold"
-                style={{ color: TONE_COLOR[passDeltaTone] }}
+                className={cn('mono text-body-sm font-semibold', TONE_TEXT_CLS[passDeltaTone])}
               >
                 {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>

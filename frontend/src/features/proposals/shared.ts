@@ -48,6 +48,35 @@ export const TONE_SUBTLE: Record<DisplayTone, string> = {
   teal: 'color-mix(in srgb, var(--teal) 14%, transparent)',
 };
 
+// Tailwind class maps mirroring TONE_COLOR / TONE_SUBTLE — preferred for static
+// tone lookups so the JSX stays free of style={{}} (BEST_PRACTICES §7/§13).
+export const TONE_TEXT_CLS: Record<DisplayTone, string> = {
+  accent: 'text-accent',
+  success: 'text-success',
+  danger: 'text-danger',
+  muted: 'text-muted',
+  secondary: 'text-secondary',
+  teal: 'text-teal',
+};
+
+export const TONE_BG_SUBTLE_CLS: Record<DisplayTone, string> = {
+  accent: 'bg-accent-subtle',
+  success: 'bg-success-subtle',
+  danger: 'bg-danger-subtle',
+  muted: 'bg-[rgba(255,255,255,0.04)]',
+  secondary: 'bg-[rgba(255,255,255,0.04)]',
+  teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
+};
+
+export const TONE_BG_CLS: Record<DisplayTone, string> = {
+  accent: 'bg-accent',
+  success: 'bg-success',
+  danger: 'bg-danger',
+  muted: 'bg-muted',
+  secondary: 'bg-secondary',
+  teal: 'bg-teal',
+};
+
 export interface KindMeta {
   label: string;
   color: string;

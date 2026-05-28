@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { agentsApi } from '../../api/agents';
 import { providersApi } from '../../api/providers';
+import { QUERY_KEYS } from '../../api/query-keys';
 import type { AgentDto } from '../../api/models';
 import { ChevronDownIcon } from '../../components/icons';
 import useToast from '../../hooks/useToast';
@@ -23,7 +24,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
   }, [open]);
 
   const { data: endpoints = [] } = useQuery({
-    queryKey: ['all-endpoints'],
+    queryKey: QUERY_KEYS.modelEndpoints,
     queryFn: () => providersApi.getAllModels(),
     enabled: open,
   });
@@ -31,7 +32,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
   const mutation = useMutation({
     mutationFn: (endpointId: string) => agentsApi.updateEndpoint(agent.id, endpointId),
     onSuccess: () => {
-      qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'agents' });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.agentsRoot });
       setOpen(false);
       toast('Endpoint updated', 'success');
     },

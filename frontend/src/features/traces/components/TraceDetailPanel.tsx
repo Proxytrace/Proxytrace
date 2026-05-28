@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
-import { testSuitesApi } from '../../../api/test-suites';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
@@ -15,6 +12,7 @@ import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
 import { PromoteModal } from '../PromoteModal';
+import { useTraceSuites } from '../hooks/useTraceSuites';
 import { DrawerStat } from './DrawerStat';
 import { TraceMessagesTab } from './TraceMessagesTab';
 import { TraceRawJsonTab, TraceMetadataTab } from './TraceMetadataTab';
@@ -55,11 +53,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, onPrev, onNext, promoting]);
 
-  const suitesQuery = useQuery({
-    queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
-    queryFn: () => testSuitesApi.list({ agentId: trace.agentId ?? undefined, pageSize: 200 }),
-    enabled: !!trace.agentId,
-  });
+  const suitesQuery = useTraceSuites(trace.agentId);
   const suites = suitesQuery.data?.items ?? [];
   const hasResponse = !!trace.response;
   const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;

@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import type { AbTestRunSummaryDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
 import { fmtDuration } from '../../lib/format';
-import { TONE_COLOR, TONE_SUBTLE, type DisplayTone } from './shared';
+import { TONE_BG_CLS, TONE_BG_SUBTLE_CLS, TONE_TEXT_CLS, type DisplayTone } from './shared';
 
 interface Props {
   ab: AbTestRunSummaryDto | null;
@@ -61,12 +61,18 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold"
-          style={{ background: TONE_SUBTLE[meta.tone], color: TONE_COLOR[meta.tone] }}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold',
+            TONE_BG_SUBTLE_CLS[meta.tone],
+            TONE_TEXT_CLS[meta.tone],
+          )}
         >
           <span
-            className={cn('inline-block size-1.5 rounded-full', meta.pulse && 'pulse-dot')}
-            style={{ background: TONE_COLOR[meta.tone] }}
+            className={cn(
+              'inline-block size-1.5 rounded-full',
+              TONE_BG_CLS[meta.tone],
+              meta.pulse && 'pulse-dot',
+            )}
           />
           A/B test · {meta.label}
         </span>
@@ -85,15 +91,16 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">Pass rate</div>
           <div className="flex items-baseline gap-2.5">
             <span
-              className="text-display font-bold tracking-[-0.02em] mono leading-none"
-              style={{ color: TONE_COLOR[passTone] }}
+              className={cn(
+                'text-display font-bold tracking-[-0.02em] mono leading-none',
+                TONE_TEXT_CLS[passTone],
+              )}
             >
               {hasResults ? `${passRate}%` : '—'}
             </span>
             {deltaTone && deltaPts != null && (
               <span
-                className="mono text-body-sm font-semibold"
-                style={{ color: TONE_COLOR[deltaTone] }}
+                className={cn('mono text-body-sm font-semibold', TONE_TEXT_CLS[deltaTone])}
               >
                 {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>
@@ -109,8 +116,8 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 items-center">
           <Stat label="Sample"   value={`${ab.completedCases}/${ab.totalCases}`}/>
           <Stat label="Duration" value={fmtDuration(ab.durationMs)}/>
-          <Stat label="Passed"   value={ab.passedCases} color="var(--success)"/>
-          <Stat label="Failed"   value={ab.failedCases} color="var(--danger)"/>
+          <Stat label="Passed"   value={ab.passedCases} tone="success"/>
+          <Stat label="Failed"   value={ab.failedCases} tone="danger"/>
         </div>
       </div>
 
@@ -123,13 +130,10 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
         </div>
         {hasResults && (
           <div className="flex items-center gap-3 mt-1.5 text-caption text-muted">
-            <LegendDot color="var(--success)" label={`${ab.passedCases} passed`}/>
-            <LegendDot color="var(--danger)"  label={`${ab.failedCases} failed`}/>
+            <LegendDot tone="success" label={`${ab.passedCases} passed`}/>
+            <LegendDot tone="danger"  label={`${ab.failedCases} failed`}/>
             {ab.totalCases - ab.completedCases > 0 && (
-              <LegendDot
-                color="color-mix(in srgb, var(--text-muted) 60%, transparent)"
-                label={`${ab.totalCases - ab.completedCases} pending`}
-              />
+              <LegendDot tone="pending" label={`${ab.totalCases - ab.completedCases} pending`}/>
             )}
           </div>
         )}
@@ -138,21 +142,27 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: string | number; color?: string }) {
+type StatTone = DisplayTone | 'primary';
+
+function Stat({ label, value, tone = 'primary' }: { label: string; value: string | number; tone?: StatTone }) {
+  const toneCls = tone === 'primary' ? 'text-primary' : TONE_TEXT_CLS[tone];
   return (
     <>
       <span className="text-caption text-muted font-medium uppercase tracking-[0.07em]">{label}</span>
-      <span className="mono text-body font-semibold" style={{ color: color ?? 'var(--text-primary)' }}>
+      <span className={cn('mono text-body font-semibold', toneCls)}>
         {value}
       </span>
     </>
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+type LegendTone = 'success' | 'danger' | 'pending';
+
+function LegendDot({ tone, label }: { tone: LegendTone; label: string }) {
+  const dotCls = tone === 'pending' ? 'bg-muted/60' : TONE_BG_CLS[tone];
   return (
     <span className="inline-flex items-center gap-1 mono">
-      <span className="inline-block size-1.5 rounded-full" style={{ background: color }}/>
+      <span className={cn('inline-block size-1.5 rounded-full', dotCls)}/>
       {label}
     </span>
   );
