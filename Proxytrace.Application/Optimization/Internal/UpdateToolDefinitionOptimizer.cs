@@ -105,11 +105,26 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             return [];
         }
 
+        IReadOnlyList<ToolSpecification> proposedTools;
+        try
+        {
+            proposedTools = completion.Tools
+                .Select(t => new ToolSpecification(
+                    t.Name,
+                    t.Description,
+                    ToolArguments.FromJsonSchema(t.JsonSchema)))
+                .ToList();
+        }
+        catch (Exception)
+        {
+            return [];
+        }
+
         // create updated agent with the proposed tools
         var updatedAgent = agentFactory(
             name: agent.Name,
             systemPrompt: agent.SystemPrompt,
-            tools: completion.Tools,
+            tools: proposedTools,
             endpoint: agent.Endpoint,
             project: agent.Project,
             modelParameters: agent.ModelParameters,
@@ -138,7 +153,7 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
             agent: agent,
             priority: priority,
             rationale: fullRationale,
-            proposedTools: completion.Tools,
+            proposedTools: proposedTools,
             currentPassRate: stats.PassRate,
             proposedPassRate: abStats?.PassRate,
             evidenceTestRunIds: [currentRun.Id],
@@ -151,9 +166,22 @@ internal sealed class UpdateToolDefinitionOptimizer : IOptimizerImplementation
     private record ToolOptimizerOutput
     {
         [Description("the tool definitions that should be changed")]
-        public required IReadOnlyList<ToolSpecification> Tools { get; [UsedImplicitly] init; }
+        public required IReadOnlyList<ProposedTool> Tools { get; [UsedImplicitly] init; }
 
-        [Description("string (1-3 sentences explaining what changed and why)")]
+        [Description("1-3 sentences explaining what changed and why")]
         public required string Rationale { get; [UsedImplicitly] init; }
+    }
+
+    [UsedImplicitly]
+    private record ProposedTool
+    {
+        [Description("the tool name; must match an existing tool name on the agent")]
+        public required string Name { get; [UsedImplicitly] init; }
+
+        [Description("the proposed tool description")]
+        public required string Description { get; [UsedImplicitly] init; }
+
+        [Description("the proposed JSON schema for the tool's arguments, as a JSON-encoded string (a JSON object with 'type', 'properties', and 'required' fields)")]
+        public required string JsonSchema { get; [UsedImplicitly] init; }
     }
 }

@@ -31,19 +31,13 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 {
     private const string OnlyToolName = "search";
 
-    private const string ValidJsonResponse = $$"""
+    private const string ValidJsonResponse = """
         {
           "tools": [
             {
-              "name": "{{OnlyToolName}}",
+              "name": "search",
               "description": "Refined search description.",
-              "arguments": {
-                "type": "object",
-                "properties": {
-                  "query": { "type": "string", "description": "the new query" }
-                },
-                "required": ["query"]
-              }
+              "jsonSchema": "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"the new query\"}},\"required\":[\"query\"]}"
             }
           ],
           "rationale": "Tightened the search description."
@@ -140,7 +134,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
                 {
                   "name": "different_name",
                   "description": "...",
-                  "arguments": { "type": "object", "properties": {} }
+                  "jsonSchema": "{\"type\":\"object\",\"properties\":{}}"
                 }
               ],
               "rationale": "..."
