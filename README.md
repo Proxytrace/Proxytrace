@@ -15,7 +15,7 @@ improvements — closing the loop between **deployment** and **optimization**.
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![PostgreSQL · SQLite · SQL Server](https://img.shields.io/badge/DB-PostgreSQL%20%C2%B7%20SQLite%20%C2%B7%20SQL%20Server-336791?logo=postgresql&logoColor=white)](DATABASE.md)
+[![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-336791?logo=postgresql&logoColor=white)](DATABASE.md)
 ![Status: early architecture](https://img.shields.io/badge/status-early%20architecture-c9944a)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 
@@ -90,7 +90,7 @@ instrumentation, regression testing, iterative optimization — to agent develop
 
 - .NET 10 SDK
 - Node.js 20+ (for the frontend)
-- A supported database — **SQLite needs zero config** and is the local default
+- PostgreSQL (for non-kiosk runs) — or use kiosk mode for a zero-dependency in-memory demo
 
 ### Run everything (recommended)
 
@@ -145,7 +145,7 @@ docker compose -f docker-compose.kiosk.yml up --build    # Kiosk mode, API :5200
 | Layer | Technology |
 |---|---|
 | **Backend** | C# / .NET 10, ASP.NET Core, Autofac DI |
-| **Database** | SQLite, PostgreSQL, or SQL Server via Entity Framework Core (provider auto-detected) |
+| **Database** | PostgreSQL via Entity Framework Core (in-memory for unit tests and kiosk mode) |
 | **Frontend** | React 19 + Vite + TypeScript, TanStack Query v5, React Router 7, Tailwind CSS 4 |
 | **Real-time** | Server-Sent Events (SSE) for live traces, test results, and proposals |
 | **Deployment** | Docker Compose (self-hosted) |
@@ -175,15 +175,14 @@ DI is wired with Autofac; each project ships a `Module : Autofac.Module`. See [C
 
 ### Database configuration
 
-Provider is auto-detected from the connection string in `Proxytrace.Api/appsettings.json`:
+Persistent storage is PostgreSQL only; set the connection string in `Proxytrace.Api/appsettings.json`:
 
-| Provider | Connection string pattern |
+| Mode | Connection string |
 |---|---|
-| SQLite | `Data Source=proxytrace.db` or `:memory:` |
-| PostgreSQL | contains `Host=` or `Port=` |
-| SQL Server | anything else |
+| PostgreSQL (debug/release/e2e) | `Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace` |
+| In-memory (unit tests/kiosk) | none — set `Kiosk:Enabled=true` |
 
-SQLite uses code-first initialization; migrations are supported for SQL Server and PostgreSQL. See [DATABASE.md](DATABASE.md) for details.
+PostgreSQL applies EF Core migrations on startup; the in-memory provider uses code-first initialization. See [DATABASE.md](DATABASE.md) for details.
 
 ---
 

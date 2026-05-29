@@ -11,7 +11,7 @@ services:
       - "5200:8080"
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Data Source=/tmp/proxytrace.db
+      # Kiosk mode uses in-memory storage; no database connection string is required.
       - Kiosk__Enabled=true
       - Self__BaseUrl=http://localhost:5200
       - Frontend__AllowedOrigin=http://localhost:5201

@@ -16,7 +16,8 @@ internal class OptimizationProposalRepository :
         IMapper<IOptimizationProposal, OptimizationProposalEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
+        IEntityEventService entityEvents,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
     }
 

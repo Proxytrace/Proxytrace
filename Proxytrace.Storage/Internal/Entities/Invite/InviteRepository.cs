@@ -13,7 +13,8 @@ internal class InviteRepository : AbstractRepository<IInvite, InviteEntity>, IIn
         IMapper<IInvite, InviteEntity> mapper,
         Func<StorageDbContext> context,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, context, transaction, entityEvents) { }
+        IEntityEventService entityEvents,
+        AmbientDbContext ambient) : base(mapper, context, transaction, entityEvents, ambient) { }
 
     public async Task<IInvite?> FindByTokenAsync(string token, CancellationToken cancellationToken = default)
     {

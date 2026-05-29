@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Transactions;
 using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -163,28 +162,25 @@ public sealed class CachedRepositoryTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task FindAsync_InsideTransactionScope_DoesNotPopulateCache()
+    public async Task FindAsync_InsideTransaction_DoesNotPopulateCache()
     {
         IServiceProvider services = GetServices();
         var repository = services.GetRequiredService<IRepository<IModel>>();
         var generator = services.GetRequiredService<IDomainEntityGenerator<IModel>>();
         var cache = services.GetRequiredService<IEntityCache<IModel>>();
+        var transaction = services.GetRequiredService<ITransaction>();
 
         IModel created = await generator.CreateAsync(CancellationToken);
         // Be sure the cache is empty for this id (CreateAsync invalidates after the write).
         cache.TryGet(created.Id).Should().BeNull();
 
-        // Read inside an ambient transaction that we explicitly do NOT complete.
-        using (new TransactionScope(
-                   TransactionScopeOption.Required,
-                   new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted },
-                   TransactionScopeAsyncFlowOption.Enabled))
+        // Read inside an active logical transaction. A value read while a transaction is in
+        // progress could reflect uncommitted writes, so it must never be promoted to the cache.
+        await transaction.InvokeAsync(async () =>
         {
             await repository.FindAsync(created.Id, CancellationToken);
-        }
+        });
 
-        // Cache must remain empty: a value loaded inside an uncompleted scope must never be
-        // promoted to the singleton cache, otherwise rolled-back data could leak.
         cache.TryGet(created.Id).Should().BeNull();
     }
 

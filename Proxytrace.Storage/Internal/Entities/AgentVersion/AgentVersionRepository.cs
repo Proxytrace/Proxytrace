@@ -21,7 +21,8 @@ internal class AgentVersionRepository : AbstractRepository<IAgentVersion, AgentV
         ITransaction transaction,
         IEntityEventService entityEvents,
         IAgentVersionFingerprinter fingerprinter,
-        IEntityCache<IAgentVersion> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        IEntityCache<IAgentVersion> cache,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
         this.fingerprinter = fingerprinter;
     }

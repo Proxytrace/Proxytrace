@@ -25,7 +25,8 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         IModelRepository models,
         IAsyncLock locker,
         IModelEndpoint.CreateNew createNewEndpoint,
-        IEntityCache<IModelEndpoint> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        IEntityCache<IModelEndpoint> cache,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
         this.models = models;
         this.locker = locker;

@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +74,10 @@ public sealed class Module : Autofac.Module
         ConfigureEntities(builder);
         ConfigureEntity(typeof(TestSuiteEvaluatorEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
+
+        builder.RegisterType<AmbientDbContext>()
+            .AsSelf()
+            .InstancePerLifetimeScope();
 
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
@@ -175,26 +178,18 @@ public sealed class Module : Autofac.Module
                 // cosmetic metadata mismatch that the tools and runtime resolve differently.
                 b.Ignore(RelationalEventId.PendingModelChangesWarning);
 
-                // SQLite doesn't support ambient transactions
-                if (configuration is SqliteConfiguration)
-                    b.Ignore(RelationalEventId.AmbientTransactionWarning);
+                // The in-memory provider has no real transactions; silence the warning so the
+                // single EF transaction path (used by ITransaction) is a no-op under unit tests.
+                if (configuration is InMemoryConfiguration)
+                    b.Ignore(InMemoryEventId.TransactionIgnoredWarning);
             });
 
         switch (configuration)
         {
-            case SqlServerConfiguration sqlServer:
-                options.UseSqlServer(sqlServer.ConnectionString,
-                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
-                break;
             case PostgresConfiguration postgres:
                 options.UseNpgsql(postgres.ConnectionString,
                     npgsqlOptions =>
                         npgsqlOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
-                break;
-            case SqliteConfiguration sqlite:
-                options.UseSqlite(NormalizeSqliteConnectionString(sqlite.ConnectionString),
-                    sqliteOptions =>
-                        sqliteOptions.MigrationsAssembly(typeof(StorageDbContext).Assembly.GetName().Name));
                 break;
             case InMemoryConfiguration inMemory:
                 options.UseInMemoryDatabase(Guid.NewGuid() + inMemory.Name);
@@ -203,18 +198,5 @@ public sealed class Module : Autofac.Module
                 throw new NotSupportedException(
                     $"Storage configuration of type {configuration.GetType().Name} is not supported");
         }
-    }
-
-    // Sets a 30s busy_timeout via DefaultTimeout so concurrent writers wait for the
-    // page lock instead of failing immediately with SQLITE_BUSY ("database is locked").
-    // WAL journal_mode is set once at init in DatabaseInitializationService.
-    private static string NormalizeSqliteConnectionString(string connectionString)
-    {
-        var builder = new SqliteConnectionStringBuilder(connectionString)
-        {
-            DefaultTimeout = 30,
-            Pooling = true,
-        };
-        return builder.ToString();
     }
 }

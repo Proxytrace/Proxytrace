@@ -1,7 +1,4 @@
-﻿using System.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -34,18 +31,10 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<StorageDbContext>();
 
-        if (configuration is SqliteConfiguration)
-        {
-            await ResetLegacySqliteDatabaseAsync(context, cancellationToken);
-            await EnableSqliteWalAsync(context, cancellationToken);
-        }
-
-        if (!configuration.SupportsMigrations || configuration.UseEnsureCreated)
+        if (!configuration.SupportsMigrations)
         {
             logger.LogInformation(
-                configuration.UseEnsureCreated
-                    ? "UseEnsureCreated is set. Building schema from the EF model via EnsureCreatedAsync."
-                    : "Storage provider does not support migrations. Using EnsureCreatedAsync.");
+                "Storage provider does not support migrations. Using EnsureCreatedAsync.");
             await context.Database.EnsureCreatedAsync(cancellationToken);
             logger.LogInformation("Database initialization completed successfully");
             return;
@@ -57,74 +46,6 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         logger.LogInformation("Database initialization completed successfully");
     }
 
-    // Enable WAL journal mode so readers do not block writers and concurrent writers
-    // (combined with busy_timeout from the connection string) wait for the lock instead
-    // of failing immediately with SQLITE_BUSY. journal_mode=WAL is persisted in the DB
-    // header; synchronous=NORMAL is per-connection but safe and standard for WAL.
-    private async Task EnableSqliteWalAsync(StorageDbContext context, CancellationToken cancellationToken)
-    {
-        await context.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
-        await context.Database.ExecuteSqlRawAsync("PRAGMA synchronous=NORMAL;", cancellationToken);
-    }
-
-    /// <summary>
-    /// Legacy SQLite databases were created via <c>EnsureCreatedAsync</c> and have no
-    /// <c>__EFMigrationsHistory</c> table. Their schema reflects whatever model existed at
-    /// creation time, which cannot be mapped reliably to a known migration ID. Drop all user
-    /// tables so <c>MigrateAsync</c> can rebuild the schema from scratch.
-    /// </summary>
-    private async Task ResetLegacySqliteDatabaseAsync(StorageDbContext context, CancellationToken cancellationToken)
-    {
-        var historyRepo = context.GetService<IHistoryRepository>();
-
-        if (await historyRepo.ExistsAsync(cancellationToken))
-        {
-            return;
-        }
-
-        var connection = context.Database.GetDbConnection();
-        if (connection.State != ConnectionState.Open)
-        {
-            await connection.OpenAsync(cancellationToken);
-        }
-
-        var tables = new List<string>();
-        await using (var cmd = connection.CreateCommand())
-        {
-            cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'";
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                tables.Add(reader.GetString(0));
-            }
-        }
-
-        if (tables.Count == 0)
-        {
-            // Fresh DB — let MigrateAsync handle everything.
-            return;
-        }
-
-        logger.LogWarning(
-            "Legacy SQLite database detected (no migrations history). Dropping {Count} table(s) so migrations can rebuild the schema. Local data will be lost.",
-            tables.Count);
-
-        await context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = OFF", cancellationToken);
-        try
-        {
-            foreach (var table in tables)
-            {
-                var quoted = "\"" + table.Replace("\"", "\"\"") + "\"";
-                var sql = "DROP TABLE IF EXISTS " + quoted;
-                await context.Database.ExecuteSqlRawAsync(sql, cancellationToken);
-            }
-        }
-        finally
-        {
-            await context.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON", cancellationToken);
-        }
-    }
-
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -132,7 +53,7 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
         {
             return;
         }
-        
+
         try
         {
             await EnsureDatabaseReadyAsync(cancellationToken);
@@ -147,5 +68,4 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
     /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
-
 }

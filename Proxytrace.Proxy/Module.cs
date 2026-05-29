@@ -43,7 +43,7 @@ internal sealed class Module : Autofac.Module
         // Storage in read-only / no-init mode: repositories without app services or schema init.
         var connectionString = configuration.GetConnectionString("Default")
                                ?? throw new InvalidOperationException("Connection string 'Default' is required.");
-        StorageConfiguration storageConfig = DetermineStorageConfiguration(connectionString);
+        StorageConfiguration storageConfig = StorageConfiguration.Postgres(connectionString);
         builder.RegisterModule(new Storage.Module(_ => storageConfig, registerApplicationServices: false));
 
         // The storage model-building graph references IAgentNameGenerator (implemented in the
@@ -89,25 +89,4 @@ internal sealed class Module : Autofac.Module
         };
     }
 
-    private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
-    {
-        if (IsPostgresConnectionString(connectionString))
-        {
-            return StorageConfiguration.Postgres(connectionString);
-        }
-
-        return IsSqliteConnectionString(connectionString)
-            ? StorageConfiguration.Sqlite(connectionString)
-            : StorageConfiguration.SqlServer(connectionString);
-    }
-
-    private static bool IsPostgresConnectionString(string connectionString)
-        => connectionString.Contains("host=", StringComparison.OrdinalIgnoreCase)
-           || connectionString.Contains("port=", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsSqliteConnectionString(string connectionString)
-        => connectionString.Contains("data source=", StringComparison.OrdinalIgnoreCase)
-           && (connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase)
-               || connectionString.Contains(".sqlite", StringComparison.OrdinalIgnoreCase)
-               || connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase));
 }

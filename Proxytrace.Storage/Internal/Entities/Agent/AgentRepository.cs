@@ -43,7 +43,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         IAgentVersionRepository versionQueries,
         IAgentVersionFingerprinter fingerprinter,
         IEntityCache<IAgent> cache,
-        IEntityCache<IAgentVersion>? versionCache = null) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        AmbientDbContext ambient,
+        IEntityCache<IAgentVersion>? versionCache = null) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
         this.createNew = createNew;
         this.versionMapper = versionMapper;
@@ -155,7 +156,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             Validator.ValidateObject(agent, new ValidationContext(agent), validateAllProperties: true);
             Validator.ValidateObject(versionDomain, new ValidationContext(versionDomain), validateAllProperties: true);
 
-            var ctx = contextFactory();
+            var ctx = ambient.RequireContext();
             var agentEntity = await mapper.Map(agent, cancellationToken);
             agentEntity = agentEntity with { CurrentVersionId = versionDomain.Id };
             var versionEntity = await versionMapper.Value.Map(versionDomain, cancellationToken);
@@ -175,7 +176,7 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
     private Task SetCurrentVersionIdAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken)
         => transaction.InvokeAsync(async () =>
         {
-            var ctx = contextFactory();
+            var ctx = ambient.RequireContext();
             var stored = await ctx.Set<AgentEntity>().FirstAsync(a => a.Id == agentId, cancellationToken);
             ctx.Entry(stored).Property(e => e.CurrentVersionId).CurrentValue = versionId;
             ctx.Entry(stored).Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;

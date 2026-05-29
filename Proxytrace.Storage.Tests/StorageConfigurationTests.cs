@@ -31,63 +31,62 @@ public sealed class StorageConfigurationTests
     }
 
     [TestMethod]
-    public void SqlServer_WithConnectionString_CreatesSqlServerConfiguration()
+    public void Postgres_WithConnectionString_CreatesPostgresConfiguration()
     {
         // Arrange
-        var connectionString = "Server=localhost;Database=TestDb;";
+        var connectionString = "Host=localhost;Port=5432;Database=TestDb;Username=u;Password=p";
 
         // Act
-        var config = StorageConfiguration.SqlServer(connectionString);
+        var config = StorageConfiguration.Postgres(connectionString);
 
         // Assert
         config.Should().NotBeNull();
-        config.Should().BeOfType<SqlServerConfiguration>();
+        config.Should().BeOfType<PostgresConfiguration>();
         config.CryptographyKeyBase64.Should().BeNull();
     }
 
     [TestMethod]
-    public void SqlServer_WithConnectionStringAndCryptographyKey_CreatesSqlServerConfiguration()
+    public void Postgres_WithCryptographyKey_StoresKey()
     {
         // Arrange
-        var connectionString = "Server=localhost;Database=TestDb;";
+        var connectionString = "Host=localhost;Port=5432;Database=TestDb;Username=u;Password=p";
         var cryptographyKey = "dGVzdC1jcnlwdG9ncmFwaHkta2V5";
 
         // Act
-        var config = StorageConfiguration.SqlServer(connectionString, cryptographyKey);
+        var config = StorageConfiguration.Postgres(connectionString, cryptographyKey);
 
         // Assert
-        config.Should().NotBeNull();
-        config.Should().BeOfType<SqlServerConfiguration>();
+        config.Should().BeOfType<PostgresConfiguration>();
         config.CryptographyKeyBase64.Should().Be(cryptographyKey);
     }
 
     [TestMethod]
-    public void SqlServer_SupportsMigrations()
+    public void Postgres_SupportsMigrations()
     {
         // Arrange
-        var connectionString = "Server=localhost;Database=TestDb;";
+        var connectionString = "Host=localhost;Port=5432;Database=TestDb;Username=u;Password=p";
 
         // Act
-        var config = StorageConfiguration.SqlServer(connectionString);
+        var config = StorageConfiguration.Postgres(connectionString);
 
         // Assert
-        var sqlServerConfig = config as SqlServerConfiguration;
-        sqlServerConfig.Should().NotBeNull();
-        sqlServerConfig.SupportsMigrations.Should().BeTrue();
+        var postgresConfig = config as PostgresConfiguration;
+        postgresConfig.Should().NotBeNull();
+        postgresConfig.SupportsMigrations.Should().BeTrue();
     }
 
     [TestMethod]
-    public void SqlServer_StoresConnectionString()
+    public void Postgres_StoresConnectionString()
     {
         // Arrange
-        var connectionString = "Server=localhost;Database=TestDb;Integrated Security=true;";
+        var connectionString = "Host=localhost;Port=5432;Database=TestDb;Username=u;Password=p";
 
         // Act
-        var config = StorageConfiguration.SqlServer(connectionString);
+        var config = StorageConfiguration.Postgres(connectionString);
 
         // Assert
-        var sqlServerConfig = config as SqlServerConfiguration;
-        sqlServerConfig.Should().NotBeNull();
-        sqlServerConfig.ConnectionString.Should().Be(connectionString);
+        var postgresConfig = config as PostgresConfiguration;
+        postgresConfig.Should().NotBeNull();
+        postgresConfig.ConnectionString.Should().Be(connectionString);
     }
 }

@@ -13,7 +13,8 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
         IMapper<IEvaluator, EvaluatorEntity> mapper,
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, contextFactory, transaction, entityEvents)
+        IEntityEventService entityEvents,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
     }
 

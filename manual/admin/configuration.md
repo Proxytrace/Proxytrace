@@ -15,18 +15,18 @@ override file values.
 
 ### Database connection string
 
-The provider is auto-detected from the connection string. Set it under
-`ConnectionStrings:Default`:
+Persistent storage is PostgreSQL only. Set it under `ConnectionStrings:Default`:
 
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Data Source=proxytrace.db"
+    "Default": "Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace"
   }
 }
 ```
 
-See [Database](/admin/database) for provider patterns and details.
+In kiosk mode (`Kiosk:Enabled=true`) the connection string is ignored and in-memory storage is
+used instead. See [Database](/admin/database) for details.
 
 ### Frontend origin (CORS)
 

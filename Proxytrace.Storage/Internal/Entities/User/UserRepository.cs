@@ -13,7 +13,8 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
         IMapper<IUser, UserEntity> mapper,
         Func<StorageDbContext> context,
         ITransaction transaction,
-        IEntityEventService entityEvents) : base(mapper, context, transaction, entityEvents) { }
+        IEntityEventService entityEvents,
+        AmbientDbContext ambient) : base(mapper, context, transaction, entityEvents, ambient) { }
 
     public async Task<IUser?> FindByExternalSubjectAsync(string externalSubject, CancellationToken cancellationToken = default)
     {

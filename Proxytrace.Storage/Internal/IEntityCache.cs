@@ -7,8 +7,8 @@ namespace Proxytrace.Storage.Internal;
 /// storage entities marked with <see cref="CacheableAttribute"/>.
 ///
 /// Callers (in practice <see cref="AbstractRepository{TDomainEntity,TStoredEntity}"/>) are
-/// responsible for transaction safety: do not read from or populate the cache while
-/// <c>System.Transactions.Transaction.Current</c> is non-null. Invalidation is always safe.
+/// responsible for transaction safety: do not read from or populate the cache while an
+/// <see cref="AmbientDbContext"/> transaction is active. Invalidation is always safe.
 /// </summary>
 internal interface IEntityCache<TDomainEntity> where TDomainEntity : IDomainEntity
 {

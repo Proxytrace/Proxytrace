@@ -1,81 +1,47 @@
 # Database
 
-Proxytrace supports multiple database providers. The provider is **auto-detected** from the
-connection string format in `Proxytrace.Api/appsettings.json` (see
-[Configuration](/admin/configuration)).
+Proxytrace uses **PostgreSQL** for all persistent deployments and an **in-memory** store for
+kiosk (single-process demo) mode and unit tests. SQLite and SQL Server are no longer supported.
 
-## Supported providers
+## Storage modes
 
-| Provider | Detected when the connection string… | Notes |
+| Mode | Selected when | Notes |
 |---|---|---|
-| **SQLite** | contains `Data Source=` with `.db`, `.sqlite`, or `:memory:` | Zero-config; default for local dev. |
-| **PostgreSQL** | contains `Host=` or `Port=` | |
-| **SQL Server** | matches neither of the above | The default fallback provider. |
-
-### SQLite (recommended for development)
-
-File-based, no server to install.
-
-```json
-{
-  "ConnectionStrings": {
-    "Default": "Data Source=proxytrace.db"
-  }
-}
-```
-
-In-memory (data lost on shutdown):
-
-```json
-{
-  "ConnectionStrings": {
-    "Default": "Data Source=:memory:"
-  }
-}
-```
-
-The `proxytrace.db` file is created automatically in the API directory on first run.
+| **PostgreSQL** | non-kiosk runs (connection string in `Proxytrace.Api/appsettings.json`) | Schema applied via EF Core migrations on startup. |
+| **In-memory** | `Kiosk:Enabled=true` | No connection string needed; data lost on shutdown. |
 
 ### PostgreSQL
 
 ```json
 {
   "ConnectionStrings": {
-    "Default": "Host=localhost;Database=Proxytrace;Username=postgres;Password=yourpassword"
+    "Default": "Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace"
   }
 }
 ```
 
-### SQL Server
+The repository's `docker-compose.yml` ships a ready-to-use PostgreSQL service.
 
-```json
-{
-  "ConnectionStrings": {
-    "Default": "Server=localhost;Database=Proxytrace;Trusted_Connection=True;TrustServerCertificate=True;"
-  }
-}
-```
+### In-memory (kiosk mode)
+
+Set `Kiosk:Enabled=true` (see [Configuration](/admin/configuration)). No database connection is
+required; all data is discarded when the process stops.
 
 ## Migrations
 
-The API automatically applies pending migrations on startup for all providers that support
-them (SQL Server, PostgreSQL, and SQLite). To create and apply migrations manually, run
-from the `Proxytrace.Storage` directory:
+Migrations target **PostgreSQL only** and are applied automatically on API startup
+(`MigrateAsync`). To create or apply them manually, supply a PostgreSQL connection string at
+design time:
 
 ```bash
-cd Proxytrace.Storage
-dotnet ef migrations add MigrationName
-dotnet ef database update
+ConnectionStrings__Default="Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace" \
+  dotnet ef migrations add MigrationName \
+  --project Proxytrace.Storage --startup-project Proxytrace.Api
+
+dotnet ef database update --project Proxytrace.Storage --startup-project Proxytrace.Api
 ```
 
 ::: tip
-SQLite uses code-first initialization in addition to migration support; for local
-development you generally don't need to touch migrations at all.
+For local experimentation without a database, run in kiosk mode — it uses in-memory storage and
+needs no migrations.
 :::
-
-## Quick start with SQLite
-
-1. Set `ConnectionStrings:Default` to `Data Source=proxytrace.db`.
-2. Run the API: `cd Proxytrace.Api && dotnet run`.
-
-The database file is created automatically.
