@@ -10,7 +10,7 @@ export default defineConfig({
   cleanUrls: false,
   appearance: 'force-dark',
   lang: 'en-US',
-  lastUpdated: true,
+  lastUpdated: false,
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
     ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/icon-32.png' }],

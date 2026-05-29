@@ -52,6 +52,12 @@ internal sealed class Module : Autofac.Module
             .As<Proxytrace.Domain.Agent.IAgentNameGenerator>()
             .SingleInstance();
 
+        // Reconstituting a ModelProvider domain entity (during API-key resolution) needs an
+        // IProviderClient.Factory. The proxy never calls CreateClient, so a stub suffices and lets
+        // Autofac auto-generate the delegate factory without pulling in Infrastructure.Module.
+        builder.RegisterType<UnusedProviderClient>()
+            .As<Proxytrace.Domain.ModelProvider.IProviderClient>();
+
         var cacheTtlSeconds = configuration.GetSection("ApiKeyCache").GetValue<int?>("TtlSeconds") ?? 30;
         builder.Register(ctx => new CachedApiKeyResolver(
                 ctx.Resolve<IApiKeyRepository>(),

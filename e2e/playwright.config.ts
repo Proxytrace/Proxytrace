@@ -42,13 +42,24 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     {
-      name: 'llm',
-      testMatch: /ingestion\.spec\.ts|test-run\.spec\.ts/,
+      name: 'llm-ingestion',
+      testMatch: /ingestion\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: '.auth/storageState.json',
       },
       dependencies: ['setup'],
+    },
+    {
+      // test-run.spec relies on an agent, which only exists once a call has been ingested.
+      // Depend on the ingestion project so it always runs first, even with multiple workers.
+      name: 'llm-test-run',
+      testMatch: /test-run\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/storageState.json',
+      },
+      dependencies: ['llm-ingestion'],
     },
   ],
 });

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Proxytrace.Storage;
 
@@ -10,9 +11,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529103720_PendingModelSync")]
+    partial class PendingModelSync
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
@@ -60,7 +63,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Project");
 
-                    b.ToTable("AgentEntity", (string)null);
+                    b.ToTable("AgentEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallEntity", b =>
@@ -127,7 +130,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("EndpointId");
 
-                    b.ToTable("AgentCallEntity", (string)null);
+                    b.ToTable("AgentCallEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", b =>
@@ -183,7 +186,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Project", "LooseFingerprint");
 
-                    b.ToTable("AgentVersionEntity", (string)null);
+                    b.ToTable("AgentVersionEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ApiKey.ApiKeyEntity", b =>
@@ -225,7 +228,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Provider");
 
-                    b.ToTable("ApiKeyEntity", (string)null);
+                    b.ToTable("ApiKeyEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Evaluator.EvaluatorEntity", b =>
@@ -256,7 +259,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Kind");
 
-                    b.ToTable("EvaluatorEntity", (string)null);
+                    b.ToTable("EvaluatorEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Invite.InviteEntity", b =>
@@ -303,7 +306,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Token")
                         .IsUnique();
 
-                    b.ToTable("InviteEntity", (string)null);
+                    b.ToTable("InviteEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Model.ModelEntity", b =>
@@ -330,7 +333,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("ModelEntity", (string)null);
+                    b.ToTable("ModelEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", b =>
@@ -368,7 +371,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Model", "Provider")
                         .IsUnique();
 
-                    b.ToTable("ModelEndpointEntity", (string)null);
+                    b.ToTable("ModelEndpointEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ModelProvider.ModelProviderEntity", b =>
@@ -410,7 +413,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("ModelProviderEntity", (string)null);
+                    b.ToTable("ModelProviderEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", b =>
@@ -477,7 +480,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Agent", "ContentHash");
 
-                    b.ToTable("OptimizationProposalEntity", (string)null);
+                    b.ToTable("OptimizationProposalEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>
@@ -508,7 +511,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("SystemEndpoint");
 
-                    b.ToTable("ProjectEntity", (string)null);
+                    b.ToTable("ProjectEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectUserEntity", b =>
@@ -523,7 +526,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectUserEntity", (string)null);
+                    b.ToTable("ProjectUserEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ProjectSearchSettings.ProjectSearchSettingsEntity", b =>
@@ -562,7 +565,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Project")
                         .IsUnique();
 
-                    b.ToTable("ProjectSearchSettingsEntity", (string)null);
+                    b.ToTable("ProjectSearchSettingsEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Statistics.TestRunStatsEntity", b =>
@@ -631,7 +634,7 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("TestRunId")
                         .IsUnique();
 
-                    b.ToTable("TestRunStatsEntity", (string)null);
+                    b.ToTable("TestRunStatsEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestCase.TestCaseEntity", b =>
@@ -658,7 +661,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TestCaseEntity", (string)null);
+                    b.ToTable("TestCaseEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestResult.TestResultEntity", b =>
@@ -699,7 +702,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("TestCase");
 
-                    b.ToTable("TestResultEntity", (string)null);
+                    b.ToTable("TestResultEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRun.TestRunEntity", b =>
@@ -738,7 +741,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Group");
 
-                    b.ToTable("TestRunEntity", (string)null);
+                    b.ToTable("TestRunEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunGroup.TestRunGroupEntity", b =>
@@ -768,7 +771,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Suite");
 
-                    b.ToTable("TestRunGroupEntity", (string)null);
+                    b.ToTable("TestRunGroupEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>
@@ -800,7 +803,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("Agent");
 
-                    b.ToTable("TestSuiteEntity", (string)null);
+                    b.ToTable("TestSuiteEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEvaluatorEntity", b =>
@@ -815,7 +818,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("EvaluatorId");
 
-                    b.ToTable("TestSuiteEvaluatorEntity", (string)null);
+                    b.ToTable("TestSuiteEvaluatorEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.User.UserEntity", b =>
@@ -854,7 +857,7 @@ namespace Proxytrace.Storage.Migrations
                         .IsUnique()
                         .HasFilter("\"ExternalSubject\" IS NOT NULL");
 
-                    b.ToTable("UserEntity", (string)null);
+                    b.ToTable("UserEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", b =>

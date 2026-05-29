@@ -19,19 +19,27 @@ test.describe('@llm ingestion via proxy', () => {
     authToken = token;
     api.setToken(token);
 
-    const result = await api.completeSetup({
-      providerName: 'E2E LLM Provider',
-      providerEndpoint: UPSTREAM_ENDPOINT,
-      providerUpstreamApiKey: process.env.OPENAI_API_KEY!,
-      providerKind: PROVIDER_KIND,
-      modelName: LLM_MODEL,
-      projectName: 'E2E LLM Project',
-      apiKeyName: 'e2e-llm-key',
+    // Setup already created a default project in auth.setup.spec.ts.
+    // Create a dedicated real LLM provider and issue a proxy API key for it.
+    const projects = await api.getProjects();
+    const projectId = projects.items[0].id;
+
+    const provider = await api.createProvider({
+      name: 'E2E LLM Provider',
+      endpoint: UPSTREAM_ENDPOINT,
+      upstreamApiKey: process.env.OPENAI_API_KEY!,
+      kind: PROVIDER_KIND,
     });
-    proxyApiKey = result.apiKeyValue;
+
+    const key = await api.createProviderApiKey(provider.id, 'e2e-llm-key', projectId);
+    proxyApiKey = key.keyValue;
   });
 
   test('trace appears in UI after proxy request', async ({ page, request }) => {
+    // The proxy call makes a real LLM round-trip and then we poll up to 30 s for the
+    // trace to be ingested, so the test timeout must comfortably exceed the poll window.
+    test.setTimeout(90_000);
+
     const api = new ProxytraceApiClient(request);
     api.setToken(authToken);
     const before = await api.getAgentCalls({ pageSize: 1 });
@@ -45,8 +53,15 @@ test.describe('@llm ingestion via proxy', () => {
       },
       data: {
         model: LLM_MODEL,
-        messages: [{ role: 'user', content: 'Reply with exactly: pong' }],
-        max_tokens: 10,
+        // A system message is required: the ingestion parser keys agent identity on the
+        // system prompt and silently drops any captured call that lacks one.
+        messages: [
+          { role: 'system', content: 'You are a terse test assistant.' },
+          { role: 'user', content: 'Reply with exactly: pong' },
+        ],
+        // Newer models (gpt-5.x) reject the deprecated `max_tokens`; `max_completion_tokens`
+        // is accepted by all current OpenAI/Azure chat-completion models.
+        max_completion_tokens: 50,
       },
     });
     expect(proxyRes.ok(), `proxy returned ${proxyRes.status()}: ${await proxyRes.text()}`).toBeTruthy();

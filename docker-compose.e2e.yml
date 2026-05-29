@@ -7,6 +7,11 @@ name: proxytrace-e2e
 
 services:
   postgres:
+    ports: !reset
+      - "5433:5432"
+    # Starting a test-run group wraps work in a TransactionScope that promotes to a 2-phase
+    # (prepared) transaction; Npgsql needs max_prepared_transactions > 0 (default is 0).
+    command: ["postgres", "-c", "max_prepared_transactions=10"]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U proxytrace -d proxytrace"]
       interval: 5s
@@ -14,9 +19,12 @@ services:
       retries: 10
       start_period: 5s
 
+  redis:
+    ports: !reset []
+
   api:
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -29,10 +37,14 @@ services:
     environment:
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
+      # The committed migration history is SQLite-typed and produces wrong column types on
+      # postgres (e.g. bool -> integer). The e2e DB is ephemeral (down -v each run), so build
+      # the schema directly from the EF model instead of applying migrations.
+      - Storage__UseEnsureCreated=true
 
   proxy:
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q 200 <&3'"]
       interval: 5s
       timeout: 5s
       retries: 20

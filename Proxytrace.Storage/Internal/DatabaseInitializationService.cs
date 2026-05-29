@@ -40,9 +40,12 @@ internal class DatabaseInitializationService : IHostedService, IDatabaseInitiali
             await EnableSqliteWalAsync(context, cancellationToken);
         }
 
-        if (!configuration.SupportsMigrations)
+        if (!configuration.SupportsMigrations || configuration.UseEnsureCreated)
         {
-            logger.LogInformation("Storage provider does not support migrations. Using EnsureCreatedAsync.");
+            logger.LogInformation(
+                configuration.UseEnsureCreated
+                    ? "UseEnsureCreated is set. Building schema from the EF model via EnsureCreatedAsync."
+                    : "Storage provider does not support migrations. Using EnsureCreatedAsync.");
             await context.Database.EnsureCreatedAsync(cancellationToken);
             logger.LogInformation("Database initialization completed successfully");
             return;

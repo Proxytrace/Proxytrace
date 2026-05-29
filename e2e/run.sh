@@ -16,7 +16,7 @@ $COMPOSE up --build -d --wait
 echo "==> Running Playwright tests..."
 cd "$SCRIPT_DIR"
 npm install --silent
-npx playwright install chromium --with-deps
+npx playwright install chromium
 
 EXIT_CODE=0
 npx playwright test "$@" || EXIT_CODE=$?

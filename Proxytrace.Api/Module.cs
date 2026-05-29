@@ -88,7 +88,8 @@ internal sealed class Module : Autofac.Module
         {
             var connectionString = configuration.GetConnectionString("Default")
                                    ?? throw new InvalidOperationException("Connection string 'Default' is required.");
-            storageConfig = DetermineStorageConfiguration(connectionString);
+            var useEnsureCreated = configuration.GetSection("Storage").GetValue<bool>("UseEnsureCreated");
+            storageConfig = DetermineStorageConfiguration(connectionString, useEnsureCreated);
         }
 
         builder.RegisterModule(new Storage.Module(_ => storageConfig));
@@ -227,16 +228,18 @@ internal sealed class Module : Autofac.Module
         };
     }
 
-    private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
+    private static StorageConfiguration DetermineStorageConfiguration(
+        string connectionString,
+        bool useEnsureCreated)
     {
         if (IsPostgresConnectionString(connectionString))
         {
-            return StorageConfiguration.Postgres(connectionString);
+            return StorageConfiguration.Postgres(connectionString, useEnsureCreated: useEnsureCreated);
         }
 
         return IsSqliteConnectionString(connectionString)
             ? StorageConfiguration.Sqlite(connectionString)
-            : StorageConfiguration.SqlServer(connectionString);
+            : StorageConfiguration.SqlServer(connectionString, useEnsureCreated: useEnsureCreated);
     }
 
     // Npgsql connection strings use "Host=" whereas SQL Server uses "Server=" / "Data Source="
