@@ -6,6 +6,7 @@ using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Application.TestRun;
+using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
@@ -23,6 +24,7 @@ using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.Tools;
+using Proxytrace.Application.Demo;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests.Optimization;
@@ -50,20 +52,43 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
 
             var endpoint = Substitute.For<IModelEndpoint>();
             var model = Substitute.For<IModel>();
+            model.Id.Returns(Guid.NewGuid());
             model.Name.Returns(configuration.Model);
 
             var provider = Substitute.For<IModelProvider>();
+            provider.Name.Returns("Test");
+            provider.Id.Returns(Guid.NewGuid());
             provider.ApiKey.Returns(configuration.ApiKey);
             provider.Endpoint.Returns(new Uri(configuration.Endpoint));
+            provider.Kind.Returns(ModelProviderKind.OpenAiCompatible);
 
+            endpoint.Id.Returns(Guid.NewGuid());
             endpoint.Model.Returns(model);
             endpoint.Provider.Returns(provider);
 
             builder.RegisterInstance(endpoint);
 
             var project = Substitute.For<IProject>();
+            project.Name.Returns("Test Project");
+            project.Id.Returns(Guid.NewGuid());
             project.SystemEndpoint.Returns(endpoint);
+            project.Members.Returns(Array.Empty<Domain.User.IUser>());
             builder.RegisterInstance(project);
+
+            builder.RegisterBuildCallback(async c =>
+            {
+                var models = c.Resolve<IRepository<IModel>>();
+                await models.AddAsync(model);
+
+                var modelproviders = c.Resolve<IRepository<IModelProvider>>();
+                await modelproviders.AddAsync(provider);
+
+                var endpoints = c.Resolve<IRepository<IModelEndpoint>>();
+                await endpoints.AddAsync(endpoint);
+
+                var projects = c.Resolve<IRepository<IProject>>();
+                await projects.AddAsync(project);
+            });
         }
 
         builder.RegisterInstance(statsReader)
@@ -71,6 +96,11 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
 
         builder.RegisterInstance(testRunnerService)
             .As<ITestRunnerService>();
+
+        builder.RegisterInstance(new KioskOptions()).AsSelf().SingleInstance();
+        builder.RegisterType<Proxytrace.Infrastructure.Internal.ModelClient>()
+            .As<IModelClient>()
+            .AsSelf();
     }
 
     /// <summary>
