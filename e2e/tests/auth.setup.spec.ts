@@ -14,10 +14,11 @@ setup('create first admin and persist session', async ({ page, request }) => {
   const { token } = await api.setupAdmin(ADMIN_EMAIL, ADMIN_PASSWORD);
   expect(token).toBeTruthy();
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  // Use 'load' not 'networkidle' — SSE connections never reach network idle.
+  await page.goto('/', { waitUntil: 'load' });
   await page.evaluate((t) => localStorage.setItem('proxytrace.token', t), token);
   // Reload so the app reads the token from localStorage and routes away from login.
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'load' });
   await expect(page).not.toHaveURL(/\/login/);
 
   await page.context().storageState({ path: AUTH_FILE });

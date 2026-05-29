@@ -32,7 +32,7 @@ test.describe('@llm test run', () => {
     ).toMatch(/Completed|Failed/);
 
     // Run appears in the Runs UI.
-    await page.goto('/runs', { waitUntil: 'networkidle' });
+    await page.goto('/runs', { waitUntil: 'load' });
     await expect(page.getByText('E2E Suite')).toBeVisible({ timeout: 10_000 });
   });
 });

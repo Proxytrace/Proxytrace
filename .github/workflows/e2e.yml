@@ -38,7 +38,7 @@ jobs:
         working-directory: e2e
 
       - name: Run core + smoke tests
-        run: npx playwright test --project=core --project=setup --project=smoke
+        run: npx playwright test --project=core --project=smoke
         working-directory: e2e
 
       - name: Run LLM tests

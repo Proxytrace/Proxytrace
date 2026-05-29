@@ -57,7 +57,7 @@ test.describe('@llm ingestion via proxy', () => {
     ).toBe(true);
 
     // Verify trace visible in Traces UI.
-    await page.goto('/traces', { waitUntil: 'networkidle' });
+    await page.goto('/traces', { waitUntil: 'load' });
     await expect(page.getByText('gpt-4o-mini')).toBeVisible({ timeout: 10_000 });
   });
 });

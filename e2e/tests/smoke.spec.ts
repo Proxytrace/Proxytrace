@@ -17,7 +17,7 @@ for (const { path, label } of ROUTES) {
     });
     page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.goto(path, { waitUntil: 'networkidle' });
+    await page.goto(path, { waitUntil: 'load' });
     await expect(page).not.toHaveURL(/\/login/);
     await expect(page.getByRole('navigation')).toBeVisible();
     expect(errors, `console errors on ${path}: ${errors.join('; ')}`).toHaveLength(0);
