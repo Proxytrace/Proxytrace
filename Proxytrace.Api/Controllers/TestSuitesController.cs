@@ -5,7 +5,6 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
-using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;

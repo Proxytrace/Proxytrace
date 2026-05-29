@@ -1,7 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 using Proxytrace.Api.Kiosk;
 using Proxytrace.Api.Middleware;

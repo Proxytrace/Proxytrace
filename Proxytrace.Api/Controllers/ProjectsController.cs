@@ -159,7 +159,7 @@ public class ProjectsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (memberIds is null || memberIds.Count == 0)
-            return Array.Empty<IUser>();
+            return [];
 
         var distinct = memberIds.Distinct().ToArray();
         foreach (var userId in distinct)

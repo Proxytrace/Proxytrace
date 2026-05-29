@@ -1,7 +1,6 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;

@@ -70,7 +70,7 @@ internal class OptimizationProposalConfig :
         var agent = await agents.GetAsync(stored.Agent, cancellationToken);
         var abTestRun = await testRuns.GetAsync(stored.ABTestRun, cancellationToken);
         var evidenceTestRunIds = serializer.Deserialize<IReadOnlyCollection<Guid>>(stored.EvidenceTestRunIds)
-                                 ?? Array.Empty<Guid>();
+                                 ?? [];
 
         return stored.Kind switch
         {

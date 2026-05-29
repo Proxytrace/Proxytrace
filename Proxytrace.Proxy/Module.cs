@@ -1,5 +1,4 @@
 using Autofac;
-using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Demo;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain.ApiKey;

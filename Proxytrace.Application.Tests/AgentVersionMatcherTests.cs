@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
@@ -36,7 +35,7 @@ public class AgentVersionMatcherTests : BaseTest<Module>
         var match = await matcher.FindSimilarVersionAsync(project, v2Prompt, tools, CancellationToken);
 
         match.Should().NotBeNull();
-        match!.SystemPrompt.Template.Should().Be(v1Prompt.Template);
+        match.SystemPrompt.Template.Should().Be(v1Prompt.Template);
     }
 
     [TestMethod]

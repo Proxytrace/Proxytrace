@@ -6,8 +6,6 @@ using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Application.Statistics;
-using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.AgentCall;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -32,15 +30,16 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 ModelBreakdown: [new ModelBreakdownStat(endpointId, "gpt-4o", CallCount: 3, TotalInputTokens: null, TotalOutputTokens: null, AvgDurationMs: null)],
                 TokenUsage: [new TokenUsageStat(date, endpointId, InputTokens: 10, OutputTokens: 20)],
                 TokenUsageByAgent: [new AgentTokenUsageStat(date, agentId, InputTokens: 5, OutputTokens: 6)],
-                RecentTraces: Array.Empty<IAgentCall>(),
-                Agents: Array.Empty<IAgent>(),
+                RecentTraces: [],
+                Agents: [],
                 AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>()));
 
         var controller = ResolveController(dashboard);
 
         var result = await controller.GetDashboardView(cancellationToken: CancellationToken);
-        var dto = result.Value!;
+        var dto = result.Value;
 
+        dto.Should().NotBeNull();
         dto.Summary.TotalCalls.Should().Be(42);
         dto.LiveTelemetry.P95Ms.Should().Be(55);
         dto.AgentBreakdown.Should().ContainSingle();
@@ -62,7 +61,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 new LiveTelemetry(0, 0, 0, 0, 0, "v"),
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
-                Array.Empty<IAgentCall>(), Array.Empty<IAgent>(), new Dictionary<Guid, DateTimeOffset>()));
+                [], [], new Dictionary<Guid, DateTimeOffset>()));
         var controller = ResolveController(dashboard);
         var projectId = Guid.NewGuid();
         var from = DateTimeOffset.UtcNow.AddDays(-1);

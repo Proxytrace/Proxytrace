@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Proxytrace.Common.Serialization;
-using Proxytrace.Domain;
-using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Tools;

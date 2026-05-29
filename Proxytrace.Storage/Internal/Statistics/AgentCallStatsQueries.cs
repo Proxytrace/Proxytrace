@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Usage;
-using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
 using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Model;

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Proposals;
-using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;

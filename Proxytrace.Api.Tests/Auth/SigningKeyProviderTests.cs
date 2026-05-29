@@ -1,10 +1,8 @@
-using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Testing.Platform.Services;
 using NSubstitute;
 using Proxytrace.Api.Auth;
-using Proxytrace.Common.Lifecycle;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests.Auth;

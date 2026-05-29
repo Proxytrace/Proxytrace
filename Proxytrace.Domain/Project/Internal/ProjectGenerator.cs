@@ -1,7 +1,6 @@
 using Proxytrace.Common.Random;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.ModelEndpoint;
-using Proxytrace.Domain.User;
 
 namespace Proxytrace.Domain.Project.Internal;
 
@@ -26,6 +25,6 @@ internal class ProjectGenerator : DomainEntityGenerator<IProject>
         return factory(
             name: random.String(),
             systemEndpoint: endpoint,
-            members: Array.Empty<IUser>());
+            members: []);
     }
 }

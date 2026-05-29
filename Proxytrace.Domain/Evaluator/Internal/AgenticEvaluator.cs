@@ -1,14 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using JetBrains.Annotations;
-using Proxytrace.Common.Async;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Agent;
-using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.Message;
-using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.Usage;

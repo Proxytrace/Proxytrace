@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Dto.TestRuns;
-using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;

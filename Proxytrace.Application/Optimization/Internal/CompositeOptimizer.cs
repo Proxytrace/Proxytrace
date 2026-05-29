@@ -1,5 +1,4 @@
 using Proxytrace.Common.Async;
-using Proxytrace.Domain;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;

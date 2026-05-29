@@ -35,15 +35,14 @@ public sealed class AuthUserResolverTests : BaseTest<Module>
         var repo = services.GetRequiredService<IRepository<IUser>>();
 
         var resolver = new LocalUserResolver(repo);
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-        {
-            new("sub", user.Id.ToString()),
-        }));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([
+            new("sub", user.Id.ToString())
+        ]));
 
         var result = await resolver.Resolve(CreateContext(), principal);
 
         result.Should().NotBeNull();
-        result!.Id.Should().Be(user.Id);
+        result.Id.Should().Be(user.Id);
     }
 
     [TestMethod]
@@ -52,10 +51,9 @@ public sealed class AuthUserResolverTests : BaseTest<Module>
         var repo = Substitute.For<IRepository<IUser>>();
         var resolver = new LocalUserResolver(repo);
         var ctx = CreateContext();
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-        {
-            new("sub", "not-a-guid"),
-        }));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([
+            new("sub", "not-a-guid")
+        ]));
 
         var result = await resolver.Resolve(ctx, principal);
 
@@ -73,10 +71,9 @@ public sealed class AuthUserResolverTests : BaseTest<Module>
 
         var resolver = new LocalUserResolver(repo);
         var ctx = CreateContext();
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-        {
-            new("sub", Guid.NewGuid().ToString()),
-        }));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([
+            new("sub", Guid.NewGuid().ToString())
+        ]));
 
         var result = await resolver.Resolve(ctx, principal);
 
@@ -103,12 +100,11 @@ public sealed class AuthUserResolverTests : BaseTest<Module>
         };
 
         var resolver = new JitUserResolver(provisioner, options);
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
-        {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([
             new("iss", "https://issuer.example.com/"),
             new(ClaimTypes.NameIdentifier, "subject-123"),
-            new("email", "user@example.com"),
-        }));
+            new("email", "user@example.com")
+        ]));
 
         var result = await resolver.Resolve(CreateContext(), principal);
 
