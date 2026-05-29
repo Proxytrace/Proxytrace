@@ -8,6 +8,7 @@ import { FormField } from '../../../components/ui/FormField';
 import { CopyIcon, PlusIcon, TrashIcon, XIcon } from '../../../components/icons';
 import { formInputCls } from '../../../components/ui/classes';
 import { fmtDate } from '../../../lib/format';
+import { ingestionUrl } from '../../../lib/ingestion';
 import useToast from '../../../hooks/useToast';
 import { maskKey } from '../providerMeta';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
@@ -33,7 +34,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
     { key: 'name', label: 'Name', width: '1.5fr', render: k => <span className="text-title font-semibold text-primary">{k.name}</span> },
     { key: 'project', label: 'Project', width: '1.2fr', render: k => <span className="text-body text-secondary">{k.projectName}</span> },
     {
-      key: 'key', label: 'Key', width: '2fr',
+      key: 'key', label: 'Key', width: '1.6fr',
       render: k => (
         <div className="flex items-center gap-1.5 min-w-0">
           <code className="font-mono text-body text-muted overflow-hidden text-ellipsis whitespace-nowrap flex-1">{maskKey(k.keyValue)}</code>
@@ -42,6 +43,20 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           </IconButton>
         </div>
       ),
+    },
+    {
+      key: 'ingestionUrl', label: 'Ingestion URL', width: '2.2fr',
+      render: k => {
+        const url = ingestionUrl(k.projectName);
+        return (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <code className="font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap flex-1">{url}</code>
+            <IconButton aria-label="Copy ingestion URL" onClick={() => { navigator.clipboard.writeText(url); toast('Ingestion URL copied', 'success'); }}>
+              <CopyIcon size={13} />
+            </IconButton>
+          </div>
+        );
+      },
     },
     { key: 'created', label: 'Created', width: '1fr', render: k => <span className="text-body text-muted">{fmtDate(k.createdAt)}</span> },
     { key: 'delete', label: '', width: 'auto', render: k => <IconButton aria-label="Delete key" danger onClick={() => setToDelete(k)}><TrashIcon size={13} /></IconButton> },
@@ -69,6 +84,10 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           <div className="flex-1 min-w-0">
             <div className="text-body font-semibold mb-1 text-success">Key "{created.name}" created — copy it now</div>
             <code className="font-mono text-body text-primary break-all">{created.keyValue}</code>
+            <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
+              <span className="text-body-sm text-muted whitespace-nowrap">Ingestion URL</span>
+              <code className="font-mono text-body-sm text-secondary break-all">{ingestionUrl(created.projectName)}</code>
+            </div>
           </div>
           <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(created.keyValue); toast('API key copied', 'success'); }}>Copy</Button>
           <IconButton aria-label="Dismiss" onClick={() => setCreated(null)}><XIcon size={14} /></IconButton>

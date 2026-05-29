@@ -9,10 +9,38 @@ it to the real provider.
 Only two things in your client:
 
 1. **Base URL** — point it at the Proxytrace proxy endpoint instead of the provider's.
-2. **API key** — use a **Proxytrace-issued API key** (see below) instead of the provider
-   key. Proxytrace maps the key to the correct project and upstream provider.
+2. **API key** — either a **Proxytrace-issued API key** (see below) **or your existing
+   upstream provider key**. Proxytrace accepts both and maps the call to the right project
+   and upstream provider.
 
 No SDK swap, no code changes beyond configuration.
+
+### Which key to use
+
+- **Proxytrace-issued key (recommended)** — carries its own project, so attribution is
+  automatic and the key can be revoked per client. The project segment in the URL is optional;
+  if you include it, it must match the key's project.
+- **Upstream provider key** — lets you migrate an existing app onto Proxytrace by changing
+  only the base URL. The key identifies the upstream provider; the **project comes from the URL
+  path** (see below), so you must include the project segment. If the same upstream key is used
+  by several projects, the path is what disambiguates them.
+- **Collisions.** If the same string is valid as both a Proxytrace key and an upstream
+  provider key, the Proxytrace key wins.
+
+### The project segment
+
+The proxy base URL carries the project as the first path segment:
+
+```
+https://your-proxytrace-host/{project}/openai/v1
+```
+
+`{project}` is the **slug** of the project name — lower-cased, with non-alphanumeric characters
+dropped and spaces turned into hyphens. For example, project **"Showcase Project"** →
+`showcase-project`. The slug is derived automatically; there is nothing to configure.
+
+The legacy `https://your-proxytrace-host/openai/v1` form (no project segment) still works for
+Proxytrace-issued keys, since the key already carries its project.
 
 ## Create an API key
 
@@ -32,8 +60,9 @@ Example using the OpenAI Python SDK:
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://your-proxytrace-host/v1",  # Proxytrace proxy endpoint
-    api_key="pt-...",                             # Proxytrace-issued key
+    # Project slug + /openai/v1. Works with a Proxytrace key or your upstream provider key.
+    base_url="https://your-proxytrace-host/showcase-project/openai/v1",
+    api_key="pt-...",  # Proxytrace-issued key, or your upstream provider key
 )
 
 resp = client.chat.completions.create(

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Application.Demo;
-using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
@@ -23,7 +22,7 @@ public sealed class OpenAiProxyControllerTests
         var controller = BuildController(Substitute.For<IIngestionStream>(), NoKeyResolver());
         controller.ControllerContext = BuildContext(authHeader: "");
 
-        await controller.Proxy("chat/completions", CancellationToken.None);
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
@@ -34,7 +33,7 @@ public sealed class OpenAiProxyControllerTests
         var controller = BuildController(Substitute.For<IIngestionStream>(), NoKeyResolver());
         controller.ControllerContext = BuildContext("Bearer not-a-real-key");
 
-        await controller.Proxy("chat/completions", CancellationToken.None);
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be(StatusCodes.Status401Unauthorized);
     }
@@ -51,7 +50,7 @@ public sealed class OpenAiProxyControllerTests
             "Bearer valid",
             body: """{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}]}""");
 
-        await controller.Proxy("chat/completions", CancellationToken.None);
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
         await stream.Received(1).PublishAsync(Arg.Any<IngestMessage>(), Arg.Any<CancellationToken>());
@@ -66,7 +65,7 @@ public sealed class OpenAiProxyControllerTests
             new ThrowingHttpClientFactory());
         controller.ControllerContext = BuildContext("Bearer valid", body: "{}");
 
-        await controller.Proxy("chat/completions", CancellationToken.None);
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be(StatusCodes.Status502BadGateway);
     }
@@ -84,7 +83,7 @@ public sealed class OpenAiProxyControllerTests
             new FakeHttpClientFactory(FakeHttpMessageHandler.BuildOpenAiResponse("ok")));
         controller.ControllerContext = BuildContext("Bearer valid", body: "{}");
 
-        await controller.Proxy("chat/completions", CancellationToken.None);
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
 
         controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
     }
@@ -103,18 +102,18 @@ public sealed class OpenAiProxyControllerTests
     private static IApiKeyResolver NoKeyResolver()
     {
         var resolver = Substitute.For<IApiKeyResolver>();
-        resolver.ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((IApiKey?)null);
+        resolver.ResolveAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns((ResolvedApiKey?)null);
         return resolver;
     }
 
-    private static IApiKeyResolver ResolverFor(IApiKey apiKey)
+    private static IApiKeyResolver ResolverFor(ResolvedApiKey resolved)
     {
         var resolver = Substitute.For<IApiKeyResolver>();
-        resolver.ResolveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(apiKey);
+        resolver.ResolveAsync(Arg.Any<string>(), Arg.Any<string?>(), Arg.Any<CancellationToken>()).Returns(resolved);
         return resolver;
     }
 
-    private static IApiKey ApiKey()
+    private static ResolvedApiKey ApiKey()
     {
         var provider = Substitute.For<IModelProvider>();
         provider.Id.Returns(Guid.NewGuid());
@@ -125,10 +124,7 @@ public sealed class OpenAiProxyControllerTests
         var project = Substitute.For<IProject>();
         project.Id.Returns(Guid.NewGuid());
 
-        var apiKey = Substitute.For<IApiKey>();
-        apiKey.Provider.Returns(provider);
-        apiKey.Project.Returns(project);
-        return apiKey;
+        return new ResolvedApiKey(project, provider);
     }
 
     private static ControllerContext BuildContext(string authHeader, string body = "{}")

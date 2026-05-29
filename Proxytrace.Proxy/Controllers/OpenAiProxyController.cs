@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Application.Demo;
-using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
@@ -18,7 +17,6 @@ namespace Proxytrace.Proxy.Controllers;
 /// main app to persist. Stays up independently of the rest of the backend.
 /// </summary>
 [ApiController]
-[Route("openai")]
 public class OpenAiProxyController : ControllerBase
 {
     private const string SessionIdHeader = "x-proxytrace-session-id";
@@ -63,9 +61,14 @@ public class OpenAiProxyController : ControllerBase
         this.logger = logger;
     }
 
-    [Route("v1/{**path}")]
+    // Two shapes are accepted: the project-scoped `/{project}/openai/v1/…` form (required for the
+    // upstream-provider-key auth path) and the legacy `/openai/v1/…` form (project derived from a
+    // Proxytrace-issued key). The literal `openai/v1/…` template is matched ahead of the
+    // parameterised one, so `project` is only bound for the scoped form.
+    [Route("openai/v1/{**path}")]
+    [Route("{project}/openai/v1/{**path}")]
     [HttpGet, HttpPost, HttpPut, HttpDelete, HttpPatch, HttpHead, HttpOptions]
-    public async Task Proxy(string path, CancellationToken cancellationToken)
+    public async Task Proxy(string path, string? project, CancellationToken cancellationToken)
     {
         if (kioskOptions.Enabled)
         {
@@ -77,8 +80,8 @@ public class OpenAiProxyController : ControllerBase
             return;
         }
 
-        IApiKey? apiKey = await GetApiKeyAsync(cancellationToken);
-        if (apiKey is null)
+        ResolvedApiKey? resolved = await GetResolvedKeyAsync(project, cancellationToken);
+        if (resolved is null)
         {
             Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
@@ -102,7 +105,7 @@ public class OpenAiProxyController : ControllerBase
             requestBody = Encoding.UTF8.GetString(requestBodyBytes);
         }
 
-        var upstream = BuildUpstreamRequest(path, requestBodyBytes, apiKey.Provider.ApiKey, apiKey.Provider.Endpoint);
+        var upstream = BuildUpstreamRequest(path, requestBodyBytes, resolved.Provider.ApiKey, resolved.Provider.Endpoint);
         var client = httpClientFactory.CreateClient("openai");
         var sw = Stopwatch.StartNew();
 
@@ -134,15 +137,15 @@ public class OpenAiProxyController : ControllerBase
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
+            await ProxyStreamingResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(apiKey.Provider, apiKey.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
+            await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
         }
     }
 
-    private async Task<IApiKey?> GetApiKeyAsync(CancellationToken cancellationToken)
+    private async Task<ResolvedApiKey?> GetResolvedKeyAsync(string? projectSlug, CancellationToken cancellationToken)
     {
         var authHeader = Request.Headers.Authorization.ToString();
         var rawKey = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
@@ -154,7 +157,7 @@ public class OpenAiProxyController : ControllerBase
             return null;
         }
 
-        return await apiKeyResolver.ResolveAsync(rawKey, cancellationToken);
+        return await apiKeyResolver.ResolveAsync(rawKey, projectSlug, cancellationToken);
     }
 
     // ── Non-streaming ─────────────────────────────────────────────────────────
