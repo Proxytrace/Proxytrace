@@ -208,6 +208,30 @@ npm run lint     # ESLint
 npm test         # Vitest unit tests
 ```
 
+**E2E tests (Playwright, inside `e2e/`)**
+
+Requires Docker. Boots the full compose stack against a throwaway database.
+
+```bash
+bash e2e/run.sh                          # Core + smoke tests (no LLM)
+OPENAI_API_KEY=sk-... bash e2e/run.sh    # All tests including @llm specs
+```
+
+Or run against an already-running stack:
+
+```bash
+# Boot the stack once (fresh DB required):
+docker compose -f docker-compose.yml -f docker-compose.e2e.yml down -v
+docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d --wait
+
+# Then run any subset:
+cd e2e && npx playwright test --project=smoke
+cd e2e && npx playwright test --project=core
+cd e2e && npx playwright test --project=llm   # requires OPENAI_API_KEY
+```
+
+See [`e2e/GUIDE.md`](e2e/GUIDE.md) for selectors, auth, polling patterns, and debugging.
+
 ---
 
 ## Documentation
