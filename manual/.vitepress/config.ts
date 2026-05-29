@@ -47,6 +47,7 @@ export default defineConfig({
             { text: 'Database', link: '/admin/database' },
             { text: 'Providers & API Keys', link: '/admin/providers-and-api-keys' },
             { text: 'Deployment', link: '/admin/deployment' },
+            { text: 'E2E Tests', link: '/admin/e2e-tests' },
           ],
         },
       ],
