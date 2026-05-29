@@ -491,9 +491,16 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// Maps to the domain entity
     /// </summary>
     protected async Task<IReadOnlyList<TDomainEntity>> Map(IReadOnlyList<TStoredEntity> stored, CancellationToken cancellationToken = default)
-        => await stored
-            .Select(x => Map(x, cancellationToken)).Await()
-            .ContinueWith(t => t.Result.Cast<TDomainEntity>().ToList(), cancellationToken);
+    {
+        // Sequential, not concurrent: a mapper may resolve related entities through the shared
+        // ambient transaction context, and a DbContext does not allow concurrent operations.
+        var mapped = new List<TDomainEntity>(stored.Count);
+        foreach (TStoredEntity entity in stored)
+        {
+            mapped.Add(await mapper.Map(entity, cancellationToken));
+        }
+        return mapped;
+    }
 
     /// <summary>
     /// Maps to the stored entity

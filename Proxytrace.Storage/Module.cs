@@ -71,6 +71,20 @@ public sealed class Module : Autofac.Module
             .AsSelf()
             .InstancePerDependency();
 
+        // Ambient-aware context factory: while a logical transaction is active, every repository,
+        // mapper and query resolves the single shared transactional context (read-your-writes on
+        // one connection). Outside a transaction it hands out a fresh context per call. This
+        // explicit Func<StorageDbContext> registration overrides Autofac's auto-generated one.
+        builder.Register<Func<StorageDbContext>>(ct =>
+        {
+            var scope = ct.Resolve<ILifetimeScope>();
+            return () =>
+            {
+                var ambient = scope.Resolve<AmbientDbContext>();
+                return ambient.Context ?? scope.Resolve<StorageDbContext>();
+            };
+        }).InstancePerLifetimeScope();
+
         ConfigureEntities(builder);
         ConfigureEntity(typeof(TestSuiteEvaluatorEntity), builder);
         ConfigureEntity(typeof(ProjectUserEntity), builder);
