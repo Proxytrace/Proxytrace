@@ -16,6 +16,9 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
     public override void Configure(EntityTypeBuilder<ModelProviderEntity> builder)
     {
         builder.HasIndex(e => e.Name).IsUnique();
+        // Indexed for the proxy's upstream-key authentication path
+        // (`IModelProviderRepository.FindByApiKeyAsync`).
+        builder.HasIndex(e => e.ApiKey);
         builder.Property(e => e.Name).HasMaxLength(256).IsRequired();
         builder.Property(e => e.Endpoint).HasMaxLength(2048).IsRequired();
         builder.Property(e => e.ApiKey).HasMaxLength(512).IsRequired();

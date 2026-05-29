@@ -22,6 +22,13 @@ Each key is tied to:
 - a **Project** — so captured traffic lands in the right tenant, and
 - a **Model Provider** — so the proxy knows which upstream to forward to.
 
+The proxy also accepts the **upstream provider's own API key** as the inbound bearer, so
+existing clients can migrate by changing only the base URL. The upstream key identifies only
+the provider — the project is taken from the **project slug in the request path**
+(`/{project}/openai/v1/…`, where the slug is derived from the project name). This means the
+same upstream key can be reused across projects, disambiguated by the path. If the same string
+is valid as both a Proxytrace key and an upstream key, the Proxytrace key wins.
+
 ### Issuing a key
 
 1. Open **Providers**.

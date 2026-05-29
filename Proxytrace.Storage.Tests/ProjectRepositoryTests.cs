@@ -89,6 +89,33 @@ public sealed class ProjectRepositoryTests : BaseTest<Module>
         stillExists.Should().BeTrue();
     }
 
+    [TestMethod]
+    public async Task FindBySlugAsync_MatchesDerivedSlug()
+    {
+        IServiceProvider services = GetServices();
+        var (repository, projectFactory, endpoint, _) = await SetupAsync(services, memberCount: 0);
+        var projectRepository = services.GetRequiredService<IProjectRepository>();
+
+        var project = projectFactory("Showcase Project", endpoint, []);
+        var saved = await repository.AddAsync(project, CancellationToken);
+
+        var found = await projectRepository.FindBySlugAsync("showcase-project", CancellationToken);
+
+        found.Should().NotBeNull();
+        found.Id.Should().Be(saved.Id);
+    }
+
+    [TestMethod]
+    public async Task FindBySlugAsync_UnknownSlug_ReturnsNull()
+    {
+        IServiceProvider services = GetServices();
+        var projectRepository = services.GetRequiredService<IProjectRepository>();
+
+        var found = await projectRepository.FindBySlugAsync("does-not-exist", CancellationToken);
+
+        found.Should().BeNull();
+    }
+
     private async Task<(IRepository<IProject> repository,
         IProject.CreateNew projectFactory,
         IModelEndpoint endpoint,

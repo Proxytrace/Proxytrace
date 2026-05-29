@@ -1,8 +1,13 @@
 using Autofac;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Demo;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain.ApiKey;
+using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
+using Proxytrace.Proxy.Internal;
 using Proxytrace.Storage;
 
 namespace Proxytrace.Proxy;
@@ -50,12 +55,16 @@ internal sealed class Module : Autofac.Module
         var cacheTtlSeconds = configuration.GetSection("ApiKeyCache").GetValue<int?>("TtlSeconds") ?? 30;
         builder.Register(ctx => new CachedApiKeyResolver(
                 ctx.Resolve<IApiKeyRepository>(),
+                ctx.Resolve<IModelProviderRepository>(),
+                ctx.Resolve<IProjectRepository>(),
+                ctx.Resolve<IMemoryCache>(),
                 TimeSpan.FromSeconds(cacheTtlSeconds)))
             .As<IApiKeyResolver>()
             .SingleInstance();
 
         builder.RegisterServiceCollection(services =>
         {
+            services.AddMemoryCache();
             // The upstream target is per-request (provider endpoint), so only the timeout matters here.
             services.AddHttpClient("openai", client => client.Timeout = TimeSpan.FromMinutes(5));
         });

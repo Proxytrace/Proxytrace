@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Proxytrace.Common.Text;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Exceptions;
@@ -27,6 +28,22 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Name == name, cancellationToken);
         return await Map(entity, cancellationToken);
+    }
+
+    public async Task<IProject?> FindBySlugAsync(
+        string slug,
+        CancellationToken cancellationToken = default)
+    {
+        // Slugs are derived from the (unique) project name and not stored, so the match can't run
+        // in SQL. Names are short and few, so project just the id/name pair and slugify in memory.
+        var candidates = await contextFactory()
+            .Set<ProjectEntity>()
+            .AsNoTracking()
+            .Select(p => new { p.Id, p.Name })
+            .ToListAsync(cancellationToken);
+
+        var match = candidates.FirstOrDefault(p => p.Name.ToSlug() == slug);
+        return match is null ? null : await this.GetAsync(match.Id, cancellationToken);
     }
 
     protected override async Task UpdateRelationsAsync(
