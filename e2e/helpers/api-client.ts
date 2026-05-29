@@ -74,7 +74,7 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
-  async getAgentCalls(params?: { page?: number; pageSize?: number }): Promise<{ total: number; items: unknown[] }> {
+  async getAgentCalls(params?: { page?: number; pageSize?: number }): Promise<{ total: number; items: Record<string, unknown>[] }> {
     const qs = new URLSearchParams();
     if (params?.page != null) qs.set('page', String(params.page));
     if (params?.pageSize != null) qs.set('pageSize', String(params.pageSize));
