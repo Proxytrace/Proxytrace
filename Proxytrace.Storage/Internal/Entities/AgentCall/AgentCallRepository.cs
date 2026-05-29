@@ -6,6 +6,7 @@ using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Search;
 using Proxytrace.Storage.Internal.Entities.Agent;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Model;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 
@@ -39,17 +40,20 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         if (filter.AgentId.HasValue)
         {
-            query = query.Where(e => e.AgentId == filter.AgentId.Value);
+            var agentId = filter.AgentId.Value;
+            var versionIdsForAgent = context.Set<AgentVersionEntity>()
+                .Where(v => v.AgentId == agentId)
+                .Select(v => v.Id);
+            query = query.Where(e => versionIdsForAgent.Contains(e.AgentVersionId));
         }
 
         if (filter.ProjectId.HasValue)
         {
             var projectId = filter.ProjectId.Value;
-            query = query.Where(e =>
-                context.Set<AgentEntity>()
-                    .Where(a => a.Project == projectId)
-                    .Select(a => a.Id)
-                    .Contains(e.AgentId));
+            var versionIdsForProject = context.Set<AgentVersionEntity>()
+                .Where(v => v.Project == projectId)
+                .Select(v => v.Id);
+            query = query.Where(e => versionIdsForProject.Contains(e.AgentVersionId));
         }
 
         if (filter.EndpointId is not null)
@@ -107,10 +111,12 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
         if (!filter.IncludeSystemAgents)
         {
-            var nonSystemAgentIds = context.Set<AgentEntity>()
-                .Where(a => !a.IsSystemAgent)
-                .Select(a => a.Id);
-            query = query.Where(e => nonSystemAgentIds.Contains(e.AgentId));
+            var nonSystemVersionIds =
+                from v in context.Set<AgentVersionEntity>()
+                join a in context.Set<AgentEntity>() on v.AgentId equals a.Id
+                where !a.IsSystemAgent
+                select v.Id;
+            query = query.Where(e => nonSystemVersionIds.Contains(e.AgentVersionId));
         }
 
         var total = await query.CountAsync(cancellationToken);
@@ -129,11 +135,15 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
-        var result = await context.Set<AgentCallEntity>()
-            .AsNoTracking()
-            .GroupBy(e => e.AgentId)
-            .Select(g => new { AgentId = g.Key, LastUsedAt = g.Max(e => e.CreatedAt) })
-            .ToDictionaryAsync(x => x.AgentId, x => x.LastUsedAt, cancellationToken);
+
+        var result =
+            await (from call in context.Set<AgentCallEntity>().AsNoTracking()
+                   join version in context.Set<AgentVersionEntity>().AsNoTracking()
+                       on call.AgentVersionId equals version.Id
+                   group call by version.AgentId
+                   into g
+                   select new { AgentId = g.Key, LastUsedAt = g.Max(e => e.CreatedAt) })
+                .ToDictionaryAsync(x => x.AgentId, x => x.LastUsedAt, cancellationToken);
         return result;
     }
 
@@ -144,13 +154,13 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
     {
         var context = contextFactory();
         var projectId = project.Id;
+        var versionIdsForProject = context.Set<AgentVersionEntity>()
+            .Where(v => v.Project == projectId)
+            .Select(v => v.Id);
         var stored = await context.Set<AgentCallEntity>()
             .AsNoTracking()
             .Where(e => e.ConversationId == conversationId)
-            .Where(e => context.Set<AgentEntity>()
-                .Where(a => a.Project == projectId)
-                .Select(a => a.Id)
-                .Contains(e.AgentId))
+            .Where(e => versionIdsForProject.Contains(e.AgentVersionId))
             .OrderByDescending(e => e.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 

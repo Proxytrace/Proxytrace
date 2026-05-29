@@ -1,5 +1,6 @@
 using System.Net;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
@@ -10,11 +11,16 @@ namespace Proxytrace.Domain.AgentCall;
 
 /// <summary>
 /// Records a single LLM call made by an agent, including request, response, token usage, and latency.
+/// Calls are bound to a specific <see cref="IAgentVersion"/> so the version's exact prompt/tools at
+/// the time of the call remain attached even if the agent is later edited.
 /// </summary>
 public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
 {
-    /// <summary>The agent that initiated this call, if associated.</summary>
+    /// <summary>The agent that initiated this call.</summary>
     IAgent Agent { get; }
+
+    /// <summary>The agent version active at the time of the call.</summary>
+    IAgentVersion Version { get; }
 
     IModelEndpoint Endpoint { get; }
 
@@ -43,11 +49,12 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
     /// Set from the <c>X-Proxytrace-Session-Id</c> header or detected via message-history matching.
     /// </summary>
     Guid? ConversationId { get; }
-    
+
     SearchKind ISearchable.SearchKind => SearchKind.AgentCall;
 
     public delegate IAgentCall CreateNew(
         IAgent agent,
+        IAgentVersion version,
         IModelEndpoint endpoint,
         Conversation request,
         ICompletion? response,
@@ -59,6 +66,7 @@ public interface IAgentCall : IDomainEntity<IAgentCall>, ISearchable
 
     public delegate IAgentCall CreateExisting(
         IAgent agent,
+        IAgentVersion version,
         IModelEndpoint endpoint,
         Conversation request,
         ICompletion? response,

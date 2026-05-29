@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 using JetBrains.Annotations;
+using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Internal;
@@ -24,6 +27,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
     public decimal? ExpectedCostDelta { get; }
     public TimeSpan? ExpectedLatencyDelta { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
+    public string ContentHash { get; }
 
     public ModelSwitchProposal(
         IAgent agent,
@@ -36,6 +40,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        ISerializer serializer,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
@@ -49,6 +54,19 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
+        ContentHash = ComputeContentHash(serializer);
+    }
+
+    private string ComputeContentHash(ISerializer serializer)
+    {
+        var envelope = new
+        {
+            Agent = Agent.Id,
+            Kind,
+            Payload = new { EndpointId = ProposedEndpoint.Id },
+        };
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serializer.Serialize(envelope)));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     public ModelSwitchProposal(
@@ -63,6 +81,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         TimeSpan? expectedLatencyDelta,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        string contentHash,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
@@ -77,6 +96,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
+        ContentHash = contentHash;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

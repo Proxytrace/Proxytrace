@@ -1,3 +1,5 @@
+using Proxytrace.Domain.Paging;
+
 namespace Proxytrace.Domain.TestSuite;
 
 /// <summary>
@@ -11,4 +13,16 @@ public interface ITestSuiteRepository : IRepository<ITestSuite>
     Task<IReadOnlyList<ITestSuite>> GetByAgentAsync(Guid agentId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<ITestSuite>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<ITestSuite>> GetByAgentPagedAsync(
+        Guid agentId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<PagedResult<ITestSuite>> GetByProjectPagedAsync(
+        Guid projectId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

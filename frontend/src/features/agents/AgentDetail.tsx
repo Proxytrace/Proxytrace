@@ -10,6 +10,7 @@ import { SystemPromptWidget } from './widgets/SystemPromptWidget';
 import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
 import { SuitePassRatesWidget } from './widgets/SuitePassRatesWidget';
+import { VersionsWidget } from './VersionsWidget';
 
 interface Props {
   agent: AgentDto;
@@ -26,6 +27,8 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
 
       <SystemPromptWidget systemMessage={agent.systemMessage} className="col-span-12 lg:col-span-7" />
       <ToolsWidget tools={agent.tools} highlightTool={highlightTool} className="col-span-12 lg:col-span-5" />
+
+      <VersionsWidget agent={agent} className="col-span-12" />
 
       {isLoading && (
         <>

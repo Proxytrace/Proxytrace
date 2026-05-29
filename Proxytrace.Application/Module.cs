@@ -81,6 +81,15 @@ public sealed class Module : Autofac.Module
             .As<IOpenAiCallParser>()
             .SingleInstance();
 
+        builder.RegisterType<AgentVersionMatcher>()
+            .As<IAgentVersionMatcher>()
+            .SingleInstance();
+
+        builder.Register(_ => new AgentVersioningOptions())
+            .As<AgentVersioningOptions>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(AgentVersioningOptions));
+
         // Ingestion transport. A host running the proxy/app split registers the Redis-backed
         // Messaging module itself (and sets this key) before this module loads; otherwise fall
         // back to the in-process stream used by the test suite and single-process runs.

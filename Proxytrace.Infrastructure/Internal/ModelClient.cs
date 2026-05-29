@@ -166,7 +166,7 @@ internal class ModelClient : IModelClient
         if (!skipIngestion)
         {
             HttpStatusCode statusCode = error != null ? HttpStatusCode.InternalServerError : HttpStatusCode.OK;
-            IAgentCall agentCall = agentCallFactory(agent, endpoint, conversation, completion, statusCode);
+            IAgentCall agentCall = agentCallFactory(agent, agent.CurrentVersion, endpoint, conversation, completion, statusCode);
             await agentCall.AddAsync(cancellationToken);
         }
 

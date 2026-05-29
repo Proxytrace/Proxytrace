@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Proxytrace.Domain.Evaluator;
 
 namespace Proxytrace.Api.Dto.TestSuites;
@@ -30,9 +31,9 @@ public record TestCaseDto(
 public record TestSuiteMessageDto(string Role, string Content);
 
 public record CreateTestSuiteRequest(
-    string Name,
-    Guid AgentId,
-    IReadOnlyList<CreateTestCaseRequest> TestCases,
+    [Required, StringLength(200, MinimumLength = 1)] string Name,
+    [Required] Guid AgentId,
+    [Required] IReadOnlyList<CreateTestCaseRequest> TestCases,
     IReadOnlyList<Guid>? EvaluatorIds = null);
 
 public record CreateTestCaseRequest(
@@ -50,7 +51,7 @@ public record AddTestCaseRequest(
 /// Callers select which traces to include, enabling curation over blind bulk import.
 /// </summary>
 public record PromoteTracesRequest(
-    string Name,
-    Guid AgentId,
-    IReadOnlyList<Guid> AgentCallIds,
+    [Required, StringLength(200, MinimumLength = 1)] string Name,
+    [Required] Guid AgentId,
+    [Required, MinLength(1)] IReadOnlyList<Guid> AgentCallIds,
     IReadOnlyList<Guid>? EvaluatorIds = null);

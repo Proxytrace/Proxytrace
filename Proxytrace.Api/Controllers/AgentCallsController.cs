@@ -2,15 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
-using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -29,17 +28,23 @@ public class AgentCallsController : ControllerBase
     private readonly IAgentRepository agentRepository;
     private readonly IDashboardStatistics statistics;
     private readonly ITraceBroadcaster traceBroadcaster;
+    private readonly AgentCallDtoMapper agentCallDtoMapper;
+    private readonly AgentDtoMapper agentDtoMapper;
 
     public AgentCallsController(
         IAgentCallRepository repository,
         IAgentRepository agentRepository,
         IDashboardStatistics statistics,
-        ITraceBroadcaster traceBroadcaster)
+        ITraceBroadcaster traceBroadcaster,
+        AgentCallDtoMapper agentCallDtoMapper,
+        AgentDtoMapper agentDtoMapper)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
         this.statistics = statistics;
         this.traceBroadcaster = traceBroadcaster;
+        this.agentCallDtoMapper = agentCallDtoMapper;
+        this.agentDtoMapper = agentDtoMapper;
     }
 
     [HttpGet]
@@ -57,9 +62,10 @@ public class AgentCallsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q);
         var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<AgentCallDto>(items.Select(AgentCallDtoMapper.ToDto).ToArray(), total, page, pageSize);
+        return new PagedResult<IAgentCall>(items, total, page, pageSize).Map(agentCallDtoMapper.ToDto);
     }
 
     [HttpGet("overview")]
@@ -84,7 +90,7 @@ public class AgentCallsController : ControllerBase
             .Where(a => !projectId.HasValue || a.Project.Id == projectId.Value)
             .OrderByDescending(a => lastCall.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
-            .Select(a => AgentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
 
         return new TracesOverviewDto(
@@ -96,10 +102,10 @@ public class AgentCallsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<AgentCallDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var call = await repository.FindAsync(id, cancellationToken);
+        if (call is null)
             return NotFound();
-        var call = await repository.GetAsync(id, cancellationToken);
-        return AgentCallDtoMapper.ToDto(call);
+        return agentCallDtoMapper.ToDto(call);
     }
 
     [HttpGet("stream")]

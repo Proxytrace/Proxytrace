@@ -14,6 +14,14 @@ public interface ITestCase : IDomainEntity
     /// <summary>The expected assistant response used for evaluation.</summary>
     AssistantMessage ExpectedOutput { get; }
 
+    /// <summary>
+    /// Returns a short, single-line label for this test case based on its first user message,
+    /// truncated to <paramref name="maxLength"/> characters with an ellipsis when the original
+    /// text exceeds <paramref name="maxLength"/> + 3 characters.
+    /// Returns <c>"Test case"</c> when no user message is present.
+    /// </summary>
+    string GetSummary(int maxLength = 77);
+
     /// <summary>Factory delegate for creating a new test case.</summary>
     public delegate ITestCase CreateNewFromCall(IAgentCall agentCall);
 

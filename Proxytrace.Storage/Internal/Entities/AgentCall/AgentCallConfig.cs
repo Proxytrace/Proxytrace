@@ -6,12 +6,14 @@ using Proxytrace.Common.Serialization;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Usage;
 using Proxytrace.Storage.Internal.Entities.Agent;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Inference;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 
@@ -22,6 +24,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
     private readonly IAgentCall.CreateExisting factory;
     private readonly IModelParameters.Create modelParametersFactory;
     private readonly ISerializer serializer;
+    private readonly IRepository<IAgentVersion> versions;
     private readonly IRepository<IAgent> agents;
     private readonly ICompletion.Create completionFactory;
     private readonly IRepository<IModelEndpoint> endpoints;
@@ -30,6 +33,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         IAgentCall.CreateExisting factory,
         IModelParameters.Create modelParametersFactory,
         ISerializer serializer,
+        IRepository<IAgentVersion> versions,
         IRepository<IAgent> agents,
         ICompletion.Create completionFactory,
         IRepository<IModelEndpoint> endpoints)
@@ -37,6 +41,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         this.factory = factory;
         this.modelParametersFactory = modelParametersFactory;
         this.serializer = serializer;
+        this.versions = versions;
         this.agents = agents;
         this.completionFactory = completionFactory;
         this.endpoints = endpoints;
@@ -44,14 +49,14 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
 
     public override void Configure(EntityTypeBuilder<AgentCallEntity> builder)
     {
-        builder.HasIndex(e => e.AgentId);
+        builder.HasIndex(e => e.AgentVersionId);
         builder.HasIndex(e => e.EndpointId);
 
         builder
-            .HasOne<AgentEntity>()
+            .HasOne<AgentVersionEntity>()
             .WithMany()
-            .HasForeignKey(e => e.AgentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(e => e.AgentVersionId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(e => e.CreatedAt);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
@@ -87,7 +92,8 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
 
     public async Task<IAgentCall> Map(AgentCallEntity stored, CancellationToken cancellationToken = default)
     {
-        IAgent agent = await agents.GetAsync(stored.AgentId, cancellationToken);
+        IAgentVersion version = await versions.GetAsync(stored.AgentVersionId, cancellationToken);
+        IAgent agent = await agents.GetAsync(version.AgentId, cancellationToken);
         IModelEndpoint endpoint = await endpoints.GetAsync(stored.EndpointId, cancellationToken);
         var completion =
             stored.Response is not null
@@ -99,6 +105,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         var modelParameters = AgentConfig.ToDomain(stored.ModelParameters, modelParametersFactory);
         return factory(
             agent: agent,
+            version: version,
             endpoint: endpoint,
             request: stored.Request,
             response: completion,
@@ -114,7 +121,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         => new AgentCallEntity
         {
             Id = domain.Id,
-            AgentId = domain.Agent.Id,
+            AgentVersionId = domain.Version.Id,
             EndpointId = domain.Endpoint.Id,
             Request = domain.Request,
             Response = domain.Response?.Response,

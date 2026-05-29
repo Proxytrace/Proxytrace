@@ -131,5 +131,6 @@ public sealed class TestRunGroupsControllerTests : BaseTest<Module>
         services.GetRequiredService<IRepository<IModelEndpoint>>(),
         services.GetRequiredService<ITestRunnerService>(),
         services.GetRequiredService<ITestResultBroadcaster>(),
-        services.GetRequiredService<IOptimizerService>());
+        services.GetRequiredService<IOptimizerService>(),
+        services.GetRequiredService<TestRunDtoMapper>());
 }

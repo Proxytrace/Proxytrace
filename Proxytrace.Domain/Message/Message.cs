@@ -76,8 +76,14 @@ public abstract record Message : IDomainObject
     public static ToolMessage CreateToolMessage(ToolResponse response)
         => new(response);
 
+    /// <summary>
+    /// Returns the concatenated text content of this message.
+    /// </summary>
+    public virtual string GetText()
+        => string.Concat(Contents.Select(c => c.Text ?? ""));
+
     /// <inheritdoc />
-    public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext) 
+    public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         => Contents.SelectMany(content => content.Validate(validationContext));
 
     /// <inheritdoc />

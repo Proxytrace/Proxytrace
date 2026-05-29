@@ -22,6 +22,18 @@ Open **Proposals** in the sidebar. New proposals stream in live. For each one:
 2. Compare the proposed change against the current agent definition.
 3. **Approve** to accept it, or **Reject** to dismiss it.
 
+## Deduplication
+
+If you **Reject** or **Approve** a proposal, the optimizer remembers the exact change it
+suggested. The next time it would surface an identical proposal (same agent + same
+proposed change), it suppresses it instead of asking you again. The proposal is only
+re-surfaced after **3 more completed test-run groups** have run against that agent — the
+threshold acts as a "fresh evidence" check so you do not keep dismissing the same
+suggestion every cycle.
+
+Proposals with a *different* proposed change are not affected; only byte-for-byte
+identical re-suggestions are suppressed.
+
 ## Closing the loop
 
 Approving a proposal is the final step of the Proxytrace loop: traffic was captured,

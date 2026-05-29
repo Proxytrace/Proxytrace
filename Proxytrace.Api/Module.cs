@@ -10,6 +10,15 @@ using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Search;
+using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Api.Dto.Evaluators;
+using Proxytrace.Api.Dto.ModelProviders;
+using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Api.Dto.Tools;
+using Proxytrace.Api.Evaluators;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Storage;
@@ -91,6 +100,16 @@ internal sealed class Module : Autofac.Module
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
 
+        builder.RegisterType<ToolDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<AgentDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<AgentCallDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<OptimizationProposalDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<EvaluatorDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<ModelProviderDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<TestRunDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<TestSuiteDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<EvaluatorBuilder>().AsSelf().SingleInstance();
+
         ConfigureAuth(builder, configuration, kiosk);
 
         SearchConfiguration searchConfiguration =
@@ -124,6 +143,10 @@ internal sealed class Module : Autofac.Module
 
                 if (authOptions.Mode == AuthMode.Local)
                 {
+                    builder.RegisterType<LocalUserResolver>()
+                        .As<IAuthUserResolver>()
+                        .InstancePerLifetimeScope();
+
                     services.AddSingleton<LocalAuthOptions>(sp =>
                     {
                         var signingKeyProvider = sp.GetRequiredService<ISigningKeyProvider>();
@@ -153,11 +176,15 @@ internal sealed class Module : Autofac.Module
                                     System.Text.Encoding.UTF8.GetBytes(localOptions.SigningKey)),
                                 RoleClaimType = ClaimTypes.Role,
                             };
-                            o.Events = JwtBearerEventsFactory.Create(new LocalUserResolver());
+                            o.Events = JwtBearerEventsFactory.Create();
                         });
                 }
                 else
                 {
+                    builder.RegisterType<JitUserResolver>()
+                        .As<IAuthUserResolver>()
+                        .InstancePerLifetimeScope();
+
                     services
                         .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
                         .Configure<AuthOptions>((o, opts) =>
@@ -174,7 +201,7 @@ internal sealed class Module : Autofac.Module
                                 NameClaimType = opts.Oidc.NameClaimType,
                                 RoleClaimType = ClaimTypes.Role,
                             };
-                            o.Events = JwtBearerEventsFactory.Create(new JitUserResolver());
+                            o.Events = JwtBearerEventsFactory.Create();
                         });
                 }
             }

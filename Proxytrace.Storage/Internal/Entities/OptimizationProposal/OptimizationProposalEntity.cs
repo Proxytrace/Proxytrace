@@ -39,4 +39,7 @@ internal record OptimizationProposalEntity : Entity
 
     /// <summary><see cref="IOptimizationProposal.ProposedPassRate"/></summary>
     public double? ProposedPassRate { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.ContentHash"/></summary>
+    public required string ContentHash { get; init; }
 }

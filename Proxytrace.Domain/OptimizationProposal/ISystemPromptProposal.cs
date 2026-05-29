@@ -32,5 +32,6 @@ public interface ISystemPromptProposal : IOptimizationProposal
         double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        string contentHash,
         IDomainEntityData existing);
 }

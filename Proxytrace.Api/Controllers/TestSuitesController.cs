@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
-using Proxytrace.Domain.Message;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
 
@@ -27,6 +26,7 @@ public class TestSuitesController : ControllerBase
     private readonly IExactMatchEvaluator.CreateNew createEvaluator;
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
+    private readonly TestSuiteDtoMapper mapper;
 
     public TestSuitesController(
         ITestSuiteRepository suiteRepository,
@@ -38,7 +38,8 @@ public class TestSuitesController : ControllerBase
         ITestCase.CreateNewFromCall createTestCaseFromCall,
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
-        ITestSuite.CreateExisting createSuiteExisting)
+        ITestSuite.CreateExisting createSuiteExisting,
+        TestSuiteDtoMapper mapper)
     {
         this.suiteRepository = suiteRepository;
         this.agentRepository = agentRepository;
@@ -50,6 +51,7 @@ public class TestSuitesController : ControllerBase
         this.createEvaluator = createEvaluator;
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
+        this.mapper = mapper;
     }
 
     [HttpGet]
@@ -60,24 +62,23 @@ public class TestSuitesController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<ITestSuite> all;
+        PagedResult<ITestSuite> paged;
         if (agentId.HasValue)
-            all = await suiteRepository.GetByAgentAsync(agentId.Value, cancellationToken);
+            paged = await suiteRepository.GetByAgentPagedAsync(agentId.Value, page, pageSize, cancellationToken);
         else if (projectId.HasValue)
-            all = await suiteRepository.GetByProjectAsync(projectId.Value, cancellationToken);
+            paged = await suiteRepository.GetByProjectPagedAsync(projectId.Value, page, pageSize, cancellationToken);
         else
-            all = await suiteRepository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<TestSuiteDto>(items, all.Count, page, pageSize);
+            paged = await suiteRepository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(mapper.ToDto);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TestSuiteDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var suite = await suiteRepository.FindAsync(id, cancellationToken);
+        if (suite is null)
             return NotFound();
-        var suite = await suiteRepository.GetAsync(id, cancellationToken);
-        return ToDto(suite);
+        return mapper.ToDto(suite);
     }
 
     [HttpPost]
@@ -85,14 +86,18 @@ public class TestSuitesController : ControllerBase
         [FromBody] CreateTestSuiteRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required.");
+
+        var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
+        if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
-        var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
         {
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            var distinctEvalIds = request.EvaluatorIds.Distinct().ToArray();
+            evaluators = await evaluatorRepository.GetManyAsync(distinctEvalIds, cancellationToken);
         }
         else
         {
@@ -113,7 +118,7 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
+        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
     [HttpPut("{id:guid}")]
@@ -122,9 +127,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] UpdateTestSuiteRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
 
         var agent = request.AgentId.HasValue && request.AgentId.Value != existing.Agent.Id
             ? await agentRepository.GetAsync(request.AgentId.Value, cancellationToken)
@@ -132,15 +137,15 @@ public class TestSuitesController : ControllerBase
 
         IReadOnlyCollection<IEvaluator> evaluators = existing.Evaluators;
         if (request.EvaluatorIds is not null)
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds.Distinct().ToArray(), cancellationToken);
 
         IReadOnlyCollection<ITestCase> testCases = existing.TestCases;
         if (request.TestCaseIds is not null)
-            testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds, cancellationToken);
+            testCases = await testCaseRepository.GetManyAsync(request.TestCaseIds.Distinct().ToArray(), cancellationToken);
 
         var updated = createSuiteExisting(existing.Name, agent, evaluators, testCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        return mapper.ToDto(saved);
     }
 
     [HttpDelete("{id:guid}")]
@@ -160,18 +165,19 @@ public class TestSuitesController : ControllerBase
         [FromBody] PromoteTracesRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await agentRepository.ContainsAsync(request.AgentId, cancellationToken))
-            return BadRequest($"Agent {request.AgentId} not found.");
-
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return BadRequest("Name is required.");
         if (request.AgentCallIds.Count == 0)
             return BadRequest("At least one agent call ID must be provided.");
-        
-        var agent = await agentRepository.GetAsync(request.AgentId, cancellationToken);
+
+        var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
+        if (agent is null)
+            return BadRequest($"Agent {request.AgentId} not found.");
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
         {
-            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds, cancellationToken);
+            evaluators = await evaluatorRepository.GetManyAsync(request.EvaluatorIds.Distinct().ToArray(), cancellationToken);
         }
         else
         {
@@ -181,12 +187,11 @@ public class TestSuitesController : ControllerBase
         }
 
         var testCases = new List<ITestCase>();
-        foreach (var callId in request.AgentCallIds)
+        foreach (var callId in request.AgentCallIds.Distinct())
         {
-            if (!await agentCallRepository.ContainsAsync(callId, cancellationToken))
+            var call = await agentCallRepository.FindAsync(callId, cancellationToken);
+            if (call is null)
                 return BadRequest($"Agent call {callId} not found.");
-
-            var call = await agentCallRepository.GetAsync(callId, cancellationToken);
             if (call.Response is null)
             {
                 throw new InvalidOperationException($"Agent call {callId} does not have a response and cannot be promoted to a test case.");
@@ -199,7 +204,7 @@ public class TestSuitesController : ControllerBase
 
         var suite = createSuite(request.Name, agent, evaluators, testCases);
         var savedSuite = await suiteRepository.AddAsync(suite, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, ToDto(savedSuite));
+        return CreatedAtAction(nameof(Get), new { id = savedSuite.Id }, mapper.ToDto(savedSuite));
     }
 
     [HttpPost("{id:guid}/test-cases")]
@@ -208,9 +213,9 @@ public class TestSuitesController : ControllerBase
         [FromBody] AddTestCaseRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
 
         var testCase = await BuildTestCase(request.FromAgentCallId, request.Input, request.ExpectedOutput, cancellationToken);
         if (testCase is null)
@@ -220,7 +225,7 @@ public class TestSuitesController : ControllerBase
         var updatedCases = existing.TestCases.Append(saved).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var savedSuite = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(savedSuite);
+        return mapper.ToDto(savedSuite);
     }
 
     [HttpDelete("{id:guid}/test-cases/{caseId:guid}")]
@@ -229,13 +234,13 @@ public class TestSuitesController : ControllerBase
         Guid caseId,
         CancellationToken cancellationToken)
     {
-        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+        var existing = await suiteRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await suiteRepository.GetAsync(id, cancellationToken);
         var updatedCases = existing.TestCases.Where(tc => tc.Id != caseId).ToArray();
         var updated = createSuiteExisting(existing.Name, existing.Agent, existing.Evaluators, updatedCases, existing);
         var saved = await suiteRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        return mapper.ToDto(saved);
     }
 
     private async Task<ITestCase?> BuildTestCase(
@@ -252,63 +257,13 @@ public class TestSuitesController : ControllerBase
 
         if (inputMessages is not null && expectedOutput is not null)
         {
-            var conversation = BuildConversation(inputMessages);
-            var expected = BuildAssistantMessage(expectedOutput);
+            var conversation = mapper.BuildConversation(inputMessages);
+            var expected = mapper.BuildAssistantMessage(expectedOutput);
             return createTestCase(conversation, expected);
         }
 
         return null;
     }
-
-    private static Conversation BuildConversation(IReadOnlyList<TestSuiteMessageDto> messages)
-    {
-        var msgs = new List<Message>();
-        foreach (var m in messages)
-        {
-            Message msg = m.Role.ToLower() switch
-            {
-                "user" => new UserMessage([Domain.Message.Content.FromText(m.Content)]),
-                "assistant" => new AssistantMessage([Domain.Message.Content.FromText(m.Content)], []),
-                "system" => new SystemMessage([Domain.Message.Content.FromText(m.Content)]),
-                _ => new UserMessage([Domain.Message.Content.FromText(m.Content)])
-            };
-            msgs.Add(msg);
-        }
-        return new Conversation(msgs);
-    }
-
-    private static AssistantMessage BuildAssistantMessage(TestSuiteMessageDto m)
-        => new([Domain.Message.Content.FromText(m.Content)], []);
-
-    private static TestSuiteDto ToDto(ITestSuite s) => new(
-        s.Id,
-        s.Name,
-        s.Agent.Id,
-        s.Agent.Name,
-        s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
-        s.TestCases.Select(tc => new TestCaseDto(
-            tc.Id,
-            tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), GetText(m))).ToArray(),
-            new TestSuiteMessageDto("assistant", string.Concat(tc.ExpectedOutput.Contents.Select(c => c.Text ?? "")))
-        )).ToArray(),
-        Description: null,
-        Tags: [],
-        TotalRuns: 0,
-        PassRate: null,
-        PrevPassRate: null,
-        PassRateTrend: [],
-        LastRunAt: null,
-        LastRunGroupId: null,
-        s.CreatedAt,
-        s.UpdatedAt);
-
-    private static string GetText(Message m) => m switch
-    {
-        UserMessage u => string.Concat(u.Contents.Select(c => c.Text ?? "")),
-        AssistantMessage a => string.Concat(a.Contents.Select(c => c.Text ?? "")),
-        SystemMessage sys => string.Concat(sys.Contents.Select(c => c.Text ?? "")),
-        _ => ""
-    };
 }
 
 public record UpdateTestSuiteRequest(

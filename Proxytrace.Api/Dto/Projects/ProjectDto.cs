@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Proxytrace.Api.Dto.Projects;
 
 public record ProjectDto(
@@ -11,11 +13,11 @@ public record ProjectDto(
 public record ProjectMemberDto(Guid Id, string Email);
 
 public record CreateProjectRequest(
-    string Name,
-    Guid SystemEndpointId,
+    [Required, StringLength(200, MinimumLength = 1)] string Name,
+    [Required] Guid SystemEndpointId,
     IReadOnlyList<Guid>? MemberIds = null);
 
 public record UpdateProjectRequest(
-    string Name,
-    Guid SystemEndpointId,
+    [Required, StringLength(200, MinimumLength = 1)] string Name,
+    [Required] Guid SystemEndpointId,
     IReadOnlyList<Guid>? MemberIds = null);

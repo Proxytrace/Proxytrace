@@ -61,7 +61,7 @@ public class JsonOutputParserTests : BaseTest<Module>
     public class ComplexModel
     {
         public SimpleModel? NestedModel { get; set; }
-        public List<string> Items { get; set; } = new();
+        public List<string> Items { get; set; } = [];
         public Dictionary<string, int> Scores { get; set; } = new();
         public TestEnum Status { get; set; }
     }

@@ -129,7 +129,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
         c.CostDelta.Should().Be(-5m);
         c.LatencyDelta.Should().Be(TimeSpan.Zero);
         c.EvidenceIds.Should().BeEquivalentTo(
-            new[] { fixture.RunsByName["current"].Id, fixture.RunsByName["altA"].Id });
+            [fixture.RunsByName["current"].Id, fixture.RunsByName["altA"].Id]);
         c.Rationale.Should().Contain("cost");
     }
 

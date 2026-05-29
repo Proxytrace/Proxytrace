@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Api.Dto.TestRuns;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestRun;
@@ -158,5 +159,6 @@ public sealed class TestRunsControllerTests : BaseTest<Module>
 
     private static TestRunsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<ITestRunRepository>(),
-        services.GetRequiredService<ITestResultBroadcaster>());
+        services.GetRequiredService<ITestResultBroadcaster>(),
+        services.GetRequiredService<TestRunDtoMapper>());
 }

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Dto.TestRuns;
-using Proxytrace.Domain;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
@@ -44,10 +43,10 @@ public class EvaluatorTestBenchController : ControllerBase
     {
         if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
-        if (!await testCases.ContainsAsync(testCaseId, cancellationToken))
+        var testCase = await testCases.FindAsync(testCaseId, cancellationToken);
+        if (testCase is null)
             return NotFound($"Test case {testCaseId} not found.");
 
-        var testCase = await testCases.GetAsync(testCaseId, cancellationToken);
         var latest = await testResults.GetLatestByTestCaseAsync(testCaseId, cancellationToken);
         if (latest is null)
             return NotFound($"No test result exists for test case {testCaseId}.");
@@ -55,12 +54,12 @@ public class EvaluatorTestBenchController : ControllerBase
         return new EvaluatorTestBenchPayloadDto(
             SourceTestResultId: latest.Id,
             TestCaseId: testCase.Id,
-            TestCaseSummary: Summarize(testCase),
+            TestCaseSummary: testCase.GetSummary(),
             Conversation: testCase.Input.Messages
-                .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), ToText(m)))
+                .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), m.GetText()))
                 .ToArray(),
-            ExpectedResponse: ToText(testCase.ExpectedOutput),
-            ActualResponse: ToText(latest.ActualResponse));
+            ExpectedResponse: testCase.ExpectedOutput.GetText(),
+            ActualResponse: latest.ActualResponse.GetText());
     }
 
     [HttpGet("default")]
@@ -74,7 +73,7 @@ public class EvaluatorTestBenchController : ControllerBase
         var latest = await testResults.GetLatestByEvaluatorAsync(evaluatorId, cancellationToken);
         return latest is null
             ? new EvaluatorTestBenchDefaultDto(null, null) 
-            : new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, Summarize(latest.TestCase));
+            : new EvaluatorTestBenchDefaultDto(latest.TestCase.Id, latest.TestCase.GetSummary());
     }
 
     [HttpGet("recent")]
@@ -86,9 +85,10 @@ public class EvaluatorTestBenchController : ControllerBase
         if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
             return NotFound($"Evaluator {evaluatorId} not found.");
 
-        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, count, cancellationToken);
+        var capped = Math.Clamp(count, 1, 50);
+        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken);
         return recent
-            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, Summarize(r.TestCase)))
+            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, r.TestCase.GetSummary()))
             .ToArray();
     }
 
@@ -98,13 +98,12 @@ public class EvaluatorTestBenchController : ControllerBase
         [FromBody] RunEvaluatorOnBenchRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+        var evaluator = await evaluators.FindAsync(evaluatorId, cancellationToken);
+        if (evaluator is null)
             return NotFound($"Evaluator {evaluatorId} not found.");
-        if (!await testCases.ContainsAsync(request.TestCaseId, cancellationToken))
+        var testCase = await testCases.FindAsync(request.TestCaseId, cancellationToken);
+        if (testCase is null)
             return NotFound($"Test case {request.TestCaseId} not found.");
-
-        var evaluator = await evaluators.GetAsync(evaluatorId, cancellationToken);
-        var testCase = await testCases.GetAsync(request.TestCaseId, cancellationToken);
 
         AssistantMessage actual;
         TimeSpan latency;
@@ -139,14 +138,4 @@ public class EvaluatorTestBenchController : ControllerBase
             evaluation.ErrorMessage);
     }
 
-    private static string Summarize(ITestCase tc)
-    {
-        var firstUser = tc.Input.Messages.OfType<UserMessage>().FirstOrDefault();
-        if (firstUser is null) return "Test case";
-        var text = string.Concat(firstUser.Contents.Select(c => c.Text ?? ""));
-        return text.Length > 80 ? text[..77] + "…" : text;
-    }
-
-    private static string ToText(Message msg)
-        => string.Concat(msg.Contents.Select(c => c.Text ?? ""));
 }

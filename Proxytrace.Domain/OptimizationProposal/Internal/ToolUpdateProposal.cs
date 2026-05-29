@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 using JetBrains.Annotations;
+using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Internal;
@@ -22,6 +25,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
     public double? CurrentPassRate { get; }
     public double? ProposedPassRate { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
+    public string ContentHash { get; }
 
     public ToolUpdateProposal(
         IAgent agent,
@@ -32,6 +36,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        ISerializer serializer,
         IRepository<IOptimizationProposal> repository) : base(repository)
     {
         Agent = agent;
@@ -43,7 +48,27 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
+        ContentHash = ComputeContentHash(serializer);
     }
+
+    private string ComputeContentHash(ISerializer serializer)
+    {
+        var orderedTools = ProposedTools
+            .OrderBy(t => t.Name, StringComparer.Ordinal)
+            .Select(t => new { t.Name, Description = NormalizeText(t.Description), t.Arguments })
+            .ToArray();
+        var envelope = new
+        {
+            Agent = Agent.Id,
+            Kind,
+            Payload = orderedTools,
+        };
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serializer.Serialize(envelope)));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
+    }
+
+    private string NormalizeText(string value)
+        => value.Replace("\r\n", "\n").Replace("\r", "\n").Trim();
 
     public ToolUpdateProposal(
         IAgent agent,
@@ -55,6 +80,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         double? proposedPassRate,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
+        string contentHash,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
@@ -67,6 +93,7 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
+        ContentHash = contentHash;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

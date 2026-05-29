@@ -203,5 +203,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IApiKey.CreateNew>(),
         services.GetRequiredService<IModelRepository>(),
         services.GetRequiredService<IModelEndpoint.CreateNew>(),
-        services.GetRequiredService<IModelEndpoint.CreateExisting>());
+        services.GetRequiredService<IModelEndpoint.CreateExisting>(),
+        services.GetRequiredService<ModelProviderDtoMapper>());
 }

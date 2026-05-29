@@ -223,6 +223,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
 
                 await agentCallFactory(
                     agent: agent,
+                    version: agent.CurrentVersion,
                     endpoint: endpoint,
                     request: request,
                     response: completion,
@@ -264,7 +265,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 TimeSpan.FromMilliseconds(540));
 
             await agentCallFactory(
-                agent: agent,
+                agent: agent, version: agent.CurrentVersion,
                 endpoint: endpoint,
                 request: turn1Request,
                 response: turn1Completion,
@@ -290,7 +291,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 TimeSpan.FromMilliseconds(710));
 
             await agentCallFactory(
-                agent: agent,
+                agent: agent, version: agent.CurrentVersion,
                 endpoint: endpoint,
                 request: turn2Request,
                 response: turn2Completion,
@@ -318,7 +319,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 new TokenUsage(261, 38),
                 TimeSpan.FromMilliseconds(602));
             await agentCallFactory(
-                agent: agent,
+                agent: agent, version: agent.CurrentVersion,
                 endpoint: endpoint,
                 request: convReq1,
                 response: convComp1,
@@ -342,7 +343,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 new TokenUsage(338, 71),
                 TimeSpan.FromMilliseconds(795));
             await agentCallFactory(
-                agent: agent,
+                agent: agent, version: agent.CurrentVersion,
                 endpoint: endpoint,
                 request: convReq2,
                 response: convComp2,
@@ -398,7 +399,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                     TimeSpan.FromMilliseconds(t.latencyMs));
 
                 await agentCallFactory(
-                    agent: agent,
+                    agent: agent, version: agent.CurrentVersion,
                     endpoint: endpoint,
                     request: request,
                     response: completion,

@@ -39,6 +39,14 @@ internal record TestCase : DomainEntity<ITestCase>, ITestCase
         ExpectedOutput = expectedOutput;
     }
 
+    public string GetSummary(int maxLength = 77)
+    {
+        var firstUser = Input.Messages.OfType<UserMessage>().FirstOrDefault();
+        if (firstUser is null) return "Test case";
+        var text = firstUser.GetText();
+        return text.Length > maxLength + 3 ? text[..maxLength] + "…" : text;
+    }
+
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         foreach (var result in base.Validate(validationContext))

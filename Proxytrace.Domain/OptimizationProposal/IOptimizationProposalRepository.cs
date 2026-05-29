@@ -15,4 +15,14 @@ public interface IOptimizationProposalRepository : IRepository<IOptimizationProp
     Task<IReadOnlyList<IOptimizationProposal>> GetByProjectAsync(
         Guid projectId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the most-recently-updated proposal for the given agent with the specified
+    /// <see cref="IOptimizationProposal.ContentHash"/>, or null if none exists.
+    /// Used by the optimizer to detect duplicate suggestions.
+    /// </summary>
+    Task<IOptimizationProposal?> FindLatestByContentHashAsync(
+        Guid agentId,
+        string contentHash,
+        CancellationToken cancellationToken = default);
 }

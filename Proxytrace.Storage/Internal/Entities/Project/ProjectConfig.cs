@@ -52,7 +52,7 @@ internal class ProjectConfig : AbstractEntityConfiguration<ProjectEntity>, IMapp
 
         IReadOnlyCollection<IUser> members = memberIds.Count > 0
             ? await users.GetManyAsync(memberIds, cancellationToken)
-            : Array.Empty<IUser>();
+            : [];
 
         return factory(stored.Name, endpoint, members, stored);
     }

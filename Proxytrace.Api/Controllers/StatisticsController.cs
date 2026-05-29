@@ -14,15 +14,23 @@ public class StatisticsController : ControllerBase
 {
     private readonly IDashboardStatistics dashboard;
     private readonly IAgentStatistics agentStatistics;
+    private readonly AgentCallDtoMapper agentCallDtoMapper;
+    private readonly AgentDtoMapper agentDtoMapper;
 
-    public StatisticsController(IDashboardStatistics dashboard, IAgentStatistics agentStatistics)
+    public StatisticsController(
+        IDashboardStatistics dashboard,
+        IAgentStatistics agentStatistics,
+        AgentCallDtoMapper agentCallDtoMapper,
+        AgentDtoMapper agentDtoMapper)
     {
         this.dashboard = dashboard;
         this.agentStatistics = agentStatistics;
+        this.agentCallDtoMapper = agentCallDtoMapper;
+        this.agentDtoMapper = agentDtoMapper;
     }
 
     [HttpGet("dashboard")]
-    public async Task<DashboardViewDto> GetDashboardView(
+    public async Task<ActionResult<DashboardViewDto>> GetDashboardView(
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
@@ -30,6 +38,10 @@ public class StatisticsController : ControllerBase
         [FromQuery] int agentLimit = 10,
         CancellationToken cancellationToken = default)
     {
+        if (from is not null && to is not null && from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
+        recentTraceCount = Math.Clamp(recentTraceCount, 1, 50);
+        agentLimit = Math.Clamp(agentLimit, 1, 100);
         var filter = new StatisticsFilter(from, to, projectId);
         DashboardView view = await dashboard.GetDashboardViewAsync(filter, recentTraceCount, agentLimit, cancellationToken);
 
@@ -42,8 +54,8 @@ public class StatisticsController : ControllerBase
             ModelBreakdown: view.ModelBreakdown.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray(),
             TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.Date, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray(),
             TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.Date, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray(),
-            RecentTraces: view.RecentTraces.Select(AgentCallDtoMapper.ToDto).ToArray(),
-            Agents: view.Agents.Select(a => AgentDtoMapper.ToDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
+            RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToDto).ToArray(),
+            Agents: view.Agents.Select(a => agentDtoMapper.ToDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
     }
 
     [HttpGet("agents/{agentId:guid}/overview")]
@@ -56,6 +68,8 @@ public class StatisticsController : ControllerBase
     {
         if (from is null || to is null)
             return BadRequest("Query parameters 'from' and 'to' are required.");
+        if (from.Value >= to.Value)
+            return BadRequest("Query parameter 'from' must be before 'to'.");
 
         var result = await agentStatistics.GetAgentOverviewAsync(agentId, from.Value, to.Value, bucket, cancellationToken);
         return new AgentOverviewDto(

@@ -1,4 +1,5 @@
 ﻿using Proxytrace.Domain.Exceptions;
+using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Domain;
 
@@ -37,6 +38,14 @@ public interface IRepository<TDomainEntity>
     /// Returns all entities of type <typeparamref name="TDomainEntity"/>
     /// </summary>
     Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns a page of entities ordered by <c>CreatedAt</c> descending.
+    /// </summary>
+    Task<PagedResult<TDomainEntity>> GetPagedAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Returns all entities for the given primary keys

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Controllers;
@@ -30,9 +30,8 @@ public class UsersController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = await repository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<UserDto>(items, all.Count, page, pageSize);
+        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(ToDto);
     }
 
     [HttpGet("me")]
@@ -45,9 +44,9 @@ public class UsersController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var user = await repository.FindAsync(id, cancellationToken);
+        if (user is null)
             return NotFound();
-        var user = await repository.GetAsync(id, cancellationToken);
         return ToDto(user);
     }
 
@@ -58,9 +57,9 @@ public class UsersController : ControllerBase
         [FromBody] UpdateUserRoleRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var user = await repository.FindAsync(id, cancellationToken);
+        if (user is null)
             return NotFound();
-        var user = await repository.GetAsync(id, cancellationToken);
         var updated = await user.ChangeRole(request.Role, cancellationToken);
         return ToDto(updated);
     }

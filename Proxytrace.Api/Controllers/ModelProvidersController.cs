@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
 using Proxytrace.Api.Dto.Projects;
@@ -9,6 +8,7 @@ using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 
 namespace Proxytrace.Api.Controllers;
@@ -28,6 +28,7 @@ public class ModelProvidersController : ControllerBase
     private readonly IApiKey.CreateNew createApiKey;
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IModelEndpoint.CreateExisting updateEndpoint;
+    private readonly ModelProviderDtoMapper mapper;
 
     public ModelProvidersController(
         IRepository<IModelProvider> providerRepository,
@@ -39,7 +40,8 @@ public class ModelProvidersController : ControllerBase
         IApiKey.CreateNew createApiKey,
         IModelRepository modelRepository,
         IModelEndpoint.CreateNew createEndpoint,
-        IModelEndpoint.CreateExisting updateEndpoint)
+        IModelEndpoint.CreateExisting updateEndpoint,
+        ModelProviderDtoMapper mapper)
     {
         this.providerRepository = providerRepository;
         this.apiKeyRepository = apiKeyRepository;
@@ -51,6 +53,7 @@ public class ModelProvidersController : ControllerBase
         this.createApiKey = createApiKey;
         this.createEndpoint = createEndpoint;
         this.updateEndpoint = updateEndpoint;
+        this.mapper = mapper;
     }
 
     [HttpGet]
@@ -59,17 +62,17 @@ public class ModelProvidersController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = await providerRepository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<ModelProviderDto>(items, all.Count, page, pageSize);
+        var paged = await providerRepository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(mapper.ToDto);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ModelProviderDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(id, cancellationToken))
+        var provider = await providerRepository.FindAsync(id, cancellationToken);
+        if (provider is null)
             return NotFound();
-        return ToDto(await providerRepository.GetAsync(id, cancellationToken));
+        return mapper.ToDto(provider);
     }
 
     [HttpGet("overview")]
@@ -87,9 +90,9 @@ public class ModelProvidersController : ControllerBase
 
         var providers = providersTask.Result
             .Select(p => new ProviderWithDetailsDto(
-                ToDto(p),
-                endpointsByProvider[p.Id].Select(ToEndpointDto).ToArray(),
-                keysByProvider[p.Id].Select(ToKeyDto).ToArray()))
+                mapper.ToDto(p),
+                endpointsByProvider[p.Id].Select(mapper.ToEndpointDto).ToArray(),
+                keysByProvider[p.Id].Select(mapper.ToKeyDto).ToArray()))
             .ToArray();
 
         return new ProvidersOverviewDto(
@@ -104,7 +107,7 @@ public class ModelProvidersController : ControllerBase
     {
         var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
+        return CreatedAtAction(nameof(Get), new { id = saved.Id }, mapper.ToDto(saved));
     }
 
     [HttpPut("{id:guid}")]
@@ -113,12 +116,12 @@ public class ModelProvidersController : ControllerBase
         [FromBody] UpdateModelProviderRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(id, cancellationToken))
+        var existing = await providerRepository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await providerRepository.GetAsync(id, cancellationToken);
         var updated = updateProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind, existing);
         var saved = await providerRepository.UpdateAsync(updated, cancellationToken);
-        return ToDto(saved);
+        return mapper.ToDto(saved);
     }
 
     [HttpDelete("{id:guid}")]
@@ -134,7 +137,7 @@ public class ModelProvidersController : ControllerBase
     public async Task<IReadOnlyList<ModelEndpointDto>> GetAllModelEndpoints(CancellationToken cancellationToken)
     {
         var all = await endpointRepository.GetAllAsync(cancellationToken);
-        return all.Select(ToEndpointDto).ToArray();
+        return all.Select(mapper.ToEndpointDto).ToArray();
     }
 
     // ── Models ────────────────────────────────────────────────────────────────
@@ -154,7 +157,7 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
             return NotFound("Provider not found.");
         var all = await endpointRepository.GetAllAsync(cancellationToken);
-        return all.Where(e => e.Provider.Id == providerId).Select(ToEndpointDto).ToArray();
+        return all.Where(e => e.Provider.Id == providerId).Select(mapper.ToEndpointDto).ToArray();
     }
 
     [HttpPost("{providerId:guid}/models")]
@@ -163,9 +166,9 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateModelEndpointRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+        var provider = await providerRepository.FindAsync(providerId, cancellationToken);
+        if (provider is null)
             return NotFound("Provider not found.");
-        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
 
         var all = await endpointRepository.GetAllAsync(cancellationToken);
         if (all.Any(e => e.Provider.Id == providerId && e.Model.Name == request.ModelName))
@@ -177,7 +180,7 @@ public class ModelProvidersController : ControllerBase
 
         var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
-        return CreatedAtAction(nameof(GetModels), new { providerId }, ToEndpointDto(saved));
+        return CreatedAtAction(nameof(GetModels), new { providerId }, mapper.ToEndpointDto(saved));
     }
 
     [HttpDelete("endpoints/{endpointId:guid}")]
@@ -197,16 +200,16 @@ public class ModelProvidersController : ControllerBase
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
             return NotFound("Provider not found.");
 
-        if (!await endpointRepository.ContainsAsync(endpointId, cancellationToken))
+        var existing = await endpointRepository.FindAsync(endpointId, cancellationToken);
+        if (existing is null)
             return NotFound("Model endpoint not found.");
 
-        var existing = await endpointRepository.GetAsync(endpointId, cancellationToken);
         if (existing.Provider.Id != providerId)
             return NotFound("Model endpoint not found.");
 
         var updated = updateEndpoint(existing.Model, existing.Provider, request.InputTokenCost, request.OutputTokenCost, existing);
         var saved = await endpointRepository.UpdateAsync(updated, cancellationToken);
-        return ToEndpointDto(saved);
+        return mapper.ToEndpointDto(saved);
     }
 
     // ── API Keys ──────────────────────────────────────────────────────────────
@@ -215,7 +218,7 @@ public class ModelProvidersController : ControllerBase
     public async Task<IReadOnlyList<ApiKeyDto>> GetKeys(Guid providerId, CancellationToken cancellationToken)
     {
         var all = await apiKeyRepository.GetAllAsync(cancellationToken);
-        return all.Where(k => k.Provider.Id == providerId).Select(ToKeyDto).ToArray();
+        return all.Where(k => k.Provider.Id == providerId).Select(mapper.ToKeyDto).ToArray();
     }
 
     [HttpPost("{providerId:guid}/keys")]
@@ -224,18 +227,17 @@ public class ModelProvidersController : ControllerBase
         [FromBody] CreateApiKeyRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
+        var provider = await providerRepository.FindAsync(providerId, cancellationToken);
+        if (provider is null)
             return NotFound("Provider not found.");
-        if (!await projectRepository.ContainsAsync(request.ProjectId, cancellationToken))
+        var project = await projectRepository.FindAsync(request.ProjectId, cancellationToken);
+        if (project is null)
             return BadRequest($"Project {request.ProjectId} not found.");
-
-        var provider = await providerRepository.GetAsync(providerId, cancellationToken);
-        var project = await projectRepository.GetAsync(request.ProjectId, cancellationToken);
 
         var keyValue = $"proxytrace-{Guid.NewGuid():N}";
         var key = createApiKey(request.Name, keyValue, project, provider);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
-        return CreatedAtAction(nameof(GetKeys), new { providerId }, ToKeyDto(saved));
+        return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));
     }
 
     [HttpDelete("{providerId:guid}/keys/{keyId:guid}")]
@@ -248,12 +250,4 @@ public class ModelProvidersController : ControllerBase
         return removed ? NoContent() : NotFound();
     }
 
-    private static ModelProviderDto ToDto(IModelProvider p) =>
-        new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Kind, p.CreatedAt, p.UpdatedAt);
-
-    private static ApiKeyDto ToKeyDto(IApiKey k) =>
-        new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);
-
-    private static ModelEndpointDto ToEndpointDto(IModelEndpoint e) =>
-        new(e.Id, e.Model.Name, e.Provider.Id, e.Provider.Name, e.InputTokenCost, e.OutputTokenCost, e.CreatedAt, e.UpdatedAt);
 }

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 
@@ -40,17 +40,16 @@ public class ProjectsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = await repository.GetAllAsync(cancellationToken);
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).Select(ToDto).ToArray();
-        return new PagedResult<ProjectDto>(items, all.Count, page, pageSize);
+        var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
+        return paged.Map(ToDto);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var project = await repository.FindAsync(id, cancellationToken);
+        if (project is null)
             return NotFound();
-        var project = await repository.GetAsync(id, cancellationToken);
         return ToDto(project);
     }
 
@@ -59,9 +58,9 @@ public class ProjectsController : ControllerBase
         [FromBody] CreateProjectRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await endpointRepository.ContainsAsync(request.SystemEndpointId, cancellationToken))
+        var endpoint = await endpointRepository.FindAsync(request.SystemEndpointId, cancellationToken);
+        if (endpoint is null)
             return BadRequest($"SystemEndpoint {request.SystemEndpointId} not found.");
-        var endpoint = await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
 
         var members = await ResolveMembersAsync(request.MemberIds, cancellationToken);
         if (members is null)
@@ -78,9 +77,9 @@ public class ProjectsController : ControllerBase
         [FromBody] UpdateProjectRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var existing = await repository.FindAsync(id, cancellationToken);
+        if (existing is null)
             return NotFound();
-        var existing = await repository.GetAsync(id, cancellationToken);
         var endpoint = existing.SystemEndpoint.Id == request.SystemEndpointId
             ? existing.SystemEndpoint
             : await endpointRepository.GetAsync(request.SystemEndpointId, cancellationToken);
@@ -108,9 +107,9 @@ public class ProjectsController : ControllerBase
         Guid id,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var project = await repository.FindAsync(id, cancellationToken);
+        if (project is null)
             return NotFound();
-        var project = await repository.GetAsync(id, cancellationToken);
         return project.Members.Select(ProjectDtoMapper.ToMemberDto).ToArray();
     }
 
@@ -120,16 +119,16 @@ public class ProjectsController : ControllerBase
         Guid userId,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var project = await repository.FindAsync(id, cancellationToken);
+        if (project is null)
             return NotFound();
-        if (!await userRepository.ContainsAsync(userId, cancellationToken))
+        var user = await userRepository.FindAsync(userId, cancellationToken);
+        if (user is null)
             return BadRequest($"User {userId} not found.");
 
-        var project = await repository.GetAsync(id, cancellationToken);
         if (project.Members.Any(m => m.Id == userId))
             return ToDto(project);
 
-        var user = await userRepository.GetAsync(userId, cancellationToken);
         var members = project.Members.Append(user).ToArray();
         var updated = createExisting(project.Name, project.SystemEndpoint, members, project);
         var saved = await repository.UpdateAsync(updated, cancellationToken);
@@ -142,10 +141,10 @@ public class ProjectsController : ControllerBase
         Guid userId,
         CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var project = await repository.FindAsync(id, cancellationToken);
+        if (project is null)
             return NotFound();
 
-        var project = await repository.GetAsync(id, cancellationToken);
         if (project.Members.All(m => m.Id != userId))
             return ToDto(project);
 
@@ -160,7 +159,7 @@ public class ProjectsController : ControllerBase
         CancellationToken cancellationToken)
     {
         if (memberIds is null || memberIds.Count == 0)
-            return Array.Empty<IUser>();
+            return [];
 
         var distinct = memberIds.Distinct().ToArray();
         foreach (var userId in distinct)

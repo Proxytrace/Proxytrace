@@ -70,7 +70,7 @@ internal class ProjectSearchSettingsConfig
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return Array.Empty<SearchKind>();
+            return [];
         }
         return raw
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

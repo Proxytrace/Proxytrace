@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Internal;
@@ -13,6 +14,7 @@ namespace Proxytrace.Domain.AgentCall.Internal;
 internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
 {
     public IAgent Agent { get; }
+    public IAgentVersion Version { get; }
     public IModelEndpoint Endpoint { get; }
     public Conversation Request { get; }
     public ICompletion? Response { get; }
@@ -25,6 +27,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
 
     public AgentCall(
         IAgent agent,
+        IAgentVersion version,
         IModelEndpoint endpoint,
         Conversation request,
         ICompletion? response,
@@ -36,6 +39,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IRepository<IAgentCall> repository) : base(repository)
     {
         Agent = agent;
+        Version = version;
         Endpoint = endpoint;
         Request = request;
         Response = response;
@@ -48,6 +52,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
 
     public AgentCall(
         IAgent agent,
+        IAgentVersion version,
         IModelEndpoint endpoint,
         Conversation request,
         ICompletion? response,
@@ -60,6 +65,7 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         IRepository<IAgentCall> repository) : base(existing, repository)
     {
         Agent = agent;
+        Version = version;
         Endpoint = endpoint;
         Request = request;
         Response = response;
@@ -78,6 +84,11 @@ internal record AgentCall : DomainEntity<IAgentCall>, IAgentCall
         }
 
         foreach (var result in Agent.Validate(validationContext))
+        {
+            yield return result;
+        }
+
+        foreach (var result in Version.Validate(validationContext))
         {
             yield return result;
         }

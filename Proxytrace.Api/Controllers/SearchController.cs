@@ -13,6 +13,8 @@ public class SearchController : ControllerBase
 {
     private const int MinQueryLength = 2;
     private const int MaxQueryLength = 200;
+    private const int MinSnippetLength = 20;
+    private const int MaxSnippetLength = 1000;
 
     private readonly ISearchService searchService;
     private readonly ISearchIndexer indexer;
@@ -76,7 +78,7 @@ public class SearchController : ControllerBase
             return BadRequest(new { error = "limit must be between 1 and 50" });
         }
 
-        var parsedKinds = new List<SearchKind>();
+        var parsedKinds = new HashSet<SearchKind>();
         foreach (var raw in (kinds ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (!TryWireToKind(raw, out var kind))
@@ -86,7 +88,7 @@ public class SearchController : ControllerBase
             parsedKinds.Add(kind);
         }
 
-        var results = await searchService.GetRecentAsync(projectId, parsedKinds, limit, cancellationToken);
+        var results = await searchService.GetRecentAsync(projectId, parsedKinds.ToArray(), limit, cancellationToken);
         var dto = new SearchResultsDto(
             results.Hits.Select(h => new SearchHitDto(
                 Kind: KindToWire(h.Kind),
@@ -122,8 +124,12 @@ public class SearchController : ControllerBase
         {
             return BadRequest(new { error = "indexedKinds must contain at least one kind" });
         }
+        if (settings.SnippetLength < MinSnippetLength || settings.SnippetLength > MaxSnippetLength)
+        {
+            return BadRequest(new { error = $"snippetLength must be between {MinSnippetLength} and {MaxSnippetLength}" });
+        }
 
-        var kinds = new List<SearchKind>(settings.IndexedKinds.Count);
+        var kinds = new HashSet<SearchKind>();
         foreach (var raw in settings.IndexedKinds)
         {
             if (!TryWireToKind(raw, out var kind))
@@ -137,7 +143,7 @@ public class SearchController : ControllerBase
         var draft = settingsFactory(
             project: current.Project,
             enabled: settings.Enabled,
-            indexedKinds: kinds,
+            indexedKinds: kinds.ToArray(),
             autoReindexOnChange: settings.AutoReindexOnChange,
             snippetLength: settings.SnippetLength);
 

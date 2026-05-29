@@ -5,6 +5,7 @@ import type {
   EvaluatorDetailDto,
   EvaluatorOverviewDto,
   EvaluatorSparklineDto,
+  UpdateEvaluatorPayload,
 } from './models';
 import type { StatisticsBucket } from '../lib/time-range';
 
@@ -53,7 +54,7 @@ export const evaluatorsApi = {
     api.get<EvaluatorDetailViewDto>(`/api/evaluators/${encodeURIComponent(evaluatorId)}/detail${qs(params)}`),
   get: (id: string) => api.get<EvaluatorDetailDto>(`/api/evaluators/${id}`),
   create: (payload: CreateEvaluatorPayload) => api.post<EvaluatorDetailDto>('/api/evaluators', payload),
-  update: (id: string, payload: Partial<CreateEvaluatorPayload>) =>
+  update: (id: string, payload: UpdateEvaluatorPayload) =>
     api.put<EvaluatorDetailDto>(`/api/evaluators/${id}`, payload),
   delete: (id: string) => api.del(`/api/evaluators/${id}`),
   getAgenticPresets: () => api.get<AgenticEvaluatorPresetDto[]>('/api/evaluators/agentic-presets'),

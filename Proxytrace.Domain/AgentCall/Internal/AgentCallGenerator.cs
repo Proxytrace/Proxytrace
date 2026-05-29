@@ -1,6 +1,7 @@
 using System.Net;
 using Proxytrace.Common.Random;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.Message;
@@ -12,7 +13,8 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
 {
     private readonly IAgentCall.CreateNew factory;
     private readonly IAgentCall.CreateExisting createExisting;
-    private readonly IDomainObjectGenerator<IAgent> agentGenerator;
+    private readonly IDomainEntityGenerator<IAgent> agentGenerator;
+    private readonly IAgentVersionRepository versionRepository;
     private readonly IDomainObjectGenerator<IModelEndpoint> endpointGenerator;
     private readonly IDomainObjectGenerator<Conversation> conversationGenerator;
     private readonly IDomainObjectGenerator<ICompletion> completionGenerator;
@@ -21,7 +23,8 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
         IAgentCall.CreateNew factory,
         IAgentCall.CreateExisting createExisting,
         IRepository<IAgentCall> repository,
-        IDomainObjectGenerator<IAgent> agentGenerator,
+        IDomainEntityGenerator<IAgent> agentGenerator,
+        IAgentVersionRepository versionRepository,
         IDomainObjectGenerator<IModelEndpoint> endpointGenerator,
         IDomainObjectGenerator<Conversation> conversationGenerator,
         IDomainObjectGenerator<ICompletion> completionGenerator,
@@ -30,14 +33,20 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
         this.factory = factory;
         this.createExisting = createExisting;
         this.agentGenerator = agentGenerator;
+        this.versionRepository = versionRepository;
         this.endpointGenerator = endpointGenerator;
         this.conversationGenerator = conversationGenerator;
         this.completionGenerator = completionGenerator;
     }
 
     public override async Task<IAgentCall> GenerateAsync(CancellationToken cancellationToken = default)
-        => factory(
-            agent: await agentGenerator.CreateAsync(cancellationToken),
+    {
+        var agent = await agentGenerator.CreateAsync(cancellationToken);
+        var version = agent.CurrentVersion;
+
+        return factory(
+            agent: agent,
+            version: version,
             endpoint: await endpointGenerator.CreateAsync(cancellationToken),
             request: await conversationGenerator.CreateAsync(cancellationToken),
             response: await completionGenerator.CreateAsync(cancellationToken),
@@ -45,12 +54,14 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
             finishReason: "stop",
             errorMessage: null,
             conversationId: null);
+    }
 
     public async Task<IAgentCall> CreateAsync(DateTimeOffset createdAt, CancellationToken cancellationToken = default)
     {
         var agentCall = await CreateAsync(cancellationToken);
         var modified = createExisting(
             agent: agentCall.Agent,
+            version: agentCall.Version,
             endpoint: agentCall.Endpoint,
             request: agentCall.Request,
             response: agentCall.Response,
@@ -61,7 +72,7 @@ internal class AgentCallGenerator : DomainEntityGenerator<IAgentCall>, IAgentCal
             conversationId: agentCall.ConversationId,
             existing: new ModifiedDomainEntityData(agentCall.Id, CreatedAt: createdAt, agentCall.UpdatedAt));
         return await modified.UpdateAsync(cancellationToken);
-    }   
+    }
 
     private record ModifiedDomainEntityData(Guid Id, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt) : IDomainEntityData;
 }

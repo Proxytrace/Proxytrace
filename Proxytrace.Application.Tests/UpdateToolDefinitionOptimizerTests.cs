@@ -352,6 +352,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
                     Arg.Any<string?>(),
                     Arg.Any<bool>(),
                     Arg.Any<Domain.Inference.IModelParameters?>(),
+                    Arg.Any<bool>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 

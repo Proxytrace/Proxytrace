@@ -2,13 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Proxytrace.Api.Dto;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.Paging;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -26,18 +27,24 @@ public class AgentsController : ControllerBase
     private readonly IAgentRepository repository;
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IAgentCallRepository agentCallRepository;
+    private readonly IAgentVersionRepository agentVersionRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
+    private readonly AgentDtoMapper agentDtoMapper;
 
     public AgentsController(
         IAgentRepository repository,
         IRepository<IModelEndpoint> endpoints,
         IAgentCallRepository agentCallRepository,
-        IProposalBroadcaster proposalBroadcaster)
+        IAgentVersionRepository agentVersionRepository,
+        IProposalBroadcaster proposalBroadcaster,
+        AgentDtoMapper agentDtoMapper)
     {
         this.repository = repository;
         this.endpoints = endpoints;
         this.agentCallRepository = agentCallRepository;
+        this.agentVersionRepository = agentVersionRepository;
         this.proposalBroadcaster = proposalBroadcaster;
+        this.agentDtoMapper = agentDtoMapper;
     }
 
     [HttpGet]
@@ -47,33 +54,36 @@ public class AgentsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = await repository.GetAllAsync(cancellationToken);
+        var all = repository.EnumerateAsync(cancellationToken);
         var filtered = projectId.HasValue
-            ? all.Where(a => a.Project.Id == projectId.Value).ToArray()
+            ? all.Where(a => a.Project.Id == projectId.Value)
             : all;
 
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
 
-        var sorted = filtered
+        var materialized = await filtered.ToArrayAsync(cancellationToken);
+        var sorted = materialized
             .OrderByDescending(a => lastCallTimes.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
             .ToArray();
 
-        var items = sorted.Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(a => AgentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var items = sorted
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => agentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
-
-        return new PagedResult<AgentDto>(items, filtered.Count(), page, pageSize);
+        return new PagedResult<AgentDto>(items, sorted.Length, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<AgentDto>> Get(Guid id, CancellationToken cancellationToken)
     {
-        if (!await repository.ContainsAsync(id, cancellationToken))
+        var agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null)
             return NotFound();
-        var agent = await repository.GetAsync(id, cancellationToken);
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
-        return AgentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
+        return agentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
     }
 
     [HttpGet("{id:guid}/proposals/stream")]
@@ -107,7 +117,7 @@ public class AgentsController : ControllerBase
 
     [HttpPatch("{id:guid}/endpoint")]
     public async Task<IActionResult> UpdateEndpoint(
-        Guid id, 
+        Guid id,
         [FromBody] UpdateAgentEndpointRequest request,
         CancellationToken cancellationToken)
     {
@@ -116,4 +126,22 @@ public class AgentsController : ControllerBase
         await agent.ChangeEndpoint(endpoint, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("{id:guid}/versions")]
+    public async Task<ActionResult<IReadOnlyList<AgentVersionDto>>> ListVersions(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        IAgent? agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null)
+        {
+            return NotFound();
+        }
+        var versions = await agentVersionRepository.GetByAgentAsync(agent, cancellationToken);
+        return versions
+            .OrderByDescending(v => v.VersionNumber)
+            .Select(v => agentDtoMapper.ToDto(v, agentVersionRepository.GetStrictFingerprint(v.SystemPrompt, v.Tools)))
+            .ToArray();
+    }
+
 }

@@ -246,6 +246,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             agentEndpoint.Id.Returns(agentEndpointId);
 
             var project = Substitute.For<IProject>();
+            project.Id.Returns(Guid.NewGuid());
             project.SystemEndpoint.Returns(systemEndpoint);
 
             var systemPrompt = Substitute.For<IPromptTemplate>();
@@ -301,6 +302,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
                     Arg.Any<string?>(),
                     Arg.Any<bool>(),
                     Arg.Any<Domain.Inference.IModelParameters?>(),
+                    Arg.Any<bool>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult<IAgent>(systemAgent));
 

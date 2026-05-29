@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Exceptions;
+using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Storage.Internal.Entities.Agent;
 
@@ -45,6 +46,56 @@ internal class TestSuiteRepository : AbstractRepository<ITestSuite, TestSuiteEnt
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);
+    }
+
+    public async Task<PagedResult<ITestSuite>> GetByAgentPagedAsync(
+        Guid agentId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var query = contextFactory()
+            .Set<TestSuiteEntity>()
+            .AsNoTracking()
+            .Where(e => e.Agent == agentId);
+
+        int total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ITestSuite>(await Map(stored, cancellationToken), total, page, pageSize);
+    }
+
+    public async Task<PagedResult<ITestSuite>> GetByProjectPagedAsync(
+        Guid projectId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var context = contextFactory();
+        var query = context
+            .Set<TestSuiteEntity>()
+            .AsNoTracking()
+            .Join(context.Set<AgentEntity>(),
+                s => s.Agent,
+                a => a.Id,
+                (s, a) => new { Suite = s, Agent = a })
+            .Where(x => x.Agent.Project == projectId)
+            .Select(x => x.Suite);
+
+        int total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ITestSuite>(await Map(stored, cancellationToken), total, page, pageSize);
     }
 
     protected override async Task UpdateRelationsAsync(

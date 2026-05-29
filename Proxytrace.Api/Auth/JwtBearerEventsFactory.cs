@@ -5,7 +5,7 @@ namespace Proxytrace.Api.Auth;
 
 internal static class JwtBearerEventsFactory
 {
-    public static JwtBearerEvents Create(IAuthUserResolver userResolver) => new()
+    public static JwtBearerEvents Create() => new()
     {
         OnMessageReceived = context =>
         {
@@ -28,15 +28,16 @@ internal static class JwtBearerEventsFactory
                 context.Fail("Missing principal.");
                 return;
             }
-            
-            var user = await userResolver.Resolve(context, principal);
+
+            var resolver = context.HttpContext.RequestServices.GetRequiredService<IAuthUserResolver>();
+            var user = await resolver.Resolve(context, principal);
             if (user is null)
             {
                 return;
             }
 
             context.HttpContext.Items[CurrentUserAccessor.UserIdItemKey] = user.Id;
-            
+
             var identity = (ClaimsIdentity?)principal.Identity;
             if (identity != null && !identity.HasClaim(c => c.Type == ClaimTypes.Role))
             {

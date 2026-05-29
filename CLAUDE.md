@@ -55,6 +55,13 @@ Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
 - Prefer collection expressions when possible
 - Supressing nullable warnings with `!` is strictly forbidden everywhere!
 - Injecting `IServiceProvider` shall be strongly avoided
+- Static members shall be avoided (except for extension methods and constants)
+- Docstrings: newline after `<summary>` and before `</summary>` (minimum 3-line blocks), e.g.:
+  ```csharp
+  /// <summary>
+  /// Does the thing.
+  /// </summary>
+  ```
 
 ### EF Core Migrations (run from Proxytrace.Storage/)
 ```bash

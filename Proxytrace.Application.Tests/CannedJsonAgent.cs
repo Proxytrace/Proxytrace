@@ -1,5 +1,6 @@
 using NSubstitute;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Completion;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
@@ -28,6 +29,7 @@ internal sealed class CannedJsonAgent : IAgent
     public string Name => "canned";
     public IModelEndpoint Endpoint { get; } = Substitute.For<IModelEndpoint>();
     public IProject Project { get; } = Substitute.For<IProject>();
+    public IAgentVersion CurrentVersion => throw new NotImplementedException();
     public IPromptTemplate SystemPrompt { get; } = Substitute.For<IPromptTemplate>();
     public IReadOnlyList<ToolSpecification> Tools => [];
     public IModelParameters ModelParameters { get; } = Substitute.For<IModelParameters>();
@@ -46,6 +48,9 @@ internal sealed class CannedJsonAgent : IAgent
         => Task.FromResult<IAgent>(this);
 
     public Task<IAgent> ChangeTools(IReadOnlyList<ToolSpecification> tools, CancellationToken cancellationToken = default)
+        => Task.FromResult<IAgent>(this);
+
+    public Task<IAgent> CreateNewVersionAsync(IPromptTemplate systemPrompt, IReadOnlyList<ToolSpecification> tools, CancellationToken cancellationToken = default)
         => Task.FromResult<IAgent>(this);
 
     public SystemMessage CreateSystemMessage(IReadOnlyDictionary<string, string>? variables = null)

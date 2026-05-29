@@ -27,12 +27,10 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("Endpoint")
+                    b.Property<Guid>("CurrentVersionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Fingerprint")
-                        .IsRequired()
-                        .HasMaxLength(64)
+                    b.Property<Guid>("Endpoint")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsSystemAgent")
@@ -50,14 +48,6 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("Project")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SystemPrompt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Tools")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("UpdatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -65,9 +55,6 @@ namespace Proxytrace.Storage.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Endpoint");
-
-                    b.HasIndex("Fingerprint")
-                        .IsUnique();
 
                     b.HasIndex("IsSystemAgent");
 
@@ -82,7 +69,7 @@ namespace Proxytrace.Storage.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("AgentId")
+                    b.Property<Guid>("AgentVersionId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ConversationId")
@@ -132,7 +119,7 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AgentId");
+                    b.HasIndex("AgentVersionId");
 
                     b.HasIndex("ConversationId");
 
@@ -141,6 +128,62 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("EndpointId");
 
                     b.ToTable("AgentCallEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AgentId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LooseFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("Project")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SystemPrompt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tools")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UpdatedAt")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AgentId");
+
+                    b.HasIndex("AgentId", "VersionNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Project", "Fingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("Project", "LooseFingerprint");
+
+                    b.ToTable("AgentVersionEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ApiKey.ApiKeyEntity", b =>
@@ -380,6 +423,11 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("Agent")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("CreatedAt")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -424,6 +472,8 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Kind");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("Agent", "ContentHash");
 
                     b.ToTable("OptimizationProposalEntity");
                 });
@@ -822,16 +872,31 @@ namespace Proxytrace.Storage.Migrations
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentCall.AgentCallEntity", b =>
                 {
-                    b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", null)
                         .WithMany()
-                        .HasForeignKey("AgentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("AgentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Proxytrace.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
                         .WithMany()
                         .HasForeignKey("EndpointId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AgentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Project")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

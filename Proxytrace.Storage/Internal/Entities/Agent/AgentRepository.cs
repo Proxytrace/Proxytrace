@@ -1,16 +1,18 @@
-using System.Security.Cryptography;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Events;
+using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Tools;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 
 namespace Proxytrace.Storage.Internal.Entities.Agent;
 
@@ -18,10 +20,14 @@ namespace Proxytrace.Storage.Internal.Entities.Agent;
 internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgentRepository
 {
     private readonly IAgent.CreateNew createNew;
+    private readonly Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper;
     private readonly IPromptTemplate.Create promptTemplateFactory;
     private readonly IModelParameters.Create modelParametersFactory;
     private readonly Lazy<IAgentNameGenerator> nameGenerator;
     private readonly IAsyncLock locker;
+    private readonly IAgentVersionRepository versionQueries;
+    private readonly IAgentVersionFingerprinter fingerprinter;
+    private readonly IEntityCache<IAgentVersion>? versionCache;
 
     public AgentRepository(
         IMapper<IAgent, AgentEntity> mapper,
@@ -29,17 +35,34 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         ITransaction transaction,
         IEntityEventService entityEvents,
         IAgent.CreateNew createNew,
+        Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper,
         IPromptTemplate.Create promptTemplateFactory,
         IModelParameters.Create modelParametersFactory,
         Lazy<IAgentNameGenerator> nameGenerator,
         IAsyncLock locker,
-        IEntityCache<IAgent> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        IAgentVersionRepository versionQueries,
+        IAgentVersionFingerprinter fingerprinter,
+        IEntityCache<IAgent> cache,
+        IEntityCache<IAgentVersion>? versionCache = null) : base(mapper, contextFactory, transaction, entityEvents, cache)
     {
         this.createNew = createNew;
+        this.versionMapper = versionMapper;
         this.promptTemplateFactory = promptTemplateFactory;
         this.modelParametersFactory = modelParametersFactory;
         this.nameGenerator = nameGenerator;
         this.locker = locker;
+        this.versionQueries = versionQueries;
+        this.fingerprinter = fingerprinter;
+        this.versionCache = versionCache;
+    }
+
+    public override async Task<IAgent> UpsertAsync(IAgent entity, CancellationToken cancellationToken = default)
+    {
+        if (await this.ContainsAsync(entity.Id, cancellationToken))
+        {
+            return await UpdateAsync(entity, cancellationToken);
+        }
+        return await PersistWithInitialVersionAsync(entity, cancellationToken);
     }
 
     public async Task<IAgent> GetOrCreateAsync(
@@ -50,71 +73,122 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         string? name = null,
         bool isSystemAgent = false,
         IModelParameters? modelParameters = null,
+        bool skipStrictPreCheck = false,
         CancellationToken cancellationToken = default)
     {
         var fingerprint = GetAgentFingerprint(systemPrompt, tools);
         using IDisposable lockObj = await locker.LockAsync(fingerprint, cancellationToken);
 
-        var existing = await FindByFingerprintAsync(fingerprint, project, cancellationToken);
-        if (existing is not null)
+        if (!skipStrictPreCheck)
         {
-            return existing;
+            var existingVersion = await versionQueries.FindByStrictFingerprintAsync(project, systemPrompt, tools, cancellationToken);
+            if (existingVersion is not null)
+            {
+                return await existingVersion.GetAgentAsync(cancellationToken);
+            }
         }
 
         name ??= await nameGenerator.Value.GenerateNameAsync(systemPrompt, project, cancellationToken);
-        systemPrompt = promptTemplateFactory(name, systemPrompt.Template);
-        var agent = createNew(
-            name: name,
-            systemPrompt: systemPrompt,
-            tools: tools,
-            endpoint: endpoint,
-            isSystemAgent: isSystemAgent,
-            project: project,
-            modelParameters: modelParameters ?? modelParametersFactory());
+        var namedPrompt = promptTemplateFactory(name, systemPrompt.Template);
 
         try
         {
-            return await AddAsync(agent, cancellationToken);
+            return await CreateWithInitialVersionAsync(
+                name, namedPrompt, tools, project, endpoint,
+                modelParameters ?? modelParametersFactory(),
+                isSystemAgent, cancellationToken);
         }
         catch (DbUpdateException)
         {
-            var raced = await FindByFingerprintAsync(fingerprint, project, cancellationToken);
+            var raced = await versionQueries.FindByStrictFingerprintAsync(project, systemPrompt, tools, cancellationToken);
             if (raced is not null)
             {
-                return raced;
+                return await raced.GetAgentAsync(cancellationToken);
             }
             throw;
         }
     }
 
-    private async Task<IAgent?> FindByFingerprintAsync(string fingerprint, IProject project, CancellationToken cancellationToken)
+    /// <summary>
+    /// Override base AddAsync: a brand-new agent must be persisted together with its initial
+    /// <see cref="IAgentVersion"/> (storage invariant). Caller-supplied Id and timestamps survive
+    /// the operation.
+    /// </summary>
+    public override async Task<IAgent> AddAsync(IAgent entity, CancellationToken cancellationToken = default)
     {
-        var existing = await contextFactory()
-            .Set<AgentEntity>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Fingerprint == fingerprint && e.Project == project.Id, cancellationToken);
-        return existing is null ? null : await mapper.Map(existing, cancellationToken);
-    }
-
-    public string GetAgentFingerprint(
-        IPromptTemplate systemPrompt,
-        IReadOnlyCollection<ToolSpecification> tools)
-    {
-        var sb = new StringBuilder();
-        sb.Append(systemPrompt.Template).Append('\0');
-        sb.Append('\0');
-
-        foreach (var tool in tools.OrderBy(t => t.Name, StringComparer.Ordinal))
+        if (await this.ContainsAsync(entity.Id, cancellationToken))
         {
-            sb.Append(tool.Name).Append('\0');
-            sb.Append(tool.Description).Append('\0');
-            sb.Append(tool.Arguments.JsonSchema).Append('\0');
+            throw new EntityAlreadyExistsException(entity.Id, typeof(IAgent));
         }
-
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        return await PersistWithInitialVersionAsync(entity, cancellationToken);
     }
+
+    public Task<IAgent> CreateWithInitialVersionAsync(
+        string name,
+        IPromptTemplate systemPrompt,
+        IReadOnlyList<ToolSpecification> tools,
+        IProject project,
+        IModelEndpoint endpoint,
+        IModelParameters modelParameters,
+        bool isSystemAgent,
+        CancellationToken cancellationToken = default)
+    {
+        var agent = createNew(
+            name: name,
+            systemPrompt: systemPrompt,
+            tools: tools,
+            endpoint: endpoint,
+            project: project,
+            modelParameters: modelParameters,
+            isSystemAgent: isSystemAgent);
+        return PersistWithInitialVersionAsync(agent, cancellationToken);
+    }
+
+    private async Task<IAgent> PersistWithInitialVersionAsync(IAgent agent, CancellationToken cancellationToken)
+    {
+        Guid agentId = await transaction.InvokeAsync(async () =>
+        {
+            // The agent already carries its v1 (built inside the IAgent.CreateNew factory). Both
+            // rows go in via a single SaveChanges — CurrentVersionId is a plain Guid column, no FK.
+            var versionDomain = agent.CurrentVersion;
+
+            Validator.ValidateObject(agent, new ValidationContext(agent), validateAllProperties: true);
+            Validator.ValidateObject(versionDomain, new ValidationContext(versionDomain), validateAllProperties: true);
+
+            var ctx = contextFactory();
+            var agentEntity = await mapper.Map(agent, cancellationToken);
+            agentEntity = agentEntity with { CurrentVersionId = versionDomain.Id };
+            var versionEntity = await versionMapper.Value.Map(versionDomain, cancellationToken);
+
+            ctx.Set<AgentEntity>().Add(agentEntity);
+            ctx.Set<AgentVersionEntity>().Add(versionEntity);
+            await ctx.SaveChangesAsync(cancellationToken);
+
+            return agent.Id;
+        });
+
+        InvalidateCacheEntry(agentId);
+        versionCache?.InvalidateAll();
+        return await this.GetAsync(agentId, cancellationToken);
+    }
+
+    private Task SetCurrentVersionIdAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken)
+        => transaction.InvokeAsync(async () =>
+        {
+            var ctx = contextFactory();
+            var stored = await ctx.Set<AgentEntity>().FirstAsync(a => a.Id == agentId, cancellationToken);
+            ctx.Entry(stored).Property(e => e.CurrentVersionId).CurrentValue = versionId;
+            ctx.Entry(stored).Property(e => e.UpdatedAt).CurrentValue = DateTimeOffset.UtcNow;
+            await ctx.SaveChangesAsync(cancellationToken);
+            InvalidateCacheEntry(agentId);
+        });
+
+    public string GetAgentFingerprint(IPromptTemplate systemPrompt, IReadOnlyCollection<ToolSpecification> tools)
+        => fingerprinter.Strict(systemPrompt, tools);
 
     public string GetAgentFingerprint(IAgent agent)
         => GetAgentFingerprint(agent.SystemPrompt, agent.Tools);
+
+    public Task SetCurrentVersionAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken = default)
+        => SetCurrentVersionIdAsync(agentId, versionId, cancellationToken);
 }

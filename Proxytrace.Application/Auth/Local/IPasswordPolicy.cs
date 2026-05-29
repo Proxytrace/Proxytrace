@@ -9,6 +9,6 @@ public sealed record PasswordValidationResult(
     bool IsValid,
     IReadOnlyList<string> Errors)
 {
-    public static PasswordValidationResult Ok() => new(true, Array.Empty<string>());
+    public static PasswordValidationResult Ok() => new(true, []);
     public static PasswordValidationResult Fail(params string[] errors) => new(false, errors);
 }

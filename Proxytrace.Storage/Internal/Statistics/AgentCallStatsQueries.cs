@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Usage;
-using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.AgentCall;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Model;
 using Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 
@@ -160,7 +160,10 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var rows = await q
-            .GroupBy(c => c.AgentId)
+            .Join(context.Set<AgentVersionEntity>().AsNoTracking(),
+                c => c.AgentVersionId, v => v.Id,
+                (c, v) => new { v.AgentId })
+            .GroupBy(x => x.AgentId)
             .Select(g => new AgentBreakdownStat(g.Key, g.Count()))
             .ToListAsync(cancellationToken);
 
@@ -209,7 +212,9 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
         var raw = await q
-            .Select(c => new { c.CreatedAt, c.AgentId, c.InputTokens, c.OutputTokens })
+            .Join(context.Set<AgentVersionEntity>().AsNoTracking(),
+                c => c.AgentVersionId, v => v.Id,
+                (c, v) => new { c.CreatedAt, v.AgentId, c.InputTokens, c.OutputTokens })
             .ToListAsync(cancellationToken);
 
         return raw
@@ -311,9 +316,13 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     {
         StorageDbContext context = contextFactory();
 
+        var versionIdsForAgent = context.Set<AgentVersionEntity>()
+            .AsNoTracking()
+            .Where(v => v.AgentId == agentId)
+            .Select(v => v.Id);
         List<AgentCallEntity> rows = await context.Set<AgentCallEntity>()
             .AsNoTracking()
-            .Where(c => c.AgentId == agentId && c.CreatedAt >= from && c.CreatedAt <= to)
+            .Where(c => versionIdsForAgent.Contains(c.AgentVersionId) && c.CreatedAt >= from && c.CreatedAt <= to)
             .ToListAsync(cancellationToken);
 
         Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
@@ -414,7 +423,11 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
 
         if (filter.AgentId is { } agentId)
         {
-            query = query.Where(c => c.AgentId == agentId);
+            IQueryable<Guid> versionIdsForAgent = context.Set<AgentVersionEntity>()
+                .AsNoTracking()
+                .Where(v => v.AgentId == agentId)
+                .Select(v => v.Id);
+            query = query.Where(c => versionIdsForAgent.Contains(c.AgentVersionId));
         }
         if (filter.EndpointId is { } endpointId)
         {
@@ -422,11 +435,11 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         }
         if (filter.ProjectId is { } projectId)
         {
-            IQueryable<Guid> agentIds = context.Set<AgentEntity>()
+            IQueryable<Guid> versionIdsForProject = context.Set<AgentVersionEntity>()
                 .AsNoTracking()
-                .Where(a => a.Project == projectId)
-                .Select(a => a.Id);
-            query = query.Where(c => agentIds.Contains(c.AgentId));
+                .Where(v => v.Project == projectId)
+                .Select(v => v.Id);
+            query = query.Where(c => versionIdsForProject.Contains(c.AgentVersionId));
         }
         if (filter.From is { } from)
         {

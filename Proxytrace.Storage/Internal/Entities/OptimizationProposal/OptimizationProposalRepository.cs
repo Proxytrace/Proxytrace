@@ -53,4 +53,19 @@ internal class OptimizationProposalRepository :
 
         return await Map(stored, cancellationToken);
     }
+
+    public async Task<IOptimizationProposal?> FindLatestByContentHashAsync(
+        Guid agentId,
+        string contentHash,
+        CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<OptimizationProposalEntity>()
+            .AsNoTracking()
+            .Where(e => e.Agent == agentId && e.ContentHash == contentHash)
+            .OrderByDescending(e => e.UpdatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
 }
