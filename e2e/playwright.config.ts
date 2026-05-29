@@ -1,4 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load e2e/.env (if present) before Playwright reads process.env.
+// Shell env vars take precedence over .env values.
+config({ path: resolve(__dirname, '.env'), override: false });
 
 export default defineConfig({
   testDir: './tests',

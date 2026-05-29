@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 const PROXY_URL = 'http://localhost:5102';
+const UPSTREAM_ENDPOINT = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1';
+const LLM_MODEL = process.env.LLM_MODEL ?? 'gpt-4o-mini';
+// Use OpenAiCompatible when pointing at a non-OpenAI endpoint.
+const PROVIDER_KIND = UPSTREAM_ENDPOINT.includes('api.openai.com') ? 'OpenAi' : 'OpenAiCompatible';
 
 test.describe('@llm ingestion via proxy', () => {
   test.skip(!process.env.OPENAI_API_KEY, 'requires OPENAI_API_KEY env var');
@@ -17,10 +21,10 @@ test.describe('@llm ingestion via proxy', () => {
 
     const result = await api.completeSetup({
       providerName: 'E2E LLM Provider',
-      providerEndpoint: 'https://api.openai.com/v1',
+      providerEndpoint: UPSTREAM_ENDPOINT,
       providerUpstreamApiKey: process.env.OPENAI_API_KEY!,
-      providerKind: 'OpenAi',
-      modelName: 'gpt-4o-mini',
+      providerKind: PROVIDER_KIND,
+      modelName: LLM_MODEL,
       projectName: 'E2E LLM Project',
       apiKeyName: 'e2e-llm-key',
     });
@@ -40,7 +44,7 @@ test.describe('@llm ingestion via proxy', () => {
         'Content-Type': 'application/json',
       },
       data: {
-        model: 'gpt-4o-mini',
+        model: LLM_MODEL,
         messages: [{ role: 'user', content: 'Reply with exactly: pong' }],
         max_tokens: 10,
       },
@@ -58,6 +62,6 @@ test.describe('@llm ingestion via proxy', () => {
 
     // Verify trace visible in Traces UI.
     await page.goto('/traces', { waitUntil: 'load' });
-    await expect(page.getByText('gpt-4o-mini')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(LLM_MODEL)).toBeVisible({ timeout: 10_000 });
   });
 });
