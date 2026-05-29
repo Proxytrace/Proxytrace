@@ -14,7 +14,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/health || exit 1"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 15s
     depends_on:
       postgres:
