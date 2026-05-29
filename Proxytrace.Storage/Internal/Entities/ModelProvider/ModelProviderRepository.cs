@@ -14,7 +14,8 @@ internal class ModelProviderRepository : AbstractRepository<IModelProvider, Mode
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
-        IEntityCache<IModelProvider> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        IEntityCache<IModelProvider> cache,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
     }
 

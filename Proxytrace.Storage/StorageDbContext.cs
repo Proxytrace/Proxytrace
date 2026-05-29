@@ -1,7 +1,5 @@
-﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Proxytrace.Storage.Internal;
 
 namespace Proxytrace.Storage;
@@ -29,31 +27,6 @@ internal class StorageDbContext : DbContext
         {
             configuration.CreateModel(modelBuilder);
         }
-
-        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
-        {
-            ApplySqliteDateTimeOffsetConversions(modelBuilder);
-        }
-    }
-
-    // SQLite can't translate DateTimeOffset in ORDER BY, so we register a string
-    // converter that keeps the same ISO 8601 TEXT format already on disk.
-    private static void ApplySqliteDateTimeOffsetConversions(ModelBuilder modelBuilder)
-    {
-        var converter = new ValueConverter<DateTimeOffset, string>(
-            v => v.ToString("o"),
-            v => DateTimeOffset.Parse(v, null, DateTimeStyles.RoundtripKind));
-
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        {
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.ClrType == typeof(DateTimeOffset))
-                {
-                    property.SetValueConverter(converter);
-                }
-            }
-        }
     }
 
     /// <inheritdoc />
@@ -64,5 +37,4 @@ internal class StorageDbContext : DbContext
         // this happens during unit tests where multiple contexts are created
         optionsBuilder.ConfigureWarnings(config => config.Ignore(CoreEventId.ManyServiceProvidersCreatedWarning));
     }
-
 }

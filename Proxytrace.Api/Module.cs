@@ -88,7 +88,7 @@ internal sealed class Module : Autofac.Module
         {
             var connectionString = configuration.GetConnectionString("Default")
                                    ?? throw new InvalidOperationException("Connection string 'Default' is required.");
-            storageConfig = DetermineStorageConfiguration(connectionString);
+            storageConfig = StorageConfiguration.Postgres(connectionString);
         }
 
         builder.RegisterModule(new Storage.Module(_ => storageConfig));
@@ -227,27 +227,4 @@ internal sealed class Module : Autofac.Module
         };
     }
 
-    private static StorageConfiguration DetermineStorageConfiguration(string connectionString)
-    {
-        if (IsPostgresConnectionString(connectionString))
-        {
-            return StorageConfiguration.Postgres(connectionString);
-        }
-
-        return IsSqliteConnectionString(connectionString)
-            ? StorageConfiguration.Sqlite(connectionString)
-            : StorageConfiguration.SqlServer(connectionString);
-    }
-
-    // Npgsql connection strings use "Host=" whereas SQL Server uses "Server=" / "Data Source="
-    private static bool IsPostgresConnectionString(string connectionString)
-        => connectionString.Contains("host=", StringComparison.OrdinalIgnoreCase)
-           || connectionString.Contains("port=", StringComparison.OrdinalIgnoreCase);
-
-    // SQLite connection strings typically use "Data Source=" followed by a file path
-    private static bool IsSqliteConnectionString(string connectionString)
-        => connectionString.Contains("data source=", StringComparison.OrdinalIgnoreCase)
-           && (connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase)
-               || connectionString.Contains(".sqlite", StringComparison.OrdinalIgnoreCase)
-               || connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase));
 }

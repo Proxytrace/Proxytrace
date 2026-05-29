@@ -5,18 +5,21 @@
 # Default mode: single process (kiosk demo) — API + frontend, no Redis required.
 # Split mode:   SPLIT=1 ./dev.sh — runs the production-shaped split (ingestion proxy + app +
 #               Redis), so agent traffic flows through the standalone proxy. Requires Docker
-#               (used to run a throwaway Redis) and shares one SQLite file between the two hosts.
+#               (used to run a throwaway Redis + PostgreSQL) shared between the two hosts.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SPLIT="${SPLIT:-0}"
 REDIS_CONTAINER="proxytrace-dev-redis"
+POSTGRES_CONTAINER="proxytrace-dev-postgres"
+PG_CONN="Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace"
 
 cleanup() {
     echo ""
     echo "Stopping dev servers..."
     if [ "$SPLIT" = "1" ]; then
         docker rm -f "$REDIS_CONTAINER" >/dev/null 2>&1 || true
+        docker rm -f "$POSTGRES_CONTAINER" >/dev/null 2>&1 || true
     fi
     # Kill all child processes in the process group
     kill -- -$$ 2>/dev/null || kill $(jobs -p) 2>/dev/null || true
@@ -32,21 +35,26 @@ if [ ! -d "$REPO_ROOT/frontend/node_modules" ]; then
 fi
 
 if [ "$SPLIT" = "1" ]; then
-    SHARED_DB="$REPO_ROOT/proxytrace.dev.db"
-    echo "Split mode: ingestion proxy + app + Redis"
+    echo "Split mode: ingestion proxy + app + Redis + PostgreSQL"
 
     echo "Starting Redis (docker) on localhost:6379 ..."
     docker rm -f "$REDIS_CONTAINER" >/dev/null 2>&1 || true
     docker run -d --rm --name "$REDIS_CONTAINER" -p 6379:6379 redis:7-alpine >/dev/null
 
-    # App (consumer): real mode, consumes the Redis stream, owns the shared SQLite schema.
+    echo "Starting PostgreSQL (docker) on localhost:5432 ..."
+    docker rm -f "$POSTGRES_CONTAINER" >/dev/null 2>&1 || true
+    docker run -d --rm --name "$POSTGRES_CONTAINER" -p 5432:5432 \
+        -e POSTGRES_USER=proxytrace -e POSTGRES_PASSWORD=proxytrace -e POSTGRES_DB=proxytrace \
+        postgres:16-alpine >/dev/null
+
+    # App (consumer): real mode, consumes the Redis stream, owns the shared PostgreSQL schema.
     echo "Starting app (API) on http://localhost:5001 ..."
     (cd "$REPO_ROOT/Proxytrace.Api" && \
         ASPNETCORE_ENVIRONMENT=Development \
         Kiosk__Enabled=false \
         Messaging__Provider=Redis \
         Redis__ConnectionString=localhost:6379 \
-        ConnectionStrings__Default="Data Source=$SHARED_DB" \
+        ConnectionStrings__Default="$PG_CONN" \
         dotnet run --urls "http://localhost:5001") &
 
     # Give the app a moment to initialize the database before the proxy reads from it.
@@ -58,7 +66,7 @@ if [ "$SPLIT" = "1" ]; then
         ASPNETCORE_ENVIRONMENT=Development \
         Messaging__Provider=Redis \
         Redis__ConnectionString=localhost:6379 \
-        ConnectionStrings__Default="Data Source=$SHARED_DB" \
+        ConnectionStrings__Default="$PG_CONN" \
         dotnet run --urls "http://localhost:5002") &
 else
     # Start backend in development mode (single-process kiosk demo)

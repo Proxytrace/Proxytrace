@@ -20,7 +20,8 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
         ITransaction transaction,
         IEntityEventService entityEvents,
         IAsyncLock locker,
-        IEntityCache<IModel> cache) : base(mapper, contextFactory, transaction, entityEvents, cache)
+        IEntityCache<IModel> cache,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient, cache)
     {
         this.factory = factory;
         this.locker = locker;
@@ -43,7 +44,7 @@ internal class ModelRepository : AbstractRepository<IModel, ModelEntity>, IModel
         }
 
         var model = factory(name: name);
-        return await AddAsync(context, model, cancellationToken);
+        return await AddAsync(model, cancellationToken);
     }
 }
 

@@ -19,6 +19,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     protected readonly Func<StorageDbContext> contextFactory;
     protected readonly ITransaction transaction;
     protected readonly IMapper<TDomainEntity, TStoredEntity> mapper;
+    protected readonly AmbientDbContext ambient;
     private readonly IEntityCache<TDomainEntity>? cache;
     private readonly IEntityEventService entityEvents;
 
@@ -27,12 +28,14 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
+        AmbientDbContext ambient,
         IEntityCache<TDomainEntity>? cache = null)
     {
         this.mapper = mapper;
         this.contextFactory = contextFactory;
         this.transaction = transaction;
         this.entityEvents = entityEvents;
+        this.ambient = ambient;
         this.cache = cache;
     }
 
@@ -50,8 +53,8 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     // values read inside a transaction can reflect uncommitted writes, and populating from a
     // transaction that later rolls back would leave phantom data in the cache. Invalidation is
     // always safe and is performed unconditionally on writes.
-    private bool CanUseCache 
-        => cache is not null && System.Transactions.Transaction.Current is null;
+    private bool CanUseCache
+        => cache is not null && !ambient.IsActive;
 
     /// <inheritdoc />
     public async Task<TDomainEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default)
@@ -240,31 +243,32 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public virtual async Task<TDomainEntity> AddAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
-        TDomainEntity result = await AddAsync(contextFactory(), entity, cancellationToken);
+        TDomainEntity result = await transaction.InvokeAsync(() => AddCoreAsync(entity, cancellationToken));
         Notify(result.Id, EntityChangeType.Added);
         return result;
     }
 
-    protected Task<TDomainEntity> AddAsync(
-        StorageDbContext context,
+    // Runs inside transaction.InvokeAsync, so the ambient transactional context is always active.
+    private async Task<TDomainEntity> AddCoreAsync(
         TDomainEntity entity,
-        CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync(async () =>
+        CancellationToken cancellationToken)
+    {
+        StorageDbContext context = ambient.RequireContext();
+
+        Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
+
+        bool exists = await Contains(entity.Id, context, cancellationToken);
+        if (exists)
         {
-            Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
+            throw new EntityAlreadyExistsException(entity.Id, typeof(TDomainEntity));
+        }
 
-            bool exists = await Contains(entity.Id, context, cancellationToken);
-            if (exists)
-            {
-                throw new EntityAlreadyExistsException(entity.Id, typeof(TDomainEntity));
-            }
-
-            TStoredEntity stored = await mapper.Map(entity, cancellationToken);
-            EntityEntry<TStoredEntity> entry = context.Set<TStoredEntity>().Add(stored);
-            await context.SaveChangesAsync(cancellationToken);
-            cache?.Invalidate(entity.Id);
-            return await mapper.Map(entry.Entity, cancellationToken);
-        });
+        TStoredEntity stored = await mapper.Map(entity, cancellationToken);
+        EntityEntry<TStoredEntity> entry = context.Set<TStoredEntity>().Add(stored);
+        await context.SaveChangesAsync(cancellationToken);
+        cache?.Invalidate(entity.Id);
+        return await mapper.Map(entry.Entity, cancellationToken);
+    }
 
     /// <inheritdoc />
     public async Task AddRangeAsync(
@@ -278,7 +282,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
 
         await transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = contextFactory();
+            StorageDbContext context = ambient.RequireContext();
 
             foreach (TDomainEntity entity in entities)
             {
@@ -319,14 +323,13 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         (TDomainEntity result, EntityChangeType change) = await transaction.InvokeAsync(async () =>
         {
-            Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
-            var context = contextFactory();
+            StorageDbContext context = ambient.RequireContext();
 
             TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
 
             return existing is null
-                ? (await AddAsync(context, entity, cancellationToken), EntityChangeType.Added)
-                : (await UpdateAsync(context, entity, cancellationToken), EntityChangeType.Updated);
+                ? (await AddCoreAsync(entity, cancellationToken), EntityChangeType.Added)
+                : (await UpdateCoreAsync(entity, cancellationToken), EntityChangeType.Updated);
         });
 
         Notify(result.Id, change);
@@ -336,53 +339,54 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<TDomainEntity> UpdateAsync(TDomainEntity entity, CancellationToken cancellationToken = default)
     {
-        TDomainEntity result = await UpdateAsync(contextFactory(), entity, cancellationToken);
+        TDomainEntity result = await transaction.InvokeAsync(() => UpdateCoreAsync(entity, cancellationToken));
         Notify(result.Id, EntityChangeType.Updated);
         return result;
     }
 
-    private Task<TDomainEntity> UpdateAsync(
-        StorageDbContext context,
+    // Runs inside transaction.InvokeAsync, so the ambient transactional context is always active.
+    private async Task<TDomainEntity> UpdateCoreAsync(
         TDomainEntity entity,
-        CancellationToken cancellationToken = default)
-        => transaction.InvokeAsync(async () =>
+        CancellationToken cancellationToken)
+    {
+        StorageDbContext context = ambient.RequireContext();
+
+        Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
+
+        // Find the existing entity with tracking enabled
+        TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
+
+        if (existing is null)
         {
-            Validator.ValidateObject(entity, new ValidationContext(entity), validateAllProperties: true);
+            throw new EntityNotFoundException(entity.Id, typeof(TDomainEntity));
+        }
 
-            // Find the existing entity with tracking enabled
-            TStoredEntity? existing = await FindAsync(context, entity.Id, cancellationToken);
+        // check for optimistic concurrency conflict
+        if (existing.UpdatedAt != entity.UpdatedAt)
+        {
+            throw new OptimisticConcurrencyException(entity.Id, typeof(TDomainEntity));
+        }
 
-            if (existing is null)
-            {
-                throw new EntityNotFoundException(entity.Id, typeof(TDomainEntity));
-            }
-            
-            // check for optimistic concurrency conflict
-            if (existing.UpdatedAt != entity.UpdatedAt)
-            {
-                throw new OptimisticConcurrencyException(entity.Id, typeof(TDomainEntity));
-            }
+        // Map the updated domain entity to storage entity, then stamp UpdatedAt centrally
+        // so callers don't have to bump it (and don't fight the concurrency check above).
+        TStoredEntity mapped = await mapper.Map(entity, cancellationToken);
+        TStoredEntity updated = mapped with { UpdatedAt = DateTimeOffset.UtcNow };
 
-            // Map the updated domain entity to storage entity, then stamp UpdatedAt centrally
-            // so callers don't have to bump it (and don't fight the concurrency check above).
-            TStoredEntity mapped = await mapper.Map(entity, cancellationToken);
-            TStoredEntity updated = mapped with { UpdatedAt = DateTimeOffset.UtcNow };
+        // Update the tracked entity using EF Core's proper update mechanism
+        EntityEntry<TStoredEntity> entry = context.Entry(existing);
+        entry.CurrentValues.SetValues(updated);
 
-            // Update the tracked entity using EF Core's proper update mechanism
-            EntityEntry<TStoredEntity> entry = context.Entry(existing);
-            entry.CurrentValues.SetValues(updated);
+        // Handle owned entities manually
+        UpdateOwnedEntities(entry, updated);
 
-            // Handle owned entities manually
-            UpdateOwnedEntities(entry, updated);
+        await UpdateRelationsAsync(context, updated, cancellationToken);
 
-            await UpdateRelationsAsync(context, updated, cancellationToken);
+        // Save changes
+        await context.SaveChangesAsync(cancellationToken);
+        cache?.Invalidate(entity.Id);
 
-            // Save changes
-            await context.SaveChangesAsync(cancellationToken);
-            cache?.Invalidate(entity.Id);
-
-            return await this.GetAsync(entity.Id, cancellationToken);
-        });
+        return await this.GetAsync(entity.Id, cancellationToken);
+    }
 
     protected virtual Task UpdateRelationsAsync(
         StorageDbContext context, 
@@ -397,7 +401,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         bool removed = await transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = contextFactory();
+            StorageDbContext context = ambient.RequireContext();
             TStoredEntity? existing = await FindAsync(context, id, cancellationToken);
             if (existing is null)
             {
@@ -421,7 +425,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         Guid[] removedIds = await transaction.InvokeAsync(async () =>
         {
-            StorageDbContext context = contextFactory();
+            StorageDbContext context = ambient.RequireContext();
             DbSet<TStoredEntity> set = context.Set<TStoredEntity>();
             Guid[] ids = await set.AsNoTracking().Select(e => e.Id).ToArrayAsync(cancellationToken);
             set.RemoveRange(set);
@@ -487,9 +491,16 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// Maps to the domain entity
     /// </summary>
     protected async Task<IReadOnlyList<TDomainEntity>> Map(IReadOnlyList<TStoredEntity> stored, CancellationToken cancellationToken = default)
-        => await stored
-            .Select(x => Map(x, cancellationToken)).Await()
-            .ContinueWith(t => t.Result.Cast<TDomainEntity>().ToList(), cancellationToken);
+    {
+        // Sequential, not concurrent: a mapper may resolve related entities through the shared
+        // ambient transaction context, and a DbContext does not allow concurrent operations.
+        var mapped = new List<TDomainEntity>(stored.Count);
+        foreach (TStoredEntity entity in stored)
+        {
+            mapped.Add(await mapper.Map(entity, cancellationToken));
+        }
+        return mapped;
+    }
 
     /// <summary>
     /// Maps to the stored entity

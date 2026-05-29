@@ -28,3 +28,9 @@ Proxytrace.Api/proxytrace.db
 # Generated web root: SPA build + VitePress manual (Proxytrace.Api/wwwroot/docs) are
 # produced at Release build time and must not be committed.
 Proxytrace.Api/wwwroot/
+
+# E2E test artifacts
+e2e/.auth/storageState.json
+e2e/playwright-report/
+e2e/test-results/
+e2e/.env

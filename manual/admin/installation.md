@@ -7,8 +7,8 @@ This section is for operators self-hosting Proxytrace. For using the product, se
 
 - **.NET 10 SDK**
 - **Node.js 20+** (for the frontend)
-- A supported **database** — SQLite needs zero configuration and is the local default. See
-  [Database](/admin/database).
+- A **PostgreSQL** database for persistent runs — or use kiosk mode for a zero-dependency
+  in-memory demo. See [Database](/admin/database).
 
 ## Run everything (recommended for local)
 

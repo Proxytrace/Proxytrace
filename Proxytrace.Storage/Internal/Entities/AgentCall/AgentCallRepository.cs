@@ -24,7 +24,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         Func<StorageDbContext> contextFactory,
         ITransaction transaction,
         IEntityEventService entityEvents,
-        ISearchService searchService) : base(mapper, contextFactory, transaction, entityEvents)
+        ISearchService searchService,
+        AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
         this.searchService = searchService;
     }

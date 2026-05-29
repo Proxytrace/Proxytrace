@@ -1,44 +1,21 @@
-using Autofac;
 using AwesomeAssertions;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Proxytrace.Application.Demo;
-using Proxytrace.Common.Lifecycle;
+using Proxytrace.Domain;
+using Proxytrace.Domain.User;
 using Proxytrace.Storage.Internal;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Storage.Tests;
 
 /// <summary>
-/// Tests for DatabaseInitializationService. SQLite-backed tests use a temp file so
-/// MigrateAsync exercises the real migration pipeline; PRAGMA tests cover the WAL setup.
+/// Tests for <see cref="DatabaseInitializationService"/> against the in-memory provider.
+/// Migration-based initialization (PostgreSQL) is exercised by the e2e suite.
 /// </summary>
 [TestClass]
 public sealed class DatabaseInitializationServiceTests : BaseTest<Module>
 {
-    private record TestData(string DbPath);
-
-    protected override void ConfigureContainer(ContainerBuilder builder)
-    {
-        base.ConfigureContainer(builder);
-
-        builder.Register(sp =>
-        {
-            var serviceProvider  = sp.Resolve<IServiceProvider>();
-            ITempDirectory tempPath = serviceProvider.GetTempDirectory(prefix: "proxytrace-tests");
-            var dbPath = tempPath.Combine($"proxytrace_init_{Guid.NewGuid():N}.db");
-            return new TestData(dbPath);
-        }).SingleInstance();
-
-        builder.RegisterModule(new Storage.Module(sp =>
-        {
-            var data = sp.GetRequiredService<TestData>();
-            return StorageConfiguration.Sqlite($"Data Source={data.DbPath}");
-        }));
-    }
-
     [TestMethod]
     public async Task StopAsync_CompletesSuccessfully()
     {
@@ -50,62 +27,20 @@ public sealed class DatabaseInitializationServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task EnsureDatabaseReadyAsync_OnFreshSqliteFile_CreatesMigratedSchema()
+    public async Task EnsureDatabaseReadyAsync_InMemory_CreatesUsableSchema()
     {
         var services = GetServices();
-        var service = services.GetRequiredService<IDatabaseInitializer>();
-        var testData = services.GetRequiredService<TestData>();
-
-        await service.EnsureDatabaseReadyAsync(CancellationToken);
-
-        File.Exists(testData.DbPath).Should().BeTrue();
-        var ctx = services.GetRequiredService<StorageDbContext>();
-        var history = await ctx.Database.GetAppliedMigrationsAsync(CancellationToken);
-        history.Should().NotBeEmpty();
-    }
-
-    [TestMethod]
-    public async Task EnsureDatabaseReadyAsync_OnLegacySqliteFile_DropsTablesAndRebuilds()
-    {
-        var services = GetServices();
-        TestData data = services.GetRequiredService<TestData>();
-
-        // Seed a legacy DB: a SQLite file with user tables but no migrations history.
-        await using (var legacy = new SqliteConnection($"Data Source={data.DbPath}"))
-        {
-            await legacy.OpenAsync(CancellationToken);
-            await using var cmd = legacy.CreateCommand();
-            cmd.CommandText = "CREATE TABLE LegacyJunk (Id INTEGER PRIMARY KEY)";
-            await cmd.ExecuteNonQueryAsync(CancellationToken);
-        }
-
         var service = services.GetRequiredService<IDatabaseInitializer>();
 
         await service.EnsureDatabaseReadyAsync(CancellationToken);
 
-        // Legacy table dropped, migrated schema present.
-        await using var conn = new SqliteConnection($"Data Source={data.DbPath}");
-        await conn.OpenAsync(CancellationToken);
-        await using var check = conn.CreateCommand();
-        check.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE name='LegacyJunk'";
-        var scalar = await check.ExecuteScalarAsync(CancellationToken);
-        scalar.Should().NotBeNull();
-        ((long)scalar).Should().Be(0);
-    }
+        // Schema is usable: a round-trip through the repository succeeds.
+        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
+        var repository = services.GetRequiredService<IRepository<IUser>>();
 
-    [TestMethod]
-    public async Task StartAsync_OnSqliteFile_DelegatesToEnsureReady()
-    {
-        var services = GetServices();
-        TestData data = services.GetRequiredService<TestData>();
-        
-        var sut = new DatabaseInitializationService(
-            services,
-            StorageConfiguration.Sqlite($"Data Source={data.DbPath}"),
-            NullLogger<DatabaseInitializationService>.Instance);
+        IUser created = await generator.CreateAsync(CancellationToken);
+        IUser retrieved = await repository.GetAsync(created.Id, CancellationToken);
 
-        await sut.StartAsync(CancellationToken);
-
-        File.Exists(data.DbPath).Should().BeTrue();
+        retrieved.Id.Should().Be(created.Id);
     }
 }

@@ -58,18 +58,18 @@ internal class TestRunConfig : AbstractEntityConfiguration<TestRunEntity>, IMapp
 
     public async Task<ITestRun> Map(TestRunEntity stored, CancellationToken cancellationToken = default)
     {
-        var groupTask = groups.GetAsync(stored.Group, cancellationToken);
-        var endpointTask = endpoints.GetAsync(stored.Endpoint, cancellationToken);
-        var resultsTask = testResults.GetManyAsync(stored.TestResults, cancellationToken);
-
-        await Task.WhenAll(groupTask, endpointTask, resultsTask);
+        // Sequential, not concurrent: these reads may share the ambient transaction context,
+        // and a DbContext does not allow concurrent operations.
+        var group = await groups.GetAsync(stored.Group, cancellationToken);
+        var endpoint = await endpoints.GetAsync(stored.Endpoint, cancellationToken);
+        var results = await testResults.GetManyAsync(stored.TestResults, cancellationToken);
 
         return factory(
-            group: groupTask.Result,
-            endpoint: endpointTask.Result,
+            group: group,
+            endpoint: endpoint,
             status: stored.Status,
             completedAt: stored.CompletedAt,
-            testResults: resultsTask.Result,
+            testResults: results,
             existing: stored);
     }
 

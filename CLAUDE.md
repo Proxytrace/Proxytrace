@@ -63,10 +63,11 @@ Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
   /// </summary>
   ```
 
-### EF Core Migrations (run from Proxytrace.Storage/)
+### EF Core Migrations (PostgreSQL-only; supply a Postgres connection string at design time)
 ```bash
-dotnet ef migrations add <MigrationName>
-dotnet ef database update
+ConnectionStrings__Default="Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace" \
+  dotnet ef migrations add <MigrationName> --project Proxytrace.Storage --startup-project Proxytrace.Api
+dotnet ef database update --project Proxytrace.Storage --startup-project Proxytrace.Api
 ```
 
 ### Frontend (React 19 / Vite, inside `frontend/`)
@@ -223,15 +224,14 @@ await FluentActions
 
 ## Database Configuration
 
-Provider is auto-detected from the connection string in `Proxytrace.Api/appsettings.json`:
+Storage is **PostgreSQL only** for persistent runs (debug/release/e2e) and **in-memory** for unit tests and kiosk mode. SQLite and SQL Server have been removed.
 
-| Provider | Connection string pattern |
-|----------|--------------------------|
-| SQLite | `Data Source=proxytrace.db` or `:memory:` |
-| PostgreSQL | contains `Host=` or `Port=` |
-| SQL Server | anything else (default) |
+| Mode | Selected when | Schema init |
+|------|---------------|-------------|
+| PostgreSQL | non-kiosk (connection string from `Proxytrace.Api/appsettings.json`) | EF migrations (`MigrateAsync`) on startup |
+| In-memory | `Kiosk:Enabled=true`, and all unit tests | `EnsureCreatedAsync` (no migrations) |
 
-SQLite is the default for local development (zero config). Migrations support is limited to SQL Server and PostgreSQL; SQLite uses code-first initialization via `IDatabaseInitializer`. See `DATABASE.md` for full details.
+Migrations are PostgreSQL-typed (`uuid`/`boolean`/`timestamptz`). The design-time factory always targets PostgreSQL using `ConnectionStrings:Default`; regenerate with `ConnectionStrings__Default=Host=...` set. Transactions use a single shared EF `IDbContextTransaction` per logical unit (`AmbientDbContext` + `Transaction`), so writes never promote to a 2-phase transaction. See `DATABASE.md` for full details.
 
 ## Domain Concepts
 

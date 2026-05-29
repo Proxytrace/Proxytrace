@@ -274,10 +274,69 @@ DESIGN.md §6 owns *which* tokens; this restates the **hard code rule** because 
 
 ## 14. Testing
 
+### 14.1 Unit tests (Vitest)
+
 - **Pure logic is extracted and unit-tested with Vitest** (`*.spec.ts`). The pattern exists: `features/runs/results.ts` + `results.spec.ts`, `lib/format.ts` + `format.test.ts`, `features/setup/Setup.spec.ts`. Computation living in a 1400-line component is computation that can't be tested — extract it to a `.ts` file, then test it.
 - Test the **logic** (selectors, formatters, reducers, derivations), not the framework. Don't snapshot-test whole pages.
 - A bug fix in pure logic gets a failing test first.
 - `npm test` (Vitest) and `npm run build` (tsc typecheck) and `npm run lint` must pass before a PR. Run `npm run lint` frequently during work (CLAUDE.md).
+
+### 14.2 E2E tests (Playwright)
+
+E2E tests live in `e2e/` at the repo root and run against the full Docker Compose stack. They are the right tool for flows that cross a process boundary (browser → API → DB, or proxy → Redis → UI). For component rendering and pure logic, use unit tests.
+
+**When a new feature requires an E2E test:**
+
+| What changed | Where to add it |
+|--------------|-----------------|
+| New top-level route | Add to `ROUTES` array in `e2e/tests/smoke.spec.ts` |
+| New CRUD entity or admin flow | Add `test.describe` block to `e2e/tests/core-crud.spec.ts` or a new `core`-project spec |
+| Flow through the ingestion proxy | `e2e/tests/ingestion.spec.ts` (tag `@llm`, gate with `test.skip`) |
+| Flow requiring real LLM output | New spec in `e2e/tests/`, matched by the `llm` project in `playwright.config.ts` |
+
+Read `e2e/GUIDE.md` before writing your first spec. It covers selectors, auth, polling, and debugging.
+
+### 14.3 Write components for testability (`data-testid`)
+
+**Every interactive element and every named list/container must carry a `data-testid` attribute.** E2E tests break when they rely on text content (text changes) or CSS classes (refactors). `data-testid` is a stable contract.
+
+**What needs `data-testid`:**
+
+- Primary action buttons: `data-testid="<entity>-create-btn"`, `"<entity>-save-btn"`, `"<entity>-delete-btn"`
+- Per-row action triggers: `data-testid={\`<entity>-edit-btn-${id}\`}`
+- List/table containers: `data-testid="<entity>-list"`
+- Individual rows/cards in dynamic lists: `data-testid={\`<entity>-row-${id}\`}`
+- Empty state: `data-testid="<entity>-empty-state"`
+- Key display fields (name, status, value): `data-testid="<entity>-name"`, `"<entity>-status"`
+
+**Convention:** `<entity>-<element-type>[-<id>]` — all lowercase, hyphenated.
+
+```tsx
+// ✅ correct
+<button data-testid="provider-create-btn" onClick={onCreate}>
+  New Provider
+</button>
+
+<ul data-testid="provider-list">
+  {providers.map((p) => (
+    <li key={p.id} data-testid={`provider-row-${p.id}`}>
+      <span data-testid={`provider-name-${p.id}`}>{p.name}</span>
+      <button data-testid={`provider-delete-btn-${p.id}`} onClick={() => onDelete(p.id)}>
+        Delete
+      </button>
+    </li>
+  ))}
+</ul>
+
+// ❌ wrong — no anchor for tests; text changes break automation
+<button onClick={onCreate}>New Provider</button>
+<li key={p.id}>{p.name}</li>
+```
+
+**Selector priority in tests** (documented in `e2e/GUIDE.md`):
+1. `page.getByTestId('...')` — preferred; survives text and style changes
+2. `page.getByRole('button', { name: '...' })` — for labelled interactive elements
+3. `page.getByText('...')` — only for asserting content is present, never for clicking
 
 ---
 
@@ -310,6 +369,9 @@ Pair this with DESIGN.md §10 (visual checklist). Both must pass.
 - [ ] Loading + empty + error states all present for async views.
 - [ ] Clickable = real button/anchor; icon-only has `aria-label`.
 - [ ] Pure logic extracted to a `.ts` file and unit-tested.
+- [ ] New routes added to `ROUTES` in `e2e/tests/smoke.spec.ts`.
+- [ ] New CRUD flows covered by an E2E test in `e2e/tests/`.
+- [ ] Interactive elements and list rows carry `data-testid` per §14.3 convention.
 - [ ] `npm run build`, `npm run lint`, `npm test` all green.
 
 ---
