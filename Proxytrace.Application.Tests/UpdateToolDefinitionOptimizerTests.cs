@@ -105,7 +105,6 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    [Ignore]
     public async Task DiscoverOptimizations_HappyPath_ProducesToolProposal()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
@@ -291,6 +290,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             agentEndpoint.Id.Returns(agentEndpointId);
 
             var project = Substitute.For<IProject>();
+            project.Id.Returns(Guid.NewGuid());
             project.SystemEndpoint.Returns(systemEndpoint);
 
             var systemPrompt = Substitute.For<IPromptTemplate>();
