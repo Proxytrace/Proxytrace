@@ -1,3 +1,8 @@
+# E2E testing overlay — always use with the base file:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml <cmd>
+# Adds healthchecks (required for --wait), fixes the JWT signing key, and
+# ensures postgres is healthy before dependent services start.
+# Run `docker compose ... down -v` to remove the named pgdata volume between runs.
 name: proxytrace-e2e
 
 services:
