@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Autofac;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -79,6 +80,12 @@ internal sealed class Module : Autofac.Module
         builder.RegisterModule(new Proxytrace.Messaging.Module(BuildMessagingConfiguration(configuration)));
         builder.Properties["Proxytrace.Messaging.Registered"] = true;
 
+        // Register the licensing module with the environment-derived configuration and claim the
+        // guard key BEFORE the storage module loads (which pulls in Application.Module, whose
+        // Free-tier fallback would otherwise register a second, JWT-less licensing module).
+        builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration)));
+        builder.Properties["Proxytrace.Licensing.Registered"] = true;
+
         StorageConfiguration storageConfig;
         if (kiosk.Enabled)
         {
@@ -95,6 +102,10 @@ internal sealed class Module : Autofac.Module
         
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule<Application.Module>();
+
+        builder.RegisterType<Auth.Licensing.LicenseEnforcementFilter>().AsSelf();
+        builder.RegisterServiceCollection(services =>
+            services.AddScoped<Auth.Licensing.LicenseEnforcementFilter>());
 
         builder.RegisterType<CurrentUserAccessor>()
             .As<ICurrentUserAccessor>()
@@ -206,6 +217,43 @@ internal sealed class Module : Autofac.Module
                 }
             }
         });
+    }
+
+    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration)
+    {
+#if DEBUG
+        var serverUrl = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_SERVER_URL")
+                        ?? "https://license.proxytrace.dev";
+        var keyOverride = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_PUBLIC_KEY");
+#else
+        const string serverUrl = "https://license.proxytrace.dev";
+        string? keyOverride = null;
+#endif
+
+        var licenseJwt = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE")?.Trim();
+
+        var cachePath = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_CACHE_PATH");
+        if (string.IsNullOrWhiteSpace(cachePath))
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            cachePath = Path.Combine(localAppData, "proxytrace", "license-cache.json");
+        }
+
+        IReadOnlyList<string> keys = string.IsNullOrWhiteSpace(keyOverride)
+            ? Proxytrace.Licensing.LicensePublicKeys.GetActiveKeys()
+            : keyOverride.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var section = configuration.GetSection("Licensing");
+
+        return new Proxytrace.Licensing.LicensingConfiguration
+        {
+            ServerUrl = serverUrl,
+            PublicKeys = keys,
+            LicenseJwt = string.IsNullOrEmpty(licenseJwt) ? null : licenseJwt,
+            CheckIntervalHours = section.GetValue<int?>("CheckIntervalHours") ?? 24,
+            OfflineGracePeriodDays = section.GetValue<int?>("OfflineGracePeriodDays") ?? 7,
+            CacheFilePath = cachePath,
+        };
     }
 
     private static Proxytrace.Messaging.MessagingConfiguration BuildMessagingConfiguration(IConfiguration configuration)

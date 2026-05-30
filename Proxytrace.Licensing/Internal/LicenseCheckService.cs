@@ -1,0 +1,217 @@
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Proxytrace.Common.Time;
+
+namespace Proxytrace.Licensing.Internal;
+
+/// <summary>
+/// Background service running the license revocation/grace state machine. After the synchronous
+/// startup gate (in <see cref="LicenseService"/>), this periodically contacts the license server
+/// and degrades the tier when the server reports revocation or remains unreachable past the
+/// offline grace window.
+/// </summary>
+internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTrigger
+{
+    private readonly LicenseService licenseService;
+    private readonly ILicenseServerClient serverClient;
+    private readonly ILicenseCacheStore cacheStore;
+    private readonly LicensingConfiguration configuration;
+    private readonly IClock clock;
+    private readonly ILogger<LicenseCheckService> logger;
+
+    private readonly SemaphoreSlim checkLock = new(1, 1);
+
+    public LicenseCheckService(
+        LicenseService licenseService,
+        ILicenseServerClient serverClient,
+        ILicenseCacheStore cacheStore,
+        LicensingConfiguration configuration,
+        IClock clock,
+        ILogger<LicenseCheckService> logger)
+    {
+        this.licenseService = licenseService;
+        this.serverClient = serverClient;
+        this.cacheStore = cacheStore;
+        this.configuration = configuration;
+        this.clock = clock;
+        this.logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        // Free deployments (no JWT) have no jti to check and never contact the server.
+        if (licenseService.Current.Jti is null)
+            return;
+
+        var period = TimeSpan.FromHours(Math.Max(1, configuration.CheckIntervalHours));
+
+        // Run once at startup, then on the interval.
+        await SafeRunCheckAsync(cancellationToken);
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(period, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            await SafeRunCheckAsync(cancellationToken);
+        }
+    }
+
+    public Task RunCheckNowAsync(CancellationToken cancellationToken) => RunCheckAsync(cancellationToken);
+
+    private async Task SafeRunCheckAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RunCheckAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // A transient failure must count toward the grace window, not crash the loop.
+            logger.LogWarning(ex, "License check iteration failed");
+        }
+    }
+
+    private async Task RunCheckAsync(CancellationToken cancellationToken)
+    {
+        var snapshot = licenseService.Current;
+        if (snapshot.Jti is null)
+            return;
+
+        await checkLock.WaitAsync(cancellationToken);
+        try
+        {
+            var result = await serverClient.CheckAsync(snapshot.Jti, GetVersion(), cancellationToken);
+            var next = Transition(licenseService.Current, result);
+            licenseService.ApplySnapshot(next);
+
+            if (result.Status == LicenseCheckResult.Valid)
+            {
+                cacheStore.Save(new LicenseCacheEntry(snapshot.Jti, result.CheckedAt, result.Status));
+            }
+        }
+        finally
+        {
+            checkLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// The license state machine: maps a server result against the current snapshot and the last
+    /// successful contact (from the cache) into the next snapshot.
+    /// </summary>
+    private LicenseSnapshot Transition(LicenseSnapshot snapshot, LicenseCheckResult result)
+    {
+        switch (result.Status)
+        {
+            case LicenseCheckResult.Valid:
+            {
+                var tier = result.UpdatedTier ?? snapshot.Tier;
+                var definition = LicensePolicy.For(tier);
+                var limits = new Dictionary<LicenseLimit, long>(definition.Limits);
+                foreach (var (k, v) in snapshot.Limits)
+                    limits[k] = v;
+                if (result.UpdatedLimits is not null)
+                {
+                    foreach (var (k, v) in result.UpdatedLimits)
+                        limits[k] = v;
+                }
+
+                if (snapshot.Status != LicenseStatus.Active)
+                    logger.LogInformation("License server confirmed valid; restoring Active tier {Tier}", tier);
+
+                return snapshot with
+                {
+                    Tier = tier,
+                    Status = LicenseStatus.Active,
+                    GracePeriodEndsAt = null,
+                    Features = result.UpdatedTier is null ? snapshot.Features : definition.Features,
+                    Limits = limits,
+                };
+            }
+
+            case LicenseCheckResult.Revoked:
+            {
+                logger.LogWarning("License {Jti} was revoked by the server; downgrading to Free", snapshot.Jti);
+                return Expired();
+            }
+
+            default:
+            {
+                // Unknown / unreachable: fold into the offline grace window measured from the
+                // last successful server contact. Use clock.UtcNow (not result.CheckedAt) so
+                // that an Unknown response — where the server was never actually reached — still
+                // advances the elapsed window correctly.
+                return ApplyGrace(snapshot);
+            }
+        }
+    }
+
+    private LicenseSnapshot ApplyGrace(LicenseSnapshot snapshot)
+    {
+        var cached = cacheStore.Load();
+        var now = clock.UtcNow;
+
+        // The offline window has two stages, each OfflineGracePeriodDays long. Within the first
+        // stage the deployment keeps running fully (Active). In the second stage it enters Grace
+        // (warning surfaced to operators). Past both stages it degrades to Free.
+        var stage = TimeSpan.FromDays(Math.Max(0, configuration.OfflineGracePeriodDays));
+        var anchor = cached?.LastServerOkUtc ?? now;
+        var elapsed = now - anchor;
+
+        if (elapsed >= stage + stage)
+        {
+            logger.LogWarning(
+                "License server unreachable for {Days:F1} days (grace {Grace} days x2); downgrading to Free",
+                elapsed.TotalDays,
+                configuration.OfflineGracePeriodDays);
+            return Free();
+        }
+
+        if (elapsed >= stage)
+        {
+            if (snapshot.Status != LicenseStatus.Grace)
+            {
+                logger.LogWarning(
+                    "License server unreachable; entering Grace until {Until}",
+                    anchor + stage + stage);
+            }
+
+            return snapshot with
+            {
+                Status = LicenseStatus.Grace,
+                GracePeriodEndsAt = anchor + stage + stage,
+            };
+        }
+
+        // Still within the first stage: keep running at full tier.
+        return snapshot with
+        {
+            Status = LicenseStatus.Active,
+            GracePeriodEndsAt = null,
+        };
+    }
+
+    private static LicenseSnapshot Free()
+    {
+        var snapshot = LicenseSnapshot.Free();
+        return snapshot with { Status = LicenseStatus.Free };
+    }
+
+    private static LicenseSnapshot Expired()
+    {
+        // Revocation collapses entitlements to Free, but the status records that the license was
+        // explicitly invalidated (vs. never having had one).
+        var snapshot = LicenseSnapshot.Free();
+        return snapshot with { Status = LicenseStatus.Expired };
+    }
+
+    private static string GetVersion()
+        => typeof(LicenseCheckService).Assembly.GetName().Version?.ToString() ?? "0.0.0";
+}

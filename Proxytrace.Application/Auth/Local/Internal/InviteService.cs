@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Invite;
 using Proxytrace.Domain.User;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Auth.Local.Internal;
 
@@ -11,23 +12,29 @@ internal sealed class InviteService : IInviteService
     private static readonly TimeSpan Ttl = TimeSpan.FromDays(7);
 
     private readonly IInviteRepository invites;
+    private readonly IUserRepository users;
     private readonly IInvite.CreateNew createInvite;
     private readonly IUser.CreateNew createUser;
     private readonly IPasswordService passwords;
     private readonly ITransaction transaction;
+    private readonly ILicenseService license;
 
     public InviteService(
         IInviteRepository invites,
+        IUserRepository users,
         IInvite.CreateNew createInvite,
         IUser.CreateNew createUser,
         IPasswordService passwords,
-        ITransaction transaction)
+        ITransaction transaction,
+        ILicenseService license)
     {
         this.invites = invites;
+        this.users = users;
         this.createInvite = createInvite;
         this.createUser = createUser;
         this.passwords = passwords;
         this.transaction = transaction;
+        this.license = license;
     }
 
     public async Task<IInvite> CreateAsync(
@@ -36,6 +43,8 @@ internal sealed class InviteService : IInviteService
         IUser invitedBy, 
         CancellationToken cancellationToken = default)
     {
+        LicenseLimitGuard.Ensure(license, LicenseLimit.MaxUsers, await users.CountAsync(cancellationToken));
+
         var token = GenerateToken();
         var invite = createInvite(email, role, token, DateTimeOffset.UtcNow + Ttl, invitedBy);
         return await invite.AddAsync(cancellationToken);

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Proxytrace.Domain.Exceptions;
+using Proxytrace.Licensing.Exceptions;
 
 namespace Proxytrace.Api.Middleware;
 
@@ -40,6 +41,7 @@ internal sealed class ExceptionHandlingMiddleware
             {
                 EntityNotFoundException or EntitiesNotFoundException => StatusCodes.Status404NotFound,
                 EntityAlreadyExistsException or OptimisticConcurrencyException => StatusCodes.Status409Conflict,
+                FeatureNotLicensedException or LicenseLimitExceededException => StatusCodes.Status402PaymentRequired,
                 NotImplementedException => StatusCodes.Status501NotImplemented,
                 _ => StatusCodes.Status500InternalServerError,
             };
@@ -49,9 +51,22 @@ internal sealed class ExceptionHandlingMiddleware
             var error = new Dictionary<string, object?>
             {
                 ["message"] = ex.Message,
-                ["type"] = ex.GetType().Name,
+                ["type"] = MapType(ex),
                 ["stacktrace"] = isDevelopment ? ex.ToString() : null,
             };
+
+            switch (ex)
+            {
+                case FeatureNotLicensedException feature:
+                    error["feature"] = feature.Feature.ToString();
+                    error["tier"] = feature.Tier.ToString();
+                    break;
+                case LicenseLimitExceededException limit:
+                    error["limit"] = limit.Limit.ToString();
+                    error["current"] = limit.Current;
+                    error["max"] = limit.Max;
+                    break;
+            }
 
             var response = JsonSerializer.Serialize(
                 new Dictionary<string, object?> { ["error"] = error },
@@ -60,4 +75,11 @@ internal sealed class ExceptionHandlingMiddleware
             await context.Response.WriteAsync(response);
         }
     }
+
+    private static string MapType(Exception ex) => ex switch
+    {
+        FeatureNotLicensedException => "FeatureNotLicensed",
+        LicenseLimitExceededException => "LicenseLimitExceeded",
+        _ => ex.GetType().Name,
+    };
 }

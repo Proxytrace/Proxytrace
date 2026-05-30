@@ -59,6 +59,12 @@ npm run lint     # ESLint
 npm test         # Vitest unit tests
 ```
 
+## Licensing
+
+Proxytrace runs on the Free tier with no license. Enterprise features and higher limits are
+unlocked with a license token — see [Licensing](/admin/licensing). Note that a *malformed*
+license token stops the app from starting.
+
 ## Next step
 
 Configure the application — see [Configuration](/admin/configuration).

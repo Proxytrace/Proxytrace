@@ -44,6 +44,7 @@ export default defineConfig({
           items: [
             { text: 'Installation', link: '/admin/installation' },
             { text: 'Configuration', link: '/admin/configuration' },
+            { text: 'Licensing', link: '/admin/licensing' },
             { text: 'Database', link: '/admin/database' },
             { text: 'Providers & API Keys', link: '/admin/providers-and-api-keys' },
             { text: 'Deployment', link: '/admin/deployment' },

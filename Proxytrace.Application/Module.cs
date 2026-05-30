@@ -29,6 +29,22 @@ public sealed class Module : Autofac.Module
     {
         base.Load(builder);
 
+        // Licensing. A composition root (e.g. the API) registers the Licensing module itself with
+        // an environment-derived configuration before this module loads (setting the key below);
+        // otherwise fall back to the Free-tier default used by tests and the in-process kiosk.
+        const string licensingModuleKey = "Proxytrace.Licensing.Registered";
+        if (!builder.Properties.ContainsKey(licensingModuleKey))
+        {
+            builder.Properties[licensingModuleKey] = true;
+            builder.RegisterModule(new Proxytrace.Licensing.Module(new Proxytrace.Licensing.LicensingConfiguration
+            {
+                ServerUrl = "https://license.proxytrace.dev",
+                PublicKeys = Proxytrace.Licensing.LicensePublicKeys.GetActiveKeys(),
+                LicenseJwt = null,
+                CacheFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "proxytrace-license-cache.json"),
+            }));
+        }
+
         builder.RegisterType<AgentCallCleanupService>()
             .AsSelf()
             .SingleInstance();
@@ -98,6 +114,26 @@ public sealed class Module : Autofac.Module
         {
             builder.Properties[messagingModuleKey] = true;
             builder.RegisterModule(new Proxytrace.Messaging.Module());
+        }
+
+        builder.RegisterType<TraceQuotaGuard>()
+            .As<Ingestion.ITraceQuotaGuard>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(TraceQuotaGuard));
+
+        const string traceQuotaGuardKey = "Proxytrace.Application.TraceQuotaGuard.Registered";
+        if (!builder.Properties.ContainsKey(traceQuotaGuardKey))
+        {
+            builder.Properties[traceQuotaGuardKey] = true;
+            builder.RegisterServiceCollection(services =>
+                services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    return kiosk.Enabled
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<TraceQuotaGuard>();
+                }));
         }
 
         builder.RegisterType<AgentCallProcessor>()

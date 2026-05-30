@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
 using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequiresFeature(LicenseFeature.OptimizationProposals)]
 [Route("api/proposals")]
 public class ProposalsController : ControllerBase
 {

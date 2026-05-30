@@ -1,4 +1,5 @@
 import { cn } from '../../../lib/cn';
+import { useFeature } from '../../../api/license';
 import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../../api/models';
 import { EvaluatorForm } from '../EvaluatorForm';
 import { KIND_ORDER, META, KIND_CATEGORY, type EvaluatorFormState } from '../evaluatorMeta';
@@ -18,6 +19,7 @@ interface Props {
 
 /** Create-evaluator overlay: kind picker first, then the kind-specific form. */
 export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, presets, onClose, onSubmit, loading }: Props) {
+  const agenticEnabled = useFeature('AgenticEvaluators');
   return (
     <div
       onClick={onClose}
@@ -40,7 +42,14 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
         <div className="p-5">
           {!pickedKind ? (
             <div className="grid grid-cols-2 gap-2.5">
-              {KIND_ORDER.map(k => <KindPickerCard key={k} kind={k} onPick={setPickedKind} />)}
+              {KIND_ORDER.map(k => (
+                <KindPickerCard
+                  key={k}
+                  kind={k}
+                  onPick={setPickedKind}
+                  locked={k === EvaluatorKind.Agentic && !agenticEnabled}
+                />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col gap-3.5">

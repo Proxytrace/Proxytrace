@@ -9,6 +9,8 @@ using Proxytrace.Common.Random;
 using Proxytrace.Common.Random.Internal;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Serialization.Internal;
+using Proxytrace.Common.Time;
+using Proxytrace.Common.Time.Internal;
 
 namespace Proxytrace.Common;
 
@@ -36,6 +38,8 @@ public class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterType<AsyncLock>().As<IAsyncLock>();
+
+        builder.RegisterType<SystemClock>().As<IClock>().SingleInstance();
 
         builder.RegisterType<NullHostedService>().AsSelf();
         

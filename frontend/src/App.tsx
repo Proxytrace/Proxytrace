@@ -16,6 +16,8 @@ import { LocalAuthProvider } from './auth/local/LocalAuthProvider';
 import { CurrentUserContext, useCurrentUser, type CurrentUser } from './auth/useCurrentUser';
 import { KioskContext } from './contexts/KioskContext';
 import useLocalAuth from './hooks/useLocalAuth';
+import { RequiresFeature } from './components/license/RequiresFeature';
+import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -149,7 +151,11 @@ function AppRoutes() {
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
         <Route path="providers" element={wrap(<Providers />)} />
         <Route path="settings" element={wrap(<Settings />)} />
-        <Route path="proposals" element={wrap(<Proposals />)} />
+        <Route path="upgrade" element={wrap(<UpgradePlaceholder />)} />
+        <Route
+          path="proposals"
+          element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
+        />
         {isAdmin && <Route path="admin/invites" element={wrap(<Invites />)} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

@@ -426,6 +426,16 @@ export function ChevronUpIcon(props: IconProps) {
   );
 }
 
+/** Closed padlock — marks license-gated nav entries and upgrade affordances. */
+export function LockIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </Svg>
+  );
+}
+
 /** Counter-clockwise reset / refresh arrow. */
 export function ResetIcon(props: IconProps) {
   return (
