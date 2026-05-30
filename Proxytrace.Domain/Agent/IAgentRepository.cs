@@ -54,4 +54,10 @@ public interface IAgentRepository : IRepository<IAgent>
     /// <summary>Atomically point <paramref name="agentId"/> at a different
     /// <see cref="IAgentVersion"/>. Callers must ensure the version belongs to the agent.</summary>
     Task SetCurrentVersionAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts user-facing agents only, excluding system agents (e.g. optimizers, agentic
+    /// evaluators). Used to enforce the licensed agent limit.
+    /// </summary>
+    Task<int> CountNonSystemAsync(CancellationToken cancellationToken = default);
 }

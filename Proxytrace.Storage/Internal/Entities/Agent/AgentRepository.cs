@@ -192,4 +192,10 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
     public Task SetCurrentVersionAsync(Guid agentId, Guid versionId, CancellationToken cancellationToken = default)
         => SetCurrentVersionIdAsync(agentId, versionId, cancellationToken);
+
+    public async Task<int> CountNonSystemAsync(CancellationToken cancellationToken = default)
+        => await contextFactory()
+            .Set<AgentEntity>()
+            .AsNoTracking()
+            .CountAsync(e => !e.IsSystemAgent, cancellationToken);
 }

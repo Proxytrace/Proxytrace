@@ -20,6 +20,8 @@ export type LicenseFeature =
 export type LicenseLimit =
   | 'MaxProjects'
   | 'MaxUsers'
+  | 'MaxAgents'
+  | 'MaxTestSuites'
   | 'MaxTracesPerMonth'
   | 'TraceRetentionDays';
 

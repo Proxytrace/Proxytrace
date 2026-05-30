@@ -7,6 +7,8 @@ public enum LicenseLimit
 {
     MaxProjects,
     MaxUsers,
+    MaxAgents,
+    MaxTestSuites,
     MaxTracesPerMonth,
     TraceRetentionDays,
 }

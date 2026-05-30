@@ -6,6 +6,7 @@ using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Prompt;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Ingestion.Internal;
 
@@ -19,6 +20,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
     private readonly IAgentVersionRepository versionRepository;
     private readonly IAgentVersionMatcher matcher;
     private readonly ITraceBroadcaster traceBroadcaster;
+    private readonly ILicenseService license;
     private readonly ILogger<AgentCallProcessor> logger;
 
     public AgentCallProcessor(
@@ -30,6 +32,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         IAgentVersionRepository versionRepository,
         IAgentVersionMatcher matcher,
         ITraceBroadcaster traceBroadcaster,
+        ILicenseService license,
         ILogger<AgentCallProcessor> logger)
     {
         this.agentCallRepository = agentCallRepository;
@@ -40,6 +43,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         this.versionRepository = versionRepository;
         this.matcher = matcher;
         this.traceBroadcaster = traceBroadcaster;
+        this.license = license;
         this.logger = logger;
     }
 
@@ -69,7 +73,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             // ── Resolve version ────────────────────────────────────────────────
             var promptTemplate = createPromptTemplate("unknown", parsed.SystemMessage.ToString());
 
-            IAgentVersion version;
+            IAgentVersion? version;
             if (priorConversationCall is not null
                 && parsed.Tools.Count == 0
                 && string.Equals(
@@ -84,6 +88,12 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             else
             {
                 version = await ResolveVersionAsync(job, promptTemplate, parsed, cancellationToken);
+            }
+
+            if (version is null)
+            {
+                // The licensed agent limit was reached and this trace belongs to a new agent; drop it.
+                return;
             }
 
             var agent = await version.GetAgentAsync(cancellationToken);
@@ -157,7 +167,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
         return false;
     }
 
-    private async Task<IAgentVersion> ResolveVersionAsync(
+    private async Task<IAgentVersion?> ResolveVersionAsync(
         IngestJob job,
         IPromptTemplate promptTemplate,
         ParseResult parsed,
@@ -182,7 +192,23 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             return updatedAgent.CurrentVersion;
         }
 
-        // 3. No similar agent -> brand-new agent + v1 (delegates to repository). We already
+        // 3. No similar agent -> would create a brand-new agent. Enforce the licensed agent cap
+        // first. Ingestion is async (the proxied client response has already been returned), so
+        // there is no request left to reject with 402 — over the limit we drop the trace.
+        var maxAgents = license.GetLimit(LicenseLimit.MaxAgents);
+        if (maxAgents != long.MaxValue)
+        {
+            var existingAgents = await agentRepository.CountNonSystemAsync(cancellationToken);
+            if (existingAgents >= maxAgents)
+            {
+                logger.LogWarning(
+                    "Agent limit reached ({Existing}/{Max}); dropping trace for a new agent",
+                    existingAgents, maxAgents);
+                return null;
+            }
+        }
+
+        // No similar agent -> brand-new agent + v1 (delegates to repository). We already
         // performed the strict-fingerprint lookup above; skip the redundant pre-check inside the
         // repository while still benefiting from its fingerprint-keyed lock + post-write race
         // recovery on the unique index.

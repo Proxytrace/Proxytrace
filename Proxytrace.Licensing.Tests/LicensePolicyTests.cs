@@ -15,6 +15,8 @@ public sealed class LicensePolicyTests
         definition.Features.Should().BeEmpty();
         definition.Limits[LicenseLimit.MaxProjects].Should().Be(1);
         definition.Limits[LicenseLimit.MaxUsers].Should().Be(3);
+        definition.Limits[LicenseLimit.MaxAgents].Should().Be(1);
+        definition.Limits[LicenseLimit.MaxTestSuites].Should().Be(1);
         definition.Limits[LicenseLimit.MaxTracesPerMonth].Should().Be(10_000);
         definition.Limits[LicenseLimit.TraceRetentionDays].Should().Be(14);
     }
@@ -31,6 +33,8 @@ public sealed class LicensePolicyTests
         definition.Features.Should().Contain(LicenseFeature.AuditLog);
         definition.Limits[LicenseLimit.MaxProjects].Should().Be(long.MaxValue);
         definition.Limits[LicenseLimit.MaxUsers].Should().Be(long.MaxValue);
+        definition.Limits[LicenseLimit.MaxAgents].Should().Be(long.MaxValue);
+        definition.Limits[LicenseLimit.MaxTestSuites].Should().Be(long.MaxValue);
         definition.Limits[LicenseLimit.MaxTracesPerMonth].Should().Be(long.MaxValue);
         definition.Limits[LicenseLimit.TraceRetentionDays].Should().Be(365);
     }

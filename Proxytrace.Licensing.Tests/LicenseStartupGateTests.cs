@@ -3,6 +3,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Proxytrace.Common.Async;
 using Proxytrace.Licensing.Exceptions;
 using Proxytrace.Licensing.Internal;
 using Proxytrace.Testing;
@@ -20,7 +21,16 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
     {
         var validator = new JwtLicenseValidator(config, NullLogger<JwtLicenseValidator>.Instance);
         var trigger = Substitute.For<ILicenseRefreshTrigger>();
-        return new LicenseService(config, validator, () => trigger, NullLogger<LicenseService>.Instance);
+        return new LicenseService(config, validator, NoOpLock(), () => trigger, NullLogger<LicenseService>.Instance);
+    }
+
+    private static IAsyncLock NoOpLock()
+    {
+        var gate = Substitute.For<IAsyncLock>();
+        gate.Lock(Arg.Any<object>()).Returns(Substitute.For<IDisposable>());
+        gate.LockAsync(Arg.Any<object>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Substitute.For<IDisposable>()));
+        return gate;
     }
 
     [TestMethod]
@@ -78,7 +88,7 @@ public sealed class LicenseStartupGateTests : BaseTest<Module>
         var trigger = Substitute.For<ILicenseRefreshTrigger>();
         var config = Module.Factory.Configuration(Module.Factory.CreateJwt());
         var validator = new JwtLicenseValidator(config, NullLogger<JwtLicenseValidator>.Instance);
-        var service = new LicenseService(config, validator, () => trigger, NullLogger<LicenseService>.Instance);
+        var service = new LicenseService(config, validator, NoOpLock(), () => trigger, NullLogger<LicenseService>.Instance);
 
         await service.ForceRefreshAsync(CancellationToken);
 

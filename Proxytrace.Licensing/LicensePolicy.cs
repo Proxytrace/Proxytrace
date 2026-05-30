@@ -12,6 +12,8 @@ public static class LicensePolicy
         {
             [LicenseLimit.MaxProjects] = 1,
             [LicenseLimit.MaxUsers] = 3,
+            [LicenseLimit.MaxAgents] = 1,
+            [LicenseLimit.MaxTestSuites] = 1,
             [LicenseLimit.MaxTracesPerMonth] = 10_000,
             [LicenseLimit.TraceRetentionDays] = 14,
         });
@@ -29,6 +31,8 @@ public static class LicensePolicy
         {
             [LicenseLimit.MaxProjects] = long.MaxValue,
             [LicenseLimit.MaxUsers] = long.MaxValue,
+            [LicenseLimit.MaxAgents] = long.MaxValue,
+            [LicenseLimit.MaxTestSuites] = long.MaxValue,
             [LicenseLimit.MaxTracesPerMonth] = long.MaxValue,
             [LicenseLimit.TraceRetentionDays] = 365,
         });

@@ -11,6 +11,8 @@ tier with no further configuration. The Free tier allows:
 
 - **1** project
 - **3** users
+- **1** agent
+- **1** test suite
 - **14-day** trace retention
 - **10,000** traces per month
 
@@ -105,6 +107,8 @@ Two non-secret tuning values live in `Proxytrace.Api/appsettings.json` under the
 |---|---|---|
 | Projects | 1 | Unlimited |
 | Users | 3 | Unlimited |
+| Agents | 1 | Unlimited |
+| Test suites | 1 | Unlimited |
 | Traces / month | 10,000 | Unlimited |
 | Trace retention | 14 days | 365 days |
 | Optimization Proposals | — | Yes |
@@ -118,9 +122,16 @@ The authoritative limits and feature sets live in
 `Proxytrace.Licensing/LicensePolicy.cs`. If that file changes, update this table to match.
 :::
 
-When you exceed a Free-tier limit (for example, trying to create a second project or invite
-a fourth user), the request is rejected. When you access a premium feature without a license
-that includes it, the API responds with HTTP **402** and the UI shows an upgrade prompt.
+When you exceed a Free-tier limit (for example, trying to create a second project, invite
+a fourth user, or create a second test suite), the request is rejected with HTTP **402** and
+the UI shows an upgrade prompt. When you access a premium feature without a license that
+includes it, the API responds with HTTP **402** as well.
+
+The **agent** limit is enforced differently because agents are discovered automatically from
+captured traces rather than created by an explicit request. Once the agent limit is reached,
+traces that would create a **new** agent are silently dropped (a warning is logged); traces
+for agents that already exist continue to be captured normally. System agents (used
+internally by optimizers and agentic evaluators) do not count toward the limit.
 
 ## Air-gapped and offline operation
 

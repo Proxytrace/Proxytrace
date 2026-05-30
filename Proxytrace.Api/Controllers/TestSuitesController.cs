@@ -8,6 +8,7 @@ using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -27,6 +28,7 @@ public class TestSuitesController : ControllerBase
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
     private readonly TestSuiteDtoMapper mapper;
+    private readonly ILicenseService license;
 
     public TestSuitesController(
         ITestSuiteRepository suiteRepository,
@@ -39,7 +41,8 @@ public class TestSuitesController : ControllerBase
         IExactMatchEvaluator.CreateNew createEvaluator,
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
-        TestSuiteDtoMapper mapper)
+        TestSuiteDtoMapper mapper,
+        ILicenseService license)
     {
         this.suiteRepository = suiteRepository;
         this.agentRepository = agentRepository;
@@ -52,6 +55,7 @@ public class TestSuitesController : ControllerBase
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
         this.mapper = mapper;
+        this.license = license;
     }
 
     [HttpGet]
@@ -92,6 +96,8 @@ public class TestSuitesController : ControllerBase
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
+
+        license.Ensure(LicenseLimit.MaxTestSuites, await suiteRepository.CountAsync(cancellationToken));
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
@@ -173,6 +179,8 @@ public class TestSuitesController : ControllerBase
         var agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
         if (agent is null)
             return BadRequest($"Agent {request.AgentId} not found.");
+
+        license.Ensure(LicenseLimit.MaxTestSuites, await suiteRepository.CountAsync(cancellationToken));
 
         IReadOnlyCollection<IEvaluator> evaluators;
         if (request.EvaluatorIds is { Count: > 0 })
