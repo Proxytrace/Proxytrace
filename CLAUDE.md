@@ -176,6 +176,13 @@ The boundary is sharp: **domain layer references the full entity, storage layer 
 
 ## Testing Conventions
 
+**Before writing or modifying any backend test, you MUST invoke the `test` skill
+(`.claude/skills/test/SKILL.md`) and follow it.** It is the source of truth for the test
+harness: per-test `BaseTest<TModule>` containers, the `ConfigureContainer` / `GetServices`
+DI hooks, NSubstitute substitution patterns, and the hard rules against shared
+state/fields and `[TestFixture]`-style helper classes. The summary below is orientation
+only; the skill overrides it where they differ.
+
 All tests extend `BaseTest<TModule>` (MSTest + AwesomeAssertions):
 
 ```csharp
