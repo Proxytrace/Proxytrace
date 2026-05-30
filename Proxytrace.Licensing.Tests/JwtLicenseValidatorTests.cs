@@ -33,6 +33,21 @@ public sealed class JwtLicenseValidatorTests
     }
 
     [TestMethod]
+    public void Validate_LegacyRs256Token_StillValidates()
+    {
+        // Backward compatibility: keys/licenses from before the ES256 migration must keep working.
+        using var rsaFactory = new TestLicenseFactory(useEcdsa: false);
+        var jwt = rsaFactory.CreateJwt(tier: "Enterprise");
+        var validator = new JwtLicenseValidator(
+            rsaFactory.Configuration(), NullLogger<JwtLicenseValidator>.Instance);
+
+        var snapshot = validator.Validate(jwt);
+
+        snapshot.Tier.Should().Be(LicenseTier.Enterprise);
+        snapshot.Status.Should().Be(LicenseStatus.Active);
+    }
+
+    [TestMethod]
     public void Validate_ExpiredToken_ThrowsExpired()
     {
         var jwt = factory.CreateJwt(expires: DateTimeOffset.UtcNow.AddMinutes(-1));

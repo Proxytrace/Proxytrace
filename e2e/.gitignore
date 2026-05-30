@@ -3,3 +3,4 @@ dist/
 playwright-report/
 test-results/
 .auth/storageState.json
+.auth/licensing-state.json

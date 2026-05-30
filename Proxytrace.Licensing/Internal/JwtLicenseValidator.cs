@@ -7,8 +7,9 @@ using Proxytrace.Licensing.Exceptions;
 namespace Proxytrace.Licensing.Internal;
 
 /// <summary>
-/// RS256 license JWT validator. Verifies signatures against the configured SPKI public keys and
-/// projects the <c>tier</c>, <c>feat</c>, and <c>lim</c> claims onto a <see cref="LicenseSnapshot"/>.
+/// License JWT validator. Verifies ES256 (and legacy RS256) signatures against the configured SPKI
+/// public keys and projects the <c>tier</c>, <c>feat</c>, and <c>lim</c> claims onto a
+/// <see cref="LicenseSnapshot"/>.
 /// </summary>
 internal sealed class JwtLicenseValidator : IJwtLicenseValidator
 {
@@ -41,7 +42,7 @@ internal sealed class JwtLicenseValidator : IJwtLicenseValidator
             ValidateIssuerSigningKey = true,
             IssuerSigningKeys = signingKeys,
             ValidateLifetime = true,
-            ValidAlgorithms = [SecurityAlgorithms.RsaSha256],
+            ValidAlgorithms = [SecurityAlgorithms.EcdsaSha256, SecurityAlgorithms.RsaSha256],
             ClockSkew = TimeSpan.Zero,
         };
 
@@ -153,9 +154,21 @@ internal sealed class JwtLicenseValidator : IJwtLicenseValidator
                 continue;
 
             var der = Convert.FromBase64String(encoded.Trim());
-            var rsa = RSA.Create();
-            rsa.ImportSubjectPublicKeyInfo(der, out _);
-            keys.Add(new RsaSecurityKey(rsa));
+
+            // Prefer ECDSA (P-256, ES256). Fall back to RSA (RS256) for legacy keys: the SPKI
+            // AlgorithmIdentifier OID won't match an EC key, so the import throws and we retry.
+            try
+            {
+                var ecdsa = ECDsa.Create();
+                ecdsa.ImportSubjectPublicKeyInfo(der, out _);
+                keys.Add(new ECDsaSecurityKey(ecdsa));
+            }
+            catch (CryptographicException)
+            {
+                var rsa = RSA.Create();
+                rsa.ImportSubjectPublicKeyInfo(der, out _);
+                keys.Add(new RsaSecurityKey(rsa));
+            }
         }
 
         return keys;

@@ -6,25 +6,44 @@ using Microsoft.IdentityModel.Tokens;
 namespace Proxytrace.Licensing.Tests;
 
 /// <summary>
-/// Generates a throwaway RSA keypair and signs license JWTs with it, so validator tests run
-/// against a key they control rather than the embedded production placeholder.
+/// Generates a throwaway keypair and signs license JWTs with it, so validator tests run against a
+/// key they control rather than the embedded production placeholder. Defaults to ES256 (P-256) to
+/// match the active embedded key; pass <c>useEcdsa: false</c> to exercise the legacy RS256 path.
 /// </summary>
 internal sealed class TestLicenseFactory : IDisposable
 {
     public const string Issuer = "https://license.proxytrace.dev";
     public const string Audience = "proxytrace";
 
-    private readonly RSA rsa;
+    private readonly RSA? rsa;
+    private readonly ECDsa? ecdsa;
 
-    public TestLicenseFactory()
+    public TestLicenseFactory(bool useEcdsa = true)
     {
-        rsa = RSA.Create(2048);
+        if (useEcdsa)
+            ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        else
+            rsa = RSA.Create(2048);
     }
+
+    private AsymmetricAlgorithm Key => (AsymmetricAlgorithm?)ecdsa ?? rsa!;
+
+    private SecurityKey SigningSecurityKey => ecdsa is not null
+        ? new ECDsaSecurityKey(ecdsa)
+        : new RsaSecurityKey(rsa);
+
+    private string Algorithm => ecdsa is not null
+        ? SecurityAlgorithms.EcdsaSha256
+        : SecurityAlgorithms.RsaSha256;
+
+    private SecurityKey UntrustedKey => ecdsa is not null
+        ? new ECDsaSecurityKey(ECDsa.Create(ECCurve.NamedCurves.nistP256))
+        : new RsaSecurityKey(RSA.Create(2048));
 
     /// <summary>
     /// The base64 SPKI public key matching the signing key, for LicensingConfiguration.PublicKeys.
     /// </summary>
-    public string PublicKeyBase64 => Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
+    public string PublicKeyBase64 => Convert.ToBase64String(Key.ExportSubjectPublicKeyInfo());
 
     public LicensingConfiguration Configuration(string? jwt = null) => new()
     {
@@ -60,8 +79,8 @@ internal sealed class TestLicenseFactory : IDisposable
         foreach (var limit in limits ?? [])
             claims.Add(new Claim("lim", limit));
 
-        var signingKey = new RsaSecurityKey(sign ? rsa : RSA.Create(2048));
-        var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.RsaSha256);
+        var signingKey = sign ? SigningSecurityKey : UntrustedKey;
+        var credentials = new SigningCredentials(signingKey, Algorithm);
 
         var token = new JwtSecurityToken(
             issuer: issuer,
@@ -74,5 +93,9 @@ internal sealed class TestLicenseFactory : IDisposable
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public void Dispose() => rsa.Dispose();
+    public void Dispose()
+    {
+        rsa?.Dispose();
+        ecdsa?.Dispose();
+    }
 }

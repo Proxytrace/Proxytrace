@@ -9,12 +9,14 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 // getByText for the rationale and status. If the page gains stable testids
 // (e.g. `proposal-list`, `proposal-row-<id>`, `proposal-status-<id>`), tighten the selectors.
 test.describe('Proposals', () => {
-  let api: ProxytraceApiClient;
   const rationale = `E2E seeded proposal ${Date.now()}`;
+  // Playwright forbids reusing the beforeAll `request` fixture inside a test, so we persist only
+  // the auth token here and rebuild a client per test against that test's own `request` fixture.
+  let token: string;
 
   test.beforeAll(async ({ request }) => {
-    api = new ProxytraceApiClient(request);
-    const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
+    const api = new ProxytraceApiClient(request);
+    ({ token } = await api.login('admin@e2e.test', 'E2ePassword1!'));
     api.setToken(token);
 
     // A proposal targets an agent. Agents exist only after a call has been ingested, so this
@@ -26,7 +28,8 @@ test.describe('Proposals', () => {
     await api.seedProposal({ agentId, rationale, status: 'Draft' });
   });
 
-  test('seeded proposal appears in the API read-back with its status', async () => {
+  test('seeded proposal appears in the API read-back with its status', async ({ request }) => {
+    const api = new ProxytraceApiClient(request, token);
     const proposals = await api.getProposals();
     const seeded = proposals.find((p) => p.rationale === rationale);
     expect(seeded, 'seeded proposal should be returned by GET /api/proposals').toBeTruthy();
@@ -35,8 +38,11 @@ test.describe('Proposals', () => {
 
   test('seeded proposal renders on the Proposals page with its status', async ({ page }) => {
     await page.goto('/proposals', { waitUntil: 'load' });
-    await expect(page.getByText(rationale)).toBeVisible();
-    // The status pill renders the proposal status text ('Draft').
-    await expect(page.getByText('Draft').first()).toBeVisible();
+    // The rationale appears both as a list-card title and the opened detail heading, so scope
+    // to the first match rather than asserting a single element.
+    await expect(page.getByText(rationale).first()).toBeVisible();
+    // A Draft proposal's pill reflects its A/B run state, not the literal status. The seeded run
+    // is freshly created (Pending), so the pill reads 'A/B queued' (see features/proposals/shared.ts).
+    await expect(page.getByText('A/B queued').first()).toBeVisible();
   });
 });

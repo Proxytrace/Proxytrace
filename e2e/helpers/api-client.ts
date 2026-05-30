@@ -1,4 +1,4 @@
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 
 export interface AuthModeDto {
   mode: string;
@@ -214,5 +214,20 @@ export class ProxytraceApiClient {
     const res = await this.request.get(`/api/proposals${query}`, { headers: this.headers() });
     if (!res.ok()) throw new Error(`get proposals failed: ${res.status()} ${await res.text()}`);
     return res.json();
+  }
+
+  // The license snapshot served by GET /api/license (AllowAnonymous). `features` is empty on the
+  // Free tier; `tier` is the lowercased LicenseTier ('free' | 'enterprise').
+  async getLicense(): Promise<{ tier: string; status: string; features: string[] }> {
+    const res = await this.request.get('/api/license', { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get license failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // Raw GET /api/proposals returning the response so callers can assert on the status code.
+  // On the Free tier the controller's [RequiresFeature(OptimizationProposals)] gate replies 402
+  // before the action runs — this is the backend half of the free-tier feature gate.
+  proposalsResponse(): Promise<APIResponse> {
+    return this.request.get('/api/proposals', { headers: this.headers() });
   }
 }
