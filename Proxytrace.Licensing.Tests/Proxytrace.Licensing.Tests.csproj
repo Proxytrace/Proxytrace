@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <NoWarn>$(NoWarn);MSTEST0001</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AwesomeAssertions" Version="9.4.0" />
+        <PackageReference Include="coverlet.collector" Version="10.0.0">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+        <PackageReference Include="MSTest" Version="4.2.2" />
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Proxytrace.Licensing\Proxytrace.Licensing.csproj" />
+        <ProjectReference Include="..\Proxytrace.Common\Proxytrace.Common.csproj" />
+        <ProjectReference Include="..\Proxytrace.Testing\Proxytrace.Testing.csproj" />
+        <ProjectReference Include="..\Proxytrace.Storage\Proxytrace.Storage.csproj" />
+    </ItemGroup>
+
+</Project>

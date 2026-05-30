@@ -1,4 +1,4 @@
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 
 export interface AuthModeDto {
   mode: string;
@@ -171,5 +171,63 @@ export class ProxytraceApiClient {
     const res = await this.request.get(`/api/test-run-groups/${id}`, { headers: this.headers() });
     if (!res.ok()) throw new Error(`get run group failed: ${res.status()} ${await res.text()}`);
     return res.json();
+  }
+
+  // Proposals. The public ProposalsController exposes GET /api/proposals (list, optional
+  // ?agentId / ?projectId filters) and PATCH /api/proposals/{id}/status. There is no public
+  // create endpoint, so seeding a proposal goes through the test-only seed action
+  // POST /api/proposals/seed (backend stub — throws NotImplementedException until the user
+  // implements it). The request shape mirrors the SystemPrompt proposal details DTO.
+  async seedProposal(opts: {
+    agentId: string;
+    kind?: string;
+    status?: string;
+    priority?: string;
+    rationale: string;
+  }): Promise<{ id: string }> {
+    const res = await this.request.post('/api/proposals/seed', {
+      headers: this.headers(),
+      data: {
+        agentId: opts.agentId,
+        kind: opts.kind ?? 'SystemPrompt',
+        status: opts.status ?? 'Draft',
+        priority: opts.priority ?? 'Medium',
+        rationale: opts.rationale,
+        details: {
+          kind: 'SystemPrompt',
+          currentSystemMessage: 'You are a helpful assistant.',
+          proposedSystemMessage: 'You are a concise, helpful assistant.',
+        },
+      },
+    });
+    if (!res.ok()) throw new Error(`seed proposal failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getProposals(params?: { agentId?: string; projectId?: string }): Promise<
+    Array<{ id: string; status: string; rationale: string; agentId: string }>
+  > {
+    const qs = new URLSearchParams();
+    if (params?.agentId) qs.set('agentId', params.agentId);
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const query = qs.toString() ? `?${qs}` : '';
+    const res = await this.request.get(`/api/proposals${query}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get proposals failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // The license snapshot served by GET /api/license (AllowAnonymous). `features` is empty on the
+  // Free tier; `tier` is the lowercased LicenseTier ('free' | 'enterprise').
+  async getLicense(): Promise<{ tier: string; status: string; features: string[] }> {
+    const res = await this.request.get('/api/license', { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get license failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // Raw GET /api/proposals returning the response so callers can assert on the status code.
+  // On the Free tier the controller's [RequiresFeature(OptimizationProposals)] gate replies 402
+  // before the action runs — this is the backend half of the free-tier feature gate.
+  proposalsResponse(): Promise<APIResponse> {
+    return this.request.get('/api/proposals', { headers: this.headers() });
   }
 }

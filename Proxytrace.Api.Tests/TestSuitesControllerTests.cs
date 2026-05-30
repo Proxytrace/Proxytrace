@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Domain;
@@ -9,6 +10,8 @@ using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Licensing;
+using Proxytrace.Licensing.Exceptions;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -428,7 +431,8 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         result.Value.TestCases.Should().NotContain(tc => tc.Id == targetCase.Id);
     }
 
-    private static TestSuitesController ResolveController(IServiceProvider services) =>
+    private static TestSuitesController ResolveController(
+        IServiceProvider services, ILicenseService? license = null) =>
         new(
             services.GetRequiredService<ITestSuiteRepository>(),
             services.GetRequiredService<IAgentRepository>(),
@@ -440,5 +444,68 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<IExactMatchEvaluator.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateExisting>(),
-            services.GetRequiredService<TestSuiteDtoMapper>());
+            services.GetRequiredService<TestSuiteDtoMapper>(),
+            license ?? UnlimitedLicense());
+
+    private static ILicenseService UnlimitedLicense()
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
+        return license;
+    }
+
+    private static ILicenseService LicenseWithSuiteLimit(long max)
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
+        license.GetLimit(LicenseLimit.MaxTestSuites).Returns(max);
+        return license;
+    }
+
+    [TestMethod]
+    public async Task Create_WhenSuiteLimitReached_ThrowsLicenseLimitExceeded()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services, LicenseWithSuiteLimit(0));
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+
+        var request = new CreateTestSuiteRequest(Name: "Suite", AgentId: agent.Id, TestCases: []);
+
+        await FluentActions
+            .Invoking(() => controller.Create(request, CancellationToken))
+            .Should().ThrowAsync<LicenseLimitExceededException>()
+            .Where(e => e.Limit == LicenseLimit.MaxTestSuites);
+    }
+
+    [TestMethod]
+    public async Task Create_WhenBelowSuiteLimit_Succeeds()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services, LicenseWithSuiteLimit(5));
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+
+        var request = new CreateTestSuiteRequest(Name: "Suite", AgentId: agent.Id, TestCases: []);
+
+        var result = await controller.Create(request, CancellationToken);
+
+        result.Result.Should().BeOfType<CreatedAtActionResult>();
+    }
+
+    [TestMethod]
+    public async Task PromoteFromTraces_WhenSuiteLimitReached_ThrowsLicenseLimitExceeded()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services, LicenseWithSuiteLimit(0));
+        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+
+        var request = new PromoteTracesRequest(
+            Name: "Promoted",
+            AgentId: call.Agent.Id,
+            AgentCallIds: [call.Id]);
+
+        await FluentActions
+            .Invoking(() => controller.PromoteFromTraces(request, CancellationToken))
+            .Should().ThrowAsync<LicenseLimitExceededException>()
+            .Where(e => e.Limit == LicenseLimit.MaxTestSuites);
+    }
 }

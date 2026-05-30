@@ -39,6 +39,10 @@ e2e/
 
 The **`setup` project** runs `auth.setup.spec.ts` first. All other projects declare `dependencies: ['setup']` in `playwright.config.ts` and load `.auth/storageState.json` — you start every test already authenticated.
 
+### Two license tiers in one run
+
+The default stack (frontend `:5101`, api `:5100`) runs the **Enterprise** tier (committed throwaway license in `docker-compose.e2e.yml`), so paid features are unlocked. To test **Free-tier** behaviour, the overlay also starts an unlicensed pair — `api-free` + `frontend-free` on `:5103` — sharing the same database. The **`licensing` project** sets its `baseURL` to `:5103` and has its own setup (`licensing.setup.spec.ts` → `.auth/licensing-state.json`), because storageState is per-origin. Use it for free-tier feature gates (the gated API returns `402`, gated routes render the upgrade placeholder). Keep its assertions **stateless** — only feature gates, never count-based limit gates, since the DB is shared and its row counts aren't deterministic.
+
 ---
 
 ## Writing a new spec

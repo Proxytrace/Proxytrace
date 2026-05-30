@@ -1,6 +1,8 @@
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Evaluators;
 using Proxytrace.Api.Evaluators;
@@ -11,6 +13,8 @@ using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Licensing;
+using Proxytrace.Licensing.Exceptions;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
@@ -146,6 +150,54 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         var result = await controller.Delete(Guid.NewGuid(), CancellationToken);
 
         result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task BuildAgentic_WhenFeatureNotLicensed_ThrowsFeatureNotLicensed()
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(false);
+        license.Current.Returns(LicenseSnapshot.Free());
+
+        IServiceProvider services = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var builder = services.GetRequiredService<EvaluatorBuilder>();
+
+        await FluentActions
+            .Invoking(() => builder.BuildAsync(
+                new CreateAgenticEvaluatorRequest
+                {
+                    ProjectId = project.Id,
+                    Name = "Judge",
+                    SystemMessage = "Rate the answer.",
+                },
+                project,
+                CancellationToken))
+            .Should().ThrowAsync<FeatureNotLicensedException>()
+            .Where(e => e.Feature == LicenseFeature.AgenticEvaluators);
+    }
+
+    [TestMethod]
+    public async Task BuildAgentic_WhenFeatureLicensed_BuildsEvaluator()
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(true);
+
+        IServiceProvider services = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        var builder = services.GetRequiredService<EvaluatorBuilder>();
+
+        var evaluator = await builder.BuildAsync(
+            new CreateAgenticEvaluatorRequest
+            {
+                ProjectId = project.Id,
+                Name = "Judge",
+                SystemMessage = "Rate the answer.",
+            },
+            project,
+            CancellationToken);
+
+        evaluator.Should().BeAssignableTo<IAgenticEvaluator>();
     }
 
     private static EvaluatorsController ResolveController(IServiceProvider services) => new(

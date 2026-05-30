@@ -1,12 +1,16 @@
 using System.Net;
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Messaging;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
+using Proxytrace.Licensing;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -483,6 +487,71 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         calls[0].ModelParameters.TopP.Should().BeNull();
         calls[0].ModelParameters.MaxTokens.Should().BeNull();
         calls[0].Agent.ModelParameters.Temperature.Should().BeNull();
+    }
+
+    // Distinct system prompt + no tools → a different agent fingerprint than FirstRequestBody.
+    private const string SecondAgentRequestBody = $$"""
+                                                    {
+                                                        "model": "{{Model}}",
+                                                        "messages": [
+                                                            {"role": "system", "content": "You are a strict math tutor."},
+                                                            {"role": "user", "content": "What is 2+2?"}
+                                                        ]
+                                                    }
+                                                    """;
+
+    [TestMethod]
+    public async Task IngestAsync_WhenAgentLimitReached_DropsTraceForNewAgent()
+    {
+        // Default license is Free, which caps non-system agents at 1.
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var agentRepo = services.GetRequiredService<IAgentRepository>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        // First distinct agent: allowed (count 0 < 1).
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, FirstRequestBody, FirstResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        // Second distinct agent: would be agent #2 → dropped, and its trace with it.
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, SecondAgentRequestBody, ChatTurn1ResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        (await agentRepo.CountNonSystemAsync(CancellationToken)).Should().Be(1);
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenAgentLimitUnlimited_CreatesSecondAgent()
+    {
+        var services = GetServices(builder =>
+        {
+            var license = Substitute.For<ILicenseService>();
+            license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
+            builder.RegisterInstance(license).As<ILicenseService>();
+        });
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var agentRepo = services.GetRequiredService<IAgentRepository>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, FirstRequestBody, FirstResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        await ingestion.IngestAsync(
+            new IngestJob(provider, project, SecondAgentRequestBody, ChatTurn1ResponseBody,
+                TimeSpan.FromMilliseconds(100), HttpStatusCode.OK),
+            cancellationToken: CancellationToken);
+
+        (await agentRepo.CountNonSystemAsync(CancellationToken)).Should().Be(2);
+        (await callRepo.CountAsync(CancellationToken)).Should().Be(2);
     }
 
     [TestMethod]

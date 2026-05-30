@@ -27,6 +27,7 @@ export const QUERY_KEYS = {
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 
+  license: ['license'] as const,
   health: ['health'] as const,
   authMode: ['auth-mode'] as const,
   appConfig: ['app-config'] as const,

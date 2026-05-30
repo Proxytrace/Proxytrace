@@ -7,6 +7,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.Setup.Internal;
 
@@ -27,6 +28,7 @@ internal class SetupService : ISetupService
     private readonly IPasswordService passwords;
     private readonly ILocalTokenIssuer tokens;
     private readonly ITransaction transaction;
+    private readonly ILicenseService license;
 
     public SetupService(
         IRepository<IModelProvider> providers,
@@ -43,7 +45,8 @@ internal class SetupService : ISetupService
         IUser.CreateNew createUser,
         IPasswordService passwords,
         ILocalTokenIssuer tokens,
-        ITransaction transaction)
+        ITransaction transaction,
+        ILicenseService license)
     {
         this.providers = providers;
         this.models = models;
@@ -60,6 +63,7 @@ internal class SetupService : ISetupService
         this.passwords = passwords;
         this.tokens = tokens;
         this.transaction = transaction;
+        this.license = license;
     }
 
     public async Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken = default)
@@ -81,8 +85,11 @@ internal class SetupService : ISetupService
     public Task<SetupResult> CompleteAsync(SetupInput input, CancellationToken cancellationToken = default)
         => transaction.InvokeAsync(async () =>
         {
-            if (await projects.CountAsync(cancellationToken) > 0)
+            var projectCount = await projects.CountAsync(cancellationToken);
+            if (projectCount > 0)
                 throw new InvalidOperationException("Setup has already been completed.");
+
+            license.Ensure(LicenseLimit.MaxProjects, projectCount);
 
             var user = await currentUser.GetCurrentUserAsync(cancellationToken)
                 ?? throw new InvalidOperationException("Setup requires an authenticated user.");

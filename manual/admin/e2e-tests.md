@@ -25,14 +25,33 @@ OPENAI_API_KEY=sk-... bash e2e/run.sh
 
 Without the key, `@llm` specs are skipped automatically — the rest of the suite still passes.
 
+## Licensing
+
+The e2e overlay injects a committed throwaway Enterprise license (`PROXYTRACE_LICENSE` in
+`docker-compose.e2e.yml`) so the suite can exercise paid features such as optimization proposals.
+It is an ES256 token (kid `2026-05`) signed with the test private key whose public half is the
+active embedded verification key, so it validates in any build configuration with no public-key
+override. The keypair is generated for tests only and grants nothing against production, which
+ships a different embedded public key. No action is needed to run the suite; this is purely
+informational.
+
+To also cover the **Free tier**, the overlay starts a second API (`api-free`) and frontend
+(`frontend-free`) with **no license configured** — `LicenseService` falls back to Free. These share
+the same database as the Enterprise pair, so the Free stack reuses the admin/project created during
+setup. The `licensing` Playwright project points at the Free stack (`:5103`) and asserts the
+feature gates the Enterprise stack can never show (the optimization-proposals API returns `402`, the
+top-bar badge reads "Free" and links to `/upgrade`, gated routes render the upgrade placeholder).
+
 ## Compose ports (e2e overlay)
 
 | Service  | Host port | Purpose |
 |----------|-----------|---------|
-| nginx (frontend) | 5101 | Playwright base URL |
-| api | 5100 | REST / SSE |
+| nginx (frontend) | 5101 | Playwright base URL (Enterprise) |
+| api | 5100 | REST / SSE (Enterprise) |
 | proxy | 5102 | OpenAI-compatible ingestion endpoint |
-| postgres | 5432 | Database (fresh per run) |
+| nginx (frontend-free) | 5103 | Base URL for the `licensing` project (Free tier) |
+| api-free | — | Free-tier REST (internal only; reached via `:5103`) |
+| postgres | 5432 | Database (fresh per run; shared by both tiers) |
 | redis | 6379 | Ingestion transport |
 
 ## Running individual projects
@@ -42,6 +61,7 @@ cd e2e
 npx playwright test --project=smoke          # Route smoke tests
 npx playwright test --project=core           # CRUD verification
 npx playwright test --project=llm            # LLM ingestion + test runs
+npx playwright test --project=licensing      # Free-tier feature gates (Free stack on :5103)
 ```
 
 ## Viewing the report

@@ -26,8 +26,6 @@ to preview; `npm run docs:build` to verify it builds.
 
 The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §14). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
 
-When implementing frontend features that require backend endpoints or methods that do not yet exist, create the missing controller action(s) or service method(s) as unimplemented stubs — throw `NotImplementedException` and leave the body empty. Do not implement backend logic. The user will implement the backend themselves.
-
 ## Commands
 
 ### Backend (.NET 10)

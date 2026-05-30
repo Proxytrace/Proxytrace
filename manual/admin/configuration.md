@@ -11,6 +11,9 @@ Proxytrace is configured through standard ASP.NET Core settings files in the
 Environment variables and the usual ASP.NET Core configuration providers also apply and
 override file values.
 
+Licensing is configured separately, primarily through environment variables — see
+[Licensing](/admin/licensing).
+
 ## Common settings
 
 ### Database connection string

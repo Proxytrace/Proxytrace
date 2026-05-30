@@ -3,6 +3,30 @@ import { showToast } from '../components/ui/Toast';
 
 type ErrorMeta = { status: number; stacktrace?: string; type?: string };
 
+/** Error types the backend tags on a 402 Payment Required response. */
+export type UpgradeErrorType = 'FeatureNotLicensed' | 'LicenseLimitExceeded';
+
+/**
+ * Thrown when the API rejects a request because the current license tier does
+ * not permit the feature or has exceeded a usage limit (HTTP 402). Callers can
+ * branch on this (e.g. show an upgrade placeholder) instead of the generic
+ * error toast, which is intentionally suppressed for these responses.
+ */
+export class UpgradeRequiredError extends Error {
+  readonly status = 402;
+  readonly errorType: UpgradeErrorType;
+
+  constructor(message: string, errorType: UpgradeErrorType) {
+    super(message);
+    this.name = 'UpgradeRequiredError';
+    this.errorType = errorType;
+  }
+}
+
+function isUpgradeErrorType(type: string | undefined): type is UpgradeErrorType {
+  return type === 'FeatureNotLicensed' || type === 'LicenseLimitExceeded';
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -31,6 +55,13 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     } catch {
       const text = await res.text().catch(() => '');
       if (text) message = `${message}: ${text}`;
+    }
+
+    // License gating: a 402 tagged with a licensing error type is not a generic
+    // failure — surface it as an UpgradeRequiredError so the UI can route to the
+    // upgrade placeholder. Do NOT fire the red error toast for these.
+    if (res.status === 402 && isUpgradeErrorType(type)) {
+      throw new UpgradeRequiredError(message, type);
     }
 
     const error = new Error(message) as Error & ErrorMeta;

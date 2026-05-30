@@ -34,6 +34,11 @@ services:
     environment:
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
+      # Throwaway Enterprise license signed (ES256, kid 2026-05) with the test private key whose
+      # public half is the embedded active key, so it validates in any build configuration with no
+      # PROXYTRACE_LICENSE_PUBLIC_KEY override. Enterprise tier unlocks the paid features the suite
+      # exercises. Grants nothing against production, which ships a different embedded public key.
+      - PROXYTRACE_LICENSE=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjIwMjYtMDUifQ.eyJpc3MiOiJodHRwczovL2xpY2Vuc2UucHJveHl0cmFjZS5kZXYiLCJhdWQiOiJwcm94eXRyYWNlIiwic3ViIjoiZGFuaWVsQHByb3h5dHJhY2UuZGV2IiwianRpIjoiYmQzZDAxMzktMTgwNi00YTg2LTliNDAtOTI3ZjFlZjE5M2YzIiwiaWF0IjoxNzgwMTM5ODg0LCJleHAiOjE4NDMyMTE4ODQsInRpZXIiOiJlbnRlcnByaXNlIiwibGltIjp7InByb2plY3RzIjoxMDAsInVzZXJzIjoxMDB9LCJmZWF0IjpbIkJhc2ljQW5hbHl0aWNzIiwiQXVkaXRMb2ciLCJTU08iLCJQcmlvcml0eVN1cHBvcnQiXX0.u6J5NJhOP7EUA2tKbRKQcs7T8gmPqXuwGIXiAIUpujUs1zikc-QCbK0x0y2dJWzd_ZIE4GlZgH1aaEGG1EaH_w
 
   proxy:
     healthcheck:
@@ -52,3 +57,57 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+  # Second API process with NO license configured → runs the Free tier (see LicenseService:
+  # an empty PROXYTRACE_LICENSE means Free). It backs the `licensing` Playwright project, which
+  # exercises the free-tier feature gates the Enterprise `api` can never show. Tier is purely a
+  # function of this env var, so the same image serves both tiers side by side.
+  #
+  # Shares the SAME postgres database as `api` (the admin/project seeded by the setup spec is
+  # reused — the licensing setup just logs in). To avoid racing migrations and competing for the
+  # ingestion stream it (a) starts only after `api` is healthy (migrations already applied) and
+  # (b) uses the InProcess message bus, so it never joins the Redis ingestion consumer group.
+  api-free:
+    build:
+      context: .
+      dockerfile: Proxytrace.Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace
+      - Kiosk__Enabled=false
+      - Self__BaseUrl=http://localhost:5103
+      - Frontend__AllowedOrigin=http://localhost:5103
+      - Redis__ConnectionString=redis:6379
+      - Messaging__Provider=InProcess
+      - Authentication__Mode=Local
+      - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
+      # Deliberately NO PROXYTRACE_LICENSE / PROXYTRACE_LICENSE_PUBLIC_KEY → Free tier.
+
+  # Free-tier SPA: same built frontend image, but its nginx proxies /api to api-free.
+  # Exposed on :5103 so the `licensing` project's baseURL points at a Free-tier stack.
+  frontend-free:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5103:80"
+    depends_on:
+      api-free:
+        condition: service_healthy
+    volumes:
+      - ./e2e/nginx.free.conf:/etc/nginx/conf.d/default.conf:ro

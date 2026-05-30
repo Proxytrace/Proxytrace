@@ -2,6 +2,12 @@ import { useState, useCallback, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
+import { LockedNavItem } from './LockedNavItem';
+import { isNavEntryLocked } from './navGating';
+import { useLicense, type LicenseFeature } from '../../api/license';
+import { LicenseBadge } from '../license/LicenseBadge';
+import { GracePeriodBanner } from '../license/GracePeriodBanner';
+import { QuotaBanner } from '../license/QuotaBanner';
 import { Avatar } from '../ui/Avatar';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
@@ -24,6 +30,7 @@ interface NavEntry {
   label: string;
   icon: NavIconName;
   to: string;
+  requiresFeature?: LicenseFeature;
 }
 
 interface NavGroup {
@@ -44,7 +51,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Agents', icon: 'users', to: '/agents' },
       { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
-      { label: 'Proposals', icon: 'sparkles', to: '/proposals' },
+      { label: 'Proposals', icon: 'sparkles', to: '/proposals', requiresFeature: 'OptimizationProposals' },
     ],
   },
   {
@@ -109,6 +116,8 @@ const HEALTH_LABEL: Record<HealthStatus, string> = {
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
   const { data: online } = useHealth();
+  const { data: license } = useLicense();
+  const licenseFeatures = license?.features ?? [];
   const location = useLocation();
   const { currentProject } = useCurrentProject();
   const searchRef = useRef<UnifiedSearchHandle>(null);
@@ -163,15 +172,24 @@ export function Shell() {
                   {group.label}
                 </div>
               )}
-              {group.items.map(item => (
-                <NavItem
-                  key={item.to}
-                  label={item.label}
-                  icon={NAV_ICONS[item.icon]}
-                  to={item.to}
-                  collapsed={collapsed}
-                />
-              ))}
+              {group.items.map(item =>
+                isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
+                  <LockedNavItem
+                    key={item.to}
+                    label={item.label}
+                    icon={NAV_ICONS[item.icon]}
+                    collapsed={collapsed}
+                  />
+                ) : (
+                  <NavItem
+                    key={item.to}
+                    label={item.label}
+                    icon={NAV_ICONS[item.icon]}
+                    to={item.to}
+                    collapsed={collapsed}
+                  />
+                ),
+              )}
             </div>
           ))}
         </nav>
@@ -198,6 +216,8 @@ export function Shell() {
 
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <GracePeriodBanner />
+        <QuotaBanner />
         {/* Topbar */}
         <header
           className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
@@ -233,6 +253,8 @@ export function Shell() {
             />
             {HEALTH_LABEL[healthStatus]}
           </div>
+
+          <LicenseBadge />
 
           <button
             type="button"

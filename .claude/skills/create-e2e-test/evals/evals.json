@@ -1,0 +1,23 @@
+{
+  "skill_name": "create-e2e-test",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add an e2e test that verifies the agents page lists the agents that exist, and shows an empty-state message when there are none.",
+      "expected_output": "A spec (new tests/agents.spec.ts wired into the core project's testMatch, OR added to core-crud.spec.ts) importing test/expect from @playwright/test, using ProxytraceApiClient + api.login for setup, page.goto('/agents', { waitUntil: 'load' }), data-testid/role/text assertions, no waitForTimeout. Recognizes /agents must be added to ROUTES only if doing a smoke check.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We need an e2e test for the proposals page: seed a proposal and check it renders with its status. There's no api-client method for proposals yet.",
+      "expected_output": "Recognizes there is no createProposal method on ProxytraceApiClient and adds one to e2e/helpers/api-client.ts (typed, throws on !res.ok()), matching the real /api/proposals contract from frontend/src/api/proposals.ts or the controller. New spec wired into a project's testMatch; auth via api.login + setToken; data-testid-first assertions; waitUntil load.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Add an end-to-end test that sends a chat completion through the proxy and confirms the resulting trace shows up on the traces page. Make sure it doesn't break CI when no OpenAI key is configured.",
+      "expected_output": "An @llm-tagged describe with test.skip(!process.env.OPENAI_API_KEY) as the first statement; posts to http://localhost:5102/openai/v1/chat/completions with a Proxytrace key and a system message + max_completion_tokens; expect.poll for ingestion; asserts model visible on /traces; test.setTimeout bumped; wired into an llm-* project. Mirrors ingestion.spec.ts rather than reinventing.",
+      "files": []
+    }
+  ]
+}

@@ -21,6 +21,7 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     private readonly IAgentCallProcessor processor;
     private readonly IRepository<IModelProvider> providerRepository;
     private readonly IRepository<IProject> projectRepository;
+    private readonly ITraceQuotaGuard quotaGuard;
     private readonly ILogger<AgentCallIngestionWorker> logger;
 
     public AgentCallIngestionWorker(
@@ -28,12 +29,14 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         IAgentCallProcessor processor,
         IRepository<IModelProvider> providerRepository,
         IRepository<IProject> projectRepository,
+        ITraceQuotaGuard quotaGuard,
         ILogger<AgentCallIngestionWorker> logger)
     {
         this.stream = stream;
         this.processor = processor;
         this.providerRepository = providerRepository;
         this.projectRepository = projectRepository;
+        this.quotaGuard = quotaGuard;
         this.logger = logger;
     }
 
@@ -92,6 +95,14 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
 
     private async Task ProcessAsync(IngestMessage message, CancellationToken cancellationToken)
     {
+        // Once the licensed monthly trace quota is reached, drop further captures rather than
+        // persisting them. The message is still acked by the caller to avoid redelivery loops.
+        if (quotaGuard.IsCurrentMonthOverQuota)
+        {
+            logger.LogWarning("Monthly trace quota exceeded; dropping captured call for project {ProjectId}", message.ProjectId);
+            return;
+        }
+
         IModelProvider provider = await providerRepository.GetAsync(message.ProviderId, cancellationToken);
         IProject project = await projectRepository.GetAsync(message.ProjectId, cancellationToken);
 

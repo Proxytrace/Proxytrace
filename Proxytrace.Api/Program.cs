@@ -25,7 +25,8 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+        options.Filters.Add<Proxytrace.Api.Auth.Licensing.LicenseEnforcementFilter>())
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
