@@ -46,6 +46,33 @@ one, you can re-parent the version from the agent's detail page:
 
 Moving versions into or out of a **system agent** is not allowed.
 
+## The agent detail view
+
+Pick an agent from the searchable list on the left to open its detail panel:
+
+- **Header card** — the agent avatar, name, current version, a *proposals ready* badge
+  (when the agent has open [proposals](/guide/optimization-proposals)), and metadata
+  (project, trace count, when it was last used). Controls on the right switch the model
+  endpoint, **Run** the agent against its test suites, open an overflow (**⋯**) menu —
+  open in the [Playground](/guide/capturing-traces), view traces, or view proposals — or
+  delete the agent.
+- **Performance** — a dedicated card with all key stats as compact tiles, each with a mini
+  sparkline: **pass rate** (and its change in percentage points over the window), **traces**,
+  **tokens** (with the input/output split), **cost**, and **avg latency**. A `1h / 24h / 7d / 30d`
+  selector sets the window, and a **live** indicator marks that the figures update as traces arrive.
+- **Definition** (main column) — the **system prompt** (with its word/line count, a copy
+  button, and — when a previous version exists — a **Diff vs v*N*** comparison against the
+  prior revision), followed by the **tools** list (click a tool to expand its parameters,
+  types, and enum values inline).
+- **Version history** (right rail) — a timeline of every captured version, newest first,
+  each showing its date and tool count with the current version highlighted; use **Move…**
+  to re-parent a version (see [Fixing a misclassification](#fixing-a-misclassification)).
+  Below it, **suite pass rates** show how the agent scores per test suite, and the full
+  model-parameter set sits in a collapsible panel that summarises temperature and max
+  tokens when collapsed.
+
+The performance stats and suite pass rates update live as new traces arrive.
+
 ## What you can do with agents
 
 - **Review the current definition** — system prompt, tool specifications, and model

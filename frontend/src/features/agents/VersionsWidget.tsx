@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { agentsApi, agentVersionsApi } from '../../api/agents';
-import { QUERY_KEYS } from '../../api/query-keys';
+import { useState } from 'react';
 import type { AgentDto, AgentVersionDto } from '../../api/models';
-import { Modal, ModalFooter } from '../../components/overlays/Modal';
+import { agentColor } from '../../lib/colors';
+import { fmtDate } from '../../lib/format';
+import { Widget } from './widgets/Widget';
+import { MoveVersionDialog } from './widgets/MoveVersionDialog';
+import { useAgentVersions } from './hooks/useAgentVersions';
 
 interface Props {
   agent: AgentDto;
@@ -11,136 +12,71 @@ interface Props {
 }
 
 export function VersionsWidget({ agent, className }: Props) {
-  const { data: versions, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.agentVersions(agent.id),
-    queryFn: () => agentsApi.listVersions(agent.id),
-  });
+  const { versions, latestVersion, isLoading } = useAgentVersions(agent.id);
   const [moving, setMoving] = useState<AgentVersionDto | null>(null);
+  const c = agentColor(agent.id);
+
+  const ordered = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
   return (
-    <section className={`bg-card rounded-lg p-4 shadow-[var(--shadow-card)] ${className ?? ''}`}>
-      <h3 className="text-sm font-semibold mb-2">Versions</h3>
-      {isLoading && <p className="text-xs text-muted">Loading…</p>}
-      {!isLoading && (!versions || versions.length === 0) && (
-        <p className="text-xs text-muted">No versions yet.</p>
-      )}
-      {!isLoading && versions && versions.length > 0 && (
-        <ul className="text-sm divide-y divide-border">
-          {versions.map((v) => (
-            <li key={v.id} className="py-2 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="font-medium">v{v.versionNumber}</div>
-                <div className="text-xs text-muted">{new Date(v.createdAt).toLocaleString()}</div>
-              </div>
-              <button
-                type="button"
-                className="text-xs underline hover:no-underline"
-                onClick={() => setMoving(v)}
+    <Widget
+      title="Version history"
+      right={versions.length > 0 && <span className="text-body-sm text-muted">{versions.length}</span>}
+      className={className}
+      bodyClassName="p-4"
+    >
+      {isLoading && <p className="text-body-sm text-muted">Loading…</p>}
+      {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted">No versions yet.</p>}
+      {!isLoading && ordered.length > 0 && (
+        <ul className="flex flex-col" data-testid="agent-versions-list">
+          {ordered.map((v, i) => {
+            const isCurrent = v.versionNumber === latestVersion;
+            const isLast = i === ordered.length - 1;
+            return (
+              <li
+                key={v.id}
+                data-testid={`agent-version-row-${v.versionNumber}`}
+                className={`relative pl-6 ${isLast ? '' : 'pb-4'}`}
               >
-                Move…
-              </button>
-            </li>
-          ))}
+                {!isLast && <span className="absolute left-[5px] top-4 bottom-0 border-l border-hairline" />}
+                <span
+                  className="absolute left-0 top-[3px] w-[11px] h-[11px] rounded-full border-2 bg-card"
+                  style={isCurrent ? { background: c, borderColor: c } : { borderColor: 'var(--border)' }}
+                />
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="font-mono text-title font-bold shrink-0"
+                    style={isCurrent ? { color: c } : undefined}
+                  >
+                    v{v.versionNumber}
+                  </span>
+                  {isCurrent && (
+                    <span
+                      className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
+                      style={{ background: `color-mix(in srgb, ${c} 18%, transparent)`, color: c }}
+                    >
+                      current
+                    </span>
+                  )}
+                  <span className="ml-auto shrink-0 text-caption text-muted">{fmtDate(v.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1 text-caption text-muted">
+                  <span>{v.tools.length} tool{v.tools.length === 1 ? '' : 's'}</span>
+                  <button
+                    type="button"
+                    className="ml-auto shrink-0 text-muted hover:text-primary transition-colors duration-100 cursor-pointer"
+                    onClick={() => setMoving(v)}
+                    data-testid={`agent-version-move-btn-${v.versionNumber}`}
+                  >
+                    Move…
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
-      {moving && (
-        <MoveVersionDialog
-          version={moving}
-          sourceAgent={agent}
-          onClose={() => setMoving(null)}
-        />
-      )}
-    </section>
-  );
-}
-
-const CANDIDATE_FETCH_LIMIT = 500;
-
-function MoveVersionDialog({
-  version,
-  sourceAgent,
-  onClose,
-}: {
-  version: AgentVersionDto;
-  sourceAgent: AgentDto;
-  onClose: () => void;
-}) {
-  const [targetAgentId, setTargetAgentId] = useState('');
-  const [search, setSearch] = useState('');
-  const qc = useQueryClient();
-  const { data: agents } = useQuery({
-    queryKey: QUERY_KEYS.agents(sourceAgent.projectId),
-    queryFn: () => agentsApi.list({ projectId: sourceAgent.projectId, pageSize: CANDIDATE_FETCH_LIMIT }),
-  });
-  const mutation = useMutation({
-    mutationFn: () => agentVersionsApi.move(version.id, targetAgentId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(sourceAgent.projectId) });
-      await qc.invalidateQueries({ queryKey: QUERY_KEYS.agentVersions(sourceAgent.id) });
-      onClose();
-    },
-  });
-
-  const filtered = useMemo(() => {
-    const all = (agents?.items ?? []).filter((a) => a.id !== sourceAgent.id);
-    const needle = search.trim().toLowerCase();
-    return needle === '' ? all : all.filter((a) => a.name.toLowerCase().includes(needle));
-  }, [agents?.items, search, sourceAgent.id]);
-
-  const totalCandidates = (agents?.items?.length ?? 0) - 1;
-  const truncated = totalCandidates >= CANDIDATE_FETCH_LIMIT - 1;
-
-  return (
-    <Modal
-      title={`Move version v${version.versionNumber}`}
-      onClose={onClose}
-      size="sm"
-      footer={
-        <ModalFooter
-          onCancel={onClose}
-          onSubmit={() => mutation.mutate()}
-          submitLabel={mutation.isPending ? 'Moving…' : 'Move'}
-          loading={mutation.isPending}
-          disabled={!targetAgentId}
-        />
-      }
-    >
-      <p className="text-xs text-muted mb-3">
-        Choose the agent that should own this version. Calls referencing this version follow it.
-        The source agent ({sourceAgent.name}) is deleted if it has no versions left.
-      </p>
-      <label className="block text-sm mb-2">
-        Search
-        <input
-          type="text"
-          autoFocus
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter agents by name…"
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-        />
-      </label>
-      <label className="block text-sm">
-        Target agent
-        <select
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
-          value={targetAgentId}
-          onChange={(e) => setTargetAgentId(e.target.value)}
-          size={Math.min(8, Math.max(2, filtered.length))}
-        >
-          {filtered.length === 0 && <option value="">No matches</option>}
-          {filtered.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      {truncated && (
-        <p className="text-[11px] text-muted mt-2">
-          Showing first {CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.
-        </p>
-      )}
-    </Modal>
+      {moving && <MoveVersionDialog version={moving} sourceAgent={agent} onClose={() => setMoving(null)} />}
+    </Widget>
   );
 }

@@ -1,11 +1,8 @@
 import type { AgentDto } from '../../api/models';
-import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { useAgentStats } from './useAgentStats';
-import { IdentityWidget } from './widgets/IdentityWidget';
-import { KpiTraces, KpiTokens, KpiCost, KpiLatency } from './widgets/KpiWidgets';
-import { PassRateWidget } from './widgets/PassRateWidget';
-import { ChartsWidget } from './widgets/ChartsWidget';
+import { AgentHeader } from './widgets/AgentHeader';
+import { PerformanceCard } from './widgets/PerformanceCard';
 import { SystemPromptWidget } from './widgets/SystemPromptWidget';
 import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
@@ -22,51 +19,32 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
   const { overview, isLoading, range, setRange } = useAgentStats(agent.id);
 
   return (
-    <div className="fade-up grid grid-cols-12 auto-rows-min gap-3 min-w-0 [animation-delay:40ms]">
-      <IdentityWidget agent={agent} onDelete={onDelete} className="col-span-12" />
+    <div className="fade-up flex flex-col gap-3.5 min-w-0 [animation-delay:40ms]">
+      <AgentHeader agent={agent} overview={overview} onDelete={onDelete} />
 
-      <SystemPromptWidget systemMessage={agent.systemMessage} className="col-span-12 lg:col-span-7" />
-      <ToolsWidget tools={agent.tools} highlightTool={highlightTool} className="col-span-12 lg:col-span-5" />
+      <PerformanceCard overview={overview} isLoading={isLoading} range={range} onRangeChange={setRange} />
 
-      <VersionsWidget agent={agent} className="col-span-12" />
-
-      {isLoading && (
-        <>
-          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
-          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
-          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
-          <Skeleton height={92} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-lg" />
-          <Skeleton height={240} className="col-span-12 lg:col-span-4 rounded-lg" />
-          <Skeleton height={240} className="col-span-12 lg:col-span-8 rounded-lg" />
-        </>
-      )}
-
-      {!isLoading && overview && overview.summary.totalTraces === 0 && (
-        <div className="col-span-12 bg-card rounded-lg py-6 shadow-[var(--shadow-card)]">
-          <EmptyState
-            title="No activity yet"
-            description="KPIs and charts appear once this agent is invoked."
-          />
+      {/* Definition (left) + version history & metadata rail (right) */}
+      <div className="grid gap-3.5 items-start grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex flex-col gap-3.5 min-w-0">
+          <SystemPromptWidget agent={agent} />
+          <ToolsWidget tools={agent.tools} highlightTool={highlightTool} />
         </div>
-      )}
 
-      {!isLoading && overview && overview.summary.totalTraces > 0 && (
-        <>
-          <KpiTraces overview={overview} range={range} className="col-span-12 sm:col-span-6 lg:col-span-3" />
-          <KpiTokens overview={overview} range={range} className="col-span-12 sm:col-span-6 lg:col-span-3" />
-          <KpiCost overview={overview} range={range} className="col-span-12 sm:col-span-6 lg:col-span-3" />
-          <KpiLatency overview={overview} range={range} className="col-span-12 sm:col-span-6 lg:col-span-3" />
+        <div className="flex flex-col gap-3.5 min-w-0">
+          <VersionsWidget agent={agent} />
 
-          <PassRateWidget overview={overview} className="col-span-12 lg:col-span-4" />
-          <ChartsWidget overview={overview} range={range} onRangeChange={setRange} className="col-span-12 lg:col-span-8" />
-        </>
-      )}
+          {isLoading ? (
+            <Skeleton height={120} className="rounded-lg" />
+          ) : (
+            overview && overview.suitePassRates.length > 0 && (
+              <SuitePassRatesWidget suitePassRates={overview.suitePassRates} />
+            )
+          )}
 
-      {!isLoading && overview && overview.suitePassRates.length > 0 && (
-        <SuitePassRatesWidget suitePassRates={overview.suitePassRates} className="col-span-12" />
-      )}
-
-      <ModelParametersWidget params={agent.modelParameters} className="col-span-12" />
+          <ModelParametersWidget params={agent.modelParameters} />
+        </div>
+      </div>
     </div>
   );
 }

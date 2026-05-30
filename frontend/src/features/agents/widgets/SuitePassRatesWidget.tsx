@@ -28,19 +28,21 @@ export function SuitePassRatesWidget({ suitePassRates, className }: Props) {
       right={<span className="text-body-sm text-muted">{suitePassRates.length} suite{suitePassRates.length !== 1 ? 's' : ''}</span>}
       className={className}
     >
-      <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+      <div className="flex flex-col gap-3.5">
         {suitePassRates.map(s => {
           const pct = s.testCases > 0 ? (s.passed / s.testCases) * 100 : 0;
+          const clr = color(pct);
           return (
-            <div key={s.suiteId} className="flex flex-col gap-1 bg-card-2 rounded-md p-3 shadow-[var(--shadow-card)]">
+            <div key={s.suiteId} className="flex flex-col gap-1.5" data-testid={`suite-pass-rate-${s.suiteId}`}>
               <div className="flex items-baseline justify-between gap-2 text-body-sm">
                 <span className="font-medium text-primary truncate">{s.suiteName}</span>
-                <span className="font-mono text-muted shrink-0">
-                  {s.passed}/{s.testCases} · {Math.round(pct)}%
+                <span className="shrink-0 flex items-baseline gap-1.5 font-mono">
+                  <span className="text-muted">{s.passed}/{s.testCases}</span>
+                  <span className="font-semibold" style={{ color: clr }}>{Math.round(pct)}%</span>
                 </span>
               </div>
-              <div className="h-[5px] rounded-full bg-card overflow-hidden">
-                <div className="h-full transition-[width] duration-300" style={{ width: `${pct}%`, background: color(pct) }} />
+              <div className="h-[6px] rounded-full bg-card-2 overflow-hidden">
+                <div className="h-full transition-[width] duration-300" style={{ width: `${pct}%`, background: clr }} />
               </div>
               <span className="text-caption text-muted">{fmtRelative(s.latestRunAt)}</span>
             </div>

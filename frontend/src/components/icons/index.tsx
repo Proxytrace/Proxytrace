@@ -435,3 +435,22 @@ export function ResetIcon(props: IconProps) {
     </Svg>
   );
 }
+
+/** Three horizontal dots — overflow / "more actions" trigger. */
+export function MoreHorizontalIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+    </Svg>
+  );
+}
+
+/** Git-style compare / diff glyph (two branches with a connector). */
+export function GitCompareIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="5" cy="6" r="3" /><circle cx="19" cy="18" r="3" />
+      <path d="M12 6h5a2 2 0 0 1 2 2v7" /><path d="M12 18H7a2 2 0 0 1-2-2V9" />
+    </Svg>
+  );
+}

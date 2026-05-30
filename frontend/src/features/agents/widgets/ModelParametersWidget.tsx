@@ -7,10 +7,19 @@ interface Props {
   className?: string;
 }
 
+function summary(params: ModelParametersDto): string {
+  const parts: string[] = [];
+  if (params.temperature != null) parts.push(`temp ${params.temperature}`);
+  if (params.maxTokens != null) parts.push(`${params.maxTokens.toLocaleString()} tok`);
+  return parts.join(' · ');
+}
+
 export function ModelParametersWidget({ params, className }: Props) {
+  const sum = summary(params);
   return (
     <Widget
       title="Model Parameters"
+      right={sum && <span className="text-body-sm text-muted font-mono">{sum}</span>}
       className={className}
       collapsible
       defaultCollapsed

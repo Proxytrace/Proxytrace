@@ -24,3 +24,11 @@ export function bucketFor(key: RangeKey): StatisticsBucket {
   if (key === '24h') return 'hourly';
   return 'daily';
 }
+
+/** Short window phrase for KPI sub-labels, e.g. "last 7 days". */
+export function rangeWindowLabel(key: RangeKey): string {
+  if (key === '1h') return 'last hour';
+  if (key === '24h') return 'last 24 hours';
+  if (key === '7d') return 'last 7 days';
+  return 'last 30 days';
+}
