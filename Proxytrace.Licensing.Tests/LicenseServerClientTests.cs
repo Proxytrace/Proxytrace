@@ -30,8 +30,9 @@ public sealed class LicenseServerClientTests
         result.Status.Should().Be(LicenseCheckResult.Valid);
         result.UpdatedTier.Should().Be(LicenseTier.Enterprise);
         result.UpdatedLimits.Should().ContainKey(LicenseLimit.MaxUsers);
-        result.UpdatedLimits![LicenseLimit.MaxUsers].Should().Be(42);
-        handler.LastRequestUri!.AbsolutePath.Should().Be("/licenses/check");
+        result.UpdatedLimits[LicenseLimit.MaxUsers].Should().Be(42);
+        handler.LastRequestUri.Should().NotBeNull();
+        handler.LastRequestUri.AbsolutePath.Should().Be("/licenses/check");
     }
 
     [TestMethod]
