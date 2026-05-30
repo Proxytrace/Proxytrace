@@ -81,10 +81,14 @@ internal sealed class Module : Autofac.Module
         builder.Properties["Proxytrace.Messaging.Registered"] = true;
 
         // Register the licensing module with the environment-derived configuration and claim the
-        // guard key BEFORE the storage module loads (which pulls in Application.Module, whose
-        // Free-tier fallback would otherwise register a second, JWT-less licensing module).
-        builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration)));
-        builder.Properties["Proxytrace.Licensing.Registered"] = true;
+        // shared guard key BEFORE the storage module loads (which pulls in Application.Module, whose
+        // Free-tier fallback registers a JWT-less licensing module only when this key is absent).
+        // The guard also makes an accidental double registration here a no-op.
+        if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
+        {
+            builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
+            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration)));
+        }
 
         StorageConfiguration storageConfig;
         if (kiosk.Enabled)
@@ -103,7 +107,8 @@ internal sealed class Module : Autofac.Module
         builder.RegisterModule<Domain.Module>();
         builder.RegisterModule<Application.Module>();
 
-        builder.RegisterType<Auth.Licensing.LicenseEnforcementFilter>().AsSelf();
+        // Single registration: the global filter (Program.cs options.Filters.Add<T>()) resolves the
+        // enforcement filter per request from the scope, so only the scoped registration is needed.
         builder.RegisterServiceCollection(services =>
             services.AddScoped<Auth.Licensing.LicenseEnforcementFilter>());
 

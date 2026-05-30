@@ -32,10 +32,9 @@ public sealed class Module : Autofac.Module
         // Licensing. A composition root (e.g. the API) registers the Licensing module itself with
         // an environment-derived configuration before this module loads (setting the key below);
         // otherwise fall back to the Free-tier default used by tests and the in-process kiosk.
-        const string licensingModuleKey = "Proxytrace.Licensing.Registered";
-        if (!builder.Properties.ContainsKey(licensingModuleKey))
+        if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
         {
-            builder.Properties[licensingModuleKey] = true;
+            builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
             builder.RegisterModule(new Proxytrace.Licensing.Module(new Proxytrace.Licensing.LicensingConfiguration
             {
                 ServerUrl = "https://license.proxytrace.dev",

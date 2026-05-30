@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Proxytrace.Common.Async;
 using Proxytrace.Licensing.Exceptions;
 
 namespace Proxytrace.Licensing.Internal;
@@ -11,20 +12,24 @@ namespace Proxytrace.Licensing.Internal;
 /// </summary>
 internal sealed class LicenseService : ILicenseService
 {
+    private static readonly Guid LockKey = Guid.NewGuid();
+    
+    private readonly IAsyncLock gate;
     private readonly Func<ILicenseRefreshTrigger> refreshTrigger;
     private readonly ILogger<LicenseService> logger;
-    private readonly object gate = new();
 
     private volatile LicenseSnapshot current;
 
     public LicenseService(
         LicensingConfiguration configuration,
         IJwtLicenseValidator validator,
+        IAsyncLock gate,
         Func<ILicenseRefreshTrigger> refreshTrigger,
         ILogger<LicenseService> logger)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(validator);
+        this.gate = gate;
         this.refreshTrigger = refreshTrigger;
         this.logger = logger;
 
@@ -53,7 +58,7 @@ internal sealed class LicenseService : ILicenseService
     public bool IsFeatureEnabled(LicenseFeature feature) => current.Features.Contains(feature);
 
     public long GetLimit(LicenseLimit limit)
-        => current.Limits.TryGetValue(limit, out var value) ? value : 0;
+        => current.Limits.GetValueOrDefault(limit, 0);
 
     public Task ForceRefreshAsync(CancellationToken cancellationToken = default)
         => refreshTrigger().RunCheckNowAsync(cancellationToken);
@@ -66,12 +71,10 @@ internal sealed class LicenseService : ILicenseService
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        bool changed;
-        lock (gate)
-        {
-            changed = !Equals(current, snapshot);
-            current = snapshot;
-        }
+        using var _ = gate.Lock(LockKey);
+        
+        var changed = !SnapshotsEqual(current, snapshot);
+        current = snapshot;
 
         if (changed)
         {
@@ -81,5 +84,55 @@ internal sealed class LicenseService : ILicenseService
                 snapshot.Status);
             Changed?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// Compares two snapshots structurally. The record's generated equality compares the Features
+    /// set and Limits dictionary by reference, so a rebuilt-but-equivalent dictionary would falsely
+    /// look "changed" on every successful poll; this compares those collections by value instead.
+    /// </summary>
+    private static bool SnapshotsEqual(LicenseSnapshot a, LicenseSnapshot b)
+    {
+        if (a.Tier != b.Tier
+            || a.Status != b.Status
+            || a.ExpiresAt != b.ExpiresAt
+            || a.GracePeriodEndsAt != b.GracePeriodEndsAt
+            || a.CustomerEmail != b.CustomerEmail
+            || a.Jti != b.Jti)
+        {
+            return false;
+        }
+
+        return FeaturesEqual(a.Features, b.Features) && LimitsEqual(a.Limits, b.Limits);
+    }
+
+    private static bool FeaturesEqual(IReadOnlySet<LicenseFeature>? a, IReadOnlySet<LicenseFeature>? b)
+    {
+        if (ReferenceEquals(a, b))
+            return true;
+        if (a is null || b is null)
+            return false;
+
+        return a.Count == b.Count && a.SetEquals(b);
+    }
+
+    private static bool LimitsEqual(
+        IReadOnlyDictionary<LicenseLimit, long>? a,
+        IReadOnlyDictionary<LicenseLimit, long>? b)
+    {
+        if (ReferenceEquals(a, b))
+            return true;
+        if (a is null || b is null)
+            return false;
+        if (a.Count != b.Count)
+            return false;
+
+        foreach (var (key, value) in a)
+        {
+            if (!b.TryGetValue(key, out var other) || other != value)
+                return false;
+        }
+
+        return true;
     }
 }

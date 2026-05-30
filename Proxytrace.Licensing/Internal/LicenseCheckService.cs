@@ -21,6 +21,8 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
 
     private readonly SemaphoreSlim checkLock = new(1, 1);
 
+    private readonly DateTimeOffset serviceStartedUtc;
+
     public LicenseCheckService(
         LicenseService licenseService,
         ILicenseServerClient serverClient,
@@ -35,6 +37,11 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         this.configuration = configuration;
         this.clock = clock;
         this.logger = logger;
+
+        // Stable anchor for deployments that have never reached the license server: the offline
+        // grace window is measured from service start so a never-connected (e.g. air-gapped)
+        // deployment still degrades through Grace to Free instead of staying Active forever.
+        serviceStartedUtc = clock.UtcNow;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -162,7 +169,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         // stage the deployment keeps running fully (Active). In the second stage it enters Grace
         // (warning surfaced to operators). Past both stages it degrades to Free.
         var stage = TimeSpan.FromDays(Math.Max(0, configuration.OfflineGracePeriodDays));
-        var anchor = cached?.LastServerOkUtc ?? now;
+        var anchor = cached?.LastServerOkUtc ?? serviceStartedUtc;
         var elapsed = now - anchor;
 
         if (elapsed >= stage + stage)

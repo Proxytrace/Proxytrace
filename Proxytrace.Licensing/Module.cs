@@ -12,6 +12,13 @@ namespace Proxytrace.Licensing;
 /// </summary>
 public sealed class Module : Autofac.Module
 {
+    /// <summary>
+    /// Autofac <c>builder.Properties</c> key marking that a licensing module has already been
+    /// registered by a composition root with a real configuration. Downstream modules check it to
+    /// skip their Free-tier fallback registration (and to avoid registering twice).
+    /// </summary>
+    public const string RegisteredKey = "Proxytrace.Licensing.Registered";
+
     private readonly LicensingConfiguration configuration;
 
     public Module(LicensingConfiguration configuration)

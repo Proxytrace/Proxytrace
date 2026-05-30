@@ -89,7 +89,7 @@ internal class SetupService : ISetupService
             if (projectCount > 0)
                 throw new InvalidOperationException("Setup has already been completed.");
 
-            LicenseLimitGuard.Ensure(license, LicenseLimit.MaxProjects, projectCount);
+            license.Ensure(LicenseLimit.MaxProjects, projectCount);
 
             var user = await currentUser.GetCurrentUserAsync(cancellationToken)
                 ?? throw new InvalidOperationException("Setup requires an authenticated user.");

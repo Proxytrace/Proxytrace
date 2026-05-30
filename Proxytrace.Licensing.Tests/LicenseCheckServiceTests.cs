@@ -118,6 +118,23 @@ public sealed class LicenseCheckServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Unreachable_NoCache_14Days_DowngradesToFree()
+    {
+        // A deployment that has never reached the license server (no cache entry) must still
+        // degrade through Grace to Free once the offline grace window elapses, measured from
+        // service start (clock initial time captured in Build).
+        var (service, license, server, _, clock) = Build(cached: null);
+        server.CheckAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Unknown(clock));
+
+        clock.Advance(TimeSpan.FromDays(14));
+        await service.RunCheckNowAsync(CancellationToken);
+
+        license.Current.Status.Should().Be(LicenseStatus.Free);
+        license.Current.Tier.Should().Be(LicenseTier.Free);
+    }
+
+    [TestMethod]
     public async Task ForceRefresh_TriggersImmediateCheck()
     {
         var (_, license, server, _, clock) = Build();

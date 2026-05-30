@@ -43,7 +43,7 @@ internal sealed class InviteService : IInviteService
         IUser invitedBy, 
         CancellationToken cancellationToken = default)
     {
-        LicenseLimitGuard.Ensure(license, LicenseLimit.MaxUsers, await users.CountAsync(cancellationToken));
+        license.Ensure(LicenseLimit.MaxUsers, await users.CountAsync(cancellationToken));
 
         var token = GenerateToken();
         var invite = createInvite(email, role, token, DateTimeOffset.UtcNow + Ttl, invitedBy);

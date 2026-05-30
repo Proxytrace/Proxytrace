@@ -21,7 +21,7 @@ public sealed class LicenseLimitGuardTests
     {
         var service = ServiceWithLimit(LicenseLimit.MaxUsers, 3);
 
-        FluentActions.Invoking(() => LicenseLimitGuard.Ensure(service, LicenseLimit.MaxUsers, 2))
+        FluentActions.Invoking(() => service.Ensure(LicenseLimit.MaxUsers, 2))
             .Should().NotThrow();
     }
 
@@ -30,7 +30,7 @@ public sealed class LicenseLimitGuardTests
     {
         var service = ServiceWithLimit(LicenseLimit.MaxUsers, 3);
 
-        FluentActions.Invoking(() => LicenseLimitGuard.Ensure(service, LicenseLimit.MaxUsers, 3))
+        FluentActions.Invoking(() => service.Ensure(LicenseLimit.MaxUsers, 3))
             .Should().Throw<LicenseLimitExceededException>()
             .Which.Max.Should().Be(3);
     }
@@ -40,7 +40,7 @@ public sealed class LicenseLimitGuardTests
     {
         var service = ServiceWithLimit(LicenseLimit.MaxProjects, 1);
 
-        FluentActions.Invoking(() => LicenseLimitGuard.Ensure(service, LicenseLimit.MaxProjects, 5))
+        FluentActions.Invoking(() => service.Ensure(LicenseLimit.MaxProjects, 5))
             .Should().Throw<LicenseLimitExceededException>();
     }
 
@@ -49,7 +49,7 @@ public sealed class LicenseLimitGuardTests
     {
         var service = ServiceWithLimit(LicenseLimit.MaxUsers, long.MaxValue);
 
-        FluentActions.Invoking(() => LicenseLimitGuard.Ensure(service, LicenseLimit.MaxUsers, long.MaxValue - 1))
+        FluentActions.Invoking(() => service.Ensure(LicenseLimit.MaxUsers, long.MaxValue - 1))
             .Should().NotThrow();
     }
 }
