@@ -8,6 +8,8 @@ namespace Proxytrace.Licensing.Tests;
 [TestClass]
 public sealed class JwtLicenseValidatorTests
 {
+    public required TestContext TestContext { get; init; }
+
     private readonly TestLicenseFactory factory = new();
 
     [TestCleanup]

@@ -5,6 +5,8 @@ namespace Proxytrace.Licensing.Tests;
 [TestClass]
 public sealed class LicensePolicyTests
 {
+    public required TestContext TestContext { get; init; }
+
     [TestMethod]
     public void For_Free_HasExpectedLimits()
     {

@@ -1,43 +1,39 @@
+using Autofac;
 using AwesomeAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Application.Ingestion;
 using Proxytrace.Licensing;
+using Proxytrace.Testing;
 
 namespace Proxytrace.Api.Tests;
 
 [TestClass]
-public sealed class LicenseControllerTests
+public sealed class LicenseControllerTests : BaseTest<Module>
 {
-    private sealed class StubLicenseService : ILicenseService
+    private static LicenseController ResolveController(IServiceProvider services, ILicenseService licenseService)
     {
-        private readonly LicenseSnapshot snapshot;
-
-        public StubLicenseService(LicenseSnapshot snapshot) => this.snapshot = snapshot;
-
-        public LicenseSnapshot Current => snapshot;
-        public event Action? Changed;
-        public bool IsFeatureEnabled(LicenseFeature feature) => snapshot.Features.Contains(feature);
-        public long GetLimit(LicenseLimit limit) => snapshot.Limits.TryGetValue(limit, out var v) ? v : 0;
-
-        public Task ForceRefreshAsync(CancellationToken cancellationToken = default)
-        {
-            Changed?.Invoke();
-            return Task.CompletedTask;
-        }
+        var quotaGuard = services.GetRequiredService<ITraceQuotaGuard>();
+        return new LicenseController(licenseService, quotaGuard);
     }
 
-    private sealed class StubQuotaGuard : ITraceQuotaGuard
+    private static ILicenseService StubLicense(LicenseSnapshot snapshot)
     {
-        public bool IsCurrentMonthOverQuota => false;
+        var service = Substitute.For<ILicenseService>();
+        service.Current.Returns(snapshot);
+        service.IsFeatureEnabled(Arg.Any<LicenseFeature>())
+            .Returns(call => snapshot.Features.Contains(call.Arg<LicenseFeature>()));
+        service.GetLimit(Arg.Any<LicenseLimit>())
+            .Returns(call => snapshot.Limits.TryGetValue(call.Arg<LicenseLimit>(), out var v) ? v : 0);
+        return service;
     }
-
-    private static LicenseController Build(LicenseSnapshot snapshot) =>
-        new(new StubLicenseService(snapshot), new StubQuotaGuard());
 
     [TestMethod]
     public void Get_FreeTier_ReturnsFreeDto()
     {
-        var controller = Build(LicenseSnapshot.Free());
+        var services = GetServices();
+        var controller = ResolveController(services, StubLicense(LicenseSnapshot.Free()));
 
         var dto = controller.Get();
 
@@ -61,7 +57,8 @@ public sealed class LicenseControllerTests
             definition.Features,
             definition.Limits);
 
-        var dto = Build(snapshot).Get();
+        var services = GetServices();
+        var dto = ResolveController(services, StubLicense(snapshot)).Get();
 
         dto.Tier.Should().Be("enterprise");
         dto.Status.Should().Be("active");
@@ -70,12 +67,26 @@ public sealed class LicenseControllerTests
     }
 
     [TestMethod]
-    public void Get_Expired_ReturnsExpiredStatus()
+    public void Get_ExpiredStatus_ReturnsExpiredDto()
     {
         var snapshot = LicenseSnapshot.Free() with { Status = LicenseStatus.Expired };
-
-        var dto = Build(snapshot).Get();
+        var services = GetServices();
+        var dto = ResolveController(services, StubLicense(snapshot)).Get();
 
         dto.Status.Should().Be("expired");
+    }
+
+    [TestMethod]
+    public async Task Refresh_CallsForceRefreshAndReturnsUpdatedDto()
+    {
+        var snapshot = LicenseSnapshot.Free();
+        var licenseService = StubLicense(snapshot);
+
+        var services = GetServices();
+        var controller = ResolveController(services, licenseService);
+
+        await controller.Refresh(CancellationToken);
+
+        await licenseService.Received(1).ForceRefreshAsync(Arg.Any<CancellationToken>());
     }
 }

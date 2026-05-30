@@ -8,6 +8,8 @@ namespace Proxytrace.Licensing.Tests;
 [TestClass]
 public sealed class LicenseServerClientTests
 {
+    public required TestContext TestContext { get; init; }
+
     private readonly MutableClock clock = new(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
 
     private LicenseServerClient Create(StubHttpMessageHandler handler)
@@ -23,7 +25,7 @@ public sealed class LicenseServerClientTests
             HttpStatusCode.OK,
             "{\"status\":\"valid\",\"updatedTier\":\"Enterprise\",\"updatedLimits\":{\"MaxUsers\":42}}");
 
-        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", CancellationToken.None);
+        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", TestContext.CancellationToken);
 
         result.Status.Should().Be(LicenseCheckResult.Valid);
         result.UpdatedTier.Should().Be(LicenseTier.Enterprise);
@@ -37,7 +39,7 @@ public sealed class LicenseServerClientTests
     {
         var handler = new StubHttpMessageHandler(HttpStatusCode.OK, "{\"status\":\"revoked\"}");
 
-        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", CancellationToken.None);
+        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", TestContext.CancellationToken);
 
         result.Status.Should().Be(LicenseCheckResult.Revoked);
     }
@@ -47,7 +49,7 @@ public sealed class LicenseServerClientTests
     {
         var handler = new StubHttpMessageHandler(HttpStatusCode.InternalServerError, "{}");
 
-        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", CancellationToken.None);
+        var result = await Create(handler).CheckAsync("jti-1", "1.0.0", TestContext.CancellationToken);
 
         result.Status.Should().Be(LicenseCheckResult.Unknown);
     }
@@ -56,7 +58,7 @@ public sealed class LicenseServerClientTests
     public async Task CheckAsync_TransportFailure_ReturnsUnknownTransient()
     {
         var result = await Create(StubHttpMessageHandler.Faulting())
-            .CheckAsync("jti-1", "1.0.0", CancellationToken.None);
+            .CheckAsync("jti-1", "1.0.0", TestContext.CancellationToken);
 
         result.Status.Should().Be(LicenseCheckResult.Unknown);
     }

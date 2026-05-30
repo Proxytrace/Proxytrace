@@ -13,6 +13,8 @@ namespace Proxytrace.Api.Tests;
 [TestClass]
 public sealed class LicenseEnforcementFilterTests
 {
+    public required TestContext TestContext { get; init; }
+
     private static AuthorizationFilterContext BuildContext(params object[] endpointMetadata)
     {
         var actionContext = new ActionContext(

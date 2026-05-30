@@ -7,6 +7,8 @@ namespace Proxytrace.Licensing.Tests;
 [TestClass]
 public sealed class LicenseLimitGuardTests
 {
+    public required TestContext TestContext { get; init; }
+
     private static ILicenseService ServiceWithLimit(LicenseLimit limit, long max)
     {
         var service = Substitute.For<ILicenseService>();
