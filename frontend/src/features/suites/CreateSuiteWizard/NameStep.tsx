@@ -39,7 +39,7 @@ export function NameStep({ value, onChange }: Props) {
     : 'Pick a preset above or type your own name. You can edit it after.';
 
   return (
-    <div className="max-w-[640px] mx-auto flex flex-col gap-4">
+    <div data-testid="wizard-step-name" className="max-w-[640px] mx-auto flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-[0.05em]">Quick presets</label>
         <div className="flex flex-wrap gap-2">
@@ -78,6 +78,7 @@ export function NameStep({ value, onChange }: Props) {
       <FormField label="Suite name">
         <input
           ref={inputRef}
+          data-testid="wizard-name-input"
           value={value}
           onChange={e => { setActive(null); onChange(e.target.value); }}
           placeholder="My regression suite"

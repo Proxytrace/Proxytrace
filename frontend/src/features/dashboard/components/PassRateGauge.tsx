@@ -24,7 +24,7 @@ export function PassRateGauge({ summary }: PassRateGaugeProps) {
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col gap-1 shadow-[var(--shadow-card)]">
+    <section data-testid="pass-rate-gauge" className="relative overflow-hidden rounded-lg bg-card px-3.5 pt-2.5 pb-3 flex flex-col gap-1 shadow-[var(--shadow-card)]">
       <div className="absolute top-5 -right-8 w-[220px] h-[220px] pointer-events-none bg-[radial-gradient(circle,color-mix(in_srgb,var(--success)_6%,transparent),transparent_65%)]" />
       <header>
         <h3 className="text-h2 font-semibold">Evaluation pass rate</h3>

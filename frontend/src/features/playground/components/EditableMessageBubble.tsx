@@ -90,6 +90,8 @@ export function EditableMessageBubble(props: Props) {
 
   return (
     <div
+      data-testid={`editable-message-bubble-${message.localId}`}
+      data-role={message.role}
       draggable={draggable}
       onDragStart={e => {
         if (!draggable) return;
@@ -141,7 +143,7 @@ export function EditableMessageBubble(props: Props) {
           <span className="text-[10px] text-danger mono uppercase tracking-[0.05em]">error</span>
         )}
         <div className="ml-auto flex items-center gap-[2px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-          <button type="button" className="btn-icon" title="Edit" onClick={beginEdit} aria-label="Edit">
+          <button type="button" className="btn-icon" title="Edit" onClick={beginEdit} aria-label="Edit" data-testid="editable-message-edit">
             <EditIcon size={12} strokeWidth={2.2} />
           </button>
           <button type="button" className="btn-icon" title="Copy to clipboard" onClick={copyContent} aria-label="Copy to clipboard">
@@ -162,10 +164,11 @@ export function EditableMessageBubble(props: Props) {
               value={draft}
               onChange={e => setDraft(e.target.value)}
               autoFocus
+              data-testid="editable-message-input"
             />
             <div className="flex items-center gap-2 justify-end">
               <button className="btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
-              <button className="btn-primary" onClick={saveEdit}>Save</button>
+              <button className="btn-primary" onClick={saveEdit} data-testid="editable-message-save">Save</button>
             </div>
           </div>
         ) : (

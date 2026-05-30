@@ -65,6 +65,7 @@ export default function Signup() {
           readOnly
         />
         <input
+          data-testid="signup-password"
           className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           type="password"
           placeholder="Password"
@@ -74,8 +75,9 @@ export default function Signup() {
           required
         />
         <PasswordRequirements password={password} />
-        {err && <p className="text-sm text-danger">{err}</p>}
+        {err && <p data-testid="signup-error" className="text-sm text-danger">{err}</p>}
         <button
+          data-testid="signup-submit"
           className="w-full rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           type="submit"
           disabled={submitting || !passwordIsValid(password)}

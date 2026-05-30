@@ -56,6 +56,7 @@ function LocalLogin() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
       <form
+        data-testid="login-form"
         className="w-80 space-y-3 rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]"
         onSubmit={async (e) => {
           e.preventDefault();
@@ -74,6 +75,7 @@ function LocalLogin() {
       >
         <h1 className="text-lg font-semibold">Sign in</h1>
         <input
+          data-testid="login-email"
           className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           placeholder="Email"
           type="email"
@@ -83,6 +85,7 @@ function LocalLogin() {
           required
         />
         <input
+          data-testid="login-password"
           className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           placeholder="Password"
           type="password"
@@ -91,8 +94,9 @@ function LocalLogin() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {err && <p className="text-sm text-danger">{err}</p>}
+        {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
         <button
+          data-testid="login-submit"
           className="w-full rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           type="submit"
           disabled={submitting}

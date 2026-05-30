@@ -32,9 +32,11 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
 
       <div className="flex flex-col gap-[3px] min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{group.suiteName}</h2>
+          <h2 data-testid="run-group-header-title" className="text-h1 font-bold tracking-[-0.01em] m-0 truncate">{group.suiteName}</h2>
           <Pill label={group.agentName} color={c} />
-          <ColoredBadge color={sc} label={group.status} dot />
+          <span data-testid={`group-status-${group.id}`}>
+            <ColoredBadge color={sc} label={group.status} dot />
+          </span>
           {active && (
             <span className="inline-flex items-center gap-1.5 text-caption text-muted shrink-0">
               <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-accent inline-block" />

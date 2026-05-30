@@ -30,7 +30,7 @@ export function MatrixView({ group, activeCaseIds }: {
   const selIdx = selectedCase ? rows.findIndex(r => r.caseId === selectedCase.caseId) : -1;
 
   return (
-    <Card padding="none">
+    <Card padding="none" data-testid="matrix-view">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -70,7 +70,7 @@ export function MatrixView({ group, activeCaseIds }: {
             <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]">Test case</div>
             <div className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em] text-right">Lat</div>
             {runs.map(run => (
-              <div key={run.id} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
+              <div key={run.id} data-testid={`matrix-col-${run.endpointId}`} className="sticky top-0 z-20 bg-card px-3 py-2.5 border-b border-hairline flex items-center">
                 <ModelTag name={run.endpointName} size="xs" />
               </div>
             ))}
@@ -94,6 +94,7 @@ export function MatrixView({ group, activeCaseIds }: {
                   {/* Test case + verdict / divergence indicator */}
                   <button
                     onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary })}
+                    data-testid={`matrix-row-${row.caseId}`}
                     className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 text-left cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
                     title={`Compare all models — ${row.summary}`}
                   >

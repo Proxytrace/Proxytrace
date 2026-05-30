@@ -34,6 +34,8 @@ export function CaseTile({ r, isSelected, onClick }: { r: TestResultDto; isSelec
   return (
     <button
       onClick={onClick}
+      data-testid={`case-tile-${r.testCaseId}`}
+      data-case-state={pass === true ? 'pass' : pass === false ? 'fail' : 'none'}
       title={`${r.testCaseId.slice(0, ID_SHORT_LEN)} · ${r.testCaseSummary}`}
       aria-label={`${r.testCaseSummary} — ${pass === true ? 'passed' : pass === false ? 'failed' : 'no result'}`}
       className={cn(

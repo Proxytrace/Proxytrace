@@ -220,7 +220,7 @@ export default function Proposals() {
       <div className="fade-up flex-1 min-h-[420px] overflow-hidden grid gap-3.5 [animation-delay:60ms] grid-cols-[340px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">
         {/* Left list */}
         <div className="min-h-0 overflow-y-auto pr-2 pt-1 pb-6">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" data-testid="proposal-list">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-[124px] rounded-lg"/>

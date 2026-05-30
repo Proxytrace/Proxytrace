@@ -10,7 +10,7 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
   const hasDetails = !!ev.note || ev.breakdown.length > 0 || !!ev.desc;
 
   return (
-    <div className="bg-card-2 rounded-md overflow-hidden border-l-[3px]" style={{ borderLeftColor: ev.color }}>
+    <div data-testid={`fixture-evaluator-${ev.evaluatorId}`} className="bg-card-2 rounded-md overflow-hidden border-l-[3px]" style={{ borderLeftColor: ev.color }}>
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full px-3.5 py-2.5 flex items-center gap-2 cursor-pointer text-left ${FOCUS_RING}`}
@@ -62,7 +62,7 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
 export function EvaluatorList({ evaluators }: { evaluators: EvaluatorFixtureResultDto[] }) {
   if (evaluators.length === 0) return null;
   return (
-    <div className="flex flex-col gap-2">
+    <div data-testid="fixture-evaluator-list" className="flex flex-col gap-2">
       {evaluators.map(ev => <EvaluatorPanel key={ev.evaluatorId} ev={ev} defaultOpen={!ev.pass} />)}
     </div>
   );

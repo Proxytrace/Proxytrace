@@ -11,11 +11,12 @@ interface Props {
 
 export function ProposalActionBar({ abReady, hasAbRun, updateStatus }: Props) {
   return (
-    <div className="flex gap-2 justify-end flex-wrap pt-3 mt-2 border-t border-hairline bg-surface">
+    <div className="flex gap-2 justify-end flex-wrap pt-3 mt-2 border-t border-hairline bg-surface" data-testid="proposal-action-bar">
       <button
         disabled={updateStatus.isPending}
         onClick={() => updateStatus.mutate(ProposalStatus.Rejected)}
         className="px-3.5 py-2 rounded-md text-body-sm font-medium text-muted bg-card-2 shadow-[var(--shadow-pill)] hover:text-secondary transition-colors disabled:opacity-50"
+        data-testid="proposal-reject-btn"
         data-write
       >
         Dismiss
@@ -40,6 +41,7 @@ export function ProposalActionBar({ abReady, hasAbRun, updateStatus }: Props) {
       <button
         disabled={updateStatus.isPending}
         onClick={() => updateStatus.mutate(ProposalStatus.Accepted)}
+        data-testid="proposal-approve-btn"
         className="px-4 py-2 rounded-md text-body-sm font-semibold text-white inline-flex items-center gap-1.5 disabled:opacity-50"
         style={{
           background: abReady ? 'var(--grad-success)' : 'var(--grad-accent)',

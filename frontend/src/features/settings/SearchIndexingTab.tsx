@@ -61,7 +61,7 @@ export function SearchIndexingTab() {
   }
 
   return (
-    <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0">
+    <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0" data-testid="search-indexing-tab">
       {/* Project list */}
       <aside className="flex flex-col bg-card border border-hairline rounded-[14px] overflow-hidden">
         <div className="p-3 border-b border-hairline shrink-0">
@@ -84,6 +84,7 @@ export function SearchIndexingTab() {
                 <button
                   key={p.id}
                   type="button"
+                  data-testid={`search-project-row-${p.id}`}
                   onClick={() => setSelectedId(p.id)}
                   className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
                     isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
@@ -131,6 +132,7 @@ export function SearchIndexingTab() {
                 <button
                   onClick={() => reindex.mutate(selectedProject.id)}
                   data-write
+                  data-testid="reindex-btn"
                   disabled={reindex.isPending || status?.isReindexing}
                   className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -160,6 +162,7 @@ export function SearchIndexingTab() {
                     label="State"
                     value={status?.isReindexing ? 'Reindexing' : 'Idle'}
                     valueClassName={status?.isReindexing ? 'text-accent' : 'text-success'}
+                    testId="index-status"
                   />
                 </div>
               )}
@@ -183,6 +186,7 @@ export function SearchIndexingTab() {
                     description="When disabled, search returns no results and indexing pauses."
                     checked={draft.enabled}
                     onChange={(v) => setDraft({ ...draft, enabled: v })}
+                    testId="toggle-row-enabled"
                   />
 
                   {/* Auto-reindex */}
@@ -191,6 +195,7 @@ export function SearchIndexingTab() {
                     description="Update the index automatically when entities are created, updated, or deleted."
                     checked={draft.autoReindexOnChange}
                     onChange={(v) => setDraft({ ...draft, autoReindexOnChange: v })}
+                    testId="toggle-row-autoReindex"
                   />
 
                   {/* Indexed kinds */}
@@ -235,6 +240,7 @@ export function SearchIndexingTab() {
                     <button
                       onClick={() => updateSettings.mutate({ projectId: selectedProject.id, next: draft })}
                       data-write
+                      data-testid="search-settings-save-btn"
                       disabled={!dirty || updateSettings.isPending}
                       className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >

@@ -27,6 +27,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
     >
       <div
         onClick={ev => ev.stopPropagation()}
+        data-testid="evaluator-new-modal"
         className="w-[min(720px,100%)] max-h-[88vh] overflow-auto bg-card rounded-xl border border-subtle shadow-[var(--shadow-float)]"
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-hairline">
@@ -78,6 +79,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
             <button
               onClick={onSubmit}
               data-write
+              data-testid="evaluator-form-submit"
               disabled={!pickedKind || loading}
               className={cn(
                 'px-4 py-2 rounded-md text-[12px] font-semibold border-0',

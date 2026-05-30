@@ -15,7 +15,7 @@ export function EvaluatorHeatmap({ group }: { group: TestRunGroupDto }) {
   const gridCols = `minmax(160px,1.4fr) repeat(${runs.length}, minmax(120px,1fr))`;
 
   return (
-    <Card padding="none">
+    <Card padding="none" data-testid="evaluator-heatmap">
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-baseline gap-2.5 min-w-0">
           <span className="text-h2 font-semibold">Evaluator breakdown</span>
@@ -42,7 +42,11 @@ export function EvaluatorHeatmap({ group }: { group: TestRunGroupDto }) {
                 <span className="truncate">{row.evaluator.name}</span>
               </div>
               {row.cells.map(cell => (
-                <div key={cell.run.id} className="px-3 py-2 flex flex-col justify-center">
+                <div
+                  key={cell.run.id}
+                  data-testid={`evaluator-heatmap-cell-${row.evaluator.id}-${cell.run.id}`}
+                  className="px-3 py-2 flex flex-col justify-center"
+                >
                   <DistributionBar cell={cell} />
                 </div>
               ))}

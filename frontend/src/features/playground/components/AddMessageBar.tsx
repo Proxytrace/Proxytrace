@@ -37,6 +37,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
+        data-testid="add-message-bar"
         className={cn(
           'group w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[10px] cursor-pointer transition-colors border border-dashed',
           open
@@ -63,6 +64,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               type="button"
               role="menuitem"
               onClick={() => { onAdd(opt.value); setOpen(false); }}
+              data-testid={`add-message-role-${opt.value}`}
               className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
             >
               <span

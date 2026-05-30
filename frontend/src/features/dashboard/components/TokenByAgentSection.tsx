@@ -15,7 +15,7 @@ interface TokenByAgentSectionProps {
 
 export function TokenByAgentSection({ tokenByAgent, agentNameById, range }: TokenByAgentSectionProps) {
   return (
-    <section className="rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]">
+    <section data-testid="token-by-agent" className="rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]">
       <header className="flex items-center justify-between gap-3 px-3 pt-2.5 pb-1.5">
         <div className="min-w-0">
           <h3 className="text-h2 font-semibold whitespace-nowrap">Token usage by agent</h3>
@@ -23,7 +23,7 @@ export function TokenByAgentSection({ tokenByAgent, agentNameById, range }: Toke
         </div>
         <div className="flex gap-2.5 text-[10.5px] text-secondary flex-wrap justify-end max-w-[320px] font-mono">
           {tokenByAgent.agentIds.map(id => (
-            <span key={id} className="flex items-center gap-1.5">
+            <span key={id} data-testid={`token-by-agent-row-${id}`} className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-sm" style={{ background: agentColor(id) }} />
               {agentNameById.get(id) ?? id.slice(0, 6)}
             </span>

@@ -10,7 +10,7 @@ interface Props {
 export function ProposalTerminalNote({ dto }: Props) {
   if (dto.status === ProposalStatus.Accepted) {
     return (
-      <div className="px-3.5 py-3 rounded-md flex items-center gap-2.5 border bg-success-subtle border-[color-mix(in_srgb,var(--success)_20%,transparent)]">
+      <div className="px-3.5 py-3 rounded-md flex items-center gap-2.5 border bg-success-subtle border-[color-mix(in_srgb,var(--success)_20%,transparent)]" data-testid="proposal-terminal-note">
         <div className="size-7 rounded-md flex items-center justify-center shrink-0 text-success bg-[color-mix(in_srgb,var(--success)_20%,transparent)]">
           <CheckboxIcon size={14}/>
         </div>
@@ -24,7 +24,7 @@ export function ProposalTerminalNote({ dto }: Props) {
 
   if (dto.status === ProposalStatus.Rejected) {
     return (
-      <div className="px-3.5 py-3 rounded-md flex items-center gap-2.5 bg-card-2/40">
+      <div className="px-3.5 py-3 rounded-md flex items-center gap-2.5 bg-card-2/40" data-testid="proposal-terminal-note">
         <div className="size-7 rounded-md flex items-center justify-center shrink-0 text-muted font-bold text-h2 bg-card-2">
           ×
         </div>

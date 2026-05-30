@@ -19,10 +19,11 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   return (
     // Wrapper is a positioning + hover context so the delete control is a real
     // sibling button, not nested inside the card button (invalid HTML / a11y).
-    <div className="group/card relative">
+    <div className="group/card relative" data-testid={`group-list-card-${group.id}`}>
       <button
         onClick={onSelect}
         aria-pressed={isSelected}
+        data-testid={`group-list-card-btn-${group.id}`}
         className={`relative w-full text-left rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 cursor-pointer shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
         style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
       >

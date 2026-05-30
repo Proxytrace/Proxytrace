@@ -17,9 +17,10 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
   const passPct = Math.round((summary?.overallPassRate ?? 0) * 100);
 
   return (
-    <div className="grid grid-cols-2 grid-rows-2 gap-2">
+    <div data-testid="dashboard-stat-tiles" className="grid grid-cols-2 grid-rows-2 gap-2">
       <StatTile
         accent
+        testId="stat-tile-traces"
         icon={<ActivityIcon size={11} />}
         label="Traces"
         value={(summary?.totalCalls ?? 0).toLocaleString()}
@@ -30,6 +31,7 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         traceFormat={v => `${Math.round(v)} traces`}
       />
       <StatTile
+        testId="stat-tile-latency"
         icon={<ClockIcon size={11} />}
         label="Avg Latency"
         value={String(Math.round(summary?.avgLatencyMs ?? 0))}
@@ -42,6 +44,7 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         traceFormat={v => fmtLatency(v)}
       />
       <StatTile
+        testId="stat-tile-throughput"
         icon={<ZapIcon size={11} />}
         label="Throughput"
         value={telemetry ? String(Math.round(telemetry.tokensPerSecond)) : '—'}
@@ -53,6 +56,7 @@ export function StatTileGrid({ summary, telemetry, trends, latencyStats }: StatT
         traceFormat={v => `${Math.round(v)} t/s`}
       />
       <StatTile
+        testId="stat-tile-pass-rate"
         icon={<TargetIcon size={11} />}
         label="Pass Rate"
         value={String(passPct)}

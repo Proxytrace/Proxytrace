@@ -9,7 +9,7 @@ interface Props {
 
 export function EvidenceList({ ids }: Props) {
   return (
-    <Card elevation="raised" padding="none" className="overflow-hidden">
+    <Card elevation="raised" padding="none" className="overflow-hidden" data-testid="evidence-list">
       <div className="flex items-center gap-2 px-3.5 py-2.5 border-b border-hairline">
         <span className="text-title font-semibold">Evidence</span>
         <span className="text-body-sm text-muted">· {ids.length} failing run{ids.length !== 1 ? 's' : ''} motivated this</span>

@@ -30,7 +30,7 @@ export function PredictedImpactBand({ dto }: Props) {
   const ms = dto.details.kind === 'ModelSwitch' ? dto.details : null;
 
   return (
-    <Card elevation="raised" padding="md">
+    <Card elevation="raised" padding="md" data-testid="predicted-impact-band">
       <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-2.5">
         Predicted impact
       </div>

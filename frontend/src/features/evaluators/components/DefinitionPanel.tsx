@@ -61,7 +61,7 @@ export function DefinitionPanel({ evaluator: e, onEdit }: Props) {
   const systemMessage = e.systemMessage;
 
   return (
-    <section className="flex flex-col min-w-0 bg-card rounded-lg shadow-[var(--shadow-card)]">
+    <section data-testid="evaluator-definition-panel" className="flex flex-col min-w-0 bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
         <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">Definition</span>
         <span className={cn('px-2 py-0.5 rounded-[4px] text-[10.5px] font-semibold', categoryTint14[cat], categoryText[cat])}>

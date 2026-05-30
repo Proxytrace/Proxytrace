@@ -72,9 +72,10 @@ export function SystemPromptWidget({ agent, className }: Props) {
       bodyClassName="p-0"
     >
       {isEmpty ? (
-        <div className="px-4 py-5 text-muted italic text-body">(no system prompt)</div>
+        <div data-testid="agent-system-prompt" className="px-4 py-5 text-muted italic text-body">(no system prompt)</div>
       ) : (
         <div
+          data-testid="agent-system-prompt"
           className="font-mono text-body leading-[1.65] text-primary whitespace-pre-wrap px-4 py-3.5 overflow-hidden"
           style={{
             maxHeight: `${CLIP_LINES * 1.65}em`,

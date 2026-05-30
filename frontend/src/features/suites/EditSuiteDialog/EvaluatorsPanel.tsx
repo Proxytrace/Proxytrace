@@ -79,6 +79,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      data-testid={`edit-suite-evaluator-toggle-${e.id}`}
                       onClick={ev => { ev.stopPropagation(); onToggle(e.id); }}
                       className="shrink-0 inline-flex items-center justify-center cursor-pointer transition-colors"
                       style={{

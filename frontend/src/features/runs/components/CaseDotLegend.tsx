@@ -6,7 +6,7 @@ export function CaseDotLegend({ evaluators }: { evaluators: RunEvaluatorDto[] })
   if (evaluators.length === 0) return null;
 
   return (
-    <span className="inline-flex items-center gap-2.5 pl-3 border-l border-hairline">
+    <span data-testid="case-dot-legend" className="inline-flex items-center gap-2.5 pl-3 border-l border-hairline">
       <span className="text-caption font-semibold text-muted tracking-[0.07em]">Dots</span>
       {evaluators.map((ev, i) => (
         <span key={ev.id} className="inline-flex items-center gap-1.5 text-body-sm text-secondary">

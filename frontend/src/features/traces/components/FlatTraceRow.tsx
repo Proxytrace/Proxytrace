@@ -18,6 +18,7 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
     <div
       role="row"
       data-trace-id={trace.id}
+      data-testid={`trace-row-${trace.id}`}
       onClick={onClick}
       className={cn(
         'grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',

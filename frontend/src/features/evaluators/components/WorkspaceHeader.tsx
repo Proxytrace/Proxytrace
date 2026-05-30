@@ -52,6 +52,7 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
           <button
             onClick={onDelete}
             data-write
+            data-testid={`evaluator-delete-btn-${e.id}`}
             className="px-3 py-2 rounded-md text-[12px] text-danger inline-flex items-center gap-1.5 border border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-danger-subtle cursor-pointer"
           >
             Delete

@@ -56,6 +56,7 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
   return (
     <button
       onClick={() => onPick(kind)}
+      data-testid={`evaluator-kind-${kind}`}
       className={cn(
         'text-left p-3.5 rounded-lg flex gap-3 cursor-pointer transition-all bg-card-2 border border-subtle',
         HOVER[cat],

@@ -10,9 +10,10 @@ interface Props {
   step: number;
   onChange: (next: number | null) => void;
   hint?: string;
+  testId?: string;
 }
 
-export function ParameterSlider({ label, value, defaultValue, min, max, step, onChange, hint }: Props) {
+export function ParameterSlider({ label, value, defaultValue, min, max, step, onChange, hint, testId }: Props) {
   const id = useId();
   const isModified = value !== defaultValue && !(value == null && defaultValue == null);
   const effective = value ?? defaultValue ?? min;
@@ -66,6 +67,7 @@ export function ParameterSlider({ label, value, defaultValue, min, max, step, on
           value={effective}
           onChange={e => onChange(Number(e.target.value))}
           aria-label={label}
+          data-testid={testId}
           className="param-slider relative w-full appearance-none bg-transparent cursor-pointer"
         />
       </div>

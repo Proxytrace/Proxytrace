@@ -31,6 +31,7 @@ export function ProviderDetail({ provider, models, keys, projects, defaultProjec
           return (
             <button
               key={t}
+              data-testid={`${t}-tab`}
               onClick={() => onTabChange(t)}
               className={cn(
                 'relative px-4 py-3 text-title font-semibold cursor-pointer bg-transparent border-none',
@@ -42,7 +43,10 @@ export function ProviderDetail({ provider, models, keys, projects, defaultProjec
               <span className="inline-flex items-center gap-2">
                 {t === 'models' ? 'Models' : 'API keys'}
                 {count > 0 && (
-                  <span className={cn('text-caption font-semibold px-1.5 py-px rounded-full', active ? 'bg-accent-subtle text-accent' : 'bg-card-2 text-muted')}>
+                  <span
+                    data-testid={t === 'models' ? 'provider-model-count' : 'provider-key-count'}
+                    className={cn('text-caption font-semibold px-1.5 py-px rounded-full', active ? 'bg-accent-subtle text-accent' : 'bg-card-2 text-muted')}
+                  >
                     {count}
                   </span>
                 )}

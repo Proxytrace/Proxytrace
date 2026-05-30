@@ -112,6 +112,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
       <div onClick={onClose} className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]" />
 
       <div
+        data-testid="trace-detail"
         className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51] shadow-[var(--shadow-float)] [animation:fade-up_0.25s_cubic-bezier(0.2,0.8,0.2,1)]"
       >
         {/* Header */}
@@ -163,6 +164,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           )}
           <div className="flex items-center gap-2 shrink-0">
             <Button
+              data-testid="promote-btn"
               onClick={() => !promoteDisabled && setPromoting(true)}
               disabled={promoteDisabled}
               title={promoteTooltip || undefined}
@@ -205,7 +207,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         {/* Tabs */}
         <div className="px-5 pt-[14px] flex gap-1 border-b border-hairline shrink-0">
           {TABS.map(([t, count]) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-body font-medium bg-transparent -mb-px inline-flex items-center gap-1.5 transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-accent' : 'text-muted border-b-transparent'}`}>
+            <button key={t} data-testid={`trace-tab-${t.toLowerCase().replace(/\s+/g, '-')}`} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-body font-medium bg-transparent -mb-px inline-flex items-center gap-1.5 transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-accent' : 'text-muted border-b-transparent'}`}>
               {t}
               {count !== null && (
                 <span className={cn('px-1.5 py-px rounded-full text-caption font-mono font-semibold', tab === t ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-muted')}>{count}</span>
@@ -215,7 +217,10 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
         </div>
 
         {/* Tab body */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0">
+        <div
+          data-testid={`trace-${tab.toLowerCase().replace(/\s+/g, '-')}-tab`}
+          className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0"
+        >
           {tab === 'Messages' && (
             <TraceMessagesTab
               trace={trace}

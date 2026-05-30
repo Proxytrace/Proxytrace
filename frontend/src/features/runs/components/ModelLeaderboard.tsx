@@ -9,9 +9,11 @@ export function ModelLeaderboard({ runs }: { runs: TestRunDto[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+    <div data-testid="model-leaderboard" className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
       {entries.map(entry => (
-        <ModelLeaderboardCard key={entry.run.id} entry={entry} multi={multi} />
+        <div key={entry.run.id} data-testid={`model-leaderboard-entry-${entry.run.endpointId}`}>
+          <ModelLeaderboardCard entry={entry} multi={multi} />
+        </div>
       ))}
     </div>
   );

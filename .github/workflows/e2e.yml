@@ -37,13 +37,19 @@ jobs:
           npx playwright install chromium --with-deps
         working-directory: e2e
 
-      - name: Run core + smoke tests
-        run: npx playwright test --project=core --project=smoke
+      - name: Run core + smoke + auth tests
+        run: npx playwright test --project=core --project=smoke --project=auth-flows
         working-directory: e2e
 
       - name: Run LLM tests
         if: env.OPENAI_API_KEY != ''
-        run: npx playwright test --project=llm
+        run: >-
+          npx playwright test
+          --project=llm-ingestion
+          --project=llm-proxy-trace
+          --project=llm-test-run
+          --project=llm-playground
+          --project=llm-evaluator-playground
         working-directory: e2e
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

@@ -159,6 +159,7 @@ function ParametersSection({
         defaultValue={defaultParameters?.temperature ?? null}
         min={0} max={2} step={0.01}
         onChange={v => setParam('temperature', v)}
+        testId="parameter-slider-temperature"
       />
       <ParameterSlider
         label="Top-P"

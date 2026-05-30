@@ -86,6 +86,7 @@ export function ComposeBox({
       >
         <textarea
           ref={taRef}
+          data-testid="compose-box"
           className="w-full bg-transparent border-0 outline-none resize-none px-[12px] pt-[10px] pb-[6px] text-[13.5px] leading-[1.55] text-primary placeholder:text-muted"
           placeholder={disabled && disabledReason ? disabledReason : 'Send a user message…'}
           value={text}
@@ -103,6 +104,7 @@ export function ComposeBox({
               <button
                 type="button"
                 onClick={() => setPickerOpen(o => !o)}
+                data-testid="endpoint-picker"
                 className={cn(
                   'inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10.5px] mono cursor-pointer transition-colors hover:text-primary border',
                   pickerOpen
@@ -150,6 +152,7 @@ export function ComposeBox({
                         role="option"
                         aria-selected={active}
                         onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
+                        data-testid={`endpoint-picker-option-${ep.id}`}
                         className={cn(
                           'w-full flex items-center gap-[8px] px-[10px] py-[6px] text-left cursor-pointer hover:bg-card transition-colors',
                           active && 'bg-accent-subtle',
@@ -179,6 +182,7 @@ export function ComposeBox({
             onClick={send}
             disabled={!canSend}
             data-write
+            data-testid="compose-send"
             aria-label="Send message"
           >
             Send

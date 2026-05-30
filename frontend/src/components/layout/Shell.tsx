@@ -258,6 +258,7 @@ export function Shell() {
 
           <button
             type="button"
+            data-testid="logout-btn"
             onClick={() => currentUser?.signOut()}
             title={`Sign out (${userName})`}
             className="cursor-pointer"
