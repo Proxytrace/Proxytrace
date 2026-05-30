@@ -1,9 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
+import { UpgradeModalProvider, showUpgradeModal } from './components/license/UpgradeModal';
+import { UpgradeRequiredError } from './api/client';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ProjectProvider  from './contexts/ProjectProvider';
 import { setupApi } from './api/setup';
@@ -35,8 +37,21 @@ const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
 const Invites = lazy(() => import('./features/admin/Invites'));
 
+// A 402 license rejection is surfaced as an upgrade dialog rather than the
+// generic error toast / page crash. Routing it from both caches catches every
+// mutation and query without per-call wiring.
+function handleUpgradeError(error: unknown): boolean {
+  if (error instanceof UpgradeRequiredError) {
+    showUpgradeModal({ errorType: error.errorType, message: error.message });
+    return true;
+  }
+  return false;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, throwOnError: true } },
+  queryCache: new QueryCache({ onError: handleUpgradeError }),
+  mutationCache: new MutationCache({ onError: handleUpgradeError }),
 });
 
 // Prefetch auth-mode so children can render synchronously.
@@ -221,7 +236,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <ModeShell />
+        <UpgradeModalProvider>
+          <ModeShell />
+        </UpgradeModalProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

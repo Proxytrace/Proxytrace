@@ -7,6 +7,7 @@ import { isNavEntryLocked } from './navGating';
 import { useLicense, type LicenseFeature } from '../../api/license';
 import { LicenseBadge } from '../license/LicenseBadge';
 import { GracePeriodBanner } from '../license/GracePeriodBanner';
+import { QuotaBanner } from '../license/QuotaBanner';
 import { Avatar } from '../ui/Avatar';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
@@ -216,6 +217,7 @@ export function Shell() {
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         <GracePeriodBanner />
+        <QuotaBanner />
         {/* Topbar */}
         <header
           className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"

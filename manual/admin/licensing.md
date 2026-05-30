@@ -124,8 +124,14 @@ The authoritative limits and feature sets live in
 
 When you exceed a Free-tier limit (for example, trying to create a second project, invite
 a fourth user, or create a second test suite), the request is rejected with HTTP **402** and
-the UI shows an upgrade prompt. When you access a premium feature without a license that
-includes it, the API responds with HTTP **402** as well.
+the UI raises an **upgrade dialog** explaining which limit was hit, with a link to the
+Enterprise plans. When you access a premium feature without a license that includes it, the
+API responds with HTTP **402** as well and the same dialog appears framed as a feature gate.
+
+The current tier is always visible as a pill in the top bar — a neutral **Free** pill (which
+links to the upgrade page) on an unlicensed install, or a green/amber tier pill on a licensed
+one. When the monthly trace quota is exhausted, a banner appears above the top bar warning
+that new traces are being dropped until the quota resets.
 
 The **agent** limit is enforced differently because agents are discovered automatically from
 captured traces rather than created by an explicit request. Once the agent limit is reached,
