@@ -172,4 +172,47 @@ export class ProxytraceApiClient {
     if (!res.ok()) throw new Error(`get run group failed: ${res.status()} ${await res.text()}`);
     return res.json();
   }
+
+  // Proposals. The public ProposalsController exposes GET /api/proposals (list, optional
+  // ?agentId / ?projectId filters) and PATCH /api/proposals/{id}/status. There is no public
+  // create endpoint, so seeding a proposal goes through the test-only seed action
+  // POST /api/proposals/seed (backend stub — throws NotImplementedException until the user
+  // implements it). The request shape mirrors the SystemPrompt proposal details DTO.
+  async seedProposal(opts: {
+    agentId: string;
+    kind?: string;
+    status?: string;
+    priority?: string;
+    rationale: string;
+  }): Promise<{ id: string }> {
+    const res = await this.request.post('/api/proposals/seed', {
+      headers: this.headers(),
+      data: {
+        agentId: opts.agentId,
+        kind: opts.kind ?? 'SystemPrompt',
+        status: opts.status ?? 'Draft',
+        priority: opts.priority ?? 'Medium',
+        rationale: opts.rationale,
+        details: {
+          kind: 'SystemPrompt',
+          currentSystemMessage: 'You are a helpful assistant.',
+          proposedSystemMessage: 'You are a concise, helpful assistant.',
+        },
+      },
+    });
+    if (!res.ok()) throw new Error(`seed proposal failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getProposals(params?: { agentId?: string; projectId?: string }): Promise<
+    Array<{ id: string; status: string; rationale: string; agentId: string }>
+  > {
+    const qs = new URLSearchParams();
+    if (params?.agentId) qs.set('agentId', params.agentId);
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const query = qs.toString() ? `?${qs}` : '';
+    const res = await this.request.get(`/api/proposals${query}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get proposals failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
 }

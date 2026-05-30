@@ -61,5 +61,16 @@ export default defineConfig({
       },
       dependencies: ['llm-ingestion'],
     },
+    {
+      // proposals.spec seeds a proposal against an agent, which only exists once a call has
+      // been ingested. Depend on the ingestion project so an agent is present first.
+      name: 'llm-proposals',
+      testMatch: /proposals\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/storageState.json',
+      },
+      dependencies: ['llm-ingestion'],
+    },
   ],
 });
