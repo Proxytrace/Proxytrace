@@ -6,6 +6,7 @@ using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Cleanup.Internal;
 using Proxytrace.Domain;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Licensing;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -116,5 +117,37 @@ public sealed class AgentCallCleanupServiceTests : BaseTest<Module>
             .Throws(new Exception());
 
         await FluentActions.Invoking(() => service.CleanOnceAsync(CancellationToken)).Should().NotThrowAsync();
+    }
+
+    [TestMethod]
+    public async Task CleanOnce_LicenseCapBelowConfiguredRetention_UsesLicenseCap()
+    {
+        const int configuredRetentionDays = 100;
+        const long licenseCapDays = 2;
+
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(LicenseLimit.TraceRetentionDays).Returns(licenseCapDays);
+
+        var agentCallRepository = Substitute.For<IAgentCallRepository>();
+        var services = GetServices(builder =>
+        {
+            builder.RegisterInstance(license).As<ILicenseService>();
+            builder.RegisterInstance(agentCallRepository).As<IAgentCallRepository>();
+            builder.RegisterInstance(new AgentCallCleanupConfiguration
+            {
+                CleanupIntervalHours = 1,
+                RetentionDurationDays = configuredRetentionDays,
+            });
+        });
+
+        var service = services.GetRequiredService<AgentCallCleanupService>();
+        await service.CleanOnceAsync(CancellationToken);
+
+        // The license cap (2 days) must win over the larger configured retention (100 days).
+        var cap = TimeSpan.FromDays(licenseCapDays);
+        await agentCallRepository.Received(1)
+            .RemoveOlderThanAsync(
+                Arg.Is<DateTimeOffset>(x => DateTimeOffset.UtcNow - cap - x < TimeSpan.FromSeconds(10)),
+                Arg.Any<CancellationToken>());
     }
 }

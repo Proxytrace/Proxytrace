@@ -1,8 +1,12 @@
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Domain;
 using Proxytrace.Domain.User;
+using Proxytrace.Licensing;
+using Proxytrace.Licensing.Exceptions;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests.Auth.Local;
@@ -54,5 +58,37 @@ public sealed class InviteServiceTests : BaseTest<Module>
         newUser.PasswordHash.Should().NotBeNullOrEmpty();
 
         (await svc.GetByTokenAsync(invite.Token, CancellationToken)).Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Create_WhenUserCountAtLimit_ThrowsLicenseLimitExceeded()
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(LicenseLimit.MaxUsers).Returns(1);
+
+        var s = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
+        // One persisted user puts us at the MaxUsers=1 cap; the next invite must be rejected.
+        var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var svc = s.GetRequiredService<IInviteService>();
+
+        await FluentActions
+            .Invoking(() => svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken))
+            .Should().ThrowAsync<LicenseLimitExceededException>()
+            .Where(e => e.Limit == LicenseLimit.MaxUsers);
+    }
+
+    [TestMethod]
+    public async Task Create_WhenUserCountBelowLimit_Succeeds()
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(LicenseLimit.MaxUsers).Returns(5);
+
+        var s = GetServices(b => b.RegisterInstance(license).As<ILicenseService>());
+        var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
+        var svc = s.GetRequiredService<IInviteService>();
+
+        var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
+
+        invite.Should().NotBeNull();
     }
 }
