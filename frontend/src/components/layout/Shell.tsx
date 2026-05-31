@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, lazy, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useState, useCallback, useRef } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
@@ -19,17 +19,13 @@ import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon, TargetIcon,
+  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon,
   LayoutSidebarIcon, ExternalLinkIcon,
 } from '../icons';
 
-const TraceyDrawer = lazy(() =>
-  import('../../features/tracey/TraceyDrawer').then(m => ({ default: m.TraceyDrawer })),
-);
-
 type NavIconName =
   | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
-  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings';
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey';
 
 interface NavEntry {
   label: string;
@@ -49,6 +45,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
       { label: 'Traces', icon: 'activity', to: '/traces' },
+      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai' },
     ],
   },
   {
@@ -96,6 +93,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,
+  tracey: <MessageSparkleIcon size={16} />,
 };
 
 type HealthStatus = 'online' | 'offline' | 'connecting';
@@ -120,7 +118,7 @@ const HEALTH_LABEL: Record<HealthStatus, string> = {
 
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
-  const [traceyOpen, setTraceyOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: online } = useHealth();
   const { data: license } = useLicense();
   const licenseFeatures = license?.features ?? [];
@@ -180,7 +178,10 @@ export function Shell() {
                   {group.label}
                 </div>
               )}
-              {group.items.map(item =>
+              {group.items
+                // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
+                .filter(item => !(kioskEnabled && item.to === '/tracey-ai'))
+                .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
                     key={item.to}
@@ -268,11 +269,11 @@ export function Shell() {
             <button
               type="button"
               data-testid="tracey-toggle"
-              onClick={() => setTraceyOpen(o => !o)}
+              onClick={() => navigate('/tracey-ai')}
               title="Tracey — AI assistant"
-              className={cn('btn-icon', traceyOpen && 'text-accent')}
+              className={cn('btn-icon', location.pathname.startsWith('/tracey-ai') && 'text-accent')}
             >
-              <SparklesIcon size={16} />
+              <MessageSparkleIcon size={16} />
             </button>
           )}
 
@@ -292,12 +293,6 @@ export function Shell() {
           <Outlet />
         </main>
       </div>
-
-      {!kioskEnabled && traceyOpen && (
-        <Suspense fallback={null}>
-          <TraceyDrawer onClose={() => setTraceyOpen(false)} />
-        </Suspense>
-      )}
 
     </div>
   );

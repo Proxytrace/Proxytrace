@@ -1,6 +1,7 @@
 import {
   streamText,
   convertToModelMessages,
+  stepCountIs,
   tool,
   zodSchema,
   type ChatTransport,
@@ -54,6 +55,10 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       system: this.systemPrompt,
       messages: await convertToModelMessages(options.messages),
       tools: this.tools,
+      // Without a stop condition the AI SDK ends the run after the first step, so a turn that
+      // starts with a tool call produces no assistant text. Keep looping (tool → result → model)
+      // until the model answers or the budget is spent.
+      stopWhen: stepCountIs(8),
       abortSignal: options.abortSignal,
     });
     return result.toUIMessageStream();

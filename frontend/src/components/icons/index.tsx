@@ -81,6 +81,15 @@ export function SparklesIcon(props: IconProps) {
   );
 }
 
+export function MessageSparkleIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.6-.8L3 21l1.9-5.1a8.5 8.5 0 0 1-.8-3.6A8.38 8.38 0 0 1 12.5 4"/>
+      <path d="M18 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>
+    </Svg>
+  );
+}
+
 export function ServerIcon(props: IconProps) {
   return (
     <Svg {...props}>

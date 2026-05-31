@@ -6,17 +6,21 @@ import { testRunGroupsApi } from '../../api/test-run-groups';
 import { proposalsApi } from '../../api/proposals';
 import { statisticsApi } from '../../api/statistics';
 import { ProposalStatus } from '../../api/models';
+import type { TraceyArtifactInput } from './tracey-artifacts';
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
  * services; `navigate` performs a client-side route change; `confirm` gates write tools
- * (auto-approve resolves it to `true` without prompting).
+ * (auto-approve resolves it to `true` without prompting); `showArtifact` renders a result in
+ * the right split panel.
  */
 export interface TraceyToolContext {
   projectId?: string;
   navigate: (path: string) => void;
   /** Resolves `true` to proceed with a write, `false` to cancel. */
   confirm: (summary: string) => Promise<boolean>;
+  /** Push an artifact (chart/table/text) into the right split panel. */
+  showArtifact: (artifact: TraceyArtifactInput) => void;
 }
 
 /**
@@ -148,5 +152,70 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
         return proposalsApi.updateStatus(proposalId, status);
       },
     }),
+
+    show_chart: tool({
+      description:
+        'Render a chart in the right artifact panel to visualize data (e.g. token usage, pass rates over time). Prefer this over dumping numbers in chat.',
+      parameters: z.object({
+        title: z.string(),
+        type: z.enum(['bar', 'line', 'area']),
+        points: z.array(z.object({ label: z.string(), value: z.number() })),
+      }),
+      confirm: false,
+      execute: async ({ title, type, points }, c) => {
+        c.showArtifact({ kind: 'chart', title, chartType: type, points });
+        return { shown: true, title };
+      },
+    }),
+    show_table: tool({
+      description: 'Render a table in the right artifact panel. Use for tabular comparisons.',
+      parameters: z.object({
+        title: z.string(),
+        columns: z.array(z.string()),
+        rows: z.array(z.array(z.union([z.string(), z.number()]))),
+      }),
+      confirm: false,
+      execute: async ({ title, columns, rows }, c) => {
+        c.showArtifact({ kind: 'table', title, columns, rows });
+        return { shown: true, title };
+      },
+    }),
+    show_text: tool({
+      description:
+        'Render a longer text artifact (markdown, JSON, or code) in the right panel instead of inline chat.',
+      parameters: z.object({
+        title: z.string(),
+        format: z.enum(['markdown', 'json', 'code']),
+        content: z.string(),
+      }),
+      confirm: false,
+      execute: async ({ title, format, content }, c) => {
+        c.showArtifact({ kind: 'text', title, format, content });
+        return { shown: true, title };
+      },
+    }),
   };
 }
+
+/**
+ * Static name + description for every Tracey tool, for the slash menu / chips. Kept in sync with
+ * {@link createTraceyTools} (and the backend `TraceyDefinition`).
+ */
+export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
+  { name: 'navigate', description: 'Open an in-app page.' },
+  { name: 'list_agents', description: 'List the agents in the project.' },
+  { name: 'get_agent', description: 'Get one agent by id.' },
+  { name: 'list_suites', description: 'List the test suites.' },
+  { name: 'get_suite', description: 'Get one test suite by id.' },
+  { name: 'list_runs', description: 'List recent test runs.' },
+  { name: 'get_run', description: 'Get one test run by id.' },
+  { name: 'list_proposals', description: 'List optimization proposals.' },
+  { name: 'get_proposal', description: 'Get one proposal by id.' },
+  { name: 'get_dashboard_stats', description: 'Aggregate dashboard statistics.' },
+  { name: 'get_agent_stats', description: 'Token usage, cost & latency for an agent.' },
+  { name: 'start_test_run', description: 'Run a suite against an agent (confirm).' },
+  { name: 'set_proposal_status', description: 'Approve or reject a proposal (confirm).' },
+  { name: 'show_chart', description: 'Plot data in the artifact panel.' },
+  { name: 'show_table', description: 'Show a table in the artifact panel.' },
+  { name: 'show_text', description: 'Show markdown/JSON/code in the artifact panel.' },
+];

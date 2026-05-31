@@ -24,6 +24,7 @@ function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext 
     projectId: 'proj-1',
     navigate: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
+    showArtifact: vi.fn(),
     ...overrides,
   };
 }
@@ -105,5 +106,57 @@ describe('tracey write tools confirmation gating', () => {
 
     expect(proposalsApi.updateStatus).not.toHaveBeenCalled();
     expect(result).toBe(CANCELLED);
+  });
+});
+
+describe('tracey artifact tools', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('show_chart pushes a chart artifact', async () => {
+    const showArtifact = vi.fn();
+    const ctx = makeCtx({ showArtifact });
+    const points = [{ label: 'A', value: 1 }, { label: 'B', value: 2 }];
+
+    const result = await createTraceyTools(ctx).show_chart.execute(
+      { title: 'Tokens', type: 'bar', points },
+      ctx,
+    );
+
+    expect(showArtifact).toHaveBeenCalledWith({ kind: 'chart', title: 'Tokens', chartType: 'bar', points });
+    expect(result).toEqual({ shown: true, title: 'Tokens' });
+  });
+
+  it('show_table pushes a table artifact', async () => {
+    const showArtifact = vi.fn();
+    const ctx = makeCtx({ showArtifact });
+
+    await createTraceyTools(ctx).show_table.execute(
+      { title: 'Agents', columns: ['name'], rows: [['A']] },
+      ctx,
+    );
+
+    expect(showArtifact).toHaveBeenCalledWith({
+      kind: 'table',
+      title: 'Agents',
+      columns: ['name'],
+      rows: [['A']],
+    });
+  });
+
+  it('show_text pushes a text artifact', async () => {
+    const showArtifact = vi.fn();
+    const ctx = makeCtx({ showArtifact });
+
+    await createTraceyTools(ctx).show_text.execute(
+      { title: 'Notes', format: 'markdown', content: 'hi' },
+      ctx,
+    );
+
+    expect(showArtifact).toHaveBeenCalledWith({
+      kind: 'text',
+      title: 'Notes',
+      format: 'markdown',
+      content: 'hi',
+    });
   });
 });
