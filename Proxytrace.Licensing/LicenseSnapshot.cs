@@ -30,4 +30,23 @@ public sealed record LicenseSnapshot(
             definition.Features,
             definition.Limits);
     }
+
+    /// <summary>
+    /// Builds an active, perpetual Enterprise-tier snapshot with no JWT identity. Because
+    /// <see cref="Jti"/> is null, the background check service never re-verifies or degrades it.
+    /// Used by kiosk/demo deployments to showcase the full feature set without a signed license.
+    /// </summary>
+    public static LicenseSnapshot Enterprise(string? customerEmail = null)
+    {
+        var definition = LicensePolicy.For(LicenseTier.Enterprise);
+        return new LicenseSnapshot(
+            LicenseTier.Enterprise,
+            LicenseStatus.Active,
+            ExpiresAt: null,
+            GracePeriodEndsAt: null,
+            CustomerEmail: customerEmail,
+            Jti: null,
+            definition.Features,
+            definition.Limits);
+    }
 }

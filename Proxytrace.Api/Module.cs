@@ -104,7 +104,7 @@ internal sealed class Module : Autofac.Module
         if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
         {
             builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
-            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration)));
+            builder.RegisterModule(new Proxytrace.Licensing.Module(BuildLicensingConfiguration(configuration, kiosk.Enabled)));
         }
 
         StorageConfiguration storageConfig;
@@ -241,7 +241,7 @@ internal sealed class Module : Autofac.Module
         });
     }
 
-    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration)
+    private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration, bool kioskEnabled)
     {
 #if DEBUG
         var serverUrl = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_SERVER_URL")
@@ -275,6 +275,12 @@ internal sealed class Module : Autofac.Module
             CheckIntervalHours = section.GetValue<int?>("CheckIntervalHours") ?? 24,
             OfflineGracePeriodDays = section.GetValue<int?>("OfflineGracePeriodDays") ?? 7,
             CacheFilePath = cachePath,
+
+            // Kiosk/demo deployments always run on a fake, perpetual Enterprise license so the
+            // full feature set is visible without a real signed JWT.
+            OverrideSnapshot = kioskEnabled
+                ? Proxytrace.Licensing.LicenseSnapshot.Enterprise("kiosk@proxytrace.dev")
+                : null,
         };
     }
 

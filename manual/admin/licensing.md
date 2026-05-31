@@ -122,6 +122,11 @@ The authoritative limits and feature sets live in
 `Proxytrace.Licensing/LicensePolicy.cs`. If that file changes, update this table to match.
 :::
 
+::: info Kiosk mode is always Enterprise
+Kiosk mode ignores `PROXYTRACE_LICENSE` entirely and runs on a built-in, perpetual
+**Enterprise** license, so the public demo can showcase every feature.
+:::
+
 When you exceed a Free-tier limit (for example, trying to create a second project, invite
 a fourth user, or create a second test suite), the request is rejected with HTTP **402** and
 the UI raises an **upgrade dialog** explaining which limit was hit, with a link to the

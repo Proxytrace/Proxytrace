@@ -33,6 +33,15 @@ internal sealed class LicenseService : ILicenseService
         this.refreshTrigger = refreshTrigger;
         this.logger = logger;
 
+        if (configuration.OverrideSnapshot is { } overrideSnapshot)
+        {
+            current = overrideSnapshot;
+            logger.LogInformation(
+                "License override active: tier {Tier} (no online verification)",
+                current.Tier);
+            return;
+        }
+
         var jwt = configuration.LicenseJwt?.Trim();
         if (string.IsNullOrEmpty(jwt))
         {
