@@ -1,78 +1,19 @@
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
-import type { Components } from 'react-markdown';
-
-/** Drops react-markdown's non-DOM `node` prop before spreading onto an HTML element. */
-function clean<T extends object>(props: T): Omit<T, 'node'> {
-  const next = { ...props } as Record<string, unknown>;
-  delete next.node;
-  return next as Omit<T, 'node'>;
-}
-
-const components: Components = {
-  p: (props) => <p className="mb-2 last:mb-0" {...clean(props)} />,
-  ul: (props) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0" {...clean(props)} />,
-  ol: (props) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0" {...clean(props)} />,
-  li: (props) => <li className="leading-relaxed" {...clean(props)} />,
-  a: (props) => (
-    <a
-      className="text-accent underline underline-offset-2 hover:opacity-80"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...clean(props)}
-    />
-  ),
-  strong: (props) => <strong className="font-semibold text-primary" {...clean(props)} />,
-  em: (props) => <em className="italic" {...clean(props)} />,
-  h1: (props) => (
-    <h1 className="mb-2 mt-3 text-h2 font-semibold text-primary first:mt-0" {...clean(props)} />
-  ),
-  h2: (props) => (
-    <h2 className="mb-2 mt-3 text-h3 font-semibold text-primary first:mt-0" {...clean(props)} />
-  ),
-  h3: (props) => (
-    <h3 className="mb-1.5 mt-2.5 text-[13px] font-semibold text-primary first:mt-0" {...clean(props)} />
-  ),
-  blockquote: (props) => (
-    <blockquote className="my-2 border-l-2 border-border pl-3 text-secondary" {...clean(props)} />
-  ),
-  code: (props) => (
-    <code
-      className="rounded-[4px] bg-surface px-1 py-0.5 font-mono text-[12px] text-accent"
-      {...clean(props)}
-    />
-  ),
-  pre: (props) => (
-    <pre
-      className="my-2 overflow-x-auto rounded-lg border border-border bg-surface p-3 text-[12px] leading-relaxed text-primary [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-primary"
-      {...clean(props)}
-    />
-  ),
-  table: (props) => (
-    <div className="my-2 overflow-x-auto">
-      <table className="w-full border-collapse text-[12px]" {...clean(props)} />
-    </div>
-  ),
-  th: (props) => (
-    <th
-      className="border border-hairline bg-card px-2 py-1 text-left font-semibold text-secondary"
-      {...clean(props)}
-    />
-  ),
-  td: (props) => <td className="border border-hairline px-2 py-1 text-primary" {...clean(props)} />,
-  hr: (props) => <hr className="my-3 border-hairline" {...clean(props)} />,
-};
+import remarkGfm from 'remark-gfm';
+import { markdownComponents } from './markdown-components';
 
 /**
  * Renders assistant message text as Markdown, themed with DESIGN.md tokens. Element overrides keep
  * the output inside the visual system (no library default styles leak in). `smooth` fades streamed
- * tokens in as they arrive.
+ * tokens in as they arrive; GFM adds tables + strikethrough + autolinks.
  */
 export function MarkdownText() {
   return (
     <MarkdownTextPrimitive
       smooth
+      remarkPlugins={[remarkGfm]}
       className="text-[13px] leading-relaxed text-primary"
-      components={components}
+      components={markdownComponents}
     />
   );
 }
