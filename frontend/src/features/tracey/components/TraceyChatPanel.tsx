@@ -1,4 +1,5 @@
 import { useThread } from '@assistant-ui/react';
+import { SparklesIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import type { TraceyChat } from '../useTraceyChat';
 import { TraceyConversation } from '../TraceyConversation';
@@ -19,9 +20,18 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface-2">
       <header className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2.5">
-        <div>
-          <div className="text-h2 font-semibold text-primary">Tracey AI</div>
-          <div className="text-body-sm text-muted">Your in-app assistant</div>
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]">
+            <SparklesIcon size={16} />
+          </span>
+          <div>
+            <div className="text-h2 font-semibold leading-tight text-primary">Tracey AI</div>
+            <div className="text-body-sm text-muted">Your in-app assistant</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-body-sm text-secondary">
+          <span className="pulse-dot size-1.5 rounded-full bg-success" />
+          Online
         </div>
       </header>
 

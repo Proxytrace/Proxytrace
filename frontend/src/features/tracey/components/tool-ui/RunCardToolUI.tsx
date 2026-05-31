@@ -1,19 +1,12 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { PlayIcon } from '../../../../components/icons';
-import { Badge, type BadgeVariant } from '../../../../components/ui/Badge';
+import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
 import { fmtPct, fmtCost, fmtTokens } from '../../../../lib/format';
-import { TestRunStatus, type TestRunDto } from '../../../../api/models';
+import type { TestRunDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
+import { RUN_STATUS_VARIANT } from './badge-variants';
 import { toolUiState } from './tool-ui-state';
-
-const STATUS_VARIANT: Record<TestRunStatus, BadgeVariant> = {
-  [TestRunStatus.Completed]: 'success',
-  [TestRunStatus.Failed]: 'danger',
-  [TestRunStatus.Running]: 'accent',
-  [TestRunStatus.Pending]: 'neutral',
-  [TestRunStatus.Cancelled]: 'neutral',
-};
 
 /** Inline renderer for the `get_run` tool result. */
 export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
@@ -32,10 +25,10 @@ export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, is
       {run && (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
-            <Badge label={run.status} variant={STATUS_VARIANT[run.status]} size="sm" />
+            <Badge label={run.status} variant={RUN_STATUS_VARIANT[run.status]} size="sm" />
             <Badge label={`${fmtPct(run.passRate)} pass`} variant="neutral" size="sm" />
           </div>
-          <div className="text-body-sm text-muted">
+          <div className="font-mono text-body-sm tabular-nums text-muted">
             {run.passedCases}/{run.totalCases} passed · {fmtCost(run.costUsd)} ·{' '}
             {fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))} tok
           </div>

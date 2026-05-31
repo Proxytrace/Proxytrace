@@ -53,22 +53,29 @@ lists, tables, and code blocks).
 
 Tracey renders rich UI **directly in the chat thread** rather than dumping raw numbers:
 
-- **Charts** — bar, line, or area plots of your data.
-- **Tables** — tabular comparisons.
-- **Text cards** — longer markdown, JSON, or code.
-- **Entity cards** — an agent, test run, proposal, provider, or trace shown as a card.
-  Click a card to jump straight to that entity's page in the app.
+- **Charts** — bar, line, or area plots of your data, with gridlines, a max/min/avg/last
+  summary, and hover for the exact value of any point.
+- **Tables** — tabular comparisons; numeric columns are right-aligned for easy scanning, and a
+  footer reports the row and column count.
+- **Text cards** — longer markdown (fully rendered), JSON, or code. Code and JSON include a
+  copy button and expand when long.
+- **Entity cards** — a single agent, test suite, test run, proposal, provider, or trace shown
+  as a card. Click a card to jump straight to that entity's page in the app.
+- **List cards** — *List agents/suites/runs/proposals* render as a titled, counted list. Each
+  row links to its entity, and **View all** (or **+N more**) opens the full page.
+- **Stats cards** — *dashboard stats* and per-agent stats render as a grid of key figures
+  (calls, tokens, latency, cost, pass rate) with an **Open** link to the matching page.
 - **Choice prompts** — when there's a short fixed set of answers, Tracey shows buttons;
-  picking one sends it back as your next message.
+  picking one sends it back as your next message (the chosen one is ticked).
 - **Forms** — when Tracey needs a few fields before acting, she shows an inline form; the
   values you submit become your next message.
 
 ## Tool calls
 
-For tools without a dedicated component (such as navigation or raw data lookups), the call
-appears as a collapsed row showing the **tool name**, its **execution duration**, and a
-**status** — *Running* (pulsing), *Done*, or *Failed*. Click the row to expand it and inspect
-the tool's **Input** and its **Output** (or **Error** if it failed).
+For tools without a dedicated component (such as navigation), the call appears as a collapsed
+row showing the **tool name**, its **execution duration**, and a **status** — *Running*
+(pulsing), *Done*, or *Failed*. Click the row to expand it and inspect the tool's **Input** and
+its **Output** (or **Error** if it failed), each with a copy button.
 
 ## Running actions
 

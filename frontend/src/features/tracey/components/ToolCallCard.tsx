@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { CheckIcon, ChevronRightIcon, XIcon } from '../../../components/icons';
+import { CodeBlock } from '../../../components/ui/CodeBlock';
 import { cn } from '../../../lib/cn';
 
 type ToolStatus = 'pending' | 'success' | 'failed';
@@ -41,15 +42,9 @@ function StatusBadge({ status }: { status: ToolStatus }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: string }) {
-  return (
-    <div>
-      <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">{title}</div>
-      <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words rounded-sm bg-surface-2 px-2 py-1.5 text-[11px] text-secondary">
-        {children}
-      </pre>
-    </div>
-  );
+/** A labelled, copyable input/output block. JSON gets a language tag; plain strings don't. */
+function Section({ title, content, json }: { title: string; content: string; json: boolean }) {
+  return <CodeBlock heading={title} content={content} language={json ? 'json' : undefined} maxLines={12} />;
 }
 
 /**
@@ -82,7 +77,8 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
       : argsText && argsText.trim() && argsText.trim() !== '{}'
         ? argsText
         : null;
-  const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+  const resultIsString = typeof result === 'string';
+  const resultText = resultIsString ? (result as string) : JSON.stringify(result, null, 2);
 
   return (
     <div className="my-1 rounded-md border border-hairline bg-card text-xs">
@@ -107,8 +103,10 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
 
       {open && (
         <div className="space-y-2 border-t border-hairline px-2.5 py-2">
-          {argsJson && <Section title="Input">{argsJson}</Section>}
-          {hasResult && <Section title={isError ? 'Error' : 'Output'}>{resultText}</Section>}
+          {argsJson && <Section title="Input" content={argsJson} json />}
+          {hasResult && (
+            <Section title={isError ? 'Error' : 'Output'} content={resultText} json={!resultIsString} />
+          )}
           {!hasResult && !isRunning && <div className="text-[11px] text-muted">No output returned.</div>}
         </div>
       )}

@@ -11,7 +11,14 @@ interface ToolUIFrameProps {
   accentBar?: string;
   /** Runtime color enabling the interactive hover glow (entity cards). */
   hoverColor?: string;
+  /** Optional element pinned to the card's top-right corner (e.g. a navigate affordance). */
+  cornerAccessory?: ReactNode;
   pendingLabel?: string;
+  /**
+   * Shaped placeholder rendered while pending, reserving the ready layout's height to avoid a
+   * jump when the result arrives. Falls back to a spinner + {@link pendingLabel} when omitted.
+   */
+  pendingSkeleton?: ReactNode;
   errorLabel?: string;
   testId?: string;
   children?: ReactNode;
@@ -28,14 +35,23 @@ export function ToolUIFrame({
   icon,
   accentBar,
   hoverColor,
+  cornerAccessory,
   pendingLabel = 'Working…',
+  pendingSkeleton,
   errorLabel = 'Tracey couldn’t load this.',
   testId,
   children,
 }: ToolUIFrameProps) {
   if (state === 'pending') {
+    if (pendingSkeleton) {
+      return (
+        <Card elevation="flat" padding="md" className="my-1" data-testid={testId} aria-busy="true">
+          {pendingSkeleton}
+        </Card>
+      );
+    }
     return (
-      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId}>
+      <Card elevation="flat" padding="sm" className="my-1 flex items-center gap-2" data-testid={testId} aria-busy="true">
         <Spinner size={12} />
         <span className="text-body-sm text-muted">{pendingLabel}</span>
       </Card>
@@ -57,13 +73,14 @@ export function ToolUIFrame({
       className="my-1"
       data-testid={testId}
     >
-      {(icon || title) && (
+      {(icon || title || cornerAccessory) && (
         <div className="flex items-center gap-2">
           {icon && <span className="shrink-0 text-muted">{icon}</span>}
           {title && <span className="truncate text-h2 font-semibold text-primary">{title}</span>}
+          {cornerAccessory && <span className="ml-auto shrink-0 pl-2">{cornerAccessory}</span>}
         </div>
       )}
-      {children && <div className={icon || title ? 'mt-2.5' : undefined}>{children}</div>}
+      {children && <div className={icon || title || cornerAccessory ? 'mt-2.5' : undefined}>{children}</div>}
     </Card>
   );
 }

@@ -247,6 +247,10 @@ a { text-decoration: none; color: inherit; }
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .pulse-dot { animation: none; }
+}
+
 /* ── Nav ── */
 .nav-item {
   display: flex;

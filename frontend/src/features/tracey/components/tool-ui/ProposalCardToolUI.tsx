@@ -1,24 +1,12 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { SparklesIcon } from '../../../../components/icons';
-import { Badge, type BadgeVariant } from '../../../../components/ui/Badge';
+import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
-import { Priority, ProposalStatus, type OptimizationProposalDto } from '../../../../api/models';
+import { type OptimizationProposalDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { ToolUIFrame } from './ToolUIFrame';
+import { PRIORITY_VARIANT, PROPOSAL_STATUS_VARIANT } from './badge-variants';
 import { toolUiState } from './tool-ui-state';
-
-const STATUS_VARIANT: Record<ProposalStatus, BadgeVariant> = {
-  [ProposalStatus.Accepted]: 'success',
-  [ProposalStatus.Rejected]: 'danger',
-  [ProposalStatus.Draft]: 'neutral',
-};
-
-const PRIORITY_VARIANT: Record<Priority, BadgeVariant> = {
-  [Priority.Critical]: 'danger',
-  [Priority.High]: 'warn',
-  [Priority.Medium]: 'accent',
-  [Priority.Low]: 'neutral',
-};
 
 function isProposal(value: unknown): value is OptimizationProposalDto {
   return typeof value === 'object' && value !== null && 'kind' in value && 'rationale' in value;
@@ -46,7 +34,7 @@ export const ProposalCardToolUI: ToolCallMessagePartComponent = ({ result, statu
     >
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge label={proposal.status} variant={STATUS_VARIANT[proposal.status]} size="sm" />
+          <Badge label={proposal.status} variant={PROPOSAL_STATUS_VARIANT[proposal.status]} size="sm" />
           <Badge label={proposal.priority} variant={PRIORITY_VARIANT[proposal.priority]} size="sm" />
         </div>
         <div className="line-clamp-2 text-body-sm text-secondary">{proposal.rationale}</div>

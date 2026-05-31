@@ -1,0 +1,39 @@
+import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { SparklesIcon } from '../../../../components/icons';
+import { Badge } from '../../../../components/ui/Badge';
+import { agentColor } from '../../../../lib/colors';
+import type { OptimizationProposalDto } from '../../../../api/models';
+import { ListCard, LIST_CARD_MAX } from './ListCard';
+import { ListCardRow } from './ListCardRow';
+import { PRIORITY_VARIANT } from './badge-variants';
+import { toolUiState } from './tool-ui-state';
+
+/** Inline renderer for the `list_proposals` tool result. */
+export const ProposalListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const state = toolUiState(status, isError, result != null);
+  const proposals = Array.isArray(result) ? (result as OptimizationProposalDto[]) : [];
+  return (
+    <ListCard
+      state={state}
+      icon={<SparklesIcon size={14} />}
+      title="Proposals"
+      count={proposals.length}
+      shown={Math.min(proposals.length, LIST_CARD_MAX)}
+      viewAllTo="/proposals"
+      pendingLabel="Loading proposals…"
+      emptyLabel="No optimization proposals yet."
+      testId="tracey-proposal-list"
+    >
+      {proposals.slice(0, LIST_CARD_MAX).map((proposal) => (
+        <ListCardRow
+          key={proposal.id}
+          to={`/proposals?agentId=${proposal.agentId}`}
+          color={agentColor(proposal.agentId)}
+          title={`${proposal.kind} · ${proposal.agentName}`}
+          subtitle={proposal.rationale}
+          right={<Badge label={proposal.priority} variant={PRIORITY_VARIANT[proposal.priority]} size="sm" />}
+        />
+      ))}
+    </ListCard>
+  );
+};
