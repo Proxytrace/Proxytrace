@@ -3,14 +3,17 @@ import type { TextMessagePartComponent } from '@assistant-ui/react';
 import { SparklesIcon, ArrowDownIcon } from '../../components/icons';
 import { MarkdownText } from './components/MarkdownText';
 import { ToolCallCard } from './components/ToolCallCard';
+import { TRACEY_TOOL_UI } from './components/tool-ui/registry';
 
 const PlainText: TextMessagePartComponent = ({ text }) => (
   <span className="whitespace-pre-wrap break-words">{text}</span>
 );
 
-// User text is shown verbatim; assistant text is rendered as Markdown.
-const userParts = { Text: PlainText, tools: { Fallback: ToolCallCard } };
-const assistantParts = { Text: MarkdownText, tools: { Fallback: ToolCallCard } };
+// User text is shown verbatim; assistant text is rendered as Markdown. Tools with a dedicated
+// inline UI render via `by_name`; everything else falls back to the diagnostic tool card.
+const tools = { by_name: TRACEY_TOOL_UI, Fallback: ToolCallCard };
+const userParts = { Text: PlainText, tools };
+const assistantParts = { Text: MarkdownText, tools };
 
 function UserMessage() {
   return (

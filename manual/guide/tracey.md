@@ -12,9 +12,9 @@ captured as a trace — she is the platform's first dogfood agent.
 ## Opening Tracey AI
 
 Open **Tracey AI** from the sidebar (under *Overview*), or click the **Tracey** button in
-the top bar (near the health indicator and your avatar). The page has a chat column on the
-left and an **artifact panel** that opens on the right when she produces a plot, table, or
-document. Your conversation is remembered per project on this device until you clear it.
+the top bar (near the health indicator and your avatar). The page is a single chat column;
+plots, tables, entity cards, and forms render **inline in the conversation** as Tracey
+produces them. Your conversation is remembered per project on this device until you clear it.
 
 ## Asking questions
 
@@ -49,20 +49,26 @@ slash command — send it as-is to invoke that tool directly.
 Tracey **streams** her replies as they are generated and renders them as Markdown (headings,
 lists, tables, and code blocks).
 
+## Inline components
+
+Tracey renders rich UI **directly in the chat thread** rather than dumping raw numbers:
+
+- **Charts** — bar, line, or area plots of your data.
+- **Tables** — tabular comparisons.
+- **Text cards** — longer markdown, JSON, or code.
+- **Entity cards** — an agent, test run, proposal, provider, or trace shown as a card.
+  Click a card to jump straight to that entity's page in the app.
+- **Choice prompts** — when there's a short fixed set of answers, Tracey shows buttons;
+  picking one sends it back as your next message.
+- **Forms** — when Tracey needs a few fields before acting, she shows an inline form; the
+  values you submit become your next message.
+
 ## Tool calls
 
-When Tracey uses a tool, it appears in the conversation as a collapsed row showing the **tool
-name**, its **execution duration**, and a **status** — *Running* (pulsing), *Done*, or
-*Failed*. Click the row to expand it and inspect the tool's **Input** and its **Output** (or
-**Error** if it failed). Pinnable results carry a **Pin to panel** action in the expanded view.
-
-## Artifacts (the right panel)
-
-When Tracey visualizes data, she renders an **artifact** in the right panel instead of
-dumping raw numbers into the chat — a **chart** (bar/line/area), a **table**, or a **text**
-document (markdown, JSON, or code). You can also **Pin to panel** any tool result shown in
-the conversation. Switch between multiple artifacts with the tabs in the panel header, and
-close the panel with its **✕** button.
+For tools without a dedicated component (such as navigation or raw data lookups), the call
+appears as a collapsed row showing the **tool name**, its **execution duration**, and a
+**status** — *Running* (pulsing), *Done*, or *Failed*. Click the row to expand it and inspect
+the tool's **Input** and its **Output** (or **Error** if it failed).
 
 ## Running actions
 
@@ -85,8 +91,8 @@ again to return to the confirm-first behavior.
 ## Clearing the conversation
 
 The controls below the message box include a **New conversation** icon (next to the **send**
-button) — use it to start fresh. This wipes the locally stored thread for the current project,
-clears any artifacts in the panel, and returns Tracey to her opening view.
+button) — use it to start fresh. This wipes the locally stored thread for the current project
+and returns Tracey to her opening view.
 
 ## Where Tracey's traces appear
 

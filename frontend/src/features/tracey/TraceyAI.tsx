@@ -3,7 +3,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { useTraceyChat } from './useTraceyChat';
 import { TraceyActionsProvider } from './tracey-actions';
 import { TraceyChatPanel } from './components/TraceyChatPanel';
-import { ArtifactPanel } from './components/ArtifactPanel';
 
 export default function TraceyAI() {
   const chat = useTraceyChat();
@@ -27,18 +26,10 @@ export default function TraceyAI() {
   }
 
   return (
-    <TraceyActionsProvider value={{ showArtifact: chat.showArtifact }}>
+    <TraceyActionsProvider value={{ sendUserMessage: chat.sendUserMessage, navigate: chat.navigate }}>
       <AssistantRuntimeProvider runtime={chat.runtime}>
-        <div className="flex h-full min-h-0 gap-3">
+        <div className="flex h-full min-h-0">
           <TraceyChatPanel chat={chat} />
-          {chat.artifacts.length > 0 && (
-            <ArtifactPanel
-              artifacts={chat.artifacts}
-              activeId={chat.activeArtifactId}
-              onSelect={chat.selectArtifact}
-              onClose={chat.clearArtifacts}
-            />
-          )}
         </div>
       </AssistantRuntimeProvider>
     </TraceyActionsProvider>

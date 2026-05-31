@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, statisticsApi } = vi.hoisted(() => ({
+const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, providersApi, agentCallsApi, statisticsApi } = vi.hoisted(() => ({
   agentsApi: { list: vi.fn(), get: vi.fn() },
   testSuitesApi: { list: vi.fn(), get: vi.fn() },
   testRunsApi: { list: vi.fn(), get: vi.fn() },
   testRunGroupsApi: { create: vi.fn() },
   proposalsApi: { getAll: vi.fn(), updateStatus: vi.fn() },
+  providersApi: { get: vi.fn() },
+  agentCallsApi: { get: vi.fn() },
   statisticsApi: { dashboard: vi.fn(), agentOverview: vi.fn() },
 }));
 
@@ -14,6 +16,8 @@ vi.mock('../../api/test-suites', () => ({ testSuitesApi }));
 vi.mock('../../api/test-runs', () => ({ testRunsApi }));
 vi.mock('../../api/test-run-groups', () => ({ testRunGroupsApi }));
 vi.mock('../../api/proposals', () => ({ proposalsApi }));
+vi.mock('../../api/providers', () => ({ providersApi }));
+vi.mock('../../api/agent-calls', () => ({ agentCallsApi }));
 vi.mock('../../api/statistics', () => ({ statisticsApi }));
 
 import { createTraceyTools, CANCELLED, type TraceyToolContext } from './tracey-tools';
@@ -24,7 +28,7 @@ function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext 
     projectId: 'proj-1',
     navigate: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
-    showArtifact: vi.fn(),
+    sendUserMessage: vi.fn(),
     ...overrides,
   };
 }
@@ -125,12 +129,32 @@ describe('tracey write tools confirmation gating', () => {
   });
 });
 
-describe('tracey artifact tools', () => {
+describe('tracey entity-fetch tools', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('show_chart pushes a chart artifact', async () => {
-    const showArtifact = vi.fn();
-    const ctx = makeCtx({ showArtifact });
+  it('get_provider fetches by id', async () => {
+    providersApi.get.mockResolvedValue({ id: 'pr1', name: 'OpenAI' });
+    const ctx = makeCtx();
+    await createTraceyTools(ctx).get_provider.execute({ providerId: 'pr1' }, ctx);
+
+    expect(providersApi.get).toHaveBeenCalledWith('pr1');
+  });
+
+  it('get_trace fetches the agent call by id', async () => {
+    agentCallsApi.get.mockResolvedValue({ id: 't1', model: 'gpt-4o' });
+    const ctx = makeCtx();
+    const result = await createTraceyTools(ctx).get_trace.execute({ traceId: 't1' }, ctx);
+
+    expect(agentCallsApi.get).toHaveBeenCalledWith('t1');
+    expect(result).toEqual({ id: 't1', model: 'gpt-4o' });
+  });
+});
+
+describe('tracey inline render tools', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('show_chart returns the chart spec to render inline', async () => {
+    const ctx = makeCtx();
     const points = [{ label: 'A', value: 1 }, { label: 'B', value: 2 }];
 
     const result = await createTraceyTools(ctx).show_chart.execute(
@@ -138,41 +162,28 @@ describe('tracey artifact tools', () => {
       ctx,
     );
 
-    expect(showArtifact).toHaveBeenCalledWith({ kind: 'chart', title: 'Tokens', chartType: 'bar', points });
-    expect(result).toEqual({ shown: true, title: 'Tokens' });
+    expect(result).toEqual({ kind: 'chart', title: 'Tokens', chartType: 'bar', points });
   });
 
-  it('show_table pushes a table artifact', async () => {
-    const showArtifact = vi.fn();
-    const ctx = makeCtx({ showArtifact });
+  it('show_table returns the table spec to render inline', async () => {
+    const ctx = makeCtx();
 
-    await createTraceyTools(ctx).show_table.execute(
+    const result = await createTraceyTools(ctx).show_table.execute(
       { title: 'Agents', columns: ['name'], rows: [['A']] },
       ctx,
     );
 
-    expect(showArtifact).toHaveBeenCalledWith({
-      kind: 'table',
-      title: 'Agents',
-      columns: ['name'],
-      rows: [['A']],
-    });
+    expect(result).toEqual({ kind: 'table', title: 'Agents', columns: ['name'], rows: [['A']] });
   });
 
-  it('show_text pushes a text artifact', async () => {
-    const showArtifact = vi.fn();
-    const ctx = makeCtx({ showArtifact });
+  it('show_text returns the text spec to render inline', async () => {
+    const ctx = makeCtx();
 
-    await createTraceyTools(ctx).show_text.execute(
+    const result = await createTraceyTools(ctx).show_text.execute(
       { title: 'Notes', format: 'markdown', content: 'hi' },
       ctx,
     );
 
-    expect(showArtifact).toHaveBeenCalledWith({
-      kind: 'text',
-      title: 'Notes',
-      format: 'markdown',
-      content: 'hi',
-    });
+    expect(result).toEqual({ kind: 'text', title: 'Notes', format: 'markdown', content: 'hi' });
   });
 });

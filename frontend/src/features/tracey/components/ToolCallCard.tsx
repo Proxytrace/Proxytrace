@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
-import { CheckIcon, ChevronRightIcon, ExpandIcon, XIcon } from '../../../components/icons';
+import { CheckIcon, ChevronRightIcon, XIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
-import { useTraceyActions } from '../tracey-actions';
-import { resultToArtifact } from '../tracey-artifacts';
 
 type ToolStatus = 'pending' | 'success' | 'failed';
 
@@ -56,10 +54,10 @@ function Section({ title, children }: { title: string; children: string }) {
 
 /**
  * A collapsed tool-call row showing name, execution duration, and status. Expands to reveal the
- * tool input, and its output (or error). Pinnable results can be sent to the artifact panel.
+ * tool input, and its output (or error). Used as the fallback for tools without a dedicated
+ * inline UI (e.g. `navigate`, `list_*`, `get_dashboard_stats`).
  */
 export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, argsText, result, isError, status }) => {
-  const { showArtifact } = useTraceyActions();
   const [open, setOpen] = useState(false);
 
   const isRunning = status.type === 'running' || status.type === 'requires-action';
@@ -85,8 +83,6 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
         ? argsText
         : null;
   const resultText = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
-  // `show_*` tools already render into the panel and `navigate` returns nothing worth pinning.
-  const pinnable = hasResult && !isError && !toolName.startsWith('show_') && toolName !== 'navigate';
 
   return (
     <div className="my-1 rounded-md border border-hairline bg-card text-xs">
@@ -114,16 +110,6 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
           {argsJson && <Section title="Input">{argsJson}</Section>}
           {hasResult && <Section title={isError ? 'Error' : 'Output'}>{resultText}</Section>}
           {!hasResult && !isRunning && <div className="text-[11px] text-muted">No output returned.</div>}
-          {pinnable && (
-            <button
-              type="button"
-              onClick={() => showArtifact(resultToArtifact(toolName, result))}
-              className="inline-flex items-center gap-1 rounded-sm border border-border px-1.5 py-[2px] text-[10px] text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] cursor-pointer"
-            >
-              <ExpandIcon size={11} />
-              Pin to panel
-            </button>
-          )}
         </div>
       )}
     </div>

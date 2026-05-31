@@ -16,7 +16,6 @@ import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
 import { clearThread, loadThread, saveThread } from './tracey-storage';
-import { withId, type TraceyArtifact, type TraceyArtifactInput } from './tracey-artifacts';
 
 export interface PendingConfirmation {
   summary: string;
@@ -56,11 +55,10 @@ export interface TraceyChat {
   pendingConfirmation: PendingConfirmation | null;
   resolveConfirmation: (approved: boolean) => void;
   clear: () => void;
-  artifacts: TraceyArtifact[];
-  activeArtifactId: string | null;
-  showArtifact: (artifact: TraceyArtifactInput) => void;
-  selectArtifact: (id: string) => void;
-  clearArtifacts: () => void;
+  /** Append a new user turn (used by interactive tool UIs). */
+  sendUserMessage: (text: string) => void;
+  /** Client-side route change (used by entity-card tool UIs). */
+  navigate: (path: string) => void;
 }
 
 export function useTraceyChat(): TraceyChat {
@@ -94,27 +92,6 @@ export function useTraceyChat(): TraceyChat {
     setPendingConfirmation(null);
   }, []);
 
-  const [artifacts, setArtifacts] = useState<TraceyArtifact[]>([]);
-  const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
-
-  const showArtifact = useCallback((input: TraceyArtifactInput) => {
-    const artifact = withId(input);
-    setArtifacts(prev => [...prev, artifact]);
-    setActiveArtifactId(artifact.id);
-  }, []);
-
-  const selectArtifact = useCallback((id: string) => setActiveArtifactId(id), []);
-
-  const clearArtifacts = useCallback(() => {
-    setArtifacts([]);
-    setActiveArtifactId(null);
-  }, []);
-
-  const toolContext = useMemo<TraceyToolContext>(
-    () => ({ projectId, navigate, confirm, showArtifact }),
-    [projectId, navigate, confirm, showArtifact],
-  );
-
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
@@ -126,6 +103,17 @@ export function useTraceyChat(): TraceyChat {
 
   const transport = useMemo(() => new DelegatingTransport(), []);
   const runtime = useChatRuntime({ transport });
+
+  // Appends a new user turn — interactive tool UIs (choice prompts, forms) feed a selection
+  // back to the model through this.
+  const sendUserMessage = useCallback((text: string) => {
+    runtime.thread.append(text);
+  }, [runtime]);
+
+  const toolContext = useMemo<TraceyToolContext>(
+    () => ({ projectId, navigate, confirm, sendUserMessage }),
+    [projectId, navigate, confirm, sendUserMessage],
+  );
 
   // Swap in the real same-origin transport whenever the session (or tool context) changes.
   useEffect(() => {
@@ -161,8 +149,6 @@ export function useTraceyChat(): TraceyChat {
   const clear = useCallback(() => {
     clearThread(userKey, projectKey);
     runtime.threads.switchToNewThread();
-    setArtifacts([]);
-    setActiveArtifactId(null);
   }, [runtime, userKey, projectKey]);
 
   const status: TraceyChat['status'] = !projectId
@@ -181,10 +167,7 @@ export function useTraceyChat(): TraceyChat {
     pendingConfirmation,
     resolveConfirmation,
     clear,
-    artifacts,
-    activeArtifactId,
-    showArtifact,
-    selectArtifact,
-    clearArtifacts,
+    sendUserMessage,
+    navigate,
   };
 }

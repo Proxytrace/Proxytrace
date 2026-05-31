@@ -4,23 +4,25 @@ import { testSuitesApi } from '../../api/test-suites';
 import { testRunsApi } from '../../api/test-runs';
 import { testRunGroupsApi } from '../../api/test-run-groups';
 import { proposalsApi } from '../../api/proposals';
+import { providersApi } from '../../api/providers';
+import { agentCallsApi } from '../../api/agent-calls';
 import { statisticsApi } from '../../api/statistics';
 import { ProposalStatus } from '../../api/models';
-import type { TraceyArtifactInput } from './tracey-artifacts';
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
  * services; `navigate` performs a client-side route change; `confirm` gates write tools
- * (auto-approve resolves it to `true` without prompting); `showArtifact` renders a result in
- * the right split panel.
+ * (auto-approve resolves it to `true` without prompting); `sendUserMessage` appends a new
+ * user turn (used by interactive tool UIs — choice prompts and forms — to feed a selection
+ * back to the model).
  */
 export interface TraceyToolContext {
   projectId?: string;
   navigate: (path: string) => void;
   /** Resolves `true` to proceed with a write, `false` to cancel. */
   confirm: (summary: string) => Promise<boolean>;
-  /** Push an artifact (chart/table/text) into the right split panel. */
-  showArtifact: (artifact: TraceyArtifactInput) => void;
+  /** Append a new user message, continuing the conversation with the given text. */
+  sendUserMessage: (text: string) => void;
 }
 
 /**
@@ -168,9 +170,23 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       },
     }),
 
+    get_provider: tool({
+      description: 'Get a single model provider by id.',
+      parameters: z.object({ providerId: z.string().describe('The id of the provider to fetch.') }),
+      confirm: false,
+      execute: async ({ providerId }) => providersApi.get(providerId),
+    }),
+    get_trace: tool({
+      description:
+        'Get a single captured trace (agent call) by id, with its model, status, token usage, latency and cost.',
+      parameters: z.object({ traceId: z.string().describe('The id of the trace / agent call to fetch.') }),
+      confirm: false,
+      execute: async ({ traceId }) => agentCallsApi.get(traceId),
+    }),
+
     show_chart: tool({
       description:
-        'Render a chart in the right artifact panel to visualize data (e.g. token usage, pass rates over time). Prefer this over dumping numbers in chat.',
+        'Render a chart inline in the chat to visualize data (e.g. token usage, pass rates over time). Prefer this over dumping numbers in chat.',
       parameters: z.object({
         title: z.string().describe('Heading shown above the chart.'),
         type: z.enum(['bar', 'line', 'area']).describe('The chart style to render.'),
@@ -180,13 +196,11 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
         })).describe('The data points to plot, in display order.'),
       }),
       confirm: false,
-      execute: async ({ title, type, points }, c) => {
-        c.showArtifact({ kind: 'chart', title, chartType: type, points });
-        return { shown: true, title };
-      },
+      execute: async ({ title, type, points }) =>
+        ({ kind: 'chart', title, chartType: type, points }),
     }),
     show_table: tool({
-      description: 'Render a table in the right artifact panel. Use for tabular comparisons.',
+      description: 'Render a table inline in the chat. Use for tabular comparisons.',
       parameters: z.object({
         title: z.string().describe('Heading shown above the table.'),
         columns: z.array(z.string()).describe('Column header labels, left to right.'),
@@ -194,24 +208,48 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
           .describe('Table rows; each row is an array of cells aligned to "columns".'),
       }),
       confirm: false,
-      execute: async ({ title, columns, rows }, c) => {
-        c.showArtifact({ kind: 'table', title, columns, rows });
-        return { shown: true, title };
-      },
+      execute: async ({ title, columns, rows }) => ({ kind: 'table', title, columns, rows }),
     }),
     show_text: tool({
       description:
-        'Render a longer text artifact (markdown, JSON, or code) in the right panel instead of inline chat.',
+        'Render a longer text block (markdown, JSON, or code) inline in the chat as a titled card.',
       parameters: z.object({
-        title: z.string().describe('Heading shown above the text artifact.'),
+        title: z.string().describe('Heading shown above the text.'),
         format: z.enum(['markdown', 'json', 'code']).describe('How to render the content.'),
-        content: z.string().describe('The full text body to render in the panel.'),
+        content: z.string().describe('The full text body to render.'),
       }),
       confirm: false,
-      execute: async ({ title, format, content }, c) => {
-        c.showArtifact({ kind: 'text', title, format, content });
-        return { shown: true, title };
-      },
+      execute: async ({ title, format, content }) => ({ kind: 'text', title, format, content }),
+    }),
+
+    present_choices: tool({
+      description:
+        'Ask the user to pick from a small set of options, rendered inline as buttons. Use instead of a plain-text question when the answers are a short fixed set. The chosen value is sent back as the next user message.',
+      parameters: z.object({
+        question: z.string().describe('The question shown above the choices.'),
+        options: z.array(z.object({
+          label: z.string().describe('Button label shown to the user.'),
+          value: z.string().describe('Text sent back as the user reply when this option is picked.'),
+        })).min(2).describe('The choices to offer, in display order.'),
+      }),
+      confirm: false,
+      execute: async () => ({ shown: true }),
+    }),
+    show_form: tool({
+      description:
+        'Render an inline form to collect a few fields from the user. On submit the values are sent back as the next user message. Use when you need structured input (e.g. a name plus a description) before acting.',
+      parameters: z.object({
+        title: z.string().describe('Heading shown above the form.'),
+        fields: z.array(z.object({
+          name: z.string().describe('Machine name of the field (returned with its value).'),
+          label: z.string().describe('Human label shown beside the input.'),
+          type: z.enum(['text', 'textarea', 'number']).describe('The input control to render.'),
+          placeholder: z.string().optional().describe('Optional placeholder text.'),
+        })).min(1).describe('The fields to collect, in display order.'),
+        submitLabel: z.string().optional().describe('Label for the submit button (default "Submit").'),
+      }),
+      confirm: false,
+      execute: async () => ({ shown: true }),
     }),
   };
 }
@@ -230,11 +268,13 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'get_run', description: 'Get one test run by id.' },
   { name: 'list_proposals', description: 'List optimization proposals.' },
   { name: 'get_proposal', description: 'Get one proposal by id.' },
+  { name: 'get_provider', description: 'Get one model provider by id.' },
+  { name: 'get_trace', description: 'Get one captured trace by id.' },
   { name: 'get_dashboard_stats', description: 'Aggregate dashboard statistics.' },
   { name: 'get_agent_stats', description: 'Token usage, cost & latency for an agent.' },
   { name: 'start_test_run', description: 'Run a suite against an agent (confirm).' },
   { name: 'set_proposal_status', description: 'Approve or reject a proposal (confirm).' },
-  { name: 'show_chart', description: 'Plot data in the artifact panel.' },
-  { name: 'show_table', description: 'Show a table in the artifact panel.' },
-  { name: 'show_text', description: 'Show markdown/JSON/code in the artifact panel.' },
+  { name: 'show_chart', description: 'Plot data inline in the chat.' },
+  { name: 'show_table', description: 'Show a table inline in the chat.' },
+  { name: 'show_text', description: 'Show markdown/JSON/code inline in the chat.' },
 ];
