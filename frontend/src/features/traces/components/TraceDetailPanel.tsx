@@ -139,6 +139,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               {trace.agentName && trace.agentId && (
                 <button
                   type="button"
+                  data-testid="trace-detail-agent-name"
                   onClick={() => { onClose(); navigate(`/agents?id=${trace.agentId}`); }}
                   title="Open agent"
                   className="cursor-pointer bg-transparent border-0 p-0 inline-flex rounded-full transition-opacity duration-150 hover:opacity-80"

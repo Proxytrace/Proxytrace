@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PlusIcon, SearchIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import type { PlaygroundRole } from '../state/types';
@@ -8,6 +9,8 @@ interface Props {
   onLoadFromTrace?: () => void;
 }
 
+const MENU_WIDTH = 260;
+
 const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; description: string }[] = [
   { value: 'user', label: 'User', accent: 'var(--teal)', description: 'Message from the human' },
   { value: 'assistant', label: 'Assistant', accent: 'var(--accent-hover)', description: 'Reply from the model' },
@@ -16,25 +19,50 @@ const ROLE_OPTIONS: { value: PlaygroundRole; label: string; accent: string; desc
 
 export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  // The menu opens upward; anchor its bottom edge just above the button so it is never
+  // clipped by the conversation list's `overflow-y-auto` container (it lives in a portal).
+  const [pos, setPos] = useState<{ bottom: number; left: number } | null>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  const updatePosition = useCallback(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setPos({ bottom: window.innerHeight - rect.top + 6, left: rect.left + rect.width / 2 });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (open) updatePosition();
+  }, [open, updatePosition]);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    const onDocDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      close();
     };
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    document.addEventListener('keydown', esc);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const onScrollOrResize = () => updatePosition();
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onScrollOrResize);
+    window.addEventListener('scroll', onScrollOrResize, true);
     return () => {
-      document.removeEventListener('mousedown', handler);
-      document.removeEventListener('keydown', esc);
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize, true);
     };
-  }, [open]);
+  }, [open, close, updatePosition]);
 
   return (
-    <div ref={ref} className="relative mt-[2px]">
+    <div className="mt-[2px]">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(o => !o)}
         data-testid="add-message-bar"
@@ -50,10 +78,12 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
         <PlusIcon size={13} strokeWidth={2.4} />
         <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em]">Add message</span>
       </button>
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute left-1/2 -translate-x-1/2 bottom-full mb-[6px] z-30 w-[260px] rounded-[12px] py-[6px] fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
+          className="fixed z-[60] -translate-x-1/2 rounded-[12px] py-[6px] fade-up bg-surface-2 border border-border shadow-[var(--shadow-float)]"
+          style={{ bottom: pos.bottom, left: pos.left, width: MENU_WIDTH }}
         >
           <div className="px-[10px] pt-[2px] pb-[6px] text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
             New message role
@@ -63,7 +93,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               key={opt.value}
               type="button"
               role="menuitem"
-              onClick={() => { onAdd(opt.value); setOpen(false); }}
+              onClick={() => { onAdd(opt.value); close(); }}
               data-testid={`add-message-role-${opt.value}`}
               className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
             >
@@ -85,13 +115,11 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
           ))}
           {onLoadFromTrace && (
             <>
-              <div
-                className="my-[4px] mx-[10px] border-t border-border"
-              />
+              <div className="my-[4px] mx-[10px] border-t border-border" />
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { onLoadFromTrace(); setOpen(false); }}
+                onClick={() => { onLoadFromTrace(); close(); }}
                 className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
               >
                 <span
@@ -107,7 +135,8 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

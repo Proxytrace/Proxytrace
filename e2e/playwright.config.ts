@@ -11,6 +11,9 @@ config({ path: resolve(__dirname, '.env'), override: false });
 // Force a single worker so projects/files execute serially and deterministically.
 const STORAGE_STATE = '.auth/storageState.json';
 const CHROME = devices['Desktop Chrome'];
+// @llm projects hit a real provider; retry to absorb transient upstream latency/throttling
+// without masking deterministic failures in the non-LLM projects (which keep retries: 0 locally).
+const LLM_RETRIES = process.env.CI ? 2 : 1;
 
 export default defineConfig({
   testDir: './tests',
@@ -77,6 +80,9 @@ export default defineConfig({
     {
       name: 'llm-ingestion',
       testMatch: /ingestion\.spec\.ts/,
+      // @llm specs make real upstream round-trips; a transient provider latency/throttle blip
+      // would otherwise fail a deterministic assertion outright. Retry to absorb that noise.
+      retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],
     },
@@ -84,6 +90,7 @@ export default defineConfig({
       // proxy-trace re-verifies the proxy → Traces UI path; depends only on a completed setup.
       name: 'llm-proxy-trace',
       testMatch: /proxy-trace\.spec\.ts/,
+      retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],
     },
@@ -92,6 +99,7 @@ export default defineConfig({
       // the ingestion project so it always runs first, even with multiple workers.
       name: 'llm-test-run',
       testMatch: /test-run\.spec\.ts/,
+      retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['llm-ingestion'],
     },
@@ -99,6 +107,7 @@ export default defineConfig({
       // Playground drives a live agent against an endpoint; needs an ingested agent present.
       name: 'llm-playground',
       testMatch: ['**/playground.spec.ts'],
+      retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['llm-ingestion'],
     },
@@ -107,6 +116,7 @@ export default defineConfig({
       // the same file self-seeds and needs no LLM.
       name: 'llm-evaluator-playground',
       testMatch: ['**/evaluator-playground.spec.ts'],
+      retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['llm-ingestion'],
     },

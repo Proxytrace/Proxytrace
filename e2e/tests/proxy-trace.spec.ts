@@ -90,14 +90,14 @@ test.describe('@llm chat completion trace lands on Traces page', () => {
 
     // The trace must be visible on the Traces page.
     await page.goto('/traces', { waitUntil: 'load' });
-    await expect(page.getByTestId('trace-list')).toBeVisible();
+    await expect(page.getByTestId('trace-table')).toBeVisible();
     const row = page.getByTestId(`trace-row-${newCallId}`);
     await expect(row).toBeVisible({ timeout: 10_000 });
 
     // Opening the row reveals the trace detail with a captured agent identity, confirming
     // the proxied call was parsed and persisted end to end.
     await row.click();
-    await expect(page.getByTestId('trace-detail-drawer')).toBeVisible();
+    await expect(page.getByTestId('trace-detail')).toBeVisible();
     await expect(page.getByTestId('trace-detail-agent-name')).not.toBeEmpty();
   });
 });
