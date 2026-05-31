@@ -54,7 +54,20 @@ internal sealed class Module : Autofac.Module
         builder
             .RegisterInstance(kiosk)
             .SingleInstance();
-        
+
+        // Optional real LLM endpoint for a fully functional kiosk demo. When the Kiosk:Endpoint
+        // section is present, validate it up front (fail fast on partial/invalid config) so the
+        // seeded provider/model/endpoint can power Tracey chat and test runs against a real LLM.
+        var kioskEndpointSection = configuration.GetSection("Kiosk:Endpoint");
+        var kioskEndpoint = kioskEndpointSection.Get<KioskEndpointOptions>() ?? new KioskEndpointOptions();
+        if (kioskEndpointSection.Exists())
+        {
+            kioskEndpoint.Resolve();
+        }
+        builder
+            .RegisterInstance(kioskEndpoint)
+            .SingleInstance();
+
         var agentCallCleanupConfiguration = configuration.GetSection("AgentCallCleanup")
             .Get<AgentCallCleanupConfiguration>() ?? new AgentCallCleanupConfiguration();
         builder

@@ -20,6 +20,7 @@ namespace Proxytrace.Application.Demo.Scenarios;
 internal sealed class CoreSeedScenario : IDemoScenario
 {
     private readonly KioskOptions kiosk;
+    private readonly KioskEndpointOptions kioskEndpoint;
     private readonly DemoSeedContext ctx;
     private readonly IUser.CreateNew userFactory;
     private readonly IModelProvider.CreateNew providerFactory;
@@ -38,6 +39,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
 
     public CoreSeedScenario(
         KioskOptions kiosk,
+        KioskEndpointOptions kioskEndpoint,
         DemoSeedContext ctx,
         IUser.CreateNew userFactory,
         IModelProvider.CreateNew providerFactory,
@@ -55,6 +57,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
         ICompletion.Create completionFactory)
     {
         this.kiosk = kiosk;
+        this.kioskEndpoint = kioskEndpoint;
         this.ctx = ctx;
         this.userFactory = userFactory;
         this.providerFactory = providerFactory;
@@ -105,9 +108,36 @@ internal sealed class CoreSeedScenario : IDemoScenario
         var claudeEndpoint = await endpoints.AddAsync(endpointFactory(claudeSonnet, anthropicProvider,
             inputTokenCost: 0.000003m, outputTokenCost: 0.000015m), cancellationToken);
 
+        // The demo (DEMO-NO-KEY) endpoints above back the seeded historical traces, stats and
+        // proposals (consumed by later scenarios via DemoSeedContext) and stay in place. When a real
+        // endpoint is configured via Kiosk:Endpoint, create it and route the project's system endpoint
+        // and the demo agents through it, so Tracey chat and test runs hit a real LLM.
+        var systemEndpoint = gpt4oMiniEndpoint;
+        var supportEndpoint = gpt4oEndpoint;
+        var reviewEndpoint = claudeEndpoint;
+        var analyticsEndpoint = gpt4oEndpoint;
+
+        if (kioskEndpoint.IsConfigured)
+        {
+            var resolved = kioskEndpoint.Resolve();
+            var realProvider = await providers.AddAsync(providerFactory(
+                resolved.ProviderName,
+                resolved.BaseUrl,
+                resolved.ApiKey,
+                resolved.Kind), cancellationToken);
+            var realModel = await models.AddAsync(modelFactory(resolved.Model), cancellationToken);
+            var realEndpoint = await endpoints.AddAsync(endpointFactory(
+                realModel, realProvider, resolved.InputTokenCost, resolved.OutputTokenCost), cancellationToken);
+
+            systemEndpoint = realEndpoint;
+            supportEndpoint = realEndpoint;
+            reviewEndpoint = realEndpoint;
+            analyticsEndpoint = realEndpoint;
+        }
+
         var project = await projects.AddAsync(projectFactory(
             "Showcase Project",
-            gpt4oMiniEndpoint,
+            systemEndpoint,
             [demoUser]), cancellationToken);
 
         var lookupOrderTool = new ToolSpecification(
@@ -129,7 +159,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 + "Always acknowledge the issue, propose a clear next step, and close politely. "
                 + "Use the `lookup_order` and `start_return` tools when a customer references an order id."),
             tools: [lookupOrderTool, startReturnTool],
-            endpoint: gpt4oEndpoint,
+            endpoint: supportEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.3),
             isSystemAgent: false).AddAsync(cancellationToken);
@@ -140,7 +170,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 "You are a senior software engineer reviewing pull requests. "
                 + "Identify correctness, security, and clarity issues. Be specific, cite line numbers."),
             tools: [],
-            endpoint: claudeEndpoint,
+            endpoint: reviewEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.2),
             isSystemAgent: false).AddAsync(cancellationToken);
@@ -151,7 +181,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
                 "You are a data analyst. Given a question and a table description, "
                 + "answer with a short summary and a SQL query."),
             tools: [],
-            endpoint: gpt4oEndpoint,
+            endpoint: analyticsEndpoint,
             project: project,
             modelParameters: paramsFactory(temperature: 0.1),
             isSystemAgent: false).AddAsync(cancellationToken);
@@ -236,13 +266,13 @@ internal sealed class CoreSeedScenario : IDemoScenario
             _ = spreadHours;
         }
 
-        await SeedTraces(supportAgent, gpt4oEndpoint, supportSamples, spreadHours: 48);
-        await SeedTraces(codeReviewAgent, claudeEndpoint, reviewSamples, spreadHours: 72);
-        await SeedTraces(analyticsAgent, gpt4oEndpoint, analyticsSamples, spreadHours: 36);
+        await SeedTraces(supportAgent, supportEndpoint, supportSamples, spreadHours: 48);
+        await SeedTraces(codeReviewAgent, reviewEndpoint, reviewSamples, spreadHours: 72);
+        await SeedTraces(analyticsAgent, analyticsEndpoint, analyticsSamples, spreadHours: 36);
 
-        await SeedToolCallConversation(supportAgent, gpt4oEndpoint);
-        await SeedMultiTurnConversation(supportAgent, gpt4oEndpoint);
-        await SeedMultiTurnConversation(analyticsAgent, gpt4oEndpoint, analyticsMultiTurn: true);
+        await SeedToolCallConversation(supportAgent, supportEndpoint);
+        await SeedMultiTurnConversation(supportAgent, supportEndpoint);
+        await SeedMultiTurnConversation(analyticsAgent, analyticsEndpoint, analyticsMultiTurn: true);
 
         async Task SeedToolCallConversation(IAgent agent, IModelEndpoint endpoint)
         {
