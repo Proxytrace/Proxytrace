@@ -49,7 +49,9 @@ export default function Agents() {
   return (
     <div className="w-full min-w-0 flex flex-col gap-3 h-full overflow-hidden">
       {isEmpty && (
-        <EmptyState title="No agents found" description="Agents are auto-created when traces are captured." />
+        <div data-testid="agent-empty-state">
+          <EmptyState title="No agents yet" description="Agents are auto-created when traces are captured." />
+        </div>
       )}
 
       {(isLoading || allAgents.length > 0) && (

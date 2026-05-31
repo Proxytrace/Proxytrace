@@ -12,7 +12,7 @@ interface Props {
 export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
   if (evaluators.length === 0) {
     return (
-      <div className="max-w-[640px] mx-auto">
+      <div data-testid="wizard-step-evaluators" className="max-w-[640px] mx-auto">
         <EmptyState
           title="No evaluators yet"
           description="You can create the suite without evaluators and attach them later."
@@ -22,7 +22,7 @@ export function EvaluatorsStep({ evaluators, selectedIds, onToggle }: Props) {
   }
 
   return (
-    <div className="max-w-[640px] mx-auto flex flex-col gap-3">
+    <div data-testid="wizard-step-evaluators" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-[12.5px] text-muted m-0">Attach evaluators (optional). They'll score every test run.</p>
         <span className="text-[11.5px] text-muted">

@@ -31,7 +31,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
   const deleteKey = useDeleteKey(providerId);
 
   const columns: DataColumn<ApiKeyDto>[] = [
-    { key: 'name', label: 'Name', width: '1.5fr', render: k => <span className="text-title font-semibold text-primary">{k.name}</span> },
+    { key: 'name', label: 'Name', width: '1.5fr', render: k => <span data-testid={`key-row-${k.id}`} className="text-title font-semibold text-primary">{k.name}</span> },
     { key: 'project', label: 'Project', width: '1.2fr', render: k => <span className="text-body text-secondary">{k.projectName}</span> },
     {
       key: 'key', label: 'Key', width: '1.6fr',
@@ -59,7 +59,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
       },
     },
     { key: 'created', label: 'Created', width: '1fr', render: k => <span className="text-body text-muted">{fmtDate(k.createdAt)}</span> },
-    { key: 'delete', label: '', width: 'auto', render: k => <IconButton aria-label="Delete key" danger onClick={() => setToDelete(k)}><TrashIcon size={13} /></IconButton> },
+    { key: 'delete', label: '', width: 'auto', render: k => <IconButton data-testid={`key-delete-btn-${k.id}`} aria-label="Delete key" danger onClick={() => setToDelete(k)}><TrashIcon size={13} /></IconButton> },
   ];
 
   return (
@@ -70,6 +70,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           <div className="text-body-sm text-muted">Keys that authenticate clients at the Proxytrace proxy.</div>
         </div>
         <Button
+          data-testid="key-create-btn"
           variant="secondary"
           size="sm"
           leftIcon={<PlusIcon size={13} />}
@@ -83,7 +84,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
         <div className="px-4 py-3 rounded-lg flex items-center gap-3 bg-success-subtle border border-[color-mix(in_srgb,var(--success)_28%,transparent)]">
           <div className="flex-1 min-w-0">
             <div className="text-body font-semibold mb-1 text-success">Key "{created.name}" created — copy it now</div>
-            <code className="font-mono text-body text-primary break-all">{created.keyValue}</code>
+            <code data-testid="key-value-reveal" className="font-mono text-body text-primary break-all">{created.keyValue}</code>
             <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
               <span className="text-body-sm text-muted whitespace-nowrap">Ingestion URL</span>
               <code className="font-mono text-body-sm text-secondary break-all">{ingestionUrl(created.projectName)}</code>
@@ -99,7 +100,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           <div className="text-title font-semibold text-primary">Generate new key</div>
           <div className="grid grid-cols-2 gap-2.5">
             <FormField label="Key name">
-              <input value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={formInputCls} />
+              <input data-testid="key-name-input" value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={formInputCls} />
             </FormField>
             <FormField label="Project">
               <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} className={formInputCls}>
@@ -110,6 +111,7 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Cancel</Button>
             <Button
+              data-testid="key-create-submit"
               data-write variant="primary" size="sm"
               loading={createKey.isPending}
               disabled={!newKey.name || !newKey.projectId}

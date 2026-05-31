@@ -31,7 +31,7 @@ export function EvaluatorDetail({ evaluator: e, attachedSuites, range, onRangeCh
   const overview = detail?.overview ?? null;
 
   return (
-    <div className="fade-up flex flex-col gap-3.5">
+    <div data-testid="evaluator-detail" className="fade-up flex flex-col gap-3.5">
       <WorkspaceHeader evaluator={e} onEdit={onEdit} onDelete={onDelete} onTestBench={() => onTestBench(e.id)} />
 
       <PerformancePanel evaluator={e} overview={overview} range={range} onRangeChange={onRangeChange} />

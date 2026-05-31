@@ -51,6 +51,7 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
       selected={isActive}
       interactive
       onClick={onClick}
+      data-testid={`proposal-card-${dto.id}`}
       className={cn('relative overflow-hidden transition-[box-shadow,opacity]', terminal && 'opacity-70')}
     >
       <div
@@ -72,6 +73,7 @@ export function ProposalCard({ dto, isActive, onClick }: Props) {
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
+            data-testid={`proposal-status-${dto.id}`}
             className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
             style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
           >

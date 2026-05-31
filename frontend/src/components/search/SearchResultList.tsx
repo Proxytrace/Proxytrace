@@ -87,6 +87,7 @@ export function SearchResultList({
                   <button
                     key={`${hit.kind}-${hit.entityId}`}
                     type="button"
+                    data-testid={`search-result-${hit.entityId}`}
                     onMouseEnter={() => onHover(globalIndex)}
                     onClick={() => onCommit(hit)}
                     className={itemCls}
@@ -97,6 +98,7 @@ export function SearchResultList({
                   <Link
                     key={`${hit.kind}-${hit.entityId}`}
                     to={searchHitToHref(hit)}
+                    data-testid={`search-result-${hit.entityId}`}
                     onMouseEnter={() => onHover(globalIndex)}
                     onClick={onLinkClick}
                     className={itemCls}

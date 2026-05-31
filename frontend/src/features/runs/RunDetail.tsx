@@ -85,7 +85,7 @@ export function RunDetail({ run, activeCaseIds }: { run: TestRunDto; activeCaseI
 
   return (
     <>
-      <Card padding="none">
+      <Card padding="none" data-testid="run-detail">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
           <div className="flex items-center gap-2.5 min-w-0 flex-wrap">

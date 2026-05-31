@@ -138,7 +138,7 @@ export default function Traces() {
       />
 
       {total > PAGE_SIZE && (
-        <div className="flex justify-center shrink-0">
+        <div data-testid="trace-pagination" className="flex justify-center shrink-0">
           <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={setPage} />
         </div>
       )}

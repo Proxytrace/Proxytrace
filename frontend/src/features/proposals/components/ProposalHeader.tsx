@@ -39,7 +39,7 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
   const prio = PRIORITY_META[dto.priority];
 
   return (
-    <div className="flex items-start gap-3.5">
+    <div className="flex items-start gap-3.5" data-testid="proposal-header">
       <div
         className="size-11 rounded-lg flex items-center justify-center shrink-0"
         style={{

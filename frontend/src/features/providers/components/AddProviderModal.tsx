@@ -40,6 +40,7 @@ export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) 
         {FIELDS.map(f => (
           <FormField key={f.key} label={f.label}>
             <input
+              data-testid={`provider-field-${f.key}`}
               type={f.type}
               value={form[f.key]}
               onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
@@ -49,7 +50,7 @@ export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) 
           </FormField>
         ))}
         <FormField label="Provider kind">
-          <select value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
+          <select data-testid="provider-field-kind" value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
             {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </FormField>

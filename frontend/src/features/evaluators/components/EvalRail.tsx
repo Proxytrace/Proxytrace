@@ -46,7 +46,7 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
     .filter(g => g.items.length > 0);
 
   return (
-    <aside className="flex flex-col min-h-0 overflow-hidden bg-card rounded-lg shadow-[var(--shadow-card)]">
+    <aside data-testid="evaluator-rail" className="flex flex-col min-h-0 overflow-hidden bg-card rounded-lg shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-[9px] px-3.5 pt-3.5 pb-2.5 border-b border-hairline">
         <div className="flex items-center justify-between">
           <span className="text-[14px] font-bold tracking-[-0.015em]">Evaluators</span>
@@ -55,6 +55,7 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
         <button
           onClick={onNew}
           data-write
+          data-testid="evaluator-create-btn"
           className="w-full px-3 py-2 rounded-md text-[12.5px] font-semibold text-white border-0 inline-flex items-center justify-center gap-1.5 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
         >
           <PlusIcon size={12} /> New evaluator

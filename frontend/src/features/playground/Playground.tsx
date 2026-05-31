@@ -138,7 +138,7 @@ export default function Playground() {
   }
 
   return (
-    <div className="flex-1 flex gap-[12px] overflow-hidden p-[2px]">
+    <div data-testid="playground" className="flex-1 flex gap-[12px] overflow-hidden p-[2px]">
       {/* Center conversation */}
       <section className="flex-1 rounded-lg flex flex-col overflow-hidden min-w-0 bg-card border border-border shadow-[var(--shadow-card)]">
         <header className="flex items-center gap-[8px] px-[12px] py-[10px] flex-wrap border-b border-border">

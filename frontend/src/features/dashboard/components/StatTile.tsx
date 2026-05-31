@@ -15,6 +15,7 @@ interface StatTileProps {
   traceColor: string;
   traceFormat?: (v: number) => string;
   accent?: boolean;
+  testId?: string;
 }
 
 export function StatTile({
@@ -29,9 +30,11 @@ export function StatTile({
   traceColor,
   traceFormat,
   accent = false,
+  testId,
 }: StatTileProps) {
   return (
     <div
+      data-testid={testId}
       className={cn(
         'relative overflow-hidden rounded-xl px-3 pt-[10px] flex flex-col gap-[5px] min-h-[88px] bg-card shadow-[var(--shadow-card)]',
         accent && 'bg-[image:linear-gradient(155deg,var(--accent-subtle),transparent_55%)]',
@@ -55,7 +58,7 @@ export function StatTile({
       </div>
       <div className="relative">
         <div className="flex items-baseline gap-1">
-          <span className="text-[24px] font-extrabold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{value}</span>
+          <span data-testid={testId ? `${testId}-value` : undefined} className="text-[24px] font-extrabold tracking-[-0.03em] leading-[0.92] tabular-nums text-primary">{value}</span>
           {unit && <span className="text-[11.5px] font-semibold text-muted">{unit}</span>}
         </div>
         <div className="text-[9.5px] text-muted mt-[3px] font-mono">{sub}</div>

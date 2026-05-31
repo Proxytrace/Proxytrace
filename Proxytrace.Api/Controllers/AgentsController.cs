@@ -8,8 +8,11 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
 using Proxytrace.Domain.AgentVersion;
+using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
+using Proxytrace.Domain.Project;
+using Proxytrace.Domain.Prompt;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -26,25 +29,37 @@ public class AgentsController : ControllerBase
 
     private readonly IAgentRepository repository;
     private readonly IRepository<IModelEndpoint> endpoints;
+    private readonly IRepository<IProject> projects;
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IAgentVersionRepository agentVersionRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
     private readonly AgentDtoMapper agentDtoMapper;
+    private readonly IAgent.CreateNew createAgent;
+    private readonly IPromptTemplate.Create createPromptTemplate;
+    private readonly IModelParameters.Create createModelParameters;
 
     public AgentsController(
         IAgentRepository repository,
         IRepository<IModelEndpoint> endpoints,
+        IRepository<IProject> projects,
         IAgentCallRepository agentCallRepository,
         IAgentVersionRepository agentVersionRepository,
         IProposalBroadcaster proposalBroadcaster,
-        AgentDtoMapper agentDtoMapper)
+        AgentDtoMapper agentDtoMapper,
+        IAgent.CreateNew createAgent,
+        IPromptTemplate.Create createPromptTemplate,
+        IModelParameters.Create createModelParameters)
     {
         this.repository = repository;
         this.endpoints = endpoints;
+        this.projects = projects;
         this.agentCallRepository = agentCallRepository;
         this.agentVersionRepository = agentVersionRepository;
         this.proposalBroadcaster = proposalBroadcaster;
         this.agentDtoMapper = agentDtoMapper;
+        this.createAgent = createAgent;
+        this.createPromptTemplate = createPromptTemplate;
+        this.createModelParameters = createModelParameters;
     }
 
     [HttpGet]
@@ -84,6 +99,41 @@ public class AgentsController : ControllerBase
             return NotFound();
         var lastCallTimes = await agentCallRepository.GetLastCallTimesAsync(cancellationToken);
         return agentDtoMapper.ToDto(agent, lastCallTimes.TryGetValue(agent.Id, out var t) ? t : null);
+    }
+
+    /// <summary>
+    /// Test-only: seeds an agent directly, bypassing the ingestion pipeline so the e2e suite can
+    /// create agents without making real LLM calls. The endpoint is resolved by id; the project is
+    /// resolved by id when supplied, otherwise the first/only project is used. The agent is created
+    /// with an empty tool-set and <c>IsSystemAgent = false</c>.
+    /// </summary>
+    [HttpPost("seed")]
+    public async Task<ActionResult<AgentDto>> Seed(
+        [FromBody] SeedAgentRequest request,
+        CancellationToken cancellationToken)
+    {
+        IModelEndpoint? endpoint = await endpoints.FindAsync(request.EndpointId, cancellationToken);
+        if (endpoint is null)
+            return NotFound();
+
+        IProject? project = request.ProjectId.HasValue
+            ? await projects.FindAsync(request.ProjectId.Value, cancellationToken)
+            : await projects.FindFirstAsync(cancellationToken);
+        if (project is null)
+            return NotFound();
+
+        IAgent agent = await repository.AddAsync(
+            createAgent(
+                request.Name,
+                createPromptTemplate(request.Name, request.SystemMessage),
+                tools: [],
+                endpoint: endpoint,
+                project: project,
+                modelParameters: createModelParameters(),
+                isSystemAgent: false),
+            cancellationToken);
+
+        return Ok(agentDtoMapper.ToDto(agent, null));
     }
 
     [HttpGet("{id:guid}/proposals/stream")]

@@ -88,7 +88,7 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                   </div>
                 </details>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch h-[min(60vh,480px)]">
+                <div data-testid="test-bench-panes" className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch h-[min(60vh,480px)]">
                   <ResponsePane title="Expected response">
                     <pre className="w-full min-h-0 flex-1 m-0 px-3 py-2.5 rounded-lg bg-surface border border-border text-xs text-primary font-mono leading-relaxed overflow-auto whitespace-pre-wrap break-words">
                       {payload.expectedResponse || '—'}
@@ -126,13 +126,14 @@ export const EvaluatorTestBench = forwardRef<EvaluatorTestBenchHandle, Props>(
                       type="button"
                       disabled={runDisabled}
                       data-write
+                      data-testid="test-bench-run"
                       onClick={() => run()}
                       className="px-4 py-2 rounded-md text-[12.5px] font-semibold text-white shadow-[var(--shadow-btn)] inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-[image:var(--grad-accent)]"
                     >
                       <TestBenchPlayIcon /> {runLabel}
                     </button>
                   </div>
-                  <div className="min-w-0 flex items-center gap-2 px-3 rounded-lg border border-hairline bg-card-2 h-[40px]">
+                  <div data-testid="test-bench-result" className="min-w-0 flex items-center gap-2 px-3 rounded-lg border border-hairline bg-card-2 h-[40px]">
                     <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted shrink-0">
                       Result
                     </span>

@@ -39,12 +39,14 @@ export default function Invites() {
           className="rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           placeholder="Email"
           type="email"
+          data-testid="invite-email-input"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <select
           className="rounded border border-border bg-bg px-3 py-2 text-sm"
+          data-testid="invite-role-select"
           value={role}
           onChange={(e) => setRole(e.target.value as typeof role)}
         >
@@ -56,6 +58,7 @@ export default function Invites() {
           className="rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           type="submit"
           data-write
+          data-testid="invite-create-btn"
           disabled={create.isPending}
         >
           {create.isPending ? 'Creating…' : 'Create invite'}
@@ -78,7 +81,7 @@ export default function Invites() {
       {isLoading ? (
         <SkeletonList rows={4} height={36} gap={6} />
       ) : (
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" data-testid="invite-list">
           <thead className="text-muted">
             <tr className="border-b border-border">
               <th className="py-2 text-left">Email</th>
@@ -96,16 +99,17 @@ export default function Invites() {
                 ? 'Expired'
                 : 'Pending';
               return (
-                <tr key={i.id} className="border-b border-border/50">
+                <tr key={i.id} data-testid={`invite-row-${i.id}`} className="border-b border-border/50">
                   <td className="py-2">{i.email}</td>
                   <td className="py-2">{i.role}</td>
-                  <td className="py-2">{status}</td>
+                  <td className="py-2" data-testid={`invite-status-${i.id}`}>{status}</td>
                   <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
                   <td className="py-2 text-right">
                     {!i.consumedAt && (
                       <button
                         onClick={() => revoke.mutate(i.id)}
                         data-write
+                        data-testid={`invite-revoke-btn-${i.id}`}
                         className="text-xs text-danger hover:underline"
                       >
                         Revoke

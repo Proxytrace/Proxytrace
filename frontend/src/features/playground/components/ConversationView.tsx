@@ -72,7 +72,7 @@ export function ConversationView({
   if (messages.length === 0) {
     const trimmed = systemPrompt?.trim();
     return (
-      <div className="flex-1 overflow-y-auto px-[16px] py-[24px] flex items-center justify-center">
+      <div data-testid="conversation-view" className="flex-1 overflow-y-auto px-[16px] py-[24px] flex items-center justify-center">
         <div className="max-w-[560px] w-full flex flex-col gap-[16px] text-center">
           <div className="flex justify-center">
             <span
@@ -132,6 +132,7 @@ export function ConversationView({
   return (
     <div
       ref={scrollerRef}
+      data-testid="conversation-view"
       className="flex-1 overflow-y-auto px-[14px] py-[14px] flex flex-col gap-[10px]"
       onDragOver={e => {
         // Allow drop in the empty area at the bottom of the list.

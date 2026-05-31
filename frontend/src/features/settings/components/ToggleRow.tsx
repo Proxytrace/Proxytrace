@@ -5,11 +5,12 @@ interface ToggleRowProps {
   description: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  testId?: string;
 }
 
-export function ToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
+export function ToggleRow({ label, description, checked, onChange, testId }: ToggleRowProps) {
   return (
-    <label className="flex items-start justify-between gap-4 cursor-pointer">
+    <label className="flex items-start justify-between gap-4 cursor-pointer" data-testid={testId}>
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className="text-[13px] font-semibold text-primary">{label}</span>
         <span className="text-[12px] text-muted">{description}</span>

@@ -17,16 +17,19 @@ interface ProviderListProps {
 
 export function ProviderList({ providers, loading, selectedId, onSelect }: ProviderListProps) {
   return (
-    <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1">
+    <Card elevation="raised" padding="sm" className="overflow-y-auto flex flex-col gap-1" data-testid="provider-list">
       {loading && <SkeletonList rows={5} height={52} gap={6} />}
       {!loading && providers.length === 0 && (
-        <EmptyState title="No providers yet" description="Add a provider to route traffic through Proxytrace." />
+        <div data-testid="provider-empty-state">
+          <EmptyState title="No providers yet" description="Add a provider to route traffic through Proxytrace." />
+        </div>
       )}
       {providers.map(p => {
         const active = selectedId === p.id;
         return (
           <button
             key={p.id}
+            data-testid={`provider-row-${p.id}`}
             onClick={() => onSelect(p)}
             className={cn(
               'group relative w-full text-left px-3 py-2.5 rounded-md flex items-center gap-3 border-none cursor-pointer',

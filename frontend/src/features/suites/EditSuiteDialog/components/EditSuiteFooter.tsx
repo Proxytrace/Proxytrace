@@ -16,6 +16,7 @@ export function EditSuiteFooter({ dirtyCount, saving, onCancel, onSave }: Props)
           Cancel
         </button>
         <button
+          data-testid="edit-suite-save-btn"
           className="btn-primary"
           onClick={onSave}
           disabled={dirtyCount === 0 || saving}

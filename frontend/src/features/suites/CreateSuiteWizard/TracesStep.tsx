@@ -89,7 +89,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
   const truncated = data && data.total > TRACE_PAGE_SIZE;
 
   return (
-    <div className="flex flex-col gap-3 min-h-0">
+    <div data-testid="wizard-step-traces" className="flex flex-col gap-3 min-h-0">
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 rounded-[9px] bg-card-2 border border-border focus-within:border-[var(--accent-primary)] transition-colors">
@@ -171,6 +171,7 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
                   return (
                     <li
                       key={t.id}
+                      data-testid={`wizard-trace-option-${t.id}`}
                       onClick={() => { setFocusedId(t.id); onToggle(t.id); }}
                       className={cn(
                         'cursor-pointer transition-colors duration-100',

@@ -19,6 +19,7 @@ export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, av
   return (
     <button
       onClick={() => onSelect(e.id)}
+      data-testid={`evaluator-rail-item-${e.id}`}
       className={cn(
         'flex items-center gap-2.5 w-full text-left px-2.5 py-[9px] rounded-[9px] cursor-pointer transition-colors',
         isSelected ? categorySelectedRow[cat] : 'bg-transparent hover:bg-card-2',

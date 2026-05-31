@@ -179,6 +179,7 @@ export default function Suites() {
           {visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}
         </span>
         <button
+          data-testid="suite-create-btn"
           onClick={() => { setCreateOpen(true); resetCreate(); }}
           className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap ml-auto"
         >
@@ -196,7 +197,7 @@ export default function Suites() {
       )}
 
       {/* Suite grid */}
-      <div className="fade-up grid gap-[14px] [animation-delay:100ms] grid-cols-[repeat(auto-fill,minmax(380px,1fr))]">
+      <div data-testid="suite-list" className="fade-up grid gap-[14px] [animation-delay:100ms] grid-cols-[repeat(auto-fill,minmax(380px,1fr))]">
         {visibleSuites.map(suite => (
           <SuiteCard
             key={suite.id}
@@ -207,7 +208,7 @@ export default function Suites() {
           />
         ))}
         {!isLoading && visibleSuites.length === 0 && (
-          <div className="col-span-full">
+          <div className="col-span-full" data-testid="suite-empty-state">
             <EmptyState title="No test suites yet" description="Create one to start evaluating." />
           </div>
         )}

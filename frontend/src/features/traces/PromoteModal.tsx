@@ -57,6 +57,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
     >
       <div
         onClick={e => e.stopPropagation()}
+        data-testid="promote-modal"
         className="w-full max-w-[980px] h-[min(720px,90vh)] bg-card rounded-[20px] flex flex-col overflow-hidden shadow-[var(--shadow-float)]"
       >
         {/* Header */}
@@ -153,6 +154,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                   <button
                     key={s.id}
                     type="button"
+                    data-testid={`promote-suite-option-${s.id}`}
                     onClick={() => setSuiteId(s.id)}
                     className={cn(
                       'text-left rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 flex items-start gap-2',
@@ -204,6 +206,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             <Button variant="secondary" onClick={onClose}>Cancel</Button>
             <Button
               variant="primary"
+              data-testid="promote-submit-btn"
               onClick={() => addCase.mutate()}
               disabled={submitDisabled}
               loading={addCase.isPending}

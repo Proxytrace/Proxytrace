@@ -25,6 +25,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
 
   return (
     <div
+      data-testid={`suite-card-${suite.id}`}
       className="bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--suite-accent)_25%,transparent)]"
       style={{ ['--suite-accent' as string]: c }}
     >
@@ -67,10 +68,10 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
             >
               <PlayFilledIcon size={11} /> {hasRuns ? 'Run again' : 'Run now'}
             </button>
-            <button onClick={onEdit} data-write className="btn-icon" aria-label="Edit suite">
+            <button onClick={onEdit} data-write data-testid={`suite-edit-btn-${suite.id}`} className="btn-icon" aria-label="Edit suite">
               <EditIcon size={13} />
             </button>
-            <button onClick={onDelete} className="btn-icon btn-icon-danger" aria-label="Delete suite">
+            <button onClick={onDelete} data-testid={`suite-delete-btn-${suite.id}`} className="btn-icon btn-icon-danger" aria-label="Delete suite">
               <TrashIcon size={13} />
             </button>
           </div>
@@ -131,7 +132,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
             <div className="text-caption text-muted font-semibold tracking-[0.07em] uppercase mb-1">
               Test cases
             </div>
-            <div className="text-[22px] font-bold tracking-[-0.02em]">{suite.testCases.length}</div>
+            <div data-testid={`suite-case-count-${suite.id}`} className="text-[22px] font-bold tracking-[-0.02em]">{suite.testCases.length}</div>
             <div className="text-[11px] text-muted mt-[2px]">
               {suite.totalRuns} run{suite.totalRuns !== 1 ? 's' : ''} total
             </div>
@@ -158,6 +159,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
 
         {/* Evaluator badges + tags */}
         <div className="flex items-center justify-between flex-wrap gap-2">
+          <span data-testid={`suite-evaluator-count-${suite.id}`} className="sr-only">{suite.evaluators.length}</span>
           {suite.evaluators.length > 0 && (
             <div className="flex gap-[5px] flex-wrap">
               {suite.evaluators.map(e => (

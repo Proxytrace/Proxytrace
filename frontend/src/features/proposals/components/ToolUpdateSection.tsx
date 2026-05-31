@@ -37,7 +37,7 @@ export function ToolUpdateSection({ details }: Props) {
   const removed = details.currentTools.filter(t => !proposedNames.has(t.name));
 
   return (
-    <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle">
+    <div className="bg-[rgba(0,0,0,0.4)] rounded-md overflow-hidden border border-border-subtle" data-testid="tool-update-section">
       <div className="px-3.5 py-2 border-b border-hairline bg-card-2/30">
         <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">Tool definition diff</span>
       </div>

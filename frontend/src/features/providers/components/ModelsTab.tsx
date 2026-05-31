@@ -63,6 +63,7 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
           <div className="text-body-sm text-muted">Set pricing to compute trace costs.</div>
         </div>
         <Button
+          data-testid="model-add-btn"
           variant="secondary"
           size="sm"
           leftIcon={<PlusIcon size={13} />}
@@ -81,12 +82,12 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
             ) : availableError ? (
               <div className="flex flex-col gap-1.5">
                 <div className="text-body text-danger">Could not discover models from endpoint. Enter manually:</div>
-                <input value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
+                <input data-testid="model-name-input" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
               </div>
             ) : selectable.length === 0 ? (
               <div className="text-body text-muted py-2">All discovered models are already added.</div>
             ) : (
-              <select value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className={`${formInputCls} font-mono`}>
+              <select data-testid="model-name-select" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className={`${formInputCls} font-mono`}>
                 <option value="">Select a model…</option>
                 {selectable.map(name => <option key={name} value={name}>{name}</option>)}
               </select>
@@ -102,7 +103,7 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={submitNew}>
+            <Button data-testid="model-add-submit" data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={submitNew}>
               Add model
             </Button>
           </div>
@@ -118,7 +119,7 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
             <span>Model</span><span>Input / 1M €</span><span>Output / 1M €</span><span />
           </div>
           {models.map((m, i) => (
-            <div key={m.id} className={i < models.length - 1 ? 'border-b border-hairline' : ''}>
+            <div key={m.id} data-testid={`model-row-${m.id}`} className={i < models.length - 1 ? 'border-b border-hairline' : ''}>
               <div className={`${GRID} px-4 py-2.5 items-center`}>
                 <span className="font-mono text-body text-primary">{m.modelName}</span>
                 <span className="text-body text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>

@@ -40,7 +40,7 @@ export default function Providers() {
           <h1 className="text-h1 font-semibold m-0 mb-1 text-primary">Providers</h1>
           <p className="text-body-sm text-muted m-0">Configure upstream model providers and manage Proxytrace API keys.</p>
         </div>
-        <Button variant="primary" size="sm" leftIcon={<PlusIcon size={14} />} onClick={() => setShowNewProvider(true)}>
+        <Button data-testid="provider-create-btn" variant="primary" size="sm" leftIcon={<PlusIcon size={14} />} onClick={() => setShowNewProvider(true)}>
           Add provider
         </Button>
       </div>

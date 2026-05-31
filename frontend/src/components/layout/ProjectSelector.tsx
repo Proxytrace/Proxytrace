@@ -44,6 +44,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
     <div ref={ref} className="relative">
       <button
         type="button"
+        data-testid="project-switcher"
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-[10px] cursor-pointer rounded-lg p-1 hover:bg-white/[.04] transition-colors ${collapsed ? 'justify-center' : 'justify-start'}`}
       >
@@ -83,6 +84,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
                 <li key={p.id}>
                   <button
                     type="button"
+                    data-testid={`project-switcher-option-${p.id}`}
                     onClick={() => {
                       setCurrentProjectId(p.id);
                       setOpen(false);

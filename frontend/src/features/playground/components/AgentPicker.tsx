@@ -46,6 +46,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
         type="button"
         onClick={() => setOpen(o => !o)}
         disabled={isLoading || agents.length === 0}
+        data-testid="agent-picker"
         className={
           compact
             ? 'inline-flex items-center gap-[8px] cursor-pointer transition-colors rounded-[10px] pl-[6px] pr-[10px] py-[5px]'
@@ -100,6 +101,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
                 role="option"
                 aria-selected={active}
                 onClick={() => { onPick(a); setOpen(false); }}
+                data-testid={`agent-picker-option-${a.id}`}
                 className="w-full flex items-center gap-[10px] px-[10px] py-[7px] cursor-pointer text-left transition-colors hover:bg-card"
                 style={active ? { background: 'var(--accent-subtle)' } : undefined}
               >

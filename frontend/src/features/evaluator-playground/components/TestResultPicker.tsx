@@ -34,6 +34,7 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
+        data-testid="test-result-picker"
         className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-left text-[12.5px] text-primary cursor-pointer transition-colors hover:bg-card-2"
         aria-haspopup="listbox"
         aria-expanded={open}

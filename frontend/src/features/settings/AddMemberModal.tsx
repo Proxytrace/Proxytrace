@@ -52,7 +52,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
         placeholder="Search users by name…"
         className={`${formInputCls} mb-3`}
       />
-      <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]">
+      <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]" data-testid="add-member-modal">
         {isLoading ? (
           <div className="p-2"><SkeletonList rows={6} height={44} gap={4} /></div>
         ) : candidates.length === 0 ? (
@@ -65,6 +65,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
             <button
               key={u.id}
               type="button"
+              data-testid={`add-member-candidate-${u.id}`}
               onClick={() => onPick(u.id)}
               disabled={loading}
               className="flex items-center gap-3 w-full px-3 py-[10px] text-left text-[13px] bg-transparent border-none border-b border-hairline last:border-b-0 cursor-pointer hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"

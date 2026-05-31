@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,10 @@ using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Paging;
+using Proxytrace.Domain.Usage;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -30,6 +34,8 @@ public class AgentCallsController : ControllerBase
     private readonly ITraceBroadcaster traceBroadcaster;
     private readonly AgentCallDtoMapper agentCallDtoMapper;
     private readonly AgentDtoMapper agentDtoMapper;
+    private readonly IAgentCall.CreateNew createCall;
+    private readonly ICompletion.Create createCompletion;
 
     public AgentCallsController(
         IAgentCallRepository repository,
@@ -37,7 +43,9 @@ public class AgentCallsController : ControllerBase
         IDashboardStatistics statistics,
         ITraceBroadcaster traceBroadcaster,
         AgentCallDtoMapper agentCallDtoMapper,
-        AgentDtoMapper agentDtoMapper)
+        AgentDtoMapper agentDtoMapper,
+        IAgentCall.CreateNew createCall,
+        ICompletion.Create createCompletion)
     {
         this.repository = repository;
         this.agentRepository = agentRepository;
@@ -45,6 +53,8 @@ public class AgentCallsController : ControllerBase
         this.traceBroadcaster = traceBroadcaster;
         this.agentCallDtoMapper = agentCallDtoMapper;
         this.agentDtoMapper = agentDtoMapper;
+        this.createCall = createCall;
+        this.createCompletion = createCompletion;
     }
 
     [HttpGet]
@@ -106,6 +116,54 @@ public class AgentCallsController : ControllerBase
         if (call is null)
             return NotFound();
         return agentCallDtoMapper.ToDto(call);
+    }
+
+    /// <summary>
+    /// Test-only: seeds an agent call (trace) directly, bypassing the ingestion pipeline so the
+    /// e2e suite can create traces without making real LLM calls. The call is recorded against the
+    /// resolved agent's current version and endpoint, with an HTTP 200 status and a "stop" finish
+    /// reason.
+    /// </summary>
+    [HttpPost("seed")]
+    public async Task<ActionResult<AgentCallDto>> Seed(
+        [FromBody] SeedAgentCallRequest request,
+        CancellationToken cancellationToken)
+    {
+        IAgent? agent = await agentRepository.FindAsync(request.AgentId, cancellationToken);
+        if (agent is null)
+            return NotFound();
+
+        var conversation = Conversation.Create();
+        if (!string.IsNullOrEmpty(request.SystemContent))
+            conversation.AddSystemMessage(new SystemMessage([Content.FromText(request.SystemContent)]));
+        conversation.Add(new UserMessage([Content.FromText(request.UserContent)]));
+
+        var assistantMessage = new AssistantMessage([Content.FromText(request.AssistantContent)], []);
+        var usage = new TokenUsage((ulong)request.InputTokens, (ulong)request.OutputTokens);
+        ICompletion completion = createCompletion(
+            assistantMessage,
+            usage,
+            TimeSpan.FromMilliseconds(request.DurationMs));
+
+        IAgentCall call = await repository.AddAsync(
+            createCall(
+                agent: agent,
+                version: agent.CurrentVersion,
+                endpoint: agent.Endpoint,
+                request: conversation,
+                response: completion,
+                httpStatus: HttpStatusCode.OK,
+                finishReason: "stop",
+                errorMessage: null,
+                modelParameters: agent.ModelParameters,
+                conversationId: request.ConversationId),
+            cancellationToken);
+
+        // Publish to the trace SSE broadcaster exactly as the ingestion pipeline does, so
+        // dashboard/traces SSE clients receive the seeded trace.
+        traceBroadcaster.Publish(TraceCreatedEvent.Create(call));
+
+        return Ok(agentCallDtoMapper.ToDto(call));
     }
 
     [HttpGet("stream")]

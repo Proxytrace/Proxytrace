@@ -23,7 +23,7 @@ export function LatencySection({ latencyHist, latencyStats }: LatencySectionProp
     : ['—', '—', '—', '—'];
 
   return (
-    <section className="rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]">
+    <section data-testid="latency-section" className="rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]">
       <header className="px-3 pt-2.5 pb-1.5">
         <h3 className="text-h2 font-semibold">Latency distribution</h3>
         <p className="text-body-sm text-muted mt-0.5 font-mono">

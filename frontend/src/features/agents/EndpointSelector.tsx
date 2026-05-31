@@ -44,6 +44,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
       <button
         onClick={() => setOpen(v => !v)}
         data-write
+        data-testid="agent-endpoint"
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium transition-[background-color] duration-100 cursor-pointer"
         style={{
           background: `color-mix(in srgb, ${c} 12%, transparent)`,
@@ -69,6 +70,7 @@ export function EndpointSelector({ agent }: { agent: AgentDto }) {
                 key={ep.id}
                 onClick={() => !isCurrent && mutation.mutate(ep.id)}
                 disabled={mutation.isPending}
+                data-testid={`agent-endpoint-option-${ep.id}`}
                 className={`w-full text-left px-4 py-2.5 flex flex-col gap-0.5 transition-[background-color] duration-100 border-0 border-b border-hairline last:border-b-0 ${
                   !isCurrent ? 'hover:bg-[var(--bg-wash-hover)] cursor-pointer' : 'cursor-default'
                 }`}

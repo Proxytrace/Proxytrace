@@ -81,7 +81,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
         </button>
       )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
+      <div data-testid="agent-list" className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
         {isLoading && (
           <SkeletonList rows={6} height={64} gap={6} />
         )}
@@ -110,6 +110,7 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
   return (
     <button
       onClick={onClick}
+      data-testid={`agent-card-${agent.id}`}
       className={`text-left rounded-lg relative overflow-hidden cursor-pointer transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] border-0 ${
         selected ? '' : 'bg-card hover:bg-card-2 shadow-[var(--shadow-card)]'
       }`}

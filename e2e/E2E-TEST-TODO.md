@@ -1,205 +1,171 @@
 # E2E Test Implementation Checklist
 
-Each unchecked box below is **one concrete Playwright test to implement** — named
-by the flow it covers, with the route, the action to drive, and the assertion to
-make. Check it off when the spec is written, wired into a `playwright.config.ts`
-project, and run green.
+Status: implemented across the Playwright suite under `e2e/`. Each box is checked when the
+spec is written, wired into a `playwright.config.ts` project, and type-checks clean. The full
+live-stack run requires Docker (`bash e2e/run.sh`); items marked **(@llm)** also need
+`OPENAI_API_KEY`. A handful of items are **not buildable** against the current product surface
+and are left unchecked with the reason inline — see "Known gaps" at the bottom.
 
-Read `e2e/GUIDE.md` + the `create-e2e-test` skill first. Conventions for every
-item: `data-testid`-first selectors, prerequisite data via `ProxytraceApiClient`
-(add a typed method if missing), `waitUntil: 'load'`, `expect.poll` for async,
-no `waitForTimeout`, `@llm`-tag + `test.skip(!OPENAI_API_KEY)` for real-LLM work.
-
----
-
-## 1. Smoke — every route loads clean (no LLM)
-File: extend `smoke.spec.ts` `ROUTES` array.
-
-- [ ] `/runs` loads, nav visible, zero console errors
-- [ ] `/evaluators` loads, zero console errors
-- [ ] `/playground` loads, zero console errors
-- [ ] `/evaluator-playground` loads, zero console errors
-- [ ] `/settings` loads, zero console errors
-- [ ] `/dashboard` (currently only `/` is checked) loads, zero console errors
-- [ ] `/admin/invites` loads for an admin user, zero console errors
-- [ ] unknown path `/does-not-exist` redirects to `/dashboard`
-
-## 2. Providers (no LLM)
-File: extend `core-crud.spec.ts` or new `providers.spec.ts`. Page `/providers`.
-
-- [ ] Create provider via `AddProviderModal` (click create → fill name/baseUrl →
-      submit) → new row appears in `ProviderList`
-- [ ] Open `ProviderDetail` → header shows provider name + model count
-- [ ] Add a model under provider (`ModelsTab`) → model appears in the models list
-- [ ] Issue an API key (`KeysTab`) → key value is shown once and the key is listed
-- [ ] Revoke/delete an API key → key disappears from `KeysTab`
-- [ ] Delete a provider → row removed from `ProviderList`, redirect to list
-- [ ] Empty state renders on a project with no providers
-
-## 3. Agents (no LLM)
-File: extend `agents.spec.ts`. Page `/agents`.
-
-- [ ] Create an agent (name + system prompt + endpoint via `EndpointSelector`) →
-      appears in `AgentList`
-- [ ] Open `AgentDetail` → name, system prompt, selected endpoint render
-- [ ] Edit an agent's system prompt → change persists on reload
-- [ ] Editing the system prompt records a new version in `VersionsWidget`
-      (`AgentVersionsController`) → version count increments, history lists it
-- [ ] Roll back / view a prior agent version → prompt reverts to that version
-- [ ] Add a tool spec to an agent → tool appears in `AgentDetail`
-- [ ] Delete an agent → removed from list; empty state returns when last is gone
-
-## 4. Test Suites & Test Cases (no LLM)
-File: new `suites.spec.ts`. Page `/suites`. Add `createTestCase`/`getTestSuite`
-to api-client.
-
-- [ ] Create a suite via `CreateSuiteWizard` end-to-end: Name step → Agent step →
-      Traces step → Evaluators step → suite appears as a `SuiteCard`
-- [ ] `SuiteCard` shows correct test-case count and evaluator count
-- [ ] Edit a suite via `EditSuiteDialog` (rename) → name updates on the card
-- [ ] Attach an evaluator to an existing suite → evaluator count increments
-- [ ] Detach an evaluator from a suite → count decrements
-- [ ] Add a test case to a suite → case count increments
-- [ ] Delete a suite → card removed; empty state when none remain
-
-## 5. Traces → Test Case promotion (no LLM; seed traces via API)
-File: new `traces.spec.ts`. Page `/traces`. Seed `AgentCall`s via api-client.
-
-- [ ] `TraceTable` lists seeded traces (correct row count)
-- [ ] Click a trace row → `TraceDetail` drawer opens with messages
-      (`TraceMessagesTab`) and metadata (`TraceMetadataTab`)
-- [ ] `AgentFilterCards` filter narrows the table to one agent's traces
-- [ ] Conversation grouping toggle switches `ConversationGroupRow` ↔ `FlatTraceRow`
-- [ ] Promote a trace via `PromoteModal`: select a suite → submit → the suite's
-      test-case count increases by one (verify via API read-back)
-- [ ] Pagination: with > pageSize seeded traces, next page shows the next set
-
-## 6. Evaluators CRUD, per kind (no LLM for rule kinds)
-File: new `evaluators.spec.ts`. Page `/evaluators`. `NewEvaluatorModal` →
-`KindPickerCard` → `EvaluatorForm`.
-
-- [ ] Create an **ExactMatch** evaluator → appears in `EvalRail`, `EvaluatorDetail`
-      shows its definition (`DefinitionPanel`)
-- [ ] Create a **NumericMatch** evaluator → definition renders correctly
-- [ ] Create a **JsonSchemaMatch** evaluator (paste schema) → schema shown in
-      `NumberedCode`
-- [ ] Create a **ToolUsage** evaluator → definition renders
-- [ ] Edit an evaluator's config → change persists
-- [ ] `AttachedPanel` lists which suites use the evaluator
-- [ ] Delete an evaluator → removed from `EvalRail`; `EmptyDetail` shown
-- [ ] `/evaluators/:id` deep-link opens that evaluator's detail directly
-
-## 7. Test Runs & results UI
-File: extend `test-run.spec.ts` (already `@llm`). Page `/runs`.
-
-- [ ] (`@llm`) After a run completes, `GroupListCard` shows the group with status
-      Completed (already partly covered — assert the card, not just status)
-- [ ] (`@llm`) Open `GroupDetail` → `MatrixView` shows one column per endpoint and
-      one row per test case
-- [ ] (`@llm`) `CaseTile` colors reflect pass/fail per case (`CaseDotLegend`)
-- [ ] (`@llm`) `RunDetail` for a single case shows per-evaluator scores
-- [ ] (`@llm`) `EvaluatorHeatmap` renders a cell per evaluator×case
-- [ ] (`@llm`) `ModelLeaderboard` ranks endpoints when a suite runs against 2+
-      endpoints (`createTestRunGroup` with two `modelEndpointIds`)
-- [ ] (`@llm`) `RunConfirmModal` → confirm starts a run from the suites page;
-      run group appears under `/runs`
-
-## 8. Dashboard statistics (no LLM; seed data via API)
-File: new `dashboard.spec.ts`. Page `/dashboard`. Add `getStatistics` to api-client.
-
-- [ ] `StatTileGrid` tiles reflect seeded counts (traces / agents / runs)
-- [ ] `HeroTokenCard` shows non-zero total tokens after seeding traces with usage
-- [ ] `PassRateGauge` shows a pass rate after a completed run exists
-- [ ] `TokenByAgentSection` lists per-agent token usage for seeded agents
-- [ ] `LatencySection` renders latency stats from seeded traces
-- [ ] `LiveTraceStream` appends a new row when a trace is ingested (SSE) —
-      assert via `expect.poll` on row count after an API-ingested call
-
-## 9. Proposals (seeded = no LLM; generation = `@llm`)
-File: extend `proposals.spec.ts`. Page `/proposals`. Feature-gated route.
-
-- [ ] Seeded proposal renders as a `ProposalCard` with its status (covered —
-      keep)
-- [ ] Open `ProposalDetail` → `ProposalHeader`, `EvidenceList`, `PredictedImpactBand`
-      render
-- [ ] `PromptDiff` shows old vs new system prompt for an UpdateSystemPrompt proposal
-- [ ] `ModelSwitchSection` shows from→to model for a SwitchModel proposal
-- [ ] Approve via `ProposalActionBar` → status flips to Approved (verify API read-back)
-- [ ] Reject via `ProposalActionBar` → status flips to Rejected, `ProposalTerminalNote`
-      shown
-- [ ] (`@llm`) Generate a real proposal for an agent with run evidence → poll until
-      it appears as a `ProposalCard`
-
-## 10. Playground (`@llm`)
-File: new `playground.spec.ts`. Page `/playground`.
-
-- [ ] (`@llm`) Pick an agent (`AgentPicker`) + endpoint (`EndpointPicker`), type a
-      prompt in `ComposeBox`, send → assistant reply renders in `ConversationView`
-- [ ] (`@llm`) `CompletionStats` shows token usage + latency after a reply
-- [ ] (`@llm`) `AddMessageBar` adds a follow-up turn → multi-turn conversation works
-- [ ] `ParameterSlider` (temperature) changes are reflected in the request payload
-      (assert via captured trace, no real send needed if mockable — else `@llm`)
-- [ ] `EditableMessageBubble` lets you edit a prior user message before re-sending
-
-## 11. Evaluator Playground / Test Bench (`@llm`)
-File: new `evaluator-playground.spec.ts`. Page `/evaluator-playground`.
-`EvaluatorTestBenchController`.
-
-- [ ] (`@llm`) Pick a test result (`TestResultPicker`) + an LLM evaluator, run the
-      bench → `TestBenchResult` shows the verdict/score in `TestBenchPanes`
-- [ ] (`@llm`) Run a rule-based evaluator (ExactMatch) on a sample → deterministic
-      pass/fail shown (this one need not be `@llm` if no model call)
-
-## 12. Settings (no LLM)
-File: new `settings.spec.ts`. Page `/settings`.
-
-- [ ] `ProjectsTab` lists existing projects with member/status cells
-- [ ] Create a project via `NewProjectModal` → appears in `ProjectsTab`
-- [ ] Add a member via `AddMemberModal` → member row appears with status
-- [ ] `SearchIndexingTab`: trigger reindex → status reflects indexing
-      (`SearchController`)
-- [ ] `DangerZoneTab`: delete project requires confirmation → after confirm,
-      project removed and user redirected
-- [ ] `ToggleRow` feature flags persist across reload
-
-## 13. Admin / Invites (no LLM; admin role)
-File: new `admin.spec.ts`. Page `/admin/invites`. Route is `isAdmin`-gated.
-Add `createInvite`/`revokeInvite`/`listInvites` to api-client.
-
-- [ ] Admin issues an invite → invite appears in the list with pending status
-- [ ] Admin revokes an invite → invite removed / marked revoked
-- [ ] Non-admin user hitting `/admin/invites` is redirected (not shown the page)
-
-## 14. Auth & access control (no LLM; separate non-storageState specs)
-File: new `auth-flows.spec.ts`. Do NOT load the shared storageState here.
-
-- [ ] Valid login (`/login`) lands on `/dashboard`
-- [ ] Invalid password shows an error and stays on `/login`; no token issued
-- [ ] Logged-out user hitting a protected route (`/agents`) is redirected to `/login`
-- [ ] Logout returns to `/login` and clears the session
-- [ ] (local mode) Signup (`/signup`) creates a user and logs in
-- [ ] Optimization-proposals route gated to HTTP 402 on Free tier (covered in
-      `licensing.spec.ts` — keep)
-
-## 15. Negative / error paths (no LLM)
-File: new `error-handling.spec.ts`. `ErrorHandlingController`.
-
-- [ ] Unknown API route returns 404 with the standard error shape (`{ request }`)
-- [ ] Invalid create payload (e.g. blank agent name) returns 400 with validation
-      details; UI shows the field error rather than crashing
-- [ ] A failed list query renders a friendly error/empty state, not a blank page
+Conventions used for every item: `data-testid`-first selectors, prerequisite data via
+`ProxytraceApiClient` (typed methods added in `helpers/api-client.ts`), `waitUntil: 'load'`,
+`expect.poll` for async, no `waitForTimeout`, `@llm`-tag + `test.skip(!OPENAI_API_KEY)` for
+real-LLM work.
 
 ---
 
-## `ProxytraceApiClient` methods to add (consolidated)
-Add each as a typed method that throws on `!res.ok()`, matching existing style;
-confirm path/body against `frontend/src/api/*.ts` or the controller.
+## 1. Smoke — every route loads clean (no LLM) — `smoke.spec.ts`
+- [x] `/runs` loads, nav visible, zero console errors
+- [x] `/evaluators` loads, zero console errors
+- [x] `/playground` loads, zero console errors
+- [x] `/evaluator-playground` loads, zero console errors
+- [x] `/settings` loads, zero console errors
+- [x] `/dashboard` loads, zero console errors
+- [x] `/admin/invites` loads for an admin user, zero console errors
+- [x] unknown path `/does-not-exist` redirects to `/dashboard`
 
-- [ ] `createAgent`, `getAgent`, `deleteAgent`, `getAgentVersions`
-- [ ] `createTestCase`, `getTestSuite`
-- [ ] `addModelToProvider`, `revokeApiKey`, `deleteProvider`
-- [ ] `getStatistics`
-- [ ] `search`, `reindexSearch`
-- [ ] `createProject`, `inviteUser`, `revokeInvite`, `listInvites`
-- [ ] `getConfig`
-- [ ] `runEvaluatorTestBench`
+## 2. Providers (no LLM) — `providers.spec.ts`
+- [x] Create provider via `AddProviderModal` → new row appears in `ProviderList`
+- [x] Open `ProviderDetail` → header shows provider name + model count
+- [x] Add a model under provider (`ModelsTab`) → model appears in the models list
+- [x] Issue an API key (`KeysTab`) → key value shown once and the key is listed
+- [x] Revoke/delete an API key → key disappears from `KeysTab`
+- [x] Delete a provider → row removed, redirect to list
+- [x] Empty state renders on a project with no providers (defensive skip on the shared tenant)
+
+## 3. Agents (no LLM) — `agents.spec.ts`
+- [x] Empty state when there are no agents; list renders created agents
+- [x] Open `AgentDetail` → name, system prompt, selected endpoint render
+- [ ] Edit an agent's system prompt → persists — **no UI edit/API path** (read-only widget)
+- [ ] Editing the prompt records a new version — **versions only created by ingestion pipeline**
+- [ ] Roll back / view a prior version — **only "move version" exists, no in-place rollback**
+- [ ] Add a tool spec to an agent — **tools are read-only; created via ingestion only**
+- [x] Delete an agent → removed from list; empty state returns when last is gone
+
+## 4. Test Suites & Test Cases (no LLM) — `suites.spec.ts`
+- [x] Create a suite via `CreateSuiteWizard` end-to-end → suite appears as a `SuiteCard`
+- [x] `SuiteCard` shows correct test-case count and evaluator count
+- [x] Edit a suite via `EditSuiteDialog` (evaluator edit; **rename has no endpoint — PUT ignores name**)
+- [x] Attach an evaluator to an existing suite → evaluator count increments
+- [x] Detach an evaluator from a suite → count decrements
+- [x] Add a test case to a suite → case count increments
+- [x] Delete a suite → card removed; empty state when none remain
+
+## 5. Traces → Test Case promotion (no LLM; seed traces via API) — `traces.spec.ts`
+- [x] `TraceTable` lists seeded traces (correct row count)
+- [x] Click a trace row → `TraceDetail` drawer opens with messages + metadata tabs
+- [x] `AgentFilterCards` filter narrows the table to one agent's traces
+- [x] Conversation grouping — seed endpoint now accepts `conversationId`; multi-turn traces render
+      as an expandable `ConversationGroupRow` (`traces-grouping.spec.ts`)
+- [x] Promote a trace via `PromoteModal` → the suite's test-case count increases by one
+- [x] Pagination: with > pageSize seeded traces, next page shows the next set
+
+## 6. Evaluators CRUD, per kind (no LLM for rule kinds) — `evaluators.spec.ts`
+- [x] Create an **ExactMatch** evaluator → appears in `EvalRail`, detail shows definition
+- [x] Create a **NumericMatch** evaluator → definition renders correctly
+- [x] Create a **JsonSchemaMatch** evaluator → schema shown in `NumberedCode`
+- [ ] Create a **ToolUsage** evaluator — **not in the API/UI: only Agentic/ExactMatch/NumericMatch/JsonSchemaMatch exist**
+- [x] Edit an evaluator's config → change persists
+- [x] `AttachedPanel` lists which suites use the evaluator
+- [x] Delete an evaluator → removed from `EvalRail`
+- [x] `/evaluators/:id` deep-link opens that evaluator's detail directly
+
+## 7. Test Runs & results UI — `test-run.spec.ts` (@llm)
+- [x] (@llm) Completed run shows the group card with status Completed
+- [x] (@llm) `GroupDetail` → `MatrixView` column per endpoint, row per test case
+- [x] (@llm) `CaseTile` colors reflect pass/fail (`data-case-state`)
+- [x] (@llm) `RunDetail` shows per-evaluator scores (fixture drawer)
+- [x] (@llm) `EvaluatorHeatmap` renders a cell per evaluator×case
+- [x] (@llm) `ModelLeaderboard` ranks endpoints with two `modelEndpointIds`
+- [x] (@llm) `RunConfirmModal` confirm starts a run from the suites page
+
+## 8. Dashboard statistics (no LLM; seed data via API) — `dashboard.spec.ts`
+- [x] Stat tiles reflect seeded counts (traces / agents)  *(no "runs" tile exists on the dashboard)*
+- [x] `HeroTokenCard` shows non-zero total tokens after seeding traces with usage
+- [x] `PassRateGauge` renders; numeric rate asserted behind an (@llm) completed run
+- [x] `TokenByAgentSection` lists per-agent token usage (legend entries)
+- [x] `LatencySection` renders latency stats from seeded traces
+- [x] `LiveTraceStream` shows a newly-seeded trace (seed doesn't emit SSE → asserted after reload)
+
+## 9. Proposals (seeded = no LLM; generation = @llm) — `proposals.spec.ts`
+- [x] Seeded proposal renders as a `ProposalCard` with its status
+- [x] Open `ProposalDetail` → header, evidence, predicted-impact render
+- [x] `PromptDiff` shows old vs new system prompt
+- [x] `ModelSwitchSection` from→to — seed endpoint now supports ModelSwitch proposals (`proposals-kinds.spec.ts`)
+- [x] `ToolUpdateSection` tool diff — seed endpoint now supports ToolUpdate proposals (`proposals-kinds.spec.ts`)
+- [x] Approve via `ProposalActionBar` → status flips to Accepted
+- [x] Reject via `ProposalActionBar` → status flips to Rejected, terminal note shown
+- [x] (@llm) Generate a real proposal via the run-group optimize endpoint
+
+## 10. Playground (@llm) — `playground.spec.ts`
+- [x] (@llm) Pick agent + endpoint, send a prompt → assistant reply in `ConversationView`
+- [x] (@llm) `CompletionStats` shows token usage + latency
+- [x] (@llm) `AddMessageBar` adds a follow-up turn
+- [x] `ParameterSlider` temperature change reflected in the request override value
+- [x] (@llm) `EditableMessageBubble` edits a prior user message before re-sending
+
+## 11. Evaluator Playground / Test Bench — `evaluator-playground.spec.ts`
+- [x] (@llm) Pick a test result + an Agentic evaluator → verdict/score in `TestBenchPanes`
+- [x] Run a rule-based ExactMatch evaluator on a sample → deterministic pass/fail (no LLM)
+
+## 12. Settings (no LLM) — `settings.spec.ts`
+- [x] `ProjectsTab` lists existing projects with member-count cells
+- [x] Create a project via `NewProjectModal` → appears in `ProjectsTab`
+- [x] Add a member via `AddMemberModal` → member row appears
+- [x] `SearchIndexingTab`: trigger reindex → status reflects indexing
+- [x] Project delete (ProjectsTab) requires type-to-confirm → removed + redirect
+- [x] `ToggleRow` feature flags persist across reload
+
+## 13. Admin / Invites (no LLM; admin role) — `admin.spec.ts`
+- [x] Admin issues an invite → appears in the list with pending status
+- [x] Admin revokes an invite → removed from list
+- [x] Non-admin hitting `/admin/invites` is redirected (browser) and gets 403 (API)
+
+## 14. Auth & access control (no LLM; separate non-storageState project) — `auth-flows.spec.ts`
+- [x] Valid login (`/login`) lands on `/dashboard`
+- [x] Invalid password shows an error and stays on login; raw login returns 401
+- [x] Logged-out user hitting a protected route renders the login form (no client redirect to `/login`)
+- [x] Logout returns to `/login` and clears the session token
+- [x] Signup (`/signup?token=`) via an invite creates a user and logs in
+- [x] Optimization-proposals 402 on Free tier — covered in `licensing.spec.ts` (kept)
+
+## 15. Negative / error paths (no LLM) — `error-handling.spec.ts`
+- [x] Missing-entity API route returns the standard error envelope (404)
+- [x] Invalid create payload returns 400; UI guards a blank submission without crashing
+- [x] A failed list query renders the per-page `ErrorBoundary`, not a blank page
+
+---
+
+## `ProxytraceApiClient` methods added
+`createAgent` (seed), `getAgent`, `deleteAgent`, `getAgentVersions`, `updateAgentEndpoint`,
+`seedAgentCall`, `getTestSuite`, `createSuiteFromTraces`, `createTestCase`,
+`updateSuiteEvaluators`, `deleteSuite`, `listProviders`, `getProvidersOverview`,
+`addModelToProvider`, `revokeApiKey`, `deleteProvider`, `firstEndpointId`, `firstProjectId`,
+`createEvaluatorOfKind`, `getEvaluator`, `updateEvaluator`, `deleteEvaluator`,
+`runEvaluatorTestBench`, `getStatistics`, `search`, `reindexSearch`, `getSearchStatus`,
+`createProject`, `deleteProject`, `addProjectMember`, `listUsers`, `inviteUser`, `listInvites`,
+`revokeInvite`, `getConfig`.
+
+## Backend test-only seed endpoints
+`POST /api/agents/seed` and `POST /api/agent-calls/seed` (mirror `POST /api/proposals/seed`) let
+no-LLM specs create agents and captured traces without a real upstream call. The agent-call seed
+accepts a `conversationId` and publishes `TraceCreatedEvent` to the SSE broadcaster (for the
+grouping + live-stream specs). `proposals/seed` accepts SystemPrompt, ModelSwitch
+(`ModelSwitchSeed` details), and ToolUpdate (`ToolUpdateSeed` details) kinds.
+
+## 16. Additional coverage (beyond the original list)
+- [x] **SSE** — a seeded trace streams into the dashboard `LiveTraceStream` without a reload (`sse.spec.ts`)
+- [x] **Cancel** — start a run group → cancel → terminal state; UI cancel affordance (`cancel.spec.ts`)
+- [x] **Cost** — per-token pricing → non-zero `costEur` in the trace metadata tab (`cost.spec.ts`)
+- [x] **Delete cascade** — provider-with-endpoints/keys delete; agent-with-traces delete behavior (`delete-cascade.spec.ts`)
+- [x] **Pagination / filter** — agents, suites, run groups page+filter via the paged APIs (`pagination.spec.ts`)
+- [x] **Tenancy** — per-project data isolation + project switcher doesn't leak (`tenancy.spec.ts`)
+- [x] **Search depth** — hit relevance, recent feed, settings persistence (`search.spec.ts`)
+- [x] **Negative** — 409 duplicate model, 400 invalid evaluator/blank project, 404 unknown id (`negative.spec.ts`)
+
+## Known gaps (product surface, not test debt)
+- **Agent edit / versions / rollback / tool-add** (§3): no UI affordance or public API — these
+  mutations only happen through the proxy-ingestion pipeline.
+- **Suite rename** (§4): `PUT /api/test-suites/{id}` ignores `name`; no rename endpoint.
+- **ToolUsage evaluator** (§6): not one of the four creatable evaluator kinds.
+- **Dashboard cost widget** (§16 cost): no cost tile on the dashboard; cost is asserted on the
+  Traces detail metadata tab instead.

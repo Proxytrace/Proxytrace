@@ -13,7 +13,7 @@ export function AgentStep({ agents, value, onChange }: Props) {
     return <EmptyState title="No agents available" description="Create an agent before building a test suite." />;
   }
   return (
-    <div className="max-w-[640px] mx-auto flex flex-col gap-3">
+    <div data-testid="wizard-step-agent" className="max-w-[640px] mx-auto flex flex-col gap-3">
       <p className="text-[12.5px] text-muted m-0">Which agent should this suite test?</p>
       <div className="grid grid-cols-2 gap-2">
         {agents.map(a => {
@@ -23,6 +23,7 @@ export function AgentStep({ agents, value, onChange }: Props) {
             <button
               key={a.id}
               type="button"
+              data-testid={`wizard-agent-option-${a.id}`}
               onClick={() => onChange(a.id)}
               className="text-left rounded-[10px] cursor-pointer transition-colors duration-150"
               style={{

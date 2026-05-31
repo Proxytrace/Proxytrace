@@ -31,13 +31,14 @@ export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewP
         />
       }
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4" data-testid="new-project-modal">
         <FormField label="Name">
           <input
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Production analytics"
+            data-testid="project-name-input"
             className={formInputCls}
           />
         </FormField>

@@ -22,6 +22,7 @@ export function AgentFilterCards({ agents, agentBreakdown, agentFilter, p95, onF
         return (
           <button
             key={a.id}
+            data-testid={`agent-filter-card-${a.id}`}
             onClick={() => onFilterChange(isActive ? '' : a.id)}
             className="text-left bg-card rounded-xl px-[14px] py-3 relative overflow-hidden transition-[box-shadow] duration-[150ms] border-none cursor-pointer"
             style={{

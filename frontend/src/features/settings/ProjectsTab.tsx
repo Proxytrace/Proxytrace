@@ -45,7 +45,7 @@ export function ProjectsTab() {
   const finishEdit = () => { setEditName(false); setEditEndpoint(false); };
 
   return (
-    <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0">
+    <div className="grid grid-cols-[320px_1fr] gap-3 flex-1 min-h-0" data-testid="projects-tab">
       {/* List */}
       <aside className="flex flex-col bg-card border border-hairline rounded-[14px] overflow-hidden">
         <div className="p-3 border-b border-hairline shrink-0 flex flex-col gap-2">
@@ -58,6 +58,7 @@ export function ProjectsTab() {
           <button
             onClick={() => setShowNew(true)}
             data-write
+            data-testid="project-create-btn"
             className="flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
           >
             <PlusIcon size={14} />
@@ -76,13 +77,14 @@ export function ProjectsTab() {
                 <button
                   key={p.id}
                   type="button"
+                  data-testid={`project-row-${p.id}`}
                   onClick={() => setSelectedId(p.id)}
                   className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
                     isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
                   }`}
                 >
                   <span className="text-[13px] font-semibold text-primary">{p.name}</span>
-                  <span className="text-[11px] text-muted">
+                  <span className="text-[11px] text-muted" data-testid={`project-row-members-${p.id}`}>
                     {p.members.length} {p.members.length === 1 ? 'member' : 'members'}
                   </span>
                 </button>
@@ -144,6 +146,7 @@ export function ProjectsTab() {
               <button
                 onClick={() => setConfirmDelete(true)}
                 data-write
+                data-testid="project-delete-btn"
                 className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle"
               >
                 <TrashIcon size={14} />
@@ -210,6 +213,7 @@ export function ProjectsTab() {
                 <button
                   onClick={() => setShowAddMember(true)}
                   data-write
+                  data-testid="add-member-btn"
                   className="flex items-center gap-1.5 px-3 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer bg-card-2 border border-hairline text-primary hover:bg-[color-mix(in_srgb,_var(--accent-primary)_8%,_transparent)]"
                 >
                   <PlusIcon size={12} />
@@ -226,6 +230,7 @@ export function ProjectsTab() {
                   {selected.members.map(m => (
                     <div
                       key={m.id}
+                      data-testid={`member-row-${m.id}`}
                       className="flex items-center gap-3 px-3 py-[10px] border-b border-hairline last:border-b-0"
                     >
                       <Avatar

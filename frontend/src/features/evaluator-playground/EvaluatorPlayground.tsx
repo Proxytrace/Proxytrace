@@ -35,7 +35,7 @@ export default function EvaluatorPlayground() {
   }
 
   return (
-    <div className="flex flex-col gap-4 flex-1 min-h-0">
+    <div data-testid="evaluator-playground" className="flex flex-col gap-4 flex-1 min-h-0">
       <PageHeader
         evaluator={selected}
         evaluators={sorted}
@@ -96,6 +96,7 @@ function PageHeader({ evaluator, evaluators, onSelect, loading }: {
         </label>
         <select
           id="evaluator-playground-select"
+          data-testid="evaluator-playground-select"
           value={evaluator?.id ?? ''}
           onChange={e => onSelect(e.target.value)}
           disabled={loading || evaluators.length === 0}

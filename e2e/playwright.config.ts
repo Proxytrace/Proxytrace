@@ -6,9 +6,16 @@ import { resolve } from 'path';
 // Shell env vars take precedence over .env values.
 config({ path: resolve(__dirname, '.env'), override: false });
 
+// The whole suite runs against a single shared database, and several specs assume an ordering
+// (e.g. the Agents empty-state must observe a tenant with no agents before any agent is seeded).
+// Force a single worker so projects/files execute serially and deterministically.
+const STORAGE_STATE = '.auth/storageState.json';
+const CHROME = devices['Desktop Chrome'];
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI
     ? [['html', { outputFolder: 'playwright-report', open: 'never' }], ['github']]
@@ -24,52 +31,83 @@ export default defineConfig({
       testMatch: /auth\.setup\.spec\.ts/,
     },
     {
+      // Every non-LLM spec that runs authenticated against the default (Enterprise) stack. The
+      // browser session is restored from the setup project's storageState.
       name: 'core',
-      testMatch: /core-crud\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: '.auth/storageState.json',
-      },
+      testMatch: [
+        '**/core-crud.spec.ts',
+        '**/agents.spec.ts',
+        '**/providers.spec.ts',
+        '**/suites.spec.ts',
+        '**/traces.spec.ts',
+        '**/traces-grouping.spec.ts',
+        '**/evaluators.spec.ts',
+        '**/dashboard.spec.ts',
+        '**/settings.spec.ts',
+        '**/admin.spec.ts',
+        '**/error-handling.spec.ts',
+        '**/proposals.spec.ts',
+        '**/proposals-kinds.spec.ts',
+        '**/cancel.spec.ts',
+        '**/cost.spec.ts',
+        '**/search.spec.ts',
+        '**/tenancy.spec.ts',
+        '**/delete-cascade.spec.ts',
+        '**/pagination.spec.ts',
+        '**/negative.spec.ts',
+        '**/sse.spec.ts',
+      ],
+      use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],
     },
     {
       name: 'smoke',
       testMatch: /smoke\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: '.auth/storageState.json',
-      },
+      use: { ...CHROME, storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+    },
+    {
+      // Auth & access-control flows test login/logout/signup from a clean session, so this project
+      // intentionally loads NO storageState — each spec drives auth itself.
+      name: 'auth-flows',
+      testMatch: /auth-flows\.spec\.ts/,
+      use: { ...CHROME },
       dependencies: ['setup'],
     },
     {
       name: 'llm-ingestion',
       testMatch: /ingestion\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: '.auth/storageState.json',
-      },
+      use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],
     },
     {
-      // test-run.spec relies on an agent, which only exists once a call has been ingested.
-      // Depend on the ingestion project so it always runs first, even with multiple workers.
+      // proxy-trace re-verifies the proxy → Traces UI path; depends only on a completed setup.
+      name: 'llm-proxy-trace',
+      testMatch: /proxy-trace\.spec\.ts/,
+      use: { ...CHROME, storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+    },
+    {
+      // test-run relies on an agent, which only exists once a call has been ingested. Depend on
+      // the ingestion project so it always runs first, even with multiple workers.
       name: 'llm-test-run',
       testMatch: /test-run\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: '.auth/storageState.json',
-      },
+      use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['llm-ingestion'],
     },
     {
-      // proposals.spec seeds a proposal against an agent, which only exists once a call has
-      // been ingested. Depend on the ingestion project so an agent is present first.
-      name: 'llm-proposals',
-      testMatch: /proposals\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: '.auth/storageState.json',
-      },
+      // Playground drives a live agent against an endpoint; needs an ingested agent present.
+      name: 'llm-playground',
+      testMatch: ['**/playground.spec.ts'],
+      use: { ...CHROME, storageState: STORAGE_STATE },
+      dependencies: ['llm-ingestion'],
+    },
+    {
+      // Evaluator test-bench: the agentic bench needs an ingested agent; the rule-based bench in
+      // the same file self-seeds and needs no LLM.
+      name: 'llm-evaluator-playground',
+      testMatch: ['**/evaluator-playground.spec.ts'],
+      use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['llm-ingestion'],
     },
     {
@@ -78,10 +116,7 @@ export default defineConfig({
       // so this only authenticates the browser against the :5103 origin.
       name: 'licensing-setup',
       testMatch: /licensing\.setup\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5103',
-      },
+      use: { ...CHROME, baseURL: 'http://localhost:5103' },
       dependencies: ['setup'],
     },
     {
@@ -90,11 +125,7 @@ export default defineConfig({
       // so it needs only `licensing-setup`, not the ingestion projects.
       name: 'licensing',
       testMatch: /licensing\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5103',
-        storageState: '.auth/licensing-state.json',
-      },
+      use: { ...CHROME, baseURL: 'http://localhost:5103', storageState: '.auth/licensing-state.json' },
       dependencies: ['licensing-setup'],
     },
   ],

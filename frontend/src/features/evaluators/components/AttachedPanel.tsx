@@ -14,7 +14,7 @@ interface Props {
 /** Two-column card listing the suites and agents this evaluator is attached to. */
 export function AttachedPanel({ suites, agentNames }: Props) {
   return (
-    <section className="bg-card rounded-lg shadow-[var(--shadow-card)]">
+    <section data-testid="evaluator-attached-panel" className="bg-card rounded-lg shadow-[var(--shadow-card)]">
       <header className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
         <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">Attached to</span>
         <span className="text-[11px] text-muted">
@@ -27,7 +27,7 @@ export function AttachedPanel({ suites, agentNames }: Props) {
           {suites.length ? (
             <div className="flex flex-col gap-[5px]">
               {suites.map(s => (
-                <div key={s.id} className="flex items-center gap-2 px-2.5 py-[7px] bg-card-2 rounded-md text-[12px] text-secondary">
+                <div key={s.id} data-testid={`evaluator-attached-suite-${s.id}`} className="flex items-center gap-2 px-2.5 py-[7px] bg-card-2 rounded-md text-[12px] text-secondary">
                   <CheckboxIcon size={11} />
                   <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{s.name}</span>
                   <ArrowUpRightIcon size={10} />

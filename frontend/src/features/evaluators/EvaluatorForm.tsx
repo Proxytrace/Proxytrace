@@ -36,7 +36,7 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       )}
       {kind === EvaluatorKind.Agentic && (
         <FormField label="Evaluator name">
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My judge" className={formInputCls} />
+          <input data-testid="evaluator-form-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My judge" className={formInputCls} />
         </FormField>
       )}
       {kind === EvaluatorKind.Agentic && (
@@ -49,17 +49,17 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       {kind === EvaluatorKind.Agentic && <FinalPromptPreview rubric={form.systemMessage} />}
       {kind === EvaluatorKind.JsonSchemaMatch && (
         <FormField label="JSON Schema">
-          <textarea value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} className={`${formInputCls} resize-y`} />
+          <textarea data-testid="evaluator-form-jsonschema" value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} className={`${formInputCls} resize-y`} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (
         <FormField label="Extraction pattern (regex)">
-          <input value={form.extractionPattern} onChange={e => setForm({ ...form, extractionPattern: e.target.value })} placeholder="score: (\d+)" className={formInputCls} />
+          <input data-testid="evaluator-form-extractionpattern" value={form.extractionPattern} onChange={e => setForm({ ...form, extractionPattern: e.target.value })} placeholder="score: (\d+)" className={formInputCls} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (
         <FormField label="Tolerance">
-          <input type="number" value={form.tolerance} onChange={e => setForm({ ...form, tolerance: e.target.value })} placeholder="0.01" className={formInputCls} />
+          <input data-testid="evaluator-form-tolerance" type="number" value={form.tolerance} onChange={e => setForm({ ...form, tolerance: e.target.value })} placeholder="0.01" className={formInputCls} />
         </FormField>
       )}
     </div>

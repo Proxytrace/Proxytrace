@@ -18,7 +18,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
   const navigate = useNavigate();
 
   return (
-    <section className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)]">
+    <section data-testid="live-trace-stream" className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)]">
       <header className="flex items-end justify-between mb-3">
         <div>
           <h3 className="text-h2 font-semibold flex items-center gap-2">
@@ -57,6 +57,7 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
             return (
               <button
                 key={t.id}
+                data-testid={`live-trace-row-${t.id}`}
                 onClick={() => navigate(`/traces?focus=${t.id}`)}
                 className={`w-full text-left grid grid-cols-[14px_1fr_auto_auto_auto_auto] gap-3.5 items-center py-[7px] px-1 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)] ${i === traces.length - 1 ? '' : 'border-b border-border-subtle'} ${isFresh ? 'slide-in' : ''}`}
               >

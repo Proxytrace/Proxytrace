@@ -101,7 +101,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
   return createPortal(
     <>
       <div className="modal-overlay" onClick={e => e.target === e.currentTarget && attemptClose()}>
-        <div className="modal-panel fade-up flex flex-col max-w-[min(1180px,94vw)] w-full max-h-[92vh]">
+        <div data-testid="edit-suite-dialog" className="modal-panel fade-up flex flex-col max-w-[min(1180px,94vw)] w-full max-h-[92vh]">
           <EditSuiteHeader suite={suite} agentColorHex={c} onClose={attemptClose} />
 
           <div className="mt-4 mb-4 flex items-center justify-between gap-3">
