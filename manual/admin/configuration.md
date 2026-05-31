@@ -44,6 +44,56 @@ override with `Frontend:AllowedOrigin`:
 }
 ```
 
+## Kiosk mode
+
+Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a rich demo
+dataset (the "Showcase Project" with sample agents, traces, test suites and proposals) on
+startup. It is intended for demos and walkthroughs.
+
+```json
+{
+  "Kiosk": {
+    "Enabled": true
+  }
+}
+```
+
+### Functional kiosk (real LLM endpoint)
+
+By default the seeded providers carry no credentials, so Tracey chat and test runs cannot
+reach a real model. To make the kiosk **fully functional**, add a `Kiosk:Endpoint` section
+with a real provider endpoint, API key and model — typically in
+`Proxytrace.Api/appsettings.local.json` so the secret stays out of source control:
+
+```json
+{
+  "Kiosk": {
+    "Enabled": true,
+    "Endpoint": {
+      "BaseUrl": "https://api.openai.com/v1",
+      "ApiKey": "sk-...",
+      "Model": "gpt-4o",
+      "Kind": "OpenAi",
+      "ProviderName": "Kiosk Provider",
+      "InputTokenCost": 0.0000025,
+      "OutputTokenCost": 0.00001
+    }
+  }
+}
+```
+
+When this section is present, kiosk seeding creates a real model provider, model and
+endpoint, makes it the project's **system endpoint** (which powers Tracey chat), and routes
+all demo agents through it so test runs call the real model.
+
+- `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
+  is missing or invalid, the API fails fast on startup with a clear error.
+- `Kind` is one of `OpenAi`, `Anthropic`, or `OpenAiCompatible` (default `OpenAi`).
+- `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional.
+
+If `Kiosk:Endpoint` is omitted, the kiosk still seeds the full demo dataset, but with
+credential-less providers (LLM calls will not succeed).
+
 ## Demo data
 
 Local dev mode does not auto-seed in every flow. Use the **`/setup`** page (or the setup

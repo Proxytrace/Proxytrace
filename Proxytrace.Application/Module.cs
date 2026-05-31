@@ -212,6 +212,13 @@ public sealed class Module : Autofac.Module
             .As<IAgenticEvaluatorPresets>()
             .SingleInstance();
 
+        // Default: no real kiosk endpoint configured. The API composition root registers the
+        // config-bound instance (from Kiosk:Endpoint) before this module loads, which wins.
+        builder.Register(_ => new KioskEndpointOptions())
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(KioskEndpointOptions));
+
         builder.RegisterType<DemoSeedContext>()
             .AsSelf()
             .SingleInstance();
