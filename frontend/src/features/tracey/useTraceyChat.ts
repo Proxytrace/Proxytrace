@@ -60,6 +60,13 @@ export interface TraceyChat {
   sendUserMessage: (text: string) => void;
   /** Client-side route change (used by entity-card tool UIs). */
   navigate: (path: string) => void;
+  /**
+   * Provision the Tracey session (model + agent). The runtime is built app-wide so the
+   * conversation survives navigation, but the session — which has backend side effects
+   * (agent provisioning) — is only created once the user actually opens Tracey. Idempotent;
+   * the page calls it on mount and the session then stays alive across navigation.
+   */
+  activate: () => void;
 }
 
 export function useTraceyChat(): TraceyChat {
@@ -70,6 +77,10 @@ export function useTraceyChat(): TraceyChat {
   // runtime now mounts app-wide (above the router), gate the session here so kiosk never
   // provisions one.
   const { enabled: kiosk } = useKiosk();
+  // The runtime mounts app-wide, but the session (and its backend agent provisioning) is only
+  // created once the user opens Tracey. Latched on, so it stays alive across navigation.
+  const [activated, setActivated] = useState(false);
+  const activate = useCallback(() => setActivated(true), []);
   const projectId = currentProject?.id;
   const userKey = currentUser?.email ?? 'anon';
   const projectKey = projectId ?? 'none';
@@ -100,10 +111,14 @@ export function useTraceyChat(): TraceyChat {
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
-    enabled: !!projectId && !kiosk,
+    enabled: !!projectId && !kiosk && activated,
     // Refresh comfortably before the 1-hour key expiry.
     staleTime: 50 * 60 * 1000,
     refetchInterval: 50 * 60 * 1000,
+    // This hook is mounted app-wide (in Shell, above the router), so a failed session must not
+    // bubble to an ErrorBoundary and crash the shell on every page. The 'error' status is
+    // surfaced as a contained empty state on the Tracey page instead (see TraceyAI).
+    throwOnError: false,
   });
 
   const transport = useMemo(() => new DelegatingTransport(), []);
@@ -174,5 +189,6 @@ export function useTraceyChat(): TraceyChat {
     clear,
     sendUserMessage,
     navigate,
+    activate,
   };
 }

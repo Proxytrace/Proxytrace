@@ -92,8 +92,13 @@ because the AI SDK runtime is in-memory only:
    (`tracey-storage.ts`, keyed by `user + project`) on every change and re-imports it on mount,
    so a hard reload restores the conversation too.
 
-Tracey is unavailable in kiosk mode, so `useTraceyChat` disables the session query when
-`useKiosk().enabled` (the provider is mounted app-wide, but no session is provisioned in kiosk).
+Because the runtime mounts app-wide, the **session** is provisioned lazily: `useTraceyChat`
+only fires the session query (which has backend side effects — Tracey agent provisioning) once
+the page calls `activate()` on mount. The flag latches on, so the session stays alive across
+navigation; pages the user never opens Tracey from provision nothing. The query also uses
+`throwOnError: false` so a failed session can't bubble to an ErrorBoundary and crash the shell —
+it surfaces as the contained "error" state on the page. Tracey is unavailable in kiosk mode, so
+the session query is additionally disabled when `useKiosk().enabled`.
 
 ## Tools: read, write, and render
 
