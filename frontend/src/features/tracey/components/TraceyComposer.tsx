@@ -2,7 +2,7 @@ import { useMemo, useState, type KeyboardEvent } from 'react';
 import { ComposerPrimitive, useComposer, useComposerRuntime } from '@assistant-ui/react';
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
-import { ArrowUpIcon, TrashIcon } from '../../../components/icons';
+import { ArrowUpIcon, MessagePlusIcon, SparklesIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
@@ -11,6 +11,8 @@ interface TraceyComposerProps {
   autoApprove: boolean;
   setAutoApprove: (value: boolean) => void;
   onClear: () => void;
+  /** Initial-view starter chips: shown only while the conversation is empty. */
+  showStarters: boolean;
 }
 
 const ALL_ITEMS: SlashItem[] = [
@@ -55,7 +57,7 @@ function AutoApproveToggle({ checked, onChange }: { checked: boolean; onChange: 
   );
 }
 
-export function TraceyComposer({ autoApprove, setAutoApprove, onClear }: TraceyComposerProps) {
+export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStarters }: TraceyComposerProps) {
   const composer = useComposerRuntime();
   const text = useComposer(c => c.text);
   // The selection is tagged with the list ("key") it belongs to. When the menu (re)opens or the
@@ -107,7 +109,23 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear }: TraceyC
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
-      <ToolChips />
+      {showStarters && (
+        <div className="flex flex-col items-center gap-4 pb-1 animate-[fade-up_var(--motion-slow)_var(--ease-standard)]">
+          <div className="flex flex-col items-center gap-2.5 text-center">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-accent-subtle text-accent">
+              <SparklesIcon size={22} />
+            </div>
+            <div className="text-h1 font-semibold text-primary">How can I help?</div>
+            <div className="max-w-md text-[13px] text-secondary">
+              Ask about your agents, suites, runs, or proposals — or have me run a suite, review a
+              proposal, or plot your data.
+            </div>
+          </div>
+          <div className="flex w-full justify-center">
+            <ToolChips />
+          </div>
+        </div>
+      )}
       <div className="relative">
         {open && (
           <SlashMenu
@@ -133,11 +151,11 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear }: TraceyC
               <button
                 type="button"
                 onClick={onClear}
-                aria-label="Clear conversation"
-                title="Clear conversation"
+                aria-label="New conversation"
+                title="New conversation"
                 className="btn-icon"
               >
-                <TrashIcon size={16} />
+                <MessagePlusIcon size={16} />
               </button>
               <ComposerPrimitive.Send
                 aria-label="Send"
