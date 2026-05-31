@@ -12,6 +12,7 @@ import { traceyApi, type TraceySessionDto } from '../../api/tracey';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useCurrentUser } from '../../auth/useCurrentUser';
+import { useKiosk } from '../../contexts/KioskContext';
 import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
@@ -65,6 +66,10 @@ export function useTraceyChat(): TraceyChat {
   const navigate = useNavigate();
   const { currentProject } = useCurrentProject();
   const currentUser = useCurrentUser();
+  // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode. Since the
+  // runtime now mounts app-wide (above the router), gate the session here so kiosk never
+  // provisions one.
+  const { enabled: kiosk } = useKiosk();
   const projectId = currentProject?.id;
   const userKey = currentUser?.email ?? 'anon';
   const projectKey = projectId ?? 'none';
@@ -95,7 +100,7 @@ export function useTraceyChat(): TraceyChat {
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
-    enabled: !!projectId,
+    enabled: !!projectId && !kiosk,
     // Refresh comfortably before the 1-hour key expiry.
     staleTime: 50 * 60 * 1000,
     refetchInterval: 50 * 60 * 1000,
@@ -151,7 +156,7 @@ export function useTraceyChat(): TraceyChat {
     runtime.threads.switchToNewThread();
   }, [runtime, userKey, projectKey]);
 
-  const status: TraceyChat['status'] = !projectId
+  const status: TraceyChat['status'] = !projectId || kiosk
     ? 'no-project'
     : queryStatus === 'pending'
       ? 'loading'

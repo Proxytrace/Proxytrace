@@ -13,6 +13,8 @@ import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useKiosk } from '../../contexts/KioskContext';
+import { useTraceyChat } from '../../features/tracey/useTraceyChat';
+import { TraceyChatProvider } from '../../features/tracey/tracey-chat-context';
 import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
@@ -129,6 +131,10 @@ export function Shell() {
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
+  // The Tracey chat is created here — above the router `Outlet` — so its runtime and
+  // conversation persist while the user navigates between routes (the `/tracey-ai` page just
+  // renders this shared runtime). Tracey is disabled in kiosk mode, so no session is created.
+  const traceyChat = useTraceyChat();
 
   const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
   const pageLabel = [...navItems]
@@ -290,7 +296,9 @@ export function Shell() {
 
         {/* Page content — single vertical scroll container for the app */}
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_10px_10px_10px] bg-transparent relative z-0 flex flex-col">
-          <Outlet />
+          <TraceyChatProvider value={traceyChat}>
+            <Outlet />
+          </TraceyChatProvider>
         </main>
       </div>
 

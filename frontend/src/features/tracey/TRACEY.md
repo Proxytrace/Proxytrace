@@ -47,8 +47,9 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
 
 | File | Role |
 |------|------|
-| `TraceyAI.tsx` | Page root. Renders status gates, wraps content in `AssistantRuntimeProvider` + `TraceyActionsProvider`, lays out the (single, full-width) chat panel. The one lazy-loaded route component. |
-| `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, `sendUserMessage` (thread append), thread persistence, and builds the runtime. Everything else is presentational or data. |
+| `TraceyAI.tsx` | Page root. Consumes the shared chat via `useTraceyChatContext`, renders status gates, wraps content in `AssistantRuntimeProvider` + `TraceyActionsProvider`, lays out the (single, full-width) chat panel. The one lazy-loaded route component. |
+| `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, `sendUserMessage` (thread append), thread persistence, and builds the runtime. Called **once** from `Shell` (above the router `Outlet`), not from the page — see "Conversation persistence" below. |
+| `tracey-chat-context.ts` | Shares the single `TraceyChat` (runtime + conversation) app-wide. `TraceyChatProvider` is mounted in `Shell` around the `Outlet`; `useTraceyChatContext()` reads it from the page. |
 | `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT per request, runs `streamText` with `stopWhen: stepCountIs(8)`, and adapts our tools into the SDK `ToolSet`. |
 | `tracey-tools.ts` | **Single source of truth** for tools: `createTraceyTools(ctx)` returns `{ name → { description, parameters (zod), confirm, execute } }`. `TRACEY_TOOLS_META` is the static name+description list for the slash menu. |
 | `tracey-prompt.ts` | `TRACEY_SYSTEM_PROMPT` — her system prompt (wire source of truth). |
@@ -74,6 +75,25 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
    step and a tool-first turn produces no text** — don't remove it.
 5. Results stream back; `TraceyConversation` renders assistant Markdown, per-tool inline UIs
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
+
+## Conversation persistence
+
+The conversation must survive both in-app navigation and a full page reload. Two layers,
+because the AI SDK runtime is in-memory only:
+
+1. **Across navigation (in-memory).** `useTraceyChat` builds the runtime, so whatever component
+   calls it owns the runtime's lifetime. It is called **once in `Shell`** — above the router
+   `Outlet` — and shared through `TraceyChatProvider` (`tracey-chat-context.ts`). `Shell` stays
+   mounted while only the `Outlet` child swaps on navigation, so the runtime (and its messages)
+   is never torn down when you leave and return to `/tracey-ai`. **Do not move the
+   `useTraceyChat()` call back into `TraceyAI`** — the page unmounts on navigation, which is the
+   exact bug this avoids.
+2. **Across reload (localStorage).** `useTraceyChat` mirrors the thread to `localStorage`
+   (`tracey-storage.ts`, keyed by `user + project`) on every change and re-imports it on mount,
+   so a hard reload restores the conversation too.
+
+Tracey is unavailable in kiosk mode, so `useTraceyChat` disables the session query when
+`useKiosk().enabled` (the provider is mounted app-wide, but no session is provisioned in kiosk).
 
 ## Tools: read, write, and render
 

@@ -1,11 +1,13 @@
 import { AssistantRuntimeProvider } from '@assistant-ui/react';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { useTraceyChat } from './useTraceyChat';
+import { useTraceyChatContext } from './tracey-chat-context';
 import { TraceyActionsProvider } from './tracey-actions';
 import { TraceyChatPanel } from './components/TraceyChatPanel';
 
 export default function TraceyAI() {
-  const chat = useTraceyChat();
+  // The chat lives in a provider above the router, so the conversation survives navigation
+  // between routes — this page only renders the (already-running) runtime.
+  const chat = useTraceyChatContext();
 
   if (chat.status === 'no-project') {
     return (
