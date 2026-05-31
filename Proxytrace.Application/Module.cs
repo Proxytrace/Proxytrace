@@ -228,6 +228,32 @@ public sealed class Module : Autofac.Module
                 .IfNotRegistered(t);
         }
 
+        builder.RegisterType<Tracey.Internal.TraceyDefinition>()
+            .As<Tracey.ITraceyDefinition>()
+            .SingleInstance();
+
+        builder.RegisterType<Tracey.Internal.TraceyAgentProvisioner>()
+            .As<Tracey.ITraceyAgentProvisioner>()
+            .SingleInstance();
+
+        builder.RegisterType<Tracey.Internal.TraceySessionService>()
+            .As<Tracey.ITraceySessionService>()
+            .SingleInstance();
+
+        builder.RegisterType<Tracey.Internal.TraceyAgentSeederHostedService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(Tracey.Internal.TraceyAgentSeederHostedService));
+
+        const string traceySeederHostedServiceKey = "Proxytrace.Application.TraceyAgentSeederHostedService.Registered";
+        if (!builder.Properties.ContainsKey(traceySeederHostedServiceKey))
+        {
+            builder.Properties[traceySeederHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
+                services.AddSingleton<IHostedService>(sp =>
+                    sp.GetRequiredService<Tracey.Internal.TraceyAgentSeederHostedService>()));
+        }
+
         builder.RegisterType<DemoSeederHostedService>()
             .AsSelf()
             .SingleInstance()

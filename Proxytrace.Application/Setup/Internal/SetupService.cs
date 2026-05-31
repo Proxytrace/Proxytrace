@@ -112,7 +112,7 @@ internal class SetupService : ISetupService
 
             var keyValue = $"proxytrace-{Guid.NewGuid():N}";
             var apiKey = await apiKeys.AddAsync(
-                createApiKey(input.ApiKeyName, keyValue, project, provider),
+                createApiKey(input.ApiKeyName, keyValue, project, provider, expiresAt: null),
                 cancellationToken);
 
             return new SetupResult(provider.Id, endpoint.Id, project.Id, apiKey.ApiKey);

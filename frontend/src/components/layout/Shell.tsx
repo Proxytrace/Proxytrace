@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
@@ -21,6 +21,10 @@ import {
   SettingsIcon, BeakerIcon, TargetIcon,
   LayoutSidebarIcon, ExternalLinkIcon,
 } from '../icons';
+
+const TraceyDrawer = lazy(() =>
+  import('../../features/tracey/TraceyDrawer').then(m => ({ default: m.TraceyDrawer })),
+);
 
 type NavIconName =
   | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
@@ -115,6 +119,7 @@ const HEALTH_LABEL: Record<HealthStatus, string> = {
 
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
+  const [traceyOpen, setTraceyOpen] = useState(false);
   const { data: online } = useHealth();
   const { data: license } = useLicense();
   const licenseFeatures = license?.features ?? [];
@@ -258,6 +263,16 @@ export function Shell() {
 
           <button
             type="button"
+            data-testid="tracey-toggle"
+            onClick={() => setTraceyOpen(o => !o)}
+            title="Tracey — AI assistant"
+            className={cn('btn-icon', traceyOpen && 'text-accent')}
+          >
+            <SparklesIcon size={16} />
+          </button>
+
+          <button
+            type="button"
             data-testid="logout-btn"
             onClick={() => currentUser?.signOut()}
             title={`Sign out (${userName})`}
@@ -272,6 +287,12 @@ export function Shell() {
           <Outlet />
         </main>
       </div>
+
+      {traceyOpen && (
+        <Suspense fallback={null}>
+          <TraceyDrawer onClose={() => setTraceyOpen(false)} />
+        </Suspense>
+      )}
 
     </div>
   );

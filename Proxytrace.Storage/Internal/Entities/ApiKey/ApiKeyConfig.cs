@@ -49,7 +49,7 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
     {
         var project = await projects.GetAsync(stored.Project, cancellationToken);
         var provider = await providers.GetAsync(stored.Provider, cancellationToken);
-        return factory(stored.Name, stored.ApiKey, project, provider, stored);
+        return factory(stored.Name, stored.ApiKey, project, provider, stored.ExpiresAt, stored);
     }
 
     public Task<ApiKeyEntity> Map(IApiKey domain, CancellationToken cancellationToken = default)
@@ -60,6 +60,7 @@ internal class ApiKeyConfig : AbstractEntityConfiguration<ApiKeyEntity>, IMapper
             ApiKey = domain.ApiKey,
             Project = domain.Project.Id,
             Provider = domain.Provider.Id,
+            ExpiresAt = domain.ExpiresAt,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

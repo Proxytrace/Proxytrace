@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Projects;
+using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Paging;
@@ -19,19 +20,22 @@ public class ProjectsController : ControllerBase
     private readonly IRepository<IUser> userRepository;
     private readonly IProject.CreateNew createNew;
     private readonly IProject.CreateExisting createExisting;
+    private readonly ITraceyAgentProvisioner traceyProvisioner;
 
     public ProjectsController(
         IProjectRepository repository,
         IRepository<IModelEndpoint> endpointRepository,
         IRepository<IUser> userRepository,
         IProject.CreateNew createNew,
-        IProject.CreateExisting createExisting)
+        IProject.CreateExisting createExisting,
+        ITraceyAgentProvisioner traceyProvisioner)
     {
         this.repository = repository;
         this.endpointRepository = endpointRepository;
         this.userRepository = userRepository;
         this.createNew = createNew;
         this.createExisting = createExisting;
+        this.traceyProvisioner = traceyProvisioner;
     }
 
     [HttpGet]
@@ -68,6 +72,7 @@ public class ProjectsController : ControllerBase
 
         var project = createNew(request.Name, endpoint, members);
         var saved = await repository.AddAsync(project, cancellationToken);
+        await traceyProvisioner.EnsureTraceyAgentAsync(saved, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
 

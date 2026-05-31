@@ -186,7 +186,18 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
     private static ProposalsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IOptimizationProposalRepository>(),
         services.GetRequiredService<IModelSwitchProposal.CreateExisting>(),
+        services.GetRequiredService<IModelSwitchProposal.CreateNew>(),
         services.GetRequiredService<ISystemPromptProposal.CreateExisting>(),
+        services.GetRequiredService<ISystemPromptProposal.CreateNew>(),
         services.GetRequiredService<IToolUpdateProposal.CreateExisting>(),
+        services.GetRequiredService<IToolUpdateProposal.CreateNew>(),
+        services.GetRequiredService<IAgentRepository>(),
+        services.GetRequiredService<IRepository<Proxytrace.Domain.ModelEndpoint.IModelEndpoint>>(),
+        services.GetRequiredService<IRepository<Proxytrace.Domain.TestSuite.ITestSuite>>(),
+        services.GetRequiredService<IRepository<Proxytrace.Domain.TestRunGroup.ITestRunGroup>>(),
+        services.GetRequiredService<IRepository<Proxytrace.Domain.TestRun.ITestRun>>(),
+        services.GetRequiredService<Proxytrace.Domain.TestSuite.ITestSuite.CreateNew>(),
+        services.GetRequiredService<Proxytrace.Domain.TestRunGroup.ITestRunGroup.CreateNew>(),
+        services.GetRequiredService<Proxytrace.Domain.TestRun.ITestRun.CreateNew>(),
         services.GetRequiredService<OptimizationProposalDtoMapper>());
 }

@@ -30,4 +30,10 @@ public interface IApiKeyResolver
 /// which authentication path matched (a Proxytrace-issued <see cref="Domain.ApiKey.IApiKey"/>
 /// or the provider's own upstream <see cref="IModelProvider.ApiKey"/>).
 /// </summary>
-public sealed record ResolvedApiKey(IProject Project, IModelProvider Provider);
+/// <param name="Project">The project to attribute the captured call to.</param>
+/// <param name="Provider">The upstream provider to forward to.</param>
+/// <param name="ExpiresAt">
+/// When the matched Proxytrace key expires, or <see langword="null"/> for keys that never expire
+/// (and for the upstream-provider path). Used to clamp the resolver cache lifetime.
+/// </param>
+public sealed record ResolvedApiKey(IProject Project, IModelProvider Provider, DateTimeOffset? ExpiresAt = null);

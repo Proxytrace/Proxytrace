@@ -31,6 +31,14 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
+      // Mirror production: the VitePress manual is reachable at /docs. In dev it
+      // runs as a separate VitePress server (port 4202, base /docs/), proxied here
+      // so `npm run dev` serves both the app and the docs from one origin.
+      '/docs': {
+        target: 'http://localhost:4202',
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
 })

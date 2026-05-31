@@ -34,6 +34,12 @@ if [ ! -d "$REPO_ROOT/frontend/node_modules" ]; then
     (cd "$REPO_ROOT/frontend" && npm install)
 fi
 
+# Manual (VitePress) deps — the frontend dev server now also serves the docs at /docs.
+if [ ! -d "$REPO_ROOT/manual/node_modules" ]; then
+    echo "Installing manual dependencies..."
+    (cd "$REPO_ROOT/manual" && npm install)
+fi
+
 if [ "$SPLIT" = "1" ]; then
     echo "Split mode: ingestion proxy + app + Redis + PostgreSQL"
 
@@ -84,6 +90,7 @@ echo "Starting frontend on http://localhost:4201 ..."
 echo ""
 echo "Dev servers running:"
 echo "  Frontend: http://localhost:4201"
+echo "  Docs:     http://localhost:4201/docs/"
 echo "  Backend:  http://localhost:5001"
 echo "  Swagger:  http://localhost:5001/swagger"
 if [ "$SPLIT" = "1" ]; then

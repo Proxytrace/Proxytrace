@@ -235,7 +235,7 @@ public class ModelProvidersController : ControllerBase
             return BadRequest($"Project {request.ProjectId} not found.");
 
         var keyValue = $"proxytrace-{Guid.NewGuid():N}";
-        var key = createApiKey(request.Name, keyValue, project, provider);
+        var key = createApiKey(request.Name, keyValue, project, provider, expiresAt: null);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
         return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));
     }

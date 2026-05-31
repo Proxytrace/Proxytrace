@@ -14,18 +14,21 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
     string IApiKey.ApiKey => apiKey;
     public IProject Project { get; }
     public IModelProvider Provider { get; }
+    public DateTimeOffset? ExpiresAt { get; }
 
     public ApiKey(
         string name,
         string apiKey,
         IProject project,
         IModelProvider provider,
+        DateTimeOffset? expiresAt,
         IRepository<IApiKey> repository) : base(repository)
     {
         Name = name;
         this.apiKey = apiKey;
         Project = project;
         Provider = provider;
+        ExpiresAt = expiresAt;
     }
 
     public ApiKey(
@@ -33,6 +36,7 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         string apiKey,
         IProject project,
         IModelProvider provider,
+        DateTimeOffset? expiresAt,
         IDomainEntityData existing,
         IRepository<IApiKey> repository) : base(existing, repository)
     {
@@ -40,6 +44,7 @@ internal record ApiKey : DomainEntity<IApiKey>, IApiKey
         this.apiKey = apiKey;
         Project = project;
         Provider = provider;
+        ExpiresAt = expiresAt;
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
