@@ -67,7 +67,12 @@ export function TraceMetadataTab({ trace }: MetadataProps) {
         {rows.map(([k, v]) => (
           <div key={k} className="px-3 py-[10px] bg-card-2 rounded-[8px]">
             <div className="text-caption text-muted uppercase tracking-[0.06em] mb-[3px]">{k}</div>
-            <div className="text-body font-mono text-primary break-all">{v}</div>
+            <div
+              data-testid={k === 'cost_eur' ? 'trace-metadata-cost' : undefined}
+              className="text-body font-mono text-primary break-all"
+            >
+              {v}
+            </div>
           </div>
         ))}
       </div>

@@ -180,24 +180,43 @@ export class ProxytraceApiClient {
   // implements it). The request shape mirrors the SystemPrompt proposal details DTO.
   async seedProposal(opts: {
     agentId: string;
-    kind?: string;
+    kind?: 'SystemPrompt' | 'ModelSwitch' | 'ToolUpdate';
     status?: string;
     priority?: string;
     rationale: string;
+    proposedEndpointId?: string;
+    proposedTools?: Array<{ name: string; description: string; parametersJson?: string | null }>;
   }): Promise<{ id: string }> {
+    const kind = opts.kind ?? 'SystemPrompt';
+    // The seed details are a polymorphic ProposalDetailsDto. ModelSwitch/ToolUpdate use distinct
+    // *Seed discriminators (ModelSwitchSeed / ToolUpdateSeed) so they don't collide with the
+    // response-mapper's discriminators in the same hierarchy.
+    let details: Record<string, unknown>;
+    if (kind === 'ModelSwitch') {
+      details = { kind: 'ModelSwitchSeed', proposedEndpointId: opts.proposedEndpointId };
+    } else if (kind === 'ToolUpdate') {
+      details = {
+        kind: 'ToolUpdateSeed',
+        proposedTools: opts.proposedTools ?? [
+          { name: 'lookup', description: 'Look up a value', parametersJson: null },
+        ],
+      };
+    } else {
+      details = {
+        kind: 'SystemPrompt',
+        currentSystemMessage: 'You are a helpful assistant.',
+        proposedSystemMessage: 'You are a concise, helpful assistant.',
+      };
+    }
     const res = await this.request.post('/api/proposals/seed', {
       headers: this.headers(),
       data: {
         agentId: opts.agentId,
-        kind: opts.kind ?? 'SystemPrompt',
+        kind,
         status: opts.status ?? 'Draft',
         priority: opts.priority ?? 'Medium',
         rationale: opts.rationale,
-        details: {
-          kind: 'SystemPrompt',
-          currentSystemMessage: 'You are a helpful assistant.',
-          proposedSystemMessage: 'You are a concise, helpful assistant.',
-        },
+        details,
       },
     });
     if (!res.ok()) throw new Error(`seed proposal failed: ${res.status()} ${await res.text()}`);
@@ -363,6 +382,7 @@ export class ProxytraceApiClient {
     inputTokens?: number;
     outputTokens?: number;
     durationMs?: number;
+    conversationId?: string;
   }): Promise<{ id: string; agentId: string | null }> {
     const res = await this.request.post('/api/agent-calls/seed', {
       headers: this.headers(),
@@ -375,6 +395,7 @@ export class ProxytraceApiClient {
         inputTokens: opts.inputTokens ?? 10,
         outputTokens: opts.outputTokens ?? 5,
         durationMs: opts.durationMs ?? 100,
+        conversationId: opts.conversationId ?? null,
       },
     });
     if (!res.ok()) throw new Error(`seed agent-call failed: ${res.status()} ${await res.text()}`);
@@ -598,6 +619,107 @@ export class ProxytraceApiClient {
   async getConfig(): Promise<{ kiosk: boolean }> {
     const res = await this.request.get('/api/config', { headers: this.headers() });
     if (!res.ok()) throw new Error(`get config failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // ── Model pricing (for cost assertions) ────────────────────────────────────
+  async updateModelPricing(
+    providerId: string,
+    endpointId: string,
+    inputTokenCost: number,
+    outputTokenCost: number,
+  ): Promise<{ id: string; inputTokenCost: number | null; outputTokenCost: number | null }> {
+    const res = await this.request.put(`/api/providers/${providerId}/models/${endpointId}`, {
+      headers: this.headers(),
+      data: { inputTokenCost, outputTokenCost },
+    });
+    if (!res.ok()) throw new Error(`update model pricing failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getModelEndpoints(): Promise<
+    Array<{ id: string; modelName: string; providerId: string; inputTokenCost: number | null; outputTokenCost: number | null }>
+  > {
+    const res = await this.request.get('/api/model-endpoints', { headers: this.headers() });
+    if (!res.ok()) throw new Error(`model endpoints failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // ── Cancel flows ───────────────────────────────────────────────────────────
+  async cancelTestRunGroup(id: string): Promise<{ id: string; status: string }> {
+    const res = await this.request.post(`/api/test-run-groups/${id}/cancel`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`cancel run group failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async cancelTestRun(id: string): Promise<void> {
+    const res = await this.request.post(`/api/test-runs/${id}/cancel`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`cancel run failed: ${res.status()} ${await res.text()}`);
+  }
+
+  // ── Search depth ───────────────────────────────────────────────────────────
+  async searchRecent(
+    projectId: string,
+    kinds: string[] = [],
+    limit = 6,
+  ): Promise<{ hits: Array<{ kind: string; entityId: string; title: string }> }> {
+    const params = new URLSearchParams();
+    if (kinds.length) params.set('kinds', kinds.join(','));
+    params.set('limit', String(limit));
+    const res = await this.request.get(`/api/projects/${projectId}/search/recent?${params}`, {
+      headers: this.headers(),
+    });
+    if (!res.ok()) throw new Error(`search recent failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getSearchSettings(
+    projectId: string,
+  ): Promise<{ enabled: boolean; indexedKinds: string[]; autoReindexOnChange: boolean; snippetLength: number }> {
+    const res = await this.request.get(`/api/projects/${projectId}/search/settings`, {
+      headers: this.headers(),
+    });
+    if (!res.ok()) throw new Error(`get search settings failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async updateSearchSettings(
+    projectId: string,
+    settings: { enabled: boolean; indexedKinds: string[]; autoReindexOnChange: boolean; snippetLength: number },
+  ): Promise<{ enabled: boolean }> {
+    const res = await this.request.put(`/api/projects/${projectId}/search/settings`, {
+      headers: this.headers(),
+      data: settings,
+    });
+    if (!res.ok()) throw new Error(`update search settings failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  // ── Paged / filtered list helpers ──────────────────────────────────────────
+  async listAgentsPaged(
+    params: { page?: number; pageSize?: number; projectId?: string } = {},
+  ): Promise<{ total: number; items: Array<{ id: string; name: string }> }> {
+    return this.getList('/api/agents', params);
+  }
+
+  async listSuites(
+    params: { page?: number; pageSize?: number; agentId?: string; projectId?: string } = {},
+  ): Promise<{ total: number; items: Array<{ id: string; name: string }> }> {
+    return this.getList('/api/test-suites', params);
+  }
+
+  async listTestRunGroups(
+    params: { page?: number; pageSize?: number; agentId?: string; projectId?: string } = {},
+  ): Promise<{ total: number; items: Array<{ id: string; status: string }> }> {
+    return this.getList('/api/test-run-groups', params);
+  }
+
+  private async getList<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) if (v != null) qs.set(k, String(v));
+    const query = qs.toString() ? `?${qs}` : '';
+    const res = await this.request.get(`${path}${query}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`list ${path} failed: ${res.status()} ${await res.text()}`);
     return res.json();
   }
 }

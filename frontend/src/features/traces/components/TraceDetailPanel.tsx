@@ -195,6 +195,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           <DrawerStat label="Total" value={fmtTokens(tokTotal)} icon={<SigmaIcon size={15} strokeWidth={2.2} />} color="var(--accent-primary)" />
           <DrawerStat
             label="Cost"
+            valueTestId={`trace-cost-${trace.id}`}
             value={trace.costEur != null ? `€${trace.costEur.toFixed(4)}` : '—'}
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
             color="var(--warn)"

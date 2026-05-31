@@ -32,6 +32,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
       {/* Header row */}
       <div
         role="row"
+        data-testid={`conversation-group-row-${conversationId}`}
         onClick={onToggle}
         className="grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]"
         style={{ gridTemplateColumns: GRID_TEMPLATE }}
@@ -82,6 +83,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           key={turn.id}
           role="row"
           data-trace-id={turn.id}
+          data-testid={`conversation-turn-${turn.id}`}
           onClick={() => onSelectTrace(turn)}
           className={cn(
             'grid items-center pl-8 pr-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',

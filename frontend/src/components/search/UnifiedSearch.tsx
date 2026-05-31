@@ -122,6 +122,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
           ref={inputRef}
           value={raw}
           autoFocus={autoFocus}
+          data-testid="search-input"
           onChange={e => { setRaw(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
@@ -179,7 +180,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
 
           {hits.length > 0 && (
             <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] h-[60vh] min-h-[280px]">
-              <div className="min-h-0 overflow-y-auto py-2 border-r border-white/[.06]">
+              <div data-testid="search-results" className="min-h-0 overflow-y-auto py-2 border-r border-white/[.06]">
                 <SearchResultList
                   groupOrder={groupOrder}
                   grouped={grouped}

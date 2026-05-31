@@ -6,9 +6,10 @@ interface DrawerStatProps {
   color: string;
   valueColor?: string;
   children?: React.ReactNode;
+  valueTestId?: string;
 }
 
-export function DrawerStat({ label, value, sub, icon, color, valueColor, children }: DrawerStatProps) {
+export function DrawerStat({ label, value, sub, icon, color, valueColor, children, valueTestId }: DrawerStatProps) {
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-[10px]">
@@ -25,7 +26,7 @@ export function DrawerStat({ label, value, sub, icon, color, valueColor, childre
         <div className="min-w-0 leading-tight">
           <div className="text-caption text-muted font-medium tracking-[0.05em] uppercase">{label}</div>
           {value !== undefined && (
-            <div className="text-[15px] font-bold mt-[2px] font-mono" style={{ color: valueColor ?? 'var(--text-primary)' }}>
+            <div data-testid={valueTestId} className="text-[15px] font-bold mt-[2px] font-mono" style={{ color: valueColor ?? 'var(--text-primary)' }}>
               {value}
             </div>
           )}

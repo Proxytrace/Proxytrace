@@ -61,7 +61,15 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
 
       <div className="flex gap-2 shrink-0">
         {active && (
-          <Button variant="secondary" size="sm" onClick={onCancel} loading={cancelPending}>Cancel</Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onCancel}
+            loading={cancelPending}
+            data-testid={`run-cancel-btn-${group.id}`}
+          >
+            Cancel
+          </Button>
         )}
         <button onClick={onDelete} className="btn-icon btn-icon-danger" aria-label="Delete run group" title="Delete run group"><TrashIcon size={14} /></button>
       </div>

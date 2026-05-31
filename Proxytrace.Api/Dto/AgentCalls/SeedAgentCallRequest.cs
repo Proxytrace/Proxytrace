@@ -12,4 +12,5 @@ public record SeedAgentCallRequest(
     string? SystemContent,
     int InputTokens,
     int OutputTokens,
-    int DurationMs);
+    int DurationMs,
+    Guid? ConversationId);

@@ -54,8 +54,8 @@ real-LLM work.
 - [x] `TraceTable` lists seeded traces (correct row count)
 - [x] Click a trace row → `TraceDetail` drawer opens with messages + metadata tabs
 - [x] `AgentFilterCards` filter narrows the table to one agent's traces
-- [ ] Conversation grouping toggle — **seed endpoint hardcodes `conversationId: null`, so no
-      `ConversationGroupRow` can be produced** (replaced with a flat-row render assertion)
+- [x] Conversation grouping — seed endpoint now accepts `conversationId`; multi-turn traces render
+      as an expandable `ConversationGroupRow` (`traces-grouping.spec.ts`)
 - [x] Promote a trace via `PromoteModal` → the suite's test-case count increases by one
 - [x] Pagination: with > pageSize seeded traces, next page shows the next set
 
@@ -90,7 +90,8 @@ real-LLM work.
 - [x] Seeded proposal renders as a `ProposalCard` with its status
 - [x] Open `ProposalDetail` → header, evidence, predicted-impact render
 - [x] `PromptDiff` shows old vs new system prompt
-- [ ] `ModelSwitchSection` from→to — **seed endpoint only supports SystemPrompt proposals**
+- [x] `ModelSwitchSection` from→to — seed endpoint now supports ModelSwitch proposals (`proposals-kinds.spec.ts`)
+- [x] `ToolUpdateSection` tool diff — seed endpoint now supports ToolUpdate proposals (`proposals-kinds.spec.ts`)
 - [x] Approve via `ProposalActionBar` → status flips to Accepted
 - [x] Reject via `ProposalActionBar` → status flips to Rejected, terminal note shown
 - [x] (@llm) Generate a real proposal via the run-group optimize endpoint
@@ -144,16 +145,27 @@ real-LLM work.
 `createProject`, `deleteProject`, `addProjectMember`, `listUsers`, `inviteUser`, `listInvites`,
 `revokeInvite`, `getConfig`.
 
-## Backend test-only seed endpoints added
-`POST /api/agents/seed` and `POST /api/agent-calls/seed` (mirror the existing
-`POST /api/proposals/seed` pattern) let the no-LLM specs create agents and captured traces
-without a real upstream call.
+## Backend test-only seed endpoints
+`POST /api/agents/seed` and `POST /api/agent-calls/seed` (mirror `POST /api/proposals/seed`) let
+no-LLM specs create agents and captured traces without a real upstream call. The agent-call seed
+accepts a `conversationId` and publishes `TraceCreatedEvent` to the SSE broadcaster (for the
+grouping + live-stream specs). `proposals/seed` accepts SystemPrompt, ModelSwitch
+(`ModelSwitchSeed` details), and ToolUpdate (`ToolUpdateSeed` details) kinds.
+
+## 16. Additional coverage (beyond the original list)
+- [x] **SSE** — a seeded trace streams into the dashboard `LiveTraceStream` without a reload (`sse.spec.ts`)
+- [x] **Cancel** — start a run group → cancel → terminal state; UI cancel affordance (`cancel.spec.ts`)
+- [x] **Cost** — per-token pricing → non-zero `costEur` in the trace metadata tab (`cost.spec.ts`)
+- [x] **Delete cascade** — provider-with-endpoints/keys delete; agent-with-traces delete behavior (`delete-cascade.spec.ts`)
+- [x] **Pagination / filter** — agents, suites, run groups page+filter via the paged APIs (`pagination.spec.ts`)
+- [x] **Tenancy** — per-project data isolation + project switcher doesn't leak (`tenancy.spec.ts`)
+- [x] **Search depth** — hit relevance, recent feed, settings persistence (`search.spec.ts`)
+- [x] **Negative** — 409 duplicate model, 400 invalid evaluator/blank project, 404 unknown id (`negative.spec.ts`)
 
 ## Known gaps (product surface, not test debt)
 - **Agent edit / versions / rollback / tool-add** (§3): no UI affordance or public API — these
   mutations only happen through the proxy-ingestion pipeline.
 - **Suite rename** (§4): `PUT /api/test-suites/{id}` ignores `name`; no rename endpoint.
-- **Conversation grouping** (§5): the trace seed endpoint sets `conversationId: null`, so grouped
-  rows can't be produced without real ingestion (or a seed-endpoint change to accept a shared id).
 - **ToolUsage evaluator** (§6): not one of the four creatable evaluator kinds.
-- **ModelSwitch proposal** (§9): `proposals/seed` only supports SystemPrompt proposals.
+- **Dashboard cost widget** (§16 cost): no cost tile on the dashboard; cost is asserted on the
+  Traces detail metadata tab instead.

@@ -156,8 +156,12 @@ public class AgentCallsController : ControllerBase
                 finishReason: "stop",
                 errorMessage: null,
                 modelParameters: agent.ModelParameters,
-                conversationId: null),
+                conversationId: request.ConversationId),
             cancellationToken);
+
+        // Publish to the trace SSE broadcaster exactly as the ingestion pipeline does, so
+        // dashboard/traces SSE clients receive the seeded trace.
+        traceBroadcaster.Publish(TraceCreatedEvent.Create(call));
 
         return Ok(agentCallDtoMapper.ToDto(call));
     }
