@@ -6,7 +6,7 @@ const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, s
   testRunsApi: { list: vi.fn(), get: vi.fn() },
   testRunGroupsApi: { create: vi.fn() },
   proposalsApi: { getAll: vi.fn(), updateStatus: vi.fn() },
-  statisticsApi: { dashboard: vi.fn(), agentCounts: vi.fn() },
+  statisticsApi: { dashboard: vi.fn(), agentOverview: vi.fn() },
 }));
 
 vi.mock('../../api/agents', () => ({ agentsApi }));
@@ -47,6 +47,22 @@ describe('tracey read tools', () => {
     await createTraceyTools(ctx).get_agent.execute({ agentId: 'a1' }, ctx);
 
     expect(agentsApi.get).toHaveBeenCalledWith('a1');
+  });
+
+  it('get_agent_stats fetches the agent overview and returns summary + counts', async () => {
+    statisticsApi.agentOverview.mockResolvedValue({
+      summary: { totalTraces: 3 },
+      counts: { suiteCount: 1 },
+      timeSeries: [],
+    });
+    const ctx = makeCtx();
+    const result = await createTraceyTools(ctx).get_agent_stats.execute({ agentId: 'a1' }, ctx);
+
+    expect(statisticsApi.agentOverview).toHaveBeenCalledWith(
+      'a1',
+      expect.objectContaining({ bucket: 'daily' }),
+    );
+    expect(result).toEqual({ summary: { totalTraces: 3 }, counts: { suiteCount: 1 } });
   });
 
   it('navigate performs a client-side route change', async () => {

@@ -53,7 +53,9 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
                 onSelect(item);
               }}
               className={`flex w-full items-baseline gap-2 border-l-2 px-3 py-1.5 text-left transition-colors cursor-pointer ${
-                active ? 'border-accent bg-card-2' : 'border-transparent bg-transparent'
+                active
+                  ? 'border-accent bg-[color-mix(in_srgb,var(--accent-primary)_30%,transparent)]'
+                  : 'border-transparent bg-transparent hover:bg-[var(--bg-wash-hover)]'
               }`}
             >
               <span

@@ -1,7 +1,8 @@
 /**
  * Persists a Tracey conversation thread in `localStorage`, keyed by user + project so each
- * user's per-project chat survives navigation and reloads. The stored value is an opaque
- * array of runtime messages; callers own the message shape.
+ * user's per-project chat survives navigation and reloads. The stored value is an opaque,
+ * JSON-serializable snapshot (assistant-ui's `ExportedMessageRepository`); callers own the
+ * shape and round-trip it through the runtime's `export()` / `import()`.
  */
 
 const PREFIX = 'proxytrace.tracey.thread';
@@ -10,20 +11,18 @@ function storageKey(userKey: string, projectKey: string): string {
   return `${PREFIX}:${userKey}:${projectKey}`;
 }
 
-export function loadThread<T = unknown>(userKey: string, projectKey: string): T[] {
+export function loadThread<T = unknown>(userKey: string, projectKey: string): T | null {
   try {
     const raw = localStorage.getItem(storageKey(userKey, projectKey));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
+    return raw ? (JSON.parse(raw) as T) : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
-export function saveThread<T = unknown>(userKey: string, projectKey: string, messages: T[]): void {
+export function saveThread<T = unknown>(userKey: string, projectKey: string, value: T): void {
   try {
-    localStorage.setItem(storageKey(userKey, projectKey), JSON.stringify(messages));
+    localStorage.setItem(storageKey(userKey, projectKey), JSON.stringify(value));
   } catch {
     // Quota or serialization failure: a dropped thread cache is non-fatal.
   }

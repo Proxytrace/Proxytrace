@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
+import type { ExportedMessageRepository } from '@assistant-ui/react';
 import type {
   ChatTransport,
   UIMessage,
@@ -14,7 +15,7 @@ import { useCurrentUser } from '../../auth/useCurrentUser';
 import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
-import { clearThread, saveThread } from './tracey-storage';
+import { clearThread, loadThread, saveThread } from './tracey-storage';
 import { withId, type TraceyArtifact, type TraceyArtifactInput } from './tracey-artifacts';
 
 export interface PendingConfirmation {
@@ -135,12 +136,21 @@ export function useTraceyChat(): TraceyChat {
     );
   }, [transport, session, projectId, toolContext]);
 
-  // Best-effort thread persistence so the conversation survives navigation/reload.
+  // Thread persistence so the conversation survives navigation/reload. We restore the saved
+  // snapshot once on mount (before subscribing) and then mirror every change back to storage.
   useEffect(() => {
     const thread = runtime.thread;
+    const saved = loadThread<ExportedMessageRepository>(userKey, projectKey);
+    if (saved && saved.messages?.length) {
+      try {
+        thread.import(saved);
+      } catch {
+        // A snapshot from an incompatible runtime version is non-fatal: start fresh.
+      }
+    }
     const persist = () => {
       try {
-        saveThread(userKey, projectKey, thread.getState().messages as unknown[]);
+        saveThread(userKey, projectKey, thread.export());
       } catch {
         // non-fatal
       }

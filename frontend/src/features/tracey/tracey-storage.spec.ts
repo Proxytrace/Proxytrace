@@ -16,35 +16,35 @@ function inMemoryStorage(): Storage {
 describe('tracey-storage', () => {
   beforeEach(() => vi.stubGlobal('localStorage', inMemoryStorage()));
 
-  it('round-trips a thread keyed by user + project', () => {
-    const messages = [{ role: 'user', text: 'hi' }, { role: 'assistant', text: 'hello' }];
-    saveThread('user-1', 'proj-1', messages);
+  it('round-trips a thread snapshot keyed by user + project', () => {
+    const snapshot = { messages: [{ role: 'user', text: 'hi' }], headId: 'm1' };
+    saveThread('user-1', 'proj-1', snapshot);
 
-    expect(loadThread('user-1', 'proj-1')).toEqual(messages);
+    expect(loadThread('user-1', 'proj-1')).toEqual(snapshot);
   });
 
   it('isolates threads per user/project key', () => {
-    saveThread('user-1', 'proj-1', [{ a: 1 }]);
-    saveThread('user-1', 'proj-2', [{ b: 2 }]);
+    saveThread('user-1', 'proj-1', { a: 1 });
+    saveThread('user-1', 'proj-2', { b: 2 });
 
-    expect(loadThread('user-1', 'proj-1')).toEqual([{ a: 1 }]);
-    expect(loadThread('user-1', 'proj-2')).toEqual([{ b: 2 }]);
+    expect(loadThread('user-1', 'proj-1')).toEqual({ a: 1 });
+    expect(loadThread('user-1', 'proj-2')).toEqual({ b: 2 });
   });
 
-  it('returns an empty array when nothing is stored', () => {
-    expect(loadThread('nobody', 'nowhere')).toEqual([]);
+  it('returns null when nothing is stored', () => {
+    expect(loadThread('nobody', 'nowhere')).toBeNull();
   });
 
   it('clears a stored thread', () => {
-    saveThread('user-1', 'proj-1', [{ a: 1 }]);
+    saveThread('user-1', 'proj-1', { a: 1 });
     clearThread('user-1', 'proj-1');
 
-    expect(loadThread('user-1', 'proj-1')).toEqual([]);
+    expect(loadThread('user-1', 'proj-1')).toBeNull();
   });
 
   it('tolerates corrupt stored JSON', () => {
     localStorage.setItem('proxytrace.tracey.thread:user-1:proj-1', '{not json');
 
-    expect(loadThread('user-1', 'proj-1')).toEqual([]);
+    expect(loadThread('user-1', 'proj-1')).toBeNull();
   });
 });

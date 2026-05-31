@@ -64,14 +64,15 @@ happens. Nothing is executed until you confirm.
 
 ### Auto-approve
 
-The chat header has an **Auto-approve** toggle (default **off**). When you turn it on,
+Below the message box sits an **Auto-approve** toggle (default **off**). When you turn it on,
 Tracey performs write actions immediately without showing the confirmation card. Turn it off
 again to return to the confirm-first behavior.
 
 ## Clearing the conversation
 
-Use **Clear conversation** in the chat header to start fresh. This wipes the locally stored
-thread for the current project and clears any artifacts in the panel.
+The controls below the message box include a **trash** icon (next to the **send** button) —
+use it to start fresh. This wipes the locally stored thread for the current project and clears
+any artifacts in the panel.
 
 ## Where Tracey's traces appear
 

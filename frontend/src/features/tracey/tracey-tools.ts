@@ -50,7 +50,9 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
   return {
     navigate: tool({
       description: 'Navigate the user to an in-app route. Use a relative path like /agents or /runs/{id}.',
-      parameters: z.object({ path: z.string() }),
+      parameters: z.object({
+        path: z.string().describe('Relative in-app route to open, e.g. "/agents" or "/runs/{runId}".'),
+      }),
       confirm: false,
       execute: async ({ path }) => {
         ctx.navigate(path);
@@ -66,7 +68,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
     get_agent: tool({
       description: 'Get a single agent by id.',
-      parameters: z.object({ agentId: z.string() }),
+      parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch.') }),
       confirm: false,
       execute: async ({ agentId }) => agentsApi.get(agentId),
     }),
@@ -79,7 +81,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
     get_suite: tool({
       description: 'Get a single test suite by id.',
-      parameters: z.object({ suiteId: z.string() }),
+      parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
       execute: async ({ suiteId }) => testSuitesApi.get(suiteId),
     }),
@@ -92,7 +94,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
     get_run: tool({
       description: 'Get a single test run by id.',
-      parameters: z.object({ runId: z.string() }),
+      parameters: z.object({ runId: z.string().describe('The id of the test run to fetch.') }),
       confirm: false,
       execute: async ({ runId }) => testRunsApi.get(runId),
     }),
@@ -105,7 +107,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
     get_proposal: tool({
       description: 'Get a single optimization proposal by id.',
-      parameters: z.object({ proposalId: z.string() }),
+      parameters: z.object({ proposalId: z.string().describe('The id of the optimization proposal to fetch.') }),
       confirm: false,
       // The proposals API has no single-get; resolve from the list.
       execute: async ({ proposalId }) => {
@@ -121,15 +123,27 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       execute: async () => statisticsApi.dashboard({ projectId }),
     }),
     get_agent_stats: tool({
-      description: 'Get statistics for a single agent (token usage, costs, latencies).',
-      parameters: z.object({ agentId: z.string() }),
+      description: 'Get statistics for a single agent (token usage, costs, latencies) over the last 30 days.',
+      parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch statistics for.') }),
       confirm: false,
-      execute: async ({ agentId }) => statisticsApi.agentCounts(agentId),
+      execute: async ({ agentId }) => {
+        const to = new Date();
+        const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const overview = await statisticsApi.agentOverview(agentId, {
+          from: from.toISOString(),
+          to: to.toISOString(),
+          bucket: 'daily',
+        });
+        return { summary: overview.summary, counts: overview.counts };
+      },
     }),
 
     start_test_run: tool({
       description: 'Start a test run of a suite against an agent. Requires user confirmation.',
-      parameters: z.object({ suiteId: z.string(), agentId: z.string() }),
+      parameters: z.object({
+        suiteId: z.string().describe('The id of the test suite to run.'),
+        agentId: z.string().describe('The id of the agent to run the suite against.'),
+      }),
       confirm: true,
       execute: async ({ suiteId, agentId }, c) => {
         const agent = await agentsApi.get(agentId);
@@ -142,8 +156,9 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     set_proposal_status: tool({
       description: 'Approve (Accepted) or reject a proposal. Requires user confirmation.',
       parameters: z.object({
-        proposalId: z.string(),
-        status: z.enum([ProposalStatus.Accepted, ProposalStatus.Rejected]),
+        proposalId: z.string().describe('The id of the proposal to update.'),
+        status: z.enum([ProposalStatus.Accepted, ProposalStatus.Rejected])
+          .describe('The new status: "Accepted" to approve, "Rejected" to reject.'),
       }),
       confirm: true,
       execute: async ({ proposalId, status }, c) => {
@@ -157,9 +172,12 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       description:
         'Render a chart in the right artifact panel to visualize data (e.g. token usage, pass rates over time). Prefer this over dumping numbers in chat.',
       parameters: z.object({
-        title: z.string(),
-        type: z.enum(['bar', 'line', 'area']),
-        points: z.array(z.object({ label: z.string(), value: z.number() })),
+        title: z.string().describe('Heading shown above the chart.'),
+        type: z.enum(['bar', 'line', 'area']).describe('The chart style to render.'),
+        points: z.array(z.object({
+          label: z.string().describe('X-axis label for this data point.'),
+          value: z.number().describe('Numeric value for this data point.'),
+        })).describe('The data points to plot, in display order.'),
       }),
       confirm: false,
       execute: async ({ title, type, points }, c) => {
@@ -170,9 +188,10 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     show_table: tool({
       description: 'Render a table in the right artifact panel. Use for tabular comparisons.',
       parameters: z.object({
-        title: z.string(),
-        columns: z.array(z.string()),
-        rows: z.array(z.array(z.union([z.string(), z.number()]))),
+        title: z.string().describe('Heading shown above the table.'),
+        columns: z.array(z.string()).describe('Column header labels, left to right.'),
+        rows: z.array(z.array(z.union([z.string(), z.number()])))
+          .describe('Table rows; each row is an array of cells aligned to "columns".'),
       }),
       confirm: false,
       execute: async ({ title, columns, rows }, c) => {
@@ -184,9 +203,9 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       description:
         'Render a longer text artifact (markdown, JSON, or code) in the right panel instead of inline chat.',
       parameters: z.object({
-        title: z.string(),
-        format: z.enum(['markdown', 'json', 'code']),
-        content: z.string(),
+        title: z.string().describe('Heading shown above the text artifact.'),
+        format: z.enum(['markdown', 'json', 'code']).describe('How to render the content.'),
+        content: z.string().describe('The full text body to render in the panel.'),
       }),
       confirm: false,
       execute: async ({ title, format, content }, c) => {
