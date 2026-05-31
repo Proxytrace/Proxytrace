@@ -77,6 +77,6 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         return new ResolvedApiKey(project, provider);
     }
 
-    private static string CacheKey(string rawKey, string? projectSlug) 
+    private static string CacheKey(string rawKey, string? projectSlug)
         => $"apikey:{projectSlug}:{rawKey}";
 }

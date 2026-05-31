@@ -156,6 +156,7 @@ public sealed class CachedApiKeyResolverTests
         result.Project.Should().BeSameAs(apiKey.Project);
     }
 
+
     [TestMethod]
     public async Task ResolveAsync_ProxytraceKeyWins_OnCollisionWithProviderKey()
     {

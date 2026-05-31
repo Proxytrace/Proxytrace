@@ -113,7 +113,8 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
             message.ResponseBody,
             TimeSpan.FromMilliseconds(message.DurationMs),
             (HttpStatusCode)message.HttpStatus,
-            message.SessionId);
+            message.SessionId,
+            message.AgentName);
 
         await processor.IngestAsync(job, cancellationToken);
     }

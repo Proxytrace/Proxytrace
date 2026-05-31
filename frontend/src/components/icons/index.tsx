@@ -81,11 +81,29 @@ export function SparklesIcon(props: IconProps) {
   );
 }
 
+export function MessageSparkleIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.6-.8L3 21l1.9-5.1a8.5 8.5 0 0 1-.8-3.6A8.38 8.38 0 0 1 12.5 4"/>
+      <path d="M18 2.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>
+    </Svg>
+  );
+}
+
 export function ServerIcon(props: IconProps) {
   return (
     <Svg {...props}>
       <rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/>
       <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+    </Svg>
+  );
+}
+
+export function MessagePlusIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5"/>
+      <line x1="15" y1="6" x2="21" y2="6"/><line x1="18" y1="3" x2="18" y2="9"/>
     </Svg>
   );
 }

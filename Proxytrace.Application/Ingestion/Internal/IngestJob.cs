@@ -11,4 +11,5 @@ internal sealed record IngestJob(
     string? ResponseBody,
     TimeSpan Duration,
     HttpStatusCode HttpStatus,
-    string? SessionId = null);
+    string? SessionId = null,
+    string? AgentName = null);

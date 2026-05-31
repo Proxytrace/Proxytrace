@@ -270,6 +270,12 @@ a { text-decoration: none; color: inherit; }
   color: var(--accent-hover);
 }
 
+/* Tracey "/" menu: keep the active option highlight independent of utility-class generation. */
+#tracey-slash-menu [role="option"][aria-selected="true"] {
+  background-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  border-left-color: var(--accent-primary);
+}
+
 /* ── Buttons ── */
 .btn-primary {
   padding: 8px 16px;

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
@@ -12,19 +12,20 @@ import { Avatar } from '../ui/Avatar';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
+import { useKiosk } from '../../contexts/KioskContext';
 import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon, TargetIcon,
+  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon,
   LayoutSidebarIcon, ExternalLinkIcon,
 } from '../icons';
 
 type NavIconName =
   | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
-  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings';
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey';
 
 interface NavEntry {
   label: string;
@@ -44,6 +45,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
       { label: 'Traces', icon: 'activity', to: '/traces' },
+      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai' },
     ],
   },
   {
@@ -91,6 +93,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   sparkles: <SparklesIcon size={16} />,
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,
+  tracey: <MessageSparkleIcon size={16} />,
 };
 
 type HealthStatus = 'online' | 'offline' | 'connecting';
@@ -115,11 +118,14 @@ const HEALTH_LABEL: Record<HealthStatus, string> = {
 
 export function Shell() {
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
   const { data: online } = useHealth();
   const { data: license } = useLicense();
   const licenseFeatures = license?.features ?? [];
   const location = useLocation();
   const { currentProject } = useCurrentProject();
+  // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
+  const { enabled: kioskEnabled } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
@@ -172,7 +178,10 @@ export function Shell() {
                   {group.label}
                 </div>
               )}
-              {group.items.map(item =>
+              {group.items
+                // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
+                .filter(item => !(kioskEnabled && item.to === '/tracey-ai'))
+                .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
                     key={item.to}
@@ -255,6 +264,18 @@ export function Shell() {
           </div>
 
           <LicenseBadge />
+
+          {!kioskEnabled && (
+            <button
+              type="button"
+              data-testid="tracey-toggle"
+              onClick={() => navigate('/tracey-ai')}
+              title="Tracey — AI assistant"
+              className={cn('btn-icon', location.pathname.startsWith('/tracey-ai') && 'text-accent')}
+            >
+              <MessageSparkleIcon size={16} />
+            </button>
+          )}
 
           <button
             type="button"

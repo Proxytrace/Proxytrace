@@ -115,8 +115,12 @@ public sealed class AgentsControllerTests : BaseTest<Module>
     private static AgentsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<IRepository<IModelEndpoint>>(),
+        services.GetRequiredService<IRepository<Proxytrace.Domain.Project.IProject>>(),
         services.GetRequiredService<IAgentCallRepository>(),
         services.GetRequiredService<Proxytrace.Domain.AgentVersion.IAgentVersionRepository>(),
         services.GetRequiredService<IProposalBroadcaster>(),
-        services.GetRequiredService<AgentDtoMapper>());
+        services.GetRequiredService<AgentDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Domain.Agent.IAgent.CreateNew>(),
+        services.GetRequiredService<Proxytrace.Domain.Prompt.IPromptTemplate.Create>(),
+        services.GetRequiredService<Proxytrace.Domain.Inference.IModelParameters.Create>());
 }

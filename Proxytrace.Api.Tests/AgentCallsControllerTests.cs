@@ -93,5 +93,7 @@ public sealed class AgentCallsControllerTests : BaseTest<Module>
         services.GetRequiredService<IDashboardStatistics>(),
         services.GetRequiredService<ITraceBroadcaster>(),
         services.GetRequiredService<AgentCallDtoMapper>(),
-        services.GetRequiredService<AgentDtoMapper>());
+        services.GetRequiredService<AgentDtoMapper>(),
+        services.GetRequiredService<Proxytrace.Domain.AgentCall.IAgentCall.CreateNew>(),
+        services.GetRequiredService<Proxytrace.Domain.Completion.ICompletion.Create>());
 }

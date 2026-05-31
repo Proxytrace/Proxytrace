@@ -228,6 +228,30 @@ public sealed class Module : Autofac.Module
                 .IfNotRegistered(t);
         }
 
+        // Per-scope: both resolve IAgentRepository, which is bound to the request's ambient
+        // DbContext. A singleton would capture one repository/context and leak it across requests.
+        builder.RegisterType<Tracey.Internal.TraceyAgentProvisioner>()
+            .As<Tracey.ITraceyAgentProvisioner>()
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<Tracey.Internal.TraceySessionService>()
+            .As<Tracey.ITraceySessionService>()
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<Tracey.Internal.TraceyAgentSeederHostedService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(Tracey.Internal.TraceyAgentSeederHostedService));
+
+        const string traceySeederHostedServiceKey = "Proxytrace.Application.TraceyAgentSeederHostedService.Registered";
+        if (!builder.Properties.ContainsKey(traceySeederHostedServiceKey))
+        {
+            builder.Properties[traceySeederHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
+                services.AddSingleton<IHostedService>(sp =>
+                    sp.GetRequiredService<Tracey.Internal.TraceyAgentSeederHostedService>()));
+        }
+
         builder.RegisterType<DemoSeederHostedService>()
             .AsSelf()
             .SingleInstance()

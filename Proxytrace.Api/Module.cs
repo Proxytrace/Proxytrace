@@ -37,7 +37,7 @@ internal sealed class Module : Autofac.Module
         ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
         IConfiguration configuration = configurationBuilder
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .AddJsonFile("appsettings.development.json", optional: true, reloadOnChange: false)
+            .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
@@ -71,6 +71,10 @@ internal sealed class Module : Autofac.Module
                 client.BaseAddress = new Uri(selfBaseUrl.TrimEnd('/') + "/");
                 client.Timeout = TimeSpan.FromMinutes(10);
             });
+
+            // Upstream client for Tracey's same-origin chat passthrough (forwards to the project's
+            // provider). Long timeout to accommodate streamed completions.
+            services.AddHttpClient("tracey-upstream", client => client.Timeout = TimeSpan.FromMinutes(5));
         });
 
         // Ingestion transport (consumer side). The standalone proxy service publishes captured

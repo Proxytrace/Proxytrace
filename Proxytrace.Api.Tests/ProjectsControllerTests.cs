@@ -118,7 +118,8 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
             services.GetRequiredService<IRepository<IModelEndpoint>>(),
             services.GetRequiredService<IRepository<IUser>>(),
             services.GetRequiredService<IProject.CreateNew>(),
-            services.GetRequiredService<IProject.CreateExisting>());
+            services.GetRequiredService<IProject.CreateExisting>(),
+            services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>());
 
     private async Task<(IProject project, IUser user)> SeedProjectAndUserAsync(IServiceProvider services)
     {

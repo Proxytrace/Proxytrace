@@ -1,6 +1,5 @@
 import { api, qs } from './client';
 import type {
-  AgentEntityCountsDto,
   AgentOverviewDto,
   AgentPassRatePointDto,
   AgentSuitePassRateDto,
@@ -33,6 +32,4 @@ export const statisticsApi = {
     api.get<AgentPassRatePointDto[]>(`/api/statistics/agents/${agentId}/pass-rate-trend${qs(params)}`),
   agentSuitePassRates: (agentId: string) =>
     api.get<AgentSuitePassRateDto[]>(`/api/statistics/agents/${agentId}/suite-pass-rates`),
-  agentCounts: (agentId: string) =>
-    api.get<AgentEntityCountsDto>(`/api/statistics/agents/${agentId}/counts`),
 };

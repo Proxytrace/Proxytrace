@@ -260,6 +260,150 @@ public sealed class AgentCallIngestorTests : BaseTest<Module>
         calls[1].ConversationId.Should().Be(sharedConversationId);
     }
 
+    // Reasoning models receive the system prompt under the "developer" role (emitted by the AI SDK
+    // for Tracey's own calls); the parser must treat it like "system" or the whole call is dropped.
+    private const string DeveloperRoleRequestBody = $$"""
+                                                      {
+                                                          "model": "{{Model}}",
+                                                          "messages": [
+                                                              {"role": "developer", "content": "{{SystemPrompt}}"},
+                                                              {"role": "user", "content": "{{UserPrompt}}"}
+                                                          ]
+                                                      }
+                                                      """;
+
+    [TestMethod]
+    public async Task IngestAsync_WhenSystemPromptSentAsDeveloperRole_PersistsCall()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: DeveloperRoleRequestBody,
+                ResponseBody: ChatTurn1ResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: null),
+            cancellationToken: CancellationToken);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls.Should().HaveCount(1);
+        calls[0].Version.SystemPrompt.Template.Should().Contain(SystemPrompt);
+    }
+
+    // A second request with a *different* system prompt (so its strict fingerprint differs) — used
+    // to prove a name-attributed call appends a new version to the same named agent rather than
+    // spawning a separate one.
+    private const string NamedAgentSecondPromptRequestBody = $$"""
+                                                              {
+                                                                  "model": "{{Model}}",
+                                                                  "messages": [
+                                                                      {"role": "system", "content": "You are Tracey, a totally different prompt."},
+                                                                      {"role": "user", "content": "{{UserPrompt}}"}
+                                                                  ],
+                                                                  "tools": [{
+                                                                      "type": "function",
+                                                                      "function": {
+                                                                          "name": "{{ToolName}}",
+                                                                          "description": "Get current weather",
+                                                                          "parameters": {"type": "object", "properties": "{}"}
+                                                                      }
+                                                                  }]
+                                                              }
+                                                              """;
+
+    // A well-formed tool schema (the shared fixtures use a malformed "properties":"{}" that the
+    // parser drops) — lets us prove the named agent's version is captured straight from the wire.
+    private const string NamedAgentRequestBody = $$"""
+                                                   {
+                                                       "model": "{{Model}}",
+                                                       "messages": [
+                                                           {"role": "system", "content": "{{SystemPrompt}}"},
+                                                           {"role": "user", "content": "{{UserPrompt}}"}
+                                                       ],
+                                                       "tools": [{
+                                                           "type": "function",
+                                                           "function": {
+                                                               "name": "{{ToolName}}",
+                                                               "description": "Get current weather",
+                                                               "parameters": { "type": "object", "properties": { "city": { "type": "string" } } }
+                                                           }
+                                                       }]
+                                                   }
+                                                   """;
+
+    [TestMethod]
+    public async Task IngestAsync_WhenAgentNameProvidedAndAgentMissing_CreatesNamedAgentFromWire()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider,
+                Project: project,
+                RequestBody: NamedAgentRequestBody,
+                ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100),
+                HttpStatus: HttpStatusCode.OK,
+                SessionId: null,
+                AgentName: "Tracey"),
+            cancellationToken: CancellationToken);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls.Should().HaveCount(1);
+        calls[0].Agent.Name.Should().Be("Tracey");
+        // The version is captured from the actual request — the backend mirrors nothing.
+        calls[0].Version.Tools.Should().ContainSingle(t => t.Name == ToolName);
+    }
+
+    [TestMethod]
+    public async Task IngestAsync_WhenAgentNameProvided_AttributesToSameAgentAndBypassesSimilarity()
+    {
+        var services = GetServices();
+        var ingestion = services.GetRequiredService<AgentCallProcessor>();
+        var callRepo = services.GetRequiredService<IAgentCallRepository>();
+        var agentRepo = services.GetRequiredService<IRepository<IAgent>>();
+        var (provider, project) = await GetProviderAndProjectAsync(services);
+
+        // First named call creates the "Tracey" agent + v1.
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider, Project: project,
+                RequestBody: FirstRequestBody, ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100), HttpStatus: HttpStatusCode.OK,
+                SessionId: null, AgentName: "Tracey"),
+            cancellationToken: CancellationToken);
+
+        // Second named call with a different system prompt: a brand-new fingerprint that the
+        // similarity matcher would split into its own agent — but name attribution keeps it under
+        // the same "Tracey" agent as a new version.
+        await ingestion.IngestAsync(
+            new IngestJob(
+                Provider: provider, Project: project,
+                RequestBody: NamedAgentSecondPromptRequestBody, ResponseBody: FirstResponseBody,
+                Duration: TimeSpan.FromMilliseconds(100), HttpStatus: HttpStatusCode.OK,
+                SessionId: null, AgentName: "Tracey"),
+            cancellationToken: CancellationToken);
+
+        (await agentRepo.CountAsync(CancellationToken)).Should().Be(1);
+
+        var calls = (await callRepo.GetFilteredAsync(
+            new AgentCallFilter { ProjectId = project.Id }, 1, 10, CancellationToken)).Items;
+        calls.Should().HaveCount(2);
+        calls[0].Agent.Id.Should().Be(calls[1].Agent.Id);
+        calls[0].Version.Id.Should().NotBe(calls[1].Version.Id);
+    }
+
     [TestMethod]
     public async Task IngestAsync_WhenSessionIdAndToolsNotResent_InheritsAgentFromPriorCall()
     {

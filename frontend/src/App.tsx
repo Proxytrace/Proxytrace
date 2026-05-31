@@ -24,6 +24,7 @@ import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
 const Traces = lazy(() => import('./features/traces/Traces'));
+const TraceyAI = lazy(() => import('./features/tracey/TraceyAI'));
 const Agents = lazy(() => import('./features/agents/Agents'));
 const Suites = lazy(() => import('./features/suites/Suites'));
 const Evaluators = lazy(() => import('./features/evaluators/Evaluators'));
@@ -157,6 +158,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={wrap(<Dashboard />)} />
         <Route path="traces" element={wrap(<Traces />)} />
+        <Route path="tracey-ai" element={wrap(<TraceyAI />)} />
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />
         <Route path="evaluators" element={wrap(<Evaluators />)} />
