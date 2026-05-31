@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
-import { TargetIcon } from '../../../../components/icons';
+import { CheckIcon, TargetIcon } from '../../../../components/icons';
 import { Button } from '../../../../components/ui/Button';
 import { useTraceyActions } from '../../tracey-actions';
 import { ToolUIFrame } from './ToolUIFrame';
@@ -33,19 +33,23 @@ export const ActionPromptToolUI: ToolCallMessagePartComponent = ({ args }) => {
   return (
     <ToolUIFrame state="ready" title={question} icon={<TargetIcon size={14} />} testId="tracey-choices">
       <div className="flex flex-wrap gap-1.5">
-        {options.map((option) => (
-          <Button
-            key={option.value}
-            type="button"
-            size="sm"
-            variant={picked === option.label ? 'primary' : 'secondary'}
-            disabled={picked !== null}
-            onClick={() => choose(option)}
-            data-testid={`tracey-choice-${option.value}`}
-          >
-            {option.label}
-          </Button>
-        ))}
+        {options.map((option) => {
+          const isPicked = picked === option.label;
+          return (
+            <Button
+              key={option.value}
+              type="button"
+              size="sm"
+              variant={isPicked ? 'primary' : 'secondary'}
+              disabled={picked !== null}
+              onClick={() => choose(option)}
+              data-testid={`tracey-choice-${option.value}`}
+            >
+              {isPicked && <CheckIcon size={13} className="-ml-0.5 mr-1" />}
+              {option.label}
+            </Button>
+          );
+        })}
       </div>
     </ToolUIFrame>
   );
