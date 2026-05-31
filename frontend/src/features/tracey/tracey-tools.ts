@@ -27,8 +27,9 @@ export interface TraceyToolContext {
 
 /**
  * A single Tracey tool. `parameters` is a zod schema (the AI runtime turns it into a JSON
- * schema); `execute` runs client-side. This is the single source of truth — the backend
- * `TraceyDefinition` mirrors the same shapes onto the stored Tracey agent.
+ * schema); `execute` runs client-side. This is the sole source of truth for Tracey's tool set:
+ * the backend stores no copy — it captures the prompt + tools from the wire on her first call
+ * and versions them under her name-attributed agent.
  */
 export interface TraceyTool<TArgs = Record<string, unknown>> {
   description: string;
@@ -255,8 +256,8 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
 }
 
 /**
- * Static name + description for every Tracey tool, for the slash menu / chips. Kept in sync with
- * {@link createTraceyTools} (and the backend `TraceyDefinition`).
+ * Static name + description for every Tracey tool, for the slash menu / chips. Must stay in sync
+ * with {@link createTraceyTools} — every tool defined there has an entry here.
  */
 export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'navigate', description: 'Open an in-app page.' },
@@ -277,4 +278,6 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'show_chart', description: 'Plot data inline in the chat.' },
   { name: 'show_table', description: 'Show a table inline in the chat.' },
   { name: 'show_text', description: 'Show markdown/JSON/code inline in the chat.' },
+  { name: 'present_choices', description: 'Ask the user to pick from inline options.' },
+  { name: 'show_form', description: 'Collect structured input via an inline form.' },
 ];

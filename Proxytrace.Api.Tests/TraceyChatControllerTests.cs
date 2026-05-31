@@ -7,8 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
+using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
 using Proxytrace.Messaging;
 using Proxytrace.Testing;
 
@@ -34,7 +36,8 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             .CreateAsync(CancellationToken);
 
         var responseBody = await InvokeForwardAsync(
-            services, project.Id, """{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}""");
+            services, AdminUserAccessor(services), project.Id,
+            """{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}]}""");
 
         responseBody.Should().Be(upstreamBody);
         await ingestion.Received(1).PublishAsync(
@@ -57,6 +60,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             services.GetRequiredService<IIngestionStream>(),
             services.GetRequiredService<IRepository<IProject>>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
+            AdminUserAccessor(services),
             NullLogger<TraceyChatController>.Instance);
 
         var http = new DefaultHttpContext();
@@ -69,13 +73,63 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
         http.Response.StatusCode.Should().Be(StatusCodes.Status404NotFound);
     }
 
-    private async Task<string> InvokeForwardAsync(IServiceProvider services, Guid projectId, string requestJson)
+    [TestMethod]
+    public async Task Forward_NonMember_Returns403()
+    {
+        var ingestion = Substitute.For<IIngestionStream>();
+        IServiceProvider services = GetServices(builder =>
+        {
+            builder.Register(_ => new FakeHttpClientFactory(FakeHttpMessageHandler.BuildOpenAiResponse("x")))
+                .As<IHttpClientFactory>().SingleInstance();
+            builder.RegisterInstance(ingestion).As<IIngestionStream>();
+        });
+
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>()
+            .CreateAsync(CancellationToken);
+
+        // A non-admin user that is not a member of the project.
+        var outsider = services.GetRequiredService<IUser.CreateNew>()(
+            "outsider@example.com", externalSubject: null, passwordHash: "hash", UserRole.Member);
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(outsider);
+
+        var controller = new TraceyChatController(
+            services.GetRequiredService<IHttpClientFactory>(),
+            services.GetRequiredService<IIngestionStream>(),
+            services.GetRequiredService<IRepository<IProject>>(),
+            services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
+            accessor,
+            NullLogger<TraceyChatController>.Instance);
+
+        var http = new DefaultHttpContext();
+        http.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("{}"));
+        http.Response.Body = new MemoryStream();
+        controller.ControllerContext = new ControllerContext { HttpContext = http };
+
+        await controller.Forward(project.Id, "chat/completions", CancellationToken);
+
+        http.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        await ingestion.DidNotReceive().PublishAsync(Arg.Any<IngestMessage>(), Arg.Any<CancellationToken>());
+    }
+
+    private static ICurrentUserAccessor AdminUserAccessor(IServiceProvider services)
+    {
+        var admin = services.GetRequiredService<IUser.CreateNew>()(
+            "admin@example.com", externalSubject: null, passwordHash: "hash", UserRole.Admin);
+        var accessor = Substitute.For<ICurrentUserAccessor>();
+        accessor.GetCurrentUserAsync(Arg.Any<CancellationToken>()).Returns(admin);
+        return accessor;
+    }
+
+    private async Task<string> InvokeForwardAsync(
+        IServiceProvider services, ICurrentUserAccessor currentUser, Guid projectId, string requestJson)
     {
         var controller = new TraceyChatController(
             services.GetRequiredService<IHttpClientFactory>(),
             services.GetRequiredService<IIngestionStream>(),
             services.GetRequiredService<IRepository<IProject>>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
+            currentUser,
             NullLogger<TraceyChatController>.Instance);
 
         var http = new DefaultHttpContext();

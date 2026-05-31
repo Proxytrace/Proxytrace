@@ -228,13 +228,15 @@ public sealed class Module : Autofac.Module
                 .IfNotRegistered(t);
         }
 
+        // Per-scope: both resolve IAgentRepository, which is bound to the request's ambient
+        // DbContext. A singleton would capture one repository/context and leak it across requests.
         builder.RegisterType<Tracey.Internal.TraceyAgentProvisioner>()
             .As<Tracey.ITraceyAgentProvisioner>()
-            .SingleInstance();
+            .InstancePerLifetimeScope();
 
         builder.RegisterType<Tracey.Internal.TraceySessionService>()
             .As<Tracey.ITraceySessionService>()
-            .SingleInstance();
+            .InstancePerLifetimeScope();
 
         builder.RegisterType<Tracey.Internal.TraceyAgentSeederHostedService>()
             .AsSelf()

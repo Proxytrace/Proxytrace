@@ -4,10 +4,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Application.Auth;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
 using Proxytrace.Messaging;
 
 namespace Proxytrace.Api.Controllers;
@@ -36,6 +39,7 @@ public class TraceyChatController : ControllerBase
     private readonly IIngestionStream stream;
     private readonly IRepository<IProject> projects;
     private readonly ITraceyAgentProvisioner traceyProvisioner;
+    private readonly ICurrentUserAccessor currentUser;
     private readonly ILogger<TraceyChatController> logger;
 
     public TraceyChatController(
@@ -43,12 +47,14 @@ public class TraceyChatController : ControllerBase
         IIngestionStream stream,
         IRepository<IProject> projects,
         ITraceyAgentProvisioner traceyProvisioner,
+        ICurrentUserAccessor currentUser,
         ILogger<TraceyChatController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.stream = stream;
         this.projects = projects;
         this.traceyProvisioner = traceyProvisioner;
+        this.currentUser = currentUser;
         this.logger = logger;
     }
 
@@ -63,6 +69,16 @@ public class TraceyChatController : ControllerBase
             return;
         }
 
+        // Authorization: forwarding spends the project provider's real upstream credential, so the
+        // caller must belong to the project (admins may reach any project). Without this, any
+        // authenticated user could drive any tenant's key by guessing a project id.
+        var user = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (user is null || !IsMember(user, project))
+        {
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            return;
+        }
+
         var provider = project.SystemEndpoint.Provider;
 
         // Guarantee Tracey's system agent exists and tag the captured call with its name, so
@@ -72,14 +88,15 @@ public class TraceyChatController : ControllerBase
         using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream, cancellationToken);
         var requestBodyBytes = bodyStream.ToArray();
-        var requestBody = Encoding.UTF8.GetString(requestBodyBytes);
 
-        var isStreaming = IsStreamingRequest(requestBody);
+        var isStreaming = IsStreamingRequest(requestBodyBytes);
         if (isStreaming)
         {
             requestBodyBytes = InjectStreamUsageOption(requestBodyBytes);
-            requestBody = Encoding.UTF8.GetString(requestBodyBytes);
         }
+
+        // Decode once, after the optional stream-usage injection, for the ingest payload.
+        var requestBody = Encoding.UTF8.GetString(requestBodyBytes);
 
         var upstream = BuildUpstreamRequest(path, requestBodyBytes, provider.ApiKey, provider.Endpoint);
         var client = httpClientFactory.CreateClient("tracey-upstream");
@@ -143,6 +160,10 @@ public class TraceyChatController : ControllerBase
         Stopwatch sw,
         CancellationToken cancellationToken)
     {
+        // SSE must not be buffered: disable response buffering so each flushed chunk reaches the
+        // browser immediately, even behind a reverse proxy.
+        HttpContext.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
+
         var accumulated = new StringBuilder();
         await using var upstreamStream = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
         using var reader = new StreamReader(upstreamStream, Encoding.UTF8, leaveOpen: true);
@@ -239,11 +260,11 @@ public class TraceyChatController : ControllerBase
         }
     }
 
-    private static bool IsStreamingRequest(string requestBody)
+    private static bool IsStreamingRequest(byte[] requestBodyBytes)
     {
         try
         {
-            using var doc = JsonDocument.Parse(requestBody);
+            using var doc = JsonDocument.Parse(requestBodyBytes);
             if (doc.RootElement.TryGetProperty("stream", out var streamProp))
             {
                 return streamProp.ValueKind == JsonValueKind.True;
@@ -256,4 +277,7 @@ public class TraceyChatController : ControllerBase
 
         return false;
     }
+
+    private static bool IsMember(IUser user, IProject project)
+        => user.Role == UserRole.Admin || project.Members.Any(m => m.Id == user.Id);
 }
