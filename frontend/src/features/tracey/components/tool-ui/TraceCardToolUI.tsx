@@ -29,7 +29,7 @@ export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
             <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
             <Pill label={trace.provider} color={providerColor(trace.provider)} size="sm" />
           </div>
-          <div className="text-body-sm text-muted">
+          <div className="font-mono text-body-sm tabular-nums text-muted">
             {fmtTokens(trace.inputTokens)} in · {fmtTokens(trace.outputTokens)} out ·{' '}
             {fmtDuration(trace.durationMs)} · {fmtCost(trace.costEur)}
           </div>

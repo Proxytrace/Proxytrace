@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowUpRightIcon } from '../../../../components/icons';
 import { ToolUIFrame } from './ToolUIFrame';
 import type { ToolUIState } from './tool-ui-state';
 
@@ -29,9 +30,23 @@ export function EntityCardLink({ state, to, title, icon, color, testId, pendingL
     <Link
       to={to}
       data-testid={testId}
-      className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
+      className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
     >
-      <ToolUIFrame state="ready" title={title} icon={icon} accentBar={color} hoverColor={color}>
+      <ToolUIFrame
+        state="ready"
+        title={title}
+        icon={icon}
+        accentBar={color}
+        hoverColor={color}
+        cornerAccessory={
+          <span
+            aria-hidden
+            className="text-muted opacity-0 transition-[opacity,color] duration-[var(--motion-fast)] ease-[var(--ease-standard)] group-hover:text-secondary group-hover:opacity-100 group-focus-visible:opacity-100"
+          >
+            <ArrowUpRightIcon size={14} />
+          </span>
+        }
+      >
         {children}
       </ToolUIFrame>
     </Link>

@@ -11,6 +11,8 @@ interface ToolUIFrameProps {
   accentBar?: string;
   /** Runtime color enabling the interactive hover glow (entity cards). */
   hoverColor?: string;
+  /** Optional element pinned to the card's top-right corner (e.g. a navigate affordance). */
+  cornerAccessory?: ReactNode;
   pendingLabel?: string;
   errorLabel?: string;
   testId?: string;
@@ -28,6 +30,7 @@ export function ToolUIFrame({
   icon,
   accentBar,
   hoverColor,
+  cornerAccessory,
   pendingLabel = 'Working…',
   errorLabel = 'Tracey couldn’t load this.',
   testId,
@@ -61,6 +64,7 @@ export function ToolUIFrame({
         <div className="flex items-center gap-2">
           {icon && <span className="shrink-0 text-muted">{icon}</span>}
           {title && <span className="truncate text-h2 font-semibold text-primary">{title}</span>}
+          {cornerAccessory && <span className="ml-auto shrink-0 pl-2">{cornerAccessory}</span>}
         </div>
       )}
       {children && <div className={icon || title ? 'mt-2.5' : undefined}>{children}</div>}

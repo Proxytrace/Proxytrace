@@ -35,7 +35,7 @@ export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, is
             <Badge label={run.status} variant={STATUS_VARIANT[run.status]} size="sm" />
             <Badge label={`${fmtPct(run.passRate)} pass`} variant="neutral" size="sm" />
           </div>
-          <div className="text-body-sm text-muted">
+          <div className="font-mono text-body-sm tabular-nums text-muted">
             {run.passedCases}/{run.totalCases} passed · {fmtCost(run.costUsd)} ·{' '}
             {fmtTokens((run.tokensIn ?? 0) + (run.tokensOut ?? 0))} tok
           </div>

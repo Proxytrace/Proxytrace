@@ -39,7 +39,7 @@ function TypingDots() {
 function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="flex justify-start gap-2.5">
-      <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
+      <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]">
         <SparklesIcon size={14} />
       </div>
       <div className="min-w-0 flex-1 pt-0.5 text-[13px] text-primary">
