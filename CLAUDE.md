@@ -83,6 +83,13 @@ npm test            # Vitest unit tests
 
 The `./dev.sh` flow does not auto-seed; use the `/setup` page (or `SetupController`) to populate demo data.
 
+### End-to-end tests (Playwright, inside `e2e/`)
+The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`).
+**Do not run the e2e tests if Docker is not installed** — they require a working
+Docker daemon and will fail without one. Check first (e.g. `docker --version` and
+`docker info`); if Docker is unavailable, skip the e2e suite and say so rather than
+attempting to run it. See the `run-e2e-tests` skill for how to execute and triage them.
+
 ## Architecture
 
 Strict layered dependency flow — each layer may only depend on layers below it:
