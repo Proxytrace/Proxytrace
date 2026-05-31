@@ -60,14 +60,14 @@ export function ToolUIFrame({
       className="my-1"
       data-testid={testId}
     >
-      {(icon || title) && (
+      {(icon || title || cornerAccessory) && (
         <div className="flex items-center gap-2">
           {icon && <span className="shrink-0 text-muted">{icon}</span>}
           {title && <span className="truncate text-h2 font-semibold text-primary">{title}</span>}
           {cornerAccessory && <span className="ml-auto shrink-0 pl-2">{cornerAccessory}</span>}
         </div>
       )}
-      {children && <div className={icon || title ? 'mt-2.5' : undefined}>{children}</div>}
+      {children && <div className={icon || title || cornerAccessory ? 'mt-2.5' : undefined}>{children}</div>}
     </Card>
   );
 }

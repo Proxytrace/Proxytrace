@@ -10,7 +10,7 @@ import { toolUiState } from './tool-ui-state';
 /** Inline renderer for the `list_agents` tool result. */
 export const AgentListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
-  const agents = (result as AgentDto[] | undefined) ?? [];
+  const agents = Array.isArray(result) ? (result as AgentDto[]) : [];
   return (
     <ListCard
       state={state}

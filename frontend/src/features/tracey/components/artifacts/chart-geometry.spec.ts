@@ -17,9 +17,13 @@ describe('chart-geometry', () => {
     expect(scale.domainMax).toBe(8);
   });
 
-  it('falls back to a unit domain when all values are zero', () => {
+  it('collapses all-zero data to a flat baseline without dividing by zero', () => {
     const scale = buildScale([0, 0]);
-    expect(scale.domainMax).toBe(1);
+    expect(scale.domainMax).toBe(0);
+    expect(scale.domainMin).toBe(0);
+    // y() must stay finite (range is guarded), landing on the baseline.
+    expect(Number.isFinite(scale.y(0))).toBe(true);
+    expect(scale.y(0)).toBeCloseTo(scale.baselineY);
   });
 
   it('produces count+1 inclusive gridline ticks across the domain', () => {

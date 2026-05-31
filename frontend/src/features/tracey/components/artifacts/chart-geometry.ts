@@ -26,7 +26,9 @@ export interface Scale {
 }
 
 export function buildScale(values: number[]): Scale {
-  const domainMax = Math.max(...values, 0) || 1;
+  // Zero-anchored: the domain always includes 0 so bar/area heights are honest. `range` guards
+  // the divide so all-zero (or all-equal) data collapses to a flat baseline instead of NaN.
+  const domainMax = Math.max(...values, 0);
   const domainMin = Math.min(...values, 0);
   const range = domainMax - domainMin || 1;
   const y = (v: number) => PAD.top + INNER_H - ((v - domainMin) / range) * INNER_H;

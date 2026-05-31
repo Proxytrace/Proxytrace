@@ -11,7 +11,7 @@ import { toolUiState } from './tool-ui-state';
 /** Inline renderer for the `list_proposals` tool result. */
 export const ProposalListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
-  const proposals = (result as OptimizationProposalDto[] | undefined) ?? [];
+  const proposals = Array.isArray(result) ? (result as OptimizationProposalDto[]) : [];
   return (
     <ListCard
       state={state}

@@ -10,7 +10,7 @@ import { toolUiState } from './tool-ui-state';
 /** Inline renderer for the `list_suites` tool result. */
 export const SuiteListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
-  const suites = (result as TestSuiteDto[] | undefined) ?? [];
+  const suites = Array.isArray(result) ? (result as TestSuiteDto[]) : [];
   return (
     <ListCard
       state={state}

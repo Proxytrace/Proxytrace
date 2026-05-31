@@ -12,7 +12,7 @@ import { toolUiState } from './tool-ui-state';
 /** Inline renderer for the `list_runs` tool result. */
 export const RunListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
-  const runs = (result as TestRunDto[] | undefined) ?? [];
+  const runs = Array.isArray(result) ? (result as TestRunDto[]) : [];
   return (
     <ListCard
       state={state}
