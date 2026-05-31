@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Negative / error paths: API error shapes (404 / 400) and the UI's graceful degradation when a

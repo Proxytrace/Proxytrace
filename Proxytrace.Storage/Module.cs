@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Statistics;
+using Proxytrace.Application.TestSupport;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Domain;
 using Proxytrace.Storage.Internal;
@@ -95,6 +96,10 @@ public sealed class Module : Autofac.Module
 
         builder.RegisterType<Transaction>()
             .As<ITransaction>();
+
+        builder.RegisterType<TestDataReset>()
+            .As<ITestDataReset>()
+            .InstancePerDependency();
 
         builder.RegisterType<TestRunStatsStore>()
             .AsImplementedInterfaces()

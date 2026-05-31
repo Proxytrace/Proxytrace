@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 
 // Every main route must load authenticated (storageState from the setup project), render the
 // nav chrome, and produce zero JS console / page errors. Adding a route here is the cheapest

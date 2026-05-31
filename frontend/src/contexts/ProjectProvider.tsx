@@ -59,7 +59,14 @@ export default function ProjectProvider({
     if (storedProjectId && projects.some((p) => p.id === storedProjectId)) {
       return storedProjectId;
     }
-    return projects[0].id;
+    // Default to the oldest ("primary") project so the selection is stable: the projects list is
+    // sorted newest-first, so creating a project must not silently flip which project every page
+    // shows. Falls back to the first item if createdAt is unavailable.
+    const oldest = projects.reduce(
+      (acc, p) => (p.createdAt < acc.createdAt ? p : acc),
+      projects[0],
+    );
+    return oldest.id;
   }, [projects, storedProjectId]);
 
   useEffect(() => {

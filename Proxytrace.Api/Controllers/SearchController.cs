@@ -88,6 +88,16 @@ public class SearchController : ControllerBase
             parsedKinds.Add(kind);
         }
 
+        // No explicit kind filter means "all kinds": the recent feed should surface everything
+        // recently indexed, not nothing.
+        if (parsedKinds.Count == 0)
+        {
+            foreach (var kind in Enum.GetValues<SearchKind>())
+            {
+                parsedKinds.Add(kind);
+            }
+        }
+
         var results = await searchService.GetRecentAsync(projectId, parsedKinds.ToArray(), limit, cancellationToken);
         var dto = new SearchResultsDto(
             results.Hits.Select(h => new SearchHitDto(

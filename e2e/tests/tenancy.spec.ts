@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Verifies multi-project tenancy isolation: agents created in one project must not be
@@ -13,7 +13,7 @@ test.describe('Tenancy isolation', () => {
   let agentA: { id: string; name: string };
   let agentB: { id: string; name: string };
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeEach(async ({ request }) => {
     api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);

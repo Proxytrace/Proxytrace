@@ -16,8 +16,12 @@ export function useProjectSelection() {
   const q = search.trim().toLowerCase();
   const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
 
+  // Once the user has explicitly selected a project, honor it unconditionally. Deriving from
+  // `projects.some(...)` made `effectiveId` flicker back to the fallback whenever the projects
+  // query was momentarily between fetches, which reseeded dependent editor drafts and clobbered
+  // in-progress edits. Fall back to the first project only when nothing is selected yet.
   const fallbackId = filtered[0]?.id ?? null;
-  const effectiveId = selectedId && projects.some(p => p.id === selectedId) ? selectedId : fallbackId;
+  const effectiveId = selectedId ?? fallbackId;
 
   return { selectedId, setSelectedId, search, setSearch, projects, filtered, effectiveId, projectsLoading };
 }

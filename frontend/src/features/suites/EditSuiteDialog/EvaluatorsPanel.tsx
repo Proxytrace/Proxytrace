@@ -45,7 +45,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
         )}
       </label>
 
-      <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card">
+      <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card p-1">
         {evaluators.length === 0 && (
           <EmptyState title="No evaluators" description="Create evaluators in the Evaluators tab first." />
         )}

@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Traces that share a conversationId (and appear more than once) collapse into one expandable
@@ -10,7 +10,7 @@ test.describe('Trace conversation grouping', () => {
   const conversationId = randomUUID();
   const turnIds: string[] = [];
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeEach(async ({ request }) => {
     const api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);

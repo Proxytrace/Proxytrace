@@ -54,7 +54,9 @@ e2e/
 │                          #   baseURL http://localhost:5101 (nginx); proxy is :5102
 ├── run.sh                 # down -v → up --build --wait → playwright test → down -v
 ├── helpers/
-│   └── api-client.ts      # ProxytraceApiClient — typed wrappers for every API call
+│   ├── api-client.ts      # ProxytraceApiClient — typed wrappers for every API call
+│   └── fixtures.ts        # extended test: worker-scoped `request` + per-test DB reset
+│                          #   (import { test, expect } from HERE, not @playwright/test)
 ├── tests/
 │   ├── auth.setup.spec.ts # `setup` project: first-admin + setup, saves storageState
 │   ├── smoke.spec.ts      # every main route loads with no console errors
@@ -70,30 +72,41 @@ Supporting pieces at the root: `docker-compose.e2e.yml` (the e2e overlay) and
 
 ## The shape of a spec
 
-Import `test`/`expect` from **`@playwright/test`** directly (this suite does NOT
-use a custom fixtures wrapper). Use `ProxytraceApiClient` from
-`../helpers/api-client` to set up prerequisite data over the API rather than
-clicking through the UI — that keeps tests fast and independent of other flows.
-Group with `test.describe`.
+Import `test`/`expect` from **`../helpers/fixtures`** — NOT from `@playwright/test`.
+The fixtures module overrides the built-in `request` fixture with a worker-scoped
+`APIRequestContext` (so a client built in `beforeAll`/`beforeEach` is reusable in
+test bodies — Playwright forbids reusing the default test-scoped `request` that
+way) and registers the **per-test DB reset** auto-fixture (see next section).
+A spec that imports from `@playwright/test` skips the reset and will be polluted by
+other specs' data — always import from the fixtures module.
+
+Use `ProxytraceApiClient` from `../helpers/api-client` to set up prerequisite data
+over the API rather than clicking through the UI. **Seed in `beforeEach` (or in the
+test body), not `beforeAll`** — the reset runs before every test and wipes
+`beforeAll`-seeded content. `beforeAll` is fine only for things the reset keeps
+(login token, `firstEndpointId()`/`firstProjectId()` lookups). Group with
+`test.describe`.
 
 ```ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 test.describe('My Feature', () => {
-  let authToken: string;
+  let api: ProxytraceApiClient;
+  let endpointId: string;
 
-  test.beforeAll(async ({ request }) => {
-    const api = new ProxytraceApiClient(request);
+  test.beforeEach(async ({ request }) => {
+    api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
-    authToken = token;
     api.setToken(token);
-    // create prerequisite data via api.* here
+    endpointId = await api.firstEndpointId();
+    // seed THIS test's prerequisite data via api.* here — the DB was just reset
   });
 
   test('entity appears in the UI', async ({ page }) => {
-    await page.goto('/my-route', { waitUntil: 'load' });
-    await expect(page.getByTestId('my-feature-list')).toBeVisible();
+    const { id } = await api.createAgent({ name: `E2E Agent ${Date.now()}`, endpointId });
+    await page.goto('/agents', { waitUntil: 'load' });
+    await expect(page.getByTestId(`agent-card-${id}`)).toBeVisible();
   });
 });
 ```
@@ -111,9 +124,53 @@ already authenticated** — never navigate to `/login` or re-auth in a UI spec.
 
 The catch: storageState only authenticates the **browser**, not the `request`
 fixture. For API calls inside a test, get a token via
-`api.login('admin@e2e.test', 'E2ePassword1!')` in `beforeAll` and `setToken` it
+`api.login('admin@e2e.test', 'E2ePassword1!')` in `beforeEach` and `setToken` it
 (the client attaches the Bearer header). Those credentials are the fixed e2e
 admin created by setup.
+
+## Test isolation — the DB resets before every core/smoke test
+
+The fixtures module (`helpers/fixtures.ts`) registers an auto-fixture that calls
+`POST /api/test/reset` before each `core`/`smoke` test. Reset **truncates all
+per-run content** (agents, traces/agent-calls, evaluators, suites, cases, runs,
+proposals, invites) but **keeps the setup baseline** (admin user, provider, model,
+endpoint, api key, the original project). Each test therefore starts from the same
+clean baseline — the way it does when run in isolation.
+
+What this means for your spec:
+
+- **Never depend on data another spec created.** Seed everything your test needs
+  itself (in `beforeEach` or the test body). "Reuse an ingested agent if one
+  exists" patterns must fall back to seeding one.
+- **`beforeAll` seeding is wiped** before the first test. Put seed data in
+  `beforeEach`. Keep only reset-surviving lookups (token, endpoint/project ids) in
+  `beforeAll` if you use it at all.
+- **Don't accumulate state in describe-level `let` counters across tests** — the DB
+  resets but JS variables don't. Re-zero them at the top of `beforeEach`.
+- **Empty-state / exact-count assertions are now safe** ("0 agents", "page 1 = 20
+  rows") because no other spec's data leaks in — but only if you seed exactly what
+  you assert and nothing else lingers.
+
+Projects and providers are *kept* across resets (they accumulate), so resolve "the
+first/primary project" deterministically with `api.firstProjectId()` (oldest), not
+"the newest one". The server seeds into that project and the UI defaults to it.
+
+## Seeding gotchas (cost real debugging time — read once)
+
+- **Agent-version fingerprint is unique per project.** It's a hash of
+  `(systemMessage + tools)`. Seeding two agents — or two Agentic evaluators (each
+  spins up a backing judge agent) — with the **same** system prompt in the same
+  project collides on a unique index and 500s. Give each a unique `systemMessage`
+  (the `createAgent` helper already defaults to a unique one; pass a unique value
+  when you set it explicitly).
+- **`POST /api/test-suites/from-traces` with no evaluators auto-attaches one
+  default ExactMatch evaluator** — a suite seeded "with zero evaluators" actually
+  has one. Account for it (or pass explicit evaluator ids).
+- **Proposal seed `kind` is the `ProposalKind` enum** (`SystemPrompt` / `Tool` /
+  `ModelSwitch`) — note it's `Tool`, not `ToolUpdate` (that alias only names the
+  details discriminator). And the seed derives a SystemPrompt proposal's *current*
+  prompt from the agent's system message, ignoring any client-supplied value — so
+  seed against an agent whose prompt you control if you assert on the diff.
 
 ## Selectors — `data-testid` first
 
@@ -190,6 +247,23 @@ Assert what a **user observes** with web-first (auto-retrying) assertions —
 `toBeVisible`, `toHaveText`, `toHaveCount`. Don't assert on DOM structure,
 request counts, or internal state.
 
+More flake traps that bit this suite:
+
+- **Don't read a value then assert the opposite after a UI write that races a
+  refetch.** An editor draft seeded from a query can be momentarily clobbered when
+  the query refetches. If you can verify the result through the API instead, do
+  that (set/read via `api.*`, assert the UI *reflects* it). When you must drive the
+  UI, wrap the interaction in `await expect(async () => { ...click...; expect(...) }).toPass()`
+  so it retries.
+- **Strict-mode violations**: `getByText('Name')` matches a card *and* an
+  auto-opened detail header → scope it: `page.getByTestId('agent-card-...').toContainText(name)`.
+  A modal's submit and a page header can share a label ("Add provider") — use the
+  modal's `modal-submit` testid scoped to `modal-panel`, not `getByRole('button', { name })`.
+- **`click` times out though the element resolved**: something intercepts pointer
+  events (an overlay, or the item sits under a scroll container's rounded border).
+  The error log names the intercepting element — fix the component (e.g. pad the
+  scroll container) rather than force-clicking.
+
 ## LLM-gated specs
 
 Any test that hits a real upstream LLM must be gated so CI (and key-less local
@@ -257,7 +331,12 @@ surface worth documenting (per CLAUDE.md, the manual tracks the product).
 
 ## Before you call it done
 
-- Imports `test`/`expect` from `@playwright/test`; setup uses `ProxytraceApiClient`.
+- Imports `test`/`expect` from **`../helpers/fixtures`** (never `@playwright/test`);
+  setup uses `ProxytraceApiClient`.
+- Seeds its own data (in `beforeEach`/test body, not `beforeAll`) and depends on no
+  other spec's data — the DB resets to baseline before every core/smoke test.
+- Resolves the primary project via `api.firstProjectId()`; unique `systemMessage`
+  per seeded agent/evaluator to avoid fingerprint collisions.
 - No `/login` navigation in UI specs (storageState handles auth); API calls get a
   token via `api.login(...)` + `setToken`.
 - Selectors are `data-testid`-first; any new id is stable and follows the naming

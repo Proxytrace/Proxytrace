@@ -1,6 +1,5 @@
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { testSuitesApi } from '../../../api/test-suites';
-import { QUERY_KEYS } from '../../../api/query-keys';
 
 interface SaveArgs {
   suiteId: string;
@@ -26,8 +25,9 @@ export function useSaveSuite(onSuccess: () => void) {
       }
     },
     onSuccess: () => {
-      // Invalidate all test-suites queries (prefix match)
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.testSuites() });
+      // Invalidate the whole test-suites namespace via the bare root; testSuites() ends in `null`,
+      // which fails to prefix-match a list keyed by an actual projectId.
+      qc.invalidateQueries({ queryKey: ['test-suites'] });
       onSuccess();
     },
   });

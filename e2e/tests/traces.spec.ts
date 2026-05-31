@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
 

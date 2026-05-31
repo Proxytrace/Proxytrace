@@ -74,7 +74,7 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
-  async getProjects(): Promise<{ items: Array<{ id: string; name: string }> }> {
+  async getProjects(): Promise<{ items: Array<{ id: string; name: string; createdAt: string }> }> {
     const res = await this.request.get('/api/projects', { headers: this.headers() });
     if (!res.ok()) throw new Error(`get projects failed: ${res.status()} ${await res.text()}`);
     return res.json();
@@ -208,11 +208,15 @@ export class ProxytraceApiClient {
         proposedSystemMessage: 'You are a concise, helpful assistant.',
       };
     }
+    // The top-level `kind` is the ProposalKind enum, whose tool-change member is `Tool` (the
+    // 'ToolUpdate' alias only names the details discriminator `ToolUpdateSeed`). Map it so the
+    // enum binds instead of 400-ing on $.kind.
+    const requestKind = kind === 'ToolUpdate' ? 'Tool' : kind;
     const res = await this.request.post('/api/proposals/seed', {
       headers: this.headers(),
       data: {
         agentId: opts.agentId,
-        kind,
+        kind: requestKind,
         status: opts.status ?? 'Draft',
         priority: opts.priority ?? 'Medium',
         rationale: opts.rationale,
@@ -309,8 +313,11 @@ export class ProxytraceApiClient {
   /** First project id — the tenant's default project created during setup. */
   async firstProjectId(): Promise<string> {
     const { items } = await this.getProjects();
-    if (!items[0]) throw new Error('no project found — setup may not have completed');
-    return items[0].id;
+    if (items.length === 0) throw new Error('no project found — setup may not have completed');
+    // The "first" project is the oldest/primary one: the server resolves seeds against it
+    // (FindFirstAsync, ordered by CreatedAt) and the UI defaults to it. The projects list is
+    // sorted newest-first, so pick the minimum CreatedAt rather than items[0].
+    return items.reduce((acc, p) => (p.createdAt < acc.createdAt ? p : acc), items[0]).id;
   }
 
   // ── Agents ─────────────────────────────────────────────────────────────────
@@ -326,8 +333,14 @@ export class ProxytraceApiClient {
     const res = await this.request.post('/api/agents/seed', {
       headers: this.headers(),
       data: {
+        // The agent-version fingerprint is derived from (systemMessage + tools) and is unique per
+        // project. Seeding two agents with an identical default prompt would collide on
+        // IX_AgentVersionEntity_Project_Fingerprint and 500. Make the default unique per call so
+        // each seeded agent is its own distinct version.
         name: opts.name,
-        systemMessage: opts.systemMessage ?? 'You are a helpful assistant.',
+        systemMessage:
+          opts.systemMessage ??
+          `You are a helpful assistant. [${Date.now()}-${Math.random().toString(36).slice(2)}]`,
         endpointId: opts.endpointId,
         projectId: opts.projectId ?? null,
       },

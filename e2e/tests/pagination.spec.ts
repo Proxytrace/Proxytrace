@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Pagination + filtering, asserted at the API level (robust, no fragile UI paging). Each paged
@@ -132,9 +132,10 @@ test.describe('Pagination & filtering', () => {
   });
 
   test('the /agents page renders its list (UI smoke for pagination)', async ({ page }) => {
-    // One lightweight UI check: the agents list mounts. The shared Pagination primitive only
-    // renders extra controls when needed; we assert the list container via its stable testid and
-    // do not depend on whether a next-page control is present (no new testids added).
+    // One lightweight UI check: the agents list mounts. Seed one agent so the list (not the empty
+    // state) renders — the DB is reset to the setup baseline before each test.
+    await api.createAgent({ name: `E2E Page UI Agent ${Date.now()}`, endpointId, projectId });
+
     await page.goto('/agents', { waitUntil: 'load' });
     await expect(page.getByTestId('agent-list')).toBeVisible();
   });

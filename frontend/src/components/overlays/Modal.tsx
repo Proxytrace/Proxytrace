@@ -25,7 +25,13 @@ export function Modal({ title, onClose, children, footer, maxWidth, size }: Moda
 
   return createPortal(
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal-panel fade-up" style={{ maxWidth: `min(${resolvedMaxWidth}px, 94vw)`, width: '100%' }}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        data-testid="modal-panel"
+        className="modal-panel fade-up"
+        style={{ maxWidth: `min(${resolvedMaxWidth}px, 94vw)`, width: '100%' }}
+      >
         {title && (
           <div className="flex items-center justify-between mb-5">
             <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
@@ -59,6 +65,7 @@ export function ModalFooter({ onCancel, onSubmit, submitLabel, loading, disabled
       <button className="btn-ghost" onClick={onCancel}>Cancel</button>
       <button
         data-write
+        data-testid="modal-submit"
         className={danger ? 'btn-danger' : 'btn-primary'}
         onClick={onSubmit}
         disabled={loading || disabled}

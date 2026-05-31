@@ -71,18 +71,31 @@ docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build -d --w
 
 cd e2e
 npm install --silent && npx playwright install chromium   # first time only
-npx playwright test --project=core
-npx playwright test tests/core-crud.spec.ts               # one file
-npx playwright test --project=core --headed               # watch the browser
-PWDEBUG=1 npx playwright test tests/core-crud.spec.ts     # step through (inspector)
-npx playwright test tests/smoke.spec.ts --reporter=list   # readable line-by-line output
+npx playwright test --project=core --no-deps -g "lists agents"   # one test, no setup re-run
+npx playwright test --project=core --no-deps tests/core-crud.spec.ts   # one file
+npx playwright test --project=core --no-deps --headed     # watch the browser
+PWDEBUG=1 npx playwright test --project=core --no-deps tests/core-crud.spec.ts  # step through
 ```
 
-**Reset between full passes.** `auth.setup.spec.ts` asserts `setupRequired: true`,
-which only holds on an **empty database**. If you re-run on a stack you already
-ran against, setup fails with *"expected empty database — run docker compose
-down -v first"* and **every dependent spec fails too**. `down -v` (drop volumes)
-before each fresh pass. `run.sh` does this for you; manual iteration does not.
+**Iterate with `--no-deps`.** Running a `core` spec normally re-runs the `setup`
+dependency, which asserts an **empty database** (`setupRequired: true`) and fails
+on a stack you've already run against — taking your target spec down with it.
+`--no-deps` skips setup and runs against the already-seeded stack; the
+**per-test DB reset** (below) gives each test a clean baseline anyway, so you
+rarely need a fresh `down -v` just to iterate. Note line filters use the project
+name's test line numbers, which shift as you edit — prefer `-g "title substring"`.
+
+**Reset between full passes.** For a *full* `run.sh`-style pass, `auth.setup`
+still needs an empty DB, so `down -v` (drop volumes) first. `run.sh` does this.
+
+**Per-test reset (core/smoke).** The fixtures module resets the DB to the setup
+baseline (`POST /api/test/reset`) before every core/smoke test — truncating
+per-run content (agents, traces, evaluators, suites, runs, proposals) while
+keeping users/providers/projects. So within a run, specs don't pollute each
+other: a spec that passes alone but fails in the full suite is now rare. If you
+*do* see that, suspect a spec that imports `test` from `@playwright/test` instead
+of `../helpers/fixtures` (so it skips the reset), or one that depends on another
+spec's data (which reset wipes).
 
 ## The project graph — why one root cause shows as many failures
 
@@ -106,10 +119,16 @@ report of "30 failures" is usually one broken thing at the root.
 ## Interpreting the result
 
 ### Skipped `@llm` specs are normal, not failures
-Without `OPENAI_API_KEY`, the `llm-ingestion`/`llm-test-run`/`llm-proposals`
-specs `test.skip` themselves on purpose. Output shows them **skipped** — that is
-the designed CI behavior, **not** a broken suite. Only report them as a gap if
-the user explicitly wanted LLM coverage (then re-run with the key).
+Without `OPENAI_API_KEY`, the `@llm` specs `test.skip` themselves on purpose;
+output shows them **skipped** — designed CI behavior, not a broken suite. Only
+report them as a gap if the user explicitly wanted LLM coverage.
+
+Two wrinkles: **`playwright.config.ts` loads `e2e/.env`**, so if that file holds a
+key, `@llm` specs **run locally** (and make real upstream calls — slower, and
+they fail if the key/endpoint is bad). And a few `@llm`-tagged tests live *inside
+core specs* (e.g. dashboard pass-rate, proposal generation), so they run in the
+`core` project when a key is present — a `core` failure named `@llm …` is LLM
+coverage, weigh it separately from the deterministic core tests.
 
 ### Where the evidence lives (all under `e2e/`, all gitignored)
 | Artifact | Path | Use |

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import type { APIRequestContext } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
@@ -132,13 +132,14 @@ test.describe('Test Suites', () => {
     const agentName = uniqueName('Attach Agent');
     const { id: agentId } = await client.createAgent({ name: agentName, endpointId });
     const call1 = await client.seedAgentCall({ agentId, userContent: 'attach', assistantContent: 'ok' });
-    // Suite starts with zero evaluators.
+    // Promoting from traces with no explicit evaluators auto-attaches one default evaluator, so the
+    // suite starts with exactly one; attaching another takes it to two.
     const { id: suiteId } = await client.createSuiteFromTraces(uniqueName('Attach Suite'), agentId, [call1.id], []);
     // A standalone evaluator to attach.
     const { id: evaluatorId } = await client.createEvaluator(projectId);
 
     await page.goto('/suites', { waitUntil: 'load' });
-    await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('0');
+    await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('1');
 
     await page.getByTestId(`suite-edit-btn-${suiteId}`).click();
     const dialog = page.getByTestId('edit-suite-dialog');
@@ -152,13 +153,13 @@ test.describe('Test Suites', () => {
     // The dialog closes on save.
     await expect(dialog).toBeHidden();
 
-    // API read-back confirms the evaluator is attached.
+    // API read-back confirms the evaluator is attached (default + the newly attached one = 2).
     await expect.poll(
       async () => (await client.getTestSuite(suiteId)).evaluators.length,
       { timeout: 10_000, message: 'evaluator attach did not persist' },
-    ).toBe(1);
+    ).toBe(2);
 
-    await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('1');
+    await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('2');
   });
 
   test('detach an evaluator via EditSuiteDialog decrements the evaluator count', async ({ page, request }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // The Agents page lists agents that exist for the tenant and renders an empty state when there
@@ -56,7 +56,7 @@ test.describe('Agents page', () => {
 
     await expect(page.getByTestId('agent-list')).toBeVisible();
     await expect(page.getByTestId(`agent-card-${created.id}`)).toBeVisible();
-    await expect(page.getByText(agentName)).toBeVisible();
+    await expect(page.getByTestId(`agent-card-${created.id}`)).toContainText(agentName);
     await expect(page.getByTestId('agent-empty-state')).toHaveCount(0);
   });
 

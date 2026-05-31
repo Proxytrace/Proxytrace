@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Dashboard ("Mission Control", route `/dashboard`, also reachable at `/`).
@@ -27,7 +27,14 @@ test.describe('Dashboard', () => {
   let seededInputTokens = 0;
   let seededOutputTokens = 0;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeEach(async ({ request }) => {
+    // The DB is reset to the setup baseline before each test, so zero the per-run accumulators to
+    // match the freshly-seeded data (they would otherwise grow across beforeEach invocations).
+    agentIds.length = 0;
+    seededCalls = 0;
+    seededInputTokens = 0;
+    seededOutputTokens = 0;
+
     api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);

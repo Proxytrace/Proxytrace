@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Verifies the Proposals feature end to end. Proposals are seeded via the test-only
@@ -27,7 +27,7 @@ test.describe('Proposals', () => {
   // A proposal seeded once for the read-back + render assertions (kept Draft / open).
   const sharedRationale = `E2E seeded proposal ${Date.now()}`;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeEach(async ({ request }) => {
     const api = new ProxytraceApiClient(request);
     ({ token } = await api.login('admin@e2e.test', 'E2ePassword1!'));
     api.setToken(token);
@@ -69,8 +69,17 @@ test.describe('Proposals', () => {
 
   test('opening a proposal shows the detail, header, predicted-impact band and prompt diff', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
+    // A SystemPrompt proposal's "current" side of the diff is derived from the *agent's* system
+    // message (the seed endpoint ignores any client-supplied current), so pin it by seeding the
+    // proposal against a dedicated agent with a known, unique prompt.
+    const currentMessage = `You are a helpful assistant. [${Date.now()}]`;
+    const { id: diffAgentId } = await api.createAgent({
+      name: `E2E Diff Agent ${Date.now()}`,
+      endpointId: await api.firstEndpointId(),
+      systemMessage: currentMessage,
+    });
     const rationale = `E2E detail proposal ${Date.now()}`;
-    const { id } = await api.seedProposal({ agentId, rationale, status: 'Draft' });
+    const { id } = await api.seedProposal({ agentId: diffAgentId, rationale, status: 'Draft' });
 
     await page.goto('/proposals', { waitUntil: 'load' });
 
@@ -87,9 +96,9 @@ test.describe('Proposals', () => {
     // SystemPrompt proposals render the prompt diff (old vs new system prompt).
     const diff = detail.getByTestId('prompt-diff');
     await expect(diff).toBeVisible();
-    // seedProposal sends current 'You are a helpful assistant.' → proposed 'You are a concise,
-    // helpful assistant.'. The diff renders both the removed and added lines.
-    await expect(diff.getByText('You are a helpful assistant.')).toBeVisible();
+    // The diff renders the removed line (the agent's current prompt) and the added line (the
+    // proposed prompt seedProposal sends: 'You are a concise, helpful assistant.').
+    await expect(diff.getByText(currentMessage)).toBeVisible();
     await expect(diff.getByText('You are a concise, helpful assistant.')).toBeVisible();
   });
 
@@ -153,8 +162,10 @@ test.describe('Proposals', () => {
       )
       .toBe('Rejected');
 
-    // Once terminal, the action bar is replaced by the terminal note. The card may need a moment
-    // to re-render off the invalidated query; re-open it to land on the now-dismissed detail.
+    // Once terminal, the action bar is replaced by the terminal note. A Rejected proposal drops out
+    // of the default "open" (Draft-only) filter, so switch to the "Dismissed" tab before re-opening
+    // it to land on the now-dismissed detail.
+    await page.getByTestId('proposal-filter-dismissed').click();
     const dismissedCard = page.getByTestId(`proposal-card-${id}`);
     await expect(dismissedCard).toBeVisible();
     await dismissedCard.click();
@@ -179,12 +190,14 @@ test.describe('@llm proposal generation', () => {
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);
 
-    const { items: agents } = await api.listAgents();
-    expect(agents.length, 'need at least one agent — run ingestion spec first').toBeGreaterThan(0);
-    const agent = agents[0];
-
-    const { items: projects } = await api.getProjects();
-    const projectId = projects[0].id;
+    // The DB is reset to the setup baseline before each test, so seed our own agent rather than
+    // relying on one from another spec.
+    const projectId = await api.firstProjectId();
+    const endpointId = await api.firstEndpointId();
+    const { items: existing } = await api.listAgents();
+    const agent =
+      existing[0] ??
+      (await api.createAgent({ name: `E2E Proposal Gen Agent ${Date.now()}`, endpointId }));
 
     // A suite whose expectation the agent is likely to miss, giving the optimizer evidence to
     // propose a fix from.

@@ -172,7 +172,7 @@ public class ModelProvidersController : ControllerBase
 
         var all = await endpointRepository.GetAllAsync(cancellationToken);
         if (all.Any(e => e.Provider.Id == providerId && e.Model.Name == request.ModelName))
-            return Conflict($"A model endpoint for '{request.ModelName}' already exists for this provider.");
+            return Conflict(new { error = $"A model endpoint for '{request.ModelName}' already exists for this provider." });
 
         var allModels = await modelRepository.GetAllAsync(cancellationToken);
         IModel model = allModels.FirstOrDefault(m => m.Name == request.ModelName)

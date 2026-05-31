@@ -26,13 +26,22 @@ export function SearchIndexingTab() {
 
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useSearchSettings(effectiveId);
 
-  // Seed the editable draft from server settings whenever the loaded settings
-  // change identity (initial load, project switch, or post-save cache update).
+  // Seed the editable draft from server settings on initial load and whenever the selected project
+  // changes — but NOT on every settings refetch, which would clobber an in-progress edit (a
+  // background refetch returns a fresh object reference even when the data is unchanged). Keying on
+  // the project id keeps the user's pending toggle intact across refetches.
   // Derive-on-change instead of an effect (BEST_PRACTICES §4.1).
   const [draft, setDraft] = useState<SearchIndexingSettings | null>(null);
-  const [syncedSettings, setSyncedSettings] = useState<SearchIndexingSettings | null>(null);
-  if (settings && settings !== syncedSettings) {
-    setSyncedSettings(settings);
+  const [syncedProjectId, setSyncedProjectId] = useState<string | null>(null);
+  // On project change, drop the previous project's draft (set the new project's settings if already
+  // cached, otherwise null so the editor waits rather than showing stale values).
+  if (effectiveId !== syncedProjectId) {
+    setSyncedProjectId(effectiveId);
+    setDraft(settings ?? null);
+  }
+  // Seed the draft once the current project's settings have loaded. After that, background refetches
+  // (which return a fresh object reference) must NOT reseed, or they would clobber a pending edit.
+  if (draft === null && settings && effectiveId === syncedProjectId) {
     setDraft(settings);
   }
 

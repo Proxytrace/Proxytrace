@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { evaluatorsApi } from '../../../api/evaluators';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import {
   EvaluatorKind,
   type CreateEvaluatorPayload,
@@ -55,12 +54,15 @@ export interface CreateEvaluatorArgs {
 }
 
 /** Creates an evaluator. The mutation result is the new evaluator (caller navigates). */
-export function useCreateEvaluator(projectId: string | null) {
+export function useCreateEvaluator() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ kind, projectId: pid, form }: CreateEvaluatorArgs) =>
       evaluatorsApi.create(buildCreatePayload(kind, pid, form)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(projectId ?? undefined) }),
+    // Invalidate the whole evaluators namespace: the rail list, the overview (which feeds the
+    // selectable list), and per-evaluator detail are all keyed under ['evaluators', …] but with
+    // different second segments, so a projectId-scoped key would miss the overview.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluators'] }),
   });
 }
 
@@ -71,21 +73,27 @@ export interface UpdateEvaluatorArgs {
 }
 
 /** Updates an evaluator's kind-specific fields. */
-export function useUpdateEvaluator(projectId: string | null) {
+export function useUpdateEvaluator() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, kind, form }: UpdateEvaluatorArgs) =>
       evaluatorsApi.update(id, buildUpdatePayload(kind, form)),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(projectId ?? undefined) }),
+    // Invalidate the whole evaluators namespace: the rail list, the overview (which feeds the
+    // selectable list), and per-evaluator detail are all keyed under ['evaluators', …] but with
+    // different second segments, so a projectId-scoped key would miss the overview.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluators'] }),
   });
 }
 
 /** Deletes an evaluator by id. */
-export function useDeleteEvaluator(projectId: string | null) {
+export function useDeleteEvaluator() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => evaluatorsApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.evaluators(projectId ?? undefined) }),
+    // Invalidate the whole evaluators namespace: the rail list, the overview (which feeds the
+    // selectable list), and per-evaluator detail are all keyed under ['evaluators', …] but with
+    // different second segments, so a projectId-scoped key would miss the overview.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluators'] }),
   });
 }
 

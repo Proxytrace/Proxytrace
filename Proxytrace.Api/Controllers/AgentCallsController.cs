@@ -135,10 +135,10 @@ public class AgentCallsController : ControllerBase
 
         var conversation = Conversation.Create();
         if (!string.IsNullOrEmpty(request.SystemContent))
-            conversation.AddSystemMessage(new SystemMessage([Content.FromText(request.SystemContent)]));
-        conversation.Add(new UserMessage([Content.FromText(request.UserContent)]));
+            conversation.AddSystemMessage(new SystemMessage([Proxytrace.Domain.Message.Content.FromText(request.SystemContent)]));
+        conversation.Add(new UserMessage([Proxytrace.Domain.Message.Content.FromText(request.UserContent)]));
 
-        var assistantMessage = new AssistantMessage([Content.FromText(request.AssistantContent)], []);
+        var assistantMessage = new AssistantMessage([Proxytrace.Domain.Message.Content.FromText(request.AssistantContent)], []);
         var usage = new TokenUsage((ulong)request.InputTokens, (ulong)request.OutputTokens);
         ICompletion completion = createCompletion(
             assistantMessage,

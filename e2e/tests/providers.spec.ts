@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // The Providers page (/providers) lists upstream model providers in a left rail (ProviderList),
@@ -64,8 +64,9 @@ test.describe('Providers page', () => {
     await page.getByTestId('provider-field-endpoint').fill('https://api.openai.com/v1');
     await page.getByTestId('provider-field-upstreamApiKey').fill('sk-e2e-fake-key');
 
-    // The add modal's submit button is the primary footer action labelled "Add provider".
-    await page.getByRole('button', { name: 'Add provider' }).click();
+    // The add modal's submit button is the primary footer action. Scope to the modal's submit
+    // testid — the page header also has an "Add provider" button, so a name match is ambiguous.
+    await page.getByTestId('modal-panel').getByTestId('modal-submit').click();
 
     // The new provider is auto-selected; its name appears in both the list and the detail header.
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();

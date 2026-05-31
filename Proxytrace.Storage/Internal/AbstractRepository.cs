@@ -233,9 +233,12 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     /// <inheritdoc />
     public async Task<TDomainEntity?> FindFirstAsync(CancellationToken cancellationToken = default)
     {
+        // Order by CreatedAt so "first" is deterministic (the oldest/primary row) rather than
+        // whatever heap order the database returns; callers treat this as the canonical default.
         TStoredEntity? result = await contextFactory()
             .Set<TStoredEntity>()
             .AsNoTracking()
+            .OrderBy(e => e.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(result, cancellationToken);
     }

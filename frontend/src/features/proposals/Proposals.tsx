@@ -164,6 +164,7 @@ export default function Proposals() {
             return (
               <button
                 key={t.key}
+                data-testid={`proposal-filter-${t.key}`}
                 onClick={() => setStatusFilter(t.key)}
                 className={cn(
                   'inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 rounded-sm text-body-sm font-medium transition-colors duration-[var(--motion-base)] cursor-pointer',

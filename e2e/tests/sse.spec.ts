@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // The agent-call seed endpoint publishes TraceCreatedEvent to ITraceBroadcaster (the same path
@@ -7,7 +7,7 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 test.describe('SSE real-time trace stream', () => {
   let agentId: string;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeEach(async ({ request }) => {
     const api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);

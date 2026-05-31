@@ -54,9 +54,9 @@ export default function Evaluators() {
         .map(s => ({ id: s.id, name: s.name, agentName: s.agentName }))
     : [];
 
-  const createEval = useCreateEvaluator(currentProjectId);
-  const updateEval = useUpdateEvaluator(currentProjectId);
-  const deleteEval = useDeleteEvaluator(currentProjectId);
+  const createEval = useCreateEvaluator();
+  const updateEval = useUpdateEvaluator();
+  const deleteEval = useDeleteEvaluator();
 
   function submitCreate() {
     if (!pickedKind || !currentProjectId) return;
