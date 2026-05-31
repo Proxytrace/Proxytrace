@@ -3,7 +3,7 @@ import { ActivityIcon } from '../../../../components/icons';
 import { fmtCost, fmtLatency, fmtTokens } from '../../../../lib/format';
 import type { AgentEntityCountsDto, AgentTimeSummaryDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
-import { StatGrid } from './StatGrid';
+import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
 import { toolUiState } from './tool-ui-state';
 
@@ -16,7 +16,14 @@ interface AgentStatsResult {
 export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
   if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel="Loading agent stats…" testId="tracey-agent-stats" />;
+    return (
+      <ToolUIFrame
+        state={state}
+        pendingLabel="Loading agent stats…"
+        pendingSkeleton={<StatGridSkeleton count={8} />}
+        testId="tracey-agent-stats"
+      />
+    );
   }
   const { summary, counts } = result as AgentStatsResult;
   const agentId = (args as { agentId?: string }).agentId;

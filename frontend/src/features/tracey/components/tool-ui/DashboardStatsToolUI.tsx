@@ -3,7 +3,7 @@ import { GridIcon } from '../../../../components/icons';
 import { fmtLatency, fmtPct, fmtTokens } from '../../../../lib/format';
 import type { DashboardViewDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
-import { StatGrid } from './StatGrid';
+import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
 import { toolUiState } from './tool-ui-state';
 
@@ -11,7 +11,14 @@ import { toolUiState } from './tool-ui-state';
 export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
   const state = toolUiState(status, isError, result != null);
   if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel="Loading dashboard…" testId="tracey-dashboard-stats" />;
+    return (
+      <ToolUIFrame
+        state={state}
+        pendingLabel="Loading dashboard…"
+        pendingSkeleton={<StatGridSkeleton count={5} />}
+        testId="tracey-dashboard-stats"
+      />
+    );
   }
   const { summary, liveTelemetry: live } = result as DashboardViewDto;
   return (

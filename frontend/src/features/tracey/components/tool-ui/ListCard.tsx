@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../../components/ui/Card';
 import { Badge } from '../../../../components/ui/Badge';
+import { Skeleton } from '../../../../components/ui/Skeleton';
 import { ArrowUpRightIcon } from '../../../../components/icons';
 import { ToolUIFrame } from './ToolUIFrame';
 import type { ToolUIState } from './tool-ui-state';
@@ -43,8 +44,11 @@ export function ListCard({
   children,
   shown,
 }: ListCardProps) {
-  if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel={pendingLabel} testId={testId} />;
+  if (state === 'error') {
+    return <ToolUIFrame state="error" testId={testId} />;
+  }
+  if (state === 'pending') {
+    return <ListCardSkeleton icon={icon} testId={testId} pendingLabel={pendingLabel} />;
   }
   const hidden = count - shown;
   return (
@@ -78,6 +82,45 @@ export function ListCard({
           +{hidden} more
         </Link>
       )}
+    </Card>
+  );
+}
+
+/** Loading placeholder matching {@link ListCard}'s header + row layout. */
+function ListCardSkeleton({
+  icon,
+  testId,
+  pendingLabel,
+}: {
+  icon: ReactNode;
+  testId: string;
+  pendingLabel: string;
+}) {
+  return (
+    <Card
+      elevation="flat"
+      padding="none"
+      className="my-1"
+      data-testid={testId}
+      aria-busy="true"
+      aria-label={pendingLabel}
+    >
+      <div className="flex items-center gap-2 border-b border-hairline px-3 py-2.5">
+        <span className="shrink-0 text-muted">{icon}</span>
+        <Skeleton width={88} height={14} />
+      </div>
+      <div className="divide-y divide-border-subtle">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="flex min-h-[44px] items-center gap-2.5 px-3 py-2">
+            <Skeleton variant="circle" width={6} height={6} />
+            <div className="flex flex-1 flex-col gap-1">
+              <Skeleton width="48%" height={11} />
+              <Skeleton width="30%" height={9} />
+            </div>
+            <Skeleton width={40} height={16} />
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }

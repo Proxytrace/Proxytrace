@@ -1,3 +1,5 @@
+import { Skeleton } from '../../../../components/ui/Skeleton';
+
 export interface StatItem {
   label: string;
   value: string;
@@ -11,6 +13,20 @@ export function StatGrid({ items }: { items: StatItem[] }) {
         <div key={item.label} className="flex flex-col gap-0.5">
           <span className="text-caption uppercase tracking-[0.06em] text-muted">{item.label}</span>
           <span className="font-mono text-h1 font-semibold tabular-nums text-primary">{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Loading placeholder matching {@link StatGrid}'s layout. */
+export function StatGridSkeleton({ count }: { count: number }) {
+  return (
+    <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="flex flex-col gap-1">
+          <Skeleton width={48} height={10} />
+          <Skeleton width={64} height={20} />
         </div>
       ))}
     </div>

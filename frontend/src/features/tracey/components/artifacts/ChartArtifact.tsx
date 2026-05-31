@@ -122,6 +122,26 @@ export function ChartArtifact({ artifact }: { artifact: ChartArtifactData }) {
           />
         )}
       </div>
+
+      {/* Screen-reader-only data table: the hover tooltip is mouse-only, so expose the same
+          numbers as a table for assistive tech (DESIGN §7 — color/visual is never the only signal). */}
+      <table className="sr-only">
+        <caption>{artifact.title}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Label</th>
+            <th scope="col">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {points.map((p, i) => (
+            <tr key={i}>
+              <td>{p.label}</td>
+              <td>{p.value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

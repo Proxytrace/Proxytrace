@@ -59,8 +59,8 @@ Tracey renders rich UI **directly in the chat thread** rather than dumping raw n
   footer reports the row and column count.
 - **Text cards** — longer markdown (fully rendered), JSON, or code. Code and JSON include a
   copy button and expand when long.
-- **Entity cards** — a single agent, test run, proposal, provider, or trace shown as a card.
-  Click a card to jump straight to that entity's page in the app.
+- **Entity cards** — a single agent, test suite, test run, proposal, provider, or trace shown
+  as a card. Click a card to jump straight to that entity's page in the app.
 - **List cards** — *List agents/suites/runs/proposals* render as a titled, counted list. Each
   row links to its entity, and **View all** (or **+N more**) opens the full page.
 - **Stats cards** — *dashboard stats* and per-agent stats render as a grid of key figures

@@ -22,7 +22,7 @@ export function ListCardRow({ to, color, title, subtitle, right }: ListCardRowPr
   return (
     <Link
       to={to}
-      className="group flex items-center gap-2.5 px-3 py-2 transition-colors duration-[var(--motion-fast)] hover:bg-[var(--bg-wash-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
+      className="group flex min-h-[44px] items-center gap-2.5 px-3 py-2 transition-colors duration-[var(--motion-fast)] hover:bg-[var(--bg-wash-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
     >
       {color && (
         <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: color }} />
