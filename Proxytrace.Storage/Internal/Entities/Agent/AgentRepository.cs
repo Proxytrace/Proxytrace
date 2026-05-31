@@ -198,4 +198,18 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             .Set<AgentEntity>()
             .AsNoTracking()
             .CountAsync(e => !e.IsSystemAgent, cancellationToken);
+
+    public async Task<IAgent?> FindByNameAsync(IProject project, string name, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+
+        var id = await contextFactory()
+            .Set<AgentEntity>()
+            .AsNoTracking()
+            .Where(e => e.Project == project.Id && e.Name == name)
+            .Select(e => (Guid?)e.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return id is { } agentId ? await this.GetAsync(agentId, cancellationToken) : null;
+    }
 }

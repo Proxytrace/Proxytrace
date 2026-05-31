@@ -16,7 +16,8 @@ public sealed class IngestMessageSerializationTests
             ResponseBody: """{"choices":[{"message":{"role":"assistant","content":"hello"}}]}""",
             DurationMs: 1234,
             HttpStatus: 200,
-            SessionId: "session-123");
+            SessionId: "session-123",
+            AgentName: "Tracey");
 
         var json = JsonSerializer.Serialize(original);
         var restored = JsonSerializer.Deserialize<IngestMessage>(json);

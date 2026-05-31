@@ -60,4 +60,10 @@ public interface IAgentRepository : IRepository<IAgent>
     /// evaluators). Used to enforce the licensed agent limit.
     /// </summary>
     Task<int> CountNonSystemAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the agent with the given <paramref name="name"/> in <paramref name="project"/>
+    /// (system or not), or null if none exists. Used for explicit name-based call attribution.
+    /// </summary>
+    Task<IAgent?> FindByNameAsync(IProject project, string name, CancellationToken cancellationToken = default);
 }

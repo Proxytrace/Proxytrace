@@ -68,11 +68,15 @@ short-lived key (so every reasoning step is captured as an `AgentCall`). The
 user's existing JWT, reusing typed `src/api/*.ts` services. No new backend action
 endpoints are required — tools reuse existing APIs.
 
-**Observability (AC-OBS-1).** The proxy already ingests calls and matches them to an
-agent via `AgentVersionMatcher` (system prompt + tools). Because Tracey's stored
-`Agent` carries the same system prompt + tools her runtime uses, her calls
-auto-attribute to the Tracey agent and appear in Traces, filterable by
-`IsSystemAgent`. No special wiring beyond routing through the proxy.
+**Observability (AC-OBS-1).** Tracey's calls are attributed to her agent by **explicit
+name**, not by fingerprint matching. The ingest path carries an optional `AgentName`
+(`TraceyChatController` sets it to the project's Tracey agent name; external proxy clients
+can send the `X-Proxytrace-Agent` header). When present, `AgentCallProcessor` attributes
+the call to that exact agent and versions it from the **actual wire request**, skipping
+`AgentVersionMatcher`/similarity entirely. Tracey's calls therefore appear in Traces,
+filterable by `IsSystemAgent`, without the backend mirroring her prompt or tools. Her
+stored agent is seeded **identity-only** (name + `IsSystemAgent` + endpoint, empty tools);
+her live prompt + tool-set are captured into her agent version on her first call.
 
 ## 4. Backend design
 
@@ -196,7 +200,9 @@ restyled assistant-ui primitives.
 | `start_test_run` | `testRunGroupsApi.create` + SSE progress via `event-stream.ts` | **yes** |
 | `set_proposal_status` | `proposalsApi.updateStatus` | **yes** |
 
-The stored `Agent.Tools` copy mirrors these definitions (hand-kept, single TS source).
+The stored Tracey agent does **not** mirror these definitions: tool schemas live solely in
+`tracey-tools.ts` (zod). The backend captures her prompt + tools from the wire and versions
+them under her named agent (see §3 Observability), so there is no hand-kept backend copy.
 
 ## 7. Error handling & confirmation UX
 
@@ -244,8 +250,10 @@ manual matches.
 
 ## 10. Deviations from issue #124 (explicit)
 
-- **AC-BE-3** relaxed: hand-written tool schemas with a single TS source mirrored onto
-  `Agent.Tools`; no DTO→TS codegen pipeline.
+- **AC-BE-3** satisfied differently: tool schemas live **only** on the client
+  (`tracey-tools.ts` zod); the backend captures Tracey's prompt + tools from the wire and
+  versions them under her name-attributed agent (`IngestMessage.AgentName` /
+  `X-Proxytrace-Agent` header). No hand-written backend tool schemas and no DTO→TS codegen.
 - **AC-UI-2** superseded: assistant-ui supplies the thread/message/composer primitives
   (styled to DESIGN.md tokens) instead of `MessageBubble`/`ToolMessageBubble`.
 - **ApiKey TTL** is new schema + proxy enforcement, not pure reuse of the existing

@@ -11,6 +11,12 @@ When the two touch (e.g. "no inline styles"), DESIGN.md states the visual rule a
 
 This document describes the **target state**. Parts of the current codebase violate it — those are debt, not precedent. When you touch a file that violates a rule here, leave it at least no worse, and prefer to fix it. Do not copy an anti-pattern just because a neighbor does it.
 
+### Feature deep-dives (read before touching these features)
+
+Some features have their own architecture guide that this file does not duplicate. Read the relevant one **before** changing that feature:
+
+- **Tracey assistant** (`src/features/tracey/`) → [`src/features/tracey/TRACEY.md`](./src/features/tracey/TRACEY.md). The chat architecture, the two request planes (reasoning vs. tool/data), and the rule that tool + prompt definitions live **only** on the client.
+
 ---
 
 ## 0. The one principle everything else serves

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
@@ -34,17 +35,20 @@ public class TraceyChatController : ControllerBase
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IIngestionStream stream;
     private readonly IRepository<IProject> projects;
+    private readonly ITraceyAgentProvisioner traceyProvisioner;
     private readonly ILogger<TraceyChatController> logger;
 
     public TraceyChatController(
         IHttpClientFactory httpClientFactory,
         IIngestionStream stream,
         IRepository<IProject> projects,
+        ITraceyAgentProvisioner traceyProvisioner,
         ILogger<TraceyChatController> logger)
     {
         this.httpClientFactory = httpClientFactory;
         this.stream = stream;
         this.projects = projects;
+        this.traceyProvisioner = traceyProvisioner;
         this.logger = logger;
     }
 
@@ -60,6 +64,10 @@ public class TraceyChatController : ControllerBase
         }
 
         var provider = project.SystemEndpoint.Provider;
+
+        // Guarantee Tracey's system agent exists and tag the captured call with its name, so
+        // ingestion attributes it directly instead of fingerprint-matching her prompt/tools.
+        var traceyAgent = await traceyProvisioner.EnsureTraceyAgentAsync(project, cancellationToken);
 
         using var bodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(bodyStream, cancellationToken);
@@ -103,17 +111,18 @@ public class TraceyChatController : ControllerBase
 
         if (isStreaming)
         {
-            await StreamResponseAsync(provider.Id, project.Id, requestBody, upstreamResponse, sw, cancellationToken);
+            await StreamResponseAsync(provider.Id, project.Id, traceyAgent.Name, requestBody, upstreamResponse, sw, cancellationToken);
         }
         else
         {
-            await BufferedResponseAsync(provider.Id, project.Id, requestBody, upstreamResponse, sw, cancellationToken);
+            await BufferedResponseAsync(provider.Id, project.Id, traceyAgent.Name, requestBody, upstreamResponse, sw, cancellationToken);
         }
     }
 
     private async Task BufferedResponseAsync(
         Guid providerId,
         Guid projectId,
+        string agentName,
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
@@ -122,12 +131,13 @@ public class TraceyChatController : ControllerBase
         var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
         sw.Stop();
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
-        await EnqueueSafeAsync(providerId, projectId, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await EnqueueSafeAsync(providerId, projectId, agentName, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     private async Task StreamResponseAsync(
         Guid providerId,
         Guid projectId,
+        string agentName,
         string requestBody,
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
@@ -151,12 +161,13 @@ public class TraceyChatController : ControllerBase
         }
 
         sw.Stop();
-        await EnqueueSafeAsync(providerId, projectId, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+        await EnqueueSafeAsync(providerId, projectId, agentName, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
     }
 
     private async Task EnqueueSafeAsync(
         Guid providerId,
         Guid projectId,
+        string agentName,
         string requestBody,
         string responseBody,
         TimeSpan duration,
@@ -173,7 +184,8 @@ public class TraceyChatController : ControllerBase
                     ResponseBody: responseBody,
                     DurationMs: (long)duration.TotalMilliseconds,
                     HttpStatus: (int)httpStatus,
-                    SessionId: null),
+                    SessionId: null,
+                    AgentName: agentName),
                 cancellationToken);
         }
         catch (Exception ex)

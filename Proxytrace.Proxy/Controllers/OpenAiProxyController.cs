@@ -21,6 +21,10 @@ public class OpenAiProxyController : ControllerBase
 {
     private const string SessionIdHeader = "x-proxytrace-session-id";
 
+    // Optional: a client may name its owning agent explicitly. When present, ingestion attributes the
+    // call to that named agent directly, skipping the prompt/tool similarity matcher.
+    private const string AgentNameHeader = "x-proxytrace-agent";
+
     private static readonly IReadOnlyCollection<string> ForwardedRequestHeaders = new HashSet<string>(
     [
         "authorization",
@@ -97,6 +101,10 @@ public class OpenAiProxyController : ControllerBase
             ? sid.ToString()
             : null;
 
+        var agentName = Request.Headers.TryGetValue(AgentNameHeader, out var an)
+            ? an.ToString()
+            : null;
+
         var isStreaming = IsStreamingRequest(requestBody, Request.ContentType);
 
         if (isStreaming)
@@ -137,11 +145,11 @@ public class OpenAiProxyController : ControllerBase
 
         if (isStreaming)
         {
-            await ProxyStreamingResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
+            await ProxyStreamingResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
         }
         else
         {
-            await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, cancellationToken);
+            await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
         }
     }
 
@@ -169,6 +177,7 @@ public class OpenAiProxyController : ControllerBase
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
         string? sessionId,
+        string? agentName,
         CancellationToken cancellationToken)
     {
         var responseBody = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -176,7 +185,7 @@ public class OpenAiProxyController : ControllerBase
 
         await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(responseBody), cancellationToken);
 
-        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, cancellationToken);
+        await EnqueueSafeAsync(provider, project, requestBody, responseBody, sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, cancellationToken);
     }
 
     // ── Streaming (SSE) ───────────────────────────────────────────────────────
@@ -188,6 +197,7 @@ public class OpenAiProxyController : ControllerBase
         HttpResponseMessage upstreamResponse,
         Stopwatch sw,
         string? sessionId,
+        string? agentName,
         CancellationToken cancellationToken)
     {
         var accumulated = new StringBuilder();
@@ -212,7 +222,7 @@ public class OpenAiProxyController : ControllerBase
 
         sw.Stop();
 
-        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, cancellationToken);
+        await EnqueueSafeAsync(provider, project, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, sessionId, agentName, cancellationToken);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -225,6 +235,7 @@ public class OpenAiProxyController : ControllerBase
         TimeSpan duration,
         HttpStatusCode httpStatus,
         string? sessionId,
+        string? agentName,
         CancellationToken cancellationToken)
     {
         try
@@ -237,7 +248,8 @@ public class OpenAiProxyController : ControllerBase
                     ResponseBody: responseBody,
                     DurationMs: (long)duration.TotalMilliseconds,
                     HttpStatus: (int)httpStatus,
-                    SessionId: sessionId),
+                    SessionId: sessionId,
+                    AgentName: agentName),
                 cancellationToken);
         }
         catch (Exception ex)

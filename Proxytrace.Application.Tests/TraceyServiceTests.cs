@@ -17,16 +17,16 @@ public sealed class TraceyServiceTests : BaseTest<Module>
     {
         IServiceProvider services = GetServices(RegisterTracey);
         var project = await CreateProjectAsync(services);
-        var definition = services.GetRequiredService<ITraceyDefinition>();
         var provisioner = services.GetRequiredService<ITraceyAgentProvisioner>();
 
         var agent = await provisioner.EnsureTraceyAgentAsync(project, CancellationToken);
 
-        agent.Name.Should().Be(definition.Name);
+        agent.Name.Should().Be(TraceyAgentProvisioner.AgentName);
         agent.IsSystemAgent.Should().BeTrue();
         agent.Project.Id.Should().Be(project.Id);
-        agent.Tools.Should().HaveCount(definition.Tools.Count);
-        agent.SystemPrompt.Template.Should().Be(definition.SystemPrompt);
+        // Seeded identity-only: empty tools; the live prompt + tools are captured from Tracey's
+        // first call via name-based attribution.
+        agent.Tools.Should().BeEmpty();
     }
 
     [TestMethod]
@@ -62,7 +62,6 @@ public sealed class TraceyServiceTests : BaseTest<Module>
 
     private static void RegisterTracey(ContainerBuilder builder)
     {
-        builder.RegisterType<TraceyDefinition>().As<ITraceyDefinition>().SingleInstance();
         builder.RegisterType<TraceyAgentProvisioner>().As<ITraceyAgentProvisioner>().SingleInstance();
         builder.RegisterType<TraceySessionService>().As<ITraceySessionService>().SingleInstance();
     }

@@ -11,7 +11,7 @@ namespace Proxytrace.Application.Tracey;
 public interface ITraceyAgentProvisioner
 {
     /// <summary>
-    /// Returns the project's Tracey agent, creating it from <see cref="ITraceyDefinition"/> if absent.
+    /// Returns the project's Tracey agent, seeding an identity-only system agent if absent.
     /// Safe to call repeatedly.
     /// </summary>
     Task<IAgent> EnsureTraceyAgentAsync(IProject project, CancellationToken cancellationToken = default);

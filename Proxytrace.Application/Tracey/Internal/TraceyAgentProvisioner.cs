@@ -7,20 +7,31 @@ namespace Proxytrace.Application.Tracey.Internal;
 
 internal sealed class TraceyAgentProvisioner : ITraceyAgentProvisioner
 {
-    private readonly ITraceyDefinition definition;
+    /// <summary>
+    /// The canonical agent name used to seed, find, and attribute Tracey within a project. Tracey's
+    /// live system prompt and tools are owned by the frontend runtime
+    /// (<c>frontend/src/features/tracey/{tracey-prompt,tracey-tools}.ts</c>) and captured into her
+    /// agent version on her first call via name-based attribution, so nothing else lives here.
+    /// </summary>
+    public const string AgentName = "Tracey";
+
+    // The seeded agent needs a v1 prompt before her first call lands. This placeholder is overwritten
+    // by the live prompt captured from the wire.
+    private const string SeedPrompt =
+        "You are Tracey, the in-app assistant for Proxytrace. This placeholder identity prompt is " +
+        "replaced by the live prompt captured from her first call.";
+
     private readonly IAgentRepository agents;
     private readonly IAgent.CreateNew createAgent;
     private readonly IPromptTemplate.Create createPrompt;
     private readonly IModelParameters.Create createParameters;
 
     public TraceyAgentProvisioner(
-        ITraceyDefinition definition,
         IAgentRepository agents,
         IAgent.CreateNew createAgent,
         IPromptTemplate.Create createPrompt,
         IModelParameters.Create createParameters)
     {
-        this.definition = definition;
         this.agents = agents;
         this.createAgent = createAgent;
         this.createPrompt = createPrompt;
@@ -37,10 +48,12 @@ internal sealed class TraceyAgentProvisioner : ITraceyAgentProvisioner
             return existing;
         }
 
+        // Seed identity only: empty tools + a placeholder prompt. Tracey's live prompt + tools are
+        // captured from her first call and versioned under this agent via name-based attribution.
         var agent = createAgent(
-            definition.Name,
-            createPrompt("tracey-system", definition.SystemPrompt),
-            tools: definition.Tools,
+            AgentName,
+            createPrompt("tracey-system", SeedPrompt),
+            tools: [],
             endpoint: project.SystemEndpoint,
             project: project,
             modelParameters: createParameters(temperature: 0.2),
@@ -51,16 +64,7 @@ internal sealed class TraceyAgentProvisioner : ITraceyAgentProvisioner
 
     private async Task<IAgent?> FindTraceyAgentAsync(IProject project, CancellationToken cancellationToken)
     {
-        await foreach (var agent in agents.EnumerateAsync(cancellationToken))
-        {
-            if (agent.IsSystemAgent
-                && agent.Project.Id == project.Id
-                && agent.Name == definition.Name)
-            {
-                return agent;
-            }
-        }
-
-        return null;
+        var agent = await agents.FindByNameAsync(project, AgentName, cancellationToken);
+        return agent is { IsSystemAgent: true } ? agent : null;
     }
 }

@@ -32,6 +32,20 @@ without re-evaluating the rules above. If the system prompt changes, the rules a
 The similarity threshold is configurable via `AgentVersioningOptions.SimilarityThreshold`;
 the candidate-cap before Levenshtein is `AgentVersioningOptions.MaxCandidates` (default 32).
 
+### Naming an agent explicitly
+
+A client can skip the matching rules entirely and tell Proxytrace which agent a call belongs
+to by sending the **`X-Proxytrace-Agent`** header with the agent's name. When present:
+
+- The call attaches to the named agent in your project, creating that agent the first time
+  the name is seen.
+- Its version (system prompt + tools) is captured straight from the request — no similarity
+  comparison runs, so unrelated prompt or tool changes never split it into a separate agent.
+
+This is how the built-in [Tracey](/guide/tracey) assistant always attributes cleanly to her
+own agent. Use it for any client where you already know the agent's identity and want stable
+grouping regardless of prompt drift.
+
 ### Fixing a misclassification
 
 If Proxytrace created a new agent for what should have been a new version of an existing

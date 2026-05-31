@@ -228,10 +228,6 @@ public sealed class Module : Autofac.Module
                 .IfNotRegistered(t);
         }
 
-        builder.RegisterType<Tracey.Internal.TraceyDefinition>()
-            .As<Tracey.ITraceyDefinition>()
-            .SingleInstance();
-
         builder.RegisterType<Tracey.Internal.TraceyAgentProvisioner>()
             .As<Tracey.ITraceyAgentProvisioner>()
             .SingleInstance();

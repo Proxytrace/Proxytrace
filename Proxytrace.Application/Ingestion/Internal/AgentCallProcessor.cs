@@ -85,6 +85,13 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
                 // prior call's version verbatim.
                 version = priorConversationCall.Version;
             }
+            else if (job.AgentName is { Length: > 0 } agentName)
+            {
+                // Explicit attribution: the caller named the owning agent (same-origin client like
+                // Tracey, or the X-Proxytrace-Agent header). Attribute directly, skipping the
+                // prompt/tool similarity matcher entirely.
+                version = await ResolveVersionForNamedAgentAsync(job, agentName, promptTemplate, parsed, cancellationToken);
+            }
             else
             {
                 version = await ResolveVersionAsync(job, promptTemplate, parsed, cancellationToken);
@@ -165,6 +172,51 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// Resolves the version for a call whose owning agent was named explicitly. Bypasses the
+    /// similarity matcher: the named agent is looked up (created from the wire if it is the first
+    /// call for that name), and a version with an identical strict fingerprint is reused — otherwise
+    /// a new version is appended. The version content always comes from the actual request, so the
+    /// backend never has to mirror the client's tool schemas or system prompt.
+    /// </summary>
+    private async Task<IAgentVersion?> ResolveVersionForNamedAgentAsync(
+        IngestJob job,
+        string agentName,
+        IPromptTemplate promptTemplate,
+        ParseResult parsed,
+        CancellationToken cancellationToken)
+    {
+        var agent = await agentRepository.FindByNameAsync(job.Project, agentName, cancellationToken);
+        if (agent is null)
+        {
+            // First call for this name: create the agent + v1 straight from the wire.
+            var namedPrompt = createPromptTemplate(agentName, parsed.SystemMessage.ToString());
+            var created = await agentRepository.CreateWithInitialVersionAsync(
+                agentName,
+                namedPrompt,
+                parsed.Tools,
+                job.Project,
+                parsed.Endpoint,
+                parsed.ModelParameters,
+                isSystemAgent: false,
+                cancellationToken);
+            return created.CurrentVersion;
+        }
+
+        // Existing named agent: reuse a version with an identical strict fingerprint, else append one.
+        var targetFingerprint = versionRepository.GetStrictFingerprint(promptTemplate, parsed.Tools);
+        var versions = await versionRepository.GetByAgentAsync(agent, cancellationToken);
+        var match = versions.FirstOrDefault(
+            v => versionRepository.GetStrictFingerprint(v.SystemPrompt, v.Tools) == targetFingerprint);
+        if (match is not null)
+        {
+            return match;
+        }
+
+        var updated = await agent.CreateNewVersionAsync(promptTemplate, parsed.Tools, cancellationToken);
+        return updated.CurrentVersion;
     }
 
     private async Task<IAgentVersion?> ResolveVersionAsync(

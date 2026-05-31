@@ -192,7 +192,10 @@ internal class OpenAiCallParser : IOpenAiCallParser
 
     private static Message? ParseMessage(string? role, JsonElement el) => role switch
     {
+        // "developer" is the OpenAI role newer reasoning models use for the system prompt; the
+        // AI SDK emits it in place of "system", so treat the two identically.
         "system"    => new SystemMessage(ParseContents(el)),
+        "developer" => new SystemMessage(ParseContents(el)),
         "user"      => new UserMessage(ParseContents(el)),
         "assistant" => new AssistantMessage(ParseContents(el), ParseToolRequests(el)),
         "tool"      => ParseToolMessage(el),
@@ -291,7 +294,10 @@ internal class OpenAiCallParser : IOpenAiCallParser
 
             foreach (var msg in messages.EnumerateArray())
             {
-                if (!msg.TryGetProperty("role", out var role) || role.GetString() != "system")
+                // Accept "developer" as well as "system": reasoning models receive the system
+                // prompt under the "developer" role (emitted by the AI SDK / OpenAI SDK).
+                var role = msg.TryGetProperty("role", out var roleEl) ? roleEl.GetString() : null;
+                if (role is not ("system" or "developer"))
                 {
                     continue;
                 }

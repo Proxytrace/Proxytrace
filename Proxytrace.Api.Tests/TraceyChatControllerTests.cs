@@ -41,7 +41,8 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             Arg.Is<IngestMessage>(m =>
                 m.ProjectId == project.Id
                 && m.ProviderId == project.SystemEndpoint.Provider.Id
-                && m.HttpStatus == 200),
+                && m.HttpStatus == 200
+                && m.AgentName == "Tracey"),
             Arg.Any<CancellationToken>());
     }
 
@@ -55,6 +56,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             services.GetRequiredService<IHttpClientFactory>(),
             services.GetRequiredService<IIngestionStream>(),
             services.GetRequiredService<IRepository<IProject>>(),
+            services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             NullLogger<TraceyChatController>.Instance);
 
         var http = new DefaultHttpContext();
@@ -73,6 +75,7 @@ public sealed class TraceyChatControllerTests : BaseTest<Module>
             services.GetRequiredService<IHttpClientFactory>(),
             services.GetRequiredService<IIngestionStream>(),
             services.GetRequiredService<IRepository<IProject>>(),
+            services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>(),
             NullLogger<TraceyChatController>.Instance);
 
         var http = new DefaultHttpContext();
