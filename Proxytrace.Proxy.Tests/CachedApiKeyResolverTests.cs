@@ -156,61 +156,6 @@ public sealed class CachedApiKeyResolverTests
         result.Project.Should().BeSameAs(apiKey.Project);
     }
 
-    [TestMethod]
-    public async Task ResolveAsync_ProxytraceKeyExpired_ReturnsNull()
-    {
-        IApiKey apiKey = ProxytraceKey();
-        apiKey.ExpiresAt.Returns(DateTimeOffset.UtcNow.AddMinutes(-1));
-        var apiKeys = Substitute.For<IApiKeyRepository>();
-        var providers = Substitute.For<IModelProviderRepository>();
-        var projects = Substitute.For<IProjectRepository>();
-        apiKeys.FindByKeyAsync("expired", Arg.Any<CancellationToken>()).Returns(apiKey);
-        providers.FindByApiKeyAsync("expired", Arg.Any<CancellationToken>()).Returns((IModelProvider?)null);
-
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
-
-        (await resolver.ResolveAsync("expired", projectSlug: null, CancellationToken.None)).Should().BeNull();
-    }
-
-    [TestMethod]
-    public async Task ResolveAsync_ProxytraceKeyNotYetExpired_Resolves()
-    {
-        IApiKey apiKey = ProxytraceKey();
-        apiKey.ExpiresAt.Returns(DateTimeOffset.UtcNow.AddMinutes(30));
-        var apiKeys = Substitute.For<IApiKeyRepository>();
-        var providers = Substitute.For<IModelProviderRepository>();
-        var projects = Substitute.For<IProjectRepository>();
-        apiKeys.FindByKeyAsync("live", Arg.Any<CancellationToken>()).Returns(apiKey);
-
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
-
-        var result = await resolver.ResolveAsync("live", projectSlug: null, CancellationToken.None);
-
-        result.Should().NotBeNull();
-        result.Provider.Should().BeSameAs(apiKey.Provider);
-    }
-
-    [TestMethod]
-    public async Task ResolveAsync_ShortLivedKey_NotServedFromCachePastExpiry()
-    {
-        IApiKey apiKey = ProxytraceKey();
-        // Expires within the cache TTL window: the cache entry must be clamped to the remaining
-        // lifetime, so a second resolve after expiry re-hits the repository (which now rejects it).
-        apiKey.ExpiresAt.Returns(DateTimeOffset.UtcNow.AddMilliseconds(150));
-        var apiKeys = Substitute.For<IApiKeyRepository>();
-        var providers = Substitute.For<IModelProviderRepository>();
-        var projects = Substitute.For<IProjectRepository>();
-        apiKeys.FindByKeyAsync("short", Arg.Any<CancellationToken>()).Returns(apiKey);
-        providers.FindByApiKeyAsync("short", Arg.Any<CancellationToken>()).Returns((IModelProvider?)null);
-
-        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
-
-        (await resolver.ResolveAsync("short", projectSlug: null, CancellationToken.None)).Should().NotBeNull();
-        await Task.Delay(250, CancellationToken.None);
-        (await resolver.ResolveAsync("short", projectSlug: null, CancellationToken.None)).Should().BeNull();
-
-        await apiKeys.Received(2).FindByKeyAsync("short", Arg.Any<CancellationToken>());
-    }
 
     [TestMethod]
     public async Task ResolveAsync_ProxytraceKeyWins_OnCollisionWithProviderKey()

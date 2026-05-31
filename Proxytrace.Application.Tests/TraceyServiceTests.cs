@@ -1,11 +1,9 @@
 using Autofac;
 using AwesomeAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Application.Tracey.Internal;
 using Proxytrace.Domain;
-using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Project;
 using Proxytrace.Testing;
 
@@ -45,25 +43,7 @@ public sealed class TraceyServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task CreateSessionAsync_MintsProjectScopedKeyExpiringInOneHour()
-    {
-        IServiceProvider services = GetServices(RegisterTracey);
-        var project = await CreateProjectAsync(services);
-        var sessionService = services.GetRequiredService<ITraceySessionService>();
-        var apiKeys = services.GetRequiredService<IApiKeyRepository>();
-
-        var session = await sessionService.CreateSessionAsync(project, CancellationToken);
-
-        var stored = await apiKeys.FindByKeyAsync(session.ApiKey, CancellationToken);
-        stored.Should().NotBeNull();
-        stored!.Project.Id.Should().Be(project.Id);
-        stored.Provider.Id.Should().Be(project.SystemEndpoint.Provider.Id);
-        stored.ExpiresAt.Should().NotBeNull();
-        stored.ExpiresAt!.Value.Should().BeCloseTo(DateTimeOffset.UtcNow.AddHours(1), TimeSpan.FromMinutes(1));
-    }
-
-    [TestMethod]
-    public async Task CreateSessionAsync_ReturnsModelAgentAndScopedProxyUrl()
+    public async Task CreateSessionAsync_ReturnsModelAndTraceyAgent()
     {
         IServiceProvider services = GetServices(RegisterTracey);
         var project = await CreateProjectAsync(services);
@@ -75,8 +55,6 @@ public sealed class TraceyServiceTests : BaseTest<Module>
 
         session.Model.Should().Be(project.SystemEndpoint.Model.Name);
         session.AgentId.Should().Be(traceyAgent.Id);
-        session.ProxyBaseUrl.Should().StartWith("http://localhost:5002/");
-        session.ProxyBaseUrl.Should().EndWith("/openai/v1");
     }
 
     private async Task<IProject> CreateProjectAsync(IServiceProvider services)
@@ -87,11 +65,5 @@ public sealed class TraceyServiceTests : BaseTest<Module>
         builder.RegisterType<TraceyDefinition>().As<ITraceyDefinition>().SingleInstance();
         builder.RegisterType<TraceyAgentProvisioner>().As<ITraceyAgentProvisioner>().SingleInstance();
         builder.RegisterType<TraceySessionService>().As<ITraceySessionService>().SingleInstance();
-        builder.RegisterInstance<IConfiguration>(new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Tracey:ProxyBaseUrl"] = "http://localhost:5002",
-            })
-            .Build());
     }
 }

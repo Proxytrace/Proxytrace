@@ -9,22 +9,19 @@ namespace Proxytrace.Application.Tracey;
 public interface ITraceySessionService
 {
     /// <summary>
-    /// Creates a Tracey session for the given project, minting a fresh API key that expires within
-    /// one hour and resolving the project's Tracey agent + model endpoint.
+    /// Resolves a Tracey session for the given project: ensures its Tracey agent exists and returns
+    /// the model + agent the browser runtime should use. The browser talks to Tracey same-origin
+    /// (via <c>/api/tracey/{projectId}/openai/v1</c> with its existing JWT), so no key is minted.
     /// </summary>
     Task<TraceySessionResult> CreateSessionAsync(IProject project, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// The result of <see cref="ITraceySessionService.CreateSessionAsync"/>: the short-lived bearer key
-/// and the proxy base URL / model / agent the browser runtime should use.
+/// The result of <see cref="ITraceySessionService.CreateSessionAsync"/>: the model and Tracey agent
+/// the browser runtime should use.
 /// </summary>
-/// <param name="ApiKey">The short-lived Proxytrace key the browser sends as the bearer token.</param>
-/// <param name="ProxyBaseUrl">The OpenAI-compatible base URL (already project-scoped, ending in <c>/v1</c>).</param>
-/// <param name="Model">The model name to request against the proxy.</param>
+/// <param name="Model">The model name to request.</param>
 /// <param name="AgentId">The id of the project's Tracey agent (for deep-links / attribution).</param>
 public sealed record TraceySessionResult(
-    string ApiKey,
-    string ProxyBaseUrl,
     string Model,
     Guid AgentId);

@@ -31,7 +31,6 @@ internal class ApiKeyGenerator : DomainEntityGenerator<IApiKey>
             name: random.String(),
             apiKey: $"proxytrace-{random.UniqueString()}",
             project: project,
-            provider: provider,
-            expiresAt: null);
+            provider: provider);
     }
 }

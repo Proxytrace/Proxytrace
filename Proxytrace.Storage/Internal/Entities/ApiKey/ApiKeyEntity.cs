@@ -25,9 +25,4 @@ internal record ApiKeyEntity : Entity
     /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.Provider"/>
     /// </summary>
     public required Guid Provider { get; init; }
-
-    /// <summary>
-    /// <see cref="Proxytrace.Domain.ApiKey.IApiKey.ExpiresAt"/>
-    /// </summary>
-    public DateTimeOffset? ExpiresAt { get; init; }
 }

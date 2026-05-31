@@ -9,32 +9,40 @@ import {
   type ToolSet,
 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import type { TraceySessionDto } from '../../api/tracey';
+import { getAccessToken } from '../../auth/token';
 import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 
 /**
- * A client-side {@link ChatTransport} that talks directly to Proxytrace's OpenAI-compatible
- * proxy with the short-lived session key. Each reasoning step runs through the proxy and is
- * captured as an AgentCall attributed to the project's Tracey agent. Tools execute in the
- * browser via {@link createTraceyTools}.
+ * A client-side {@link ChatTransport} that talks to Tracey's same-origin API endpoint
+ * (`/api/tracey/{projectId}/openai/v1`). The API forwards each call to the project's provider and
+ * captures it as an AgentCall attributed to the Tracey agent. Auth is the app's own JWT (injected
+ * per request), so there is no CORS and no short-lived key. Tools execute in the browser via
+ * {@link createTraceyTools}.
  */
 export class TraceyTransport implements ChatTransport<UIMessage> {
   private readonly tools: ToolSet;
   private readonly model;
 
   constructor(
-    session: TraceySessionDto,
+    projectId: string,
+    model: string,
     toolContext: TraceyToolContext,
     private readonly systemPrompt: string,
   ) {
     const openai = createOpenAI({
-      baseURL: session.proxyBaseUrl,
-      apiKey: session.apiKey,
+      // Relative URL → resolved against the app origin → same-origin (Vite/nginx proxies /api).
+      baseURL: `/api/tracey/${projectId}/openai/v1`,
+      // The real credential is the app JWT, injected by the custom fetch below; this is a placeholder.
+      apiKey: 'app-jwt',
+      fetch: async (input, init) => {
+        const token = getAccessToken();
+        const headers = new Headers(init?.headers);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+        return fetch(input, { ...init, headers });
+      },
     });
-    // Use the Chat Completions API (/chat/completions) — that is what the Proxytrace proxy
-    // speaks. The provider default (openai(id)) targets the Responses API (/responses),
-    // which the proxy does not expose.
-    this.model = openai.chat(session.model);
+    // Chat Completions API (/chat/completions) — the default openai(id) targets the Responses API.
+    this.model = openai.chat(model);
     this.tools = buildAiTools(toolContext);
   }
 

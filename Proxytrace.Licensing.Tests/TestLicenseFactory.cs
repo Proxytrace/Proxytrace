@@ -26,7 +26,7 @@ internal sealed class TestLicenseFactory : IDisposable
             rsa = RSA.Create(2048);
     }
 
-    private AsymmetricAlgorithm Key => (AsymmetricAlgorithm?)ecdsa ?? rsa!;
+    private AsymmetricAlgorithm Key => (AsymmetricAlgorithm?)ecdsa ?? rsa ?? throw new InvalidOperationException("No key generated");
 
     private SecurityKey SigningSecurityKey => ecdsa is not null
         ? new ECDsaSecurityKey(ecdsa)

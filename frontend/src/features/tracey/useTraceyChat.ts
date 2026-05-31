@@ -104,12 +104,14 @@ export function useTraceyChat(): TraceyChat {
   const transport = useMemo(() => new DelegatingTransport(), []);
   const runtime = useChatRuntime({ transport });
 
-  // Swap in the real proxy-backed transport whenever the session (or tool context) changes.
+  // Swap in the real same-origin transport whenever the session (or tool context) changes.
   useEffect(() => {
     transport.setInner(
-      session ? new TraceyTransport(session, toolContext, TRACEY_SYSTEM_PROMPT) : null,
+      session && projectId
+        ? new TraceyTransport(projectId, session.model, toolContext, TRACEY_SYSTEM_PROMPT)
+        : null,
     );
-  }, [transport, session, toolContext]);
+  }, [transport, session, projectId, toolContext]);
 
   // Best-effort thread persistence so the conversation survives navigation/reload.
   useEffect(() => {

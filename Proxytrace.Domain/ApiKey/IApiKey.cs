@@ -30,14 +30,9 @@ public interface IApiKey : IDomainEntity
     /// </summary>
     IModelProvider Provider { get; }
 
-    /// <summary>
-    /// The moment this key stops authenticating, or <see langword="null"/> for a key that never expires.
-    /// </summary>
-    DateTimeOffset? ExpiresAt { get; }
-
     /// <summary>Factory delegate for creating a new API key.</summary>
-    public delegate IApiKey CreateNew(string name, string apiKey, IProject project, IModelProvider provider, DateTimeOffset? expiresAt);
+    public delegate IApiKey CreateNew(string name, string apiKey, IProject project, IModelProvider provider);
 
     /// <summary>Factory delegate for reconstituting an existing API key from persistence.</summary>
-    public delegate IApiKey CreateExisting(string name, string apiKey, IProject project, IModelProvider provider, DateTimeOffset? expiresAt, IDomainEntityData existing);
+    public delegate IApiKey CreateExisting(string name, string apiKey, IProject project, IModelProvider provider, IDomainEntityData existing);
 }

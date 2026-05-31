@@ -60,6 +60,9 @@ traces to system agents to review exactly what she did and how many tokens it co
 
 ## Privacy & security
 
-Tracey's browser session uses a **short-lived** Proxytrace key (it expires within an hour).
-Your upstream provider credentials never reach the browser — only the temporary Proxytrace
-key does, and the proxy swaps in the real provider key server-side.
+Tracey's chat runs **same-origin**: the browser calls the Proxytrace API with your normal
+session (JWT), and the API forwards each request to your model provider server-side. Your
+upstream provider credentials never reach the browser.
+
+> Tracey makes real model calls, so she needs a configured provider with a valid key and is
+> unavailable in read-only demo (kiosk) mode.

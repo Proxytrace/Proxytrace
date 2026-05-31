@@ -12,6 +12,7 @@ import { Avatar } from '../ui/Avatar';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
+import { useKiosk } from '../../contexts/KioskContext';
 import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
@@ -125,6 +126,8 @@ export function Shell() {
   const licenseFeatures = license?.features ?? [];
   const location = useLocation();
   const { currentProject } = useCurrentProject();
+  // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
+  const { enabled: kioskEnabled } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
@@ -261,15 +264,17 @@ export function Shell() {
 
           <LicenseBadge />
 
-          <button
-            type="button"
-            data-testid="tracey-toggle"
-            onClick={() => setTraceyOpen(o => !o)}
-            title="Tracey — AI assistant"
-            className={cn('btn-icon', traceyOpen && 'text-accent')}
-          >
-            <SparklesIcon size={16} />
-          </button>
+          {!kioskEnabled && (
+            <button
+              type="button"
+              data-testid="tracey-toggle"
+              onClick={() => setTraceyOpen(o => !o)}
+              title="Tracey — AI assistant"
+              className={cn('btn-icon', traceyOpen && 'text-accent')}
+            >
+              <SparklesIcon size={16} />
+            </button>
+          )}
 
           <button
             type="button"
@@ -288,7 +293,7 @@ export function Shell() {
         </main>
       </div>
 
-      {traceyOpen && (
+      {!kioskEnabled && traceyOpen && (
         <Suspense fallback={null}>
           <TraceyDrawer onClose={() => setTraceyOpen(false)} />
         </Suspense>

@@ -40,10 +40,6 @@ public class TraceyController : ControllerBase
         }
 
         var session = await sessionService.CreateSessionAsync(project, cancellationToken);
-        return new TraceySessionDto(
-            session.ApiKey,
-            session.ProxyBaseUrl,
-            session.Model,
-            session.AgentId);
+        return new TraceySessionDto(session.Model, session.AgentId);
     }
 }

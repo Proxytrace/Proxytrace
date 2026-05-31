@@ -40,13 +40,9 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
 
         // Only cache positive resolutions so an outage can't pin a key to "unknown", and so the
         // last-known-good mapping keeps the proxy serving while the database is briefly unreachable.
-        if (resolved is not null)
+        if (resolved is not null && ttl > TimeSpan.Zero)
         {
-            TimeSpan effectiveTtl = ClampTtl(resolved.ExpiresAt);
-            if (effectiveTtl > TimeSpan.Zero)
-            {
-                cache.Set(cacheKey, resolved, effectiveTtl);
-            }
+            cache.Set(cacheKey, resolved, ttl);
         }
 
         return resolved;
@@ -59,15 +55,9 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         IApiKey? apiKey = await apiKeys.FindByKeyAsync(rawKey, cancellationToken);
         if (apiKey is not null)
         {
-            // A short-lived key past its expiry authenticates no longer; treat as not found (→ 401).
-            if (apiKey.ExpiresAt is { } expiresAt && expiresAt < DateTimeOffset.UtcNow)
-            {
-                return null;
-            }
-
             return !string.IsNullOrEmpty(projectSlug) && apiKey.Project.Name.ToSlug() != projectSlug
                 ? null
-                : new ResolvedApiKey(apiKey.Project, apiKey.Provider, apiKey.ExpiresAt);
+                : new ResolvedApiKey(apiKey.Project, apiKey.Provider);
         }
 
         // Upstream-provider-key path: caller authenticated with the provider's own credentials. The
@@ -85,19 +75,6 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         }
 
         return new ResolvedApiKey(project, provider);
-    }
-
-    // Never serve a short-lived key from cache past its own lifetime: clamp the configured TTL to the
-    // remaining time before expiry. Keys that never expire keep the configured TTL.
-    private TimeSpan ClampTtl(DateTimeOffset? expiresAt)
-    {
-        if (expiresAt is not { } expiry)
-        {
-            return ttl;
-        }
-
-        TimeSpan remaining = expiry - DateTimeOffset.UtcNow;
-        return remaining < ttl ? remaining : ttl;
     }
 
     private static string CacheKey(string rawKey, string? projectSlug)

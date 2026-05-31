@@ -2,12 +2,10 @@ import { api, qs } from './client';
 
 /**
  * The browser session payload for the Tracey assistant. Mirrors the backend
- * `TraceySessionDto`: a short-lived proxy key plus the coordinates the AI runtime
- * needs to reach the ingestion proxy.
+ * `TraceySessionDto`: the model + Tracey agent the AI runtime uses. The runtime calls Tracey
+ * same-origin (`/api/tracey/{projectId}/openai/v1`) with the app JWT — no proxy key.
  */
 export interface TraceySessionDto {
-  apiKey: string;
-  proxyBaseUrl: string;
   model: string;
   agentId: string;
 }
