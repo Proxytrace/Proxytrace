@@ -108,7 +108,7 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 px-4">
       {showStarters && (
         <div className="flex flex-col items-center gap-4 pb-1 animate-[fade-up_var(--motion-slow)_var(--ease-standard)]">
           <div className="flex flex-col items-center gap-2.5 text-center">

@@ -107,6 +107,11 @@ Because Tracey runs through the proxy, her LLM calls show up in **Traces** like 
 agent, attributed to the built-in **Tracey** system agent for your project. You can filter
 traces to system agents to review exactly what she did and how many tokens it cost.
 
+Each finished Tracey response carries a small **trace icon** beneath it — click it to jump
+straight to that response's captured trace in the **Traces** detail view, without hunting for
+it in the list. (Ingestion is asynchronous, so just after a reply the trace may take a moment
+to appear; if so, you'll see a brief "still being captured" note — try again in a second.)
+
 ## Privacy & security
 
 Tracey's chat runs **same-origin**: the browser calls the Proxytrace API with your normal

@@ -94,7 +94,7 @@ internal sealed class Module : Autofac.Module
         // calls onto this stream; the AgentCallIngestionWorker registered by Application.Module
         // consumes and persists them. Registered before the storage/application modules so this
         // configured stream wins over their in-process default.
-        builder.RegisterModule(new Proxytrace.Messaging.Module(BuildMessagingConfiguration(configuration)));
+        builder.RegisterModule(new Proxytrace.Messaging.Module(BuildMessagingConfiguration(configuration, kiosk.Enabled)));
         builder.Properties["Proxytrace.Messaging.Registered"] = true;
 
         // Register the licensing module with the environment-derived configuration and claim the
@@ -284,13 +284,19 @@ internal sealed class Module : Autofac.Module
         };
     }
 
-    private static Proxytrace.Messaging.MessagingConfiguration BuildMessagingConfiguration(IConfiguration configuration)
+    private static Proxytrace.Messaging.MessagingConfiguration BuildMessagingConfiguration(IConfiguration configuration, bool kioskEnabled)
     {
         var messaging = configuration.GetSection("Messaging");
-        var provider = Enum.TryParse<Proxytrace.Messaging.MessagingProvider>(
-            messaging.GetValue<string>("Provider"), ignoreCase: true, out var parsed)
-            ? parsed
-            : Proxytrace.Messaging.MessagingProvider.Redis;
+
+        // Kiosk is inherently single-process and in-memory: there is no separate proxy producer
+        // and no Redis-fed consumer, so ingestion always uses the in-process channel. Force it
+        // regardless of config (mirrors the kiosk -> StorageConfiguration.InMemory() choice above).
+        var provider = kioskEnabled
+            ? Proxytrace.Messaging.MessagingProvider.InProcess
+            : Enum.TryParse<Proxytrace.Messaging.MessagingProvider>(
+                messaging.GetValue<string>("Provider"), ignoreCase: true, out var parsed)
+                ? parsed
+                : Proxytrace.Messaging.MessagingProvider.Redis;
 
         return new Proxytrace.Messaging.MessagingConfiguration
         {

@@ -50,6 +50,11 @@ Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a ric
 dataset (the "Showcase Project" with sample agents, traces, test suites and proposals) on
 startup. It is intended for demos and walkthroughs.
 
+Kiosk is single-process: it does **not** require Redis. Captured-call ingestion runs over an
+in-process channel (`Messaging:Provider=InProcess`, forced automatically in kiosk regardless of
+config), and the ingestion worker runs in-process to persist those calls into the in-memory demo
+DB. The split/Redis transport is only for the standalone-proxy production deployment.
+
 ```json
 {
   "Kiosk": {
@@ -84,7 +89,10 @@ with a real provider endpoint, API key and model — typically in
 
 When this section is present, kiosk seeding creates a real model provider, model and
 endpoint, makes it the project's **system endpoint** (which powers Tracey chat), and routes
-all demo agents through it so test runs call the real model.
+all demo agents through it so test runs call the real model. The **Tracey AI** assistant also
+becomes visible and usable in the kiosk — her chat is the one write the read-only demo permits.
+Each Tracey exchange is captured through the in-process ingestion pipeline and shows up as a new
+trace attributed to the Tracey system agent.
 
 - `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
   is missing or invalid, the API fails fast on startup with a clear error.
@@ -92,7 +100,8 @@ all demo agents through it so test runs call the real model.
 - `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional.
 
 If `Kiosk:Endpoint` is omitted, the kiosk still seeds the full demo dataset, but with
-credential-less providers (LLM calls will not succeed).
+credential-less providers (LLM calls will not succeed); **Tracey stays hidden** in that case,
+since she has no real model to call.
 
 ## Demo data
 

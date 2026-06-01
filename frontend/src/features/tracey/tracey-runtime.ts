@@ -23,6 +23,13 @@ import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 export class TraceyTransport implements ChatTransport<UIMessage> {
   private readonly tools: ToolSet;
   private readonly model;
+  /**
+   * Correlation id for the in-flight turn. Sent on every upstream request of the turn so all of
+   * its captured calls share one ConversationId, and attached to the assistant message's metadata
+   * so the UI can deep-link the response to its ingested trace. Set per `sendMessages` call (which
+   * the runtime awaits sequentially), so there's no cross-turn interleaving.
+   */
+  private currentTurnId: string | null = null;
 
   constructor(
     projectId: string,
@@ -39,6 +46,7 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
         const token = getAccessToken();
         const headers = new Headers(init?.headers);
         if (token) headers.set('Authorization', `Bearer ${token}`);
+        if (this.currentTurnId) headers.set('x-proxytrace-session-id', this.currentTurnId);
         return fetch(input, { ...init, headers });
       },
     });
@@ -50,6 +58,10 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
   async sendMessages(
     options: Parameters<ChatTransport<UIMessage>['sendMessages']>[0],
   ): Promise<ReadableStream<UIMessageChunk>> {
+    // One id per turn: tags the turn's upstream calls (header, above) and the resulting assistant
+    // message (metadata, below) with the same value so the UI can resolve the response → trace.
+    const turnId = crypto.randomUUID();
+    this.currentTurnId = turnId;
     const result = streamText({
       model: this.model,
       system: this.systemPrompt,
@@ -61,7 +73,10 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       stopWhen: stepCountIs(8),
       abortSignal: options.abortSignal,
     });
-    return result.toUIMessageStream();
+    // assistant-ui surfaces this under the message's `metadata.custom`; `TraceLink` reads it.
+    return result.toUIMessageStream({
+      messageMetadata: () => ({ custom: { traceConversationId: turnId } }),
+    });
   }
 
   reconnectToStream(): Promise<ReadableStream<UIMessageChunk> | null> {

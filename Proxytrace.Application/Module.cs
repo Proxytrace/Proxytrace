@@ -152,13 +152,11 @@ public sealed class Module : Autofac.Module
             builder.Properties[agentCallIngestionWorkerKey] = true;
             builder.RegisterServiceCollection(services =>
             {
+                // Runs in every mode, including kiosk: kiosk uses the in-process ingestion stream
+                // (see Proxytrace.Api.Module messaging config), so the worker consumes that channel
+                // and persists captured calls (e.g. Tracey chats) into the in-memory demo DB.
                 services.AddSingleton<IHostedService>(sc =>
-                {
-                    var kiosk = sc.GetRequiredService<KioskOptions>();
-                    return kiosk.Enabled
-                        ? new NullHostedService()
-                        : sc.GetRequiredService<AgentCallIngestionWorker>();
-                });
+                    sc.GetRequiredService<AgentCallIngestionWorker>());
             });
         }
 

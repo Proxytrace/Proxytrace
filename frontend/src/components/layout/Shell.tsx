@@ -13,8 +13,10 @@ import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useKiosk } from '../../contexts/KioskContext';
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
 import { useTraceyChat } from '../../features/tracey/useTraceyChat';
 import { TraceyChatProvider } from '../../features/tracey/tracey-chat-context';
+import { TraceyActionsProvider } from '../../features/tracey/tracey-actions';
 import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
@@ -126,14 +128,14 @@ export function Shell() {
   const licenseFeatures = license?.features ?? [];
   const location = useLocation();
   const { currentProject } = useCurrentProject();
-  // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
-  const { enabled: kioskEnabled } = useKiosk();
+  // Tracey makes real LLM calls; in kiosk she's only available when an LLM endpoint is configured.
+  const { traceyAvailable } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
   // The Tracey chat is created here — above the router `Outlet` — so its runtime and
   // conversation persist while the user navigates between routes (the `/tracey-ai` page just
-  // renders this shared runtime). Tracey is disabled in kiosk mode, so no session is created.
+  // renders this shared runtime). When Tracey is unavailable, no session is created.
   const traceyChat = useTraceyChat();
 
   const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
@@ -185,8 +187,8 @@ export function Shell() {
                 </div>
               )}
               {group.items
-                // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode.
-                .filter(item => !(kioskEnabled && item.to === '/tracey-ai'))
+                // Tracey needs a usable LLM endpoint; hide her nav entry when unavailable (kiosk without one).
+                .filter(item => !(item.to === '/tracey-ai' && !traceyAvailable))
                 .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
@@ -271,7 +273,7 @@ export function Shell() {
 
           <LicenseBadge />
 
-          {!kioskEnabled && (
+          {traceyAvailable && (
             <button
               type="button"
               data-testid="tracey-toggle"
@@ -296,8 +298,18 @@ export function Shell() {
 
         {/* Page content — single vertical scroll container for the app */}
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_10px_10px_10px] bg-transparent relative z-0 flex flex-col">
+          {/* The runtime provider mounts here — above the router `Outlet` — not on the Tracey
+              page. assistant-ui keeps the conversation's message state inside the component
+              subtree the provider renders, so mounting it per-route would destroy the thread on
+              every navigation. Hoisting it here is what actually makes the chat survive nav. */}
           <TraceyChatProvider value={traceyChat}>
-            <Outlet />
+            <TraceyActionsProvider
+              value={{ sendUserMessage: traceyChat.sendUserMessage, navigate: traceyChat.navigate }}
+            >
+              <AssistantRuntimeProvider runtime={traceyChat.runtime}>
+                <Outlet />
+              </AssistantRuntimeProvider>
+            </TraceyActionsProvider>
           </TraceyChatProvider>
         </main>
       </div>

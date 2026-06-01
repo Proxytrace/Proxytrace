@@ -9,10 +9,12 @@ namespace Proxytrace.Api.Controllers;
 public class ConfigController : ControllerBase
 {
     private readonly KioskOptions kioskOptions;
+    private readonly KioskEndpointOptions kioskEndpoint;
 
-    public ConfigController(KioskOptions kioskOptions)
+    public ConfigController(KioskOptions kioskOptions, KioskEndpointOptions kioskEndpoint)
     {
         this.kioskOptions = kioskOptions;
+        this.kioskEndpoint = kioskEndpoint;
     }
 
     [HttpGet]
@@ -20,5 +22,8 @@ public class ConfigController : ControllerBase
     public object Get() => new
     {
         kiosk = kioskOptions.Enabled,
+
+        // Tracey is always available outside kiosk; in kiosk only when a real LLM endpoint is configured.
+        tracey = !kioskOptions.Enabled || kioskEndpoint.IsConfigured,
     };
 }

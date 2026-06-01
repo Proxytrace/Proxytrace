@@ -35,17 +35,19 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-1">
+      <div className="flex min-h-0 flex-1 flex-col pb-3 pt-1">
         {pendingConfirmation && (
-          <div className="mx-auto mt-2 w-full max-w-3xl rounded-lg border border-[color-mix(in_srgb,var(--warn)_35%,transparent)] bg-warn-subtle px-3 py-2.5">
-            <div className="text-[13px] text-primary">{pendingConfirmation.summary}</div>
-            <div className="mt-2 flex gap-2">
-              <button onClick={() => resolveConfirmation(true)} className="btn-primary px-3 py-1 text-xs">
-                Confirm
-              </button>
-              <button onClick={() => resolveConfirmation(false)} className="btn-ghost px-3 py-1 text-xs">
-                Cancel
-              </button>
+          <div className="mx-auto mt-2 w-full max-w-3xl px-4">
+            <div className="rounded-lg border border-[color-mix(in_srgb,var(--warn)_35%,transparent)] bg-warn-subtle px-3 py-2.5">
+              <div className="text-[13px] text-primary">{pendingConfirmation.summary}</div>
+              <div className="mt-2 flex gap-2">
+                <button onClick={() => resolveConfirmation(true)} className="btn-primary px-3 py-1 text-xs">
+                  Confirm
+                </button>
+                <button onClick={() => resolveConfirmation(false)} className="btn-ghost px-3 py-1 text-xs">
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}

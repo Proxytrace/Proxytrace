@@ -9,4 +9,5 @@ public record AgentCallFilter(
     DateTimeOffset? To = null,
     int? HttpStatus = null,
     bool IncludeSystemAgents = true,
-    string? Query = null);
+    string? Query = null,
+    Guid? ConversationId = null);

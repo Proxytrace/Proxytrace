@@ -62,6 +62,11 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => e.EndpointId == filter.EndpointId);
         }
 
+        if (filter.ConversationId.HasValue)
+        {
+            query = query.Where(e => e.ConversationId == filter.ConversationId.Value);
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Model))
         {
             var search = filter.Model;

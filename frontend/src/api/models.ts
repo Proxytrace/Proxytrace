@@ -552,6 +552,7 @@ export interface AgentCallFilter {
   httpStatus?: number;
   includeSystemAgents?: boolean;
   q?: string;
+  conversationId?: string;
   page?: number;
   pageSize?: number;
 }

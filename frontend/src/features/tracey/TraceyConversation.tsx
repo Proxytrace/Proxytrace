@@ -1,69 +1,22 @@
-import { ThreadPrimitive, MessagePrimitive } from '@assistant-ui/react';
-import type { TextMessagePartComponent } from '@assistant-ui/react';
-import { SparklesIcon, ArrowDownIcon } from '../../components/icons';
-import { MarkdownText } from './components/MarkdownText';
-import { ToolCallCard } from './components/ToolCallCard';
-import { TRACEY_TOOL_UI } from './components/tool-ui/registry';
-
-const PlainText: TextMessagePartComponent = ({ text }) => (
-  <span className="whitespace-pre-wrap break-words">{text}</span>
-);
-
-// User text is shown verbatim; assistant text is rendered as Markdown. Tools with a dedicated
-// inline UI render via `by_name`; everything else falls back to the diagnostic tool card.
-const tools = { by_name: TRACEY_TOOL_UI, Fallback: ToolCallCard };
-const userParts = { Text: PlainText, tools };
-const assistantParts = { Text: MarkdownText, tools };
-
-function UserMessage() {
-  return (
-    <MessagePrimitive.Root className="flex justify-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-accent px-3.5 py-2 text-[13px] text-white">
-        <MessagePrimitive.Parts components={userParts} />
-      </div>
-    </MessagePrimitive.Root>
-  );
-}
-
-/** Three pulsing dots shown while Tracey is thinking but hasn't streamed visible content yet. */
-function TypingDots() {
-  return (
-    <div className="flex items-center gap-1 py-1">
-      <span className="size-1.5 animate-pulse rounded-full bg-muted [animation-delay:0ms]" />
-      <span className="size-1.5 animate-pulse rounded-full bg-muted [animation-delay:150ms]" />
-      <span className="size-1.5 animate-pulse rounded-full bg-muted [animation-delay:300ms]" />
-    </div>
-  );
-}
-
-function AssistantMessage() {
-  return (
-    <MessagePrimitive.Root className="flex justify-start gap-2.5">
-      <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent ring-1 ring-[color-mix(in_srgb,var(--accent-primary)_22%,transparent)]">
-        <SparklesIcon size={14} />
-      </div>
-      <div className="min-w-0 flex-1 pt-0.5 text-[13px] text-primary">
-        <MessagePrimitive.Parts components={assistantParts} />
-        {/* Only the still-empty last message while the run is active shows the thinking dots. */}
-        <MessagePrimitive.If last hasContent={false}>
-          <ThreadPrimitive.If running>
-            <TypingDots />
-          </ThreadPrimitive.If>
-        </MessagePrimitive.If>
-      </div>
-    </MessagePrimitive.Root>
-  );
-}
+import { ThreadPrimitive } from '@assistant-ui/react';
+import { ArrowDownIcon } from '../../components/icons';
+import { AssistantMessage } from './components/AssistantMessage';
+import { UserMessage } from './components/UserMessage';
 
 /** The scrolling message list (composer lives in {@link TraceyComposer}). */
 export function TraceyConversation() {
   return (
     <ThreadPrimitive.Root className="relative flex flex-1 min-h-0 flex-col">
+      {/* The viewport scrolls the full panel width so the scrollbar sits in the panel gutter,
+          not glued to the text. `scrollbar-gutter: stable both-edges` reserves symmetric space so
+          the centered message column stays aligned with the composer (which has no scrollbar). */}
       <ThreadPrimitive.Viewport
         autoScroll
-        className="mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-4 overflow-y-auto px-2 py-4"
+        className="flex w-full flex-1 min-h-0 flex-col overflow-y-auto [scrollbar-gutter:stable_both-edges]"
       >
-        <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-5">
+          <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+        </div>
       </ThreadPrimitive.Viewport>
 
       <ThreadPrimitive.ScrollToBottom asChild>

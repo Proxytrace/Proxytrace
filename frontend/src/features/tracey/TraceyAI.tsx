@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
-import { AssistantRuntimeProvider } from '@assistant-ui/react';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { useTraceyChatContext } from './tracey-chat-context';
-import { TraceyActionsProvider } from './tracey-actions';
 import { TraceyChatPanel } from './components/TraceyChatPanel';
 
 export default function TraceyAI() {
@@ -33,13 +31,11 @@ export default function TraceyAI() {
     );
   }
 
+  // The runtime + actions providers are mounted app-wide in Shell (above the router) so the
+  // conversation survives navigation — this page only renders the already-running runtime.
   return (
-    <TraceyActionsProvider value={{ sendUserMessage: chat.sendUserMessage, navigate: chat.navigate }}>
-      <AssistantRuntimeProvider runtime={chat.runtime}>
-        <div className="flex h-full min-h-0">
-          <TraceyChatPanel chat={chat} />
-        </div>
-      </AssistantRuntimeProvider>
-    </TraceyActionsProvider>
+    <div className="flex h-full min-h-0">
+      <TraceyChatPanel chat={chat} />
+    </div>
   );
 }

@@ -180,13 +180,13 @@ function AppRoutes() {
   );
 }
 
-function KioskShell() {
+function KioskShell({ traceyAvailable }: { traceyAvailable: boolean }) {
   useEffect(() => {
     document.body.classList.add('kiosk');
     return () => document.body.classList.remove('kiosk');
   }, []);
   return (
-    <KioskContext.Provider value={{ enabled: true }}>
+    <KioskContext.Provider value={{ enabled: true, traceyAvailable }}>
       <BrowserRouter>
         <CurrentUserContext.Provider value={{ email: 'demo@proxytrace.dev', signOut: () => {} }}>
           <AppRoutes />
@@ -203,7 +203,7 @@ function ModeShell() {
     staleTime: Infinity,
   });
   const { data, isLoading, error } = useAuthMode();
-  if (appConfig?.kiosk) return <KioskShell />;
+  if (appConfig?.kiosk) return <KioskShell traceyAvailable={!!appConfig.tracey} />;
   if (isLoading) return <PageLoader />;
   if (error || !data) {
     return (

@@ -8,8 +8,6 @@ namespace Proxytrace.Application.Tests.Demo;
 [TestClass]
 public sealed class KioskEndpointOptionsTests : BaseTest<Module>
 {
-    public required TestContext TestContext { get; init; }
-
     [TestMethod]
     public void IsConfigured_WhenAllRequiredFieldsPresent_IsTrue()
     {

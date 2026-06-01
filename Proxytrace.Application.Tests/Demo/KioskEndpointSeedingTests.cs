@@ -12,8 +12,6 @@ namespace Proxytrace.Application.Tests.Demo;
 [TestClass]
 public sealed class KioskEndpointSeedingTests : BaseTest<Module>
 {
-    public required TestContext TestContext { get; init; }
-
     private const string RealApiKey = "sk-real-kiosk-key";
     private const string RealBaseUrl = "https://api.example-llm.com/v1";
     private const string RealModel = "demo-gpt";

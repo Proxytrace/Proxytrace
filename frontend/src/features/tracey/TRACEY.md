@@ -76,6 +76,23 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
 5. Results stream back; `TraceyConversation` renders assistant Markdown, per-tool inline UIs
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 
+## Linking a response to its trace
+
+Each finished assistant turn shows a `TraceLink` (`components/TraceLink.tsx`) that deep-links to
+the call the turn was ingested as. The wiring, end to end:
+
+- `TraceyTransport.sendMessages` mints one `crypto.randomUUID()` per turn. It rides every upstream
+  request as the `x-proxytrace-session-id` header (so all of a turn's tool-loop calls share it) and
+  is attached to the assistant message via `toUIMessageStream({ messageMetadata })` under
+  `metadata.custom.traceConversationId`.
+- The backend (`TraceyChatController`) reads that header into `IngestMessage.SessionId`, which the
+  ingestion pipeline stores as the call's **`ConversationId`** (a non-GUID would be SHA-1 hashed; we
+  send a GUID, so it's stored verbatim).
+- `TraceLink` reads `metadata.custom.traceConversationId` via `useMessage`, resolves it to the
+  latest matching call through the `conversationId` filter on `GET /api/agent-calls`, and routes to
+  `/traces?focus=<id>`. It renders nothing until the id exists (i.e. while the turn is still
+  streaming), and toasts if the trace hasn't been ingested yet (ingestion is async).
+
 ## Conversation persistence
 
 The conversation must survive both in-app navigation and a full page reload. Two layers,

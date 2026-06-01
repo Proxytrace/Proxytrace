@@ -73,10 +73,10 @@ export function useTraceyChat(): TraceyChat {
   const navigate = useNavigate();
   const { currentProject } = useCurrentProject();
   const currentUser = useCurrentUser();
-  // Tracey makes real LLM calls, so she's unavailable in read-only kiosk/demo mode. Since the
-  // runtime now mounts app-wide (above the router), gate the session here so kiosk never
-  // provisions one.
-  const { enabled: kiosk } = useKiosk();
+  // Tracey makes real LLM calls; in kiosk she's only available when an LLM endpoint is configured.
+  // Since the runtime mounts app-wide (above the router), gate the session here so it's only
+  // provisioned when Tracey is actually available.
+  const { traceyAvailable } = useKiosk();
   // The runtime mounts app-wide, but the session (and its backend agent provisioning) is only
   // created once the user opens Tracey. Latched on, so it stays alive across navigation.
   const [activated, setActivated] = useState(false);
@@ -111,7 +111,7 @@ export function useTraceyChat(): TraceyChat {
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
-    enabled: !!projectId && !kiosk && activated,
+    enabled: !!projectId && traceyAvailable && activated,
     // Refresh comfortably before the 1-hour key expiry.
     staleTime: 50 * 60 * 1000,
     refetchInterval: 50 * 60 * 1000,
@@ -171,7 +171,7 @@ export function useTraceyChat(): TraceyChat {
     runtime.threads.switchToNewThread();
   }, [runtime, userKey, projectKey]);
 
-  const status: TraceyChat['status'] = !projectId || kiosk
+  const status: TraceyChat['status'] = !projectId || !traceyAvailable
     ? 'no-project'
     : queryStatus === 'pending'
       ? 'loading'
