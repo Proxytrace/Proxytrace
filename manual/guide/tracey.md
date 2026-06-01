@@ -107,10 +107,18 @@ Because Tracey runs through the proxy, her LLM calls show up in **Traces** like 
 agent, attributed to the built-in **Tracey** system agent for your project. You can filter
 traces to system agents to review exactly what she did and how many tokens it cost.
 
-Each finished Tracey response carries a small **trace icon** beneath it — click it to jump
-straight to that response's captured trace in the **Traces** detail view, without hunting for
-it in the list. (Ingestion is asynchronous, so just after a reply the trace may take a moment
-to appear; if so, you'll see a brief "still being captured" note — try again in a second.)
+Each finished Tracey response carries a subtle **status row** beneath it. Because a single
+answer can involve several model calls (Tracey calling tools, then answering), the row shows
+the **total tokens** and **response time** for the whole turn — the token total matches the
+figure the Traces page shows for that turn's conversation group — plus two actions:
+
+- a **copy** button that puts the response text on your clipboard, and
+- a **trace icon** that jumps straight to that turn's captured traces in the **Traces** view,
+  without hunting for them in the list.
+
+The row appears once the reply has finished streaming, with the totals shown immediately. If
+you click the trace icon before the capture has finished saving (ingestion is asynchronous),
+you'll see a brief "still being captured" note — try again in a second.
 
 ## Privacy & security
 

@@ -76,22 +76,33 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
 5. Results stream back; `TraceyConversation` renders assistant Markdown, per-tool inline UIs
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 
-## Linking a response to its trace
+## Per-response status row
 
-Each finished assistant turn shows a `TraceLink` (`components/TraceLink.tsx`) that deep-links to
-the call the turn was ingested as. The wiring, end to end:
+Each finished assistant turn shows `MessageStatusBar` (`components/MessageStatusBar.tsx`) — a quiet
+row with the turn's **total tokens + duration**, a `CopyMessageButton`, and an `OpenTraceButton`.
 
-- `TraceyTransport.sendMessages` mints one `crypto.randomUUID()` per turn. It rides every upstream
-  request as the `x-proxytrace-session-id` header (so all of a turn's tool-loop calls share it) and
-  is attached to the assistant message via `toUIMessageStream({ messageMetadata })` under
-  `metadata.custom.traceConversationId`.
-- The backend (`TraceyChatController`) reads that header into `IngestMessage.SessionId`, which the
-  ingestion pipeline stores as the call's **`ConversationId`** (a non-GUID would be SHA-1 hashed; we
-  send a GUID, so it's stored verbatim).
-- `TraceLink` reads `metadata.custom.traceConversationId` via `useMessage`, resolves it to the
-  latest matching call through the `conversationId` filter on `GET /api/agent-calls`, and routes to
-  `/traces?focus=<id>`. It renders nothing until the id exists (i.e. while the turn is still
-  streaming), and toasts if the trace hasn't been ingested yet (ingestion is async).
+A Tracey turn is a multi-step tool loop (`stopWhen: stepCountIs(8)`), so it makes several upstream
+calls — each ingested as its own trace, all sharing the turn's ConversationId. The SDK's
+`result.totalUsage` is the usage **aggregated across all those steps** — i.e. the whole turn — so it
+matches the sum of the turn's ingested traces (this holds as long as every step is captured; see the
+empty-completion note in `OpenAiCallParser`). We therefore read tokens straight from the SDK at the
+client: instant, no polling, no async lookup.
+
+- `TraceyTransport.sendMessages` mints one `crypto.randomUUID()` per turn and, on the **finish**
+  part of `toUIMessageStream({ messageMetadata })`, writes
+  `metadata.custom = { traceConversationId, usage, durationMs }` (`usage` from `part.totalUsage`,
+  `durationMs` from wall-clock). Finish-only emission keeps the row hidden while the turn streams.
+  The same id also rides every upstream request as the `x-proxytrace-session-id` header, so all of
+  the turn's calls share it.
+- The backend (`TraceyChatController`) reads that header into `IngestMessage.SessionId`, stored as
+  each call's **`ConversationId`** (a non-GUID would be SHA-1 hashed; we send a GUID → verbatim).
+- `MessageStatusBar` reads `metadata.custom` once; `message-stats.ts` (`readMessageStats` +
+  `readTraceConversationId`, unit-tested) narrows it to `{ inputTokens, outputTokens, totalTokens,
+  durationMs }` and the id. Tokens/duration render via `lib/format`.
+- `OpenTraceButton` → `useOpenResponseTrace` resolves the ConversationId to the latest call **on
+  click** (a single `GET /api/agent-calls` fetch, not a poll) and routes to `/traces?focus=<id>`
+  (which expands the turn's conversation group in Traces), or toasts if nothing is ingested yet.
+  `CopyMessageButton` copies the assistant text (joined from the message's text parts).
 
 ## Conversation persistence
 

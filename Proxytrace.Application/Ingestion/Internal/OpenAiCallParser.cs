@@ -391,7 +391,18 @@ internal class OpenAiCallParser : IOpenAiCallParser
     private static AssistantMessage? ParseAgentMessageFromSse(string responseBody)
     {
         var text = new System.Text.StringBuilder();
-        var toolRequests = new List<ToolRequest>();
+        // Streamed tool calls arrive in fragments keyed by index: the first fragment carries the
+        // id + name, later fragments only append argument text (no id). They must be reassembled
+        // per index — parsing each chunk into its own ToolRequest yields fragments with an empty
+        // id, which fail validation. Preserve first-seen order for stable output.
+        var toolCalls = new Dictionary<int, StreamedToolCall>();
+        var toolCallOrder = new List<int>();
+        // Whether we saw at least one well-formed completion chunk. An assistant turn can legitimately
+        // be empty (no text, no tool calls) — e.g. a "render-and-stop" step after a chart tool. That
+        // is still a real captured call, and its request carries the preceding tool's result, so it
+        // must be ingested rather than dropped. Only a body that yields no completion chunk at all is
+        // not a parseable response.
+        var sawCompletionChunk = false;
 
         foreach (var line in responseBody.Split('\n'))
         {
@@ -410,6 +421,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
                     continue;
                 }
 
+                sawCompletionChunk = true;
                 var choice = choices[0];
                 if (!choice.TryGetProperty("delta", out var delta))
                 {
@@ -422,7 +434,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
                     text.Append(content.GetString());
                 }
 
-                toolRequests.AddRange(ParseToolRequests(delta));
+                AccumulateToolCallDeltas(delta, toolCalls, toolCallOrder);
             }
             catch { /* skip malformed chunk */ }
         }
@@ -431,9 +443,84 @@ internal class OpenAiCallParser : IOpenAiCallParser
             ? (IReadOnlyList<Content>)[Content.FromText(text.ToString())]
             : [];
 
-        return contents.Count == 0 && toolRequests.Count == 0
-            ? null
-            : new AssistantMessage(contents, toolRequests);
+        var toolRequests = toolCallOrder
+            .Select(index => toolCalls[index])
+            // Drop any accumulator that never received an id/name (a stray fragment) so a partial
+            // tool call can't produce an invalid ToolRequest.
+            .Where(tc => !string.IsNullOrWhiteSpace(tc.Id) && !string.IsNullOrWhiteSpace(tc.Name))
+            .Select(tc => new ToolRequest(
+                tc.Id,
+                tc.Name,
+                tc.Arguments.Length > 0 ? tc.Arguments.ToString() : "{}"))
+            .ToList();
+
+        // Mirror the non-streaming path, which builds an AssistantMessage for any assistant response
+        // including an empty one: keep the (possibly empty) message whenever a completion was
+        // actually streamed, and return null only when the body was not a completion at all.
+        return sawCompletionChunk
+            ? new AssistantMessage(contents, toolRequests)
+            : null;
+    }
+
+    /// <summary>
+    /// Merges a streaming chat-completion delta's tool-call fragments into the per-index
+    /// accumulators, keeping the id/name from whichever fragment carries them and concatenating
+    /// argument text across fragments.
+    /// </summary>
+    private static void AccumulateToolCallDeltas(
+        JsonElement delta,
+        Dictionary<int, StreamedToolCall> toolCalls,
+        List<int> order)
+    {
+        if (!delta.TryGetProperty("tool_calls", out var toolCallsEl)
+            || toolCallsEl.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
+        foreach (var tc in toolCallsEl.EnumerateArray())
+        {
+            var index = tc.TryGetProperty("index", out var idxEl) && idxEl.TryGetInt32(out var i) ? i : 0;
+            if (!toolCalls.TryGetValue(index, out var acc))
+            {
+                acc = new StreamedToolCall();
+                toolCalls[index] = acc;
+                order.Add(index);
+            }
+
+            if (tc.TryGetProperty("id", out var idEl)
+                && idEl.ValueKind == JsonValueKind.String
+                && idEl.GetString() is { Length: > 0 } id)
+            {
+                acc.Id = id;
+            }
+
+            if (tc.TryGetProperty("function", out var fn))
+            {
+                if (fn.TryGetProperty("name", out var nameEl)
+                    && nameEl.ValueKind == JsonValueKind.String
+                    && nameEl.GetString() is { Length: > 0 } name)
+                {
+                    acc.Name = name;
+                }
+
+                if (fn.TryGetProperty("arguments", out var argsEl)
+                    && argsEl.ValueKind == JsonValueKind.String)
+                {
+                    acc.Arguments.Append(argsEl.GetString());
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Mutable accumulator for a single streamed tool call, reassembled across SSE delta chunks.
+    /// </summary>
+    private sealed class StreamedToolCall
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public System.Text.StringBuilder Arguments { get; } = new();
     }
 
     // ── Scalar field extraction ───────────────────────────────────────────────

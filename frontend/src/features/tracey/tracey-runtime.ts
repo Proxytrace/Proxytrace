@@ -62,6 +62,7 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
     // message (metadata, below) with the same value so the UI can resolve the response → trace.
     const turnId = crypto.randomUUID();
     this.currentTurnId = turnId;
+    const startedAt = performance.now();
     const result = streamText({
       model: this.model,
       system: this.systemPrompt,
@@ -73,9 +74,27 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       stopWhen: stepCountIs(8),
       abortSignal: options.abortSignal,
     });
-    // assistant-ui surfaces this under the message's `metadata.custom`; `TraceLink` reads it.
+    // On finish, attach the turn's correlation id, token usage, and wall-clock duration to the
+    // assistant message. assistant-ui surfaces these under `metadata.custom`; `MessageStatusBar`
+    // shows them and uses the id to deep-link to the captured trace(s). `part.totalUsage` is the
+    // SDK's usage aggregated across all tool-loop steps — i.e. the whole turn — which matches the
+    // sum of the turn's ingested traces. Emitted only on finish, so the row stays hidden while the
+    // turn is still streaming.
     return result.toUIMessageStream({
-      messageMetadata: () => ({ custom: { traceConversationId: turnId } }),
+      messageMetadata: ({ part }) =>
+        part.type === 'finish'
+          ? {
+              custom: {
+                traceConversationId: turnId,
+                usage: {
+                  inputTokens: part.totalUsage.inputTokens ?? 0,
+                  outputTokens: part.totalUsage.outputTokens ?? 0,
+                  totalTokens: part.totalUsage.totalTokens ?? 0,
+                },
+                durationMs: Math.round(performance.now() - startedAt),
+              },
+            }
+          : undefined,
     });
   }
 
