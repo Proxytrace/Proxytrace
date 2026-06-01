@@ -12,17 +12,13 @@ import { ProposalStatus } from '../../api/models';
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
  * services; `navigate` performs a client-side route change; `confirm` gates write tools
- * (auto-approve resolves it to `true` without prompting); `sendUserMessage` appends a new
- * user turn (used by interactive tool UIs — choice prompts and forms — to feed a selection
- * back to the model).
+ * (auto-approve resolves it to `true` without prompting).
  */
 export interface TraceyToolContext {
   projectId?: string;
   navigate: (path: string) => void;
   /** Resolves `true` to proceed with a write, `false` to cancel. */
   confirm: (summary: string) => Promise<boolean>;
-  /** Append a new user message, continuing the conversation with the given text. */
-  sendUserMessage: (text: string) => void;
 }
 
 /**
@@ -36,7 +32,12 @@ export interface TraceyTool<TArgs = Record<string, unknown>> {
   parameters: z.ZodType<TArgs>;
   /** Whether this tool mutates state and must be confirmed when auto-approve is off. */
   confirm: boolean;
-  execute: (args: TArgs, ctx: TraceyToolContext) => Promise<unknown>;
+  /**
+   * Runs the tool client-side. Omitted for human-in-the-loop tools (e.g. `ask_questions`)
+   * whose UI supplies the result via assistant-ui's `addResult`, pausing the turn until the
+   * user responds instead of resolving immediately.
+   */
+  execute?: (args: TArgs, ctx: TraceyToolContext) => Promise<unknown>;
 }
 
 const empty = z.object({});
@@ -223,34 +224,28 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       execute: async ({ title, format, content }) => ({ kind: 'text', title, format, content }),
     }),
 
-    present_choices: tool({
+    ask_questions: tool({
       description:
-        'Ask the user to pick from a small set of options, rendered inline as buttons. Use instead of a plain-text question when the answers are a short fixed set. The chosen value is sent back as the next user message.',
+        'Ask the user one or more clarifying questions before acting. Rendered inline as a ' +
+        'stepped widget (one question at a time). Each question shows 2–4 options as a vertical ' +
+        'list plus a static "Something else" free-text field. Set `multiple: true` to let the ' +
+        'user pick several options for that question. Prefer this over asking in plain prose ' +
+        '(disambiguation, gathering a few decisions, free-form input). You receive the user’s ' +
+        'answers as this tool’s result (an `answers` array of `{ question, answer }`); continue ' +
+        'once they arrive.',
       parameters: z.object({
-        question: z.string().describe('The question shown above the choices.'),
-        options: z.array(z.object({
-          label: z.string().describe('Button label shown to the user.'),
-          value: z.string().describe('Text sent back as the user reply when this option is picked.'),
-        })).min(2).describe('The choices to offer, in display order.'),
+        questions: z.array(z.object({
+          id: z.string().describe('Machine key for this question, returned with its answer.'),
+          question: z.string().describe('The question text shown to the user.'),
+          multiple: z.boolean().optional().describe('Allow selecting more than one option.'),
+          options: z.array(z.object({
+            label: z.string().describe('Option label shown to the user.'),
+            value: z.string().describe('Text recorded as the answer when this option is picked.'),
+          })).min(2).max(4).describe('The 2–4 options offered, in display order.'),
+        })).min(1).describe('Questions to ask in sequence, one at a time.'),
       }),
       confirm: false,
-      execute: async () => ({ shown: true }),
-    }),
-    show_form: tool({
-      description:
-        'Render an inline form to collect a few fields from the user. On submit the values are sent back as the next user message. Use when you need structured input (e.g. a name plus a description) before acting.',
-      parameters: z.object({
-        title: z.string().describe('Heading shown above the form.'),
-        fields: z.array(z.object({
-          name: z.string().describe('Machine name of the field (returned with its value).'),
-          label: z.string().describe('Human label shown beside the input.'),
-          type: z.enum(['text', 'textarea', 'number']).describe('The input control to render.'),
-          placeholder: z.string().optional().describe('Optional placeholder text.'),
-        })).min(1).describe('The fields to collect, in display order.'),
-        submitLabel: z.string().optional().describe('Label for the submit button (default "Submit").'),
-      }),
-      confirm: false,
-      execute: async () => ({ shown: true }),
+      // No execute: human-in-the-loop. The tool UI resolves it via addResult once the user answers.
     }),
   };
 }
@@ -278,6 +273,5 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'show_chart', description: 'Plot data inline in the chat.' },
   { name: 'show_table', description: 'Show a table inline in the chat.' },
   { name: 'show_text', description: 'Show markdown/JSON/code inline in the chat.' },
-  { name: 'present_choices', description: 'Ask the user to pick from inline options.' },
-  { name: 'show_form', description: 'Collect structured input via an inline form.' },
+  { name: 'ask_questions', description: 'Ask the user one or more clarifying questions inline.' },
 ];

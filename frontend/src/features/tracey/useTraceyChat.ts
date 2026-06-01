@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
 import type { ExportedMessageRepository } from '@assistant-ui/react';
+import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 import type {
   ChatTransport,
   UIMessage,
@@ -56,8 +57,6 @@ export interface TraceyChat {
   pendingConfirmation: PendingConfirmation | null;
   resolveConfirmation: (approved: boolean) => void;
   clear: () => void;
-  /** Append a new user turn (used by interactive tool UIs). */
-  sendUserMessage: (text: string) => void;
   /** Client-side route change (used by entity-card tool UIs). */
   navigate: (path: string) => void;
   /**
@@ -122,17 +121,17 @@ export function useTraceyChat(): TraceyChat {
   });
 
   const transport = useMemo(() => new DelegatingTransport(), []);
-  const runtime = useChatRuntime({ transport });
-
-  // Appends a new user turn — interactive tool UIs (choice prompts, forms) feed a selection
-  // back to the model through this.
-  const sendUserMessage = useCallback((text: string) => {
-    runtime.thread.append(text);
-  }, [runtime]);
+  // `ask_questions` is a human-in-the-loop tool with no `execute`: the model emits the call and
+  // the widget supplies the answers via `addResult`. This makes the runtime auto-resubmit once the
+  // pending tool call has its result, so the model continues the same turn (no extra user message).
+  const runtime = useChatRuntime({
+    transport,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+  });
 
   const toolContext = useMemo<TraceyToolContext>(
-    () => ({ projectId, navigate, confirm, sendUserMessage }),
-    [projectId, navigate, confirm, sendUserMessage],
+    () => ({ projectId, navigate, confirm }),
+    [projectId, navigate, confirm],
   );
 
   // Swap in the real same-origin transport whenever the session (or tool context) changes.
@@ -187,7 +186,6 @@ export function useTraceyChat(): TraceyChat {
     pendingConfirmation,
     resolveConfirmation,
     clear,
-    sendUserMessage,
     navigate,
     activate,
   };

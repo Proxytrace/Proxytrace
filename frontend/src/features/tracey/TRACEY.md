@@ -48,14 +48,14 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
 | File | Role |
 |------|------|
 | `TraceyAI.tsx` | Page root. Consumes the shared chat via `useTraceyChatContext`, renders status gates, wraps content in `AssistantRuntimeProvider` + `TraceyActionsProvider`, lays out the (single, full-width) chat panel. The one lazy-loaded route component. |
-| `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, `sendUserMessage` (thread append), thread persistence, and builds the runtime. Called **once** from `Shell` (above the router `Outlet`), not from the page — see "Conversation persistence" below. |
+| `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, thread persistence, and builds the runtime. Called **once** from `Shell` (above the router `Outlet`), not from the page — see "Conversation persistence" below. |
 | `tracey-chat-context.ts` | Shares the single `TraceyChat` (runtime + conversation) app-wide. `TraceyChatProvider` is mounted in `Shell` around the `Outlet`; `useTraceyChatContext()` reads it from the page. |
 | `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT per request, runs `streamText` with `stopWhen: stepCountIs(8)`, and adapts our tools into the SDK `ToolSet`. |
 | `tracey-tools.ts` | **Single source of truth** for tools: `createTraceyTools(ctx)` returns `{ name → { description, parameters (zod), confirm, execute } }`. `TRACEY_TOOLS_META` is the static name+description list for the slash menu. |
 | `tracey-prompt.ts` | `TRACEY_SYSTEM_PROMPT` — her system prompt (wire source of truth). |
 | `tracey-artifacts.ts` | Frontend-only render shapes the `show_chart`/`show_table`/`show_text` tools return (chart/table/text). |
 | `tracey-storage.ts` | `localStorage` thread persistence keyed by `user + project`. |
-| `tracey-actions.tsx` | React context (`sendUserMessage`, `navigate`) for assistant-ui message-part components that can't take props. |
+| `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
 | `tracey-quick-actions.ts` | Curated prompt presets ("skills") shown as composer chips + top of the slash menu. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user bubble, assistant bubble, typing dots, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `MarkdownText`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
@@ -140,12 +140,15 @@ the session query is additionally disabled when `useKiosk().enabled`.
   on cancel.
 - **Render tools** (`show_chart`, `show_table`, `show_text`) just **return the render spec**;
   the matching `tool-ui/` component draws it inline.
-- **Interactive tools** (`present_choices`, `show_form`) return an ack; their component reads
-  `args` and calls `ctx.sendUserMessage(...)` (via the actions context) to feed the user's
-  choice/submission back as the next turn.
+- **Interactive (human-in-the-loop) tools** (`ask_questions`) define **no `execute`**: the AI SDK
+  emits the call and pauses. Their tool-UI component reads `args`, collects input, and calls the
+  `addResult(...)` prop (from assistant-ui's `ToolCallMessagePartProps`) to resolve the call — the
+  runtime then continues the same assistant turn, with no extra user message. The result also
+  drives the read-only summary, so it survives reload.
 
-`TraceyToolContext` (`{ projectId, navigate, confirm, sendUserMessage }`) is built in
+`TraceyToolContext` (`{ projectId, navigate, confirm }`) is built in
 `useTraceyChat` and passed to both `createTraceyTools` (for `execute`) and the SDK tool adapter.
+The tool adapter omits `execute` for interactive tools so the SDK treats them as frontend tools.
 A tool gets inline UI by adding its component to `tool-ui/registry.ts` (keyed by tool name);
 unmapped tools render with `ToolCallCard`.
 
@@ -218,10 +221,11 @@ component).
    \`{ kind, title, chartType, points }\`) and render it through \`ToolUIFrame\` + an existing
    renderer in \`components/artifacts/\`. Don't recompute SVG/markdown — reuse the renderer.
 
-3. **Interactive.** Read \`args\` (guard for partial streaming), keep a tiny local \`useState\` for
-   the "done" state, and call \`useTraceyActions().sendUserMessage(text)\` to feed the user's
-   choice/submission back as the next turn. Disable the controls after the user acts so a turn
-   isn't sent twice. See \`ActionPromptToolUI\` and \`FormToolUI\`.
+3. **Interactive (human-in-the-loop).** Give the tool **no `execute`** so the SDK pauses. Read
+   \`args\` (guard for partial streaming), collect input in local \`useState\`, and call the
+   \`addResult(result)\` prop to resolve the paused call — the runtime continues the turn, no extra
+   user message. Drive the "done"/read-only state off the \`result\` prop so it survives reload. See
+   \`AskQuestionsToolUI\` (its pure answer/result logic lives in \`ask-questions-logic.ts\`).
 
 ### Card rules (DESIGN.md + BEST_PRACTICES.md)
 

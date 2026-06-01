@@ -13,8 +13,9 @@ captured as a trace — she is the platform's first dogfood agent.
 
 Open **Tracey AI** from the sidebar (under *Overview*), or click the **Tracey** button in
 the top bar (near the health indicator and your avatar). The page is a single chat column;
-plots, tables, entity cards, and forms render **inline in the conversation** as Tracey
-produces them. Your conversation is remembered per project on this device until you clear it.
+plots, tables, entity cards, and question widgets render **inline in the conversation** as
+Tracey produces them. Your conversation is remembered per project on this device until you
+clear it.
 
 ## Asking questions
 
@@ -26,7 +27,8 @@ Type a request and press **Enter** (use **Shift+Enter** for a newline). Examples
 - "Take me to the test runs page."
 
 Tracey fetches live data before answering. If a request is ambiguous (for example, several
-agents match a name), she asks a brief clarifying question rather than guessing.
+agents match a name) or she needs a few decisions from you before acting, she asks with an
+inline **questions widget** rather than guessing — see *Inline components* below.
 
 ## The opening view
 
@@ -65,10 +67,13 @@ Tracey renders rich UI **directly in the chat thread** rather than dumping raw n
   row links to its entity, and **View all** (or **+N more**) opens the full page.
 - **Stats cards** — *dashboard stats* and per-agent stats render as a grid of key figures
   (calls, tokens, latency, cost, pass rate) with an **Open** link to the matching page.
-- **Choice prompts** — when there's a short fixed set of answers, Tracey shows buttons;
-  picking one sends it back as your next message (the chosen one is ticked).
-- **Forms** — when Tracey needs a few fields before acting, she shows an inline form; the
-  values you submit become your next message.
+- **Questions widget** — when Tracey needs to ask you something, she shows a stepped widget
+  that walks you through one question at a time (with a *Step 1 of N* indicator when there's
+  more than one). Each question is a **vertical list of options** plus a static
+  **"Something else…"** free-text field for a custom answer. Some questions allow **multiple**
+  selections; others only one, and the free-text field is exclusive with the option picks.
+  Click **Next** to move on (**Submit** on the last one); the widget then collapses into a
+  read-only summary of your questions and answers, which are sent back as your next message.
 
 ## Tool calls
 

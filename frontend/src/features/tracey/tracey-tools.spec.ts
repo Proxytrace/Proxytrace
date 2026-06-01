@@ -20,7 +20,7 @@ vi.mock('../../api/providers', () => ({ providersApi }));
 vi.mock('../../api/agent-calls', () => ({ agentCallsApi }));
 vi.mock('../../api/statistics', () => ({ statisticsApi }));
 
-import { createTraceyTools, CANCELLED, type TraceyToolContext } from './tracey-tools';
+import { createTraceyTools, CANCELLED, type TraceyTool, type TraceyToolContext } from './tracey-tools';
 import { ProposalStatus } from '../../api/models';
 
 function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext {
@@ -28,9 +28,14 @@ function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext 
     projectId: 'proj-1',
     navigate: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
-    sendUserMessage: vi.fn(),
     ...overrides,
   };
+}
+
+/** Invoke a tool's `execute`, asserting it exists (only interactive tools omit it). */
+function exec(t: TraceyTool, args: Record<string, unknown>, ctx: TraceyToolContext) {
+  if (!t.execute) throw new Error('tool has no execute');
+  return t.execute(args, ctx);
 }
 
 describe('tracey read tools', () => {
@@ -39,7 +44,7 @@ describe('tracey read tools', () => {
   it('list_agents passes the project id and returns the items', async () => {
     agentsApi.list.mockResolvedValue({ items: [{ id: 'a1' }] });
     const ctx = makeCtx();
-    const result = await createTraceyTools(ctx).list_agents.execute({}, ctx);
+    const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx);
 
     expect(agentsApi.list).toHaveBeenCalledWith({ projectId: 'proj-1' });
     expect(result).toEqual([{ id: 'a1' }]);
@@ -48,7 +53,7 @@ describe('tracey read tools', () => {
   it('get_agent fetches by id', async () => {
     agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
     const ctx = makeCtx();
-    await createTraceyTools(ctx).get_agent.execute({ agentId: 'a1' }, ctx);
+    await exec(createTraceyTools(ctx).get_agent, { agentId: 'a1' }, ctx);
 
     expect(agentsApi.get).toHaveBeenCalledWith('a1');
   });
@@ -60,7 +65,7 @@ describe('tracey read tools', () => {
       timeSeries: [],
     });
     const ctx = makeCtx();
-    const result = await createTraceyTools(ctx).get_agent_stats.execute({ agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).get_agent_stats, { agentId: 'a1' }, ctx);
 
     expect(statisticsApi.agentOverview).toHaveBeenCalledWith(
       'a1',
@@ -71,7 +76,7 @@ describe('tracey read tools', () => {
 
   it('navigate performs a client-side route change', async () => {
     const ctx = makeCtx();
-    await createTraceyTools(ctx).navigate.execute({ path: '/agents' }, ctx);
+    await exec(createTraceyTools(ctx).navigate, { path: '/agents' }, ctx);
 
     expect(ctx.navigate).toHaveBeenCalledWith('/agents');
   });
@@ -86,7 +91,7 @@ describe('tracey write tools confirmation gating', () => {
     testRunGroupsApi.create.mockResolvedValue({ id: 'g1' });
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
-    const result = await createTraceyTools(ctx).start_test_run.execute({ suiteId: 's1', agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 's1', agentId: 'a1' }, ctx);
 
     expect(ctx.confirm).toHaveBeenCalledOnce();
     expect(testRunGroupsApi.create).toHaveBeenCalledWith('s1', ['e1']);
@@ -98,7 +103,7 @@ describe('tracey write tools confirmation gating', () => {
     testSuitesApi.get.mockResolvedValue({ id: 's1', name: 'Suite' });
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(false) });
 
-    const result = await createTraceyTools(ctx).start_test_run.execute({ suiteId: 's1', agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 's1', agentId: 'a1' }, ctx);
 
     expect(testRunGroupsApi.create).not.toHaveBeenCalled();
     expect(result).toBe(CANCELLED);
@@ -108,7 +113,7 @@ describe('tracey write tools confirmation gating', () => {
     proposalsApi.updateStatus.mockResolvedValue({ id: 'p1', status: ProposalStatus.Accepted });
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
-    await createTraceyTools(ctx).set_proposal_status.execute(
+    await exec(createTraceyTools(ctx).set_proposal_status, 
       { proposalId: 'p1', status: ProposalStatus.Accepted },
       ctx,
     );
@@ -119,7 +124,7 @@ describe('tracey write tools confirmation gating', () => {
   it('set_proposal_status is a no-op when declined', async () => {
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(false) });
 
-    const result = await createTraceyTools(ctx).set_proposal_status.execute(
+    const result = await exec(createTraceyTools(ctx).set_proposal_status, 
       { proposalId: 'p1', status: ProposalStatus.Rejected },
       ctx,
     );
@@ -135,7 +140,7 @@ describe('tracey entity-fetch tools', () => {
   it('get_provider fetches by id', async () => {
     providersApi.get.mockResolvedValue({ id: 'pr1', name: 'OpenAI' });
     const ctx = makeCtx();
-    await createTraceyTools(ctx).get_provider.execute({ providerId: 'pr1' }, ctx);
+    await exec(createTraceyTools(ctx).get_provider, { providerId: 'pr1' }, ctx);
 
     expect(providersApi.get).toHaveBeenCalledWith('pr1');
   });
@@ -143,7 +148,7 @@ describe('tracey entity-fetch tools', () => {
   it('get_trace fetches the agent call by id', async () => {
     agentCallsApi.get.mockResolvedValue({ id: 't1', model: 'gpt-4o' });
     const ctx = makeCtx();
-    const result = await createTraceyTools(ctx).get_trace.execute({ traceId: 't1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).get_trace, { traceId: 't1' }, ctx);
 
     expect(agentCallsApi.get).toHaveBeenCalledWith('t1');
     expect(result).toEqual({ id: 't1', model: 'gpt-4o' });
@@ -157,7 +162,7 @@ describe('tracey inline render tools', () => {
     const ctx = makeCtx();
     const points = [{ label: 'A', value: 1 }, { label: 'B', value: 2 }];
 
-    const result = await createTraceyTools(ctx).show_chart.execute(
+    const result = await exec(createTraceyTools(ctx).show_chart, 
       { title: 'Tokens', type: 'bar', points },
       ctx,
     );
@@ -168,7 +173,7 @@ describe('tracey inline render tools', () => {
   it('show_table returns the table spec to render inline', async () => {
     const ctx = makeCtx();
 
-    const result = await createTraceyTools(ctx).show_table.execute(
+    const result = await exec(createTraceyTools(ctx).show_table, 
       { title: 'Agents', columns: ['name'], rows: [['A']] },
       ctx,
     );
@@ -179,11 +184,18 @@ describe('tracey inline render tools', () => {
   it('show_text returns the text spec to render inline', async () => {
     const ctx = makeCtx();
 
-    const result = await createTraceyTools(ctx).show_text.execute(
+    const result = await exec(createTraceyTools(ctx).show_text, 
       { title: 'Notes', format: 'markdown', content: 'hi' },
       ctx,
     );
 
     expect(result).toEqual({ kind: 'text', title: 'Notes', format: 'markdown', content: 'hi' });
+  });
+
+  it('ask_questions is human-in-the-loop: no execute, so the tool call pauses for its UI', () => {
+    const ctx = makeCtx();
+
+    // No `execute` means the AI SDK emits the call and waits; the tool UI resolves it via addResult.
+    expect(createTraceyTools(ctx).ask_questions.execute).toBeUndefined();
   });
 });

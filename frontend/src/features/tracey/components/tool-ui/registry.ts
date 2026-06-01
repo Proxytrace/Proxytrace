@@ -8,8 +8,7 @@ import { RunCardToolUI } from './RunCardToolUI';
 import { ProposalCardToolUI } from './ProposalCardToolUI';
 import { ProviderCardToolUI } from './ProviderCardToolUI';
 import { TraceCardToolUI } from './TraceCardToolUI';
-import { ActionPromptToolUI } from './ActionPromptToolUI';
-import { FormToolUI } from './FormToolUI';
+import { AskQuestionsToolUI } from './AskQuestionsToolUI';
 import { AgentListToolUI } from './AgentListToolUI';
 import { SuiteListToolUI } from './SuiteListToolUI';
 import { RunListToolUI } from './RunListToolUI';
@@ -32,8 +31,7 @@ export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
   get_proposal: ProposalCardToolUI,
   get_provider: ProviderCardToolUI,
   get_trace: TraceCardToolUI,
-  present_choices: ActionPromptToolUI,
-  show_form: FormToolUI,
+  ask_questions: AskQuestionsToolUI,
   list_agents: AgentListToolUI,
   list_suites: SuiteListToolUI,
   list_runs: RunListToolUI,

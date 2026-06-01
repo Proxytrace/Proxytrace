@@ -303,9 +303,7 @@ export function Shell() {
               subtree the provider renders, so mounting it per-route would destroy the thread on
               every navigation. Hoisting it here is what actually makes the chat survive nav. */}
           <TraceyChatProvider value={traceyChat}>
-            <TraceyActionsProvider
-              value={{ sendUserMessage: traceyChat.sendUserMessage, navigate: traceyChat.navigate }}
-            >
+            <TraceyActionsProvider value={{ navigate: traceyChat.navigate }}>
               <AssistantRuntimeProvider runtime={traceyChat.runtime}>
                 <Outlet />
               </AssistantRuntimeProvider>

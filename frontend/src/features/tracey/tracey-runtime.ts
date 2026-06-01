@@ -107,11 +107,19 @@ function buildAiTools(ctx: TraceyToolContext): ToolSet {
   const traceyTools = createTraceyTools(ctx);
   const aiTools: ToolSet = {};
   for (const [name, def] of Object.entries(traceyTools)) {
-    aiTools[name] = tool({
-      description: def.description,
-      inputSchema: zodSchema(def.parameters),
-      execute: (args: unknown) => def.execute(args as Record<string, unknown>, ctx),
-    });
+    const exec = def.execute;
+    // A tool with no `execute` is a frontend (human-in-the-loop) tool: the SDK emits the call and
+    // pauses, and the tool UI supplies the result via `addResult` (see `ask_questions`).
+    aiTools[name] = exec
+      ? tool({
+          description: def.description,
+          inputSchema: zodSchema(def.parameters),
+          execute: (args: unknown) => exec(args as Record<string, unknown>, ctx),
+        })
+      : tool({
+          description: def.description,
+          inputSchema: zodSchema(def.parameters),
+        });
   }
   return aiTools;
 }
