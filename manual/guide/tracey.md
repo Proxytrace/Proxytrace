@@ -30,6 +30,18 @@ Tracey fetches live data before answering. If a request is ambiguous (for exampl
 agents match a name) or she needs a few decisions from you before acting, she asks with an
 inline **questions widget** rather than guessing — see *Inline components* below.
 
+## Answers from the manual
+
+Tracey also uses **this manual** as a knowledge base. For how-to, what-is, and setup
+questions about Proxytrace itself — "How do I set up the proxy?", "What does a numeric-match
+evaluator do?", "How does agent versioning work?" — she searches the user guide and answers
+from it, rather than guessing.
+
+When her answer draws on the manual, she **cites the source as a clickable link** back to the
+exact guide section, so you can open the full page and read more. The split is simple:
+questions about *your data* (agents, runs, stats) are answered from live project state;
+questions about *how the product works* are answered from the manual, with citations.
+
 ## The opening view
 
 When a conversation is empty, Tracey opens in a centered "initial view": the message box sits

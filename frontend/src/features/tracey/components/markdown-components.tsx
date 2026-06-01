@@ -17,14 +17,24 @@ export const markdownComponents: Components = {
   ul: (props) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0" {...clean(props)} />,
   ol: (props) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0" {...clean(props)} />,
   li: (props) => <li className="leading-relaxed" {...clean(props)} />,
-  a: (props) => (
-    <a
-      className="text-accent underline underline-offset-2 hover:opacity-80"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...clean(props)}
-    />
-  ),
+  a: (props) => {
+    const cleaned = clean(props);
+    // Manual citations (/docs/...) get a distinct amber pill so sourced answers stand out
+    // from ordinary inline links.
+    const isCitation = typeof cleaned.href === 'string' && cleaned.href.startsWith('/docs/');
+    return (
+      <a
+        className={
+          isCitation
+            ? 'mx-0.5 inline rounded-[4px] bg-accent-subtle px-1.5 py-0.5 font-medium text-accent no-underline transition-colors hover:bg-accent hover:text-surface'
+            : 'text-accent underline underline-offset-2 hover:opacity-80'
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+        {...cleaned}
+      />
+    );
+  },
   strong: (props) => <strong className="font-semibold text-primary" {...clean(props)} />,
   em: (props) => <em className="italic" {...clean(props)} />,
   h1: (props) => (

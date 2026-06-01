@@ -4,11 +4,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "gen:docs": "node scripts/docs-index/generate.mjs",
+    "predev": "npm run gen:docs",
     "dev": "concurrently -n vite,docs -c green,cyan \"vite\" \"npm --prefix ../manual run docs:dev\"",
     "dev:app": "vite",
+    "prebuild": "npm run gen:docs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "pretest": "npm run gen:docs",
     "test": "vitest run"
   },
   "dependencies": {

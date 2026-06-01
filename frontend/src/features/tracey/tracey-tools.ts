@@ -8,6 +8,8 @@ import { providersApi } from '../../api/providers';
 import { agentCallsApi } from '../../api/agent-calls';
 import { statisticsApi } from '../../api/statistics';
 import { ProposalStatus } from '../../api/models';
+import { searchDocs } from './knowledge/search-docs';
+import { DOCS_INDEX } from './knowledge/docs-index.generated';
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
@@ -62,6 +64,22 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
         ctx.navigate(path);
         return { navigatedTo: path };
       },
+    }),
+
+    search_docs: tool({
+      description:
+        'Search the Proxytrace product manual (the user guide at /docs) for how-to, ' +
+        'what-is, setup, and conceptual questions about using Proxytrace itself. Returns the ' +
+        'most relevant manual sections, each with a `url` you MUST cite back to the user as an ' +
+        'inline markdown link. Use this for product questions; use the data tools for the ' +
+        "user's own agents, runs, and stats.",
+      parameters: z.object({
+        query: z.string().describe('Natural-language search query, e.g. "how do I set up the proxy".'),
+        limit: z.number().int().min(1).max(8).optional()
+          .describe('Max sections to return (default 4).'),
+      }),
+      confirm: false,
+      execute: async ({ query, limit }) => ({ results: searchDocs(query, DOCS_INDEX, limit ?? 4) }),
     }),
 
     list_agents: tool({
@@ -256,6 +274,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
  */
 export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'navigate', description: 'Open an in-app page.' },
+  { name: 'search_docs', description: 'Search the product manual and cite sources.' },
   { name: 'list_agents', description: 'List the agents in the project.' },
   { name: 'get_agent', description: 'Get one agent by id.' },
   { name: 'list_suites', description: 'List the test suites.' },
