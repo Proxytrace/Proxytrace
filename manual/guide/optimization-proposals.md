@@ -4,6 +4,11 @@ An **Optimization Proposal** is a data-driven recommendation to improve an
 [agent](/guide/agents) — for example, switching its model or updating its system prompt.
 Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 
+> A proposal is only ever created by **validating an
+> [optimization theory](/guide/optimization-theories)** with an A/B test run. The proposal
+> records the baseline vs. candidate comparison (pass-rate, cost, latency) as its evidence.
+> Theories are the unproven hypotheses; proposals are the ones that earned a measurable win.
+
 ## What a proposal contains
 
 - **Kind** — the type of change (e.g. switch model, update system prompt).

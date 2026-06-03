@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.Tools;
 
 namespace Proxytrace.Application.Optimization.Internal.Evidence;
 
@@ -32,7 +33,7 @@ internal sealed record OptimizerEvidence(
         return JsonSerializer.Serialize(payload, serializerOptions);
     }
 
-    private static object ToToolPayload(Domain.Tools.ToolSpecification tool)
+    private static object ToToolPayload(ToolSpecification tool)
     {
         using var doc = TryParseJson(tool.Arguments.JsonSchema);
         return new

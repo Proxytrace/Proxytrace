@@ -1,6 +1,6 @@
 using Proxytrace.Api.Dto.Tools;
-using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Api.Dto.Proposals;
@@ -37,7 +37,7 @@ public sealed class OptimizationProposalDtoMapper
 
     private static AbTestRunSummaryDto ToAbTestRunSummaryDto(ITestRun r)
     {
-        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
+        var passed = r.TestResults.Count(x => x.IsPass());
         var completed = r.TestResults.Count;
         var total = r.Group.Suite.TestCases.Count;
         var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;

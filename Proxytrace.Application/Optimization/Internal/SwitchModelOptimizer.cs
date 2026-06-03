@@ -1,6 +1,6 @@
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.TestRun;
-using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -8,7 +8,7 @@ using Proxytrace.Domain.TestRunGroup;
 namespace Proxytrace.Application.Optimization.Internal;
 
 /// <summary>
-/// Optimizer implementation that recommends switching the agent's model endpoint
+/// Optimizer implementation that hypothesises switching the agent's model endpoint
 /// when an alternative wins on cost or latency without regressing pass rate.
 /// </summary>
 internal sealed class SwitchModelOptimizer : IOptimizerImplementation
@@ -18,11 +18,11 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
     /// </summary>
     private const double MinMargin = 0.10;
 
-    private readonly IModelSwitchProposal.CreateNew factory;
+    private readonly IModelSwitchTheory.CreateNew factory;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
 
     public SwitchModelOptimizer(
-        IModelSwitchProposal.CreateNew factory,
+        IModelSwitchTheory.CreateNew factory,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats)
     {
         this.factory = factory;
@@ -30,7 +30,7 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<IOptimizationProposal>> DiscoverOptimizations(
+    public async Task<IReadOnlyList<IOptimizationTheory>> DiscoverTheories(
         ITestRunGroup testRunGroup,
         IReadOnlyList<ITestRun> testRuns,
         CancellationToken cancellationToken = default)
@@ -87,13 +87,6 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             _ => Priority.Low,
         };
 
-        decimal? costDelta = winner.Cost.HasValue && currentStats.Cost.HasValue
-            ? winner.Cost.Value - currentStats.Cost.Value
-            : null;
-        TimeSpan? latencyDelta = winner.TotalDuration.HasValue && currentStats.TotalDuration.HasValue
-            ? winner.TotalDuration.Value - currentStats.TotalDuration.Value
-            : null;
-
         var metricLabel = chosen.Metric == Metric.Cost ? "cost" : "latency";
         var savingPct = chosen.RelativeSaving > double.MinValue
             ? (chosen.RelativeSaving * 100).ToString("F1")
@@ -105,19 +98,16 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             + $"with no pass-rate regression. {metricLabel}: {FormatMetric(chosen.Metric, winner)} vs "
             + $"{FormatMetric(chosen.Metric, currentStats)}.";
 
-        var proposal = factory(
+        var theory = factory(
             agent: testRunGroup.Suite.Agent,
+            suite: testRunGroup.Suite,
+            source: TheorySource.Optimizer,
             priority: priority,
             rationale: rationale,
             proposedEndpoint: bestRun.Endpoint,
-            currentPassRate: currentStats.PassRate,
-            proposedPassRate: winner.PassRate,
-            expectedCostDelta: costDelta,
-            expectedLatencyDelta: latencyDelta,
-            evidenceTestRunIds: [currentRun.Id, bestRun.Id],
-            abTestRun: bestRun);
+            evidenceTestRunIds: [currentRun.Id, bestRun.Id]);
 
-        return [proposal];
+        return [theory];
     }
 
     /// <summary>

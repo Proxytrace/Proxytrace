@@ -80,6 +80,9 @@ public sealed class Module : Autofac.Module
         builder.RegisterType<OptimizationProposalGenerator>()
             .AsImplementedInterfaces();
 
+        builder.RegisterType<OptimizationTheory.Internal.OptimizationTheoryGenerator>()
+            .AsImplementedInterfaces();
+
         builder.RegisterType<EntityEventService>()
             .As<IEntityEventService>()
             .SingleInstance();

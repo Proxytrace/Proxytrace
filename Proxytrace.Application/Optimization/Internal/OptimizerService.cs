@@ -1,7 +1,6 @@
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.TestRunGroup;
 
 namespace Proxytrace.Application.Optimization.Internal;
@@ -10,7 +9,7 @@ internal class OptimizerService : BackgroundService, IOptimizerService
 {
     private readonly IOptimizer optimizer;
     private readonly ITestRunGroupRepository testRunGroupRepository;
-    private readonly IProposalBroadcaster broadcaster;
+    private readonly ITheoryValidationService theoryValidationService;
     private readonly ILogger<OptimizerService> logger;
 
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
@@ -23,12 +22,12 @@ internal class OptimizerService : BackgroundService, IOptimizerService
     public OptimizerService(
         IOptimizer optimizer,
         ITestRunGroupRepository testRunGroupRepository,
-        IProposalBroadcaster broadcaster,
+        ITheoryValidationService theoryValidationService,
         ILogger<OptimizerService> logger)
     {
         this.optimizer = optimizer;
         this.testRunGroupRepository = testRunGroupRepository;
-        this.broadcaster = broadcaster;
+        this.theoryValidationService = theoryValidationService;
         this.logger = logger;
     }
 
@@ -50,13 +49,20 @@ internal class OptimizerService : BackgroundService, IOptimizerService
                         continue;
                     }
 
-                    logger.LogInformation("Running optimization for test run group {GroupId}", groupId);
-                    var proposals = await optimizer.DiscoverOptimizations(group, cancellationToken);
+                    logger.LogInformation("Discovering optimization theories for test run group {GroupId}", groupId);
+                    var theories = await optimizer.DiscoverTheories(group, cancellationToken);
 
-                    foreach (var proposal in proposals)
-                        broadcaster.Publish(ProposalCreatedEvent.Create(proposal));
+                    var submitted = 0;
+                    foreach (var theory in theories)
+                    {
+                        var result = await theoryValidationService.SubmitAsync(theory, cancellationToken);
+                        if (result.Outcome == TheorySubmissionOutcome.Accepted)
+                            submitted++;
+                    }
 
-                    logger.LogInformation("Optimization for group {GroupId} produced {Count} proposal(s)", groupId, proposals.Count);
+                    logger.LogInformation(
+                        "Group {GroupId} produced {Discovered} theory/theories, {Submitted} submitted for validation",
+                        groupId, theories.Count, submitted);
                 }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {

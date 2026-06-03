@@ -627,6 +627,54 @@ export interface ProposalCreatedEvent {
   createdAt: string;
 }
 
+export enum TheoryStatus { Proposed = 'Proposed', Validating = 'Validating', Validated = 'Validated', Invalidated = 'Invalidated' }
+export enum TheorySource { Optimizer = 'Optimizer', User = 'User', TraceyAi = 'TraceyAi', External = 'External' }
+
+export interface TheoryDto {
+  id: string;
+  kind: ProposalKind;
+  status: TheoryStatus;
+  source: TheorySource;
+  agentId: string;
+  agentName: string;
+  suiteId: string;
+  priority: Priority;
+  rationale: string;
+  details: ProposalDetailsDto;
+  evidenceTestRunIds: string[];
+  resultingProposalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Seed-style proposed-change payloads accepted by POST /api/theories. */
+export type SubmitTheoryDetails =
+  | { kind: 'SystemPrompt'; currentSystemMessage: string; proposedSystemMessage: string }
+  | { kind: 'ModelSwitchSeed'; proposedEndpointId: string }
+  | { kind: 'ToolUpdateSeed'; proposedTools: { name: string; description: string; parametersJson: string | null }[] };
+
+export interface SubmitTheoryRequest {
+  agentId: string;
+  suiteId: string;
+  priority: Priority;
+  rationale: string;
+  source: TheorySource;
+  details: SubmitTheoryDetails;
+}
+
+export interface TheoryStatusChangedEvent {
+  type: 'theory-changed';
+  id: string;
+  agentId: string;
+  kind: ProposalKind;
+  status: TheoryStatus;
+  source: TheorySource;
+  priority: Priority;
+  rationale: string;
+  resultingProposalId: string | null;
+  updatedAt: string;
+}
+
 /* ── SSE Events ── */
 export interface TraceCreatedEvent {
   id: string;

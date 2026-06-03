@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
-import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TraceCreatedEvent } from './models';
+import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
 
 // EventSource can't set Authorization headers, so the token must ride in the query
 // string. Prefer a short-lived, single-use stream ticket over the long-lived session
@@ -88,6 +88,14 @@ export function useProposalStream(agentId: string | null, onProposal: (e: Propos
     agentId ? `/api/agents/${agentId}/proposals/stream` : null,
     ['proposal-created'],
     onProposal,
+  );
+}
+
+export function useTheoryStream(agentId: string | null, onTheory: (e: TheoryStatusChangedEvent) => void) {
+  useEventStream<TheoryStatusChangedEvent>(
+    agentId ? `/api/agents/${agentId}/theories/stream` : null,
+    ['theory-changed'],
+    onTheory,
   );
 }
 

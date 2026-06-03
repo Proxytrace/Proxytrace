@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using System.Text;
 using JetBrains.Annotations;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
@@ -54,19 +52,7 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         ExpectedLatencyDelta = expectedLatencyDelta;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
-        ContentHash = ComputeContentHash(serializer);
-    }
-
-    private string ComputeContentHash(ISerializer serializer)
-    {
-        var envelope = new
-        {
-            Agent = Agent.Id,
-            Kind,
-            Payload = new { EndpointId = ProposedEndpoint.Id },
-        };
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serializer.Serialize(envelope)));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
+        ContentHash = OptimizationContentHash.ForModelSwitch(serializer, agent.Id, proposedEndpoint.Id);
     }
 
     public ModelSwitchProposal(

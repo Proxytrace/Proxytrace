@@ -6,7 +6,7 @@ using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
-using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -34,14 +34,13 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("gpt-4o-mini", cost: 3.0m, latency: Sec(4), passed: 9),
             Spec("claude-3-haiku", cost: 4.0m, latency: Sec(5), passed: 9));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["gpt-4o-mini"].Endpoint);
         c.Priority.Should().Be(Priority.High); // 70% saving
-        c.CostDelta.Should().Be(-7.0m);
         c.Rationale.Should().Contain("cost");
     }
 
@@ -58,15 +57,13 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("gpt-4o-mini", cost: 2.0m, latency: Sec(3), passed: 8),
             Spec("gpt-4o", cost: 6.0m, latency: Sec(6), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["gpt-4o-mini"].Endpoint);
         c.Priority.Should().Be(Priority.High); // 75% saving
-        c.CostDelta.Should().Be(-6.0m);
-        c.LatencyDelta.Should().Be(Sec(-9));
     }
 
     /// <summary>
@@ -81,10 +78,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("gpt-3.5-turbo", cost: 1.0m, latency: Sec(2), passed: 5),
             Spec("gpt-4o", cost: 8.0m, latency: Sec(5), passed: 10));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     /// <summary>
@@ -102,14 +99,14 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("balanced-model", cost: 5.0m, latency: Sec(6), passed: 8),
             Spec("premium-model", cost: 15.0m, latency: Sec(8), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
         // budget-model wins on cost but its latency (50s) is worse than runner-up balanced-model (6s)
         // On latency metric: balanced-model (6s) wins, runner-up is premium-model (8s).
         // balanced-model cost (5) vs runner-up cost on latency (premium at 15) => not worse. 
         // Margin: (8-6)/8 = 25% > 10% ✓. Pass rate equal ✓. Other metric (cost) not worse ✓.
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["balanced-model"].Endpoint);
     }
@@ -126,10 +123,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("model-b", cost: 5.0m, latency: Sec(5), passed: 8),
             Spec("model-c", cost: 5.0m, latency: Sec(5), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     /// <summary>
@@ -143,10 +140,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("cheaper", cost: 7.0m, latency: Sec(5), passed: 8),
             Spec("cheapest", cost: 8.0m, latency: Sec(5), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         fixture.Captured.Priority.Should().Be(Priority.Medium); // 30% saving
     }
 
@@ -161,10 +158,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("slightly-cheaper", cost: 8.5m, latency: Sec(5), passed: 8),
             Spec("runner-up", cost: 9.8m, latency: Sec(5), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         fixture.Captured.Priority.Should().Be(Priority.Low); // 15% saving
     }
 
@@ -179,10 +176,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
             Spec("current", cost: 10.0m, latency: Sec(10), isCurrent: true, passed: 8),
             Spec("alternative", cost: 4.0m, latency: Sec(4), passed: 8));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().ContainSingle();
+        theories.Should().ContainSingle();
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["alternative"].Endpoint);
         c.Priority.Should().Be(Priority.High); // 60% cost saving
@@ -261,21 +258,17 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<TestRunStats>>(stats));
 
-        IModelSwitchProposal.CreateNew factory = (
-            _, priority, rationale, proposedEndpoint, currentPassRate, proposedPassRate,
-            costDelta, latencyDelta, evidenceIds, abTestRun) =>
+        IModelSwitchTheory.CreateNew factory = (
+            _, theorySuite, source, priority, rationale, proposedEndpoint, evidenceIds) =>
         {
             captured.Called = true;
             captured.Priority = priority;
             captured.Rationale = rationale;
             captured.Endpoint = proposedEndpoint;
-            captured.CurrentPassRate = currentPassRate;
-            captured.ProposedPassRate = proposedPassRate;
-            captured.CostDelta = costDelta;
-            captured.LatencyDelta = latencyDelta;
+            captured.Source = source;
+            captured.Suite = theorySuite;
             captured.EvidenceIds = evidenceIds;
-            captured.AbTestRun = abTestRun;
-            return Substitute.For<IModelSwitchProposal>();
+            return Substitute.For<IModelSwitchTheory>();
         };
 
         var optimizer = new SwitchModelOptimizer(factory, runStats);
@@ -313,11 +306,8 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
         public Priority Priority { get; set; }
         public string? Rationale { get; set; }
         public IModelEndpoint? Endpoint { get; set; }
-        public double? CurrentPassRate { get; set; }
-        public double? ProposedPassRate { get; set; }
-        public decimal? CostDelta { get; set; }
-        public TimeSpan? LatencyDelta { get; set; }
+        public TheorySource Source { get; set; }
+        public ITestSuite? Suite { get; set; }
         public IReadOnlyCollection<Guid>? EvidenceIds { get; set; }
-        public ITestRun? AbTestRun { get; set; }
     }
 }

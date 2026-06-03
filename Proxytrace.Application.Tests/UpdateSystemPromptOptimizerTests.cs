@@ -12,6 +12,7 @@ using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Proposal;
@@ -37,7 +38,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
         """;
 
     [TestMethod]
-    public async Task DiscoverOptimizations_NoRunForCurrentEndpoint_ReturnsEmpty()
+    public async Task DiscoverTheories_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun runForOtherEndpoint = fixture.CreateRun(
@@ -46,16 +47,16 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: 1,
             results: []);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [runForOtherEndpoint],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_ZeroFailures_ReturnsEmpty()
+    public async Task DiscoverTheories_ZeroFailures_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -64,16 +65,16 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: 5,
             results: []);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_HappyPath_ProducesSystemPromptProposal()
+    public async Task DiscoverTheories_HappyPath_ProducesSystemPromptProposal()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -82,18 +83,19 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: 4,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().HaveCount(1);
-        IOptimizationProposal proposal = proposals[0];
-        proposal.Should().BeAssignableTo<ISystemPromptProposal>();
-        ((ISystemPromptProposal)proposal).ProposedSystemMessage
+        theories.Should().HaveCount(1);
+        IOptimizationTheory theory = theories[0];
+        theory.Should().BeAssignableTo<ISystemPromptTheory>();
+        ((ISystemPromptTheory)theory).ProposedSystemMessage
             .Should().Be("You are an even better assistant.");
-        proposal.Rationale.Should().Contain("Failing cases lacked structured guidance.");
-        proposal.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(run.Id);
+        theory.Source.Should().Be(TheorySource.Optimizer);
+        theory.Rationale.Should().Contain("Failing cases lacked structured guidance.");
+        theory.EvidenceTestRunIds.Should().ContainSingle().Which.Should().Be(run.Id);
     }
 
     [TestMethod]
@@ -101,7 +103,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
     [DataRow(3, 20, Priority.Medium)]   // 15%
     [DataRow(6, 20, Priority.High)]     // 30%
     [DataRow(12, 20, Priority.Critical)] // 60%
-    public async Task DiscoverOptimizations_PriorityBuckets(int failed, int total, Priority expected)
+    public async Task DiscoverTheories_PriorityBuckets(int failed, int total, Priority expected)
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -110,17 +112,17 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: total,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().ContainSingle()
+        theories.Should().ContainSingle()
             .Which.Priority.Should().Be(expected);
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_MalformedJsonResponse_ReturnsEmpty()
+    public async Task DiscoverTheories_MalformedJsonResponse_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(cannedResponse: "this is not JSON");
         ITestRun run = fixture.CreateRun(
@@ -129,16 +131,16 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_EmptyProposedPrompt_ReturnsEmpty()
+    public async Task DiscoverTheories_EmptyProposedPrompt_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(
             """{ "proposedSystemPrompt": "", "rationale": "blank" }""");
@@ -148,12 +150,12 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     private OptimizerFixture BuildFixture(string cannedResponse)
@@ -235,7 +237,7 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
 
         public static OptimizerFixture Build(IServiceProvider services, string cannedResponse)
         {
-            var proposalFactory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+            var theoryFactory = services.GetRequiredService<ISystemPromptTheory.CreateNew>();
             var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
 
             var agentEndpointId = Guid.NewGuid();
@@ -269,24 +271,6 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             group.Id.Returns(Guid.NewGuid());
             group.Suite.Returns(suite);
 
-            var abTestRun = Substitute.For<ITestRun>();
-            abTestRun.Id.Returns(Guid.NewGuid());
-            var abGroup = Substitute.For<ITestRunGroup>();
-            abGroup.GetTestRuns(Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<IReadOnlyList<ITestRun>>([abTestRun]));
-
-            var testRunnerService = Substitute.For<ITestRunnerService>();
-            testRunnerService.RunInForegroundAsync(
-                    Arg.Any<ITestSuite>(),
-                    Arg.Any<IReadOnlyList<IModelEndpoint>>(),
-                    Arg.Any<IAgent?>(),
-                    Arg.Any<bool>(),
-                    Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(abGroup));
-
-            var promptTemplateFactory = services.GetRequiredService<IPromptTemplate.Create>();
-            var agentFactory = services.GetRequiredService<IAgent.CreateNew>();
-
             var systemAgent = new CannedJsonAgent(cannedResponse, outputFormatFactory);
 
             var prompts = Substitute.For<IPromptTemplateRepository>();
@@ -309,13 +293,10 @@ public sealed class UpdateSystemPromptOptimizerTests : BaseTest<Module>
             var statistics = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
 
             var optimizer = new UpdateSystemPromptOptimizer(
-                proposalFactory,
+                theoryFactory,
                 prompts,
                 agents,
                 new OptimizerEvidenceBuilder(),
-                new Lazy<ITestRunnerService>(() => testRunnerService),
-                promptTemplateFactory,
-                agentFactory,
                 statistics);
 
             return new OptimizerFixture

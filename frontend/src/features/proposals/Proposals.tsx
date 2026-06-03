@@ -7,6 +7,7 @@ import type { OptimizationProposalDto } from '../../api/models';
 import { ProposalKind, ProposalStatus, TestRunStatus } from '../../api/models';
 import { ProposalCard } from './ProposalCard';
 import { ProposalDetail } from './ProposalDetail';
+import { TheoriesPanel } from './TheoriesPanel';
 import { useProposals } from './hooks/useProposals';
 import { KIND_META } from './shared';
 
@@ -216,6 +217,16 @@ export default function Proposals() {
           {filtered.length} proposal{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
+
+      {/* Theory pipeline — unproven hypotheses awaiting A/B validation */}
+      <details className="fade-up rounded-xl border border-border bg-card-2 [animation-delay:40ms]">
+        <summary className="cursor-pointer px-3.5 py-2.5 text-body-sm font-semibold text-primary">
+          Theory pipeline
+        </summary>
+        <div className="border-t border-border p-3">
+          <TheoriesPanel onViewProposal={setSelectedId} />
+        </div>
+      </details>
 
       {/* Master-detail */}
       <div className="fade-up flex-1 min-h-[420px] overflow-hidden grid gap-3.5 [animation-delay:60ms] grid-cols-[340px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)]">

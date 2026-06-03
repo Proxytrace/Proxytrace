@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using System.Text;
 using JetBrains.Annotations;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
@@ -47,23 +45,8 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
-        ContentHash = ComputeContentHash(serializer);
+        ContentHash = OptimizationContentHash.ForSystemPrompt(serializer, agent.Id, proposedSystemMessage);
     }
-
-    private string ComputeContentHash(ISerializer serializer)
-    {
-        var envelope = new
-        {
-            Agent = Agent.Id,
-            Kind,
-            Payload = new { Message = NormalizeText(ProposedSystemMessage) },
-        };
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serializer.Serialize(envelope)));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private string NormalizeText(string value)
-        => value.Replace("\r\n", "\n").Replace("\r", "\n").Trim();
 
     public SystemPromptProposal(
         IAgent agent,

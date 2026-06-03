@@ -33,6 +33,7 @@ public class AgentsController : ControllerBase
     private readonly IAgentCallRepository agentCallRepository;
     private readonly IAgentVersionRepository agentVersionRepository;
     private readonly IProposalBroadcaster proposalBroadcaster;
+    private readonly ITheoryBroadcaster theoryBroadcaster;
     private readonly AgentDtoMapper agentDtoMapper;
     private readonly IAgent.CreateNew createAgent;
     private readonly IPromptTemplate.Create createPromptTemplate;
@@ -45,6 +46,7 @@ public class AgentsController : ControllerBase
         IAgentCallRepository agentCallRepository,
         IAgentVersionRepository agentVersionRepository,
         IProposalBroadcaster proposalBroadcaster,
+        ITheoryBroadcaster theoryBroadcaster,
         AgentDtoMapper agentDtoMapper,
         IAgent.CreateNew createAgent,
         IPromptTemplate.Create createPromptTemplate,
@@ -56,6 +58,7 @@ public class AgentsController : ControllerBase
         this.agentCallRepository = agentCallRepository;
         this.agentVersionRepository = agentVersionRepository;
         this.proposalBroadcaster = proposalBroadcaster;
+        this.theoryBroadcaster = theoryBroadcaster;
         this.agentDtoMapper = agentDtoMapper;
         this.createAgent = createAgent;
         this.createPromptTemplate = createPromptTemplate;
@@ -154,6 +157,28 @@ public class AgentsController : ControllerBase
         {
             var data = JsonSerializer.Serialize(evt, SseOptions);
             await Response.WriteAsync($"event: proposal-created\ndata: {data}\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+    }
+
+    [HttpGet("{id:guid}/theories/stream")]
+    public async Task StreamTheories(Guid id, CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+        {
+            Response.StatusCode = 404;
+            return;
+        }
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var reader = theoryBroadcaster.Subscribe(id, cancellationToken);
+        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+        {
+            var data = JsonSerializer.Serialize(evt, SseOptions);
+            await Response.WriteAsync($"event: theory-changed\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
     }

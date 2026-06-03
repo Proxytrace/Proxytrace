@@ -6,7 +6,7 @@ using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
-using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -19,51 +19,51 @@ namespace Proxytrace.Application.Tests;
 public sealed class SwitchModelOptimizerTests : BaseTest<Module>
 {
     [TestMethod]
-    public async Task DiscoverOptimizations_NoRunForCurrentEndpoint_ReturnsEmpty()
+    public async Task DiscoverTheories_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
         // no spec marked current => agent points at an endpoint without a run
         Fixture fixture = Build(
             Spec("a", cost: 5m, latency: Sec(5)),
             Spec("b", cost: 9m, latency: Sec(5)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_FewerThanTwoRunsWithPassRate_ReturnsEmpty()
+    public async Task DiscoverTheories_FewerThanTwoRunsWithPassRate_ReturnsEmpty()
     {
         // alternative has no test cases => null pass rate => filtered out, leaving only current
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(5), isCurrent: true),
             Spec("alt", cost: 1m, latency: Sec(1), passed: 0, total: 0));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_CurrentAlreadyBest_ReturnsEmpty()
+    public async Task DiscoverTheories_CurrentAlreadyBest_ReturnsEmpty()
     {
         Fixture fixture = Build(
             Spec("current", cost: 1m, latency: Sec(1), isCurrent: true),
             Spec("alt", cost: 10m, latency: Sec(10)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_WinningMarginBelowThreshold_ReturnsEmpty()
+    public async Task DiscoverTheories_WinningMarginBelowThreshold_ReturnsEmpty()
     {
         // cheapest beats runner-up by <10%; latency identical everywhere
         Fixture fixture = Build(
@@ -71,15 +71,15 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altA", cost: 9.0m, latency: Sec(5)),
             Spec("altB", cost: 9.5m, latency: Sec(5)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_OtherStatWorseThanRunnerUp_ReturnsEmpty()
+    public async Task DiscoverTheories_OtherStatWorseThanRunnerUp_ReturnsEmpty()
     {
         // altA wins cost with margin, but its latency is worse than the cost runner-up (altB)
         Fixture fixture = Build(
@@ -87,74 +87,70 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("altA", cost: 5m, latency: Sec(20)),
             Spec("altB", cost: 9m, latency: Sec(6)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_PassRateWorseThanRunnerUp_ReturnsEmpty()
+    public async Task DiscoverTheories_PassRateWorseThanRunnerUp_ReturnsEmpty()
     {
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(5), isCurrent: true, passed: 8),
             Spec("altA", cost: 5m, latency: Sec(4), passed: 5),
             Spec("altB", cost: 9m, latency: Sec(6), passed: 9));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
         fixture.Captured.Called.Should().BeFalse();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_CostWin_ProducesProposal()
+    public async Task DiscoverTheories_CostWin_ProducesTheory()
     {
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(5), isCurrent: true),
             Spec("altA", cost: 5m, latency: Sec(5)),
             Spec("altB", cost: 9m, latency: Sec(5)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().HaveCount(1);
+        theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["altA"].Endpoint);
         c.Priority.Should().Be(Priority.High); // 50% cost saving vs current
-        c.CurrentPassRate.Should().Be(0.8);
-        c.ProposedPassRate.Should().Be(0.8);
-        c.CostDelta.Should().Be(-5m);
-        c.LatencyDelta.Should().Be(TimeSpan.Zero);
+        c.Source.Should().Be(TheorySource.Optimizer);
+        c.Suite.Should().BeSameAs(fixture.Group.Suite);
         c.EvidenceIds.Should().BeEquivalentTo(
             [fixture.RunsByName["current"].Id, fixture.RunsByName["altA"].Id]);
         c.Rationale.Should().Contain("cost");
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_LatencyWin_ProducesProposal()
+    public async Task DiscoverTheories_LatencyWin_ProducesTheory()
     {
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(10), isCurrent: true),
             Spec("altA", cost: 10m, latency: Sec(5)),
             Spec("altB", cost: 10m, latency: Sec(9)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().HaveCount(1);
+        theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["altA"].Endpoint);
         c.Priority.Should().Be(Priority.High);
-        c.CostDelta.Should().Be(0m);
-        c.LatencyDelta.Should().Be(Sec(-5));
         c.Rationale.Should().Contain("latency");
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_BothMetricsQualify_LargerRelativeSavingWins()
+    public async Task DiscoverTheories_BothMetricsQualify_LargerRelativeSavingWins()
     {
         // cost saving vs current ~16.7%, latency saving vs current 90% => latency wins
         Fixture fixture = Build(
@@ -164,10 +160,10 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
             Spec("F1", cost: 20m, latency: Sec(60)),
             Spec("F2", cost: 60m, latency: Sec(20)));
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        proposals.Should().HaveCount(1);
+        theories.Should().HaveCount(1);
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["L"].Endpoint);
         c.Rationale.Should().Contain("latency");
@@ -247,21 +243,17 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<IReadOnlyList<TestRunStats>>(stats));
 
-        IModelSwitchProposal.CreateNew factory = (
-            _, priority, rationale, proposedEndpoint, currentPassRate, proposedPassRate,
-            costDelta, latencyDelta, evidenceIds, abTestRun) =>
+        IModelSwitchTheory.CreateNew factory = (
+            _, theorySuite, source, priority, rationale, proposedEndpoint, evidenceIds) =>
         {
             captured.Called = true;
             captured.Priority = priority;
             captured.Rationale = rationale;
             captured.Endpoint = proposedEndpoint;
-            captured.CurrentPassRate = currentPassRate;
-            captured.ProposedPassRate = proposedPassRate;
-            captured.CostDelta = costDelta;
-            captured.LatencyDelta = latencyDelta;
+            captured.Source = source;
+            captured.Suite = theorySuite;
             captured.EvidenceIds = evidenceIds;
-            captured.AbTestRun = abTestRun;
-            return Substitute.For<IModelSwitchProposal>();
+            return Substitute.For<IModelSwitchTheory>();
         };
 
         var optimizer = new SwitchModelOptimizer(factory, runStats);
@@ -299,11 +291,8 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
         public Priority Priority { get; set; }
         public string? Rationale { get; set; }
         public IModelEndpoint? Endpoint { get; set; }
-        public double? CurrentPassRate { get; set; }
-        public double? ProposedPassRate { get; set; }
-        public decimal? CostDelta { get; set; }
-        public TimeSpan? LatencyDelta { get; set; }
+        public TheorySource Source { get; set; }
+        public ITestSuite? Suite { get; set; }
         public IReadOnlyCollection<Guid>? EvidenceIds { get; set; }
-        public ITestRun? AbTestRun { get; set; }
     }
 }

@@ -33,6 +33,7 @@ export default defineConfig({
             { text: 'Test Suites & Cases', link: '/guide/test-suites-and-cases' },
             { text: 'Evaluators', link: '/guide/evaluators' },
             { text: 'Running Tests', link: '/guide/running-tests' },
+            { text: 'Optimization Theories', link: '/guide/optimization-theories' },
             { text: 'Optimization Proposals', link: '/guide/optimization-proposals' },
             { text: 'Dashboard', link: '/guide/dashboard' },
             { text: 'Tracey (AI Assistant)', link: '/guide/tracey' },

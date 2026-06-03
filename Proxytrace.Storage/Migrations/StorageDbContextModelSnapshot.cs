@@ -464,6 +464,73 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("OptimizationProposalEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationTheory.OptimizationTheoryEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Agent")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EvidenceTestRunIds")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Rationale")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ResultingProposalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Suite")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Agent");
+
+                    b.HasIndex("Kind");
+
+                    b.HasIndex("ResultingProposalId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Suite");
+
+                    b.HasIndex("Agent", "ContentHash");
+
+                    b.ToTable("OptimizationTheoryEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -918,6 +985,26 @@ namespace Proxytrace.Storage.Migrations
                         .WithMany()
                         .HasForeignKey("Agent")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationTheory.OptimizationTheoryEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Agent")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.OptimizationProposal.OptimizationProposalEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ResultingProposalId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Suite")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
