@@ -7,9 +7,32 @@ import { proposalsApi } from '../../api/proposals';
 import { providersApi } from '../../api/providers';
 import { agentCallsApi } from '../../api/agent-calls';
 import { statisticsApi } from '../../api/statistics';
-import { ProposalStatus } from '../../api/models';
+import { theoriesApi } from '../../api/theories';
+import { Priority, ProposalStatus, TheorySource } from '../../api/models';
 import { searchDocs } from './knowledge/search-docs';
 import { DOCS_INDEX } from './knowledge/docs-index.generated';
+import { getSkill, listSkills } from './skills/registry';
+
+/** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
+const theoryDetailsSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('SystemPrompt'),
+    currentSystemMessage: z.string().describe("The agent's current system message."),
+    proposedSystemMessage: z.string().describe('The full rewritten system message to test.'),
+  }),
+  z.object({
+    kind: z.literal('ModelSwitchSeed'),
+    proposedEndpointId: z.string().describe('Id of the ModelEndpoint to switch the agent to.'),
+  }),
+  z.object({
+    kind: z.literal('ToolUpdateSeed'),
+    proposedTools: z.array(z.object({
+      name: z.string().describe('Tool name.'),
+      description: z.string().describe('What the tool does.'),
+      parametersJson: z.string().nullable().describe('JSON-schema for the arguments, or null for none.'),
+    })).describe('The full proposed tool set (replaces the current tools).'),
+  }),
+]);
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
@@ -80,6 +103,25 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       }),
       confirm: false,
       execute: async ({ query, limit }) => ({ results: searchDocs(query, DOCS_INDEX, limit ?? 4) }),
+    }),
+
+    load_skill: tool({
+      description:
+        'Load a skill — a detailed step-by-step playbook for a specific task — into the ' +
+        "conversation on demand. Call this with the skill's id BEFORE acting whenever the " +
+        "user's request matches one of the skills listed in your system prompt. The full " +
+        'instructions come back as this tool result; follow them.',
+      parameters: z.object({
+        skillId: z.string().describe('The id of the skill to load, e.g. "optimize-agent".'),
+      }),
+      confirm: false,
+      execute: async ({ skillId }) => {
+        const skill = getSkill(skillId);
+        if (!skill) {
+          return { notFound: skillId, available: listSkills().map((s) => s.id) };
+        }
+        return { id: skill.id, name: skill.name, instructions: skill.instructions };
+      },
     }),
 
     list_agents: tool({
@@ -189,6 +231,38 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
         return proposalsApi.updateStatus(proposalId, status);
       },
     }),
+    submit_optimization_theory: tool({
+      description:
+        'Submit an optimization theory for an agent — a concrete proposed change (system prompt, ' +
+        'model switch, or tool update) that the backend A/B-tests against the agent\'s suite. ' +
+        'Spawns a reviewable proposal if it improves the pass rate, otherwise it is rejected. ' +
+        'Use the `optimize-agent` skill to drive this. Requires user confirmation.',
+      parameters: z.object({
+        agentId: z.string().describe('The id of the agent to optimize.'),
+        suiteId: z.string().describe('The id of the test suite to validate the change against.'),
+        priority: z.enum([Priority.Low, Priority.Medium, Priority.High, Priority.Critical])
+          .describe('How strongly the evidence supports this change.'),
+        rationale: z.string().describe('One-sentence, evidence-grounded reason the change should help.'),
+        details: theoryDetailsSchema,
+      }),
+      confirm: true,
+      execute: async ({ agentId, suiteId, priority, rationale, details }, c) => {
+        const agent = await agentsApi.get(agentId);
+        const ok = await c.confirm(
+          `Submit a ${details.kind === 'ModelSwitchSeed' ? 'model-switch' : details.kind === 'ToolUpdateSeed' ? 'tool-update' : 'system-prompt'} ` +
+          `optimization theory for "${agent.name}" and run an A/B test?`,
+        );
+        if (!ok) return CANCELLED;
+        try {
+          return await theoriesApi.submit({ agentId, suiteId, priority, rationale, source: TheorySource.TraceyAi, details });
+        } catch (error) {
+          const status = (error as { status?: number }).status;
+          if (status === 409) return { outcome: 'duplicate', message: 'An identical theory or proposal already exists for this agent.' };
+          if (status === 429) return { outcome: 'quota', message: 'Too many theories are awaiting validation. Try again later.' };
+          return { outcome: 'error', message: error instanceof Error ? error.message : 'Failed to submit the theory.' };
+        }
+      },
+    }),
 
     get_provider: tool({
       description: 'Get a single model provider by id.',
@@ -275,6 +349,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
 export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'navigate', description: 'Open an in-app page.' },
   { name: 'search_docs', description: 'Search the product manual and cite sources.' },
+  { name: 'load_skill', description: 'Load a task playbook (skill) on demand.' },
   { name: 'list_agents', description: 'List the agents in the project.' },
   { name: 'get_agent', description: 'Get one agent by id.' },
   { name: 'list_suites', description: 'List the test suites.' },
@@ -289,6 +364,7 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'get_agent_stats', description: 'Token usage, cost & latency for an agent.' },
   { name: 'start_test_run', description: 'Run a suite against an agent (confirm).' },
   { name: 'set_proposal_status', description: 'Approve or reject a proposal (confirm).' },
+  { name: 'submit_optimization_theory', description: 'Theorize an agent optimization and A/B-test it (confirm).' },
   { name: 'show_chart', description: 'Plot data inline in the chat.' },
   { name: 'show_table', description: 'Show a table inline in the chat.' },
   { name: 'show_text', description: 'Show markdown/JSON/code inline in the chat.' },

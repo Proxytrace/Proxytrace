@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, providersApi, agentCallsApi, statisticsApi } = vi.hoisted(() => ({
+const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, providersApi, agentCallsApi, statisticsApi, theoriesApi } = vi.hoisted(() => ({
   agentsApi: { list: vi.fn(), get: vi.fn() },
   testSuitesApi: { list: vi.fn(), get: vi.fn() },
   testRunsApi: { list: vi.fn(), get: vi.fn() },
@@ -9,6 +9,7 @@ const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, p
   providersApi: { get: vi.fn() },
   agentCallsApi: { get: vi.fn() },
   statisticsApi: { dashboard: vi.fn(), agentOverview: vi.fn() },
+  theoriesApi: { submit: vi.fn(), get: vi.fn() },
 }));
 
 vi.mock('../../api/agents', () => ({ agentsApi }));
@@ -19,9 +20,10 @@ vi.mock('../../api/proposals', () => ({ proposalsApi }));
 vi.mock('../../api/providers', () => ({ providersApi }));
 vi.mock('../../api/agent-calls', () => ({ agentCallsApi }));
 vi.mock('../../api/statistics', () => ({ statisticsApi }));
+vi.mock('../../api/theories', () => ({ theoriesApi }));
 
 import { createTraceyTools, CANCELLED, type TraceyTool, type TraceyToolContext } from './tracey-tools';
-import { ProposalStatus } from '../../api/models';
+import { Priority, ProposalStatus, TheorySource } from '../../api/models';
 
 function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext {
   return {
@@ -197,5 +199,92 @@ describe('tracey inline render tools', () => {
 
     // No `execute` means the AI SDK emits the call and waits; the tool UI resolves it via addResult.
     expect(createTraceyTools(ctx).ask_questions.execute).toBeUndefined();
+  });
+});
+
+describe('tracey load_skill tool', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the instructions for a known skill', async () => {
+    const ctx = makeCtx();
+    const result = await exec(createTraceyTools(ctx).load_skill, { skillId: 'optimize-agent' }, ctx) as {
+      id: string; instructions: string;
+    };
+
+    expect(result.id).toBe('optimize-agent');
+    expect(result.instructions).toContain('Optimize an agent');
+  });
+
+  it('reports notFound with the available ids for an unknown skill', async () => {
+    const ctx = makeCtx();
+    const result = await exec(createTraceyTools(ctx).load_skill, { skillId: 'nope' }, ctx) as {
+      notFound: string; available: string[];
+    };
+
+    expect(result.notFound).toBe('nope');
+    expect(result.available).toContain('optimize-agent');
+  });
+});
+
+describe('tracey submit_optimization_theory tool', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const details = { kind: 'SystemPrompt', currentSystemMessage: 'old', proposedSystemMessage: 'new' } as const;
+
+  it('submits as Tracey AI when confirmed', async () => {
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+    theoriesApi.submit.mockResolvedValue({ id: 'th1', status: 'Proposed' });
+    const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
+
+    const result = await exec(createTraceyTools(ctx).submit_optimization_theory,
+      { agentId: 'a1', suiteId: 's1', priority: Priority.High, rationale: 'why', details },
+      ctx,
+    );
+
+    expect(ctx.confirm).toHaveBeenCalledOnce();
+    expect(theoriesApi.submit).toHaveBeenCalledWith({
+      agentId: 'a1', suiteId: 's1', priority: Priority.High, rationale: 'why',
+      source: TheorySource.TraceyAi, details,
+    });
+    expect(result).toEqual({ id: 'th1', status: 'Proposed' });
+  });
+
+  it('cancels without submitting when declined', async () => {
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+    const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(false) });
+
+    const result = await exec(createTraceyTools(ctx).submit_optimization_theory,
+      { agentId: 'a1', suiteId: 's1', priority: Priority.Low, rationale: 'why', details },
+      ctx,
+    );
+
+    expect(theoriesApi.submit).not.toHaveBeenCalled();
+    expect(result).toBe(CANCELLED);
+  });
+
+  it('maps a 409 conflict to a duplicate outcome', async () => {
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+    theoriesApi.submit.mockRejectedValue(Object.assign(new Error('conflict'), { status: 409 }));
+    const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
+
+    const result = await exec(createTraceyTools(ctx).submit_optimization_theory,
+      { agentId: 'a1', suiteId: 's1', priority: Priority.Medium, rationale: 'why', details },
+      ctx,
+    ) as { outcome: string };
+
+    expect(result.outcome).toBe('duplicate');
+  });
+
+  it('maps a 429 to a quota outcome', async () => {
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+    theoriesApi.submit.mockRejectedValue(Object.assign(new Error('too many'), { status: 429 }));
+    const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
+
+    const result = await exec(createTraceyTools(ctx).submit_optimization_theory,
+      { agentId: 'a1', suiteId: 's1', priority: Priority.Medium, rationale: 'why', details },
+      ctx,
+    ) as { outcome: string };
+
+    expect(result.outcome).toBe('quota');
   });
 });

@@ -1,0 +1,81 @@
+import { Link } from 'react-router-dom';
+import { CheckIcon, SparklesIcon } from '../../../../components/icons';
+import { Badge } from '../../../../components/ui/Badge';
+import { Spinner } from '../../../../components/ui/Spinner';
+import { agentColor } from '../../../../lib/colors';
+import { ProposalKind, TheoryStatus, type TheoryDto } from '../../../../api/models';
+import { ToolUIFrame } from './ToolUIFrame';
+import { PRIORITY_VARIANT, THEORY_STATUS_VARIANT } from './badge-variants';
+import { TheoryChangePreview } from './TheoryChangePreview';
+import { useLiveTheory } from './useLiveTheory';
+
+const KIND_LABEL: Record<ProposalKind, string> = {
+  [ProposalKind.SystemPrompt]: 'System prompt',
+  [ProposalKind.Tool]: 'Tool update',
+  [ProposalKind.ModelSwitch]: 'Model switch',
+};
+
+const STATUS_LABEL: Record<TheoryStatus, string> = {
+  [TheoryStatus.Proposed]: 'Queued',
+  [TheoryStatus.Validating]: 'A/B testing',
+  [TheoryStatus.Validated]: 'Improved',
+  [TheoryStatus.Invalidated]: 'Rejected',
+};
+
+/**
+ * The live theory card Tracey renders after submitting an optimization theory. Streams the
+ * validation status (queued → A/B testing → improved/rejected) and, on a win, links to the
+ * proposal the theory spawned.
+ */
+export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
+  const theory = useLiveTheory(initial);
+  const color = agentColor(theory.agentId);
+  const isRunning = theory.status === TheoryStatus.Proposed || theory.status === TheoryStatus.Validating;
+
+  return (
+    <ToolUIFrame
+      state="ready"
+      title={`${KIND_LABEL[theory.kind]} for ${theory.agentName}`}
+      icon={<SparklesIcon size={14} />}
+      accentBar={color}
+      testId="tracey-theory-card"
+    >
+      <div className="flex flex-col gap-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge label={STATUS_LABEL[theory.status]} variant={THEORY_STATUS_VARIANT[theory.status]} size="sm" />
+          <Badge label={theory.priority} variant={PRIORITY_VARIANT[theory.priority]} size="sm" />
+          <span className="text-body-sm text-muted">via Tracey AI</span>
+        </div>
+
+        <p className="line-clamp-2 text-body-sm text-secondary">{theory.rationale}</p>
+
+        <TheoryChangePreview details={theory.details} />
+
+        <div className="mt-0.5 flex items-center gap-2 border-t border-hairline pt-2 text-body-sm" data-testid="tracey-theory-status">
+          {isRunning && (
+            <>
+              <Spinner size={12} />
+              <span className="text-secondary">Running A/B test…</span>
+            </>
+          )}
+          {theory.status === TheoryStatus.Validated && (
+            <>
+              <span className="text-success"><CheckIcon size={14} /></span>
+              <span className="text-secondary">Improved the pass rate.</span>
+              <Link
+                to={`/proposals?agentId=${theory.agentId}`}
+                data-testid="tracey-theory-proposal-link"
+                className="ml-auto font-medium text-accent hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
+              >
+                View proposal
+              </Link>
+            </>
+          )}
+          {theory.status === TheoryStatus.Invalidated && (
+            <span className="text-muted">No improvement — theory rejected.</span>
+          )}
+        </div>
+      </div>
+    </ToolUIFrame>
+  );
+}

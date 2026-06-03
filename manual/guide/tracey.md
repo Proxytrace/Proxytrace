@@ -96,12 +96,13 @@ its **Output** (or **Error** if it failed), each with a copy button.
 
 ## Running actions
 
-Two actions change state and are therefore **confirmation-gated**:
+These actions change state and are therefore **confirmation-gated**:
 
 | Action | What it does |
 |--------|--------------|
 | **Start a test run** | Runs a suite against an agent's endpoint. |
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
+| **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
 By default Tracey shows a **Confirm / Cancel** card summarizing the action before anything
 happens. Nothing is executed until you confirm.
@@ -111,6 +112,44 @@ happens. Nothing is executed until you confirm.
 Below the message box sits an **Auto-approve** toggle (default **off**). When you turn it on,
 Tracey performs write actions immediately without showing the confirmation card. Turn it off
 again to return to the confirm-first behavior.
+
+## Skills
+
+For richer, multi-step jobs, Tracey has **skills** — built-in playbooks she loads **on demand**.
+Her everyday instructions stay lean; when your request matches a skill, she pulls in that skill's
+detailed steps just for that task and follows them. You don't invoke skills directly — just ask
+for what you want in plain language (e.g. "optimize my support agent") and Tracey loads the right
+skill herself. The first skill is **Optimize an agent**, below.
+
+## Optimizing an agent
+
+Ask Tracey to **optimize, improve, or tune an agent** and she runs a complete optimization loop
+for you. There's an **Optimize an agent** starter chip for it, too.
+
+She needs two things: the agent must **exist** and it must have a **test suite** (the benchmark
+the change is measured against). If the agent has no suite, Tracey tells you and stops — create a
+suite first.
+
+The flow:
+
+1. **Theory.** Tracey inspects the agent and its recent results, then theorizes **one** concrete
+   change — a rewritten **system prompt**, a **model switch**, or a **tool update** — with a short
+   rationale. After you confirm, she submits it as an **optimization theory**.
+2. **A/B test.** The theory is validated in the background: Proxytrace runs the suite against the
+   current agent (baseline) and against the proposed change (candidate), back to back. Tracey
+   shows a **theory card** in the chat that streams the status — *Running A/B test…* while it
+   works.
+3. **Result.** The card resolves to one of two outcomes:
+   - **Improved** — the change raised the pass rate, so it becomes a reviewable **optimization
+     proposal**. The card shows a **View proposal** link; from there you can approve or reject it
+     (and Tracey can do that for you too).
+   - **Rejected** — the change didn't improve the agent, so the theory is discarded (kept for
+     provenance, visible in the optimization pipeline).
+
+Theories Tracey submits appear alongside optimizer- and user-submitted ones in the project's
+optimization pipeline, tagged **via Tracey AI**. Identical theories are de-duplicated and a
+project has a cap on how many can be validating at once, so if a submission is a duplicate or the
+queue is full, Tracey tells you instead of running it again.
 
 ## Clearing the conversation
 
