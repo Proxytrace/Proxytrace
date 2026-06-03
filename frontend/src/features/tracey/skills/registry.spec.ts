@@ -19,10 +19,17 @@ describe('tracey skills registry', () => {
   });
 
   it('parses the front-matter `tools:` list into the skill bundle', () => {
-    expect(getSkill('optimize-agent')?.tools).toEqual([
-      'submit_optimization_theory',
-      'get_agent_stats',
+    expect(getSkill('review-proposals')?.tools).toEqual([
+      'list_proposals',
+      'get_proposal',
+      'set_proposal_status',
     ]);
+  });
+
+  it('lets a skill bundle the reads it needs from other areas', () => {
+    // optimize-agent gathers evidence with run/trace reads owned by other skills too.
+    expect(getSkill('optimize-agent')?.tools).toContain('submit_optimization_theory');
+    expect(getSkill('optimize-agent')?.tools).toContain('get_run');
   });
 
   it('lists every loaded skill', () => {

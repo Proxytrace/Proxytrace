@@ -12,31 +12,22 @@ import { getSkill, listSkills } from './skills/registry';
  */
 
 /**
- * Tools active on every step, regardless of which skills have loaded. These are the conversational
- * and read/render essentials plus the simple, directly-wired write actions. Specialist tools live
- * in skill bundles and stay gated until their skill loads.
+ * Tools active on every step, regardless of which skills have loaded. This is a deliberately lean
+ * set: the dispatcher essentials (navigate, search_docs, load_skill, ask_questions), the inline
+ * renderers (show_*), and the two universal agent reads that nearly every request touches. Every
+ * other tool — suite/run/proposal/provider/trace reads, stats, and all write actions — lives in a
+ * skill bundle and stays gated until its skill loads (see the `*-skill.md` front-matter `tools:`).
  */
 export const CORE_TOOL_NAMES: readonly string[] = [
   'navigate',
   'search_docs',
   'load_skill',
-  'list_agents',
-  'get_agent',
-  'list_suites',
-  'get_suite',
-  'list_runs',
-  'get_run',
-  'list_proposals',
-  'get_proposal',
-  'get_provider',
-  'get_trace',
-  'get_dashboard_stats',
-  'start_test_run',
-  'set_proposal_status',
+  'ask_questions',
   'show_chart',
   'show_table',
   'show_text',
-  'ask_questions',
+  'list_agents',
+  'get_agent',
 ];
 
 /**

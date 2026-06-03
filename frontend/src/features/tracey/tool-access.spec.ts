@@ -19,12 +19,29 @@ describe('tracey tool access', () => {
     expect(new Set(activeToolNamesFor([]))).toEqual(new Set(CORE_TOOL_NAMES));
   });
 
+  it('keeps the core lean — gated reads/actions are not in it', () => {
+    expect(CORE_TOOL_NAMES).not.toContain('list_proposals');
+    expect(CORE_TOOL_NAMES).not.toContain('start_test_run');
+    expect(CORE_TOOL_NAMES).not.toContain('get_dashboard_stats');
+    // The universal agent reads and renderers stay core.
+    expect(CORE_TOOL_NAMES).toContain('get_agent');
+    expect(CORE_TOOL_NAMES).toContain('show_chart');
+  });
+
   it('unlocks a skill bundle once its skill is loaded', () => {
-    const active = activeToolNamesFor(['optimize-agent']);
-    expect(active).toContain('submit_optimization_theory');
-    expect(active).toContain('get_agent_stats');
+    const active = activeToolNamesFor(['review-proposals']);
+    expect(active).toContain('list_proposals');
+    expect(active).toContain('set_proposal_status');
     // Core stays active alongside the bundle.
     expect(active).toContain('navigate');
+    // A different skill's tools stay gated.
+    expect(active).not.toContain('start_test_run');
+  });
+
+  it('unions bundles when several skills are loaded', () => {
+    const active = activeToolNamesFor(['review-proposals', 'test-suites-and-runs']);
+    expect(active).toContain('set_proposal_status');
+    expect(active).toContain('start_test_run');
   });
 
   it('ignores unknown skill ids', () => {
