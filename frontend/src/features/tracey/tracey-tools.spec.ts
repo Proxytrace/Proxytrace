@@ -208,10 +208,10 @@ describe('tracey load_skill tool', () => {
   it('returns the instructions for a known skill', async () => {
     const ctx = makeCtx();
     const result = await exec(createTraceyTools(ctx).load_skill, { skillId: 'optimize-agent' }, ctx) as {
-      id: string; instructions: string;
+      name: string; instructions: string;
     };
 
-    expect(result.id).toBe('optimize-agent');
+    expect(result.name).toBe('optimize-agent');
     expect(result.instructions).toContain('Optimize an agent');
   });
 

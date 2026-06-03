@@ -118,9 +118,9 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       execute: async ({ skillId }) => {
         const skill = getSkill(skillId);
         if (!skill) {
-          return { notFound: skillId, available: listSkills().map((s) => s.id) };
+          return { notFound: skillId, available: listSkills().map((s) => s.name) };
         }
-        return { id: skill.id, name: skill.name, instructions: skill.instructions };
+        return { name: skill.name, instructions: skill.instructions };
       },
     }),
 

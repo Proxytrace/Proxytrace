@@ -1,15 +1,14 @@
 /**
- * A Tracey skill: a named, on-demand playbook. Only the `id` + `description` are advertised
- * to the model up front (via the system-prompt catalog); the full `instructions` body is
+ * A Tracey skill: a named, on-demand playbook authored as a `*.md` file with YAML front-matter
+ * (`name` + `description`), mirroring the Claude SKILL.md convention. Only `name` + `description`
+ * are advertised to the model up front (via the system-prompt catalog); the full markdown body is
  * loaded into context lazily through the `load_skill` tool, keeping the base prompt lean.
  */
 export interface TraceySkill {
-  /** Stable machine id used by `load_skill` and the catalog (kebab-case). */
-  id: string;
-  /** Short human title. */
+  /** Kebab-case identifier from the front-matter `name`. Used by `load_skill` and the catalog. */
   name: string;
-  /** One-line summary shown in the system-prompt skill catalog. Keep it to a sentence. */
+  /** One-line summary from the front-matter `description`, shown in the skill catalog. */
   description: string;
-  /** The full markdown playbook injected into context when the skill is loaded. */
+  /** The markdown playbook body (everything after the front-matter), injected when loaded. */
   instructions: string;
 }

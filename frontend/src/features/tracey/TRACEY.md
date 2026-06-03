@@ -260,9 +260,10 @@ base prompt. The system prompt advertises only a compact catalog (`id — descri
 `skillCatalog()`); the body arrives as the result of the `load_skill` tool when the model decides
 a task matches. This keeps `TRACEY_SYSTEM_PROMPT` lean as the skill set grows.
 
-- **Add a skill:** create `skills/<name>-skill.ts` exporting a `TraceySkill`
-  (`id`, `name`, `description`, `instructions`), and register it in `skills/registry.ts`. That's
-  it — it's auto-listed in the catalog and loadable; no prompt edit, no backend change.
+- **Add a skill:** drop a `skills/<name>.md` file with YAML front-matter (`name` + `description`,
+  the Claude SKILL.md convention) and the playbook as the markdown body. `registry.ts`
+  `import.meta.glob`s every `*.md` and parses the front-matter — no registration code, no prompt
+  edit, no backend change. It's auto-listed in the catalog and loadable.
 - **`load_skill`** (read tool, no confirm) returns `{ id, name, instructions }`, or
   `{ notFound, available }` for an unknown id.
 - The **`optimize-agent`** skill drives `submit_optimization_theory`: it tells Tracey to verify
