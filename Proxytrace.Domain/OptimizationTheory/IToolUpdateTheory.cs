@@ -1,0 +1,37 @@
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.Proposal;
+using Proxytrace.Domain.TestSuite;
+using Proxytrace.Domain.Tools;
+
+namespace Proxytrace.Domain.OptimizationTheory;
+
+/// <summary>
+/// Theory that updating the agent's tool definitions will improve it.
+/// </summary>
+public interface IToolUpdateTheory : IOptimizationTheory
+{
+    /// <summary>The proposed tool specifications, replacing the agent's current ones.</summary>
+    IReadOnlyList<ToolSpecification> ProposedTools { get; }
+
+    public delegate IToolUpdateTheory CreateNew(
+        IAgent agent,
+        ITestSuite suite,
+        TheorySource source,
+        Priority priority,
+        string rationale,
+        IReadOnlyList<ToolSpecification> proposedTools,
+        IReadOnlyCollection<Guid> evidenceTestRunIds);
+
+    public delegate IToolUpdateTheory CreateExisting(
+        IAgent agent,
+        ITestSuite suite,
+        TheoryStatus status,
+        TheorySource source,
+        Priority priority,
+        string rationale,
+        IReadOnlyList<ToolSpecification> proposedTools,
+        IReadOnlyCollection<Guid> evidenceTestRunIds,
+        Guid? resultingProposalId,
+        string contentHash,
+        IDomainEntityData existing);
+}

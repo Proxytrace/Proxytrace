@@ -1,5 +1,6 @@
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Domain;
+using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.Usage;
 
@@ -15,7 +16,9 @@ internal sealed class TestRunStatsProjector : AbstractStatsProjector<ITestRun, T
     protected override Task<TestRunStats> ComputeStatsAsync(ITestRun run, CancellationToken cancellationToken)
     {
         int testCases = run.Group.Suite.TestCases.Count;
-        int passed = run.TestResults.Count(r => r.Passed);
+        // Use the shared pass definition so the optimizer's stats-based vetting agrees with
+        // the theory validator's gate and the proposal pass-rates shown in the UI.
+        int passed = run.TestResults.Count(r => r.IsPass());
 
         TokenUsage? usage = run.TestResults
             .Select(r => r.Usage)

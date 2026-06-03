@@ -1,9 +1,10 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using Proxytrace.Domain.Completion;
+using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
-using Proxytrace.Domain.Inference;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Tools;
 using Proxytrace.Domain.Usage;
@@ -390,7 +391,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
 
     private static AssistantMessage? ParseAgentMessageFromSse(string responseBody)
     {
-        var text = new System.Text.StringBuilder();
+        var text = new StringBuilder();
         // Streamed tool calls arrive in fragments keyed by index: the first fragment carries the
         // id + name, later fragments only append argument text (no id). They must be reassembled
         // per index — parsing each chunk into its own ToolRequest yields fragments with an empty
@@ -520,7 +521,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
     {
         public string Id { get; set; } = "";
         public string Name { get; set; } = "";
-        public System.Text.StringBuilder Arguments { get; } = new();
+        public StringBuilder Arguments { get; } = new();
     }
 
     // ── Scalar field extraction ───────────────────────────────────────────────

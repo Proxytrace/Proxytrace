@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Tools;
+using Proxytrace.Domain.Usage;
 
 namespace Proxytrace.Application.Playground.Internal;
 
@@ -123,7 +126,7 @@ internal sealed class PlaygroundService : IPlaygroundService
         decimal? cost = null;
         if (endpoint.InputTokenCost is not null && endpoint.OutputTokenCost is not null && (inputTokens > 0 || outputTokens > 0))
         {
-            cost = endpoint.CalculateCost(new Domain.Usage.TokenUsage(inputTokens, outputTokens));
+            cost = endpoint.CalculateCost(new TokenUsage(inputTokens, outputTokens));
         }
 
         yield return new DoneEvent(inputTokens, outputTokens, latencyMs, cost, finishReason);
@@ -165,15 +168,15 @@ internal sealed class PlaygroundService : IPlaygroundService
     {
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(arg.JsonSchema);
+            using var doc = JsonDocument.Parse(arg.JsonSchema);
             var dict = new Dictionary<string, object?>();
             foreach (var prop in doc.RootElement.EnumerateObject())
             {
                 if (prop.NameEquals("description")) continue;
-                dict[prop.Name] = System.Text.Json.JsonSerializer.Deserialize<object>(prop.Value.GetRawText());
+                dict[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText());
             }
             if (!string.IsNullOrWhiteSpace(description)) dict["description"] = description;
-            var json = System.Text.Json.JsonSerializer.SerializeToElement(dict);
+            var json = JsonSerializer.SerializeToElement(dict);
             return new OverriddenJsonArgument(arg.Name, arg.IsRequired, json);
         }
         catch
@@ -182,16 +185,16 @@ internal sealed class PlaygroundService : IPlaygroundService
         }
     }
 
-    private sealed record OverriddenJsonArgument(string Name, bool IsRequired, System.Text.Json.JsonElement Json) : IToolArgument
+    private sealed record OverriddenJsonArgument(string Name, bool IsRequired, JsonElement Json) : IToolArgument
     {
         public string? Description
-            => Json.TryGetProperty("description", out var d) && d.ValueKind == System.Text.Json.JsonValueKind.String ? d.GetString() : null;
+            => Json.TryGetProperty("description", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString() : null;
 
         public Type Type => typeof(object);
         public object? DefaultValue => null;
         public string JsonSchema => Json.GetRawText();
 
-        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(System.ComponentModel.DataAnnotations.ValidationContext validationContext)
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
             => [];
     }
 

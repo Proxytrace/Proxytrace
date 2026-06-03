@@ -4,6 +4,9 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ .
+# The build's prebuild step (gen:docs) reads the manual markdown (../manual) to bake the
+# Tracey docs index into the bundle, so the manual sources must be present in this stage.
+COPY manual/ /manual/
 RUN npm run build
 
 # Build the VitePress user/operator manual served at /docs.

@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
-using System.Text;
 using JetBrains.Annotations;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
@@ -48,27 +46,8 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         ProposedPassRate = proposedPassRate;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
-        ContentHash = ComputeContentHash(serializer);
+        ContentHash = OptimizationContentHash.ForTools(serializer, agent.Id, proposedTools);
     }
-
-    private string ComputeContentHash(ISerializer serializer)
-    {
-        var orderedTools = ProposedTools
-            .OrderBy(t => t.Name, StringComparer.Ordinal)
-            .Select(t => new { t.Name, Description = NormalizeText(t.Description), t.Arguments })
-            .ToArray();
-        var envelope = new
-        {
-            Agent = Agent.Id,
-            Kind,
-            Payload = orderedTools,
-        };
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(serializer.Serialize(envelope)));
-        return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    private string NormalizeText(string value)
-        => value.Replace("\r\n", "\n").Replace("\r", "\n").Trim();
 
     public ToolUpdateProposal(
         IAgent agent,

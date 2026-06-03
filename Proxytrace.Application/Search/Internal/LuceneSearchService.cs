@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Index;
 using Lucene.Net.QueryParsers.Classic;
@@ -228,7 +229,7 @@ internal sealed class LuceneSearchService : ISearchService
         }
         try
         {
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            using var doc = JsonDocument.Parse(json);
             var dict = new Dictionary<string, string>();
             foreach (var prop in doc.RootElement.EnumerateObject())
             {

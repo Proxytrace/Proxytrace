@@ -13,6 +13,7 @@ using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Tools;
 using Proxytrace.Domain.Usage;
 using Proxytrace.Domain.User;
+
 // ReSharper disable InconsistentNaming
 
 namespace Proxytrace.Application.Demo.Scenarios;

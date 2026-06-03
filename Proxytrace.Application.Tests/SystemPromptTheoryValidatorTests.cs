@@ -1,0 +1,193 @@
+using AwesomeAssertions;
+using NSubstitute;
+using Proxytrace.Application.Optimization.Internal.Validation;
+using Proxytrace.Application.TestRun;
+using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.Evaluation;
+using Proxytrace.Domain.Inference;
+using Proxytrace.Domain.ModelEndpoint;
+using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
+using Proxytrace.Domain.Prompt;
+using Proxytrace.Domain.Proposal;
+using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestRunGroup;
+using Proxytrace.Domain.TestSuite;
+using Proxytrace.Domain.Tools;
+using Proxytrace.Testing;
+
+namespace Proxytrace.Application.Tests;
+
+[TestClass]
+public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
+{
+    [TestMethod]
+    public async Task Validate_CandidateImproves_ProducesProposal()
+    {
+        var f = Build(baselinePassed: [true, false], candidatePassed: [true, true]);
+
+        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+
+        proposal.Should().NotBeNull();
+        f.Captured.CurrentPassRate.Should().Be(0.5);
+        f.Captured.ProposedPassRate.Should().Be(1.0);
+    }
+
+    [TestMethod]
+    public async Task Validate_CandidateNoImprovement_ReturnsNull()
+    {
+        var f = Build(baselinePassed: [true, true], candidatePassed: [true, true]);
+
+        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+
+        proposal.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Validate_CandidateRegresses_ReturnsNull()
+    {
+        var f = Build(baselinePassed: [true, true], candidatePassed: [true, false]);
+
+        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+
+        proposal.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Validate_UnevaluatedResults_DoNotCountAsPass()
+    {
+        // A run whose results carry no evaluations must score 0, not 1 (All() over empty is vacuously true).
+        var f = Build(baselinePassed: [true], candidatePassed: []); // candidate result has zero evaluations
+        f.OverrideCandidate(MakeRunWithEmptyEvaluations(1));
+
+        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+
+        proposal.Should().BeNull();
+    }
+
+    private Fixture Build(bool[] baselinePassed, bool[] candidatePassed)
+    {
+        var endpoint = Substitute.For<IModelEndpoint>();
+        endpoint.Id.Returns(Guid.NewGuid());
+
+        var agent = Substitute.For<IAgent>();
+        agent.Name.Returns("agent");
+        agent.Endpoint.Returns(endpoint);
+        agent.Tools.Returns(new List<ToolSpecification>());
+        agent.Project.Returns(Substitute.For<Domain.Project.IProject>());
+        agent.SystemPrompt.Returns(Substitute.For<IPromptTemplate>());
+        agent.ModelParameters.Returns(Substitute.For<IModelParameters>());
+
+        var suite = Substitute.For<ITestSuite>();
+
+        var theory = Substitute.For<ISystemPromptTheory>();
+        theory.Agent.Returns(agent);
+        theory.Suite.Returns(suite);
+        theory.Priority.Returns(Priority.Medium);
+        theory.Rationale.Returns("better prompt");
+        theory.ProposedSystemMessage.Returns("You are better.");
+        theory.EvidenceTestRunIds.Returns(Array.Empty<Guid>());
+
+        var baselineRun = MakeRun(endpoint, baselinePassed);
+        var candidateRun = MakeRun(endpoint, candidatePassed);
+        var baselineGroup = GroupReturning(baselineRun);
+        var candidateGroup = GroupReturning(candidateRun);
+
+        var runner = Substitute.For<ITestRunnerService>();
+        runner.RunInForegroundAsync(
+                Arg.Any<ITestSuite>(), Arg.Any<IReadOnlyList<IModelEndpoint>>(),
+                Arg.Any<IAgent?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(baselineGroup, candidateGroup);
+
+        var captured = new Captured();
+        ISystemPromptProposal.CreateNew proposalFactory = (
+            _, _, _, _, currentPassRate, proposedPassRate, _, _) =>
+        {
+            captured.CurrentPassRate = currentPassRate;
+            captured.ProposedPassRate = proposedPassRate;
+            return Substitute.For<ISystemPromptProposal>();
+        };
+
+        IPromptTemplate.Create promptFactory = (_, _) => Substitute.For<IPromptTemplate>();
+        IAgent.CreateNew agentFactory = (_, _, _, _, _, _, _) =>
+        {
+            var candidate = Substitute.For<IAgent>();
+            candidate.Endpoint.Returns(endpoint);
+            return candidate;
+        };
+
+        var validator = new SystemPromptTheoryValidator(
+            proposalFactory, promptFactory, agentFactory,
+            new Lazy<ITestRunnerService>(() => runner),
+            Substitute.For<ITestRunRepository>());
+
+        return new Fixture { Validator = validator, Theory = theory, Captured = captured, Runner = runner, Endpoint = endpoint, Baseline = baselineRun };
+    }
+
+    private static ITestRunGroup GroupReturning(ITestRun run)
+    {
+        var group = Substitute.For<ITestRunGroup>();
+        group.GetTestRuns(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<ITestRun>>([run]));
+        return group;
+    }
+
+    private static ITestRun MakeRun(IModelEndpoint endpoint, bool[] passed)
+    {
+        var results = passed.Select(p =>
+        {
+            var ev = Substitute.For<IEvaluation>();
+            ev.Passed.Returns(p);
+            var r = Substitute.For<ITestResult>();
+            r.Evaluations.Returns([ev]);
+            return r;
+        }).ToList();
+
+        var run = Substitute.For<ITestRun>();
+        run.Id.Returns(Guid.NewGuid());
+        run.Endpoint.Returns(endpoint);
+        run.TestResults.Returns(results);
+        return run;
+    }
+
+    private static ITestRun MakeRunWithEmptyEvaluations(int resultCount)
+    {
+        var results = Enumerable.Range(0, resultCount).Select(_ =>
+        {
+            var r = Substitute.For<ITestResult>();
+            r.Evaluations.Returns(Array.Empty<IEvaluation>());
+            return r;
+        }).ToList();
+
+        var run = Substitute.For<ITestRun>();
+        run.Id.Returns(Guid.NewGuid());
+        run.TestResults.Returns(results);
+        return run;
+    }
+
+    private sealed class Fixture
+    {
+        public required SystemPromptTheoryValidator Validator { get; init; }
+        public required ISystemPromptTheory Theory { get; init; }
+        public required Captured Captured { get; init; }
+        public required ITestRunnerService Runner { get; init; }
+        public required IModelEndpoint Endpoint { get; init; }
+        public required ITestRun Baseline { get; init; }
+
+        public void OverrideCandidate(ITestRun candidate)
+        {
+            var baselineGroup = GroupReturning(Baseline);
+            var candidateGroup = GroupReturning(candidate);
+            Runner.RunInForegroundAsync(
+                    Arg.Any<ITestSuite>(), Arg.Any<IReadOnlyList<IModelEndpoint>>(),
+                    Arg.Any<IAgent?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+                .Returns(baselineGroup, candidateGroup);
+        }
+    }
+
+    private sealed class Captured
+    {
+        public double? CurrentPassRate { get; set; }
+        public double? ProposedPassRate { get; set; }
+    }
+}

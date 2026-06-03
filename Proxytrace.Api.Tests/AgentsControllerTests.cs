@@ -119,6 +119,7 @@ public sealed class AgentsControllerTests : BaseTest<Module>
         services.GetRequiredService<IAgentCallRepository>(),
         services.GetRequiredService<Proxytrace.Domain.AgentVersion.IAgentVersionRepository>(),
         services.GetRequiredService<IProposalBroadcaster>(),
+        services.GetRequiredService<ITheoryBroadcaster>(),
         services.GetRequiredService<AgentDtoMapper>(),
         services.GetRequiredService<Proxytrace.Domain.Agent.IAgent.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.Prompt.IPromptTemplate.Create>(),

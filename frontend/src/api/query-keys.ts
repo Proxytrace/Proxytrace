@@ -45,6 +45,7 @@ export const QUERY_KEYS = {
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
+  theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
 
   search: (projectId: string, q: string) => ['search', projectId, q] as const,

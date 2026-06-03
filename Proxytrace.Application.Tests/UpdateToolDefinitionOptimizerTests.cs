@@ -13,6 +13,7 @@ using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.TestCase;
@@ -45,7 +46,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
         """;
 
     [TestMethod]
-    public async Task DiscoverOptimizations_AgentHasNoTools_ReturnsEmpty()
+    public async Task DiscoverTheories_AgentHasNoTools_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse, includeTool: false);
         ITestRun run = fixture.CreateRun(
@@ -54,16 +55,16 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_NoRunForCurrentEndpoint_ReturnsEmpty()
+    public async Task DiscoverTheories_NoRunForCurrentEndpoint_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -72,16 +73,16 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_ZeroFailures_ReturnsEmpty()
+    public async Task DiscoverTheories_ZeroFailures_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -90,16 +91,16 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 5,
             results: []);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_HappyPath_ProducesToolProposal()
+    public async Task DiscoverTheories_HappyPath_ProducesToolProposal()
     {
         OptimizerFixture fixture = BuildFixture(ValidJsonResponse);
         ITestRun run = fixture.CreateRun(
@@ -108,16 +109,17 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 4,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().HaveCount(1);
-        IOptimizationProposal proposal = proposals[0];
-        proposal.Should().BeAssignableTo<IToolUpdateProposal>();
+        theories.Should().HaveCount(1);
+        IOptimizationTheory theory = theories[0];
+        theory.Should().BeAssignableTo<IToolUpdateTheory>();
+        theory.Source.Should().Be(TheorySource.Optimizer);
 
-        var tools = ((IToolUpdateProposal)proposal).ProposedTools.ToList();
+        var tools = ((IToolUpdateTheory)theory).ProposedTools.ToList();
         tools.Should().HaveCount(1);
         tools[0].Name.Should().Be(OnlyToolName);
         tools[0].Description.Should().Be("Refined search description.");
@@ -126,7 +128,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_LlmRenamesTool_ReturnsEmpty()
+    public async Task DiscoverTheories_LlmRenamesTool_ReturnsEmpty()
     {
         const string renamedJson = """
             {
@@ -147,16 +149,16 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_LlmReturnsWrongToolCount_ReturnsEmpty()
+    public async Task DiscoverTheories_LlmReturnsWrongToolCount_ReturnsEmpty()
     {
         const string wrongCountJson = """
             { "tools": [], "rationale": "..." }
@@ -168,16 +170,16 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     [TestMethod]
-    public async Task DiscoverOptimizations_MalformedJsonResponse_ReturnsEmpty()
+    public async Task DiscoverTheories_MalformedJsonResponse_ReturnsEmpty()
     {
         OptimizerFixture fixture = BuildFixture(cannedResponse: "this is not JSON");
         ITestRun run = fixture.CreateRun(
@@ -186,12 +188,12 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             total: 1,
             results: [fixture.CreateFailingResult()]);
 
-        var proposals = await fixture.Optimizer.DiscoverOptimizations(
+        var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group,
             [run],
             CancellationToken);
 
-        proposals.Should().BeEmpty();
+        theories.Should().BeEmpty();
     }
 
     private OptimizerFixture BuildFixture(string cannedResponse, bool includeTool = true)
@@ -273,7 +275,7 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
 
         public static OptimizerFixture Build(IServiceProvider services, string cannedResponse, bool includeTool = true)
         {
-            var proposalFactory = services.GetRequiredService<IToolUpdateProposal.CreateNew>();
+            var theoryFactory = services.GetRequiredService<IToolUpdateTheory.CreateNew>();
             var outputFormatFactory = services.GetRequiredService<IOutputFormat.Create>();
 
             var agentEndpointId = Guid.NewGuid();
@@ -314,23 +316,6 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             group.Id.Returns(Guid.NewGuid());
             group.Suite.Returns(suite);
 
-            var abTestRun = Substitute.For<ITestRun>();
-            abTestRun.Id.Returns(Guid.NewGuid());
-            var abGroup = Substitute.For<ITestRunGroup>();
-            abGroup.GetTestRuns(Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult<IReadOnlyList<ITestRun>>([abTestRun]));
-
-            var testRunnerService = Substitute.For<ITestRunnerService>();
-            testRunnerService.RunInForegroundAsync(
-                    Arg.Any<ITestSuite>(),
-                    Arg.Any<IReadOnlyList<IModelEndpoint>>(),
-                    Arg.Any<IAgent?>(),
-                    Arg.Any<bool>(),
-                    Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(abGroup));
-
-            var agentFactory = services.GetRequiredService<IAgent.CreateNew>();
-
             var systemAgent = new CannedJsonAgent(cannedResponse, outputFormatFactory);
 
             var prompts = Substitute.For<IPromptTemplateRepository>();
@@ -353,14 +338,11 @@ public sealed class UpdateToolDefinitionOptimizerTests : BaseTest<Module>
             var statistics = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
 
             var optimizer = new UpdateToolDefinitionOptimizer(
-                proposalFactory,
+                theoryFactory,
                 prompts,
                 agents,
                 new OptimizerEvidenceBuilder(),
-                new Lazy<ITestRunnerService>(() => testRunnerService),
-                agentFactory,
-                statistics,
-                NullLogger<UpdateToolDefinitionOptimizer>.Instance);
+                statistics);
 
             return new OptimizerFixture
             {

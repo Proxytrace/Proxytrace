@@ -5,6 +5,7 @@ using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Domain.User;
+
 // ReSharper disable InconsistentNaming
 
 namespace Proxytrace.Application.Demo;

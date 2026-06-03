@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -267,7 +268,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         CancellationToken cancellationToken)
     {
         IEvaluation? evaluation;
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         try
         {
             evaluation = await evaluator.EvaluateAsync(testResult, cancellationToken);

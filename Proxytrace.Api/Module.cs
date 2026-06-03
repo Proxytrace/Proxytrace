@@ -137,6 +137,7 @@ internal sealed class Module : Autofac.Module
         builder.RegisterType<AgentDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<AgentCallDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<OptimizationProposalDtoMapper>().AsSelf().SingleInstance();
+        builder.RegisterType<Dto.Theories.TheoryDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<EvaluatorDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<ModelProviderDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<TestRunDtoMapper>().AsSelf().SingleInstance();

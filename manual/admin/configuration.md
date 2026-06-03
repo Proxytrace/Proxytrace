@@ -108,6 +108,26 @@ since she has no real model to call.
 Local dev mode does not auto-seed in every flow. Use the **`/setup`** page (or the setup
 endpoint) to populate demo data into an empty database.
 
+## Optimization theory validation
+
+Every [optimization theory](/guide/optimization-theories) is validated by running its target
+test suite with the proposed change applied — i.e. **real LLM calls that cost money and
+time**. Because theories can be submitted by users, Tracey AI, and external API callers, the
+validation pipeline is rate-limited so an open submission endpoint cannot run away with
+spend:
+
+- **Deduplication** — a theory identical to one already in flight, or to an already-decided
+  proposal (until the 3-completed-group "fresh evidence" threshold), is suppressed before any
+  run starts.
+- **Per-project backlog cap** — validation runs one theory at a time, so the queue is what
+  grows under load. Each project may have at most a fixed number of **in-flight** theories
+  (queued *or* validating — currently **20**) at once. Submissions beyond that are rejected
+  with HTTP `429 Too Many Requests` and should be retried once the backlog drains.
+
+Validation runs are flagged as system runs, so they never recursively trigger further
+optimization. Keep an eye on provider spend when many theories are submitted in a short
+window.
+
 ## Security headers
 
 The API emits a strict Content-Security-Policy and related headers on every response (the

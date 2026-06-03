@@ -4,22 +4,29 @@ using Microsoft.Extensions.Hosting;
 using Proxytrace.Application.Agent;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Internal;
+using Proxytrace.Application.Auth.Local;
+using Proxytrace.Application.Auth.Local.Internal;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Cleanup.Internal;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Demo.Internal;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Evaluator.Internal;
+using Proxytrace.Application.Ingestion;
+using Proxytrace.Application.Ingestion.Internal;
+using Proxytrace.Application.Playground;
+using Proxytrace.Application.Search;
 using Proxytrace.Application.Setup;
 using Proxytrace.Application.Setup.Internal;
-using Proxytrace.Application.Ingestion.Internal;
-using Proxytrace.Application.Search;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Application.Streaming.Internal;
 using Proxytrace.Application.TestRun.Internal;
+using Proxytrace.Application.Tracey;
+using Proxytrace.Application.Tracey.Internal;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Common.Hosting;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Application;
 
@@ -32,15 +39,15 @@ public sealed class Module : Autofac.Module
         // Licensing. A composition root (e.g. the API) registers the Licensing module itself with
         // an environment-derived configuration before this module loads (setting the key below);
         // otherwise fall back to the Free-tier default used by tests and the in-process kiosk.
-        if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
+        if (!builder.Properties.ContainsKey(Licensing.Module.RegisteredKey))
         {
-            builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
-            builder.RegisterModule(new Proxytrace.Licensing.Module(new Proxytrace.Licensing.LicensingConfiguration
+            builder.Properties[Licensing.Module.RegisteredKey] = true;
+            builder.RegisterModule(new Licensing.Module(new LicensingConfiguration
             {
                 ServerUrl = "https://license.proxytrace.dev",
-                PublicKeys = Proxytrace.Licensing.LicensePublicKeys.GetActiveKeys(),
+                PublicKeys = LicensePublicKeys.GetActiveKeys(),
                 LicenseJwt = null,
-                CacheFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "proxytrace-license-cache.json"),
+                CacheFilePath = Path.Combine(Path.GetTempPath(), "proxytrace-license-cache.json"),
             }));
         }
 
@@ -62,9 +69,13 @@ public sealed class Module : Autofac.Module
             .As<IProposalBroadcaster>()
             .SingleInstance();
 
+        builder.RegisterType<TheoryBroadcaster>()
+            .As<ITheoryBroadcaster>()
+            .SingleInstance();
+
         builder.RegisterModule<Optimization.Module>();
         builder.RegisterModule<Statistics.Module>();
-        builder.RegisterModule<Playground.PlaygroundModule>();
+        builder.RegisterModule<PlaygroundModule>();
 
         builder.RegisterModule<SearchModule>();
 
@@ -112,11 +123,11 @@ public sealed class Module : Autofac.Module
         if (!builder.Properties.ContainsKey(messagingModuleKey))
         {
             builder.Properties[messagingModuleKey] = true;
-            builder.RegisterModule(new Proxytrace.Messaging.Module());
+            builder.RegisterModule(new Messaging.Module());
         }
 
         builder.RegisterType<TraceQuotaGuard>()
-            .As<Ingestion.ITraceQuotaGuard>()
+            .As<ITraceQuotaGuard>()
             .AsSelf()
             .SingleInstance()
             .IfNotRegistered(typeof(TraceQuotaGuard));
@@ -172,36 +183,36 @@ public sealed class Module : Autofac.Module
             .As<IJitUserProvisioner>()
             .SingleInstance();
 
-        builder.RegisterType<Auth.Local.Internal.PasswordPolicy>()
-            .As<Auth.Local.IPasswordPolicy>()
+        builder.RegisterType<PasswordPolicy>()
+            .As<IPasswordPolicy>()
             .SingleInstance();
 
-        builder.RegisterType<Auth.Local.Internal.PasswordService>()
-            .As<Auth.Local.IPasswordService>()
+        builder.RegisterType<PasswordService>()
+            .As<IPasswordService>()
             .SingleInstance();
 
-        builder.Register(_ => new Auth.Local.LocalAuthOptions
+        builder.Register(_ => new LocalAuthOptions
             {
                 SigningKey = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
             })
-            .As<Auth.Local.LocalAuthOptions>()
+            .As<LocalAuthOptions>()
             .SingleInstance()
-            .IfNotRegistered(typeof(Auth.Local.LocalAuthOptions));
+            .IfNotRegistered(typeof(LocalAuthOptions));
 
-        builder.RegisterType<Auth.Local.Internal.LocalTokenIssuer>()
-            .As<Auth.Local.ILocalTokenIssuer>()
+        builder.RegisterType<LocalTokenIssuer>()
+            .As<ILocalTokenIssuer>()
             .SingleInstance();
 
-        builder.RegisterType<Auth.Local.Internal.InviteService>()
-            .As<Auth.Local.IInviteService>()
+        builder.RegisterType<InviteService>()
+            .As<IInviteService>()
             .SingleInstance();
 
-        builder.RegisterType<Auth.Local.Internal.LoginService>()
-            .As<Auth.Local.ILoginService>()
+        builder.RegisterType<LoginService>()
+            .As<ILoginService>()
             .SingleInstance();
 
-        builder.RegisterType<Auth.Local.Internal.LegacyClaimService>()
-            .As<Auth.Local.ILegacyClaimService>()
+        builder.RegisterType<LegacyClaimService>()
+            .As<ILegacyClaimService>()
             .SingleInstance();
 
         builder.RegisterInstance(Prompts.ResourceManager);
@@ -235,18 +246,18 @@ public sealed class Module : Autofac.Module
 
         // Per-scope: both resolve IAgentRepository, which is bound to the request's ambient
         // DbContext. A singleton would capture one repository/context and leak it across requests.
-        builder.RegisterType<Tracey.Internal.TraceyAgentProvisioner>()
-            .As<Tracey.ITraceyAgentProvisioner>()
+        builder.RegisterType<TraceyAgentProvisioner>()
+            .As<ITraceyAgentProvisioner>()
             .InstancePerLifetimeScope();
 
-        builder.RegisterType<Tracey.Internal.TraceySessionService>()
-            .As<Tracey.ITraceySessionService>()
+        builder.RegisterType<TraceySessionService>()
+            .As<ITraceySessionService>()
             .InstancePerLifetimeScope();
 
-        builder.RegisterType<Tracey.Internal.TraceyAgentSeederHostedService>()
+        builder.RegisterType<TraceyAgentSeederHostedService>()
             .AsSelf()
             .SingleInstance()
-            .IfNotRegistered(typeof(Tracey.Internal.TraceyAgentSeederHostedService));
+            .IfNotRegistered(typeof(TraceyAgentSeederHostedService));
 
         const string traceySeederHostedServiceKey = "Proxytrace.Application.TraceyAgentSeederHostedService.Registered";
         if (!builder.Properties.ContainsKey(traceySeederHostedServiceKey))
@@ -254,7 +265,7 @@ public sealed class Module : Autofac.Module
             builder.Properties[traceySeederHostedServiceKey] = true;
             builder.RegisterServiceCollection(services =>
                 services.AddSingleton<IHostedService>(sp =>
-                    sp.GetRequiredService<Tracey.Internal.TraceyAgentSeederHostedService>()));
+                    sp.GetRequiredService<TraceyAgentSeederHostedService>()));
         }
 
         builder.RegisterType<DemoSeederHostedService>()

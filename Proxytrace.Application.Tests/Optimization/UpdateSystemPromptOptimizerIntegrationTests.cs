@@ -14,7 +14,7 @@ using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
-using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Proposal;
@@ -146,13 +146,13 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
                     FailReason: null),
             ]);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        IOptimizationProposal proposal = proposals[0];
-        proposal.Should().BeAssignableTo<ISystemPromptProposal>();
+        theories.Should().ContainSingle();
+        IOptimizationTheory proposal = theories[0];
+        proposal.Should().BeAssignableTo<ISystemPromptTheory>();
 
-        var promptProposal = (ISystemPromptProposal)proposal;
+        var promptProposal = (ISystemPromptTheory)proposal;
         promptProposal.ProposedSystemMessage.Should().NotBeNullOrWhiteSpace();
         promptProposal.ProposedSystemMessage.Length.Should().BeGreaterThan(20);
         proposal.Rationale.Should().NotBeNullOrWhiteSpace();
@@ -189,10 +189,10 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
             ],
             passingCases: []);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        var promptProposal = (ISystemPromptProposal)proposals[0];
+        theories.Should().ContainSingle();
+        var promptProposal = (ISystemPromptTheory)theories[0];
         promptProposal.ProposedSystemMessage.ToLowerInvariant().Should().Contain("json");
     }
 
@@ -232,10 +232,10 @@ public sealed class UpdateSystemPromptOptimizerIntegrationTests : BaseTest<Modul
                     FailReason: null),
             ]);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        var promptProposal = (ISystemPromptProposal)proposals[0];
+        theories.Should().ContainSingle();
+        var promptProposal = (ISystemPromptTheory)theories[0];
         promptProposal.ProposedSystemMessage.Should().NotBeNullOrWhiteSpace();
         string lower = promptProposal.ProposedSystemMessage.ToLowerInvariant();
         (lower.Contains("greet") || lower.Contains("polite") || lower.Contains("empathy") ||

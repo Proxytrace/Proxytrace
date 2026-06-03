@@ -1,3 +1,4 @@
+using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -166,7 +167,7 @@ internal sealed class AgentCallProcessor : IAgentCallProcessor
             {
                 return true;
             }
-            if (e is System.Data.Common.DbException)
+            if (e is DbException)
             {
                 return true;
             }

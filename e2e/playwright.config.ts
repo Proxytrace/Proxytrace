@@ -51,6 +51,7 @@ export default defineConfig({
         '**/error-handling.spec.ts',
         '**/proposals.spec.ts',
         '**/proposals-kinds.spec.ts',
+        '**/theories.spec.ts',
         '**/cancel.spec.ts',
         '**/cost.spec.ts',
         '**/search.spec.ts',

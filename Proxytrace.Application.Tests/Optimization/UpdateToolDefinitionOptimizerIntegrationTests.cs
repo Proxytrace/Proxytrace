@@ -14,7 +14,7 @@ using Proxytrace.Domain.Message;
 using Proxytrace.Domain.Model;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
-using Proxytrace.Domain.OptimizationProposal;
+using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Proposal;
@@ -156,13 +156,13 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
                     FailReason: null),
             ]);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        IOptimizationProposal proposal = proposals[0];
-        proposal.Should().BeAssignableTo<IToolUpdateProposal>();
+        theories.Should().ContainSingle();
+        IOptimizationTheory proposal = theories[0];
+        proposal.Should().BeAssignableTo<IToolUpdateTheory>();
 
-        var toolProposal = (IToolUpdateProposal)proposal;
+        var toolProposal = (IToolUpdateTheory)proposal;
         toolProposal.ProposedTools.Should().HaveCount(1);
 
         var proposedTool = toolProposal.ProposedTools[0];
@@ -218,10 +218,10 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
             ],
             passingCases: []);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        var toolProposal = (IToolUpdateProposal)proposals[0];
+        theories.Should().ContainSingle();
+        var toolProposal = (IToolUpdateTheory)theories[0];
         var proposedTool = toolProposal.ProposedTools[0];
         proposedTool.Name.Should().Be("create_ticket");
 
@@ -280,10 +280,10 @@ public sealed class UpdateToolDefinitionOptimizerIntegrationTests : BaseTest<Mod
             ],
             passingCases: []);
 
-        var proposals = await optimizer.DiscoverOptimizations(group, [run], CancellationToken);
+        var theories = await optimizer.DiscoverTheories(group, [run], CancellationToken);
 
-        proposals.Should().ContainSingle();
-        var toolProposal = (IToolUpdateProposal)proposals[0];
+        theories.Should().ContainSingle();
+        var toolProposal = (IToolUpdateTheory)theories[0];
         var proposedTool = toolProposal.ProposedTools[0];
         proposedTool.Name.Should().Be("send_email");
         proposedTool.Description.Length.Should().BeGreaterThan("Sends an email".Length);
