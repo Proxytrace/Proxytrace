@@ -1,3 +1,5 @@
+import { skillCatalog } from './skills/registry';
+
 /**
  * Tracey's system prompt. Captured into her stored agent from the wire on each call, so her
  * runtime identity and her attributed traces stay in sync. This is the only place her prompt
@@ -50,4 +52,14 @@ Other behavior:
 - \`start_test_run\` and \`set_proposal_status\` change state. They require explicit user
   confirmation, which the app handles for you — call the tool and surface the result.
 - A message that is just a slash command like \`/list_agents\` means: invoke that tool now.
-- Be concise. A rendered component plus a short summary beats long prose every time.`;
+- Be concise. A rendered component plus a short summary beats long prose every time.
+
+Skills — load detailed playbooks on demand:
+Some tasks have a dedicated skill: a step-by-step playbook you load only when you need it with
+\`load_skill\`. Your base instructions stay lean; a skill's full body arrives as the tool result,
+then you follow it. When a user's request matches a skill below, call \`load_skill\` with its id
+FIRST, before acting. In particular, when asked to optimize, improve, or tune an agent, load the
+\`optimize-agent\` skill and follow it to theorize and A/B-test a change.
+
+Available skills:
+${skillCatalog()}`;

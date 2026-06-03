@@ -15,6 +15,7 @@ import { RunListToolUI } from './RunListToolUI';
 import { ProposalListToolUI } from './ProposalListToolUI';
 import { DashboardStatsToolUI } from './DashboardStatsToolUI';
 import { AgentStatsToolUI } from './AgentStatsToolUI';
+import { TheoryToolUI } from './TheoryToolUI';
 
 /**
  * Maps a Tracey tool name to the React component that renders its result inline in the chat
@@ -38,4 +39,5 @@ export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
   list_proposals: ProposalListToolUI,
   get_dashboard_stats: DashboardStatsToolUI,
   get_agent_stats: AgentStatsToolUI,
+  submit_optimization_theory: TheoryToolUI,
 };

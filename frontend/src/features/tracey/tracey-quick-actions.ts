@@ -40,4 +40,10 @@ export const QUICK_ACTIONS: QuickAction[] = [
     hint: 'Walk through open optimization proposals',
     prompt: 'Show the open optimization proposals and help me decide on each one.',
   },
+  {
+    id: 'optimize-agent',
+    label: 'Optimize an agent',
+    hint: 'Theorize and A/B-test an improvement',
+    prompt: 'Optimize one of my agents: theorize a concrete improvement and A/B-test it.',
+  },
 ];

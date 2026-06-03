@@ -56,7 +56,8 @@ attributes the call to her agent by name (`X-Proxytrace-Agent` / same-origin tag
 | `tracey-artifacts.ts` | Frontend-only render shapes the `show_chart`/`show_table`/`show_text` tools return (chart/table/text). |
 | `tracey-storage.ts` | `localStorage` thread persistence keyed by `user + project`. |
 | `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
-| `tracey-quick-actions.ts` | Curated prompt presets ("skills") shown as composer chips + top of the slash menu. |
+| `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
+| `skills/` | On-demand **skills** — playbooks the model loads at runtime via the `load_skill` tool. `registry.ts` (catalog + lookup), `types.ts`, and one file per skill (e.g. `optimization-skill.ts`). |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user bubble, assistant bubble, typing dots, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `MarkdownText`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
 | `api/tracey.ts` | `getSession()` → `{ model, agentId }` for `GET /api/tracey/session`. |
@@ -251,6 +252,26 @@ component).
    back to \`ToolCallCard\` — fine for diagnostic tools like \`navigate\` / \`list_*\`.
 4. Teach Tracey about it in \`TRACEY_SYSTEM_PROMPT\` (when to reach for it).
 5. Keep \`manual/guide/tracey.md\` in sync.
+
+## Skills (on-demand playbooks)
+
+A **skill** is a named markdown playbook the model loads at runtime instead of carrying in the
+base prompt. The system prompt advertises only a compact catalog (`id — description`, built by
+`skillCatalog()`); the body arrives as the result of the `load_skill` tool when the model decides
+a task matches. This keeps `TRACEY_SYSTEM_PROMPT` lean as the skill set grows.
+
+- **Add a skill:** drop a `skills/<name>.md` file with YAML front-matter (`name` + `description`,
+  the Claude SKILL.md convention) and the playbook as the markdown body. `registry.ts`
+  `import.meta.glob`s every `*.md` and parses the front-matter — no registration code, no prompt
+  edit, no backend change. It's auto-listed in the catalog and loadable.
+- **`load_skill`** (read tool, no confirm) returns `{ id, name, instructions }`, or
+  `{ notFound, available }` for an unknown id.
+- The **`optimize-agent`** skill drives `submit_optimization_theory`: it tells Tracey to verify
+  the agent + its suite, ground a hypothesis in real run/trace evidence, author one change, and
+  submit it. The submit tool posts to `POST /api/theories` (`source: TraceyAi`); the backend
+  A/B-validates it and either spawns a Draft proposal or invalidates it. The
+  `submit_optimization_theory` card (`tool-ui/TheoryToolUI.tsx` → `LiveTheoryCard.tsx`) streams
+  that status via `useTheoryStream` (patched into the `theory(id)` query cache, never refetched).
 
 ## Constraints & gotchas
 
