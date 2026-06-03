@@ -23,7 +23,17 @@ function parseSkill(raw: string): TraceySkill {
     throw new Error('Skill front-matter must define `name` and `description`.');
   }
 
-  return { name: meta.name, description: meta.description, instructions: raw.slice(match[0].length).trim() };
+  // `tools:` is an optional comma/space-separated list of tool names the skill unlocks.
+  const tools = meta.tools
+    ? meta.tools.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean)
+    : undefined;
+
+  return {
+    name: meta.name,
+    description: meta.description,
+    instructions: raw.slice(match[0].length).trim(),
+    ...(tools && tools.length > 0 ? { tools } : {}),
+  };
 }
 
 // Every `*.md` in this folder is a skill — inlined at build time via Vite's `?raw`. Adding a

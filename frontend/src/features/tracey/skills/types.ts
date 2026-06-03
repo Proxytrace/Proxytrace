@@ -11,4 +11,11 @@ export interface TraceySkill {
   description: string;
   /** The markdown playbook body (everything after the front-matter), injected when loaded. */
   instructions: string;
+  /**
+   * Tool names this skill unlocks. These are defined but inactive until the skill is loaded; once
+   * `load_skill` runs for this skill, they join the active set for the rest of the turn. Tools not
+   * listed by any skill (and not in the core set) stay gated. Optional — a pure-instructions skill
+   * omits it.
+   */
+  tools?: string[];
 }

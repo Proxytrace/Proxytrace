@@ -121,6 +121,12 @@ detailed steps just for that task and follows them. You don't invoke skills dire
 for what you want in plain language (e.g. "optimize my support agent") and Tracey loads the right
 skill herself. The first skill is **Optimize an agent**, below.
 
+A skill can also **unlock specialist tools**. To keep her everyday toolset focused (and her
+reasoning sharp), Tracey only carries a lean core set by default; the tools a task needs come in
+*with* its skill. For example, the *Optimize an agent* skill brings in the optimization-theory and
+per-agent-statistics tools when it loads. This is automatic — loading the skill makes its tools
+available for the rest of that request — so it changes nothing about how you talk to her.
+
 ## Optimizing an agent
 
 Ask Tracey to **optimize, improve, or tune an agent** and she runs a complete optimization loop

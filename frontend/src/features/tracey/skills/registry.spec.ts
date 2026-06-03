@@ -18,6 +18,13 @@ describe('tracey skills registry', () => {
     expect(getSkill('does-not-exist')).toBeUndefined();
   });
 
+  it('parses the front-matter `tools:` list into the skill bundle', () => {
+    expect(getSkill('optimize-agent')?.tools).toEqual([
+      'submit_optimization_theory',
+      'get_agent_stats',
+    ]);
+  });
+
   it('lists every loaded skill', () => {
     expect(listSkills()).toHaveLength(Object.keys(TRACEY_SKILLS).length);
     expect(listSkills().map((s) => s.name)).toContain('optimize-agent');

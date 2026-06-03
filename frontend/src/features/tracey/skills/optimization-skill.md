@@ -1,6 +1,7 @@
 ---
 name: optimize-agent
 description: Theorize a concrete improvement to an agent and A/B-test it. Use when the user asks to optimize, improve, or tune an agent.
+tools: submit_optimization_theory, get_agent_stats
 ---
 
 # Skill: Optimize an agent
