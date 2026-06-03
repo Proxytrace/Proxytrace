@@ -32,7 +32,7 @@ export function TheoryChangePreview({ details }: TheoryChangePreviewProps) {
 
   return (
     <div data-testid="tracey-theory-change">
-      <div className="mb-1 text-caption uppercase tracking-wide text-muted">Proposed system prompt</div>
+      <div className="mb-1 text-caption text-muted">Proposed system prompt</div>
       <pre className="line-clamp-4 whitespace-pre-wrap rounded-sm bg-card-2 p-2 font-mono text-body-sm text-secondary">
         {details.proposedSystemMessage}
       </pre>

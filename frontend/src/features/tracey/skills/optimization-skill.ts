@@ -57,6 +57,8 @@ Call \`submit_optimization_theory\` with:
 - a one-sentence \`rationale\` grounded in what you saw,
 - \`details\` for the chosen kind:
   - System prompt → \`{ kind: 'SystemPrompt', currentSystemMessage, proposedSystemMessage }\`
+    (read \`currentSystemMessage\` from the agent's \`systemMessage\` field returned by \`get_agent\` —
+    never retype or guess it).
   - Model switch → \`{ kind: 'ModelSwitchSeed', proposedEndpointId }\`
   - Tool update → \`{ kind: 'ToolUpdateSeed', proposedTools: [{ name, description, parametersJson }] }\`
 
