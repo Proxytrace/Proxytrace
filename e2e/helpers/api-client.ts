@@ -18,6 +18,22 @@ export interface SetupCompleteResponse {
   apiKeyValue: string;
 }
 
+export interface TheoryDto {
+  id: string;
+  kind: string;
+  status: string;
+  source: string;
+  agentId: string;
+  agentName: string;
+  suiteId: string;
+  priority: string;
+  rationale: string;
+  evidenceTestRunIds: string[];
+  resultingProposalId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class ProxytraceApiClient {
   constructor(
     private readonly request: APIRequestContext,
@@ -252,6 +268,66 @@ export class ProxytraceApiClient {
   // before the action runs — this is the backend half of the free-tier feature gate.
   proposalsResponse(): Promise<APIResponse> {
     return this.request.get('/api/proposals', { headers: this.headers() });
+  }
+
+  // ── Optimization theories ────────────────────────────────────────────────
+  // POST /api/theories submits an unproven theory; the validator A/B-tests it in the
+  // background. Submission itself is synchronous and needs no LLM, so the 202 response and the
+  // returned status (Proposed) are deterministic. `details` is the polymorphic ProposalDetailsDto;
+  // a SystemPrompt theory is the only kind that needs no extra ids.
+  theorySubmitResponse(opts: {
+    agentId: string;
+    suiteId: string;
+    proposedSystemMessage: string;
+    rationale: string;
+    source?: string;
+    priority?: string;
+  }): Promise<APIResponse> {
+    return this.request.post('/api/theories', {
+      headers: this.headers(),
+      data: {
+        agentId: opts.agentId,
+        suiteId: opts.suiteId,
+        priority: opts.priority ?? 'Medium',
+        rationale: opts.rationale,
+        source: opts.source ?? 'External',
+        details: {
+          kind: 'SystemPrompt',
+          currentSystemMessage: '',
+          proposedSystemMessage: opts.proposedSystemMessage,
+        },
+      },
+    });
+  }
+
+  async submitTheory(opts: {
+    agentId: string;
+    suiteId: string;
+    proposedSystemMessage: string;
+    rationale: string;
+    source?: string;
+    priority?: string;
+  }): Promise<TheoryDto> {
+    const res = await this.theorySubmitResponse(opts);
+    if (!res.ok()) throw new Error(`submit theory failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getTheories(params?: { agentId?: string; projectId?: string; status?: string }): Promise<TheoryDto[]> {
+    const qs = new URLSearchParams();
+    if (params?.agentId) qs.set('agentId', params.agentId);
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    if (params?.status) qs.set('status', params.status);
+    const query = qs.toString() ? `?${qs}` : '';
+    const res = await this.request.get(`/api/theories${query}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get theories failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async getTheory(id: string): Promise<TheoryDto> {
+    const res = await this.request.get(`/api/theories/${id}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get theory failed: ${res.status()} ${await res.text()}`);
+    return res.json();
   }
 
   // ── Providers ──────────────────────────────────────────────────────────────

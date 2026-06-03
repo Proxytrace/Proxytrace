@@ -32,7 +32,7 @@ export function TheoriesPanel({ onViewProposal }: TheoriesPanelProps) {
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col gap-2" data-testid="theory-list">
       {theories.map((theory) => (
         <TheoryRow key={theory.id} theory={theory} onViewProposal={onViewProposal} />
       ))}
@@ -45,7 +45,7 @@ function TheoryRow({ theory, onViewProposal }: { theory: TheoryDto; onViewPropos
   const kind = KIND_META[theory.kind];
 
   return (
-    <li className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
+    <li data-testid={`theory-row-${theory.id}`} className="flex items-start gap-3 rounded-xl border border-border bg-card p-3">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Pill label={kind.label} color={kind.color} size="sm" />
