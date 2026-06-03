@@ -1,12 +1,13 @@
 using Lucene.Net.Store;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Directory = Lucene.Net.Store.Directory;
 
 namespace Proxytrace.Application.Search.Internal;
 
 internal interface ILuceneDirectoryFactory
 {
-    Lucene.Net.Store.Directory Open();
+    Directory Open();
 }
 
 internal sealed class LuceneDirectoryFactory : ILuceneDirectoryFactory
@@ -25,7 +26,7 @@ internal sealed class LuceneDirectoryFactory : ILuceneDirectoryFactory
         this.logger = logger;
     }
 
-    public Lucene.Net.Store.Directory Open()
+    public Directory Open()
     {
         // No host environment registered (e.g. unit-test container) → in-memory index.
         // Also explicit ":memory:" opt-in.
@@ -69,8 +70,8 @@ internal sealed class LuceneDirectoryFactory : ILuceneDirectoryFactory
         {
             System.IO.Directory.CreateDirectory(path);
             string probe = Path.Combine(path, ".write-probe");
-            using (System.IO.File.Create(probe)) { }
-            System.IO.File.Delete(probe);
+            using (File.Create(probe)) { }
+            File.Delete(probe);
             return true;
         }
         catch

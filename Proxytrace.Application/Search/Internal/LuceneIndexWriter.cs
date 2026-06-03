@@ -3,6 +3,7 @@ using Lucene.Net.Documents;
 using Lucene.Net.Index;
 using Lucene.Net.Search;
 using Lucene.Net.Util;
+using Directory = Lucene.Net.Store.Directory;
 
 namespace Proxytrace.Application.Search.Internal;
 
@@ -10,7 +11,7 @@ internal sealed class LuceneIndexWriter : IDisposable
 {
     public const LuceneVersion Version = LuceneVersion.LUCENE_48;
 
-    private readonly Lucene.Net.Store.Directory directory;
+    private readonly Directory directory;
     private readonly bool ownsDirectory;
     private readonly IndexWriter writer;
     private readonly SearcherManager searcherManager;
@@ -20,7 +21,7 @@ internal sealed class LuceneIndexWriter : IDisposable
     {
     }
 
-    private LuceneIndexWriter(Lucene.Net.Store.Directory directory, bool ownsDirectory)
+    private LuceneIndexWriter(Directory directory, bool ownsDirectory)
     {
         this.directory = directory;
         this.ownsDirectory = ownsDirectory;
@@ -34,7 +35,7 @@ internal sealed class LuceneIndexWriter : IDisposable
         searcherManager = new SearcherManager(writer, applyAllDeletes: true, null);
     }
 
-    internal static LuceneIndexWriter ForTesting(Lucene.Net.Store.Directory directory)
+    internal static LuceneIndexWriter ForTesting(Directory directory)
         => new(directory, ownsDirectory: false);
 
     public void Upsert(string id, Document doc)

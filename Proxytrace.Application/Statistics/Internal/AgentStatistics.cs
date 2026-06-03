@@ -1,5 +1,6 @@
 using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestSuite;
 
@@ -80,7 +81,7 @@ internal class AgentStatistics : IAgentStatistics
         {
             suites = await testSuites.GetManyAsync(suiteIds, cancellationToken);
         }
-        catch (Domain.Exceptions.EntitiesNotFoundException)
+        catch (EntitiesNotFoundException)
         {
             // Some suites were deleted after the run finalized — fall back to a per-id lookup.
             var found = new List<ITestSuite>(suiteIds.Length);
