@@ -5,6 +5,7 @@ import {
   tool,
   zodSchema,
   type ChatTransport,
+  type StepResult,
   type UIMessage,
   type UIMessageChunk,
   type ToolSet,
@@ -12,6 +13,7 @@ import {
 import { createOpenAI } from '@ai-sdk/openai';
 import { getAccessToken } from '../../auth/token';
 import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
+import { activeToolNamesFor } from './tool-access';
 
 /**
  * A client-side {@link ChatTransport} that talks to Tracey's same-origin API endpoint
@@ -68,6 +70,11 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       system: this.systemPrompt,
       messages: await convertToModelMessages(options.messages),
       tools: this.tools,
+      // Progressive tool disclosure: every tool is defined (so the wire capture stays complete),
+      // but only CORE plus the bundles of skills loaded so far this turn are offered to the model
+      // on a given step. Loading a skill via `load_skill` unlocks its tools for the rest of the
+      // turn — a dispatcher feel without a second model. (See `tool-access.ts`.)
+      prepareStep: ({ steps }) => ({ activeTools: activeToolNamesFor(loadedSkillIds(steps)) }),
       // Without a stop condition the AI SDK ends the run after the first step, so a turn that
       // starts with a tool call produces no assistant text. Keep looping (tool → result → model)
       // until the model answers or the budget is spent.
@@ -101,6 +108,22 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
   reconnectToStream(): Promise<ReadableStream<UIMessageChunk> | null> {
     return Promise.resolve(null);
   }
+}
+
+/**
+ * Skill ids loaded so far this turn, read from prior steps' `load_skill` tool calls. Drives which
+ * tool bundles are active on the next step (see `prepareStep`). Exported for unit testing.
+ */
+export function loadedSkillIds(steps: ReadonlyArray<StepResult<ToolSet>>): string[] {
+  const ids: string[] = [];
+  for (const step of steps) {
+    for (const call of step.toolCalls) {
+      if (call.toolName !== 'load_skill') continue;
+      const skillId = (call.input as { skillId?: unknown }).skillId;
+      if (typeof skillId === 'string') ids.push(skillId);
+    }
+  }
+  return ids;
 }
 
 function buildAiTools(ctx: TraceyToolContext): ToolSet {

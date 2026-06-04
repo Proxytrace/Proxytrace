@@ -119,7 +119,23 @@ For richer, multi-step jobs, Tracey has **skills** — built-in playbooks she lo
 Her everyday instructions stay lean; when your request matches a skill, she pulls in that skill's
 detailed steps just for that task and follows them. You don't invoke skills directly — just ask
 for what you want in plain language (e.g. "optimize my support agent") and Tracey loads the right
-skill herself. The first skill is **Optimize an agent**, below.
+skill herself.
+
+A skill also **unlocks the specialist tools** that task needs. To keep her everyday toolset
+focused — and her tool selection sharp — Tracey carries only a lean core by default (navigation,
+manual search, the inline renderers, the question widget, and reading your agents). The tools for a
+particular area come in *with* its skill, so the first time a request touches that area she loads
+the matching skill, which brings both the playbook and its tools. This is automatic and changes
+nothing about how you talk to her; you may just notice a brief "loading skill" step.
+
+Her skills cover:
+
+| Skill | Loads when you ask about… |
+|-------|---------------------------|
+| **Test suites & runs** | your suites, test runs, results/pass rates, or starting a run |
+| **Review proposals** | listing or reviewing proposals, or approving/rejecting one |
+| **Project insights** | overall stats/usage/cost, a provider, or a specific trace |
+| **Optimize an agent** | optimizing, improving, or tuning an agent (below) |
 
 ## Optimizing an agent
 
