@@ -3,6 +3,7 @@ using Autofac;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Search;
 using Proxytrace.Domain.ProjectSearchSettings;
@@ -151,5 +152,6 @@ public sealed class SearchControllerTests : BaseTest<Module>
         services.GetRequiredService<IProjectSearchSettingsResolver>(),
         services.GetRequiredService<ISearchIndexStatistics>(),
         services.GetRequiredService<IReindexStateTracker>(),
-        services.GetRequiredService<IProjectSearchSettings.CreateNew>());
+        services.GetRequiredService<IProjectSearchSettings.CreateNew>(),
+        services.GetRequiredService<SearchRequestOptions>());
 }

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Api.Json;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Application.TestRun;
@@ -20,12 +20,6 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/test-run-groups")]
 public class TestRunGroupsController : ControllerBase
 {
-    private static readonly JsonSerializerOptions SseOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     private readonly ITestRunGroupRepository groupRepository;
     private readonly ITestRunRepository runRepository;
     private readonly ITestSuiteRepository suiteRepository;
@@ -123,7 +117,7 @@ public class TestRunGroupsController : ControllerBase
         if (group.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = GroupRunCompleteEvent.Create(group);
-            var completeData = JsonSerializer.Serialize(completeEvt, SseOptions);
+            var completeData = JsonSerializer.Serialize(completeEvt, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: group-run-complete\ndata: {completeData}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
             return;
@@ -192,7 +186,7 @@ public class TestRunGroupsController : ControllerBase
             RunCompleteEvent => "run-complete",
             _ => "unknown",
         };
-        var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
+        var data = JsonSerializer.Serialize(evt, evt.GetType(), ApiJsonOptions.Sse);
         await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
         await Response.Body.FlushAsync(cancellationToken);
     }

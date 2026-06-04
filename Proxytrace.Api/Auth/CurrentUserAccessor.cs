@@ -8,6 +8,8 @@ internal sealed class CurrentUserAccessor : ICurrentUserAccessor
 {
     internal const string UserIdItemKey = "Proxytrace.UserId";
 
+    private const string CurrentUserItemKey = "Proxytrace.CurrentUser";
+
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly IRepository<IUser> users;
 
@@ -25,11 +27,22 @@ internal sealed class CurrentUserAccessor : ICurrentUserAccessor
             return null;
         }
 
+        if (ctx.Items[CurrentUserItemKey] is IUser cached)
+        {
+            return cached;
+        }
+
         if (ctx.Items[UserIdItemKey] is not Guid userId)
         {
             return null;
         }
-        
-        return await users.FindAsync(userId, cancellationToken);
+
+        var user = await users.FindAsync(userId, cancellationToken);
+        if (user is not null)
+        {
+            ctx.Items[CurrentUserItemKey] = user;
+        }
+
+        return user;
     }
 }

@@ -7,24 +7,13 @@ namespace Proxytrace.Api.Middleware;
 /// </summary>
 internal sealed class SecurityHeadersMiddleware
 {
-    private const string ContentSecurityPolicy =
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:; " +
-        "base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'";
-
-    // The bundled VitePress manual at /docs emits a few static inline scripts (dark-mode
-    // probe, page hash map). These are trusted, build-time content, so /docs gets a CSP
-    // that allows inline scripts while the rest of the app keeps the strict policy above.
-    private const string DocsContentSecurityPolicy =
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:; " +
-        "base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'";
-
     private readonly RequestDelegate next;
+    private readonly SecurityHeadersOptions options;
 
-    public SecurityHeadersMiddleware(RequestDelegate next)
+    public SecurityHeadersMiddleware(RequestDelegate next, SecurityHeadersOptions options)
     {
         this.next = next;
+        this.options = options;
     }
 
     public Task InvokeAsync(HttpContext context)
@@ -42,11 +31,14 @@ internal sealed class SecurityHeadersMiddleware
         }
         else if (context.Request.Path.StartsWithSegments("/docs"))
         {
-            headers["Content-Security-Policy"] = DocsContentSecurityPolicy;
+            // The bundled VitePress manual at /docs emits a few static inline scripts (dark-mode
+            // probe, page hash map). These are trusted, build-time content, so /docs gets a CSP
+            // that allows inline scripts while the rest of the app keeps the strict policy.
+            headers["Content-Security-Policy"] = options.DocsContentSecurityPolicy;
         }
         else
         {
-            headers["Content-Security-Policy"] = ContentSecurityPolicy;
+            headers["Content-Security-Policy"] = options.ContentSecurityPolicy;
         }
 
         return next(context);

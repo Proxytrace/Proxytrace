@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Dto.Search;
 using Proxytrace.Domain.ProjectSearchSettings;
 using Proxytrace.Domain.Search;
@@ -11,17 +12,13 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/projects/{projectId:guid}/search")]
 public class SearchController : ControllerBase
 {
-    private const int MinQueryLength = 2;
-    private const int MaxQueryLength = 200;
-    private const int MinSnippetLength = 20;
-    private const int MaxSnippetLength = 1000;
-
     private readonly ISearchService searchService;
     private readonly ISearchIndexer indexer;
     private readonly IProjectSearchSettingsResolver settingsResolver;
     private readonly ISearchIndexStatistics indexStatistics;
     private readonly IReindexStateTracker reindexTracker;
     private readonly IProjectSearchSettings.CreateNew settingsFactory;
+    private readonly SearchRequestOptions options;
 
     public SearchController(
         ISearchService searchService,
@@ -29,7 +26,8 @@ public class SearchController : ControllerBase
         IProjectSearchSettingsResolver settingsResolver,
         ISearchIndexStatistics indexStatistics,
         IReindexStateTracker reindexTracker,
-        IProjectSearchSettings.CreateNew settingsFactory)
+        IProjectSearchSettings.CreateNew settingsFactory,
+        SearchRequestOptions options)
     {
         this.searchService = searchService;
         this.indexer = indexer;
@@ -37,6 +35,7 @@ public class SearchController : ControllerBase
         this.indexStatistics = indexStatistics;
         this.reindexTracker = reindexTracker;
         this.settingsFactory = settingsFactory;
+        this.options = options;
     }
 
     [HttpGet]
@@ -45,13 +44,13 @@ public class SearchController : ControllerBase
         [FromQuery] string q,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < MinQueryLength)
+        if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < options.MinQueryLength)
         {
-            return BadRequest(new { error = $"q must be at least {MinQueryLength} chars" });
+            return BadRequest(new { error = $"q must be at least {options.MinQueryLength} chars" });
         }
-        if (q.Length > MaxQueryLength)
+        if (q.Length > options.MaxQueryLength)
         {
-            return BadRequest(new { error = $"q must be at most {MaxQueryLength} chars" });
+            return BadRequest(new { error = $"q must be at most {options.MaxQueryLength} chars" });
         }
 
         var results = await searchService.SearchAsync(projectId, q.Trim(), cancellationToken);
@@ -134,9 +133,9 @@ public class SearchController : ControllerBase
         {
             return BadRequest(new { error = "indexedKinds must contain at least one kind" });
         }
-        if (settings.SnippetLength < MinSnippetLength || settings.SnippetLength > MaxSnippetLength)
+        if (settings.SnippetLength < options.MinSnippetLength || settings.SnippetLength > options.MaxSnippetLength)
         {
-            return BadRequest(new { error = $"snippetLength must be between {MinSnippetLength} and {MaxSnippetLength}" });
+            return BadRequest(new { error = $"snippetLength must be between {options.MinSnippetLength} and {options.MaxSnippetLength}" });
         }
 
         var kinds = new HashSet<SearchKind>();

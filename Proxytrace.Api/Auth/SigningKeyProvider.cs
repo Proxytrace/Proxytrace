@@ -1,46 +1,41 @@
 using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace Proxytrace.Api.Auth;
 
-internal class SigningKeyProvider : ISigningKeyProvider
+internal sealed class SigningKeyProvider : ISigningKeyProvider
 {
-    private readonly IHostEnvironment environment;
+    private const int MinKeyLength = 32;
+    private const int GeneratedKeyByteLength = 64;
 
-    public SigningKeyProvider(IHostEnvironment environment)
+    private readonly ISigningKeyStore store;
+
+    public SigningKeyProvider(ISigningKeyStore store)
     {
-        this.environment = environment;
+        this.store = store;
     }
-    
+
     public string EnsureSigningKey(string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))
         {
+            if (configured.Length < MinKeyLength)
+            {
+                throw new InvalidOperationException(
+                    $"Configured local signing key must be at least {MinKeyLength} characters.");
+            }
+
             return configured;
         }
 
-        var path = Path.Combine(environment.ContentRootPath, "appsettings.local.json");
-        if (File.Exists(path))
-        {
-            using var doc = JsonDocument.Parse(File.ReadAllText(path));
-            if (doc.RootElement.TryGetProperty("Authentication", out var auth)
-                && auth.TryGetProperty("Local", out var local)
-                && local.TryGetProperty("SigningKey", out var key)
-                && key.GetString() is { Length: > 0 } existing)
-            {
-                return existing;
-            }
-        }
-
-        var bytes = new byte[64];
-        RandomNumberGenerator.Fill(bytes);
-        var generated = Convert.ToBase64String(bytes);
-
-        var doc2 = new
-        {
-            Authentication = new { Local = new { SigningKey = generated } }
-        };
-        File.WriteAllText(path, JsonSerializer.Serialize(doc2, new JsonSerializerOptions { WriteIndented = true }));
+        var generated = GenerateKey();
+        store.Persist(generated);
         return generated;
+    }
+
+    private static string GenerateKey()
+    {
+        var bytes = new byte[GeneratedKeyByteLength];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes);
     }
 }

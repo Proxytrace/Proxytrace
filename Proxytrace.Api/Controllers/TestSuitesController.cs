@@ -273,8 +273,3 @@ public class TestSuitesController : ControllerBase
         return null;
     }
 }
-
-public record UpdateTestSuiteRequest(
-    Guid? AgentId,
-    IReadOnlyList<Guid>? EvaluatorIds,
-    IReadOnlyList<Guid>? TestCaseIds);

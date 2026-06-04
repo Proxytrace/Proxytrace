@@ -1,7 +1,7 @@
+using System.Text.Json.Nodes;
 using AwesomeAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Testing.Platform.Services;
-using NSubstitute;
 using Proxytrace.Api.Auth;
 using Proxytrace.Testing;
 
@@ -10,14 +10,28 @@ namespace Proxytrace.Api.Tests.Auth;
 [TestClass]
 public sealed class SigningKeyProviderTests : BaseTest<Module>
 {
+    private const string ValidConfiguredKey = "preset-key-1234-preset-key-1234-abcd";
+
     [TestMethod]
     public void EnsureSigningKey_ConfiguredValue_IsReturnedAsIs()
     {
         var services = GetServices();
         var provider = services.GetRequiredService<ISigningKeyProvider>();
-        var result = provider.EnsureSigningKey("preset-key-1234");
 
-        result.Should().Be("preset-key-1234");
+        var result = provider.EnsureSigningKey(ValidConfiguredKey);
+
+        result.Should().Be(ValidConfiguredKey);
+    }
+
+    [TestMethod]
+    public void EnsureSigningKey_ConfiguredValueTooShort_Throws()
+    {
+        var services = GetServices();
+        var provider = services.GetRequiredService<ISigningKeyProvider>();
+
+        FluentActions
+            .Invoking(() => provider.EnsureSigningKey("too-short"))
+            .Should().Throw<InvalidOperationException>();
     }
 
     [TestMethod]
@@ -28,9 +42,6 @@ public sealed class SigningKeyProviderTests : BaseTest<Module>
         var dir = host.ContentRootPath;
         try
         {
-            var env = Substitute.For<IHostEnvironment>();
-            env.ContentRootPath.Returns(dir);
-
             var provider = services.GetRequiredService<ISigningKeyProvider>();
             var first = provider.EnsureSigningKey(configured: null);
 
@@ -51,21 +62,59 @@ public sealed class SigningKeyProviderTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public void EnsureSigningKey_ExistingFileWithKey_ReusesIt()
+    public void EnsureSigningKey_NoConfig_ExistingFileWithComments_DoesNotThrow()
     {
         var services = GetServices();
         var env = services.GetRequiredService<IHostEnvironment>();
         var dir = env.ContentRootPath;
+        var path = Path.Combine(dir, "appsettings.local.json");
         try
         {
-            File.WriteAllText(
-                Path.Combine(dir, "appsettings.local.json"),
-                """{"Authentication":{"Local":{"SigningKey":"persisted-key-xyz"}}}""");
+            File.WriteAllText(path, """
+                {
+                    // a JSONC comment that ASP.NET's config provider tolerates
+                    "SomeOther": { "Value": "keep-me" },
+                }
+                """);
 
             var provider = services.GetRequiredService<ISigningKeyProvider>();
-            var key = provider.EnsureSigningKey(configured: null);
+            var generated = provider.EnsureSigningKey(configured: null);
 
-            key.Should().Be("persisted-key-xyz");
+            generated.Should().NotBeNullOrWhiteSpace();
+            var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject;
+            json?["SomeOther"]?["Value"]?.GetValue<string>().Should().Be("keep-me");
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
+
+    [TestMethod]
+    public void EnsureSigningKey_NoConfig_PreservesExistingLocalSettings()
+    {
+        var services = GetServices();
+        var env = services.GetRequiredService<IHostEnvironment>();
+        var dir = env.ContentRootPath;
+        var path = Path.Combine(dir, "appsettings.local.json");
+        try
+        {
+            File.WriteAllText(path, """{"SomeOther":{"Value":"keep-me"}}""");
+
+            var provider = services.GetRequiredService<ISigningKeyProvider>();
+            var generated = provider.EnsureSigningKey(configured: null);
+
+            var json = JsonNode.Parse(File.ReadAllText(path)) as JsonObject;
+            json.Should().NotBeNull();
+            json?["SomeOther"]?["Value"]?.GetValue<string>().Should().Be("keep-me");
+            json?["Authentication"]?["Local"]?["SigningKey"]?.GetValue<string>().Should().Be(generated);
         }
         finally
         {

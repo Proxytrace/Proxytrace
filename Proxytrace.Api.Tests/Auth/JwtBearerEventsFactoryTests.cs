@@ -1,0 +1,97 @@
+using System.Security.Claims;
+using AwesomeAssertions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using Proxytrace.Api.Auth;
+using Proxytrace.Domain.User;
+
+namespace Proxytrace.Api.Tests.Auth;
+
+[TestClass]
+public sealed class JwtBearerEventsFactoryTests
+{
+    private sealed class StubAuthUserResolver : IAuthUserResolver
+    {
+        private readonly IUser? user;
+
+        public StubAuthUserResolver(IUser? user)
+        {
+            this.user = user;
+        }
+
+        public Task<IUser?> Resolve(TokenValidatedContext context, ClaimsPrincipal principal)
+            => Task.FromResult(user);
+    }
+
+    private static AuthenticationScheme Scheme() => new(
+        JwtBearerDefaults.AuthenticationScheme,
+        JwtBearerDefaults.AuthenticationScheme,
+        typeof(JwtBearerHandler));
+
+    [TestMethod]
+    public async Task OnMessageReceived_WithAccessTokenQuery_SetsToken()
+    {
+        var events = JwtBearerEventsFactory.Create();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.QueryString = new QueryString("?access_token=abc123");
+        var ctx = new MessageReceivedContext(httpContext, Scheme(), new JwtBearerOptions());
+
+        await events.OnMessageReceived(ctx);
+
+        ctx.Token.Should().Be("abc123");
+    }
+
+    [TestMethod]
+    public async Task OnMessageReceived_WithoutQuery_LeavesTokenNull()
+    {
+        var events = JwtBearerEventsFactory.Create();
+        var ctx = new MessageReceivedContext(new DefaultHttpContext(), Scheme(), new JwtBearerOptions());
+
+        await events.OnMessageReceived(ctx);
+
+        ctx.Token.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task OnTokenValidated_NullPrincipal_FailsContext()
+    {
+        var events = JwtBearerEventsFactory.Create();
+        var ctx = new TokenValidatedContext(new DefaultHttpContext(), Scheme(), new JwtBearerOptions())
+        {
+            Principal = null,
+        };
+
+        await events.OnTokenValidated(ctx);
+
+        ctx.Result?.Failure.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task OnTokenValidated_ResolvedUser_StoresUserIdAndAddsRoleClaim()
+    {
+        var userId = Guid.NewGuid();
+        var user = Substitute.For<IUser>();
+        user.Id.Returns(userId);
+        user.Role.Returns(UserRole.Admin);
+
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddSingleton<IAuthUserResolver>(new StubAuthUserResolver(user));
+        var httpContext = new DefaultHttpContext { RequestServices = serviceCollection.BuildServiceProvider() };
+
+        var identity = new ClaimsIdentity([new Claim("sub", userId.ToString())], "Test");
+        var ctx = new TokenValidatedContext(httpContext, Scheme(), new JwtBearerOptions())
+        {
+            Principal = new ClaimsPrincipal(identity),
+        };
+
+        var events = JwtBearerEventsFactory.Create();
+
+        await events.OnTokenValidated(ctx);
+
+        httpContext.Items[CurrentUserAccessor.UserIdItemKey].Should().Be(userId);
+        identity.HasClaim(ClaimTypes.Role, nameof(UserRole.Admin)).Should().BeTrue();
+    }
+}

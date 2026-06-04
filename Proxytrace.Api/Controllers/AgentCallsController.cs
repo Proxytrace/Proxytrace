@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.AgentCalls;
+using Proxytrace.Api.Json;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
 using Proxytrace.Application.Statistics;
@@ -22,12 +22,6 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/agent-calls")]
 public class AgentCallsController : ControllerBase
 {
-    private static readonly JsonSerializerOptions SseOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     private readonly IAgentCallRepository repository;
     private readonly IAgentRepository agentRepository;
     private readonly IDashboardStatistics statistics;
@@ -178,7 +172,7 @@ public class AgentCallsController : ControllerBase
 
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, SseOptions);
+            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: trace-created\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

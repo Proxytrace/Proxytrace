@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Kiosk;
+using Proxytrace.Api.Configuration;
+using Proxytrace.Api.Middleware;
+using Proxytrace.Api.Middleware.Exceptions;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
@@ -44,6 +47,11 @@ internal sealed class Module : Autofac.Module
         builder
             .RegisterInstance(configuration)
             .As<IConfiguration>();
+
+        builder
+            .RegisterType<AppSettingsLocalSigningKeyStore>()
+            .As<ISigningKeyStore>()
+            .SingleInstance();
 
         builder
             .RegisterType<SigningKeyProvider>()
@@ -133,6 +141,11 @@ internal sealed class Module : Autofac.Module
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
 
+        builder.RegisterAssemblyTypes(typeof(Module).Assembly)
+            .Where(t => typeof(IExceptionMapper).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+            .As<IExceptionMapper>()
+            .SingleInstance();
+
         builder.RegisterType<ToolDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<AgentDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<AgentCallDtoMapper>().AsSelf().SingleInstance();
@@ -153,6 +166,21 @@ internal sealed class Module : Autofac.Module
         var testRunnerConfiguration = configuration.GetSection("TestRunner").Get<TestRunnerConfiguration>()
             ?? new TestRunnerConfiguration();
         builder.RegisterInstance(testRunnerConfiguration);
+
+        var securityHeadersOptions = configuration.GetSection("SecurityHeaders").Get<SecurityHeadersOptions>()
+            ?? new SecurityHeadersOptions();
+        securityHeadersOptions.Validate();
+        builder.RegisterInstance(securityHeadersOptions);
+
+        var searchRequestOptions = configuration.GetSection("Search:Requests").Get<SearchRequestOptions>()
+            ?? new SearchRequestOptions();
+        searchRequestOptions.Validate();
+        builder.RegisterInstance(searchRequestOptions);
+
+        var statisticsOptions = configuration.GetSection("Statistics").Get<StatisticsOptions>()
+            ?? new StatisticsOptions();
+        statisticsOptions.Validate();
+        builder.RegisterInstance(statisticsOptions);
     }
 
     private void ConfigureAuth(ContainerBuilder builder, IConfiguration configuration, KioskOptions kiosk)
