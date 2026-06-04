@@ -1,14 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { EvaluationScore, type EvaluationResultDto } from '../../../api/models';
-
-const SCORE_COLOR: Record<EvaluationScore, string> = {
-  [EvaluationScore.Terrible]: 'var(--danger)',
-  [EvaluationScore.Bad]: 'var(--warn)',
-  [EvaluationScore.Acceptable]: 'var(--accent-primary)',
-  [EvaluationScore.Good]: 'var(--teal)',
-  [EvaluationScore.Excellent]: 'var(--success)',
-};
+import { type EvaluationResultDto } from '../../../api/models';
+import { scoreColor, tooltipPosition } from '../testBenchMeta';
 
 /** Score / error / loading pill for a test-bench run result. Color is data-driven per score. */
 export function ResultPill({ result, loading }: { result?: EvaluationResultDto; loading?: boolean }) {
@@ -37,7 +30,7 @@ export function ResultPill({ result, loading }: { result?: EvaluationResultDto; 
     );
   }
 
-  const color = result.score ? (SCORE_COLOR[result.score] ?? 'var(--accent-primary)') : 'var(--accent-primary)';
+  const color = scoreColor(result.score);
   return (
     <div className="flex items-center gap-1.5">
       <span
@@ -61,11 +54,7 @@ export function ReasoningTip({ text }: { text: string }) {
   function show() {
     const el = anchorRef.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const width = Math.min(352, window.innerWidth * 0.8);
-    const left = Math.max(8, rect.right - width);
-    const top = rect.top - 8;
-    setPos({ top, left });
+    setPos(tooltipPosition(el.getBoundingClientRect(), window.innerWidth));
     setOpen(true);
   }
 

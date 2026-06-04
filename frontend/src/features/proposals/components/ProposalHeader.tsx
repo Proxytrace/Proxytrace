@@ -6,12 +6,14 @@ import {
 import type { OptimizationProposalDto } from '../../../api/models';
 import { ProposalKind } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
+import { cn } from '../../../lib/cn';
 import { fmtRelative } from '../../../lib/format';
 import {
   KIND_META,
   PRIORITY_META,
-  TONE_COLOR,
-  TONE_SUBTLE,
+  TONE_TEXT,
+  TONE_BG,
+  TONE_SUBTLE_BG,
 } from '../shared';
 import type { DisplayStatus } from '../shared';
 
@@ -65,12 +67,10 @@ export function ProposalHeader({ dto, status, titleLine }: Props) {
             {KIND_ICON[dto.kind]} {kind.label}
           </span>
           <span
-            className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold"
-            style={{ background: TONE_SUBTLE[status.tone], color: TONE_COLOR[status.tone] }}
+            className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-caption font-semibold', TONE_SUBTLE_BG[status.tone], TONE_TEXT[status.tone])}
           >
             <span
-              className={`inline-block size-1.5 rounded-full ${status.pulse ? 'pulse-dot' : ''}`}
-              style={{ background: TONE_COLOR[status.tone] }}
+              className={cn('inline-block size-1.5 rounded-full', TONE_BG[status.tone], status.pulse && 'pulse-dot')}
             />
             {status.label}
           </span>

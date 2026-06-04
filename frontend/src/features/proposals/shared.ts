@@ -39,13 +39,34 @@ export const TONE_COLOR: Record<DisplayTone, string> = {
   teal: 'var(--teal)',
 };
 
-export const TONE_SUBTLE: Record<DisplayTone, string> = {
-  accent: 'var(--accent-subtle)',
-  success: 'var(--success-subtle)',
-  danger: 'var(--danger-subtle)',
-  muted: 'rgba(255,255,255,0.04)',
-  secondary: 'rgba(255,255,255,0.04)',
-  teal: 'color-mix(in srgb, var(--teal) 14%, transparent)',
+/** Tone → text-color Tailwind class (arbitrary value over the same CSS var as {@link TONE_COLOR}). */
+export const TONE_TEXT: Record<DisplayTone, string> = {
+  accent: 'text-[var(--accent-primary)]',
+  success: 'text-[var(--success)]',
+  danger: 'text-[var(--danger)]',
+  muted: 'text-[var(--text-muted)]',
+  secondary: 'text-[var(--text-secondary)]',
+  teal: 'text-[var(--teal)]',
+};
+
+/** Tone → solid background Tailwind class (e.g. for status dots). Mirrors {@link TONE_COLOR}. */
+export const TONE_BG: Record<DisplayTone, string> = {
+  accent: 'bg-[var(--accent-primary)]',
+  success: 'bg-[var(--success)]',
+  danger: 'bg-[var(--danger)]',
+  muted: 'bg-[var(--text-muted)]',
+  secondary: 'bg-[var(--text-secondary)]',
+  teal: 'bg-[var(--teal)]',
+};
+
+/** Tone → subtle background Tailwind class (badge fills). */
+export const TONE_SUBTLE_BG: Record<DisplayTone, string> = {
+  accent: 'bg-[var(--accent-subtle)]',
+  success: 'bg-[var(--success-subtle)]',
+  danger: 'bg-[var(--danger-subtle)]',
+  muted: 'bg-[rgba(255,255,255,0.04)]',
+  secondary: 'bg-[rgba(255,255,255,0.04)]',
+  teal: 'bg-[color-mix(in_srgb,var(--teal)_14%,transparent)]',
 };
 
 export interface KindMeta {

@@ -1,38 +1,49 @@
 import { useState } from 'react';
 import type { MessageDto } from '../../api/models';
 import { ChevronRightIcon } from '../icons';
+import { cn } from '../../lib/cn';
+
+type RoleKey = 'user' | 'assistant' | 'system';
 
 interface RoleStyle {
-  accent: string;
+  accentText: string;
+  accentBg: string;
   bodyBg: string;
   border: string;
   hover: string;
   label: string;
 }
 
-const ROLES: Record<string, RoleStyle> = {
+const ROLES: Record<RoleKey, RoleStyle> = {
   user: {
-    accent: 'var(--teal)',
-    bodyBg: 'color-mix(in srgb, var(--teal) 6%, transparent)',
-    border: 'color-mix(in srgb, var(--teal) 25%, transparent)',
-    hover: 'color-mix(in srgb, var(--teal) 5%, transparent)',
+    accentText: 'text-[var(--teal)]',
+    accentBg: 'bg-[var(--teal)]',
+    bodyBg: 'bg-[color-mix(in_srgb,var(--teal)_6%,transparent)]',
+    border: 'border-[color-mix(in_srgb,var(--teal)_25%,transparent)]',
+    hover: 'hover:bg-[color-mix(in_srgb,var(--teal)_5%,transparent)]',
     label: 'USER',
   },
   assistant: {
-    accent: 'var(--accent-primary)',
-    bodyBg: 'var(--accent-subtle)',
-    border: 'color-mix(in srgb, var(--accent-primary) 25%, transparent)',
-    hover: 'color-mix(in srgb, var(--accent-primary) 5%, transparent)',
+    accentText: 'text-[var(--accent-primary)]',
+    accentBg: 'bg-[var(--accent-primary)]',
+    bodyBg: 'bg-[var(--accent-subtle)]',
+    border: 'border-[color-mix(in_srgb,var(--accent-primary)_25%,transparent)]',
+    hover: 'hover:bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)]',
     label: 'ASSISTANT',
   },
   system: {
-    accent: 'var(--text-secondary)',
-    bodyBg: 'var(--bg-wash-hover)',
-    border: 'var(--border-color)',
-    hover: 'var(--bg-wash-hover)',
+    accentText: 'text-[var(--text-secondary)]',
+    accentBg: 'bg-[var(--text-secondary)]',
+    bodyBg: 'bg-[var(--bg-wash-hover)]',
+    border: 'border-[var(--border-color)]',
+    hover: 'hover:bg-[var(--bg-wash-hover)]',
     label: 'SYSTEM',
   },
 };
+
+function roleKey(role: string): RoleKey {
+  return role === 'user' || role === 'system' ? role : 'assistant';
+}
 
 interface Props {
   msg: MessageDto;
@@ -40,9 +51,8 @@ interface Props {
 }
 
 export function MessageBubble({ msg, defaultOpen = true }: Props) {
-  const role = ROLES[msg.role] ?? ROLES.assistant;
+  const role = ROLES[roleKey(msg.role)];
   const [open, setOpen] = useState(defaultOpen);
-  const [hover, setHover] = useState(false);
 
   const content = msg.content?.trim() ?? '';
   if (!content) return null;
@@ -54,27 +64,22 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
 
   return (
     <div
-      className="rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]"
-      style={{ borderColor: role.border }}
+      className={cn('rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border)}
     >
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        className="w-full flex items-center gap-2 px-3 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100"
-        style={{ background: hover ? role.hover : 'transparent' }}
+        className={cn('w-full flex items-center gap-2 px-3 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100', role.hover)}
       >
         <span
           aria-hidden
-          className={`inline-flex shrink-0 transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
-          style={{ color: role.accent }}
+          className={cn('inline-flex shrink-0 transition-transform duration-150', role.accentText, open && 'rotate-90')}
         >
           <ChevronRightIcon size={11} strokeWidth={2.5} />
         </span>
-        <span aria-hidden className="w-[5px] h-[5px] rounded-full shrink-0" style={{ background: role.accent }} />
-        <span className="font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0" style={{ color: role.accent }}>
+        <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
+        <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
           {role.label}
         </span>
         {!open && (
@@ -89,7 +94,7 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
 
       {open && (
         <div className="border-t border-t-[rgba(255,255,255,0.05)]">
-          <div className="px-[14px] py-[12px]" style={{ background: role.bodyBg }}>
+          <div className={cn('px-[14px] py-[12px]', role.bodyBg)}>
             <div className={`text-[13px] leading-[1.65] whitespace-pre-wrap ${isSystem ? 'text-secondary italic' : 'text-primary'}`}>
               {content}
             </div>
