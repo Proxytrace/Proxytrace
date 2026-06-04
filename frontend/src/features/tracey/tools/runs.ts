@@ -64,6 +64,7 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
         agentName: group.agentName,
         status: group.status,
         totalCases: group.runs.reduce((sum, run) => sum + run.totalCases, 0),
+        awaitable: { kind: 'test-run', id: group.id },
       });
     },
   }),

@@ -133,13 +133,17 @@ describe('tracey write tools confirmation gating', () => {
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
     const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 's1', agentId: 'a1' }, ctx) as {
-      artifactRef: string; kind: string; summary: { id: string; status: string; totalCases: number };
+      artifactRef: string; kind: string;
+      summary: { id: string; status: string; totalCases: number; awaitable: { kind: string; id: string } };
     };
 
     expect(ctx.confirm).toHaveBeenCalledOnce();
     expect(testRunGroupsApi.create).toHaveBeenCalledWith('s1', ['e1']);
     expect(result.kind).toBe('test-run-group');
-    expect(result.summary).toEqual({ id: 'g1', suiteName: 'Suite', agentName: 'A', status: 'Pending', totalCases: 5 });
+    expect(result.summary).toEqual({
+      id: 'g1', suiteName: 'Suite', agentName: 'A', status: 'Pending', totalCases: 5,
+      awaitable: { kind: 'test-run', id: 'g1' },
+    });
     expect(await getArtifact(result.artifactRef)).toEqual(group);
   });
 
