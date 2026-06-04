@@ -8,6 +8,7 @@ import { createStatsTools } from './tools/stats';
 import { createProviderTools } from './tools/providers';
 import { createTraceTools } from './tools/traces';
 import { createDisplayTools } from './tools/display';
+import { createAwaitTools } from './tools/await';
 
 export { CANCELLED } from './tools/shared';
 export type { TraceyTool, TraceyToolContext } from './tools/shared';
@@ -30,6 +31,7 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     ...createProviderTools(ctx, store),
     ...createTraceTools(ctx, store),
     ...createDisplayTools(ctx, store),
+    ...createAwaitTools(ctx, store),
   };
 }
 
@@ -56,6 +58,7 @@ export const TRACEY_TOOLS_META: { name: string; description: string }[] = [
   { name: 'start_test_run', description: 'Run a suite against an agent (confirm).' },
   { name: 'set_proposal_status', description: 'Approve or reject a proposal (confirm).' },
   { name: 'submit_optimization_theory', description: 'Theorize an agent optimization and A/B-test it (confirm).' },
+  { name: 'await_actions', description: 'Wait for test runs / theories to finish, then react.' },
   { name: 'show_chart', description: 'Plot data inline in the chat.' },
   { name: 'show_table', description: 'Show a table inline in the chat.' },
   { name: 'show_text', description: 'Show markdown/JSON/code inline in the chat.' },

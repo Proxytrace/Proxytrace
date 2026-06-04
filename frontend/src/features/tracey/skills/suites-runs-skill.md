@@ -1,7 +1,7 @@
 ---
 name: test-suites-and-runs
 description: Inspect test suites and runs, and start a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
-tools: list_suites, get_suite, list_runs, get_run, start_test_run
+tools: list_suites, get_suite, list_runs, get_run, start_test_run, await_actions
 ---
 
 # Skill: Test suites & runs
