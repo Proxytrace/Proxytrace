@@ -51,7 +51,12 @@ function openDb(): Promise<IDBDatabase> {
       }
     };
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      // Don't cache a rejected promise: a transient open failure would otherwise wedge the store
+      // permanently. Clearing it lets the next call retry.
+      dbPromise = null;
+      reject(request.error);
+    };
   });
   return dbPromise;
 }

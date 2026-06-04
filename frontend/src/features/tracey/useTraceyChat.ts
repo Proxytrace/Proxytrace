@@ -171,7 +171,8 @@ export function useTraceyChat(): TraceyChat {
 
   const clear = useCallback(() => {
     clearThread(userKey, projectKey);
-    void clearArtifacts(artifactScope);
+    // Best-effort: a failed blob wipe must not block starting a new thread.
+    void clearArtifacts(artifactScope).catch(() => {});
     runtime.threads.switchToNewThread();
   }, [runtime, userKey, projectKey, artifactScope]);
 

@@ -60,6 +60,23 @@ describe('tracey read tools', () => {
     expect(await getArtifact(result.artifactRef)).toEqual(items);
   });
 
+  it('falls back to the full payload inline when the artifact store is unavailable', async () => {
+    const items = [{ id: 'a1', name: 'Alpha' }];
+    agentsApi.list.mockResolvedValue({ items });
+    const ctx = makeCtx();
+    // Force storeArtifact to throw (simulating IndexedDB disabled, e.g. private browsing).
+    const spy = vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
+      throw new Error('store unavailable');
+    });
+    try {
+      const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx);
+      expect(result).toEqual(items);
+      expect(result).not.toHaveProperty('artifactRef');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('get_agent stores the full agent and returns a curated summary', async () => {
     const agent = {
       id: 'a1', name: 'Alpha', endpointName: 'gpt-4o',
