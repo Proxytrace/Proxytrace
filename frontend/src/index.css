@@ -98,9 +98,10 @@
   --shadow-topbar: 0 1px 0 rgba(255,255,255,0.025), 0 4px 16px -8px rgba(0,0,0,0.4);
 
   /* Button shadows (gradient buttons + danger variant) */
-  --shadow-btn: 0 4px 14px -4px rgba(201,148,74,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-success: 0 4px 14px -4px rgba(61,170,111,0.40), inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-danger: 0 4px 14px -4px rgba(217,85,85,0.40), inset 0 1px 0 rgba(255,255,255,0.10);
+  /* No colored glow halo — just a subtle inset top highlight (bevel) on filled buttons. */
+  --shadow-btn: inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-success: inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-danger: inset 0 1px 0 rgba(255,255,255,0.10);
 
   /* Radii (collapsed scale — sm/md/lg/xl) */
   --radius-sm: 6px;

@@ -143,9 +143,10 @@ the UI raises an **upgrade dialog** explaining which limit was hit, with a link 
 Enterprise plans. When you access a premium feature without a license that includes it, the
 API responds with HTTP **402** as well and the same dialog appears framed as a feature gate.
 
-The current tier is always visible as a pill in the top bar — a neutral **Free** pill (which
-links to the upgrade page) on an unlicensed install, or a green/amber tier pill on a licensed
-one. When the monthly trace quota is exhausted, a banner appears above the top bar warning
+The current tier is always visible as a chip in the top bar — a muted, sparkle-marked **Free**
+chip (which links to the upgrade page) on an unlicensed install, or a crowned tier chip on a
+licensed one: gold when the license is active, amber while a re-check is pending. When the
+monthly trace quota is exhausted, a banner appears above the top bar warning
 that new traces are being dropped until the quota resets.
 
 The **agent** limit is enforced differently because agents are discovered automatically from

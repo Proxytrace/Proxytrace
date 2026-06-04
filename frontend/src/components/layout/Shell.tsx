@@ -297,7 +297,12 @@ export function Shell() {
         </header>
 
         {/* Page content — single vertical scroll container for the app */}
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_10px_10px_10px] bg-transparent relative z-0 flex flex-col">
+        {/* Flush the scroll container to the window's right edge and inset the content with
+            right padding instead of a margin. Firefox/Linux uses overlay scrollbars, so
+            `scrollbar-gutter: stable` does NOT reserve space — the thumb would paint over the
+            content. With the container flush + `pr-[10px]`, the overlay thumb floats in the
+            padding strip and never overlaps cards, while staying glued to the screen edge. */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_0_10px_10px] pr-[10px] bg-transparent relative z-0 flex flex-col">
           {/* The runtime provider mounts here — above the router `Outlet` — not on the Tracey
               page. assistant-ui keeps the conversation's message state inside the component
               subtree the provider renders, so mounting it per-route would destroy the thread on

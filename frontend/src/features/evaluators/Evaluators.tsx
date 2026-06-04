@@ -116,7 +116,7 @@ export default function Evaluators() {
           avgScoreById={avgScoreById}
         />
 
-        <main className="min-w-0 overflow-y-auto flex flex-col">
+        <main className="min-w-0 overflow-y-auto flex flex-col pr-[10px]">
           {selected ? (
             <EvaluatorDetail
               evaluator={selected}

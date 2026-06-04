@@ -33,7 +33,10 @@ export function ProposalDetail({ dto }: Props) {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full" data-testid="proposal-detail">
-      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4 [&>*]:shrink-0 [scrollbar-gutter:stable]">
+      {/* Right padding (not scrollbar-gutter) so the Firefox/Linux overlay scrollbar floats in
+          the padding strip instead of overlapping content — gutter:stable is a no-op for overlay
+          scrollbars. See [[firefox-overlay-scrollbar-gutter-noop]]. */}
+      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-4 pr-[10px] [&>*]:shrink-0">
         <ProposalHeader dto={dto} status={status} titleLine={titleLine}/>
 
         {restOfRationale && (

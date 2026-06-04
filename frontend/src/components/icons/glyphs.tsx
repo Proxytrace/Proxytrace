@@ -77,6 +77,15 @@ export function SparklesIcon(props: IconProps) {
   );
 }
 
+export function CrownIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M5 16 3 6l5.5 4L12 4l3.5 6L21 6l-2 10H5z"/>
+      <path d="M5 19h14"/>
+    </Svg>
+  );
+}
+
 export function MessageSparkleIcon(props: IconProps) {
   return (
     <Svg {...props}>
