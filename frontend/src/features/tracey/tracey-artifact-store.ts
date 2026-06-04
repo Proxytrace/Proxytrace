@@ -99,7 +99,7 @@ async function idbGet(id: string): Promise<unknown | null> {
   return record ? record.data : null;
 }
 
-async function idbClear(scope: string): Promise<void> {
+async function idbClear(scope: string, keep?: ReadonlySet<string>): Promise<void> {
   const db = await openDb();
   const tx = db.transaction(STORE, 'readwrite');
   const index = tx.objectStore(STORE).index(SCOPE_INDEX);
@@ -107,7 +107,8 @@ async function idbClear(scope: string): Promise<void> {
   cursorRequest.onsuccess = () => {
     const cursor = cursorRequest.result;
     if (cursor) {
-      cursor.delete();
+      const id = (cursor.value as ArtifactRecord).id;
+      if (!keep || !keep.has(id)) cursor.delete();
       cursor.continue();
     }
   };
@@ -143,7 +144,7 @@ function lsGet(id: string): unknown | null {
   }
 }
 
-function lsClear(scope: string): void {
+function lsClear(scope: string, keep?: ReadonlySet<string>): void {
   if (!lsAvailable()) return;
   const toRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -151,7 +152,7 @@ function lsClear(scope: string): void {
     if (!key || !key.startsWith(LS_PREFIX)) continue;
     try {
       const record = JSON.parse(localStorage.getItem(key) ?? '') as ArtifactRecord;
-      if (record.scope === scope) toRemove.push(key);
+      if (record.scope === scope && (!keep || !keep.has(record.id))) toRemove.push(key);
     } catch {
       // A corrupt entry: drop it too.
       toRemove.push(key);
@@ -194,23 +195,57 @@ export async function getArtifact(id: string): Promise<unknown | null> {
   return lsGet(id);
 }
 
-/**
- * Deletes every artifact belonging to a scope (a `${userKey}:${projectKey}` string) from both
- * backends, used when a Tracey thread is cleared. Best-effort: failures are swallowed.
- */
-export async function clearArtifacts(scope: string): Promise<void> {
+async function sweep(scope: string, keep?: ReadonlySet<string>): Promise<void> {
   if (idbAvailable()) {
     try {
-      await idbClear(scope);
+      await idbClear(scope, keep);
     } catch {
       // ignore
     }
   }
   try {
-    lsClear(scope);
+    lsClear(scope, keep);
   } catch {
     // ignore
   }
+}
+
+/**
+ * Deletes every artifact belonging to a scope (a `${userKey}:${projectKey}` string) from both
+ * backends, used when a Tracey thread is cleared. Best-effort: failures are swallowed.
+ */
+export function clearArtifacts(scope: string): Promise<void> {
+  return sweep(scope);
+}
+
+/**
+ * Garbage-collects a scope's artifacts, keeping only those whose id is in {@link keep} (the
+ * references the live thread still points at) and deleting the rest. Run at mount against the
+ * restored thread's references to dispose of orphans left by a replaced thread, a failed restore,
+ * or a write whose thread snapshot never persisted. Best-effort: failures are swallowed.
+ */
+export function pruneArtifacts(scope: string, keep: ReadonlySet<string>): Promise<void> {
+  return sweep(scope, keep);
+}
+
+/**
+ * Collects every `artifactRef` carried by a persisted thread snapshot (assistant-ui's
+ * `ExportedMessageRepository`). Scans the serialized snapshot so it stays decoupled from the exact
+ * message-part shape; the references are the set of artifacts the thread still needs.
+ */
+export function collectArtifactRefs(snapshot: unknown): Set<string> {
+  const refs = new Set<string>();
+  try {
+    const json = JSON.stringify(snapshot);
+    const pattern = /"artifactRef":"([^"]+)"/g;
+    for (let match = pattern.exec(json); match !== null; match = pattern.exec(json)) {
+      refs.add(match[1]);
+    }
+  } catch {
+    // A non-serializable snapshot yields no references (nothing kept) — callers treat that as
+    // "prune everything", which is the safe outcome for an unreadable thread.
+  }
+  return refs;
 }
 
 /**

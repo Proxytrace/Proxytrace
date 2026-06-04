@@ -5,6 +5,8 @@ import {
   getArtifact,
   clearArtifacts,
   storeArtifact,
+  pruneArtifacts,
+  collectArtifactRefs,
 } from './tracey-artifact-store';
 
 function inMemoryStorage(): Storage {
@@ -56,6 +58,42 @@ describe('tracey-artifact-store', () => {
     const b = await storeArtifact('u:p', 'k', { v: 2 }, null);
 
     expect(a.artifactRef).not.toBe(b.artifactRef);
+  });
+});
+
+describe('collectArtifactRefs', () => {
+  it('gathers every artifactRef from a nested thread snapshot', () => {
+    const snapshot = {
+      headId: 'm2',
+      messages: [
+        { message: { parts: [{ type: 'tool-get_agent', result: { artifactRef: 'r1', kind: 'agent' } }] } },
+        { message: { parts: [
+          { type: 'text', text: 'hi' },
+          { type: 'tool-show_chart', result: { artifactRef: 'r2', kind: 'chart' } },
+        ] } },
+      ],
+    };
+
+    expect(collectArtifactRefs(snapshot)).toEqual(new Set(['r1', 'r2']));
+  });
+
+  it('returns an empty set for a snapshot with no references', () => {
+    expect(collectArtifactRefs({ messages: [] })).toEqual(new Set());
+    expect(collectArtifactRefs(null)).toEqual(new Set());
+  });
+});
+
+describe('pruneArtifacts', () => {
+  it('deletes scope blobs whose id is not in the keep set, leaving others', async () => {
+    await putArtifact({ id: 'keep1', scope: 's:p', kind: 'k', data: 1 });
+    await putArtifact({ id: 'orphan', scope: 's:p', kind: 'k', data: 2 });
+    await putArtifact({ id: 'other-scope', scope: 's:p2', kind: 'k', data: 3 });
+
+    await pruneArtifacts('s:p', new Set(['keep1']));
+
+    expect(await getArtifact('keep1')).toBe(1);
+    expect(await getArtifact('orphan')).toBeNull();
+    expect(await getArtifact('other-scope')).toBe(3);
   });
 });
 

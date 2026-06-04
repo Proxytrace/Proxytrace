@@ -190,12 +190,26 @@ Affected: `ChartToolUI`, `TableToolUI`, `TextToolUI`, `AgentListToolUI`,
 - Existing tool-UI behavior is covered by the unchanged rendered output; add
   focused tests only where the resolve path needs guarding.
 
+## Disposal
+
+- **Explicit clear:** the "New conversation" action calls `clearArtifacts(scope)`,
+  wiping every blob for the user+project from both backends.
+- **Mount-time GC:** on mount, `useTraceyChat` collects the artifact references in
+  the restored thread snapshot (`collectArtifactRefs`) and calls
+  `pruneArtifacts(scope, liveRefs)`, deleting any scope blob the thread no longer
+  references. This disposes of orphans left by a replaced thread, a failed
+  restore, or a write whose snapshot never persisted. Within a live thread every
+  tool result stays in the snapshot, so its blob remains referenced — there are
+  no live-session orphans to collect. GC runs only at mount: pruning mid-stream
+  could race a just-written blob whose reference is not yet persisted and delete a
+  live one.
+
 ## Known limitations (YAGNI)
 
-- Blobs orphaned by edited/retried messages are not individually collected; they
-  are removed wholesale on thread `clear()`. Acceptable for the chat use case.
-- No per-scope size cap initially; IndexedDB quota is large and a future cap can
-  be added if needed.
+- A very long single thread keeps every blob it references (correct — the cards
+  need them); there is no per-scope size cap initially. Under the localStorage
+  fallback this can hit the ~5MB origin quota, at which point new writes drop to
+  the inline path. A cap/LRU can be added later if needed.
 
 ## Side checks
 
