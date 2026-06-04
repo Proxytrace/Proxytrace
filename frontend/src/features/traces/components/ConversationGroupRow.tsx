@@ -7,7 +7,6 @@ import { firstUserMessage } from '../../../lib/trace';
 import type { AgentCallDto } from '../../../api/models';
 import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
-import { MiniChevronIcon } from '../../../components/icons';
 import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
 
 interface Props {
@@ -27,6 +26,9 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
   const model = turns[0].model;
   const c = turns[0].agentId ? agentColor(turns[0].agentId) : agentColor(conversationId);
   const allOk = turns.every(t => t.httpStatus >= 200 && t.httpStatus < 300);
+  // When every turn shares the same status, show that exact code (e.g. "200") rather than the
+  // coarse "2xx" bucket; only fall back to a bucket label when the turns disagree.
+  const uniformStatus = turns.every(t => t.httpStatus === turns[0].httpStatus) ? turns[0].httpStatus : null;
 
   return (
     <>
@@ -40,17 +42,14 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
-          <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
-            {firstUserMessage(turns[0]) ?? <span className="text-muted">—</span>}
-          </span>
           <span
-            className="inline-flex items-center gap-[3px] text-caption font-semibold px-[5px] py-[1px] rounded-full shrink-0"
+            className="inline-flex items-center text-caption font-semibold px-[6px] py-[1px] rounded-full shrink-0"
             style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
           >
             {turns.length} turns
-            <MiniChevronIcon
-              className={cn('shrink-0 transition-transform duration-[150ms]', expanded ? 'rotate-90' : 'rotate-0')}
-            />
+          </span>
+          <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+            {firstUserMessage(turns[0]) ?? <span className="text-muted">—</span>}
           </span>
         </span>
 
@@ -63,9 +62,11 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
         </span>
 
         <span className="inline-flex items-center gap-[5px]">
-          {allOk
-            ? <><StatusDot httpStatus={200} showLabel={false} /><span className="mono text-body-sm text-success">2xx</span></>
-            : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-body-sm text-warn">mixed</span></>}
+          {uniformStatus != null
+            ? <StatusDot httpStatus={uniformStatus} />
+            : allOk
+              ? <><StatusDot httpStatus={200} showLabel={false} /><span className="mono text-body-sm text-success">2xx</span></>
+              : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-body-sm text-warn">mixed</span></>}
         </span>
 
         <ToolsCell count={totalTools} />

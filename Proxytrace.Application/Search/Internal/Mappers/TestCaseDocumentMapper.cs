@@ -23,6 +23,8 @@ internal sealed class TestCaseDocumentMapper : IDocumentMapper
 
     public SearchKind Kind => SearchKind.TestCase;
 
+    public Type EntityType => typeof(ITestCase);
+
     public TestCaseDocumentMapper(
         IRepository<ITestCase> testCases,
         ITestSuiteRepository testSuites,

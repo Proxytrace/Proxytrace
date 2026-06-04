@@ -17,6 +17,8 @@ interface FilterDropdownProps {
   active?: boolean;
   accent?: string;
   align?: 'left' | 'right';
+  /** Whether the menu opens below ('down', default) or above ('up') the trigger. */
+  direction?: 'down' | 'up';
   width?: number;
 }
 
@@ -28,6 +30,7 @@ export function FilterDropdown({
   active,
   accent,
   align = 'left',
+  direction = 'down',
   width = 200,
 }: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -41,10 +44,10 @@ export function FilterDropdown({
     const btn = buttonRef.current;
     if (!btn) return;
     const rect = btn.getBoundingClientRect();
-    const top = rect.bottom + 6;
+    const top = direction === 'up' ? rect.top - 6 : rect.bottom + 6;
     const left = align === 'right' ? rect.right - width : rect.left;
     setPos({ top, left });
-  }, [align, width]);
+  }, [align, direction, width]);
 
   useLayoutEffect(() => {
     if (open) updatePosition();
@@ -108,6 +111,8 @@ export function FilterDropdown({
             top: pos.top,
             left: pos.left,
             minWidth: width,
+            // 'up' anchors the menu's bottom edge at the trigger top so it grows upward.
+            transform: direction === 'up' ? 'translateY(-100%)' : undefined,
           }}
         >
           {options.map(opt => {
