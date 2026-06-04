@@ -24,52 +24,10 @@ export function rangeFrom(key: string): string | undefined {
   return undefined;
 }
 
-// ── Row types ────────────────────────────────────────────────────────────────
+// ── Row types / grouping (shared with the dashboard live stream) ───────────────
 
-export type ConversationGroup = {
-  type: 'conversation';
-  conversationId: string;
-  turns: AgentCallDto[];
-};
-export type FlatTrace = { type: 'flat'; trace: AgentCallDto };
-export type TraceRow = ConversationGroup | FlatTrace;
-
-/**
- * Groups traces that share a conversationId (multi-turn) into ConversationGroup rows;
- * traces with no conversationId, or whose conversationId appears only once, become FlatTrace rows.
- * Order is preserved from the input array.
- */
-export function buildRows(traces: AgentCallDto[]): TraceRow[] {
-  const groups = new Map<string, AgentCallDto[]>();
-  for (const t of traces) {
-    if (t.conversationId) {
-      const g = groups.get(t.conversationId) ?? [];
-      g.push(t);
-      groups.set(t.conversationId, g);
-    }
-  }
-  const multi = new Set(
-    [...groups.entries()].filter(([, v]) => v.length > 1).map(([k]) => k),
-  );
-
-  const rows: TraceRow[] = [];
-  const emitted = new Set<string>();
-  for (const t of traces) {
-    if (t.conversationId && multi.has(t.conversationId)) {
-      if (!emitted.has(t.conversationId)) {
-        emitted.add(t.conversationId);
-        rows.push({
-          type: 'conversation',
-          conversationId: t.conversationId,
-          turns: groups.get(t.conversationId) ?? [],
-        });
-      }
-    } else {
-      rows.push({ type: 'flat', trace: t });
-    }
-  }
-  return rows;
-}
+export { buildRows } from '../../lib/trace';
+export type { ConversationGroup, FlatTrace, TraceRow } from '../../lib/trace';
 
 /**
  * Tool-request count for a trace, 0 when the call has no response. A captured call with no
@@ -82,10 +40,10 @@ export function toolCount(trace: AgentCallDto): number {
 
 // ── Column layout (shared between header row and all trace rows) ───────────────
 
-export const COL_WIDTHS = ['180px', '1fr', '140px', '72px', '70px', '130px', '120px', '80px'] as const;
+export const COL_WIDTHS = ['minmax(240px,2fr)', 'minmax(120px,1fr)', '140px', '72px', '70px', '130px', '120px', '80px'] as const;
 export const GRID_TEMPLATE = COL_WIDTHS.join(' ');
 
-export const COL_HEADERS = ['Trace ID', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Latency', 'Time'] as const;
+export const COL_HEADERS = ['Message', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Latency', 'Time'] as const;
 
 // ── Latency bar math ──────────────────────────────────────────────────────────
 

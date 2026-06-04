@@ -5,7 +5,7 @@ import {
   computeTokenVolume,
   computeModelSplit,
   computeLatencyHist,
-  computeTokenByAgent,
+  computeTokenAgentShare,
   buildAgentNameMap,
   agentCallCount,
   splitTokenStr,
@@ -45,14 +45,14 @@ describe('computeLatencyStats', () => {
 describe('computeTokenVolume', () => {
   it('returns [] for empty', () => expect(computeTokenVolume([])).toEqual([]));
 
-  it('sums input+output per date and sorts', () => {
+  it('sums input+output per bucket and sorts chronologically', () => {
     const data = [
-      { date: '2024-01-02', inputTokens: 10, outputTokens: 20 },
-      { date: '2024-01-01', inputTokens: 5, outputTokens: 15 },
-      { date: '2024-01-02', inputTokens: 10, outputTokens: 5 },
+      { bucketStart: '2024-01-02T00:00:00+00:00', inputTokens: 10, outputTokens: 20 },
+      { bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 5, outputTokens: 15 },
+      { bucketStart: '2024-01-02T00:00:00+00:00', inputTokens: 10, outputTokens: 5 },
     ];
     const result = computeTokenVolume(data);
-    expect(result).toEqual([20, 45]); // [date1 total, date2 total] sorted by date
+    expect(result).toEqual([20, 45]); // [bucket1 total, bucket2 total] sorted by bucketStart
   });
 });
 
@@ -98,28 +98,44 @@ describe('computeLatencyHist', () => {
   });
 });
 
-// ── computeTokenByAgent ──────────────────────────────────────────────────────
+// ── computeTokenAgentShare ───────────────────────────────────────────────────
 
-describe('computeTokenByAgent', () => {
+describe('computeTokenAgentShare', () => {
+  const agents = [
+    { id: 'a1', name: 'AgentOne', isSystemAgent: false },
+    { id: 'a2', name: 'AgentTwo', isSystemAgent: false },
+    { id: 'sys', name: 'Optimizer', isSystemAgent: true },
+  ] as AgentDto[];
+
   it('returns empty for no data', () => {
-    const result = computeTokenByAgent([], new Map());
-    expect(result.data).toEqual([]);
-    expect(result.agentIds).toEqual([]);
+    const result = computeTokenAgentShare([], agents);
+    expect(result.agents).toEqual([]);
+    expect(result.total).toBe(0);
   });
 
-  it('groups by date and agent', () => {
+  it('totals per agent, sorts desc, and computes share', () => {
     const raw: AgentTokenUsageDto[] = [
-      { agentId: 'a1', date: '2024-01-01', inputTokens: 10, outputTokens: 5 },
-      { agentId: 'a2', date: '2024-01-01', inputTokens: 20, outputTokens: 10 },
+      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 5 },
+      { agentId: 'a2', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 20, outputTokens: 10 },
+      { agentId: 'a1', bucketStart: '2024-01-01T01:00:00+00:00', inputTokens: 5, outputTokens: 0 },
     ];
-    const names = new Map([['a1', 'AgentOne'], ['a2', 'AgentTwo']]);
-    const { data, agentIds } = computeTokenByAgent(raw, names);
-    expect(agentIds).toContain('a1');
-    expect(agentIds).toContain('a2');
-    expect(data).toHaveLength(1);
-    const seg = data[0].segments;
-    expect(seg.find(s => s.label === 'AgentOne')?.value).toBe(15);
-    expect(seg.find(s => s.label === 'AgentTwo')?.value).toBe(30);
+    const { agents: list, total } = computeTokenAgentShare(raw, agents);
+    expect(total).toBe(50);
+    expect(list.map(a => a.name)).toEqual(['AgentTwo', 'AgentOne']); // 30 before 20
+    expect(list[0].tokens).toBe(30);
+    expect(list[0].share).toBeCloseTo(0.6);
+    expect(list[1].inputTokens).toBe(15);
+    expect(list[1].outputTokens).toBe(5);
+  });
+
+  it('excludes system agents', () => {
+    const raw: AgentTokenUsageDto[] = [
+      { agentId: 'a1', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 10, outputTokens: 0 },
+      { agentId: 'sys', bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 99, outputTokens: 0 },
+    ];
+    const { agents: list, total } = computeTokenAgentShare(raw, agents);
+    expect(total).toBe(10);
+    expect(list.map(a => a.id)).toEqual(['a1']);
   });
 });
 

@@ -29,6 +29,13 @@ public sealed record LicensingConfiguration
     public LicenseSnapshot? OverrideSnapshot { get; init; }
 
     /// <summary>
+    /// Whether the background service contacts the license server for periodic revocation/grace
+    /// checks. When false the startup snapshot (from JWT validation or the override) is kept as-is
+    /// and no network calls are made — used by local dev builds to avoid needing the license server.
+    /// </summary>
+    public bool ServerCheckEnabled { get; init; } = true;
+
+    /// <summary>
     /// How often the background check service contacts the license server.
     /// </summary>
     public int CheckIntervalHours { get; init; } = 24;

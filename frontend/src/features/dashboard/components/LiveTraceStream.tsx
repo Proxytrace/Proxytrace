@@ -1,12 +1,12 @@
-// Live trace stream section — shows the 6 most recent agent calls.
+// Live trace stream section — most recent agent calls, grouped by conversation.
 
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pill } from '../../../components/ui/Pill';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import type { AgentCallDto } from '../../../api/models';
-import { modelColor, statusColor } from '../../../lib/colors';
-import { fmtLatency, fmtTokens } from '../../../lib/format';
+import { buildRows } from '../../../lib/trace';
+import { LiveStreamRow, LIVE_STREAM_GRID } from './LiveStreamRow';
 
 interface LiveTraceStreamProps {
   traces: AgentCallDto[];
@@ -16,6 +16,7 @@ interface LiveTraceStreamProps {
 
 export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStreamProps) {
   const navigate = useNavigate();
+  const rows = useMemo(() => buildRows(traces), [traces]);
 
   return (
     <section data-testid="live-trace-stream" className="rounded-lg bg-card px-3.5 pt-2.5 pb-1.5 flex flex-col shadow-[var(--shadow-card)]">
@@ -34,15 +35,15 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         </button>
       </header>
 
-      <div className="grid grid-cols-[14px_1fr_auto_auto_auto_auto] gap-3.5 px-1 pb-2.5 text-[9.5px] font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle">
-        <span /><span>Trace ID</span><span>Model</span><span>Status</span><span>Tokens</span><span className="text-right">Latency</span>
+      <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-[9.5px] font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>
+        <span /><span>Message</span><span className="text-center">Turns</span><span className="text-center">Model</span><span className="text-center">Status</span><span className="text-right">Tokens</span><span className="text-right">Latency</span>
       </div>
 
       {isLoading ? (
         <div className="py-3 flex flex-col gap-1.5">
           {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} height={26} className="rounded-sm" />)}
         </div>
-      ) : traces.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className="py-10">
           <EmptyState
             title="No traces yet"
@@ -51,28 +52,15 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
         </div>
       ) : (
         <div>
-          {traces.map((t, i) => {
-            const sc = statusColor(t.httpStatus);
-            const isFresh = freshIds.has(t.id);
-            return (
-              <button
-                key={t.id}
-                data-testid={`live-trace-row-${t.id}`}
-                onClick={() => navigate(`/traces?focus=${t.id}`)}
-                className={`w-full text-left grid grid-cols-[14px_1fr_auto_auto_auto_auto] gap-3.5 items-center py-[7px] px-1 font-mono text-body-sm cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_4%,transparent)] ${i === traces.length - 1 ? '' : 'border-b border-border-subtle'} ${isFresh ? 'slide-in' : ''}`}
-              >
-                <span
-                  className="size-[7px] rounded-full"
-                  style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }}
-                />
-                <span className="text-primary overflow-hidden text-ellipsis whitespace-nowrap">{t.id.slice(0, 16)}</span>
-                <Pill label={t.model} color={modelColor(t.model)} size="sm" />
-                <span className="text-[10.5px] font-semibold" style={{ color: sc }}>{t.httpStatus}</span>
-                <span className="text-secondary text-right min-w-[50px]">{fmtTokens(t.inputTokens + t.outputTokens)}</span>
-                <span className="text-muted text-right min-w-[56px]">{fmtLatency(t.durationMs)}</span>
-              </button>
-            );
-          })}
+          {rows.map((row, i) => (
+            <LiveStreamRow
+              key={row.type === 'flat' ? row.trace.id : row.conversationId}
+              row={row}
+              freshIds={freshIds}
+              isLast={i === rows.length - 1}
+              onSelect={id => navigate(`/traces?focus=${id}`)}
+            />
+          ))}
         </div>
       )}
     </section>

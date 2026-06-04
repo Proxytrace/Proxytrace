@@ -103,13 +103,13 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     public async Task GetTokenUsage_DelegatesToCallStats()
     {
         var svc = Build(out _, out var callStats, out _);
-        var date = DateOnly.FromDateTime(DateTime.UtcNow);
-        callStats.GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
-            .Returns([new TokenUsageStat(date, Guid.NewGuid(), 1, 2)]);
+        var bucketStart = DateTimeOffset.UtcNow;
+        callStats.GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns([new TokenUsageStat(bucketStart, Guid.NewGuid(), 1, 2)]);
 
-        var result = await svc.GetTokenUsageAsync(new StatisticsFilter(), CancellationToken);
+        var result = await svc.GetTokenUsageAsync(new StatisticsFilter(), StatisticsBucket.Daily, CancellationToken);
 
         result.Should().ContainSingle();
-        await callStats.Received(1).GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>());
+        await callStats.Received(1).GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>());
     }
 }

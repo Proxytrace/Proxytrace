@@ -26,7 +26,7 @@ public record SummaryDto(
     double AvgLatencyMs,
     double? OverallPassRate);
 
-public record TokenUsageDto(DateOnly Date, Guid EndPointId, long InputTokens, long OutputTokens);
+public record TokenUsageDto(DateTimeOffset BucketStart, Guid EndPointId, long InputTokens, long OutputTokens);
 
 public record LatencyDto(Guid EndpointId, double P50Ms, double P95Ms, double P99Ms, double MinMs, double MaxMs, int SampleCount);
 
@@ -42,7 +42,7 @@ public record LiveTelemetryDto(
     double P95Ms,
     string ProxyVersion);
 
-public record AgentTokenUsageDto(DateOnly Date, Guid AgentId, long InputTokens, long OutputTokens);
+public record AgentTokenUsageDto(DateTimeOffset BucketStart, Guid AgentId, long InputTokens, long OutputTokens);
 
 public record DashboardTrendsDto(
     IReadOnlyList<double> Traces,

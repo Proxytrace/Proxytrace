@@ -71,7 +71,7 @@ a single unbroken line.
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `PROXYTRACE_LICENSE` | The license token (a JWT). Trimmed before use. Unset → Free tier. | _unset_ |
+| `PROXYTRACE_LICENSE` | The license token (a JWT). Trimmed before use. Takes precedence over the `Licensing:License` appsettings value. Unset (and no config value) → Free tier. | _unset_ |
 | `PROXYTRACE_LICENSE_SERVER_URL` | Override the license server base URL. **Debug builds only** — Release builds ignore this and always use the default. | `https://license.proxytrace.dev` |
 | `PROXYTRACE_LICENSE_PUBLIC_KEY` | Override the signature-verification public keys (comma-separated, base64). **Debug builds only** — Release builds use the keys baked into the binary. | _embedded keys_ |
 | `PROXYTRACE_LICENSE_CACHE_PATH` | Path to the offline license-status cache file. | `<LocalApplicationData>/proxytrace/license-cache.json` |
@@ -84,18 +84,28 @@ server URL and public keys are fixed at compile time.
 
 ### appsettings
 
-Two non-secret tuning values live in `Proxytrace.Api/appsettings.json` under the
-`Licensing` section:
+These values live in `Proxytrace.Api/appsettings.json` under the `Licensing` section:
 
 ```json
 {
   "Licensing": {
+    "License": "eyJ...",
+    "ServerCheckEnabled": true,
     "CheckIntervalHours": 24,
     "OfflineGracePeriodDays": 7
   }
 }
 ```
 
+- `License` — the license token (a JWT), as an alternative to the `PROXYTRACE_LICENSE`
+  environment variable. The environment variable **wins** when both are set. Intended mainly
+  for local debugging and testing — set it in `appsettings.local.json` (which is
+  git-ignored) rather than committing a token. Unset in both → Free tier.
+- `ServerCheckEnabled` — **Debug builds only.** Whether the background service contacts the
+  license server for periodic revocation/grace checks. When `false`, the startup license
+  snapshot is kept as-is and **no network calls** are made — useful so local dev does not need
+  the license server reachable. Defaults to `false` in Debug. **Release builds ignore this
+  setting entirely and always perform the server check.**
 - `CheckIntervalHours` — how often the running app re-validates the license against the
   license server. Default **24**.
 - `OfflineGracePeriodDays` — how long the app keeps operating on its last-known-good license

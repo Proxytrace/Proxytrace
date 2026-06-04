@@ -3,6 +3,7 @@
 
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
+import { firstUserMessage } from '../../../lib/trace';
 import type { AgentCallDto } from '../../../api/models';
 import { latencyBarPct } from '../tracesMeta';
 
@@ -20,12 +21,15 @@ export function LatencyBar({ ms }: { ms: number }) {
 
 // ── Individual cells ──────────────────────────────────────────────────────────
 
-export function TraceIdCell({ trace }: { trace: AgentCallDto }) {
+export function MessagePreviewCell({ trace }: { trace: AgentCallDto }) {
   const c = trace.agentId ? agentColor(trace.agentId) : modelColor(trace.model);
+  const preview = firstUserMessage(trace);
   return (
     <span className="flex items-center gap-2 min-w-0">
       <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
-      <span className="mono text-primary text-body-sm">{trace.id.slice(0, 8)}…{trace.id.slice(-4)}</span>
+      <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+        {preview ?? <span className="text-muted">—</span>}
+      </span>
     </span>
   );
 }

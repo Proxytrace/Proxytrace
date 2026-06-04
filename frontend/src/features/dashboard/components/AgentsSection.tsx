@@ -15,6 +15,7 @@ interface AgentsSectionProps {
 
 export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
   const navigate = useNavigate();
+  const visibleAgents = agents.filter(a => !a.isSystemAgent);
 
   return (
     <div data-testid="dashboard-agents-section" className="fade-up rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)] [animation-delay:200ms]">
@@ -22,7 +23,7 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
         <div className="min-w-0">
           <h3 className="text-h2 font-semibold">Agents</h3>
           <p className="text-body-sm text-muted mt-0.5 font-mono">
-            <span data-testid="dashboard-agents-count">{agents.length}</span> detected · tap to inspect
+            <span data-testid="dashboard-agents-count">{visibleAgents.length}</span> detected · tap to inspect
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -38,14 +39,14 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
         </div>
       </header>
       <div className="px-3 pb-3">
-        {agents.length === 0 ? (
+        {visibleAgents.length === 0 ? (
           <EmptyState
             title="No agents yet"
             description="Agents are detected automatically when you route traffic through the Proxytrace proxy."
           />
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            {agents.slice(0, 8).map(a => {
+            {visibleAgents.slice(0, 8).map(a => {
               const c = agentColor(a.id);
               const traces = agentCallCount(agentBreakdown ?? [], a.id);
               return (

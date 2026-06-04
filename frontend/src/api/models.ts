@@ -168,7 +168,7 @@ export interface LiveTelemetryDto {
   proxyVersion: string;
 }
 export interface AgentTokenUsageDto {
-  date: string;
+  bucketStart: string;
   agentId: string;
   inputTokens: number;
   outputTokens: number;
@@ -189,7 +189,7 @@ export interface LatencyStatDto {
   sampleCount: number;
 }
 export interface TokenUsageDto {
-  date: string;
+  bucketStart: string;
   endPointId: string;
   inputTokens: number;
   outputTokens: number;

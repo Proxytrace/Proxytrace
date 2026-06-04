@@ -1,7 +1,6 @@
 // Pure constants, label maps, and derivations for the Dashboard.
 // No JSX, no I/O — unit-tested in dashboardMeta.spec.ts.
 
-import type { StackedDatum } from '../../components/charts';
 import type {
   AgentBreakdownDto,
   AgentDto,
@@ -9,7 +8,7 @@ import type {
   ModelBreakdownDto,
   AgentTokenUsageDto,
 } from '../../api/models';
-import { agentColor, modelColor } from '../../lib/colors';
+import { modelColor } from '../../lib/colors';
 import { fmtTokens } from '../../lib/format';
 import type { RangeKey } from '../../lib/time-range';
 
@@ -53,11 +52,11 @@ export function computeLatencyStats(data: LatencyStatDto[]): LatencyStats | null
 
 // ── Token volume ─────────────────────────────────────────────────────────────
 
-/** Aggregate token usage by date into a sorted array of daily totals. */
-export function computeTokenVolume(data: { date: string; inputTokens: number; outputTokens: number }[]): number[] {
-  const byDate = new Map<string, number>();
-  for (const r of data) byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.inputTokens + r.outputTokens);
-  return [...byDate.entries()]
+/** Aggregate token usage by bucket into a sorted, chronological array of per-bucket totals. */
+export function computeTokenVolume(data: { bucketStart: string; inputTokens: number; outputTokens: number }[]): number[] {
+  const byBucket = new Map<string, number>();
+  for (const r of data) byBucket.set(r.bucketStart, (byBucket.get(r.bucketStart) ?? 0) + r.inputTokens + r.outputTokens);
+  return [...byBucket.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, v]) => v);
 }
@@ -92,38 +91,53 @@ export function computeLatencyHist(data: LatencyStatDto[]): number[] {
   return buckets;
 }
 
-// ── Token usage by agent (stacked bar) ──────────────────────────────────────
+// ── Token usage by agent (share) ────────────────────────────────────────────
 
-export interface TokenByAgent {
-  data: StackedDatum[];
-  agentIds: string[];
+export interface AgentTokenShare {
+  id: string;
+  name: string;
+  tokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  /** Fraction of the grand total (0–1). */
+  share: number;
 }
 
-/** Pivot per-agent token rows into a stacked bar dataset. */
-export function computeTokenByAgent(
-  rawData: AgentTokenUsageDto[],
-  agentNameById: Map<string, string>,
-): TokenByAgent {
-  if (rawData.length === 0) return { data: [], agentIds: [] };
+export interface TokenAgentShare {
+  agents: AgentTokenShare[];
+  total: number;
+}
 
-  const ids: string[] = [];
-  const byDate = new Map<string, Map<string, number>>();
+/**
+ * Aggregate per-agent token rows into totals sorted by usage (desc), excluding
+ * system agents. Powers the donut + legend on the dashboard.
+ */
+export function computeTokenAgentShare(rawData: AgentTokenUsageDto[], agents: AgentDto[]): TokenAgentShare {
+  const systemIds = new Set(agents.filter(a => a.isSystemAgent).map(a => a.id));
+  const nameById = new Map(agents.map(a => [a.id, a.name]));
+
+  const acc = new Map<string, { input: number; output: number }>();
   for (const r of rawData) {
-    if (!ids.includes(r.agentId)) ids.push(r.agentId);
-    const m = byDate.get(r.date) ?? new Map<string, number>();
-    m.set(r.agentId, (m.get(r.agentId) ?? 0) + r.inputTokens + r.outputTokens);
-    byDate.set(r.date, m);
+    if (systemIds.has(r.agentId)) continue;
+    const cur = acc.get(r.agentId) ?? { input: 0, output: 0 };
+    cur.input += r.inputTokens;
+    cur.output += r.outputTokens;
+    acc.set(r.agentId, cur);
   }
-  const dates = [...byDate.keys()].sort();
-  const data: StackedDatum[] = dates.map(d => ({
-    label: new Date(d).toLocaleDateString('en-US', { weekday: 'short' }),
-    segments: ids.map(id => ({
-      value: byDate.get(d)?.get(id) ?? 0,
-      color: agentColor(id),
-      label: agentNameById.get(id) ?? id.slice(0, 6),
-    })),
+
+  const list: AgentTokenShare[] = [...acc.entries()].map(([id, v]) => ({
+    id,
+    name: nameById.get(id) ?? id.slice(0, 6),
+    tokens: v.input + v.output,
+    inputTokens: v.input,
+    outputTokens: v.output,
+    share: 0,
   }));
-  return { data, agentIds: ids };
+  const total = list.reduce((n, a) => n + a.tokens, 0);
+  for (const a of list) a.share = total > 0 ? a.tokens / total : 0;
+  list.sort((a, b) => b.tokens - a.tokens);
+
+  return { agents: list, total };
 }
 
 // ── Agent name map ───────────────────────────────────────────────────────────

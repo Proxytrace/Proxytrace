@@ -29,8 +29,8 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 AgentBreakdown: [new AgentBreakdownStat(agentId, 7)],
                 Latency: [new LatencyStat(endpointId, 10, 20, 30, 1, 100, 50)],
                 ModelBreakdown: [new ModelBreakdownStat(endpointId, "gpt-4o", CallCount: 3, TotalInputTokens: null, TotalOutputTokens: null, AvgDurationMs: null)],
-                TokenUsage: [new TokenUsageStat(date, endpointId, InputTokens: 10, OutputTokens: 20)],
-                TokenUsageByAgent: [new AgentTokenUsageStat(date, agentId, InputTokens: 5, OutputTokens: 6)],
+                TokenUsage: [new TokenUsageStat(date.ToDateTime(TimeOnly.MinValue), endpointId, InputTokens: 10, OutputTokens: 20)],
+                TokenUsageByAgent: [new AgentTokenUsageStat(date.ToDateTime(TimeOnly.MinValue), agentId, InputTokens: 5, OutputTokens: 6)],
                 RecentTraces: [],
                 Agents: [],
                 AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>()));
