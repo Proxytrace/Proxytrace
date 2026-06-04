@@ -12,6 +12,7 @@ import {
   ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon,
 } from '../../../components/icons';
 import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
+import { CopyButton } from '../../../components/ui/CopyButton';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
 import { PromoteModal } from '../PromoteModal';
@@ -117,13 +118,11 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
       >
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
-          <button onClick={onClose} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
-            <ChevronRightIcon size={14} strokeWidth={2.5} />
-          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
               <span className="mono text-body-title font-semibold">{trace.id.slice(0, 18)}…</span>
+              <CopyButton text={trace.id} label="Copy trace ID" className="shrink-0" />
               <span
                 className={cn(
                   'inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono',

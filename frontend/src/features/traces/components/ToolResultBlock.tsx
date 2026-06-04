@@ -1,5 +1,7 @@
 import { Collapsible } from '../../../components/ui/Collapsible';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
+import { CopyButton } from '../../../components/ui/CopyButton';
+import { hoverRevealOverlayCls } from '../../../components/ui/classes';
 import type { MessageDto } from '../../../api/models';
 
 interface Props {
@@ -12,10 +14,10 @@ export function ToolResultBlock({ msg }: Props) {
   const sizeB = msg.content?.length ?? 0;
 
   return (
-    <div className="rounded-md overflow-hidden bg-[color-mix(in_srgb,var(--teal)_8%,transparent)] border border-[color-mix(in_srgb,var(--teal)_28%,transparent)]">
+    <div className="relative group rounded-md overflow-hidden bg-[color-mix(in_srgb,var(--teal)_8%,transparent)] border border-[color-mix(in_srgb,var(--teal)_28%,transparent)]">
+      <CopyButton text={msg.content} label="Copy result" className={hoverRevealOverlayCls} />
       <Collapsible
-        defaultOpen
-        headerClassName="px-3 py-[9px] text-body-sm font-mono"
+        headerClassName="pl-3 pr-9 py-[9px] text-body-sm font-mono"
         contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-body-sm leading-[1.55]"
         title={
           <span className="flex items-center gap-2 flex-1 text-secondary">

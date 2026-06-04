@@ -23,13 +23,16 @@ export function TraceMessagesTab({
           return [<ToolResultBlock key={`m${i}`} msg={msg} />];
         }
         const blocks: React.ReactElement[] = [];
-        if (msg.content?.trim()) blocks.push(<MessageBubble key={`m${i}`} msg={msg} />);
+        if (msg.content?.trim()) {
+          blocks.push(<MessageBubble key={`m${i}`} msg={msg} defaultOpen={msg.role !== 'system'} />);
+        }
         msg.toolRequests?.forEach(req => {
           blocks.push(
             <ToolMessageBubble
               key={`t${req.id}`}
               request={req}
               result={toolResultByCallId.get(req.id)}
+              defaultOpen={false}
               onJumpToDefinition={trace.agentId ? () => onJumpToDefinition(req.name) : undefined}
             />,
           );

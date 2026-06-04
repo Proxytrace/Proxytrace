@@ -35,6 +35,20 @@ Typical things you can do:
 - **Per page** lets you choose how many traces to show at once (20, 50, 100, or 200). The
   total trace count for the current filter is shown alongside the pager.
 
+### The trace detail panel
+
+Click a trace to open its detail panel. The header shows the trace ID with a **copy**
+button beside it that puts the full ID on your clipboard. The **Messages** tab lays out the
+conversation as a stack of expandable blocks:
+
+- **System messages** and **tool calls** start **collapsed** to keep long traces scannable —
+  click a block's header to expand it. User and assistant messages start expanded.
+- **Hover any message block** to reveal a **copy** button that puts that block's content on
+  your clipboard (the message text, or the tool call's name, arguments, and result).
+
+Close the panel by pressing `Esc` or clicking outside it. Use the arrow buttons (or the
+`←`/`→` keys) to step to the previous/next trace.
+
 ### Multi-turn conversations
 
 Calls that share a conversation are grouped into a single collapsible row. The group's

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { MessageDto } from '../../api/models';
 import { ChevronRightIcon } from '../icons';
+import { CopyButton } from './CopyButton';
+import { hoverRevealOverlayCls } from './classes';
 import { cn } from '../../lib/cn';
 
 type RoleKey = 'user' | 'assistant' | 'system';
@@ -64,13 +66,14 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
 
   return (
     <div
-      className={cn('rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border)}
+      className={cn('relative group rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border)}
     >
+      <CopyButton text={content} label="Copy message" className={hoverRevealOverlayCls} />
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        className={cn('w-full flex items-center gap-2 px-3 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100', role.hover)}
+        className={cn('w-full flex items-center gap-2 pl-3 pr-9 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100', role.hover)}
       >
         <span
           aria-hidden
