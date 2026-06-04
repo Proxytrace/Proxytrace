@@ -125,17 +125,22 @@ describe('tracey read tools', () => {
 describe('tracey write tools confirmation gating', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('start_test_run fires the run when confirmed', async () => {
+  it('start_test_run fires the run and stores the group, returning a compact summary', async () => {
     agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A', endpointId: 'e1', endpointName: 'gpt' });
     testSuitesApi.get.mockResolvedValue({ id: 's1', name: 'Suite' });
-    testRunGroupsApi.create.mockResolvedValue({ id: 'g1' });
+    const group = { id: 'g1', suiteName: 'Suite', agentName: 'A', status: 'Pending', runs: [{ totalCases: 3 }, { totalCases: 2 }] };
+    testRunGroupsApi.create.mockResolvedValue(group);
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
-    const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 's1', agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 's1', agentId: 'a1' }, ctx) as {
+      artifactRef: string; kind: string; summary: { id: string; status: string; totalCases: number };
+    };
 
     expect(ctx.confirm).toHaveBeenCalledOnce();
     expect(testRunGroupsApi.create).toHaveBeenCalledWith('s1', ['e1']);
-    expect(result).toEqual({ id: 'g1' });
+    expect(result.kind).toBe('test-run-group');
+    expect(result.summary).toEqual({ id: 'g1', suiteName: 'Suite', agentName: 'A', status: 'Pending', totalCases: 5 });
+    expect(await getArtifact(result.artifactRef)).toEqual(group);
   });
 
   it('start_test_run cancels without calling the API when declined', async () => {

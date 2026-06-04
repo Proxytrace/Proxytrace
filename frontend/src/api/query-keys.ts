@@ -41,6 +41,8 @@ export const QUERY_KEYS = {
   providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
 
   testRunGroups: (agentFilter?: string, projectId?: string) => [TEST_RUN_GROUPS, agentFilter, projectId ?? null] as const,
+  /** A single test-run group — used by Tracey's live run-progress card. */
+  testRunGroup: (id: string) => [TEST_RUN_GROUPS, 'detail', id] as const,
   /** Prefix matching every test-run-groups query — use for invalidation. */
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,

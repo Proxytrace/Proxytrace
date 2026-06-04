@@ -43,7 +43,10 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     },
   }),
   start_test_run: tool({
-    description: 'Start a test run of a suite against an agent. Requires user confirmation.',
+    description:
+      'Start a test run of a suite against an agent. Requires user confirmation. On start the ' +
+      'user sees a live progress card that streams completion + pass/fail as cases finish; you ' +
+      'get back only a compact summary (group id, status, case count) — do not poll for progress.',
     parameters: z.object({
       suiteId: z.string().describe('The id of the test suite to run.'),
       agentId: z.string().describe('The id of the agent to run the suite against.'),
@@ -54,7 +57,14 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       const suite = await testSuitesApi.get(suiteId);
       const ok = await c.confirm(`Run suite "${suite.name}" against agent "${agent.name}" (${agent.endpointName})?`);
       if (!ok) return CANCELLED;
-      return testRunGroupsApi.create(suiteId, [agent.endpointId]);
+      const group = await testRunGroupsApi.create(suiteId, [agent.endpointId]);
+      return store('test-run-group', group, {
+        id: group.id,
+        suiteName: group.suiteName,
+        agentName: group.agentName,
+        status: group.status,
+        totalCases: group.runs.reduce((sum, run) => sum + run.totalCases, 0),
+      });
     },
   }),
 });

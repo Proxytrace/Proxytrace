@@ -100,12 +100,17 @@ These actions change state and are therefore **confirmation-gated**:
 
 | Action | What it does |
 |--------|--------------|
-| **Start a test run** | Runs a suite against an agent's endpoint. |
+| **Start a test run** | Runs a suite against an agent's endpoint, then shows a **live progress card** (see below). |
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
 | **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
 By default Tracey shows a **Confirm / Cancel** card summarizing the action before anything
 happens. Nothing is executed until you confirm.
+
+Once you confirm a **test run**, the chat shows a **live run-progress card**: a progress bar that
+fills as cases complete, a running case count, and a pass-rate badge — all streaming in real time
+(*queued → running → completed*). When the run finishes the card settles on the final pass/fail
+tally; a **View run** link opens the full run page at any point.
 
 ### Auto-approve
 
