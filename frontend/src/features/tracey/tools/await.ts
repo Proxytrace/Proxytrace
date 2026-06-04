@@ -125,6 +125,9 @@ export const createAwaitTools: ToolFactory = () => ({
         now: () => Date.now(),
       };
       const results = await Promise.all(handles.map((handle) => awaitOne(handle, opts)));
+      // Returned inline (not via the artifact `store`): the aggregate is already compact and there
+      // is no `await_actions` card to resolve a reference — it falls back to ToolCallCard. Storing
+      // it would only add a blob nothing reads. The per-item live cards already visualize progress.
       return { results, anyTimedOut: results.some((r) => r.timedOut) };
     },
   }),

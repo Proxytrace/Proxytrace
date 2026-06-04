@@ -64,9 +64,13 @@ confirm: false   // read-only wait, no mutation
 ```
 
 `execute`: `Promise.all` over the handles; each runs a poll loop until its kind's `isTerminal`
-predicate holds or the shared cap is hit, then summarizes. Returns one aggregate, stored via the
-artifact `store()` (compact summary to the model, full payload to any future card). Per-handle
+predicate holds or the shared cap is hit, then summarizes. Returns one aggregate. Per-handle
 result carries `timedOut: boolean`.
+
+> **Implementation note:** the aggregate is returned **inline**, not through the artifact `store()`.
+> The aggregate is already compact and there is no `await_actions` card to resolve a stored
+> reference (it falls back to `ToolCallCard`), so storing it would only add a blob nothing reads.
+> (The per-item live cards already visualize progress.)
 
 ### Awaitable registry
 
