@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Proxytrace is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
+## Workflow
+
+After completing any implementation, you MUST always do a round of critical review of
+the changes using the `review` skill before considering the work done.
+
 ## User Manual
 
 The user & operator manual is a VitePress project in [`manual/`](manual/) (markdown source,
