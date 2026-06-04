@@ -34,3 +34,17 @@ evaluators that express what "correct" means for the suite. See
 
 Once a suite has cases and evaluators, run it against an
 [agent](/guide/agents) version to produce a [test run](/guide/running-tests).
+
+## The suites overview
+
+Each suite card surfaces its latest run data at a glance:
+
+- **Pass rate** — the pass rate of the most recent run, with the change versus the
+  previous run and a sparkline of the trend across past runs.
+- **Test cases** — case count and total number of runs executed.
+- **Last run** — when the suite last ran. Suites that have never run are flagged
+  *No runs yet*.
+
+Use the **Agent** filter at the top to narrow the list to a single agent. The filter only
+lists agents that actually own a suite, so it stays usable no matter how many agents the
+project has.

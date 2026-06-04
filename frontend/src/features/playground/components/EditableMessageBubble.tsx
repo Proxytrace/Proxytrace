@@ -5,7 +5,7 @@ import {
   GripVerticalIcon,
   TrashIcon,
 } from '../../../components/icons';
-import { JsonBlock } from '../../../components/ui/JsonBlock';
+import { ToolCallBlock } from '../../../components/conversation/ToolCallBlock';
 import { formInputCls } from '../../../components/ui/classes';
 import type { PlaygroundMessage, PlaygroundRole } from '../state/types';
 
@@ -191,20 +191,7 @@ export function EditableMessageBubble(props: Props) {
             {message.toolRequests && message.toolRequests.length > 0 && (
               <div className="mt-[10px] flex flex-col gap-[6px]">
                 {message.toolRequests.map(tr => (
-                  <div
-                    key={tr.id}
-                    className="rounded-md p-[10px] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle"
-                  >
-                    <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
-                      <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success"
-                      >
-                        tool call
-                      </span>
-                      <span className="font-bold text-success">{tr.name}</span>
-                      <span className="text-muted text-[10px]">{tr.id.slice(0, 12)}</span>
-                    </div>
-                    <JsonBlock value={tr.arguments} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
-                  </div>
+                  <ToolCallBlock key={tr.id} name={tr.name} id={tr.id} arguments={tr.arguments} />
                 ))}
               </div>
             )}

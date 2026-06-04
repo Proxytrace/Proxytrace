@@ -93,7 +93,6 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const invocations = allMessages.flatMap(m =>
     (m.toolRequests ?? []).map(req => ({ req, result: toolResultByCallId.get(req.id) })),
   );
-  const absorbedCallIds = new Set(invocations.map(i => i.req.id));
 
   const jumpToDefinition = (toolName: string) => {
     if (!trace.agentId) return;
@@ -223,13 +222,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0"
         >
           {tab === 'Messages' && (
-            <TraceMessagesTab
-              trace={trace}
-              allMessages={allMessages}
-              toolResultByCallId={toolResultByCallId}
-              absorbedCallIds={absorbedCallIds}
-              onJumpToDefinition={jumpToDefinition}
-            />
+            <TraceMessagesTab trace={trace} onJumpToDefinition={jumpToDefinition} />
           )}
           {tab === 'Tools' && (
             invocations.length === 0

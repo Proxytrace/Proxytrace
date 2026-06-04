@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { MessageDto } from '../../api/models';
 import { ChevronRightIcon } from '../icons';
 import { CopyButton } from './CopyButton';
 import { hoverRevealOverlayCls } from './classes';
@@ -48,11 +47,13 @@ function roleKey(role: string): RoleKey {
 }
 
 interface Props {
-  msg: MessageDto;
+  msg: { role: string; content: string };
   defaultOpen?: boolean;
+  /** Overrides the role-derived header label (e.g. "Expected"). */
+  label?: string;
 }
 
-export function MessageBubble({ msg, defaultOpen = true }: Props) {
+export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
   const role = ROLES[roleKey(msg.role)];
   const [open, setOpen] = useState(defaultOpen);
 
@@ -83,7 +84,7 @@ export function MessageBubble({ msg, defaultOpen = true }: Props) {
         </span>
         <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
         <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
-          {role.label}
+          {label ?? role.label}
         </span>
         {!open && (
           <span className="text-[12px] truncate min-w-0 text-secondary">

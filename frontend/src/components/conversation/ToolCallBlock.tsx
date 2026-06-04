@@ -1,0 +1,29 @@
+import { JsonBlock } from '../ui/JsonBlock';
+
+interface Props {
+  name: string;
+  /** Tool-call id; the first 12 chars are shown as a subtle reference. */
+  id?: string;
+  /** Raw arguments (JSON string or already-parsed value). */
+  arguments: unknown;
+}
+
+/**
+ * The shared presentation for a single tool call (name + arguments), success-tinted to
+ * match the tool styling used across the app. Unlike `ToolMessageBubble` this does not
+ * pair a result — use it where a call is shown on its own (e.g. the playground editor).
+ */
+export function ToolCallBlock({ name, id, arguments: args }: Props) {
+  return (
+    <div className="rounded-md p-[10px] border border-[color-mix(in_srgb,var(--success)_25%,transparent)] bg-success-subtle">
+      <div className="flex items-center gap-[8px] text-body-sm mono mb-[6px]">
+        <span className="inline-flex items-center px-[6px] py-[1px] rounded-full text-caption font-bold bg-[color-mix(in_srgb,var(--success)_18%,transparent)] text-success">
+          tool call
+        </span>
+        <span className="font-bold text-success">{name}</span>
+        {id && <span className="text-muted text-[10px]">{id.slice(0, 12)}</span>}
+      </div>
+      <JsonBlock value={args} hideCopy transparent maxHeight={180} className="!px-0 !py-0" />
+    </div>
+  );
+}

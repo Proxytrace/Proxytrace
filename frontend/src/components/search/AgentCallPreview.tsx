@@ -2,7 +2,8 @@ import type { SearchHit } from '../../api/search';
 import { useAgentCallPreview } from './hooks/useSearchPreviewQuery';
 import { MetaGrid, PreviewLoading } from './SearchPreviewPrimitives';
 import { GenericBody } from './SearchGenericBody';
-import { Conversation } from './SearchPreviewLayout';
+import { ConversationView } from '../conversation/ConversationView';
+import { fromAgentCall } from '../conversation/adapters';
 
 interface Props {
   id: string;
@@ -15,11 +16,6 @@ export function AgentCallPreview({ id, hit }: Props) {
   if (q.isError || !q.data) return <GenericBody hit={hit} />;
 
   const call = q.data;
-  // Defensively filter nullish entries in case the response field is absent at runtime
-  const messages = [
-    ...call.request,
-    call.response,
-  ].filter(m => m != null);
   return (
     <>
       <MetaGrid entries={[
@@ -28,7 +24,7 @@ export function AgentCallPreview({ id, hit }: Props) {
         ['Status', String(call.httpStatus)],
         ['Tokens', `${call.inputTokens} in · ${call.outputTokens} out`],
       ]} />
-      <Conversation messages={messages.map(m => ({ role: m.role, content: m.content }))} />
+      <ConversationView messages={fromAgentCall(call)} />
     </>
   );
 }

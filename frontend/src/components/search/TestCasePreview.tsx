@@ -3,7 +3,8 @@ import type { TestSuiteMessageDto } from '../../api/models';
 import { useTestCasePreview } from './hooks/useSearchPreviewQuery';
 import { MetaGrid, PreviewLoading } from './SearchPreviewPrimitives';
 import { GenericBody } from './SearchGenericBody';
-import { Conversation } from './SearchPreviewLayout';
+import { ConversationView } from '../conversation/ConversationView';
+import { fromSimple } from '../conversation/adapters';
 
 interface Props {
   id: string;
@@ -29,7 +30,7 @@ export function TestCasePreview({ id, hit }: Props) {
         ['Suite', meta.suiteName ?? '—'],
         ['Agent', meta.agentName ?? '—'],
       ]} />
-      <Conversation messages={msgs} />
+      <ConversationView messages={fromSimple(msgs)} />
     </>
   );
 }

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { MessageDto, ToolRequestDto } from '../../api/models';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
 import { JsonBlock } from './JsonBlock';
 import { CopyButton } from './CopyButton';
@@ -24,8 +23,8 @@ function argsPreview(args: unknown): string {
 }
 
 interface Props {
-  request: ToolRequestDto;
-  result?: MessageDto;
+  request: { id: string; name: string; arguments: string };
+  result?: { content: string };
   onJumpToDefinition?: () => void;
   defaultOpen?: boolean;
 }

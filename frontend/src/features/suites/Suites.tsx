@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
@@ -69,10 +70,24 @@ export default function Suites() {
     });
   }
 
-  const agentList = [
-    { id: '', name: 'All', count: suites.length },
-    ...agents.map(a => ({ id: a.id, name: a.name, count: suites.filter(s => s.agentId === a.id).length })),
-  ];
+  // Only agents that actually own a suite are offered as filter options — a flat
+  // dropdown scales to many agents where wrapping pill tabs did not.
+  const agentFilterOptions = useMemo<FilterDropdownOption[]>(() => {
+    const byAgent = new Map<string, { name: string; count: number }>();
+    for (const s of suites) {
+      const existing = byAgent.get(s.agentId);
+      if (existing) existing.count += 1;
+      else byAgent.set(s.agentId, { name: s.agentName, count: 1 });
+    }
+    return [
+      { key: '', label: `All agents (${suites.length})` },
+      ...Array.from(byAgent, ([id, { name, count }]) => ({
+        key: id,
+        label: `${name} (${count})`,
+        accent: agentColor(id),
+      })),
+    ];
+  }, [suites]);
 
   const canAdvanceCreate =
     ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
@@ -138,43 +153,17 @@ export default function Suites() {
         ))}
       </div>
 
-      {/* Agent filter tabs */}
-      <div className="fade-up flex items-center gap-6 [animation-delay:60ms]">
-        <div className="flex gap-1 p-1 bg-card rounded-[11px] shadow-[var(--shadow-pill)] flex-wrap">
-          {agentList.map(a => {
-            const isActive = agentFilter === a.id;
-            const c = a.id ? agentColor(a.id) : undefined;
-            return (
-              <button
-                key={a.id}
-                onClick={() => setAgentFilter(a.id)}
-                className="px-[14px] py-[7px] rounded-lg text-[12.5px] font-medium inline-flex items-center gap-[7px]"
-                style={{
-                  background: isActive ? 'var(--bg-card-2)' : 'transparent',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  boxShadow: isActive ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.25)' : 'none',
-                }}
-              >
-                {c && (
-                  <span
-                    className="w-[7px] h-[7px] rounded-[2px]"
-                    style={{ background: c, opacity: isActive ? 1 : 0.5 }}
-                  />
-                )}
-                {a.name}
-                <span
-                  className="px-[6px] py-[1px] rounded-full text-caption font-mono font-semibold"
-                  style={{
-                    background: isActive ? 'var(--accent-subtle)' : 'var(--bg-card)',
-                    color: isActive ? 'var(--accent-hover)' : 'var(--text-muted)',
-                  }}
-                >
-                  {a.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Agent filter */}
+      <div className="fade-up flex items-center gap-4 [animation-delay:60ms]">
+        <FilterDropdown
+          label="Agent"
+          value={agentFilter}
+          options={agentFilterOptions}
+          onChange={setAgentFilter}
+          active={!!agentFilter}
+          accent={agentFilter ? agentColor(agentFilter) : undefined}
+          width={240}
+        />
         <span className="text-body text-muted">
           {visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}
         </span>
