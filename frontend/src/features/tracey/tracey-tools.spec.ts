@@ -307,7 +307,7 @@ describe('tracey submit_optimization_theory tool', () => {
       agentId: 'a1', suiteId: 's1', priority: Priority.High, rationale: 'why',
       source: TheorySource.TraceyAi, details,
     });
-    expect(result).toEqual({ id: 'th1', status: 'Proposed' });
+    expect(result).toEqual({ id: 'th1', status: 'Proposed', awaitable: { kind: 'theory', id: 'th1' } });
   });
 
   it('cancels without submitting when declined', async () => {

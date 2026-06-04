@@ -103,7 +103,8 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         );
         if (!ok) return CANCELLED;
         try {
-          return await theoriesApi.submit({ agentId, suiteId, priority, rationale, source: TheorySource.TraceyAi, details });
+          const theory = await theoriesApi.submit({ agentId, suiteId, priority, rationale, source: TheorySource.TraceyAi, details });
+          return { ...theory, awaitable: { kind: 'theory', id: theory.id } };
         } catch (error) {
           const status = (error as { status?: number }).status;
           if (status === 409) return { outcome: 'duplicate', message: 'An identical theory or proposal already exists for this agent.' };
