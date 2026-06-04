@@ -12,6 +12,7 @@ import { Priority, ProposalStatus, TheorySource } from '../../api/models';
 import { searchDocs } from './knowledge/search-docs';
 import { DOCS_INDEX } from './knowledge/docs-index.generated';
 import { getSkill, listSkills } from './skills/registry';
+import { storeArtifact } from './tracey-artifact-store';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
 const theoryDetailsSchema = z.discriminatedUnion('kind', [
@@ -41,6 +42,11 @@ const theoryDetailsSchema = z.discriminatedUnion('kind', [
  */
 export interface TraceyToolContext {
   projectId?: string;
+  /**
+   * `${userKey}:${projectKey}` scope under which large tool payloads are stored in the artifact
+   * store, so a thread reset can wipe exactly this user+project's blobs.
+   */
+  artifactScope: string;
   navigate: (path: string) => void;
   /** Resolves `true` to proceed with a write, `false` to cancel. */
   confirm: (summary: string) => Promise<boolean>;
@@ -75,6 +81,12 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
 
   const tool = <TArgs>(t: TraceyTool<TArgs>): TraceyTool =>
     t as unknown as TraceyTool;
+
+  // Stash a large payload in the browser artifact store and hand the model only a compact
+  // reference + digest. The inline tool-UI card resolves the reference back to the full data, so
+  // the rich result reaches the user without ever entering the model context.
+  const store = <S>(kind: string, full: unknown, summary: S) =>
+    storeArtifact(ctx.artifactScope, kind, full, summary);
 
   return {
     navigate: tool({
@@ -125,69 +137,159 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
 
     list_agents: tool({
-      description: 'List the agents in the current project.',
+      description:
+        'List the agents in the current project. Returns a compact index (each agent\'s id + name) ' +
+        'plus a reference; the full list is rendered to the user as a card. To inspect one agent, ' +
+        'call get_agent with its id.',
       parameters: empty,
       confirm: false,
-      execute: async () => (await agentsApi.list({ projectId })).items,
+      execute: async () => {
+        const items = (await agentsApi.list({ projectId })).items;
+        return store('agent-list', items, {
+          count: items.length,
+          items: items.map((a) => ({ id: a.id, name: a.name })),
+        });
+      },
     }),
     get_agent: tool({
-      description: 'Get a single agent by id.',
+      description:
+        'Get a single agent by id. Returns a curated summary (name, endpoint, tool count, system ' +
+        'prompt preview) plus a reference; the full agent is rendered to the user as a card.',
       parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch.') }),
       confirm: false,
-      execute: async ({ agentId }) => agentsApi.get(agentId),
+      execute: async ({ agentId }) => {
+        const agent = await agentsApi.get(agentId);
+        return store('agent', agent, {
+          id: agent.id,
+          name: agent.name,
+          endpointName: agent.endpointName,
+          toolCount: agent.tools.length,
+          systemPromptPreview: agent.systemMessage.slice(0, 200),
+        });
+      },
     }),
 
     list_suites: tool({
-      description: 'List the test suites in the current project.',
+      description:
+        'List the test suites in the current project. Returns a compact index (id + name) plus a ' +
+        'reference; the full list is rendered to the user. To inspect one suite, call get_suite.',
       parameters: empty,
       confirm: false,
-      execute: async () => (await testSuitesApi.list({ projectId })).items,
+      execute: async () => {
+        const items = (await testSuitesApi.list({ projectId })).items;
+        return store('suite-list', items, {
+          count: items.length,
+          items: items.map((s) => ({ id: s.id, name: s.name })),
+        });
+      },
     }),
     get_suite: tool({
-      description: 'Get a single test suite by id.',
+      description:
+        'Get a single test suite by id. Returns a curated summary (name, case count, pass rate) ' +
+        'plus a reference; the full suite is rendered to the user as a card.',
       parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
-      execute: async ({ suiteId }) => testSuitesApi.get(suiteId),
+      execute: async ({ suiteId }) => {
+        const suite = await testSuitesApi.get(suiteId);
+        return store('suite', suite, {
+          id: suite.id,
+          name: suite.name,
+          caseCount: suite.testCases.length,
+          passRate: suite.passRate,
+        });
+      },
     }),
 
     list_runs: tool({
-      description: 'List recent test runs.',
+      description:
+        'List recent test runs. Returns a compact index (id, suite, agent, status, pass rate) plus ' +
+        'a reference; the full list is rendered to the user. To inspect one run, call get_run.',
       parameters: empty,
       confirm: false,
-      execute: async () => (await testRunsApi.list({})).items,
+      execute: async () => {
+        const items = (await testRunsApi.list({})).items;
+        return store('run-list', items, {
+          count: items.length,
+          items: items.map((r) => ({
+            id: r.id, suiteName: r.suiteName, agentName: r.agentName, status: r.status, passRate: r.passRate,
+          })),
+        });
+      },
     }),
     get_run: tool({
-      description: 'Get a single test run by id.',
+      description:
+        'Get a single test run by id. Returns a curated summary (suite, agent, status, pass/fail ' +
+        'counts) plus a reference; the full run is rendered to the user as a card.',
       parameters: z.object({ runId: z.string().describe('The id of the test run to fetch.') }),
       confirm: false,
-      execute: async ({ runId }) => testRunsApi.get(runId),
+      execute: async ({ runId }) => {
+        const run = await testRunsApi.get(runId);
+        return store('run', run, {
+          id: run.id,
+          suiteName: run.suiteName,
+          agentName: run.agentName,
+          status: run.status,
+          passRate: run.passRate,
+          passedCases: run.passedCases,
+          failedCases: run.failedCases,
+          totalCases: run.totalCases,
+        });
+      },
     }),
 
     list_proposals: tool({
-      description: 'List optimization proposals.',
+      description:
+        'List optimization proposals. Returns a compact index (id, kind, status, priority, agent) ' +
+        'plus a reference; the full list is rendered to the user. To inspect one, call get_proposal.',
       parameters: empty,
       confirm: false,
-      execute: async () => proposalsApi.getAll({ projectId }),
+      execute: async () => {
+        const items = await proposalsApi.getAll({ projectId });
+        return store('proposal-list', items, {
+          count: items.length,
+          items: items.map((p) => ({
+            id: p.id, kind: p.kind, status: p.status, priority: p.priority, agentName: p.agentName,
+          })),
+        });
+      },
     }),
     get_proposal: tool({
-      description: 'Get a single optimization proposal by id.',
+      description:
+        'Get a single optimization proposal by id. Returns a curated summary (kind, status, ' +
+        'priority, expected pass-rate delta) plus a reference; the full proposal is rendered to the user.',
       parameters: z.object({ proposalId: z.string().describe('The id of the optimization proposal to fetch.') }),
       confirm: false,
       // The proposals API has no single-get; resolve from the list.
       execute: async ({ proposalId }) => {
         const all = await proposalsApi.getAll({ projectId });
-        return all.find(p => p.id === proposalId) ?? { notFound: proposalId };
+        const proposal = all.find(p => p.id === proposalId);
+        if (!proposal) return { notFound: proposalId };
+        return store('proposal', proposal, {
+          id: proposal.id,
+          kind: proposal.kind,
+          status: proposal.status,
+          priority: proposal.priority,
+          agentName: proposal.agentName,
+          expectedPassRateDelta: proposal.expectedPassRateDelta,
+        });
       },
     }),
 
     get_dashboard_stats: tool({
-      description: 'Get aggregate dashboard statistics for the current project.',
+      description:
+        'Get aggregate dashboard statistics for the current project. Returns the headline summary ' +
+        'plus a reference; the full dashboard is rendered to the user as a card.',
       parameters: empty,
       confirm: false,
-      execute: async () => statisticsApi.dashboard({ projectId }),
+      execute: async () => {
+        const view = await statisticsApi.dashboard({ projectId });
+        return store('dashboard-stats', view, { summary: view.summary });
+      },
     }),
     get_agent_stats: tool({
-      description: 'Get statistics for a single agent (token usage, costs, latencies) over the last 30 days.',
+      description:
+        'Get statistics for a single agent (token usage, costs, latencies) over the last 30 days. ' +
+        'Returns the headline summary plus a reference; the full stats are rendered to the user as a card.',
       parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch statistics for.') }),
       confirm: false,
       execute: async ({ agentId }) => {
@@ -198,7 +300,8 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
           to: to.toISOString(),
           bucket: 'daily',
         });
-        return { summary: overview.summary, counts: overview.counts };
+        const full = { summary: overview.summary, counts: overview.counts };
+        return store('agent-stats', full, { summary: overview.summary });
       },
     }),
 
@@ -265,22 +368,42 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
     }),
 
     get_provider: tool({
-      description: 'Get a single model provider by id.',
+      description:
+        'Get a single model provider by id. Returns a curated summary (name, kind) plus a ' +
+        'reference; the full provider is rendered to the user as a card.',
       parameters: z.object({ providerId: z.string().describe('The id of the provider to fetch.') }),
       confirm: false,
-      execute: async ({ providerId }) => providersApi.get(providerId),
+      execute: async ({ providerId }) => {
+        const provider = await providersApi.get(providerId);
+        return store('provider', provider, { id: provider.id, name: provider.name, kind: provider.kind });
+      },
     }),
     get_trace: tool({
       description:
-        'Get a single captured trace (agent call) by id, with its model, status, token usage, latency and cost.',
+        'Get a single captured trace (agent call) by id. Returns a curated summary (model, status, ' +
+        'token usage, latency, cost) plus a reference; the full trace is rendered to the user as a card.',
       parameters: z.object({ traceId: z.string().describe('The id of the trace / agent call to fetch.') }),
       confirm: false,
-      execute: async ({ traceId }) => agentCallsApi.get(traceId),
+      execute: async ({ traceId }) => {
+        const call = await agentCallsApi.get(traceId);
+        return store('trace', call, {
+          id: call.id,
+          model: call.model,
+          provider: call.provider,
+          httpStatus: call.httpStatus,
+          inputTokens: call.inputTokens,
+          outputTokens: call.outputTokens,
+          durationMs: call.durationMs,
+          costEur: call.costEur,
+        });
+      },
     }),
 
     show_chart: tool({
       description:
-        'Render a chart inline in the chat to visualize data (e.g. token usage, pass rates over time). Prefer this over dumping numbers in chat.',
+        'Render a chart inline in the chat to visualize data (e.g. token usage, pass rates over time). ' +
+        'Prefer this over dumping numbers in chat. The chart is rendered to the user; you receive only ' +
+        'a reference back, so you do not need to restate the data.',
       parameters: z.object({
         title: z.string().describe('Heading shown above the chart.'),
         type: z.enum(['bar', 'line', 'area']).describe('The chart style to render.'),
@@ -291,10 +414,12 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
       }),
       confirm: false,
       execute: async ({ title, type, points }) =>
-        ({ kind: 'chart', title, chartType: type, points }),
+        store('chart', { kind: 'chart', title, chartType: type, points }, { kind: 'chart', title }),
     }),
     show_table: tool({
-      description: 'Render a table inline in the chat. Use for tabular comparisons.',
+      description:
+        'Render a table inline in the chat. Use for tabular comparisons. The table is rendered to the ' +
+        'user; you receive only a reference back.',
       parameters: z.object({
         title: z.string().describe('Heading shown above the table.'),
         columns: z.array(z.string()).describe('Column header labels, left to right.'),
@@ -302,18 +427,21 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
           .describe('Table rows; each row is an array of cells aligned to "columns".'),
       }),
       confirm: false,
-      execute: async ({ title, columns, rows }) => ({ kind: 'table', title, columns, rows }),
+      execute: async ({ title, columns, rows }) =>
+        store('table', { kind: 'table', title, columns, rows }, { kind: 'table', title }),
     }),
     show_text: tool({
       description:
-        'Render a longer text block (markdown, JSON, or code) inline in the chat as a titled card.',
+        'Render a longer text block (markdown, JSON, or code) inline in the chat as a titled card. ' +
+        'The block is rendered to the user; you receive only a reference back.',
       parameters: z.object({
         title: z.string().describe('Heading shown above the text.'),
         format: z.enum(['markdown', 'json', 'code']).describe('How to render the content.'),
         content: z.string().describe('The full text body to render.'),
       }),
       confirm: false,
-      execute: async ({ title, format, content }) => ({ kind: 'text', title, format, content }),
+      execute: async ({ title, format, content }) =>
+        store('text', { kind: 'text', title, format, content }, { kind: 'text', title }),
     }),
 
     ask_questions: tool({

@@ -170,8 +170,9 @@ queue is full, Tracey tells you instead of running it again.
 ## Clearing the conversation
 
 The controls below the message box include a **New conversation** icon (next to the **send**
-button) — use it to start fresh. This wipes the locally stored thread for the current project
-and returns Tracey to her opening view.
+button) — use it to start fresh. This wipes the locally stored thread for the current project —
+along with any cached result data Tracey kept in your browser for that project — and returns
+Tracey to her opening view.
 
 ## Where Tracey's traces appear
 

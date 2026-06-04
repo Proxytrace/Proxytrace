@@ -4,12 +4,11 @@ import { Pill } from '../../../../components/ui/Pill';
 import { providerColor } from '../../../../lib/colors';
 import type { ProviderDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_provider` tool result. */
 export const ProviderCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const provider = result as ProviderDto | undefined;
+  const { state, data: provider } = useArtifactResult<ProviderDto>(result, status, isError);
   return (
     <EntityCardLink
       state={state}

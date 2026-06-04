@@ -7,12 +7,12 @@ import type { TestRunDto } from '../../../../api/models';
 import { ListCard, LIST_CARD_MAX } from './ListCard';
 import { ListCardRow } from './ListCardRow';
 import { RUN_STATUS_VARIANT } from './badge-variants';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_runs` tool result. */
 export const RunListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const runs = Array.isArray(result) ? (result as TestRunDto[]) : [];
+  const { state, data } = useArtifactResult<TestRunDto[]>(result, status, isError);
+  const runs = data ?? [];
   return (
     <ListCard
       state={state}

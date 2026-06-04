@@ -18,6 +18,7 @@ import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
 import { clearThread, loadThread, saveThread } from './tracey-storage';
+import { clearArtifacts } from './tracey-artifact-store';
 
 export interface PendingConfirmation {
   summary: string;
@@ -83,6 +84,9 @@ export function useTraceyChat(): TraceyChat {
   const projectId = currentProject?.id;
   const userKey = currentUser?.email ?? 'anon';
   const projectKey = projectId ?? 'none';
+  // Scope under which Tracey's large tool payloads are stored, so a thread reset wipes exactly
+  // this user+project's artifacts (see tracey-artifact-store).
+  const artifactScope = `${userKey}:${projectKey}`;
 
   const [autoApprove, setAutoApprove] = useState(false);
   const autoApproveRef = useRef(autoApprove);
@@ -130,8 +134,8 @@ export function useTraceyChat(): TraceyChat {
   });
 
   const toolContext = useMemo<TraceyToolContext>(
-    () => ({ projectId, navigate, confirm }),
-    [projectId, navigate, confirm],
+    () => ({ projectId, artifactScope, navigate, confirm }),
+    [projectId, artifactScope, navigate, confirm],
   );
 
   // Swap in the real same-origin transport whenever the session (or tool context) changes.
@@ -167,8 +171,9 @@ export function useTraceyChat(): TraceyChat {
 
   const clear = useCallback(() => {
     clearThread(userKey, projectKey);
+    void clearArtifacts(artifactScope);
     runtime.threads.switchToNewThread();
-  }, [runtime, userKey, projectKey]);
+  }, [runtime, userKey, projectKey, artifactScope]);
 
   const status: TraceyChat['status'] = !projectId || !traceyAvailable
     ? 'no-project'

@@ -5,7 +5,7 @@ import type { AgentEntityCountsDto, AgentTimeSummaryDto } from '../../../../api/
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 interface AgentStatsResult {
   summary: AgentTimeSummaryDto;
@@ -14,8 +14,8 @@ interface AgentStatsResult {
 
 /** Inline renderer for the `get_agent_stats` tool result (30-day window). */
 export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  if (state !== 'ready') {
+  const { state, data } = useArtifactResult<AgentStatsResult>(result, status, isError);
+  if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame
         state={state}
@@ -25,7 +25,7 @@ export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, s
       />
     );
   }
-  const { summary, counts } = result as AgentStatsResult;
+  const { summary, counts } = data;
   const agentId = (args as { agentId?: string }).agentId;
   return (
     <ToolUIFrame

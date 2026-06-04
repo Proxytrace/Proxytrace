@@ -5,12 +5,12 @@ import type { DashboardViewDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_dashboard_stats` tool result. */
 export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  if (state !== 'ready') {
+  const { state, data } = useArtifactResult<DashboardViewDto>(result, status, isError);
+  if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame
         state={state}
@@ -20,7 +20,7 @@ export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, sta
       />
     );
   }
-  const { summary, liveTelemetry: live } = result as DashboardViewDto;
+  const { summary, liveTelemetry: live } = data;
   return (
     <ToolUIFrame
       state="ready"

@@ -1,4 +1,6 @@
+import 'fake-indexeddb/auto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getArtifact } from './tracey-artifact-store';
 
 const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, providersApi, agentCallsApi, statisticsApi, theoriesApi } = vi.hoisted(() => ({
   agentsApi: { list: vi.fn(), get: vi.fn() },
@@ -28,6 +30,7 @@ import { Priority, ProposalStatus, TheorySource } from '../../api/models';
 function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext {
   return {
     projectId: 'proj-1',
+    artifactScope: 'user-1:proj-1',
     navigate: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
     ...overrides,
@@ -43,37 +46,55 @@ function exec(t: TraceyTool, args: Record<string, unknown>, ctx: TraceyToolConte
 describe('tracey read tools', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('list_agents passes the project id and returns the items', async () => {
-    agentsApi.list.mockResolvedValue({ items: [{ id: 'a1' }] });
+  it('list_agents stores the full list and returns a compact index envelope', async () => {
+    const items = [{ id: 'a1', name: 'Alpha' }, { id: 'a2', name: 'Beta' }];
+    agentsApi.list.mockResolvedValue({ items });
     const ctx = makeCtx();
-    const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx);
+    const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx) as {
+      artifactRef: string; kind: string; summary: { count: number; items: { id: string; name: string }[] };
+    };
 
     expect(agentsApi.list).toHaveBeenCalledWith({ projectId: 'proj-1' });
-    expect(result).toEqual([{ id: 'a1' }]);
+    expect(result.kind).toBe('agent-list');
+    expect(result.summary).toEqual({ count: 2, items: [{ id: 'a1', name: 'Alpha' }, { id: 'a2', name: 'Beta' }] });
+    expect(await getArtifact(result.artifactRef)).toEqual(items);
   });
 
-  it('get_agent fetches by id', async () => {
-    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
+  it('get_agent stores the full agent and returns a curated summary', async () => {
+    const agent = {
+      id: 'a1', name: 'Alpha', endpointName: 'gpt-4o',
+      tools: [{ name: 't1' }, { name: 't2' }], systemMessage: 'You are Alpha.',
+    };
+    agentsApi.get.mockResolvedValue(agent);
     const ctx = makeCtx();
-    await exec(createTraceyTools(ctx).get_agent, { agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).get_agent, { agentId: 'a1' }, ctx) as {
+      artifactRef: string; kind: string; summary: Record<string, unknown>;
+    };
 
     expect(agentsApi.get).toHaveBeenCalledWith('a1');
+    expect(result.kind).toBe('agent');
+    expect(result.summary).toMatchObject({ id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2 });
+    expect(await getArtifact(result.artifactRef)).toEqual(agent);
   });
 
-  it('get_agent_stats fetches the agent overview and returns summary + counts', async () => {
+  it('get_agent_stats stores summary + counts and returns the summary digest', async () => {
     statisticsApi.agentOverview.mockResolvedValue({
       summary: { totalTraces: 3 },
       counts: { suiteCount: 1 },
       timeSeries: [],
     });
     const ctx = makeCtx();
-    const result = await exec(createTraceyTools(ctx).get_agent_stats, { agentId: 'a1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).get_agent_stats, { agentId: 'a1' }, ctx) as {
+      artifactRef: string; kind: string; summary: Record<string, unknown>;
+    };
 
     expect(statisticsApi.agentOverview).toHaveBeenCalledWith(
       'a1',
       expect.objectContaining({ bucket: 'daily' }),
     );
-    expect(result).toEqual({ summary: { totalTraces: 3 }, counts: { suiteCount: 1 } });
+    expect(result.kind).toBe('agent-stats');
+    expect(result.summary).toEqual({ summary: { totalTraces: 3 } });
+    expect(await getArtifact(result.artifactRef)).toEqual({ summary: { totalTraces: 3 }, counts: { suiteCount: 1 } });
   });
 
   it('navigate performs a client-side route change', async () => {
@@ -147,51 +168,65 @@ describe('tracey entity-fetch tools', () => {
     expect(providersApi.get).toHaveBeenCalledWith('pr1');
   });
 
-  it('get_trace fetches the agent call by id', async () => {
-    agentCallsApi.get.mockResolvedValue({ id: 't1', model: 'gpt-4o' });
+  it('get_trace stores the full call and returns a curated summary', async () => {
+    const call = { id: 't1', model: 'gpt-4o', provider: 'openai', httpStatus: 200, inputTokens: 10, outputTokens: 20, durationMs: 500, costEur: 0.1 };
+    agentCallsApi.get.mockResolvedValue(call);
     const ctx = makeCtx();
-    const result = await exec(createTraceyTools(ctx).get_trace, { traceId: 't1' }, ctx);
+    const result = await exec(createTraceyTools(ctx).get_trace, { traceId: 't1' }, ctx) as {
+      artifactRef: string; kind: string; summary: Record<string, unknown>;
+    };
 
     expect(agentCallsApi.get).toHaveBeenCalledWith('t1');
-    expect(result).toEqual({ id: 't1', model: 'gpt-4o' });
+    expect(result.kind).toBe('trace');
+    expect(result.summary).toMatchObject({ id: 't1', model: 'gpt-4o', httpStatus: 200 });
+    expect(await getArtifact(result.artifactRef)).toEqual(call);
   });
 });
 
 describe('tracey inline render tools', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('show_chart returns the chart spec to render inline', async () => {
+  it('show_chart stores the chart spec and returns a reference with a title-only summary', async () => {
     const ctx = makeCtx();
     const points = [{ label: 'A', value: 1 }, { label: 'B', value: 2 }];
 
-    const result = await exec(createTraceyTools(ctx).show_chart, 
+    const result = await exec(createTraceyTools(ctx).show_chart,
       { title: 'Tokens', type: 'bar', points },
       ctx,
-    );
+    ) as { artifactRef: string; kind: string; summary: Record<string, unknown> };
 
-    expect(result).toEqual({ kind: 'chart', title: 'Tokens', chartType: 'bar', points });
+    expect(result.kind).toBe('chart');
+    expect(result.summary).toEqual({ kind: 'chart', title: 'Tokens' });
+    expect(await getArtifact(result.artifactRef))
+      .toEqual({ kind: 'chart', title: 'Tokens', chartType: 'bar', points });
   });
 
-  it('show_table returns the table spec to render inline', async () => {
+  it('show_table stores the table spec and returns a reference', async () => {
     const ctx = makeCtx();
 
-    const result = await exec(createTraceyTools(ctx).show_table, 
+    const result = await exec(createTraceyTools(ctx).show_table,
       { title: 'Agents', columns: ['name'], rows: [['A']] },
       ctx,
-    );
+    ) as { artifactRef: string; kind: string; summary: Record<string, unknown> };
 
-    expect(result).toEqual({ kind: 'table', title: 'Agents', columns: ['name'], rows: [['A']] });
+    expect(result.kind).toBe('table');
+    expect(result.summary).toEqual({ kind: 'table', title: 'Agents' });
+    expect(await getArtifact(result.artifactRef))
+      .toEqual({ kind: 'table', title: 'Agents', columns: ['name'], rows: [['A']] });
   });
 
-  it('show_text returns the text spec to render inline', async () => {
+  it('show_text stores the text spec and returns a reference', async () => {
     const ctx = makeCtx();
 
-    const result = await exec(createTraceyTools(ctx).show_text, 
+    const result = await exec(createTraceyTools(ctx).show_text,
       { title: 'Notes', format: 'markdown', content: 'hi' },
       ctx,
-    );
+    ) as { artifactRef: string; kind: string; summary: Record<string, unknown> };
 
-    expect(result).toEqual({ kind: 'text', title: 'Notes', format: 'markdown', content: 'hi' });
+    expect(result.kind).toBe('text');
+    expect(result.summary).toEqual({ kind: 'text', title: 'Notes' });
+    expect(await getArtifact(result.artifactRef))
+      .toEqual({ kind: 'text', title: 'Notes', format: 'markdown', content: 'hi' });
   });
 
   it('ask_questions is human-in-the-loop: no execute, so the tool call pauses for its UI', () => {

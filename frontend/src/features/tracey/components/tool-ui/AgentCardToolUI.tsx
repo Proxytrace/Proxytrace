@@ -6,12 +6,11 @@ import { agentColor, modelColor } from '../../../../lib/colors';
 import { fmtRelative } from '../../../../lib/format';
 import type { AgentDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_agent` tool result. */
 export const AgentCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const agent = result as AgentDto | undefined;
+  const { state, data: agent } = useArtifactResult<AgentDto>(result, status, isError);
   return (
     <EntityCardLink
       state={state}
