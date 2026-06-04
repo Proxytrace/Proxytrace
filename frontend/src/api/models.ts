@@ -77,7 +77,8 @@ export interface AgentCallDto {
   model: string;
   provider: string;
   request: MessageDto[];
-  response: MessageDto;
+  /** Null when the captured call produced no completion (HTTP error, empty/dropped completion). */
+  response: MessageDto | null;
   tools: ToolSpecDto[];
   inputTokens: number;
   outputTokens: number;

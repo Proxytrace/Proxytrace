@@ -4,7 +4,7 @@ import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import type { AgentCallDto } from '../../../api/models';
-import { GRID_TEMPLATE } from '../tracesMeta';
+import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
 import { MiniChevronIcon } from '../../../components/icons';
 import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
@@ -21,7 +21,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
   const { turns, conversationId } = group;
   const totalTokens = turns.reduce((n, t) => n + t.inputTokens + t.outputTokens, 0);
   const totalMs = turns.reduce((n, t) => n + t.durationMs, 0);
-  const totalTools = turns.reduce((n, t) => n + t.response.toolRequests.length, 0);
+  const totalTools = turns.reduce((n, t) => n + toolCount(t), 0);
   const agentName = turns[0].agentName;
   const model = turns[0].model;
   const c = turns[0].agentId ? agentColor(turns[0].agentId) : agentColor(conversationId);
@@ -103,7 +103,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
             <Pill label={turn.model} color={modelColor(turn.model)} size="sm" />
           </span>
           <StatusDot httpStatus={turn.httpStatus} />
-          <ToolsCell count={turn.response.toolRequests.length} />
+          <ToolsCell count={toolCount(turn)} />
           <TokenCell trace={turn} />
           <LatencyCell ms={turn.durationMs} />
           <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turn.createdAt)}</span>

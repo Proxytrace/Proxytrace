@@ -71,6 +71,15 @@ export function buildRows(traces: AgentCallDto[]): TraceRow[] {
   return rows;
 }
 
+/**
+ * Tool-request count for a trace, 0 when the call has no response. A captured call with no
+ * completion (an HTTP error, an empty/dropped completion) has a null `response`, so every
+ * tool-count read must go through this rather than dereferencing `response` directly.
+ */
+export function toolCount(trace: AgentCallDto): number {
+  return trace.response?.toolRequests.length ?? 0;
+}
+
 // ── Column layout (shared between header row and all trace rows) ───────────────
 
 export const COL_WIDTHS = ['180px', '1fr', '140px', '72px', '70px', '130px', '120px', '80px'] as const;
