@@ -5,12 +5,12 @@ import { fmtRelative } from '../../../../lib/format';
 import type { AgentDto } from '../../../../api/models';
 import { ListCard, LIST_CARD_MAX } from './ListCard';
 import { ListCardRow } from './ListCardRow';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_agents` tool result. */
 export const AgentListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const agents = Array.isArray(result) ? (result as AgentDto[]) : [];
+  const { state, data } = useArtifactResult<AgentDto[]>(result, status, isError);
+  const agents = data ?? [];
   return (
     <ListCard
       state={state}

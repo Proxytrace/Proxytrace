@@ -6,7 +6,7 @@ import { type OptimizationProposalDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { ToolUIFrame } from './ToolUIFrame';
 import { PRIORITY_VARIANT, PROPOSAL_STATUS_VARIANT } from './badge-variants';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 function isProposal(value: unknown): value is OptimizationProposalDto {
   return typeof value === 'object' && value !== null && 'kind' in value && 'rationale' in value;
@@ -14,14 +14,14 @@ function isProposal(value: unknown): value is OptimizationProposalDto {
 
 /** Inline renderer for the `get_proposal` tool result. */
 export const ProposalCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
+  const { state, data } = useArtifactResult<OptimizationProposalDto>(result, status, isError);
   if (state !== 'ready') {
     return <ToolUIFrame state={state} pendingLabel="Loading proposal…" testId="tracey-proposal-card" />;
   }
-  if (!isProposal(result)) {
+  if (!isProposal(data)) {
     return <ToolUIFrame state="error" errorLabel="Proposal not found." testId="tracey-proposal-card" />;
   }
-  const proposal = result;
+  const proposal = data;
   return (
     <EntityCardLink
       state="ready"

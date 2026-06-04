@@ -4,7 +4,7 @@ import { Skeleton } from '../../../../components/ui/Skeleton';
 import type { ChartArtifact as ChartArtifactData } from '../../tracey-artifacts';
 import { ChartArtifact } from '../artifacts/ChartArtifact';
 import { ToolUIFrame } from './ToolUIFrame';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Placeholder reserving the chart's height (stat strip + plot) while it loads. */
 function ChartSkeleton() {
@@ -22,8 +22,8 @@ function ChartSkeleton() {
 
 /** Inline renderer for the `show_chart` tool. */
 export const ChartToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  if (state !== 'ready') {
+  const { state, data } = useArtifactResult<ChartArtifactData>(result, status, isError);
+  if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame
         state={state}
@@ -33,7 +33,6 @@ export const ChartToolUI: ToolCallMessagePartComponent = ({ result, status, isEr
       />
     );
   }
-  const data = result as ChartArtifactData;
   return (
     <ToolUIFrame state="ready" title={data.title} icon={<ActivityIcon size={14} />} testId="tracey-chart">
       <ChartArtifact artifact={data} />

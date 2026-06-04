@@ -6,12 +6,11 @@ import { fmtPct, fmtCost, fmtTokens } from '../../../../lib/format';
 import type { TestRunDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { RUN_STATUS_VARIANT } from './badge-variants';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_run` tool result. */
 export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const run = result as TestRunDto | undefined;
+  const { state, data: run } = useArtifactResult<TestRunDto>(result, status, isError);
   return (
     <EntityCardLink
       state={state}

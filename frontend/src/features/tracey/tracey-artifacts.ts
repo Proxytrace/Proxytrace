@@ -1,8 +1,9 @@
 /**
- * Shapes the `show_chart` / `show_table` / `show_text` tools return. Each is rendered
- * **inline in the chat thread** by the matching tool-UI component (see
- * `components/tool-ui/`). Nothing here is persisted server-side, and there is no longer a
- * side panel — a tool result is the artifact.
+ * Shapes the `show_chart` / `show_table` / `show_text` tools build. Each is stashed in the browser
+ * artifact store (see `tracey-artifact-store.ts`) and rendered **inline in the chat thread** by the
+ * matching tool-UI component (see `components/tool-ui/`), which resolves it from a reference. The
+ * model only ever sees the reference + a title-only digest, never the full payload. Nothing here is
+ * persisted server-side, and there is no side panel.
  */
 
 export type ChartType = 'bar' | 'line' | 'area';

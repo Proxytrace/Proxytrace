@@ -5,12 +5,12 @@ import { fmtPct } from '../../../../lib/format';
 import type { TestSuiteDto } from '../../../../api/models';
 import { ListCard, LIST_CARD_MAX } from './ListCard';
 import { ListCardRow } from './ListCardRow';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_suites` tool result. */
 export const SuiteListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const suites = Array.isArray(result) ? (result as TestSuiteDto[]) : [];
+  const { state, data } = useArtifactResult<TestSuiteDto[]>(result, status, isError);
+  const suites = data ?? [];
   return (
     <ListCard
       state={state}

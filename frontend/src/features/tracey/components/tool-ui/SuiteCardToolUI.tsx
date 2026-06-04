@@ -5,12 +5,11 @@ import { agentColor } from '../../../../lib/colors';
 import { fmtPct, fmtRelative } from '../../../../lib/format';
 import type { TestSuiteDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
-import { toolUiState } from './tool-ui-state';
+import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_suite` tool result. */
 export const SuiteCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  const suite = result as TestSuiteDto | undefined;
+  const { state, data: suite } = useArtifactResult<TestSuiteDto>(result, status, isError);
   return (
     <EntityCardLink
       state={state}

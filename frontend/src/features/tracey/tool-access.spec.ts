@@ -10,6 +10,7 @@ import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 
 const ctx: TraceyToolContext = {
   projectId: 'p1',
+  artifactScope: 'u:p1',
   navigate: () => {},
   confirm: async () => true,
 };

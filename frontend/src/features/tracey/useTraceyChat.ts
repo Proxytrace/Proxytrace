@@ -18,6 +18,7 @@ import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
 import { clearThread, loadThread, saveThread } from './tracey-storage';
+import { clearArtifacts, collectArtifactRefs, pruneArtifacts } from './tracey-artifact-store';
 
 export interface PendingConfirmation {
   summary: string;
@@ -83,6 +84,9 @@ export function useTraceyChat(): TraceyChat {
   const projectId = currentProject?.id;
   const userKey = currentUser?.email ?? 'anon';
   const projectKey = projectId ?? 'none';
+  // Scope under which Tracey's large tool payloads are stored, so a thread reset wipes exactly
+  // this user+project's artifacts (see tracey-artifact-store).
+  const artifactScope = `${userKey}:${projectKey}`;
 
   const [autoApprove, setAutoApprove] = useState(false);
   const autoApproveRef = useRef(autoApprove);
@@ -130,8 +134,8 @@ export function useTraceyChat(): TraceyChat {
   });
 
   const toolContext = useMemo<TraceyToolContext>(
-    () => ({ projectId, navigate, confirm }),
-    [projectId, navigate, confirm],
+    () => ({ projectId, artifactScope, navigate, confirm }),
+    [projectId, artifactScope, navigate, confirm],
   );
 
   // Swap in the real same-origin transport whenever the session (or tool context) changes.
@@ -148,13 +152,20 @@ export function useTraceyChat(): TraceyChat {
   useEffect(() => {
     const thread = runtime.thread;
     const saved = loadThread<ExportedMessageRepository>(userKey, projectKey);
+    let liveRefs = new Set<string>();
     if (saved && saved.messages?.length) {
       try {
         thread.import(saved);
+        liveRefs = collectArtifactRefs(saved);
       } catch {
         // A snapshot from an incompatible runtime version is non-fatal: start fresh.
       }
     }
+    // Dispose of artifacts the restored thread no longer references — orphans from a replaced
+    // thread, a failed restore, or a write whose snapshot never persisted. Run only at mount (the
+    // thread is stable here); pruning mid-stream could race a just-written blob whose reference is
+    // not yet in the persisted snapshot and delete a live one.
+    void pruneArtifacts(artifactScope, liveRefs).catch(() => {});
     const persist = () => {
       try {
         saveThread(userKey, projectKey, thread.export());
@@ -163,12 +174,14 @@ export function useTraceyChat(): TraceyChat {
       }
     };
     return thread.subscribe(persist);
-  }, [runtime, userKey, projectKey]);
+  }, [runtime, userKey, projectKey, artifactScope]);
 
   const clear = useCallback(() => {
     clearThread(userKey, projectKey);
+    // Best-effort: a failed blob wipe must not block starting a new thread.
+    void clearArtifacts(artifactScope).catch(() => {});
     runtime.threads.switchToNewThread();
-  }, [runtime, userKey, projectKey]);
+  }, [runtime, userKey, projectKey, artifactScope]);
 
   const status: TraceyChat['status'] = !projectId || !traceyAvailable
     ? 'no-project'
