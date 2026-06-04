@@ -1,19 +1,22 @@
 /**
- * Persists large Tracey tool-result payloads in IndexedDB, keyed by a random reference id.
+ * Persists large Tracey tool-result payloads in the browser, keyed by a random reference id.
  * Tools store the full payload here and return only a compact {@link ArtifactEnvelope} to the
  * model (and to the persisted thread snapshot); the inline tool-UI cards resolve the reference
  * back to the full data via `useArtifact`. This keeps big results (agent lists, captured traces,
  * stats series, plot data) out of the model context — they live in the browser instead.
  *
- * All operations are best-effort: a failed read/write degrades to a missing artifact (the card
- * shows its empty/error state) rather than throwing into the chat runtime, matching the
- * swallow-and-continue posture of `tracey-storage.ts`.
+ * Storage is tiered so the token saving survives degraded environments: IndexedDB first (roomy,
+ * the normal path), falling back to localStorage when IndexedDB is unavailable (e.g. private
+ * browsing in Firefox). Only if both backends fail does the caller (`tracey-tools`) drop to
+ * returning the payload inline. Reads check both backends so an artifact written under one path
+ * still resolves under the other.
  */
 
 const DB_NAME = 'proxytrace.tracey';
 const DB_VERSION = 1;
 const STORE = 'artifacts';
 const SCOPE_INDEX = 'scope';
+const LS_PREFIX = 'proxytrace.tracey.artifact:';
 
 /**
  * A stored payload: the full data plus the scope it belongs to so a thread reset can wipe just
@@ -37,7 +40,17 @@ export interface ArtifactEnvelope<S = unknown> {
   summary: S;
 }
 
+/* ── IndexedDB backend ── */
+
 let dbPromise: Promise<IDBDatabase> | null = null;
+
+function idbAvailable(): boolean {
+  try {
+    return typeof indexedDB !== 'undefined' && indexedDB !== null;
+  } catch {
+    return false;
+  }
+}
 
 function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
@@ -68,10 +81,7 @@ function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-/**
- * Writes a full payload to the store under its id.
- */
-export async function putArtifact(record: ArtifactRecord): Promise<void> {
+async function idbPut(record: ArtifactRecord): Promise<void> {
   const db = await openDb();
   const tx = db.transaction(STORE, 'readwrite');
   tx.objectStore(STORE).put(record);
@@ -82,22 +92,14 @@ export async function putArtifact(record: ArtifactRecord): Promise<void> {
   });
 }
 
-/**
- * Reads a full payload by reference id, or null when it is absent (cleared, evicted, or never
- * written).
- */
-export async function getArtifact(id: string): Promise<unknown | null> {
+async function idbGet(id: string): Promise<unknown | null> {
   const db = await openDb();
   const tx = db.transaction(STORE, 'readonly');
   const record = await promisifyRequest(tx.objectStore(STORE).get(id) as IDBRequest<ArtifactRecord | undefined>);
   return record ? record.data : null;
 }
 
-/**
- * Deletes every artifact belonging to a scope (a `${userKey}:${projectKey}` string), used when a
- * Tracey thread is cleared.
- */
-export async function clearArtifacts(scope: string): Promise<void> {
+async function idbClear(scope: string): Promise<void> {
   const db = await openDb();
   const tx = db.transaction(STORE, 'readwrite');
   const index = tx.objectStore(STORE).index(SCOPE_INDEX);
@@ -114,6 +116,101 @@ export async function clearArtifacts(scope: string): Promise<void> {
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
   });
+}
+
+/* ── localStorage backend (fallback) ── */
+
+function lsAvailable(): boolean {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage !== null;
+  } catch {
+    return false;
+  }
+}
+
+function lsPut(record: ArtifactRecord): void {
+  localStorage.setItem(LS_PREFIX + record.id, JSON.stringify(record));
+}
+
+function lsGet(id: string): unknown | null {
+  if (!lsAvailable()) return null;
+  const raw = localStorage.getItem(LS_PREFIX + id);
+  if (!raw) return null;
+  try {
+    return (JSON.parse(raw) as ArtifactRecord).data;
+  } catch {
+    return null;
+  }
+}
+
+function lsClear(scope: string): void {
+  if (!lsAvailable()) return;
+  const toRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(LS_PREFIX)) continue;
+    try {
+      const record = JSON.parse(localStorage.getItem(key) ?? '') as ArtifactRecord;
+      if (record.scope === scope) toRemove.push(key);
+    } catch {
+      // A corrupt entry: drop it too.
+      toRemove.push(key);
+    }
+  }
+  for (const key of toRemove) localStorage.removeItem(key);
+}
+
+/* ── Tiered public API ── */
+
+/**
+ * Writes a full payload, preferring IndexedDB and falling back to localStorage. Throws only when
+ * neither backend can store it, so the caller can fall back to an inline result.
+ */
+export async function putArtifact(record: ArtifactRecord): Promise<void> {
+  if (idbAvailable()) {
+    try {
+      await idbPut(record);
+      return;
+    } catch {
+      // Fall through to localStorage.
+    }
+  }
+  lsPut(record);
+}
+
+/**
+ * Reads a full payload by reference id, checking IndexedDB then localStorage, or null when it is
+ * absent in both (cleared, evicted, or never written).
+ */
+export async function getArtifact(id: string): Promise<unknown | null> {
+  if (idbAvailable()) {
+    try {
+      const value = await idbGet(id);
+      if (value != null) return value;
+    } catch {
+      // Fall through to localStorage.
+    }
+  }
+  return lsGet(id);
+}
+
+/**
+ * Deletes every artifact belonging to a scope (a `${userKey}:${projectKey}` string) from both
+ * backends, used when a Tracey thread is cleared. Best-effort: failures are swallowed.
+ */
+export async function clearArtifacts(scope: string): Promise<void> {
+  if (idbAvailable()) {
+    try {
+      await idbClear(scope);
+    } catch {
+      // ignore
+    }
+  }
+  try {
+    lsClear(scope);
+  } catch {
+    // ignore
+  }
 }
 
 /**

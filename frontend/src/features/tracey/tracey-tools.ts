@@ -84,9 +84,9 @@ export function createTraceyTools(ctx: TraceyToolContext): Record<string, Tracey
 
   // Stash a large payload in the browser artifact store and hand the model only a compact
   // reference + digest. The inline tool-UI card resolves the reference back to the full data, so
-  // the rich result reaches the user without ever entering the model context. If the store is
-  // unavailable (e.g. IndexedDB disabled in private browsing), fall back to returning the full
-  // payload inline — the card renders it either way; only this failure mode costs model context.
+  // the rich result reaches the user without ever entering the model context. The store itself
+  // falls back from IndexedDB to localStorage; only if both are unavailable do we return the full
+  // payload inline — the card renders it either way, and only that last-resort mode costs context.
   const store = async <S>(kind: string, full: unknown, summary: S): Promise<unknown> => {
     try {
       return await storeArtifact(ctx.artifactScope, kind, full, summary);

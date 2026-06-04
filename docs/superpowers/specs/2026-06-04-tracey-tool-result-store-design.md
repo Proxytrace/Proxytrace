@@ -168,9 +168,11 @@ Affected: `ChartToolUI`, `TableToolUI`, `TextToolUI`, `AgentListToolUI`,
 
 ## Error handling
 
-- Store read/write failures are swallowed; the card falls back to its error state
-  (`toolUiState` already models this). The model still received its summary, so
-  the turn continues.
+- Storage is tiered: `putArtifact`/`getArtifact` prefer IndexedDB and fall back
+  to localStorage (so the token saving survives IndexedDB-disabled environments
+  such as Firefox private browsing); reads check both backends. Only if both
+  backends fail to store does `tracey-tools` drop to returning the payload inline
+  (correct, but costs model context). `clearArtifacts` wipes both backends.
 - A missing blob (`getArtifact` → null), e.g. after a partial clear or an
   eviction, renders the card's error/empty state.
 

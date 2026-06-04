@@ -1,11 +1,23 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   putArtifact,
   getArtifact,
   clearArtifacts,
   storeArtifact,
 } from './tracey-artifact-store';
+
+function inMemoryStorage(): Storage {
+  const map = new Map<string, string>();
+  return {
+    getItem: (k) => map.get(k) ?? null,
+    setItem: (k, v) => void map.set(k, v),
+    removeItem: (k) => void map.delete(k),
+    clear: () => map.clear(),
+    key: (i) => [...map.keys()][i] ?? null,
+    get length() { return map.size; },
+  };
+}
 
 describe('tracey-artifact-store', () => {
   it('round-trips an artifact by id', async () => {
@@ -44,5 +56,37 @@ describe('tracey-artifact-store', () => {
     const b = await storeArtifact('u:p', 'k', { v: 2 }, null);
 
     expect(a.artifactRef).not.toBe(b.artifactRef);
+  });
+});
+
+describe('tracey-artifact-store localStorage fallback (IndexedDB unavailable)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('round-trips and scope-clears via localStorage when IndexedDB is absent', async () => {
+    const ls = inMemoryStorage();
+    const setItem = vi.spyOn(ls, 'setItem');
+    vi.stubGlobal('indexedDB', undefined);
+    vi.stubGlobal('localStorage', ls);
+
+    await putArtifact({ id: 'ls1', scope: 'u:p1', kind: 'agent', data: { name: 'Local' } });
+    expect(setItem).toHaveBeenCalled();
+    await putArtifact({ id: 'ls2', scope: 'u:p2', kind: 'agent', data: { name: 'Other' } });
+
+    expect(await getArtifact('ls1')).toEqual({ name: 'Local' });
+    expect(await getArtifact('missing')).toBeNull();
+
+    await clearArtifacts('u:p1');
+    expect(await getArtifact('ls1')).toBeNull();
+    expect(await getArtifact('ls2')).toEqual({ name: 'Other' });
+  });
+
+  it('storeArtifact persists to localStorage and returns a reference when IndexedDB is absent', async () => {
+    vi.stubGlobal('indexedDB', undefined);
+    vi.stubGlobal('localStorage', inMemoryStorage());
+
+    const env = await storeArtifact('u:p', 'agent-list', { items: [1, 2] }, { count: 2 });
+
+    expect(env.summary).toEqual({ count: 2 });
+    expect(await getArtifact(env.artifactRef)).toEqual({ items: [1, 2] });
   });
 });
