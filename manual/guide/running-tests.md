@@ -22,7 +22,10 @@ so you can compare, for example, the same suite across several agent versions.
 
 A completed run gives you:
 
-- **Per-case results** — the agent's output for each case and each evaluator's score.
+- **Test case matrix** — one row per case, one column per endpoint, showing each
+  evaluator's verdict and latency. The same table layout is used whether you ran against
+  a single endpoint or several, so divergent rows are easy to spot when comparing models.
+  Click any cell or row to open the full input/output and evaluator detail.
 - **Aggregate metrics** — pass rates and scores rolled up across the suite.
 - **Comparisons** — how this run stacks up against previous runs of the same suite.
 

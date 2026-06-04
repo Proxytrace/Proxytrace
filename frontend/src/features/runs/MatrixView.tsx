@@ -30,7 +30,7 @@ export function MatrixView({ group, activeCaseIds }: {
   const selIdx = selectedCase ? rows.findIndex(r => r.caseId === selectedCase.caseId) : -1;
 
   return (
-    <Card padding="none" data-testid="matrix-view">
+    <Card padding="none" data-testid="matrix-view" className="flex flex-col flex-1 min-h-0">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-2.5 border-b border-hairline">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -64,7 +64,7 @@ export function MatrixView({ group, activeCaseIds }: {
       {rows.length === 0 ? (
         <div className="py-[60px] text-center text-muted text-body">No cases match this filter.</div>
       ) : (
-        <div className="overflow-auto max-h-[70vh]">
+        <div className="flex-1 min-h-0 overflow-auto">
           <div className="grid min-w-max" style={{ gridTemplateColumns: gridCols }}>
             {/* Header */}
             <div className="sticky top-0 z-20 bg-card px-4 py-2.5 border-b border-hairline text-caption font-semibold text-muted uppercase tracking-[0.06em]">Test case</div>

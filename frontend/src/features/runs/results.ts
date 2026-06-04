@@ -14,9 +14,6 @@ import type {
 } from '../../api/models';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER } from '../../lib/constants';
 
-export type CaseFilter = 'all' | 'passed' | 'failed';
-export type ViewMode = 'table' | 'grid';
-
 const SUCCESS = 'var(--success)';
 const WARN = 'var(--warn)';
 const DANGER = 'var(--danger)';

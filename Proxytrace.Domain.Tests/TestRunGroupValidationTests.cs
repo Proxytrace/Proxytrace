@@ -18,12 +18,13 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
 
-        var group = factory(suite);
+        var group = factory(suite, false);
 
         group.Should().NotBeNull();
         group.Suite.Should().Be(suite);
         group.Status.Should().Be(TestRunStatus.Pending);
         group.CompletedAt.Should().BeNull();
+        group.IsSystemRun.Should().BeFalse();
         group.Id.Should().NotBe(Guid.Empty);
         group.CreatedAt.Should().NotBe(default);
         group.UpdatedAt.Should().NotBe(default);
@@ -40,14 +41,26 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
     }
 
     [TestMethod]
+    public async Task CreateNew_WithIsSystemRun_FlagsGroupAsSystemRun()
+    {
+        IServiceProvider services = GetServices();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+
+        var group = factory(suite, true);
+
+        group.IsSystemRun.Should().BeTrue();
+    }
+
+    [TestMethod]
     public async Task CreateNew_IdsAreUniquePerInstance()
     {
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
 
-        var group1 = factory(suite);
-        var group2 = factory(suite);
+        var group1 = factory(suite, false);
+        var group2 = factory(suite, false);
 
         group1.Id.Should().NotBe(group2.Id);
     }
@@ -60,12 +73,13 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         var generator = services.GetRequiredService<IDomainEntityGenerator<ITestRunGroup>>();
         var existing = await generator.CreateAsync(CancellationToken);
 
-        var group = createExisting(existing.Suite, existing.Status, existing.CompletedAt, existing);
+        var group = createExisting(existing.Suite, existing.Status, existing.CompletedAt, existing.IsSystemRun, existing);
 
         group.Id.Should().Be(existing.Id);
         group.Suite.Should().Be(existing.Suite);
         group.Status.Should().Be(existing.Status);
         group.CompletedAt.Should().Be(existing.CompletedAt);
+        group.IsSystemRun.Should().Be(existing.IsSystemRun);
         group.CreatedAt.Should().Be(existing.CreatedAt);
         group.UpdatedAt.Should().Be(existing.UpdatedAt);
     }
@@ -78,7 +92,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
-        var group = factory(suite);
+        var group = factory(suite, false);
         await services.GetRequiredService<IRepository<ITestRunGroup>>().AddAsync(group, CancellationToken);
 
         var updated = await group.SetRunning(CancellationToken);
@@ -130,7 +144,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
-        var group = factory(suite);
+        var group = factory(suite, false);
         await services.GetRequiredService<IRepository<ITestRunGroup>>().AddAsync(group, CancellationToken);
 
         var updated = await group.SetCancelled(CancellationToken);
@@ -192,7 +206,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         var repo = services.GetRequiredService<IRepository<ITestRunGroup>>();
         var suite = await GetOrCreate<ITestSuite>(services);
 
-        var group = await repo.AddAsync(factory(suite), CancellationToken);
+        var group = await repo.AddAsync(factory(suite, false), CancellationToken);
         await group.SetRunning(CancellationToken);
 
         var reloaded = await repo.GetAsync(group.Id, CancellationToken);
@@ -221,7 +235,7 @@ public sealed class TestRunGroupValidationTests : DomainTest<Module>
         var repo = services.GetRequiredService<IRepository<ITestRunGroup>>();
         var suite = await GetOrCreate<ITestSuite>(services);
 
-        var group = await repo.AddAsync(factory(suite), CancellationToken);
+        var group = await repo.AddAsync(factory(suite, false), CancellationToken);
 
         if (targetStatus == TestRunStatus.Pending)
             return group;

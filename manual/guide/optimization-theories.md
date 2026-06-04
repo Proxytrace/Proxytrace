@@ -37,7 +37,9 @@ Proposed → Validating → Validated   → becomes an Optimization Proposal
 
 1. **Proposed** — the theory has been accepted into the queue.
 2. **Validating** — Proxytrace runs the suite with the proposed change applied (an
-   ephemeral A/B run) and compares it against the current agent.
+   ephemeral A/B run) and compares it against the current agent. These internal A/B runs
+   are hidden from the [test run](/guide/running-tests) list so they don't clutter your
+   own results — they live with the theory and its resulting proposal instead.
 3. **Validated** — the change measurably improved the agent. A Draft **proposal** is
    created automatically, carrying the comparison as evidence.
 4. **Invalidated** — the change did not improve the agent. The theory is kept so the same
