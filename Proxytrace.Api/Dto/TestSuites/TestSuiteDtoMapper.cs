@@ -38,7 +38,7 @@ public sealed class TestSuiteDtoMapper
             s.TestCases.Select(tc => new TestCaseDto(
                 tc.Id,
                 tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), m.GetText())).ToArray(),
-                new TestSuiteMessageDto("assistant", tc.ExpectedOutput.GetText())
+                ToExpectedOutputDto(tc.ExpectedOutput)
             )).ToArray(),
             Description: null,
             Tags: [],
@@ -70,5 +70,24 @@ public sealed class TestSuiteDtoMapper
     }
 
     public AssistantMessage BuildAssistantMessage(TestSuiteMessageDto m)
-        => new([Content.FromText(m.Content)], []);
+    {
+        IReadOnlyList<Content> contents = string.IsNullOrEmpty(m.Content)
+            ? []
+            : [Content.FromText(m.Content)];
+        IReadOnlyList<ToolRequest> toolRequests = (m.ToolRequests ?? [])
+            .Select(tr => new ToolRequest(Guid.NewGuid().ToString(), tr.Name, tr.Arguments))
+            .ToArray();
+        return new AssistantMessage(contents, toolRequests);
+    }
+
+    /// <summary>
+    /// Maps an expected assistant response into its DTO, preserving any tool requests.
+    /// </summary>
+    public TestSuiteMessageDto ToExpectedOutputDto(AssistantMessage expected)
+        => new(
+            "assistant",
+            expected.GetText(),
+            expected.ToolRequests.Count > 0
+                ? expected.ToolRequests.Select(tr => new ToolRequestInputDto(tr.Name, tr.Arguments)).ToArray()
+                : null);
 }

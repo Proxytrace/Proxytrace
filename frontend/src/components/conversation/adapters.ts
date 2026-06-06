@@ -33,7 +33,14 @@ export function fromAgentCall(call: AgentCallDto): ConversationMessage[] {
 export function fromTestCase(tc: TestCaseDto): ConversationMessage[] {
   return [
     ...tc.input.map(m => ({ role: toRole(m.role), content: m.content })),
-    { role: toRole(tc.expectedOutput.role), content: tc.expectedOutput.content, label: 'Expected' },
+    {
+      role: toRole(tc.expectedOutput.role),
+      content: tc.expectedOutput.content,
+      label: 'Expected',
+      toolCalls: tc.expectedOutput.toolRequests?.length
+        ? tc.expectedOutput.toolRequests.map((t, i) => ({ id: String(i), name: t.name, arguments: t.arguments }))
+        : undefined,
+    },
   ];
 }
 

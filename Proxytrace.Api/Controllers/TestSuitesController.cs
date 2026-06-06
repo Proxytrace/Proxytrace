@@ -293,7 +293,9 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            return createTestCaseFromCall(call);
+            return expectedOutput is not null
+                ? createTestCase(call.Request, mapper.BuildAssistantMessage(expectedOutput))
+                : createTestCaseFromCall(call);
         }
 
         if (inputMessages is not null && expectedOutput is not null)

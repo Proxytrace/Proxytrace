@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { AgentCallDto, MessageDto, TestSuiteDto } from '../../api/models';
+import type { AgentCallDto, TestSuiteDto } from '../../api/models';
 import { testSuitesApi } from '../../api/test-suites';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct } from '../../lib/format';
@@ -8,7 +8,12 @@ import { cn } from '../../lib/cn';
 import { PlusIcon, XIcon, CheckIcon } from '../../components/icons';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
 import { MessageBubble } from '../../components/ui/MessageBubble';
-import { ToolMessageBubble } from '../../components/ui/ToolMessageBubble';
+import { ExpectedOutputEditor } from '../suites/components/ExpectedOutputEditor';
+import {
+  expectedFromResponse,
+  toMessage,
+  validateExpected,
+} from '../suites/components/expectedOutput';
 import useToast from '../../hooks/useToast';
 import { Button } from '../../components/ui/Button';
 
@@ -23,18 +28,18 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const agentLabel = trace.agentName ?? 'Agent';
 
   const [suiteId, setSuiteId] = useState<string>(suites[0]?.id ?? '');
+  const [expected, setExpected] = useState(() => expectedFromResponse(trace.response ?? null));
   const { show: toast } = useToast();
   const qc = useQueryClient();
 
   const inputMessages = trace.request.filter(m => m.role !== 'system');
-  const expected: MessageDto | null = trace.response ?? null;
   const hasSystem = trace.request.some(m => m.role === 'system');
-  const expectedToolResultByCallId = new Map<string, MessageDto>();
+  const expectedValid = validateExpected(expected);
 
   const selectedSuite = suites.find(s => s.id === suiteId) ?? null;
 
   const addCase = useMutation({
-    mutationFn: () => testSuitesApi.addTestCase(suiteId, trace.id),
+    mutationFn: () => testSuitesApi.addTestCase(suiteId, trace.id, toMessage(expected)),
     onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: ['test-suites'] });
       toast(`Added to ${updated.name}`, 'success');
@@ -48,7 +53,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const errorMsg = addCase.isError
     ? ((addCase.error as Error).message || 'Failed to add test case')
     : null;
-  const submitDisabled = !suiteId || addCase.isPending;
+  const submitDisabled = !suiteId || !expectedValid || addCase.isPending;
 
   return (
     <div
@@ -109,30 +114,13 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             </div>
 
             <div>
-              <div className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em] mb-2">
-                Expected output
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+                  Expected output
+                </span>
+                <span className="text-[10.5px] text-muted italic">Editable</span>
               </div>
-              {expected === null ? (
-                <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
-                  This trace has no response.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-[8px]">
-                  {expected.content?.trim() && <MessageBubble msg={expected} defaultOpen />}
-                  {expected.toolRequests?.map(req => (
-                    <ToolMessageBubble
-                      key={req.id}
-                      request={req}
-                      result={expectedToolResultByCallId.get(req.id)}
-                    />
-                  ))}
-                  {!expected.content?.trim() && !(expected.toolRequests?.length) && (
-                    <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
-                      Response is empty.
-                    </div>
-                  )}
-                </div>
-              )}
+              <ExpectedOutputEditor value={expected} tools={trace.tools} onChange={setExpected} />
             </div>
           </div>
 

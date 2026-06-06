@@ -23,6 +23,25 @@ Each test case captures the input to run and the expectation to check against. W
 an exact string, a number within tolerance, a JSON shape, a tool that should be called,
 and so on.
 
+## Editing the expected output
+
+The captured response is only a starting point. When the traced output is *not* what you
+want the agent to produce — you intend to change the agent to hit a target — edit the
+expected output directly:
+
+- **In the Promote dialog**, the *Expected output* section is editable before you add the
+  case to a suite.
+- **In the Edit Suite dialog**, select a case and choose **Edit expected output** to revise
+  an existing case (saved immediately).
+
+The editor offers two mutually exclusive types:
+
+- **Text response** — the assistant's plain-text answer.
+- **Tool request** — one or more tool calls the agent should make. Pick a tool name
+  (the agent's declared tools are suggested, but any name is allowed) and supply the call
+  **arguments as JSON**. Add or remove tool requests as needed. Saving is blocked until the
+  text is non-empty or every tool request has a name and valid JSON arguments.
+
 ## Attaching evaluators
 
 A test suite has a many-to-many relationship with **evaluators**: one suite can score its

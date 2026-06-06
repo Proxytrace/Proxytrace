@@ -28,7 +28,11 @@ public record TestCaseDto(
     IReadOnlyList<TestSuiteMessageDto> Input,
     TestSuiteMessageDto ExpectedOutput);
 
-public record TestSuiteMessageDto(string Role, string Content);
+public record TestSuiteMessageDto(string Role, string Content, IReadOnlyList<ToolRequestInputDto>? ToolRequests = null);
+
+public record ToolRequestInputDto(string Name, string Arguments);
+
+public record UpdateTestCaseRequest(TestSuiteMessageDto ExpectedOutput);
 
 public record CreateTestSuiteRequest(
     [Required, StringLength(200, MinimumLength = 1)] string Name,

@@ -409,6 +409,28 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task AddTestCase_FromCallWithExpectedOverride_UsesProvidedToolRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+
+        var result = await controller.AddTestCase(
+            suite.Id,
+            new AddTestCaseRequest(
+                FromAgentCallId: call.Id,
+                Input: null,
+                ExpectedOutput: new TestSuiteMessageDto("assistant", "", [new ToolRequestInputDto("lookup", "{}")])),
+            CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value.TestCases.Should()
+            .ContainSingle(tc => tc.ExpectedOutput.ToolRequests != null && tc.ExpectedOutput.ToolRequests.Count == 1)
+            .Which.ExpectedOutput.ToolRequests!.Single().Name.Should().Be("lookup");
+    }
+
+    [TestMethod]
     public async Task RemoveTestCase_MissingSuite_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

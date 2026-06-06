@@ -256,7 +256,12 @@ export interface AgentOverviewDto {
 }
 
 /* ── Test Suites ── */
-export interface TestSuiteMessageDto { role: string; content: string; }
+export interface ToolRequestInputDto { name: string; arguments: string; }
+export interface TestSuiteMessageDto {
+  role: string;
+  content: string;
+  toolRequests?: ToolRequestInputDto[] | null;
+}
 export interface TestCaseDto {
   id: string;
   input: TestSuiteMessageDto[];
