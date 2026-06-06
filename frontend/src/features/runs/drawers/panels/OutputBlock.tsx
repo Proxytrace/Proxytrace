@@ -3,7 +3,7 @@ import type { OutputValueDto } from '../../../../api/models';
 
 function outputStr(val: OutputValueDto): string {
   if (val.kind === 'message') return val.content ?? '';
-  if (val.kind === 'tool_call') return JSON.stringify({ tool: val.tool, arguments: val.arguments }, null, 2);
+  if (val.kind === 'tool_call') return JSON.stringify({ tool: val.name, arguments: val.arguments }, null, 2);
   return JSON.stringify(val, null, 2);
 }
 

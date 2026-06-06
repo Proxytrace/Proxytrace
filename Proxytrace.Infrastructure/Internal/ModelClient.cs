@@ -103,6 +103,47 @@ internal class ModelClient : IModelClient
         return new TypedCompletion<TOutput>(output, completion.Usage, completion.Latency);
     }
 
+    public ModelRequestPreview BuildRequestPreview(
+        Conversation conversation,
+        ModelOptions? options = null,
+        IReadOnlyDictionary<string, string>? promptVariables = null)
+    {
+        SystemMessage systemMessage = agent.CreateSystemMessage(promptVariables);
+        options ??= ModelOptions.FromAgent(agent, endpoint.Model);
+        conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
+
+        var messages = conversation.Messages.Select(ToPreviewMessage).ToList();
+        var tools = options.Tools
+            .Select(t => new RequestToolPreview(t.Name, t.Description, t.Arguments.JsonSchema))
+            .ToList();
+
+        return new ModelRequestPreview(endpoint.Model.Name, messages, tools);
+    }
+
+    private static RequestMessagePreview ToPreviewMessage(Message message)
+    {
+        var role = message.Role.ToString().ToLowerInvariant();
+
+        if (message is AssistantMessage { ToolRequests.Count: > 0 } assistant)
+        {
+            var calls = assistant.ToolRequests
+                .Select(tr => new RequestToolCallPreview(tr.Id, tr.Name, tr.Arguments))
+                .ToList();
+            return new RequestMessagePreview(role, NullIfEmpty(assistant.GetText()), calls, null);
+        }
+
+        if (message is ToolMessage toolMessage)
+        {
+            var (id, contents) = toolMessage.Deconstruct();
+            var content = string.Concat(contents.Select(c => c.Text ?? string.Empty));
+            return new RequestMessagePreview(role, content, [], id);
+        }
+
+        return new RequestMessagePreview(role, NullIfEmpty(message.GetText()), [], null);
+    }
+
+    private static string? NullIfEmpty(string text) => string.IsNullOrEmpty(text) ? null : text;
+
     private async Task<ICompletion> CompleteAsync(
         SystemMessage systemMessage,
         Conversation conversation,
@@ -115,7 +156,7 @@ internal class ModelClient : IModelClient
                 "Model calls are disabled in kiosk mode. This instance of ModelClient is not functional.");
         }
         
-        options ??= ModelOptions.FromModel(endpoint.Model);
+        options ??= ModelOptions.FromAgent(agent, endpoint.Model);
         conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
 
         ICompletion? completion = null;
@@ -186,7 +227,7 @@ internal class ModelClient : IModelClient
         ModelOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        options ??= ModelOptions.FromModel(endpoint.Model);
+        options ??= ModelOptions.FromAgent(agent, endpoint.Model);
         conversation = Conversation.ReplaceSystemMessage(conversation, systemMessage);
 
         Stopwatch sw = Stopwatch.StartNew();

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Message;
+using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 
@@ -73,6 +74,19 @@ public sealed class TestRunDtoMapper
             Runtime: MapRuntime(result),
             Endpoints: MapEndpoints(run, result));
 
+    public ModelRequestPreviewDto ToRequestDto(ModelRequestPreview preview)
+        => new(
+            preview.Model,
+            preview.Messages.Select(m => new RequestMessageDto(
+                m.Role,
+                m.Content,
+                m.ToolCalls.Select(tc => new RequestToolCallDto(tc.Id, tc.Name, tc.Arguments)).ToArray(),
+                m.ToolCallId)).ToArray(),
+            preview.Tools.Select(t => new RequestToolDto(
+                t.Name,
+                t.Description,
+                JsonSerializer.Deserialize<JsonElement>(t.JsonSchema))).ToArray());
+
     private TestCaseMessageDto[] MapInputMessages(Conversation input)
         => input.Messages.Select(MapInputMessage).ToArray();
 
@@ -139,7 +153,7 @@ public sealed class TestRunDtoMapper
             TokOut: result.Usage?.OutputTokenCount,
             Calls: 1,
             Latency: (long)result.Latency.TotalMilliseconds,
-            CostUsd: 0)
+            CostUsd: result.Usage is { } usage ? (double)(run.Endpoint.CalculateCost(usage) ?? 0m) : 0)
     ];
 
     private string EndpointColor(string providerName)

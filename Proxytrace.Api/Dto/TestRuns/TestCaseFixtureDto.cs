@@ -29,6 +29,21 @@ public record OutputValueDto(
 
 public record ToolCallInfoDto(string Name, object Arguments);
 
+public record ModelRequestPreviewDto(
+    string Model,
+    RequestMessageDto[] Messages,
+    RequestToolDto[] Tools);
+
+public record RequestMessageDto(
+    string Role,
+    string? Content,
+    RequestToolCallDto[] ToolCalls,
+    string? ToolCallId);
+
+public record RequestToolCallDto(string Id, string Name, string Arguments);
+
+public record RequestToolDto(string Name, string Description, object JsonSchema);
+
 public record EvaluatorFixtureResultDto(
     string EvaluatorId,
     string EvaluatorKind,

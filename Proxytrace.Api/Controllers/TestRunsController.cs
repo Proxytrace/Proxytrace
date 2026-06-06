@@ -63,6 +63,22 @@ public class TestRunsController : ControllerBase
         return mapper.ToFixtureDto(run, result);
     }
 
+    [HttpGet("{id:guid}/cases/{caseId:guid}/request")]
+    public async Task<ActionResult<ModelRequestPreviewDto>> GetCaseRequest(
+        Guid id, Guid caseId, CancellationToken cancellationToken)
+    {
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
+            return NotFound();
+        var testCase = run.Group.Suite.TestCases.FirstOrDefault(tc => tc.Id == caseId);
+        if (testCase is null)
+            return NotFound();
+
+        var client = run.Group.Suite.Agent.CreateClient(customEndpoint: run.Endpoint, skipIngestion: true);
+        var preview = client.BuildRequestPreview(testCase.Input);
+        return mapper.ToRequestDto(preview);
+    }
+
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {

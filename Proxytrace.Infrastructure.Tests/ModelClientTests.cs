@@ -82,11 +82,11 @@ public sealed class ModelClientTests : BaseTest<Module>
         return ep;
     }
 
-    private static IAgent MakeAgent(IModelEndpoint endpoint)
+    private static IAgent MakeAgent(IModelEndpoint endpoint, params ToolSpecification[] tools)
     {
         IAgent agent = Substitute.For<IAgent>();
         agent.Endpoint.Returns(endpoint);
-        agent.Tools.Returns([]);
+        agent.Tools.Returns(tools);
         agent.CreateSystemMessage(Arg.Any<IReadOnlyDictionary<string, string>?>())
             .Returns(new SystemMessage([Content.FromText("test system")]));
         return agent;
@@ -376,6 +376,60 @@ public sealed class ModelClientTests : BaseTest<Module>
 
         capturedOptions?.Tools.Should().ContainSingle()
             .Which.Name.Should().Be("my_tool");
+    }
+
+    [TestMethod]
+    public async Task CompleteAsync_WhenNoOptionsProvided_PassesAgentToolsToChatOptions()
+    {
+        // Regression: test runs pass no ModelOptions, so the default must carry the agent's
+        // tool definitions through to the model. Without this the model never sees the tools
+        // and answers in prose instead of emitting the expected tool call.
+        var tool = new ToolSpecification("forecast_trend", "Forecast a metric trend", ToolArguments.None);
+        ChatOptions? capturedOptions = null;
+
+        IChatClient chatClient = Substitute.For<IChatClient>();
+        chatClient.GetResponseAsync(
+                Arg.Any<IEnumerable<ChatMessage>>(),
+                Arg.Do<ChatOptions>(o => capturedOptions = o),
+                Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(TextResponse("ok")));
+
+        var services = GetServices(config =>
+        {
+            IModelEndpoint endpoint = MakeEndpoint();
+            config.RegisterInstance(endpoint).As<IModelEndpoint>();
+            config.RegisterInstance(MakeAgent(endpoint, tool)).As<IAgent>();
+            config.RegisterInstance(chatClient).As<IChatClient>();
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+
+        capturedOptions.Should().NotBeNull();
+        capturedOptions.Tools.Should().ContainSingle()
+            .Which.Name.Should().Be("forecast_trend");
+    }
+
+    [TestMethod]
+    public void BuildRequestPreview_IncludesAgentToolsAndMergedSystemPrompt()
+    {
+        var tool = new ToolSpecification("forecast_trend", "Forecast a metric trend", ToolArguments.None);
+
+        var services = GetServices(config =>
+        {
+            IModelEndpoint endpoint = MakeEndpoint(modelName: "gpt-5.4-nano");
+            config.RegisterInstance(endpoint).As<IModelEndpoint>();
+            config.RegisterInstance(MakeAgent(endpoint, tool)).As<IAgent>();
+            RegisterChatClient(config, TextResponse("unused"));
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        var preview = client.BuildRequestPreview(SimpleConversation("Forecast revenue"));
+
+        preview.Model.Should().Be("gpt-5.4-nano");
+        preview.Tools.Should().ContainSingle().Which.Name.Should().Be("forecast_trend");
+        preview.Messages[0].Role.Should().Be("system");
+        preview.Messages.Should().Contain(m => m.Role == "user");
     }
 
     [TestMethod]

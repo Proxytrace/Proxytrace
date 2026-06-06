@@ -55,6 +55,14 @@ export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
   [EvaluatorKind.JsonSchemaMatch]: '#6b9eaa',
 };
 
+/**
+ * Color for an evaluator from its kind string (the API serializes the kind as its name).
+ * Falls back to teal for any kind not in the palette so a border is never left uncolored.
+ */
+export function evaluatorColor(kind: string): string {
+  return EVALUATOR_KIND_COLOR[kind as EvaluatorKind] ?? '#6b9eaa';
+}
+
 export const EVALUATOR_KIND_CATEGORY: Record<EvaluatorKind, 'llm' | 'rule'> = {
   [EvaluatorKind.Agentic]: 'llm',
   [EvaluatorKind.ExactMatch]: 'rule',

@@ -1,4 +1,4 @@
-import { fmtDuration } from '../../../lib/format';
+import { fmtDuration, fmtTokens, fmtCost } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
 import { Skeleton, SkeletonList } from '../../../components/ui/Skeleton';
 import { compositeColor, fixtureSummary } from '../results';
@@ -11,6 +11,7 @@ import {
   EvaluatorList,
   RoleMessageList,
   EvalBreakdown,
+  RequestPreviewButton,
   SECTION_LABEL,
 } from './panels';
 
@@ -26,14 +27,15 @@ interface Props {
   onNext?: () => void;
 }
 
-function ComparisonColumn({ run, fixture, isLoading, focused }: {
+function ComparisonColumn({ run, caseId, fixture, isLoading, focused }: {
   run: TestRunDto;
+  caseId: string;
   fixture: TestCaseFixtureDto | undefined;
   isLoading: boolean;
   focused: boolean;
 }) {
   const mc = modelColor(run.endpointName);
-  const { total, allPass, composite, totalCost: cost } = fixtureSummary(fixture);
+  const { total, allPass, composite, totalCost: cost, tokensOut } = fixtureSummary(fixture);
   const failed = total > 0 && !allPass;
 
   const borderCls = focused
@@ -53,6 +55,7 @@ function ComparisonColumn({ run, fixture, isLoading, focused }: {
       <div className="flex items-center gap-2 min-w-0">
         <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: mc }} />
         <span className="mono text-body font-semibold truncate flex-1 min-w-0">{run.endpointName}</span>
+        <RequestPreviewButton runId={run.id} caseId={caseId} model={run.endpointName} />
         {fixture && <PassFailTag pass={allPass} />}
       </div>
 
@@ -63,7 +66,9 @@ function ComparisonColumn({ run, fixture, isLoading, focused }: {
           <span className="text-muted">·</span>
           <span className="mono text-secondary">{fmtDuration(fixture.runtime.total)}</span>
           <span className="text-muted">·</span>
-          <span className="mono text-secondary">${cost.toFixed(4)}</span>
+          <span className="mono text-secondary">{fmtTokens(tokensOut)} out</span>
+          <span className="text-muted">·</span>
+          <span className="mono text-secondary">{fmtCost(cost)}</span>
         </div>
       )}
 
@@ -130,6 +135,7 @@ export function ComparisonDrawer({ runs, caseId, caseSummary, caseIdx, total, fo
                 <ComparisonColumn
                   key={run.id}
                   run={run}
+                  caseId={caseId}
                   fixture={queries[i].data}
                   isLoading={queries[i].isLoading}
                   focused={run.id === focusRunId}

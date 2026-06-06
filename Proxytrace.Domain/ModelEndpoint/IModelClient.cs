@@ -25,6 +25,26 @@ public record ModelOptions(
 
 public record TypedCompletion<TOutput>(TOutput? Response, TokenUsage? Usage, TimeSpan Latency);
 
+/// <summary>
+/// A read-only snapshot of the exact request a <see cref="IModelClient"/> would send to the model:
+/// the resolved model name, the messages (system prompt already merged in), and the tool definitions.
+/// Built without contacting the provider, so it can be inspected for debugging.
+/// </summary>
+public record ModelRequestPreview(
+    string Model,
+    IReadOnlyList<RequestMessagePreview> Messages,
+    IReadOnlyList<RequestToolPreview> Tools);
+
+public record RequestMessagePreview(
+    string Role,
+    string? Content,
+    IReadOnlyList<RequestToolCallPreview> ToolCalls,
+    string? ToolCallId);
+
+public record RequestToolCallPreview(string Id, string Name, string Arguments);
+
+public record RequestToolPreview(string Name, string Description, string JsonSchema);
+
 public interface IModelClient
 {
     public delegate IModelClient Factory(
@@ -43,6 +63,16 @@ public interface IModelClient
         ModelOptions? options = null,
         IReadOnlyDictionary<string, string>? promptVariables = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reconstructs the request that <see cref="CompleteAsync(Conversation, ModelOptions?, IReadOnlyDictionary{string, string}?, CancellationToken)"/>
+    /// would send — model, messages (with the agent's system prompt merged in), and tools — without
+    /// contacting the provider. Defaults the tools to the agent's toolset, mirroring a real run.
+    /// </summary>
+    ModelRequestPreview BuildRequestPreview(
+        Conversation conversation,
+        ModelOptions? options = null,
+        IReadOnlyDictionary<string, string>? promptVariables = null);
 
     /// <summary>
     /// Streams a single completion turn. Caller supplies the system message explicitly so the

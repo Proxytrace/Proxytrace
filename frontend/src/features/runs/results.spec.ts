@@ -21,6 +21,7 @@ import {
   buildMatrixRows,
   fixtureSummary,
   patchGroupsWithResult,
+  scoreLabel,
 } from './results';
 import {
   buildLeaderboard,
@@ -145,7 +146,7 @@ describe('fixtureSummary', () => {
 
   it('zeroes everything when the fixture is undefined', () => {
     expect(fixtureSummary(undefined)).toEqual({
-      passed: 0, total: 0, allPass: false, composite: null, totalCost: 0, totalTokens: 0,
+      passed: 0, total: 0, allPass: false, composite: null, totalCost: 0, totalTokens: 0, tokensOut: 0,
     });
   });
 
@@ -162,6 +163,22 @@ describe('fixtureSummary', () => {
     expect(s).toMatchObject({ passed: 1, total: 2, allPass: false, composite: 50 });
     expect(s.totalCost).toBeCloseTo(0.03);
     expect(s.totalTokens).toBe(40);
+    expect(s.tokensOut).toBe(10);
+  });
+});
+
+describe('scoreLabel', () => {
+  it('maps each backend score ordinal (1..5) to its label', () => {
+    expect(scoreLabel(1)).toBe(EvaluationScore.Terrible);
+    expect(scoreLabel(2)).toBe(EvaluationScore.Bad);
+    expect(scoreLabel(3)).toBe(EvaluationScore.Acceptable);
+    expect(scoreLabel(4)).toBe(EvaluationScore.Good);
+    expect(scoreLabel(5)).toBe(EvaluationScore.Excellent);
+  });
+
+  it('returns "—" for null and the raw number for out-of-range values', () => {
+    expect(scoreLabel(null)).toBe('—');
+    expect(scoreLabel(7)).toBe('7');
   });
 });
 

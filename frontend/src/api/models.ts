@@ -508,13 +508,26 @@ export interface OutputValueDto {
   name?: string | null;
   arguments?: unknown;
 }
+export interface RequestToolCallDto { id: string; name: string; arguments: string; }
+export interface RequestMessageDto {
+  role: string;
+  content: string | null;
+  toolCalls: RequestToolCallDto[];
+  toolCallId: string | null;
+}
+export interface RequestToolDto { name: string; description: string; jsonSchema: unknown; }
+export interface ModelRequestPreviewDto {
+  model: string;
+  messages: RequestMessageDto[];
+  tools: RequestToolDto[];
+}
+
 export interface BreakdownItemDto { k: string; v: string; match: boolean; }
 export interface EvaluatorFixtureResultDto {
   evaluatorId: string;
   evaluatorKind: string;
   evaluatorName: string;
-  color: string;
-  desc: string;
+  desc?: string | null;
   score: number;
   pass: boolean;
   breakdown: BreakdownItemDto[];

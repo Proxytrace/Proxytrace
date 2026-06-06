@@ -29,6 +29,13 @@ A completed run gives you:
 - **Aggregate metrics** — pass rates and scores rolled up across the suite.
 - **Comparisons** — how this run stacks up against previous runs of the same suite.
 
+When you open a case, each model column has a **Request** button. It shows the exact
+request that run sends to the model — the resolved model name, the full message list (with
+the agent's system prompt merged in), and the **tool definitions** the model receives. Use
+it to confirm the agent is offering the tools a case expects; if a tool is missing here, the
+model can't call it. The request is rebuilt on demand from the agent's current configuration,
+so it reflects what a re-run would send.
+
 ## What runs feed into
 
 Test runs are the evidence behind

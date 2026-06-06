@@ -50,6 +50,7 @@ export const QUERY_KEYS = {
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,
   fixture: (runId: string, caseId: string) => ['fixture', runId, caseId] as const,
+  fixtureRequest: (runId: string, caseId: string) => ['fixture-request', runId, caseId] as const,
 
   search: (projectId: string, q: string) => ['search', projectId, q] as const,
   searchRecent: (projectId: string, kinds: string[], limit: number) =>
