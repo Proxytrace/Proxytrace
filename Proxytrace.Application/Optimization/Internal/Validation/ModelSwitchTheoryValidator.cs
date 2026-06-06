@@ -28,7 +28,7 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
 
     public override bool CanValidate(IOptimizationTheory theory) => theory is IModelSwitchTheory;
 
-    public override async Task<IOptimizationProposal?> ValidateAsync(
+    public override async Task<TheoryValidationOutcome> ValidateAsync(
         IOptimizationTheory theory,
         CancellationToken cancellationToken = default)
     {
@@ -41,28 +41,30 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);
 
-        // Pass-rate must not regress.
-        if (baseline.PassRate is not { } basePassRate
-            || candidate.PassRate is not { } candidatePassRate
-            || candidatePassRate < basePassRate)
+        if (baseline.PassRate is not { } basePassRate || candidate.PassRate is not { } candidatePassRate)
         {
-            return null;
+            return TheoryValidationOutcome.Inconclusive;
         }
+
+        (int basePasses, int baseTotal) = PassCounts(baselineRun);
+        (int candPasses, int candTotal) = PassCounts(candidateRun);
+        double? pValue = ProportionStats.TwoSidedPValue(basePasses, baseTotal, candPasses, candTotal);
 
         decimal? costDelta = candidate.Cost.HasValue && baseline.Cost.HasValue
             ? candidate.Cost.Value - baseline.Cost.Value
             : null;
         TimeSpan latencyDelta = candidate.Latency - baseline.Latency;
 
-        // The switch must actually save money or time — equal-quality-but-pricier is not a win.
+        // Pass-rate must not regress, and the switch must actually save money or time —
+        // equal-quality-but-pricier is not a win.
         bool cheaper = costDelta is < 0m;
         bool faster = latencyDelta < TimeSpan.Zero;
-        if (!cheaper && !faster)
+        if (candidatePassRate < basePassRate || (!cheaper && !faster))
         {
-            return null;
+            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue);
         }
 
-        return proposalFactory(
+        var proposal = proposalFactory(
             agent: agent,
             priority: theory.Priority,
             rationale: theory.Rationale,
@@ -73,5 +75,7 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
             expectedLatencyDelta: latencyDelta,
             evidenceTestRunIds: theory.EvidenceTestRunIds,
             abTestRun: candidateRun);
+
+        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue);
     }
 }

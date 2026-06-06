@@ -30,6 +30,9 @@ public sealed class TheoryDtoMapper
             ToDetailsDto(t),
             [.. t.EvidenceTestRunIds],
             t.ResultingProposalId,
+            t.BaselinePassRate,
+            t.ProjectedPassRate,
+            t.PValue,
             t.CreatedAt,
             t.UpdatedAt);
 

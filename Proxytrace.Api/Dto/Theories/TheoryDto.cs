@@ -21,6 +21,9 @@ public record TheoryDto(
     ProposalDetailsDto Details,
     Guid[] EvidenceTestRunIds,
     Guid? ResultingProposalId,
+    double? BaselinePassRate,
+    double? ProjectedPassRate,
+    double? PValue,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
@@ -35,3 +38,21 @@ public record SubmitTheoryRequest(
     string Rationale,
     TheorySource Source,
     ProposalDetailsDto Details);
+
+/// <summary>
+/// Test-only request to seed an optimization theory directly in a chosen lifecycle state,
+/// bypassing the asynchronous validation pipeline. <see cref="ResultingProposalId"/> is required
+/// when <see cref="Status"/> is <see cref="TheoryStatus.Validated"/> so the spawned proposal is
+/// resolvable. The pass-rate / p-value metrics are optional and recorded as-is.
+/// </summary>
+public record SeedTheoryRequest(
+    Guid AgentId,
+    TheoryStatus Status,
+    TheorySource Source,
+    Priority Priority,
+    string Rationale,
+    ProposalDetailsDto Details,
+    double? BaselinePassRate,
+    double? ProjectedPassRate,
+    double? PValue,
+    Guid? ResultingProposalId);

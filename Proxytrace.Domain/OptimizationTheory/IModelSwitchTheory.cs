@@ -32,6 +32,9 @@ public interface IModelSwitchTheory : IOptimizationTheory
         IModelEndpoint proposedEndpoint,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         Guid? resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
         string contentHash,
         IDomainEntityData existing);
 }

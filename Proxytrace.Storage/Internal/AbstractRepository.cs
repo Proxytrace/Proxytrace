@@ -364,8 +364,11 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             throw new EntityNotFoundException(entity.Id, typeof(TDomainEntity));
         }
 
-        // check for optimistic concurrency conflict
-        if (existing.UpdatedAt != entity.UpdatedAt)
+        // check for optimistic concurrency conflict — compared at the database's persisted
+        // (microsecond) precision so a full-precision in-memory token (e.g. the entity AddAsync
+        // returns before any DB round-trip truncates it) does not spuriously conflict on the first
+        // update after an insert. See ConcurrencyTokenExtensions.
+        if (!existing.UpdatedAt.MatchesConcurrencyToken(entity.UpdatedAt))
         {
             throw new OptimisticConcurrencyException(entity.Id, typeof(TDomainEntity));
         }

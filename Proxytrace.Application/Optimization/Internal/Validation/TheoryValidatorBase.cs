@@ -35,7 +35,7 @@ internal abstract class TheoryValidatorBase : ITheoryValidator
 
     public abstract bool CanValidate(IOptimizationTheory theory);
 
-    public abstract Task<IOptimizationProposal?> ValidateAsync(IOptimizationTheory theory, CancellationToken cancellationToken = default);
+    public abstract Task<TheoryValidationOutcome> ValidateAsync(IOptimizationTheory theory, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns the evidence run executed against <paramref name="endpoint"/> if one exists,
@@ -103,5 +103,15 @@ internal abstract class TheoryValidatorBase : ITheoryValidator
         }
 
         return new RunMetrics(passRate, cost, latency);
+    }
+
+    /// <summary>
+    /// Returns the number of passing results and the total result count for a run — the raw
+    /// counts a two-proportion test needs, as opposed to the rounded <see cref="RunMetrics.PassRate"/>.
+    /// </summary>
+    protected static (int Passes, int Total) PassCounts(ITestRun run)
+    {
+        var results = run.TestResults;
+        return (results.Count(r => r.IsPass()), results.Count);
     }
 }

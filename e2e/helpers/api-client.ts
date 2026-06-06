@@ -313,6 +313,62 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
+  // Test-only: seeds a theory directly in a chosen lifecycle state (POST /api/theories/seed),
+  // bypassing the async validation pipeline so board states are deterministic. A Validated seed
+  // must carry a `resultingProposalId` (seed a proposal first and pass its id).
+  async seedTheory(opts: {
+    agentId: string;
+    status: 'Proposed' | 'Validating' | 'Validated' | 'Invalidated';
+    kind?: 'SystemPrompt' | 'ModelSwitch' | 'ToolUpdate';
+    source?: string;
+    priority?: string;
+    rationale: string;
+    proposedSystemMessage?: string;
+    proposedEndpointId?: string;
+    proposedTools?: Array<{ name: string; description: string; parametersJson?: string | null }>;
+    baselinePassRate?: number;
+    projectedPassRate?: number;
+    pValue?: number;
+    resultingProposalId?: string;
+  }): Promise<TheoryDto> {
+    const kind = opts.kind ?? 'SystemPrompt';
+    // Polymorphic ProposalDetailsDto, same *Seed discriminators as seedProposal.
+    let details: Record<string, unknown>;
+    if (kind === 'ModelSwitch') {
+      details = { kind: 'ModelSwitchSeed', proposedEndpointId: opts.proposedEndpointId };
+    } else if (kind === 'ToolUpdate') {
+      details = {
+        kind: 'ToolUpdateSeed',
+        proposedTools: opts.proposedTools ?? [
+          { name: 'lookup', description: 'Look up a value', parametersJson: null },
+        ],
+      };
+    } else {
+      details = {
+        kind: 'SystemPrompt',
+        currentSystemMessage: '',
+        proposedSystemMessage: opts.proposedSystemMessage ?? 'You are a concise, helpful assistant.',
+      };
+    }
+    const res = await this.request.post('/api/theories/seed', {
+      headers: this.headers(),
+      data: {
+        agentId: opts.agentId,
+        status: opts.status,
+        source: opts.source ?? 'Optimizer',
+        priority: opts.priority ?? 'Medium',
+        rationale: opts.rationale,
+        details,
+        baselinePassRate: opts.baselinePassRate ?? null,
+        projectedPassRate: opts.projectedPassRate ?? null,
+        pValue: opts.pValue ?? null,
+        resultingProposalId: opts.resultingProposalId ?? null,
+      },
+    });
+    if (!res.ok()) throw new Error(`seed theory failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
   async getTheories(params?: { agentId?: string; projectId?: string; status?: string }): Promise<TheoryDto[]> {
     const qs = new URLSearchParams();
     if (params?.agentId) qs.set('agentId', params.agentId);

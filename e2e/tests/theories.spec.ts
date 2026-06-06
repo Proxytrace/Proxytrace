@@ -75,7 +75,7 @@ test.describe('Optimization Theories', () => {
     expect(res.status()).toBe(404);
   });
 
-  test('submitted theory appears in the Theory pipeline panel', async ({ page }) => {
+  test('submitted theory appears as a card on the theories board', async ({ page }) => {
     const theory = await api.submitTheory({
       agentId,
       suiteId,
@@ -84,7 +84,9 @@ test.describe('Optimization Theories', () => {
     });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId('theory-pipeline-toggle').click();
-    await expect(page.getByTestId(`theory-row-${theory.id}`)).toBeVisible();
+    await expect(page.getByTestId('theory-board')).toBeVisible();
+    // The card carries a column-independent testid; background A/B validation may move it between
+    // columns, but it remains on the board.
+    await expect(page.getByTestId(`theory-card-${theory.id}`)).toBeVisible({ timeout: 10_000 });
   });
 });

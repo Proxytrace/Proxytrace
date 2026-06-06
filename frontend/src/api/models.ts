@@ -649,6 +649,9 @@ export interface TheoryDto {
   details: ProposalDetailsDto;
   evidenceTestRunIds: string[];
   resultingProposalId: string | null;
+  baselinePassRate: number | null;
+  projectedPassRate: number | null;
+  pValue: number | null;
   createdAt: string;
   updatedAt: string;
 }

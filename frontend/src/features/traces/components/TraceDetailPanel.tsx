@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
@@ -15,6 +15,7 @@ import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
 import { CopyButton } from '../../../components/ui/CopyButton';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
+import { DetailPanel } from '../../../components/overlays/DetailPanel';
 import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
 import { TraceMessagesTab } from './TraceMessagesTab';
@@ -41,20 +42,6 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
     setTab('Messages');
     setPromoting(false);
   }
-
-  // Keyboard navigation — genuine DOM subscription per BEST_PRACTICES §4.1.
-  // Lives here (not in TraceDetail.tsx) because `promoting` guard requires
-  // access to this component's modal state.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (promoting) return;
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev?.();
-      if (e.key === 'ArrowRight') onNext?.();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose, onPrev, onNext, promoting]);
 
   const suitesQuery = useQuery({
     queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
@@ -109,12 +96,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]" />
-
-      <div
-        data-testid="trace-detail"
-        className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51] shadow-[var(--shadow-float)] [animation:fade-up_0.25s_cubic-bezier(0.2,0.8,0.2,1)]"
-      >
+      <DetailPanel onClose={onClose} onPrev={onPrev} onNext={onNext} keyboardEnabled={!promoting} testId="trace-detail">
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
           <div className="flex-1 min-w-0">
@@ -239,7 +221,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           {tab === 'Raw JSON' && <TraceRawJsonTab trace={trace} tokTotal={tokTotal} />}
           {tab === 'Metadata' && <TraceMetadataTab trace={trace} />}
         </div>
-      </div>
+      </DetailPanel>
 
       {promoting && <PromoteModal trace={trace} suites={suites} onClose={() => setPromoting(false)} />}
     </>

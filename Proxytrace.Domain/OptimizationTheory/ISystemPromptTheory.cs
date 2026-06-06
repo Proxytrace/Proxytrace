@@ -31,6 +31,9 @@ public interface ISystemPromptTheory : IOptimizationTheory
         string proposedSystemMessage,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         Guid? resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
         string contentHash,
         IDomainEntityData existing);
 }

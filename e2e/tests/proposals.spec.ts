@@ -1,208 +1,203 @@
 import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
-// Verifies the Proposals feature end to end. Proposals are seeded via the test-only
-// POST /api/proposals/seed endpoint (the public ProposalsController exposes only GET +
-// PATCH /status). Seeding requires no real LLM, so these tests are deterministic.
+// Verifies the Optimization Theories board (the /proposals route) end to end. The board is
+// theory-driven: theories flow Proposed → Validating → Validated/Rejected, and a validated
+// theory links to a reviewable proposal. Both are seeded via test-only endpoints
+// (POST /api/theories/seed, POST /api/proposals/seed) so the states are deterministic and need
+// no real LLM.
 //
-// IMPORTANT seeding constraints (see ProposalsController.Seed):
-//   • Only SystemPrompt proposals can be seeded — the action returns 400 for any other kind.
-//     There is therefore NO way to seed a ModelSwitch proposal, so the ModelSwitchSection
-//     ("from → to model") test is intentionally omitted; see the note at the bottom.
-//   • A seeded proposal always gets a freshly-created (Pending) A/B run attached. The card's
-//     status pill reflects that A/B run state, not the literal ProposalStatus — a Draft seed
-//     shows 'A/B queued', not 'Draft'. For approve/reject we therefore drive the
-//     ProposalActionBar buttons and assert the new status via api.getProposals read-back.
-//
-// The proposals components expose stable data-testids: `proposal-list`, `proposal-card-<id>`,
-// `proposal-status-<id>`, `proposal-detail`, `proposal-header`, `evidence-list`,
-// `predicted-impact-band`, `prompt-diff`, `model-switch-section`, `proposal-action-bar`,
-// `proposal-approve-btn`, `proposal-reject-btn`, `proposal-terminal-note`.
-test.describe('Proposals', () => {
-  // Playwright forbids reusing the beforeAll `request` fixture inside a test, so we persist only
-  // the auth token + agent id here and rebuild a client per test against that test's own fixture.
+// Stable data-testids: `theory-board`, `theory-column-<status>`, `theory-column-count-<status>`,
+// `theory-card-<id>`, `theory-handle-<id>`, `theory-promote-btn-<id>`, `theory-detail`,
+// and (in the drawer, for a validated theory) `proposal-detail` / `prompt-diff`.
+test.describe('Optimization Theories board', () => {
   let token: string;
   let agentId: string;
-
-  // A proposal seeded once for the read-back + render assertions (kept Draft / open).
-  const sharedRationale = `E2E seeded proposal ${Date.now()}`;
 
   test.beforeEach(async ({ request }) => {
     const api = new ProxytraceApiClient(request);
     ({ token } = await api.login('admin@e2e.test', 'E2ePassword1!'));
     api.setToken(token);
 
-    // A proposal targets an agent. Reuse an ingested agent if one exists; otherwise seed one
-    // against the default endpoint so these (non-LLM) seeded-proposal tests run without a real
-    // ingestion step.
     const agents = await api.listAgents();
     agentId =
       agents.items[0]?.id ??
-      (await api.createAgent({ name: `E2E Proposal Agent ${Date.now()}`, endpointId: await api.firstEndpointId() })).id;
-
-    await api.seedProposal({ agentId, rationale: sharedRationale, status: 'Draft' });
+      (await api.createAgent({ name: `E2E Theory Agent ${Date.now()}`, endpointId: await api.firstEndpointId() })).id;
   });
 
-  test('seeded proposal appears in the API read-back with its status', async ({ request }) => {
+  test('seeded theory appears in the API read-back with its status', async ({ request }) => {
     const api = new ProxytraceApiClient(request, token);
-    const proposals = await api.getProposals();
-    const seeded = proposals.find((p) => p.rationale === sharedRationale);
-    expect(seeded, 'seeded proposal should be returned by GET /api/proposals').toBeTruthy();
-    expect(seeded?.status).toBe('Draft');
+    const rationale = `E2E proposed theory ${Date.now()}`;
+    const { id } = await api.seedTheory({ agentId, status: 'Proposed', rationale });
+
+    const theories = await api.getTheories({ agentId });
+    const seeded = theories.find((t) => t.id === id);
+    expect(seeded, 'seeded theory should be returned by GET /api/theories').toBeTruthy();
+    expect(seeded?.status).toBe('Proposed');
   });
 
-  test('seeded proposal renders as a ProposalCard with its status', async ({ page }) => {
+  test('a proposed theory renders as a card in the Proposed column', async ({ page, request }) => {
+    const api = new ProxytraceApiClient(request, token);
+    const rationale = `E2E board proposed ${Date.now()}`;
+    const { id } = await api.seedTheory({ agentId, status: 'Proposed', rationale });
+
     await page.goto('/proposals', { waitUntil: 'load' });
 
-    const list = page.getByTestId('proposal-list');
-    await expect(list).toBeVisible();
-
-    // The card title is derived from the first sentence of the rationale, which is the whole
-    // rationale here (no '.'). Scope to the list so we don't also match the detail heading.
-    const card = list.getByText(sharedRationale).first();
+    await expect(page.getByTestId('theory-board')).toBeVisible();
+    const card = page.getByTestId(`theory-card-${id}`);
     await expect(card).toBeVisible();
-
-    // A freshly-seeded Draft proposal's A/B run is Pending, so the status pill reads 'A/B queued'
-    // (displayStatus in features/proposals/shared.ts), not the literal 'Draft'.
-    await expect(list.getByText('A/B queued').first()).toBeVisible();
+    // The card lives inside the Proposed column.
+    await expect(page.getByTestId('theory-column-Proposed').getByTestId(`theory-card-${id}`)).toBeVisible();
+    await expect(card.getByText(rationale)).toBeVisible();
   });
 
-  test('opening a proposal shows the detail, header, predicted-impact band and prompt diff', async ({ page, request }) => {
+  test('opening a theory shows its decision flow', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
-    // A SystemPrompt proposal's "current" side of the diff is derived from the *agent's* system
-    // message (the seed endpoint ignores any client-supplied current), so pin it by seeding the
-    // proposal against a dedicated agent with a known, unique prompt.
+    const rationale = `E2E theory flow ${Date.now()}`;
+    const { id } = await api.seedTheory({ agentId, status: 'Proposed', rationale });
+
+    await page.goto('/proposals', { waitUntil: 'load' });
+    await page.getByTestId(`theory-card-${id}`).click();
+
+    const flow = page.getByTestId('decision-flow');
+    await expect(flow).toBeVisible();
+    // The flow lays out the lifecycle stages top to bottom.
+    await expect(flow.getByTestId('flow-step-evidence')).toBeVisible();
+    await expect(flow.getByTestId('flow-step-outcome')).toBeVisible();
+  });
+
+  test('a validated theory shows the change diff and completed flow in the drawer', async ({ page, request }) => {
+    const api = new ProxytraceApiClient(request, token);
+    // A validated theory references a reviewable proposal; seed the proposal first and link it.
     const currentMessage = `You are a helpful assistant. [${Date.now()}]`;
-    const { id: diffAgentId } = await api.createAgent({
-      name: `E2E Diff Agent ${Date.now()}`,
+    const { id: detailAgentId } = await api.createAgent({
+      name: `E2E Validated Agent ${Date.now()}`,
       endpointId: await api.firstEndpointId(),
       systemMessage: currentMessage,
     });
-    const rationale = `E2E detail proposal ${Date.now()}`;
-    const { id } = await api.seedProposal({ agentId: diffAgentId, rationale, status: 'Draft' });
+    const { id: proposalId } = await api.seedProposal({
+      agentId: detailAgentId,
+      rationale: `E2E backing proposal ${Date.now()}`,
+      status: 'Draft',
+    });
+    const { id: theoryId } = await api.seedTheory({
+      agentId: detailAgentId,
+      status: 'Validated',
+      rationale: `E2E validated theory ${Date.now()}`,
+      baselinePassRate: 0.78,
+      projectedPassRate: 0.9,
+      pValue: 0.008,
+      resultingProposalId: proposalId,
+    });
 
     await page.goto('/proposals', { waitUntil: 'load' });
 
-    // Select the specific seeded card by its stable per-id testid.
-    const card = page.getByTestId(`proposal-card-${id}`);
-    await expect(card).toBeVisible();
+    const card = page.getByTestId(`theory-card-${theoryId}`);
+    await expect(page.getByTestId('theory-column-Validated').getByTestId(`theory-card-${theoryId}`)).toBeVisible();
     await card.click();
 
-    const detail = page.getByTestId('proposal-detail');
-    await expect(detail).toBeVisible();
-    await expect(detail.getByTestId('proposal-header')).toBeVisible();
-    await expect(detail.getByTestId('predicted-impact-band')).toBeVisible();
-
-    // SystemPrompt proposals render the prompt diff (old vs new system prompt).
-    const diff = detail.getByTestId('prompt-diff');
-    await expect(diff).toBeVisible();
-    // The diff renders the removed line (the agent's current prompt) and the added line (the
-    // proposed prompt seedProposal sends: 'You are a concise, helpful assistant.').
-    await expect(diff.getByText(currentMessage)).toBeVisible();
-    await expect(diff.getByText('You are a concise, helpful assistant.')).toBeVisible();
+    const flow = page.getByTestId('decision-flow');
+    await expect(flow).toBeVisible();
+    // The Theory stage renders the proposed system-prompt change as a diff.
+    await expect(flow.getByTestId('prompt-diff')).toBeVisible();
+    // A validated theory pending review exposes the Promote action in the Outcome stage.
+    await expect(flow.getByTestId('flow-promote-btn')).toBeVisible();
   });
 
-  test('the action bar evidence list is absent without evidence runs', async ({ page, request }) => {
-    // Seeded proposals carry an A/B run but no evidence run ids, so EvidenceList must not render.
+  test('dismissing from the drawer flips the linked proposal to Rejected', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
-    const rationale = `E2E no-evidence proposal ${Date.now()}`;
-    const { id } = await api.seedProposal({ agentId, rationale, status: 'Draft' });
+    const { id: proposalId } = await api.seedProposal({
+      agentId,
+      rationale: `E2E dismiss backing ${Date.now()}`,
+      status: 'Draft',
+    });
+    const { id: theoryId } = await api.seedTheory({
+      agentId,
+      status: 'Validated',
+      rationale: `E2E dismiss theory ${Date.now()}`,
+      baselinePassRate: 0.8,
+      projectedPassRate: 0.85,
+      pValue: 0.04,
+      resultingProposalId: proposalId,
+    });
 
     await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`proposal-card-${id}`).click();
+    await page.getByTestId(`theory-card-${theoryId}`).click();
+    await page.getByTestId('decision-flow').getByTestId('flow-dismiss-btn').click();
 
-    const detail = page.getByTestId('proposal-detail');
-    await expect(detail).toBeVisible();
-    await expect(detail.getByTestId('evidence-list')).toHaveCount(0);
-  });
-
-  test('approving via the action bar flips the status to Accepted', async ({ page, request }) => {
-    const api = new ProxytraceApiClient(request, token);
-    const rationale = `E2E approve proposal ${Date.now()}`;
-    const { id } = await api.seedProposal({ agentId, rationale, status: 'Draft' });
-
-    await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`proposal-card-${id}`).click();
-
-    const bar = page.getByTestId('proposal-action-bar');
-    await expect(bar).toBeVisible();
-    await bar.getByTestId('proposal-approve-btn').click();
-
-    // The pill / literal status diverge in the UI, so assert the canonical state via the API.
     await expect
       .poll(
         async () => {
           const proposals = await api.getProposals({ agentId });
-          return proposals.find((p) => p.id === id)?.status;
+          return proposals.find((p) => p.id === proposalId)?.status;
+        },
+        { timeout: 10_000, intervals: [500], message: 'proposal status did not flip to Rejected' },
+      )
+      .toBe('Rejected');
+  });
+
+  test('promoting a validated theory flips the linked proposal to Accepted', async ({ page, request }) => {
+    const api = new ProxytraceApiClient(request, token);
+    const { id: proposalId } = await api.seedProposal({
+      agentId,
+      rationale: `E2E promote backing ${Date.now()}`,
+      status: 'Draft',
+    });
+    const { id: theoryId } = await api.seedTheory({
+      agentId,
+      status: 'Validated',
+      rationale: `E2E promote theory ${Date.now()}`,
+      baselinePassRate: 0.71,
+      projectedPassRate: 0.78,
+      pValue: 0.03,
+      resultingProposalId: proposalId,
+    });
+
+    await page.goto('/proposals', { waitUntil: 'load' });
+
+    const promote = page.getByTestId(`theory-promote-btn-${theoryId}`);
+    await expect(promote).toBeVisible();
+    await promote.click();
+
+    await expect
+      .poll(
+        async () => {
+          const proposals = await api.getProposals({ agentId });
+          return proposals.find((p) => p.id === proposalId)?.status;
         },
         { timeout: 10_000, intervals: [500], message: 'proposal status did not flip to Accepted' },
       )
       .toBe('Accepted');
   });
-
-  test('rejecting via the action bar flips the status to Rejected and shows the terminal note', async ({ page, request }) => {
-    const api = new ProxytraceApiClient(request, token);
-    const rationale = `E2E reject proposal ${Date.now()}`;
-    const { id } = await api.seedProposal({ agentId, rationale, status: 'Draft' });
-
-    await page.goto('/proposals', { waitUntil: 'load' });
-    await page.getByTestId(`proposal-card-${id}`).click();
-
-    const bar = page.getByTestId('proposal-action-bar');
-    await expect(bar).toBeVisible();
-    await bar.getByTestId('proposal-reject-btn').click();
-
-    await expect
-      .poll(
-        async () => {
-          const proposals = await api.getProposals({ agentId });
-          return proposals.find((p) => p.id === id)?.status;
-        },
-        { timeout: 10_000, intervals: [500], message: 'proposal status did not flip to Rejected' },
-      )
-      .toBe('Rejected');
-
-    // Once terminal, the action bar is replaced by the terminal note. A Rejected proposal drops out
-    // of the default "open" (Draft-only) filter, so switch to the "Dismissed" tab before re-opening
-    // it to land on the now-dismissed detail.
-    await page.getByTestId('proposal-filter-dismissed').click();
-    const dismissedCard = page.getByTestId(`proposal-card-${id}`);
-    await expect(dismissedCard).toBeVisible();
-    await dismissedCard.click();
-    const detail = page.getByTestId('proposal-detail');
-    await expect(detail.getByTestId('proposal-terminal-note')).toBeVisible();
-    await expect(detail.getByTestId('proposal-action-bar')).toHaveCount(0);
-  });
 });
 
-// A real, LLM-generated proposal. Generation runs only against a *completed* test run group
-// (POST /api/test-run-groups/{id}/optimize → background optimizer → ProposalBroadcaster), and
-// the run executes the agent against a live model, so this is necessarily LLM-gated. There is
-// no non-LLM trigger that produces a genuine (non-seeded) proposal.
-test.describe('@llm proposal generation', () => {
+// A real, LLM-generated proposal still surfaces on the board: its winning theory is Validated and
+// links to the generated proposal. Generation runs only against a *completed* test run group and
+// hits a live model, so this is LLM-gated.
+test.describe('@llm optimizer pipeline', () => {
   test.skip(!process.env.OPENAI_API_KEY, 'requires OPENAI_API_KEY env var');
 
-  test('generating a proposal from run evidence surfaces it as a ProposalCard', async ({ page, request }) => {
-    // Two real LLM round-trips (the run + the optimizer); allow generous time.
+  // Exercises the real optimizer → theory → A/B validation → board pipeline end to end. We assert
+  // the deterministic, meaningful outcome: from a failing run, the optimizer surfaces a theory that
+  // *completes validation* (reaches a terminal Validated/Invalidated state) and renders on the
+  // board. We deliberately do NOT assert that a proposal is produced — whether the A/B *wins*
+  // depends on the model exactly-matching a string, which is inherently non-deterministic. (Earlier
+  // this whole pipeline hung on an optimistic-concurrency conflict in the A/B run; this guards it.)
+  test('optimizer surfaces a theory that completes validation on the board', async ({ page, request }) => {
     test.setTimeout(180_000);
 
     const api = new ProxytraceApiClient(request);
     const { token } = await api.login('admin@e2e.test', 'E2ePassword1!');
     api.setToken(token);
 
-    // The DB is reset to the setup baseline before each test, so seed our own agent rather than
-    // relying on one from another spec.
     const projectId = await api.firstProjectId();
     const endpointId = await api.firstEndpointId();
-    const { items: existing } = await api.listAgents();
-    const agent =
-      existing[0] ??
-      (await api.createAgent({ name: `E2E Proposal Gen Agent ${Date.now()}`, endpointId }));
+    const agent = await api.createAgent({ name: `E2E Optimizer Agent ${Date.now()}`, endpointId });
 
-    // A suite whose expectation the agent is likely to miss, giving the optimizer evidence to
-    // propose a fix from.
+    // A clearly-failing expectation guarantees the optimizer has something to hypothesise about,
+    // so it reliably produces at least one theory to validate.
     const { id: evaluatorId } = await api.createEvaluator(projectId);
-    const { id: suiteId } = await api.createTestSuite('E2E Proposal Suite', agent.id, [evaluatorId], [
+    const { id: suiteId } = await api.createTestSuite('E2E Optimizer Suite', agent.id, [evaluatorId], [
       { userContent: 'Reply with exactly: pong', expectedContent: 'definitely-not-the-answer' },
     ]);
 
@@ -215,29 +210,30 @@ test.describe('@llm proposal generation', () => {
       )
       .toMatch(/Completed|Failed/);
 
-    // Kick off optimization on the completed group (test-run-groups/{id}/optimize).
     const optimizeRes = await request.post(`/api/test-run-groups/${groupId}/optimize`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(optimizeRes.ok(), `optimize trigger failed: ${optimizeRes.status()}`).toBeTruthy();
 
-    // Poll the API until the optimizer has produced at least one proposal for this agent.
-    let proposalId: string | undefined;
+    // Poll until a theory for this agent reaches a terminal validation state. Reaching a terminal
+    // state at all proves the A/B validation ran to completion (the concurrency bug would have
+    // aborted it).
+    let theoryId: string | undefined;
     await expect
       .poll(
         async () => {
-          const proposals = await api.getProposals({ agentId: agent.id });
-          proposalId = proposals[0]?.id;
-          return proposals.length;
+          const theories = await api.getTheories({ agentId: agent.id });
+          const terminal = theories.find((t) => t.status === 'Validated' || t.status === 'Invalidated');
+          theoryId = terminal?.id;
+          return terminal?.status;
         },
-        { timeout: 90_000, intervals: [3_000], message: 'optimizer produced no proposal' },
+        { timeout: 120_000, intervals: [3_000], message: 'optimizer theory never completed validation' },
       )
-      .toBeGreaterThan(0);
+      .toMatch(/Validated|Invalidated/);
 
-    // It renders as a ProposalCard in the UI.
     await page.goto('/proposals', { waitUntil: 'load' });
-    await expect(page.getByTestId('proposal-list')).toBeVisible();
-    expect(proposalId, 'a generated proposal id should be available').toBeTruthy();
-    await expect(page.getByTestId(`proposal-card-${proposalId}`)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('theory-board')).toBeVisible();
+    expect(theoryId, 'a validated/invalidated theory id should be available').toBeTruthy();
+    await expect(page.getByTestId(`theory-card-${theoryId}`)).toBeVisible({ timeout: 15_000 });
   });
 });
