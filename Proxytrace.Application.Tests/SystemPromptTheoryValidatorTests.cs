@@ -27,31 +27,38 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
     {
         var f = Build(baselinePassed: [true, false], candidatePassed: [true, true]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().NotBeNull();
+        outcome.Proposal.Should().NotBeNull();
+        outcome.BaselinePassRate.Should().Be(0.5);
+        outcome.ProjectedPassRate.Should().Be(1.0);
+        outcome.PValue.Should().NotBeNull();
         f.Captured.CurrentPassRate.Should().Be(0.5);
         f.Captured.ProposedPassRate.Should().Be(1.0);
     }
 
     [TestMethod]
-    public async Task Validate_CandidateNoImprovement_ReturnsNull()
+    public async Task Validate_CandidateNoImprovement_ReturnsNoProposalButRecordsMetrics()
     {
         var f = Build(baselinePassed: [true, true], candidatePassed: [true, true]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().BeNull();
+        outcome.Proposal.Should().BeNull();
+        outcome.BaselinePassRate.Should().Be(1.0);
+        outcome.ProjectedPassRate.Should().Be(1.0);
     }
 
     [TestMethod]
-    public async Task Validate_CandidateRegresses_ReturnsNull()
+    public async Task Validate_CandidateRegresses_ReturnsNoProposal()
     {
         var f = Build(baselinePassed: [true, true], candidatePassed: [true, false]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().BeNull();
+        outcome.Proposal.Should().BeNull();
+        outcome.BaselinePassRate.Should().Be(1.0);
+        outcome.ProjectedPassRate.Should().Be(0.5);
     }
 
     [TestMethod]
@@ -61,9 +68,9 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
         var f = Build(baselinePassed: [true], candidatePassed: []); // candidate result has zero evaluations
         f.OverrideCandidate(MakeRunWithEmptyEvaluations(1));
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().BeNull();
+        outcome.Proposal.Should().BeNull();
     }
 
     private Fixture Build(bool[] baselinePassed, bool[] candidatePassed)

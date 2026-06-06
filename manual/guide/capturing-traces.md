@@ -25,6 +25,38 @@ Typical things you can do:
 - Identify traces worth promoting into a benchmark — see
   [Test Suites & Cases](/guide/test-suites-and-cases).
 
+### Filtering, search, and paging
+
+- **Agent cards** at the top let you focus on one agent. Only agents that actually have
+  traces in the selected time range are shown.
+- **Search** matches anywhere inside captured message content (and the response), not just
+  at the start of a word — searching `efund` finds a trace mentioning `refund`. You can also
+  search by model name or the short trace ID.
+- **Per page** lets you choose how many traces to show at once (20, 50, 100, or 200). The
+  total trace count for the current filter is shown alongside the pager.
+
+### The trace detail panel
+
+Click a trace to open its detail panel. The header shows the trace ID with a **copy**
+button beside it that puts the full ID on your clipboard. The **Messages** tab lays out the
+conversation as a stack of expandable blocks:
+
+- **System messages** and **tool calls** start **collapsed** to keep long traces scannable —
+  click a block's header to expand it. User and assistant messages start expanded.
+- **Hover any message block** to reveal a **copy** button that puts that block's content on
+  your clipboard (the message text, or the tool call's name, arguments, and result).
+
+Close the panel by pressing `Esc` or clicking outside it. Use the arrow buttons (or the
+`←`/`→` keys) to step to the previous/next trace.
+
+### Multi-turn conversations
+
+Calls that share a conversation are grouped into a single collapsible row. The group's
+leading **turns** badge shows how many calls it contains; click the row to expand the
+individual turns. The group's status column shows the exact code (e.g. `200`) when every
+turn shares it, `2xx` when all turns succeeded with differing 2xx codes, and `mixed` when
+the turns disagree.
+
 ## From traces to everything else
 
 Traces are the raw material for the rest of Proxytrace:

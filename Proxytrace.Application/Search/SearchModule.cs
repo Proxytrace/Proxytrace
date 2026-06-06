@@ -63,25 +63,20 @@ internal sealed class SearchModule : Autofac.Module
             .As<ISearchIndexStatistics>()
             .SingleInstance();
 
-        // discover implementations of ISearchable
-        foreach (var searchableType in typeof(ISearchable).GetImplementations())
-        {
-            RegisterDecorator(searchableType, builder);
-        }
-        
+        // Keep the index in sync off the entity-change event stream — the one seam every
+        // repository write flows through (AbstractRepository.Notify), regardless of which
+        // interface the caller used. A repository decorator can't observe writes made through a
+        // custom repo interface (e.g. IAgentCallRepository), so it missed every searchable kind.
+        builder.RegisterType<EntityChangeIndexingService>()
+            .AsSelf()
+            .SingleInstance();
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService(sc => sc.GetRequiredService<EntityChangeIndexingService>()));
+
         builder.RegisterType<TraceIndexPrunerService>()
             .AsSelf()
             .SingleInstance();
         builder.RegisterServiceCollection(services =>
             services.AddHostedService(sc => sc.GetRequiredService<TraceIndexPrunerService>()));
-    }
-
-    private static void RegisterDecorator(Type searchableType, ContainerBuilder builder)
-    {
-        var domainInterfaceType = searchableType.GetInterfaces()
-            .Last(i => !i.IsGenericType && i != typeof(IDomainEntity) && i.IsAssignableTo(typeof(IDomainEntity)));
-        var repositoryType = typeof(IRepository<>).MakeGenericType(domainInterfaceType);
-        var decoratorType = typeof(IndexingRepositoryDecorator<>).MakeGenericType(domainInterfaceType);
-        builder.RegisterDecorator(decoratorType, repositoryType);
     }
 }

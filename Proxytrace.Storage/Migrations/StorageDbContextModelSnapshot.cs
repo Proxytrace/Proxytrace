@@ -473,6 +473,9 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("Agent")
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("BaselinePassRate")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("ContentHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -492,8 +495,14 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
+                    b.Property<double?>("PValue")
+                        .HasColumnType("double precision");
+
                     b.Property<int>("Priority")
                         .HasColumnType("integer");
+
+                    b.Property<double?>("ProjectedPassRate")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Rationale")
                         .IsRequired()
@@ -790,6 +799,9 @@ namespace Proxytrace.Storage.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsSystemRun")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");

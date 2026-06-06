@@ -11,7 +11,13 @@ public record TestCaseFixtureDto(
 
 public record TestCaseInputDto(TestCaseMessageDto[] Messages);
 
-public record TestCaseMessageDto(string Role, string Content, string? Name);
+public record TestCaseMessageDto(
+    string Role,
+    string Content,
+    ToolRequestFixtureDto[] ToolRequests,
+    string? ToolCallId);
+
+public record ToolRequestFixtureDto(string Id, string Name, string Arguments);
 
 public record OutputValueDto(
     string Kind,
@@ -22,6 +28,21 @@ public record OutputValueDto(
 );
 
 public record ToolCallInfoDto(string Name, object Arguments);
+
+public record ModelRequestPreviewDto(
+    string Model,
+    RequestMessageDto[] Messages,
+    RequestToolDto[] Tools);
+
+public record RequestMessageDto(
+    string Role,
+    string? Content,
+    RequestToolCallDto[] ToolCalls,
+    string? ToolCallId);
+
+public record RequestToolCallDto(string Id, string Name, string Arguments);
+
+public record RequestToolDto(string Name, string Description, object JsonSchema);
 
 public record EvaluatorFixtureResultDto(
     string EvaluatorId,

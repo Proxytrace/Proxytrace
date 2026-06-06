@@ -9,7 +9,6 @@ import { RunGroupHeader } from './components/RunGroupHeader';
 import { ModelLeaderboard } from './components/ModelLeaderboard';
 import { EvaluatorHeatmap } from './components/EvaluatorHeatmap';
 import { MatrixView } from './MatrixView';
-import { RunDetail } from './RunDetail';
 
 export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDelete: () => void }) {
   const qc = useQueryClient();
@@ -43,11 +42,13 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
 
   useTestRunGroupStream(active ? group.id : null, handleStreamEvent, handleStreamDone);
 
-  const singleRun = group.runs[0] ?? null;
   const multipleRuns = group.runs.length > 1;
 
+  // Single- and multi-endpoint groups render identically: the matrix is the
+  // canonical results view (one column per endpoint). The matrix is the only
+  // scroller, so this column fills the viewport and never spills a page scrollbar.
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 h-full min-h-0">
       <RunGroupHeader
         group={group}
         onDelete={onDelete}
@@ -59,10 +60,7 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
 
       <EvaluatorHeatmap group={group} />
 
-      {multipleRuns
-        ? <MatrixView group={group} activeCaseIds={activeCaseIds} />
-        : singleRun && <RunDetail key={singleRun.id} run={singleRun} activeCaseIds={activeCaseIds} />
-      }
+      <MatrixView group={group} activeCaseIds={activeCaseIds} />
     </div>
   );
 }

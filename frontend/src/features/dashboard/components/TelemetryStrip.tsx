@@ -1,6 +1,5 @@
 // Live telemetry strip shown at the top of the dashboard.
 
-import { CopyIcon } from '../../../components/icons';
 import type { LiveTelemetryDto } from '../../../api/models';
 import { fmtLatency } from '../../../lib/format';
 import { teleFmt, type LatencyStats } from '../dashboardMeta';
@@ -24,12 +23,6 @@ export function TelemetryStrip({ telemetry, latencyStats }: TelemetryStripProps)
         value={latencyStats ? fmtLatency(latencyStats.p95) : teleFmt(telemetry?.p95Ms, fmtLatency)}
       />
       <TeleCell label="proxy" value={teleFmt(telemetry?.proxyVersion)} />
-      <button
-        className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-card-2 px-3 py-1.5 text-body-sm font-medium text-secondary shadow-[var(--shadow-pill)] cursor-pointer transition-colors hover:text-primary"
-        aria-label="Export telemetry"
-      >
-        <CopyIcon size={12} /> Export
-      </button>
     </div>
   );
 }

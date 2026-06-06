@@ -67,7 +67,7 @@ public sealed class OptimizationTheoryRepositoryTests : BaseTest<Module>
         var found = await repo.FindLatestByContentHashAsync(agent.Id, theory.ContentHash, CancellationToken);
 
         found.Should().NotBeNull();
-        found!.Id.Should().Be(theory.Id);
+        found.Id.Should().Be(theory.Id);
     }
 
     [TestMethod]

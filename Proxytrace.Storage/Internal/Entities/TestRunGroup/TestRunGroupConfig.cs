@@ -35,6 +35,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             suite: await suites.GetAsync(stored.Suite, cancellationToken),
             status: stored.Status,
             completedAt: stored.CompletedAt,
+            isSystemRun: stored.IsSystemRun,
             existing: stored);
 
     public Task<TestRunGroupEntity> Map(ITestRunGroup domain, CancellationToken cancellationToken = default)
@@ -44,6 +45,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             Suite = domain.Suite.Id,
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,
+            IsSystemRun = domain.IsSystemRun,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

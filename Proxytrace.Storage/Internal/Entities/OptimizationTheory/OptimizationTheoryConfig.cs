@@ -109,6 +109,9 @@ internal class OptimizationTheoryConfig :
             proposedEndpoint: proposedEndpoint,
             evidenceTestRunIds: evidenceTestRunIds,
             resultingProposalId: stored.ResultingProposalId,
+            baselinePassRate: stored.BaselinePassRate,
+            projectedPassRate: stored.ProjectedPassRate,
+            pValue: stored.PValue,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -131,6 +134,9 @@ internal class OptimizationTheoryConfig :
             proposedSystemMessage: data.ProposedSystemMessage,
             evidenceTestRunIds: evidenceTestRunIds,
             resultingProposalId: stored.ResultingProposalId,
+            baselinePassRate: stored.BaselinePassRate,
+            projectedPassRate: stored.ProjectedPassRate,
+            pValue: stored.PValue,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -153,6 +159,9 @@ internal class OptimizationTheoryConfig :
             proposedTools: data.ProposedTools,
             evidenceTestRunIds: evidenceTestRunIds,
             resultingProposalId: stored.ResultingProposalId,
+            baselinePassRate: stored.BaselinePassRate,
+            projectedPassRate: stored.ProjectedPassRate,
+            pValue: stored.PValue,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -183,6 +192,9 @@ internal class OptimizationTheoryConfig :
             Data = data,
             EvidenceTestRunIds = serializer.Serialize(domain.EvidenceTestRunIds),
             ResultingProposalId = domain.ResultingProposalId,
+            BaselinePassRate = domain.BaselinePassRate,
+            ProjectedPassRate = domain.ProjectedPassRate,
+            PValue = domain.PValue,
             ContentHash = domain.ContentHash,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

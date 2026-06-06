@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Proxytrace.Api.Auth;
 using Proxytrace.Api.Auth.Kiosk;
+using Proxytrace.Api.Configuration;
+using Proxytrace.Api.Middleware;
+using Proxytrace.Api.Middleware.Exceptions;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
@@ -44,6 +47,11 @@ internal sealed class Module : Autofac.Module
         builder
             .RegisterInstance(configuration)
             .As<IConfiguration>();
+
+        builder
+            .RegisterType<AppSettingsLocalSigningKeyStore>()
+            .As<ISigningKeyStore>()
+            .SingleInstance();
 
         builder
             .RegisterType<SigningKeyProvider>()
@@ -133,6 +141,11 @@ internal sealed class Module : Autofac.Module
             .As<ICurrentUserAccessor>()
             .InstancePerLifetimeScope();
 
+        builder.RegisterAssemblyTypes(typeof(Module).Assembly)
+            .Where(t => typeof(IExceptionMapper).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
+            .As<IExceptionMapper>()
+            .SingleInstance();
+
         builder.RegisterType<ToolDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<AgentDtoMapper>().AsSelf().SingleInstance();
         builder.RegisterType<AgentCallDtoMapper>().AsSelf().SingleInstance();
@@ -153,6 +166,21 @@ internal sealed class Module : Autofac.Module
         var testRunnerConfiguration = configuration.GetSection("TestRunner").Get<TestRunnerConfiguration>()
             ?? new TestRunnerConfiguration();
         builder.RegisterInstance(testRunnerConfiguration);
+
+        var securityHeadersOptions = configuration.GetSection("SecurityHeaders").Get<SecurityHeadersOptions>()
+            ?? new SecurityHeadersOptions();
+        securityHeadersOptions.Validate();
+        builder.RegisterInstance(securityHeadersOptions);
+
+        var searchRequestOptions = configuration.GetSection("Search:Requests").Get<SearchRequestOptions>()
+            ?? new SearchRequestOptions();
+        searchRequestOptions.Validate();
+        builder.RegisterInstance(searchRequestOptions);
+
+        var statisticsOptions = configuration.GetSection("Statistics").Get<StatisticsOptions>()
+            ?? new StatisticsOptions();
+        statisticsOptions.Validate();
+        builder.RegisterInstance(statisticsOptions);
     }
 
     private void ConfigureAuth(ContainerBuilder builder, IConfiguration configuration, KioskOptions kiosk)
@@ -244,16 +272,26 @@ internal sealed class Module : Autofac.Module
 
     private static Proxytrace.Licensing.LicensingConfiguration BuildLicensingConfiguration(IConfiguration configuration, bool kioskEnabled)
     {
+        var section = configuration.GetSection("Licensing");
+
 #if DEBUG
         var serverUrl = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_SERVER_URL")
                         ?? "https://license.proxytrace.dev";
         var keyOverride = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_PUBLIC_KEY");
+        // Debug only: allow disabling the server check (defaults off) so local dev does not
+        // need the license server reachable.
+        var serverCheckEnabled = section.GetValue<bool?>("ServerCheckEnabled") ?? false;
 #else
         const string serverUrl = "https://license.proxytrace.dev";
         string? keyOverride = null;
+        // Release builds MUST always contact the license server; the config override is ignored.
+        const bool serverCheckEnabled = true;
 #endif
 
-        var licenseJwt = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE")?.Trim();
+        // Env var wins; fall back to the "Licensing:License" config value so a license can be set
+        // in appsettings.local.json for local debugging and testing without an environment variable.
+        var licenseJwt = (Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE")
+                          ?? section.GetValue<string>("License"))?.Trim();
 
         var cachePath = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_CACHE_PATH");
         if (string.IsNullOrWhiteSpace(cachePath))
@@ -266,13 +304,12 @@ internal sealed class Module : Autofac.Module
             ? Proxytrace.Licensing.LicensePublicKeys.GetActiveKeys()
             : keyOverride.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        var section = configuration.GetSection("Licensing");
-
         return new Proxytrace.Licensing.LicensingConfiguration
         {
             ServerUrl = serverUrl,
             PublicKeys = keys,
             LicenseJwt = string.IsNullOrEmpty(licenseJwt) ? null : licenseJwt,
+            ServerCheckEnabled = serverCheckEnabled,
             CheckIntervalHours = section.GetValue<int?>("CheckIntervalHours") ?? 24,
             OfflineGracePeriodDays = section.GetValue<int?>("OfflineGracePeriodDays") ?? 7,
             CacheFilePath = cachePath,

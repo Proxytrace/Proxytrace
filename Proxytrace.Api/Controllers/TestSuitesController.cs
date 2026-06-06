@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.Statistics;
+using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -28,6 +30,7 @@ public class TestSuitesController : ControllerBase
     private readonly ITestSuite.CreateNew createSuite;
     private readonly ITestSuite.CreateExisting createSuiteExisting;
     private readonly TestSuiteDtoMapper mapper;
+    private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly ILicenseService license;
 
     public TestSuitesController(
@@ -42,6 +45,7 @@ public class TestSuitesController : ControllerBase
         ITestSuite.CreateNew createSuite,
         ITestSuite.CreateExisting createSuiteExisting,
         TestSuiteDtoMapper mapper,
+        IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         ILicenseService license)
     {
         this.suiteRepository = suiteRepository;
@@ -55,6 +59,7 @@ public class TestSuitesController : ControllerBase
         this.createSuite = createSuite;
         this.createSuiteExisting = createSuiteExisting;
         this.mapper = mapper;
+        this.runStats = runStats;
         this.license = license;
     }
 
@@ -73,7 +78,32 @@ public class TestSuitesController : ControllerBase
             paged = await suiteRepository.GetByProjectPagedAsync(projectId.Value, page, pageSize, cancellationToken);
         else
             paged = await suiteRepository.GetPagedAsync(page, pageSize, cancellationToken);
-        return paged.Map(mapper.ToDto);
+
+        var statsBySuite = await GetRunStatsBySuiteAsync(
+            paged.Items.Select(s => s.Id).ToArray(), cancellationToken);
+
+        return paged.Map(s => mapper.ToDto(
+            s,
+            statsBySuite.TryGetValue(s.Id, out var rows) ? rows : []));
+    }
+
+    /// <summary>
+    /// Loads finalized run statistics for the given suites, grouped by suite id.
+    /// Returns an empty map when no suite ids are supplied.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, IReadOnlyList<TestRunStats>>> GetRunStatsBySuiteAsync(
+        IReadOnlyCollection<Guid> suiteIds,
+        CancellationToken cancellationToken)
+    {
+        if (suiteIds.Count == 0)
+            return new Dictionary<Guid, IReadOnlyList<TestRunStats>>();
+
+        var wanted = suiteIds.ToHashSet();
+        var allStats = await runStats.QueryAsync(new TestRunStats.Filter(), cancellationToken);
+        return allStats
+            .Where(r => wanted.Contains(r.SuiteId))
+            .GroupBy(r => r.SuiteId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<TestRunStats>)g.ToArray());
     }
 
     [HttpGet("{id:guid}")]
@@ -82,7 +112,10 @@ public class TestSuitesController : ControllerBase
         var suite = await suiteRepository.FindAsync(id, cancellationToken);
         if (suite is null)
             return NotFound();
-        return mapper.ToDto(suite);
+        var statsBySuite = await GetRunStatsBySuiteAsync([id], cancellationToken);
+        return mapper.ToDto(
+            suite,
+            statsBySuite.TryGetValue(id, out var rows) ? rows : []);
     }
 
     [HttpPost]
@@ -260,7 +293,9 @@ public class TestSuitesController : ControllerBase
         if (fromAgentCallId.HasValue)
         {
             var call = await agentCallRepository.GetAsync(fromAgentCallId.Value, cancellationToken);
-            return createTestCaseFromCall(call);
+            return expectedOutput is not null
+                ? createTestCase(call.Request, mapper.BuildAssistantMessage(expectedOutput))
+                : createTestCaseFromCall(call);
         }
 
         if (inputMessages is not null && expectedOutput is not null)
@@ -273,8 +308,3 @@ public class TestSuitesController : ControllerBase
         return null;
     }
 }
-
-public record UpdateTestSuiteRequest(
-    Guid? AgentId,
-    IReadOnlyList<Guid>? EvaluatorIds,
-    IReadOnlyList<Guid>? TestCaseIds);

@@ -1,24 +1,26 @@
 import { useState } from 'react';
 import { XIcon, ChevronDownIcon, CheckIcon } from '../../../../components/icons';
 import { FOCUS_RING } from '../../../../lib/constants';
-import { tint } from '../../../../lib/colors';
+import { evaluatorColor, tint } from '../../../../lib/colors';
 import type { EvaluatorFixtureResultDto } from '../../../../api/models';
+import { scoreLabel } from '../../results';
 import { PassFailTag } from './PassFailTag';
 
 export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResultDto; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const hasDetails = !!ev.note || ev.breakdown.length > 0 || !!ev.desc;
+  const color = evaluatorColor(ev.evaluatorKind);
 
   return (
-    <div data-testid={`fixture-evaluator-${ev.evaluatorId}`} className="bg-card-2 rounded-md overflow-hidden border-l-[3px]" style={{ borderLeftColor: ev.color }}>
+    <div data-testid={`fixture-evaluator-${ev.evaluatorId}`} className="bg-card-2 rounded-md overflow-hidden border-l-[3px]" style={{ borderLeftColor: color }}>
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full px-3.5 py-2.5 flex items-center gap-2 cursor-pointer text-left ${FOCUS_RING}`}
       >
-        <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(ev.color, 18), color: ev.color }}>{ev.evaluatorKind}</span>
+        <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(color, 18), color }}>{ev.evaluatorKind}</span>
         <span className="text-title font-semibold flex-1 min-w-0 truncate">{ev.evaluatorName}</span>
         {typeof ev.score === 'number' && (
-          <span className="mono text-body text-secondary shrink-0">{(ev.score * 100).toFixed(0)}%</span>
+          <span className="mono text-body-sm text-secondary shrink-0">{scoreLabel(ev.score)}</span>
         )}
         <PassFailTag pass={ev.pass} />
         {hasDetails && (

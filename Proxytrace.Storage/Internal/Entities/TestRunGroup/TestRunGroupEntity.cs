@@ -9,4 +9,5 @@ internal record TestRunGroupEntity : Entity
     public required Guid Suite { get; init; }
     public required TestRunStatus Status { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
+    public bool IsSystemRun { get; init; }
 }

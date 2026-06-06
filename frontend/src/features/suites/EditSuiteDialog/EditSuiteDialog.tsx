@@ -4,7 +4,8 @@ import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../../ap
 import { FilterTabs } from '../../../components/ui/FilterTabs';
 import { agentColor } from '../../../lib/colors';
 import { TestCasesPanel } from './TestCasesPanel';
-import { TestCasePreview, TraceConversationPreview, PreviewEmpty } from './TestCasePreview';
+import { TraceConversationPreview, PreviewEmpty } from './TestCasePreview';
+import { EditableTestCasePreview } from './EditableTestCasePreview';
 import { EvaluatorsPanel } from './EvaluatorsPanel';
 import { EvaluatorPreview } from './EvaluatorPreview';
 import { useEditSuiteEvaluators, useEditSuiteTraces } from '../hooks/useEditSuiteQueries';
@@ -38,6 +39,10 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
   const { traces } = useEditSuiteTraces(suite.agentId);
 
   const traceById = useMemo(() => new Map(traces.map(t => [t.id, t])), [traces]);
+  const agentTools = useMemo(() => {
+    const byName = new Map(traces.flatMap(t => t.tools).map(tool => [tool.name, tool]));
+    return [...byName.values()];
+  }, [traces]);
   const evalById = useMemo(() => new Map(evaluators.map(e => [e.id, e])), [evaluators]);
 
   const pendingAddTraces: AgentCallDto[] = Array.from(pendingAddTraceIds)
@@ -101,7 +106,11 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
   return createPortal(
     <>
       <div className="modal-overlay" onClick={e => e.target === e.currentTarget && attemptClose()}>
-        <div data-testid="edit-suite-dialog" className="modal-panel fade-up flex flex-col max-w-[min(1180px,94vw)] w-full max-h-[92vh]">
+        <div
+          data-testid="edit-suite-dialog"
+          className="modal-panel fade-up flex flex-col"
+          style={{ width: '100%', maxWidth: 'min(1180px, 94vw)', maxHeight: '92vh' }}
+        >
           <EditSuiteHeader suite={suite} agentColorHex={c} onClose={attemptClose} />
 
           <div className="mt-4 mb-4 flex items-center justify-between gap-3">
@@ -116,7 +125,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
             <DirtyIndicator count={dirtyCount} />
           </div>
 
-          <div className="flex-1 min-h-0 grid gap-4 grid-cols-[minmax(0,1fr)_540px] h-[60vh]">
+          <div className="grid gap-4 grid-cols-[minmax(0,1fr)_540px] grid-rows-[minmax(0,1fr)] h-[60vh]">
             {tab === 'cases' ? (
               <>
                 <TestCasesPanel
@@ -136,7 +145,7 @@ export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
                   {focusedTrace
                     ? <TraceConversationPreview trace={focusedTrace} />
                     : focusedCase
-                      ? <TestCasePreview testCase={focusedCase} />
+                      ? <EditableTestCasePreview key={focusedCase.id} testCase={focusedCase} tools={agentTools} />
                       : <PreviewEmpty title="Select a case or trace" description="Click any row to inspect its conversation." />}
                 </div>
               </>

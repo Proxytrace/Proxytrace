@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
@@ -12,8 +12,10 @@ import {
   ArrowDownToLineIcon, ArrowUpFromLineIcon, SigmaIcon,
 } from '../../../components/icons';
 import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
+import { CopyButton } from '../../../components/ui/CopyButton';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { Button } from '../../../components/ui/Button';
+import { DetailPanel } from '../../../components/overlays/DetailPanel';
 import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
 import { TraceMessagesTab } from './TraceMessagesTab';
@@ -40,20 +42,6 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
     setTab('Messages');
     setPromoting(false);
   }
-
-  // Keyboard navigation — genuine DOM subscription per BEST_PRACTICES §4.1.
-  // Lives here (not in TraceDetail.tsx) because `promoting` guard requires
-  // access to this component's modal state.
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (promoting) return;
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') onPrev?.();
-      if (e.key === 'ArrowRight') onNext?.();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose, onPrev, onNext, promoting]);
 
   const suitesQuery = useQuery({
     queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
@@ -92,7 +80,6 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
   const invocations = allMessages.flatMap(m =>
     (m.toolRequests ?? []).map(req => ({ req, result: toolResultByCallId.get(req.id) })),
   );
-  const absorbedCallIds = new Set(invocations.map(i => i.req.id));
 
   const jumpToDefinition = (toolName: string) => {
     if (!trace.agentId) return;
@@ -109,21 +96,14 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.4)]" />
-
-      <div
-        data-testid="trace-detail"
-        className="fixed top-[76px] right-[10px] bottom-[10px] w-[min(720px,92vw)] bg-card rounded-[18px] flex flex-col overflow-hidden z-[51] shadow-[var(--shadow-float)] [animation:fade-up_0.25s_cubic-bezier(0.2,0.8,0.2,1)]"
-      >
+      <DetailPanel onClose={onClose} onPrev={onPrev} onNext={onNext} keyboardEnabled={!promoting} testId="trace-detail">
         {/* Header */}
         <div className="px-5 pt-4 pb-3 flex items-center gap-3 border-b border-hairline shrink-0">
-          <button onClick={onClose} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
-            <ChevronRightIcon size={14} strokeWidth={2.5} />
-          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ background: aColor, boxShadow: `0 0 8px ${aColor}` }} />
               <span className="mono text-body-title font-semibold">{trace.id.slice(0, 18)}…</span>
+              <CopyButton text={trace.id} label="Copy trace ID" className="shrink-0" />
               <span
                 className={cn(
                   'inline-flex items-center gap-[5px] px-2 py-[2px] rounded-full text-caption font-semibold font-mono',
@@ -224,13 +204,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           className="flex-1 min-h-0 overflow-y-auto px-5 pt-[14px] pb-7 flex flex-col gap-[10px] [&>*]:shrink-0"
         >
           {tab === 'Messages' && (
-            <TraceMessagesTab
-              trace={trace}
-              allMessages={allMessages}
-              toolResultByCallId={toolResultByCallId}
-              absorbedCallIds={absorbedCallIds}
-              onJumpToDefinition={jumpToDefinition}
-            />
+            <TraceMessagesTab trace={trace} onJumpToDefinition={jumpToDefinition} />
           )}
           {tab === 'Tools' && (
             invocations.length === 0
@@ -247,7 +221,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
           {tab === 'Raw JSON' && <TraceRawJsonTab trace={trace} tokTotal={tokTotal} />}
           {tab === 'Metadata' && <TraceMetadataTab trace={trace} />}
         </div>
-      </div>
+      </DetailPanel>
 
       {promoting && <PromoteModal trace={trace} suites={suites} onClose={() => setPromoting(false)} />}
     </>

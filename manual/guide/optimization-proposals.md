@@ -21,11 +21,15 @@ Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 
 ## Reviewing proposals
 
-Open **Proposals** in the sidebar. New proposals stream in live. For each one:
+Open **Proposals** in the sidebar. The page is the **Optimization Theories** board: every
+proposal belongs to a **Validated** theory, shown in the board's *Validated* column (see
+[Reviewing the board](/guide/optimization-theories#reviewing-the-board)). For each one:
 
-1. Read the rationale and inspect the linked evidence runs.
-2. Compare the proposed change against the current agent definition.
-3. **Approve** to accept it, or **Reject** to dismiss it.
+1. **Promote** straight from the validated card to accept it, or click the card to open the
+   full review drawer.
+2. In the drawer, read the rationale, inspect the A/B results and linked evidence runs, and
+   compare the proposed change against the current agent definition.
+3. **Approve** to accept it, or **Dismiss** to reject it.
 
 ## Deduplication
 

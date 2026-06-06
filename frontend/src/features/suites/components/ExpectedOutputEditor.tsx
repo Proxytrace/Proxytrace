@@ -1,0 +1,124 @@
+import type { ToolRequestInputDto, ToolSpecDto } from '../../../api/models';
+import { Textarea } from '../../../components/ui/Textarea';
+import { FilterTabs } from '../../../components/ui/FilterTabs';
+import { PlusIcon, TrashIcon } from '../../../components/icons';
+import { cn } from '../../../lib/cn';
+import { ToolNameCombobox } from './ToolNameCombobox';
+import { type ExpectedOutput, argsValid, argsSkeleton, isArgsEmpty } from './expectedOutput';
+
+interface Props {
+  value: ExpectedOutput;
+  tools: ToolSpecDto[];
+  onChange: (value: ExpectedOutput) => void;
+  /** When true, the editor stretches to fill its flex parent instead of sizing to content. */
+  fill?: boolean;
+}
+
+export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
+  const mode = value.toolRequests === null ? 'text' : 'tool';
+  const rows = value.toolRequests ?? [];
+
+  const setMode = (next: string) => {
+    if (next === 'text') onChange({ content: value.content, toolRequests: null });
+    else onChange({ content: value.content, toolRequests: value.toolRequests ?? [] });
+  };
+
+  const setRow = (i: number, patch: Partial<ToolRequestInputDto>) =>
+    onChange({ ...value, toolRequests: rows.map((r, j) => (j === i ? { ...r, ...patch } : r)) });
+
+  // Picking a declared tool fills its name and seeds the JSON skeleton, but never clobbers
+  // arguments the user has already started editing.
+  const pickTool = (i: number, tool: ToolSpecDto) =>
+    setRow(i, {
+      name: tool.name,
+      ...(isArgsEmpty(rows[i].arguments) ? { arguments: argsSkeleton(tool) } : {}),
+    });
+
+  const addRow = () =>
+    onChange({ ...value, toolRequests: [...rows, { name: '', arguments: '{\n  \n}' }] });
+
+  const removeRow = (i: number) =>
+    onChange({ ...value, toolRequests: rows.filter((_, j) => j !== i) });
+
+  return (
+    <div className={cn('flex flex-col gap-3', fill && 'flex-1 min-h-0')}>
+      <FilterTabs
+        options={[
+          { label: 'Text response', value: 'text' },
+          { label: 'Tool request', value: 'tool' },
+        ]}
+        value={mode}
+        onChange={setMode}
+      />
+
+      {mode === 'text' ? (
+        <Textarea
+          data-testid="expected-output-text"
+          aria-label="Expected text response"
+          placeholder="What the agent should respond with…"
+          className={cn(fill && 'flex-1 min-h-0 resize-none')}
+          value={value.content}
+          onChange={e => onChange({ ...value, content: e.target.value })}
+        />
+      ) : (
+        <div className={cn('flex flex-col gap-2', fill && 'flex-1 min-h-0 overflow-y-auto')}>
+          {rows.length === 0 && (
+            <div className="px-3 py-4 bg-card-2 rounded-[10px] text-[12px] text-muted text-center">
+              No tool requests yet.
+            </div>
+          )}
+
+          {rows.map((row, i) => {
+            const invalidArgs = row.arguments.trim().length > 0 && !argsValid(row.arguments);
+            return (
+              <div
+                key={i}
+                data-testid={`expected-tool-row-${i}`}
+                className={cn(
+                  'bg-card-2 rounded-[10px] p-3 flex flex-col gap-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
+                  fill && 'flex-1 min-h-[140px]',
+                )}
+              >
+                <div className="flex items-center gap-2 shrink-0">
+                  <ToolNameCombobox
+                    value={row.name}
+                    tools={tools}
+                    onChange={name => setRow(i, { name })}
+                    onPickTool={tool => pickTool(i, tool)}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remove tool request"
+                    onClick={() => removeRow(i)}
+                    className="btn-icon cursor-pointer shrink-0"
+                  >
+                    <TrashIcon size={14} />
+                  </button>
+                </div>
+                <Textarea
+                  className={cn('mono text-[12px]', fill && 'flex-1 min-h-0 resize-none')}
+                  aria-label="Tool arguments (JSON)"
+                  rows={3}
+                  invalid={invalidArgs}
+                  value={row.arguments}
+                  onChange={e => setRow(i, { arguments: e.target.value })}
+                />
+                {invalidArgs && (
+                  <span className="text-[11px] text-danger shrink-0">Arguments must be valid JSON.</span>
+                )}
+              </div>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={addRow}
+            className="shrink-0 flex items-center justify-center gap-1.5 text-[12px] text-accent border border-dashed border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)] rounded-md py-2 cursor-pointer hover:bg-accent-subtle transition-colors"
+          >
+            <PlusIcon size={13} strokeWidth={2.5} /> Add tool request
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

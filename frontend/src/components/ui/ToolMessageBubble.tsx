@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { MessageDto, ToolRequestDto } from '../../api/models';
 import { ChevronRightIcon, ExternalLinkIcon } from '../icons';
 import { JsonBlock } from './JsonBlock';
+import { CopyButton } from './CopyButton';
+import { hoverRevealOverlayCls } from './classes';
 
 function safeParse(s: string | null | undefined): unknown {
   if (s == null || s === '') return s ?? null;
@@ -22,8 +23,8 @@ function argsPreview(args: unknown): string {
 }
 
 interface Props {
-  request: ToolRequestDto;
-  result?: MessageDto;
+  request: { id: string; name: string; arguments: string };
+  result?: { content: string };
   onJumpToDefinition?: () => void;
   defaultOpen?: boolean;
 }
@@ -36,6 +37,11 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
   const resultBytes = result?.content?.length ?? 0;
 
   const hasResult = result != null;
+  const copyText = JSON.stringify(
+    { tool: request.name, arguments: args, ...(hasResult ? { result: resultParsed } : {}) },
+    null,
+    2,
+  );
   const statusLabel = hasResult ? 'ok' : 'pending';
   const statusFg = hasResult ? 'var(--teal)' : 'var(--warn)';
   const statusBg = hasResult ? 'color-mix(in srgb, var(--teal) 14%, transparent)' : 'color-mix(in srgb, var(--warn) 14%, transparent)';
@@ -43,14 +49,15 @@ export function ToolMessageBubble({ request, result, onJumpToDefinition, default
 
   return (
     <div
-      className="rounded-[12px] overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+      className="relative group rounded-[12px] overflow-hidden bg-card-2 border border-[color-mix(in_srgb,var(--success)_22%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
     >
+      <CopyButton text={copyText} label="Copy tool call" className={hoverRevealOverlayCls} />
       {/* Header */}
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 px-3 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
+        className="w-full flex items-center gap-2 pl-3 pr-9 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 hover:bg-success-subtle"
       >
         <span
           aria-hidden

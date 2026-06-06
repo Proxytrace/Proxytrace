@@ -22,6 +22,7 @@ public class AuthController : ControllerBase
     private readonly IInviteRepository inviteRepo;
     private readonly IPasswordPolicy policy;
     private readonly ICurrentUserAccessor currentUser;
+    private readonly IStreamTicketService streamTickets;
     private readonly IConfiguration config;
 
     public AuthController(
@@ -33,6 +34,7 @@ public class AuthController : ControllerBase
         IInviteRepository inviteRepo,
         IPasswordPolicy policy,
         ICurrentUserAccessor currentUser,
+        IStreamTicketService streamTickets,
         IConfiguration config)
     {
         this.options = options;
@@ -43,6 +45,7 @@ public class AuthController : ControllerBase
         this.inviteRepo = inviteRepo;
         this.policy = policy;
         this.currentUser = currentUser;
+        this.streamTickets = streamTickets;
         this.config = config;
     }
 
@@ -89,8 +92,14 @@ public class AuthController : ControllerBase
     // JwtBearerEventsFactory.OnMessageReceived alongside the existing access_token path.
     [HttpGet("stream-ticket")]
     [Authorize]
-    public Task<ActionResult<StreamTicketResponse>> StreamTicket(CancellationToken ct)
-        => throw new NotImplementedException();
+    public async Task<ActionResult<StreamTicketResponse>> StreamTicket(CancellationToken ct)
+    {
+        var me = await currentUser.GetCurrentUserAsync(ct);
+        if (me is null) return Unauthorized();
+
+        var ticket = streamTickets.Issue(me);
+        return new StreamTicketResponse(ticket.Token, ticket.ExpiresAt);
+    }
 
     [HttpPost("login")]
     [AllowAnonymous]

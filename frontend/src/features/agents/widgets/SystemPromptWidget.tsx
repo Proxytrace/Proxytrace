@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import type { AgentDto } from '../../../api/models';
-import { CopyIcon, CheckIcon, GitCompareIcon } from '../../../components/icons';
+import { CopyIcon, CheckIcon, GitCompareIcon, ChevronDownIcon } from '../../../components/icons';
 import { useAgentVersions } from '../hooks/useAgentVersions';
 import { Widget } from './Widget';
 import { SystemPromptDiffDialog } from './SystemPromptDiffDialog';
 
 interface Props {
-  agent: AgentDto;
+  agentId: string;
+  /** System prompt of the version currently being viewed. */
+  systemMessage: string;
+  /** Version number currently being viewed. */
+  activeVersion: number;
+  isLatest: boolean;
   className?: string;
 }
 
@@ -16,21 +20,26 @@ function countWords(text: string): number {
   return text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
 }
 
-export function SystemPromptWidget({ agent, className }: Props) {
-  const trimmed = agent.systemMessage ?? '';
+export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLatest, className }: Props) {
+  const trimmed = systemMessage ?? '';
   const isEmpty = trimmed.trim().length === 0;
   const lineCount = isEmpty ? 0 : trimmed.split('\n').length;
   const wordCount = countWords(trimmed);
 
-  const { versions, latestVersion } = useAgentVersions(agent.id);
+  const { versions } = useAgentVersions(agentId);
+  // Default diff base: the version immediately preceding the one being viewed.
   const previous = versions
-    .filter(v => v.versionNumber < latestVersion)
+    .filter(v => v.versionNumber < activeVersion)
     .sort((a, b) => b.versionNumber - a.versionNumber)[0];
 
   const [diffOpen, setDiffOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const clipped = lineCount > CLIP_LINES;
 
   const meta = isEmpty ? null : (
     <span className="text-body-sm text-muted">
+      {!isLatest && <span className="font-mono font-semibold text-secondary">v{activeVersion} · </span>}
       {wordCount} word{wordCount !== 1 ? 's' : ''} · {lineCount} line{lineCount !== 1 ? 's' : ''}
     </span>
   );
@@ -49,15 +58,19 @@ export function SystemPromptWidget({ agent, className }: Props) {
           Diff vs v{previous.versionNumber}
         </button>
       )}
+      {clipped && (
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          aria-expanded={expanded}
+          data-testid="system-prompt-expand-btn"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium bg-card-2 text-secondary hover:text-primary cursor-pointer transition-colors duration-150"
+        >
+          <ChevronDownIcon size={12} className={`transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />
+          {expanded ? 'Collapse' : 'Expand'}
+        </button>
+      )}
       <CopyButton value={trimmed} disabled={isEmpty} />
-    </div>
-  );
-
-  const expandContent = isEmpty ? (
-    <div className="text-muted italic text-body">(no system prompt)</div>
-  ) : (
-    <div className="font-mono text-body leading-relaxed text-primary whitespace-pre-wrap rounded-md p-4 max-h-[60vh] overflow-y-auto bg-surface">
-      {trimmed}
     </div>
   );
 
@@ -65,9 +78,6 @@ export function SystemPromptWidget({ agent, className }: Props) {
     <Widget
       title="System Prompt"
       right={right}
-      expandTitle="System Prompt"
-      expandContent={expandContent}
-      expandMaxWidth={820}
       className={className}
       bodyClassName="p-0"
     >
@@ -76,12 +86,18 @@ export function SystemPromptWidget({ agent, className }: Props) {
       ) : (
         <div
           data-testid="agent-system-prompt"
-          className="font-mono text-body leading-[1.65] text-primary whitespace-pre-wrap px-4 py-3.5 overflow-hidden"
-          style={{
-            maxHeight: `${CLIP_LINES * 1.65}em`,
-            maskImage: lineCount > CLIP_LINES ? 'linear-gradient(to bottom, black 70%, transparent 100%)' : undefined,
-            WebkitMaskImage: lineCount > CLIP_LINES ? 'linear-gradient(to bottom, black 70%, transparent 100%)' : undefined,
-          }}
+          className={`font-mono text-body leading-[1.65] text-primary whitespace-pre-wrap px-4 py-3.5 ${
+            expanded ? 'max-h-[60vh] overflow-y-auto' : 'overflow-hidden'
+          }`}
+          style={
+            expanded
+              ? undefined
+              : {
+                  maxHeight: `${CLIP_LINES * 1.65}em`,
+                  maskImage: clipped ? 'linear-gradient(to bottom, black 70%, transparent 100%)' : undefined,
+                  WebkitMaskImage: clipped ? 'linear-gradient(to bottom, black 70%, transparent 100%)' : undefined,
+                }
+          }
         >
           {trimmed}
         </div>
@@ -89,10 +105,9 @@ export function SystemPromptWidget({ agent, className }: Props) {
 
       {diffOpen && previous && (
         <SystemPromptDiffDialog
-          previousLabel={`v${previous.versionNumber}`}
-          currentLabel={`v${latestVersion}`}
-          previous={previous.systemMessage}
-          current={trimmed}
+          versions={versions}
+          initialBase={previous.versionNumber}
+          initialCompare={activeVersion}
           onClose={() => setDiffOpen(false)}
         />
       )}

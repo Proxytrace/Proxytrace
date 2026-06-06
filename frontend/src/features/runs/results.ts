@@ -14,9 +14,6 @@ import type {
 } from '../../api/models';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER } from '../../lib/constants';
 
-export type CaseFilter = 'all' | 'passed' | 'failed';
-export type ViewMode = 'table' | 'grid';
-
 const SUCCESS = 'var(--success)';
 const WARN = 'var(--warn)';
 const DANGER = 'var(--danger)';
@@ -35,6 +32,25 @@ export const isErrored = (e: EvaluationResultDto): boolean => e.errorMessage !==
 
 export const isEvalPass = (e: EvaluationResultDto): boolean =>
   !isErrored(e) && e.score !== null && PASSING_SCORES.has(e.score);
+
+/** Maps a backend evaluation score (1..5) to its label, e.g. 5 → "Excellent". */
+const SCORE_LABEL_BY_VALUE: Record<number, EvaluationScore> = {
+  1: EvaluationScore.Terrible,
+  2: EvaluationScore.Bad,
+  3: EvaluationScore.Acceptable,
+  4: EvaluationScore.Good,
+  5: EvaluationScore.Excellent,
+};
+
+/**
+ * Human label for an evaluator score. The backend serializes the {@link EvaluationScore}
+ * enum as its underlying byte (1..5), so the value is an ordinal — not a 0..1 fraction.
+ * Returns the score word ("Excellent"), the raw number for unexpected values, or "—" for null.
+ */
+export function scoreLabel(score: number | null): string {
+  if (score === null) return '—';
+  return SCORE_LABEL_BY_VALUE[score] ?? String(score);
+}
 
 // ── Case-level ───────────────────────────────────────────────────────────────
 
@@ -68,6 +84,7 @@ export interface FixtureSummary {
   composite: number | null;
   totalCost: number;
   totalTokens: number;
+  tokensOut: number;
 }
 
 /** Rolls a single-case fixture up into the metrics both drawers display. Zeroed when the fixture is still loading. */
@@ -76,7 +93,8 @@ export function fixtureSummary(fixture: TestCaseFixtureDto | undefined): Fixture
   const total = fixture?.evaluators.length ?? 0;
   const totalCost = fixture?.endpoints.reduce((s, ep) => s + ep.costUsd, 0) ?? 0;
   const totalTokens = fixture?.endpoints.reduce((s, ep) => s + ep.tokIn + ep.tokOut, 0) ?? 0;
-  return { passed, total, allPass: total > 0 && passed === total, composite: compositePercent(passed, total), totalCost, totalTokens };
+  const tokensOut = fixture?.endpoints.reduce((s, ep) => s + ep.tokOut, 0) ?? 0;
+  return { passed, total, allPass: total > 0 && passed === total, composite: compositePercent(passed, total), totalCost, totalTokens, tokensOut };
 }
 
 export function avgLatency(run: TestRunDto): number | null {

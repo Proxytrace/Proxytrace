@@ -19,7 +19,7 @@ public record StatisticsSummary(
     double? OverallPassRate);
 
 public record TokenUsageStat(
-    DateOnly Date,
+    DateTimeOffset BucketStart,
     Guid EndpointId,
     long? InputTokens,
     long? OutputTokens);
@@ -69,10 +69,10 @@ public record LiveTelemetry(
     string ProxyVersion);
 
 /// <summary>
-/// Token usage attributed to a single agent for one calendar day (for the stacked token-by-agent chart).
+/// Token usage attributed to a single agent for one time bucket (for the stacked token-by-agent chart).
 /// </summary>
 public record AgentTokenUsageStat(
-    DateOnly Date,
+    DateTimeOffset BucketStart,
     Guid AgentId,
     long InputTokens,
     long OutputTokens);

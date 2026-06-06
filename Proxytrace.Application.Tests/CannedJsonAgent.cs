@@ -77,6 +77,12 @@ internal sealed class CannedJsonAgent : IAgent
             CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
+        public ModelRequestPreview BuildRequestPreview(
+            Conversation conversation,
+            ModelOptions? options = null,
+            IReadOnlyDictionary<string, string>? promptVariables = null)
+            => throw new NotImplementedException();
+
         public async Task<TypedCompletion<TOutput>> CompleteAsync<TOutput>(
             Conversation conversation,
             ModelOptions? options = null,

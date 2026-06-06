@@ -134,6 +134,55 @@ The API emits a strict Content-Security-Policy and related headers on every resp
 nginx deployment sets equivalent headers). This is why the bundled manual is served from a
 path the CSP explicitly allows — see [Deployment](/admin/deployment).
 
+The policies default to safe values but can be overridden per environment under
+`SecurityHeaders`. `ContentSecurityPolicy` applies to the app/API; `DocsContentSecurityPolicy`
+applies to the bundled manual at `/docs` (which needs a slightly relaxed `script-src`):
+
+```json
+{
+  "SecurityHeaders": {
+    "ContentSecurityPolicy": "default-src 'self'; ...",
+    "DocsContentSecurityPolicy": "default-src 'self'; script-src 'self' 'unsafe-inline'; ..."
+  }
+}
+```
+
+Empty values are rejected on startup.
+
+## Endpoint tuning
+
+A few API limits are configurable; the defaults are sensible and rarely need changing. Invalid
+values (e.g. a minimum above its maximum) fail fast on startup.
+
+Search request validation bounds live under `Search:Requests`:
+
+```json
+{
+  "Search": {
+    "Requests": {
+      "MinQueryLength": 2,
+      "MaxQueryLength": 200,
+      "MinSnippetLength": 20,
+      "MaxSnippetLength": 1000
+    }
+  }
+}
+```
+
+Dashboard statistics page sizes (used when a request omits `recentTraceCount`/`agentLimit`, and
+as upper clamps) live under `Statistics`:
+
+```json
+{
+  "Statistics": {
+    "DefaultRecentTraceCount": 6,
+    "MaxRecentTraceCount": 50,
+    "DefaultAgentLimit": 10,
+    "MaxAgentLimit": 100
+  }
+}
+```
+
 ## Next step
 
 Choose and configure a database — see [Database](/admin/database).

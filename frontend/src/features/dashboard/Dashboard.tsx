@@ -9,8 +9,7 @@ import {
   computeTokenVolume,
   computeModelSplit,
   computeLatencyHist,
-  computeTokenByAgent,
-  buildAgentNameMap,
+  computeTokenAgentShare,
 } from './dashboardMeta';
 import { useDashboardView } from './hooks/useDashboardQueries';
 import { useLiveClock } from './hooks/useLiveClock';
@@ -62,8 +61,7 @@ export default function Dashboard() {
   const tokenVolume = computeTokenVolume(dashboard?.tokenUsage ?? []);
   const modelSplit = computeModelSplit(dashboard?.modelBreakdown ?? []);
   const latencyHist = computeLatencyHist(dashboard?.latency ?? []);
-  const agentNameById = buildAgentNameMap(agents);
-  const tokenByAgent = computeTokenByAgent(dashboard?.tokenUsageByAgent ?? [], agentNameById);
+  const tokenAgentShare = computeTokenAgentShare(dashboard?.tokenUsageByAgent ?? [], agents);
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-2">
@@ -118,7 +116,7 @@ export default function Dashboard() {
       <div
         className="fade-up grid grid-cols-1 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] gap-2 [animation-delay:160ms]"
       >
-        <TokenByAgentSection tokenByAgent={tokenByAgent} agentNameById={agentNameById} range={range} />
+        <TokenByAgentSection share={tokenAgentShare} range={range} />
         <LatencySection latencyHist={latencyHist} latencyStats={latencyStats} />
       </div>
 

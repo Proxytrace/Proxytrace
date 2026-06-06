@@ -12,6 +12,7 @@ import { AskQuestionsToolUI } from './AskQuestionsToolUI';
 import { AgentListToolUI } from './AgentListToolUI';
 import { SuiteListToolUI } from './SuiteListToolUI';
 import { RunListToolUI } from './RunListToolUI';
+import { StartTestRunToolUI } from './StartTestRunToolUI';
 import { ProposalListToolUI } from './ProposalListToolUI';
 import { DashboardStatsToolUI } from './DashboardStatsToolUI';
 import { AgentStatsToolUI } from './AgentStatsToolUI';
@@ -29,6 +30,7 @@ export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
   get_agent: AgentCardToolUI,
   get_suite: SuiteCardToolUI,
   get_run: RunCardToolUI,
+  start_test_run: StartTestRunToolUI,
   get_proposal: ProposalCardToolUI,
   get_provider: ProviderCardToolUI,
   get_trace: TraceCardToolUI,

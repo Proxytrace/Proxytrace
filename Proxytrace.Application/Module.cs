@@ -187,6 +187,10 @@ public sealed class Module : Autofac.Module
             .As<IPasswordPolicy>()
             .SingleInstance();
 
+        builder.RegisterType<StreamTicketService>()
+            .As<IStreamTicketService>()
+            .SingleInstance();
+
         builder.RegisterType<PasswordService>()
             .As<IPasswordService>()
             .SingleInstance();

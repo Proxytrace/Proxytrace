@@ -1,7 +1,7 @@
 ---
 name: optimize-agent
 description: Theorize a concrete improvement to an agent and A/B-test it. Use when the user asks to optimize, improve, or tune an agent.
-tools: submit_optimization_theory, get_agent_stats, list_suites, list_runs, get_run, get_trace
+tools: submit_optimization_theory, get_agent_stats, list_suites, list_runs, get_run, get_trace, await_actions
 ---
 
 # Skill: Optimize an agent
@@ -60,6 +60,12 @@ theory card it renders streams the status: **Validating** while the A/B test run
 link to the new **proposal** (it won) or **rejected** (no improvement). Add at most one sentence
 of context — the card shows the rest. If the submission comes back as a duplicate or quota error,
 explain it plainly instead of retrying.
+
+`submit_optimization_theory` returns an `awaitable` handle (`{ kind: "theory", id }`). To report
+the outcome in the same turn, call `await_actions([handle])` after submitting; it resolves when
+the A/B validation finishes (Validated or Invalidated). Then tell the user the result — on a win,
+mention the proposal it created (`resultingProposalId`). If it reports `timedOut`, say validation
+is still running and to check back.
 
 ## Guardrails
 

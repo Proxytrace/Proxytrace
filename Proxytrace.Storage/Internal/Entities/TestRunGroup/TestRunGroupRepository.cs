@@ -32,7 +32,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 g => g.Suite,
                 s => s.Id,
                 (g, s) => new { Group = g, Suite = s })
-            .Where(x => x.Suite.Agent == agentId)
+            .Where(x => x.Suite.Agent == agentId && !x.Group.IsSystemRun)
             .Select(x => x.Group)
             .ToListAsync(cancellationToken);
 
@@ -53,7 +53,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 gs => gs.Suite.Agent,
                 a => a.Id,
                 (gs, a) => new { gs.Group, Agent = a })
-            .Where(x => x.Agent.Project == projectId)
+            .Where(x => x.Agent.Project == projectId && !x.Group.IsSystemRun)
             .Select(x => x.Group)
             .ToListAsync(cancellationToken);
 
@@ -75,7 +75,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 g => g.Suite,
                 s => s.Id,
                 (g, s) => new { Group = g, Suite = s })
-            .Where(x => x.Suite.Agent == agentId)
+            .Where(x => x.Suite.Agent == agentId && !x.Group.IsSystemRun)
             .Select(x => x.Group);
 
         int total = await query.CountAsync(cancellationToken);
@@ -107,7 +107,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 gs => gs.Suite.Agent,
                 a => a.Id,
                 (gs, a) => new { gs.Group, Agent = a })
-            .Where(x => x.Agent.Project == projectId)
+            .Where(x => x.Agent.Project == projectId && !x.Group.IsSystemRun)
             .Select(x => x.Group);
 
         int total = await query.CountAsync(cancellationToken);
@@ -134,6 +134,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 s => s.Id,
                 (g, s) => new { Group = g, Suite = s })
             .Where(x => x.Suite.Agent == agentId
+                && !x.Group.IsSystemRun
                 && x.Group.Status == TestRunStatus.Completed
                 && x.Group.CompletedAt != null
                 && x.Group.CompletedAt > since)

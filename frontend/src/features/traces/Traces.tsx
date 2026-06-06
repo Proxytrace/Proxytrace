@@ -1,10 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Pagination } from '../../components/ui/Pagination';
+import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
 import { buildRows, rangeFrom } from './tracesMeta';
-import { PAGE_SIZE } from './hooks/useTraceQueries';
+import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { useFocusTrace } from './hooks/useFocusTrace';
 import { useScrollToTrace } from './hooks/useScrollToTrace';
 import { useTraceSseStream } from './hooks/useTraceSseStream';
@@ -15,6 +17,9 @@ import { useDebounce } from './hooks/useDebounce';
 
 export default function Traces() {
   const [page, setPage] = useState(1);
+  const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('traces.pageSize', PAGE_SIZE);
+  // Guard against a stale/garbage stored value — only accept a known option.
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
   const [range, setRange] = useState('24h');
   const [agentFilter, setAgentFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -30,6 +35,7 @@ export default function Traces() {
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,
+    pageSize,
     range,
     agentFilter,
     debouncedSearch,
@@ -37,7 +43,14 @@ export default function Traces() {
     from,
   });
 
-  const agents = showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent);
+  // Only surface agents that actually have traces in the current range — an agent with a
+  // zero count is noise on the Traces tab (it has nothing to show).
+  const callCounts = useMemo(
+    () => new Map(agentBreakdown.map(b => [b.agentId, b.callCount])),
+    [agentBreakdown],
+  );
+  const visibleAgents = showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent);
+  const agents = visibleAgents.filter(a => (callCounts.get(a.id) ?? 0) > 0);
 
   const rows = useMemo(() => buildRows(traces), [traces]);
 
@@ -106,6 +119,11 @@ export default function Traces() {
     setPage(1);
   }
 
+  function handlePageSizeChange(v: number) {
+    setStoredPageSize(v);
+    setPage(1);
+  }
+
   return (
     <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
       <AgentFilterCards
@@ -137,9 +155,19 @@ export default function Traces() {
         onToggleConv={toggleConv}
       />
 
-      {total > PAGE_SIZE && (
-        <div data-testid="trace-pagination" className="flex justify-center shrink-0">
-          <Pagination page={page} total={total} pageSize={PAGE_SIZE} onChange={setPage} />
+      {total > 0 && (
+        <div data-testid="trace-pagination" className="flex items-center justify-between gap-3 shrink-0">
+          <FilterDropdown
+            label="Per page:"
+            value={String(pageSize)}
+            active
+            direction="up"
+            options={PAGE_SIZE_OPTIONS.map(n => ({ key: String(n), label: String(n) }))}
+            onChange={key => handlePageSizeChange(Number(key))}
+            width={110}
+          />
+          <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
+          <span className="text-caption text-muted whitespace-nowrap">{total.toLocaleString()} total</span>
         </div>
       )}
 

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Agents;
+using Proxytrace.Api.Json;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -21,12 +21,6 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/agents")]
 public class AgentsController : ControllerBase
 {
-    private static readonly JsonSerializerOptions SseOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     private readonly IAgentRepository repository;
     private readonly IRepository<IModelEndpoint> endpoints;
     private readonly IRepository<IProject> projects;
@@ -155,7 +149,7 @@ public class AgentsController : ControllerBase
         var reader = proposalBroadcaster.Subscribe(id, cancellationToken);
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, SseOptions);
+            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: proposal-created\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
@@ -177,7 +171,7 @@ public class AgentsController : ControllerBase
         var reader = theoryBroadcaster.Subscribe(id, cancellationToken);
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, SseOptions);
+            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: theory-changed\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

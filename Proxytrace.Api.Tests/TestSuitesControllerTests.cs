@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.TestSuites;
+using Proxytrace.Application.Statistics;
+using Proxytrace.Application.Statistics.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -407,6 +409,28 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task AddTestCase_FromCallWithExpectedOverride_UsesProvidedToolRequest()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+        var call = await services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>().CreateAsync(CancellationToken);
+
+        var result = await controller.AddTestCase(
+            suite.Id,
+            new AddTestCaseRequest(
+                FromAgentCallId: call.Id,
+                Input: null,
+                ExpectedOutput: new TestSuiteMessageDto("assistant", "", [new ToolRequestInputDto("lookup", "{}")])),
+            CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        result.Value.TestCases.Should()
+            .ContainSingle(tc => tc.ExpectedOutput.ToolRequests != null && tc.ExpectedOutput.ToolRequests.Count == 1)
+            .Which.ExpectedOutput.ToolRequests!.Single().Name.Should().Be("lookup");
+    }
+
+    [TestMethod]
     public async Task RemoveTestCase_MissingSuite_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();
@@ -431,6 +455,39 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         result.Value.TestCases.Should().NotContain(tc => tc.Id == targetCase.Id);
     }
 
+    [TestMethod]
+    public async Task GetAll_WithFinalizedRun_PopulatesSuiteRunStats()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+
+        var writer = services.GetRequiredService<IStatsWriter<TestRunStats>>();
+        var groupId = Guid.NewGuid();
+        await writer.UpsertAsync(
+            new TestRunStats(
+                TestRunId: Guid.NewGuid(),
+                AgentId: suite.Agent.Id,
+                EndpointId: Guid.NewGuid(),
+                GroupId: groupId,
+                SuiteId: suite.Id,
+                TestCases: 4,
+                Passed: 3,
+                TotalDuration: TimeSpan.FromSeconds(2),
+                Usage: null,
+                Cost: null,
+                RunCompletedAt: DateTimeOffset.UtcNow),
+            CancellationToken);
+
+        var paged = await controller.GetAll(cancellationToken: CancellationToken);
+
+        var dto = paged.Items.Single(s => s.Id == suite.Id);
+        dto.TotalRuns.Should().Be(1);
+        dto.PassRate.Should().Be(75);
+        dto.LastRunGroupId.Should().Be(groupId);
+        dto.LastRunAt.Should().NotBeNull();
+    }
+
     private static TestSuitesController ResolveController(
         IServiceProvider services, ILicenseService? license = null) =>
         new(
@@ -445,6 +502,7 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
             services.GetRequiredService<ITestSuite.CreateNew>(),
             services.GetRequiredService<ITestSuite.CreateExisting>(),
             services.GetRequiredService<TestSuiteDtoMapper>(),
+            services.GetRequiredService<IStatsReader<TestRunStats, TestRunStats.Filter>>(),
             license ?? UnlimitedLicense());
 
     private static ILicenseService UnlimitedLicense()

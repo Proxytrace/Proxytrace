@@ -4,8 +4,8 @@ import { modelColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import type { AgentCallDto } from '../../../api/models';
-import { GRID_TEMPLATE } from '../tracesMeta';
-import { TraceIdCell, TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
+import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
+import { MessagePreviewCell, TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
 
 interface Props {
   trace: AgentCallDto;
@@ -27,7 +27,7 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
       )}
       style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
-      <TraceIdCell trace={trace} />
+      <MessagePreviewCell trace={trace} />
       <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
         {trace.agentName ?? <span className="text-muted">—</span>}
       </span>
@@ -35,7 +35,7 @@ export function FlatTraceRow({ trace, selected, onClick }: Props) {
         <Pill label={trace.model} color={modelColor(trace.model)} size="sm" />
       </span>
       <StatusDot httpStatus={trace.httpStatus} />
-      <ToolsCell count={trace.response.toolRequests.length} />
+      <ToolsCell count={toolCount(trace)} />
       <TokenCell trace={trace} />
       <LatencyCell ms={trace.durationMs} />
       <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(trace.createdAt)}</span>

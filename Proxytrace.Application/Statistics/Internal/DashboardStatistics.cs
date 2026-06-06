@@ -32,8 +32,8 @@ internal class DashboardStatistics : IDashboardStatistics
         Task<IReadOnlyList<AgentBreakdownStat>> agentBreakdownTask = GetAgentBreakdownAsync(filter, cancellationToken);
         Task<IReadOnlyList<LatencyStat>> latencyTask = GetLatencyAsync(filter, cancellationToken);
         Task<IReadOnlyList<ModelBreakdownStat>> modelBreakdownTask = GetModelBreakdownAsync(filter, cancellationToken);
-        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, cancellationToken);
-        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, cancellationToken);
+        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, ResolveTokenBucket(filter), cancellationToken);
+        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, ResolveTokenBucket(filter), cancellationToken);
         Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = agentCalls.GetFilteredAsync(
             new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From),
             page: 1,
@@ -87,14 +87,25 @@ internal class DashboardStatistics : IDashboardStatistics
         return callSummary with { OverallPassRate = passRate };
     }
 
-    internal Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
-        => callStats.GetTokenUsageAsync(filter, cancellationToken);
+    internal Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+        => callStats.GetTokenUsageAsync(filter, bucket, cancellationToken);
+
+    /// <summary>
+    /// Derives the token-volume bucket width from the requested window so short ranges (1h/24h)
+    /// resolve to sub-day buckets and still produce a multi-point series.
+    /// </summary>
+    private static StatisticsBucket ResolveTokenBucket(StatisticsFilter filter)
+    {
+        DateTimeOffset to = filter.To ?? DateTimeOffset.UtcNow;
+        DateTimeOffset from = filter.From ?? to.AddDays(-1);
+        return StatisticsTime.ForWindow(from, to);
+    }
 
     internal Task<IReadOnlyList<ModelBreakdownStat>> GetModelBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
         => callStats.GetModelBreakdownAsync(filter, cancellationToken);
 
-    internal Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
-        => callStats.GetTokenUsageByAgentAsync(filter, cancellationToken);
+    internal Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
+        => callStats.GetTokenUsageByAgentAsync(filter, bucket, cancellationToken);
 
     internal async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {

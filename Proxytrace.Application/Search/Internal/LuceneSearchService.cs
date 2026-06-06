@@ -45,7 +45,9 @@ internal sealed class LuceneSearchService : ISearchService
             analyzer)
         {
             DefaultOperator = QueryParserBase.AND_OPERATOR,
-            AllowLeadingWildcard = false,
+            // Leading wildcards are required for substring matching of content tokens
+            // (PrefixQueryRewriter wraps bare terms as *term*).
+            AllowLeadingWildcard = true,
         };
 
         Query parsed;
@@ -177,7 +179,9 @@ internal sealed class LuceneSearchService : ISearchService
             analyzer)
         {
             DefaultOperator = QueryParserBase.AND_OPERATOR,
-            AllowLeadingWildcard = false,
+            // Leading wildcards are required for substring matching of content tokens
+            // (PrefixQueryRewriter wraps bare terms as *term*).
+            AllowLeadingWildcard = true,
         };
 
         Query parsed;

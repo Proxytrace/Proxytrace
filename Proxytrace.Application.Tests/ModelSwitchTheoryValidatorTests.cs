@@ -23,32 +23,36 @@ public sealed class ModelSwitchTheoryValidatorTests : BaseTest<Module>
     {
         var f = Build(currentCost: 10m, proposedCost: 4m, baselinePassed: [true, true], candidatePassed: [true, true]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().NotBeNull();
+        outcome.Proposal.Should().NotBeNull();
+        outcome.BaselinePassRate.Should().Be(1.0);
+        outcome.ProjectedPassRate.Should().Be(1.0);
         f.Captured.CostDelta.Should().Be(-12m); // (4*2) - (10*2)
         f.Captured.CurrentPassRate.Should().Be(1.0);
         f.Captured.ProposedPassRate.Should().Be(1.0);
     }
 
     [TestMethod]
-    public async Task Validate_SameCostSameLatency_NoWin_ReturnsNull()
+    public async Task Validate_SameCostSameLatency_NoWin_ReturnsNoProposalButRecordsMetrics()
     {
         var f = Build(currentCost: 10m, proposedCost: 10m, baselinePassed: [true, true], candidatePassed: [true, true]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().BeNull();
+        outcome.Proposal.Should().BeNull();
+        outcome.BaselinePassRate.Should().Be(1.0);
+        outcome.ProjectedPassRate.Should().Be(1.0);
     }
 
     [TestMethod]
-    public async Task Validate_CheaperButPassRateRegresses_ReturnsNull()
+    public async Task Validate_CheaperButPassRateRegresses_ReturnsNoProposal()
     {
         var f = Build(currentCost: 10m, proposedCost: 4m, baselinePassed: [true, true], candidatePassed: [true, false]);
 
-        var proposal = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
-        proposal.Should().BeNull();
+        outcome.Proposal.Should().BeNull();
     }
 
     private static Fixture Build(decimal currentCost, decimal proposedCost, bool[] baselinePassed, bool[] candidatePassed)

@@ -1,37 +1,7 @@
-import type { AgentCallDto, MessageDto } from '../../../api/models';
-import { MessageBubble } from '../../../components/ui/MessageBubble';
-import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
-import { Collapsible } from '../../../components/ui/Collapsible';
-import { JsonBlock } from '../../../components/ui/JsonBlock';
+import type { AgentCallDto } from '../../../api/models';
+import { ConversationView } from '../../../components/conversation/ConversationView';
+import { fromAgentCall } from '../../../components/conversation/adapters';
 import { EmptyState } from '../../../components/ui/EmptyState';
-
-function ToolResultBlock({ msg }: { msg: MessageDto }) {
-  let parsed: unknown = msg.content;
-  try { parsed = JSON.parse(msg.content); } catch { /* leave as string */ }
-  const sizeB = msg.content?.length ?? 0;
-  return (
-    <div className="rounded-md overflow-hidden bg-[color-mix(in_srgb,var(--teal)_8%,transparent)] border border-[color-mix(in_srgb,var(--teal)_28%,transparent)]">
-      <Collapsible
-        defaultOpen
-        headerClassName="px-3 py-[9px] text-body-sm font-mono"
-        contentClassName="px-[14px] pt-[10px] pb-3 pl-[34px] font-mono text-body-sm leading-[1.55]"
-        title={
-          <span className="flex items-center gap-2 flex-1 text-secondary">
-            <span className="font-bold tracking-[0.04em] text-teal">RESULT</span>
-            <span className="font-semibold text-primary">{msg.toolCallId?.slice(0, 12) ?? '—'}</span>
-            <span className="ml-auto text-caption font-mono text-muted">{sizeB} B</span>
-          </span>
-        }
-      >
-        <div className="border-t border-dashed border-[color-mix(in_srgb,var(--teal)_22%,transparent)]">
-          <div className="mt-[10px]">
-            <JsonBlock value={parsed} hideCopy transparent className="!px-0 !py-0" />
-          </div>
-        </div>
-      </Collapsible>
-    </div>
-  );
-}
 
 interface Props {
   trace: AgentCallDto | null;
@@ -46,34 +16,9 @@ export function TracePreviewPanel({ trace }: Props) {
     );
   }
 
-  const allMessages: MessageDto[] = [...trace.request, ...(trace.response ? [trace.response] : [])];
-  const toolResultByCallId = new Map<string, MessageDto>();
-  for (const m of allMessages) if (m.role === 'tool' && m.toolCallId) toolResultByCallId.set(m.toolCallId, m);
-  const invocations = allMessages.flatMap(m =>
-    (m.toolRequests ?? []).map(req => ({ req, result: toolResultByCallId.get(req.id) }))
-  );
-  const absorbedCallIds = new Set(invocations.map(i => i.req.id));
-
   return (
-    <div className="h-full min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-[10px] [&>*]:shrink-0">
-      {allMessages.flatMap((msg, i) => {
-        if (msg.role === 'tool') {
-          if (msg.toolCallId && absorbedCallIds.has(msg.toolCallId)) return [];
-          return [<ToolResultBlock key={`m${i}`} msg={msg} />];
-        }
-        const blocks: React.ReactElement[] = [];
-        if (msg.content?.trim()) blocks.push(<MessageBubble key={`m${i}`} msg={msg} />);
-        msg.toolRequests?.forEach(req => {
-          blocks.push(
-            <ToolMessageBubble
-              key={`t${req.id}`}
-              request={req}
-              result={toolResultByCallId.get(req.id)}
-            />
-          );
-        });
-        return blocks;
-      })}
+    <div className="h-full min-h-0 overflow-y-auto px-4 py-4">
+      <ConversationView messages={fromAgentCall(trace)} />
     </div>
   );
 }

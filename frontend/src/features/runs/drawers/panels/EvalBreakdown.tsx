@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { CheckIcon, XIcon } from '../../../../components/icons';
 import { modelColor } from '../../../../lib/colors';
 import type { TestRunDto, TestCaseFixtureDto } from '../../../../api/models';
-import { isDivergent } from '../../results';
+import { isDivergent, scoreLabel } from '../../results';
 import { SECTION_LABEL } from './constants';
 
 export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures: (TestCaseFixtureDto | undefined)[] }) {
@@ -48,7 +48,7 @@ export function EvalBreakdown({ runs, fixtures }: { runs: TestRunDto[]; fixtures
                       ? <>
                           {c.pass ? <CheckIcon size={12} strokeWidth={2.5} className="text-success shrink-0" /> : <XIcon size={12} strokeWidth={2.5} className="text-danger shrink-0" />}
                           {typeof c.score === 'number' && (
-                            <span className={`mono text-caption font-semibold ${c.pass ? 'text-success' : 'text-danger'}`}>{(c.score * 100).toFixed(0)}%</span>
+                            <span className={`mono text-caption font-semibold truncate ${c.pass ? 'text-success' : 'text-danger'}`}>{scoreLabel(c.score)}</span>
                           )}
                         </>
                       : <span className="text-muted">—</span>}

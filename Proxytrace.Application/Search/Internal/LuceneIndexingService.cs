@@ -174,6 +174,7 @@ internal sealed class LuceneIndexingService : BackgroundService, ISearchIndexer
 
         using var scope = scopeFactory.CreateScope();
         var mappers = ResolveMappers(scope);
+        var settingsResolver = scope.ServiceProvider.GetRequiredService<IProjectSearchSettingsResolver>();
 
         foreach (var req in batch.Values)
         {
@@ -193,11 +194,16 @@ internal sealed class LuceneIndexingService : BackgroundService, ISearchIndexer
                 if (doc is null)
                 {
                     writer.DeleteDeferred(key);
+                    continue;
                 }
-                else
+                // Respect per-project search settings centrally (the gate used to live in the
+                // repository decorator). A project with search disabled, auto-reindex off, or
+                // this kind excluded gets no incremental update — manual reindex still forces it.
+                if (!await IsIndexingAllowedAsync(settingsResolver, doc, req.Kind, cancellationToken))
                 {
-                    writer.UpsertDeferred(key, doc);
+                    continue;
                 }
+                writer.UpsertDeferred(key, doc);
             }
             catch (Exception ex)
             {
@@ -213,6 +219,20 @@ internal sealed class LuceneIndexingService : BackgroundService, ISearchIndexer
         {
             logger.LogError(ex, "Failed to commit index batch ({Count} items)", batch.Count);
         }
+    }
+
+    private static async Task<bool> IsIndexingAllowedAsync(
+        IProjectSearchSettingsResolver resolver,
+        Document doc,
+        SearchKind kind,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(doc.Get(SearchConstants.FieldProjectId), out var projectId))
+        {
+            return false;
+        }
+        var settings = await resolver.GetOrDefaultsAsync(projectId, cancellationToken);
+        return settings.Enabled && settings.AutoReindexOnChange && settings.IndexedKinds.Contains(kind);
     }
 
     private void BeginPending()

@@ -149,11 +149,11 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
 
             var validator = validators.FirstOrDefault(v => v.CanValidate(theory));
-            IOptimizationProposal? proposal = validator is null
-                ? null
+            TheoryValidationOutcome outcome = validator is null
+                ? TheoryValidationOutcome.Inconclusive
                 : await validator.ValidateAsync(theory, cancellationToken);
 
-            if (proposal is not null)
+            if (outcome.Proposal is { } proposal)
             {
                 // Persist the proposal and mark the theory validated atomically — a crash between
                 // the two writes would otherwise leave an orphaned Draft proposal that no theory
@@ -161,7 +161,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
                 var (persisted, validated) = await transaction.InvokeAsync(async () =>
                 {
                     var savedProposal = await proposals.AddAsync(proposal, cancellationToken);
-                    var savedTheory = await theory.SetValidated(savedProposal.Id, cancellationToken);
+                    var savedTheory = await theory.SetValidated(
+                        savedProposal.Id, outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue, cancellationToken);
                     return (savedProposal, savedTheory);
                 });
 
@@ -171,7 +172,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             }
             else
             {
-                theory = await theory.SetInvalidated(cancellationToken);
+                theory = await theory.SetInvalidated(
+                    outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue, cancellationToken);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
                 logger.LogInformation("Theory {TheoryId} invalidated — no improvement", theoryId);
             }
@@ -194,7 +196,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             var theory = await theories.FindAsync(theoryId, cancellationToken);
             if (theory is { Status: TheoryStatus.Validating })
             {
-                theory = await theory.SetInvalidated(cancellationToken);
+                theory = await theory.SetInvalidated(null, null, null, cancellationToken);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
             }
         }

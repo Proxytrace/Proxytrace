@@ -61,6 +61,19 @@ public sealed record AssistantMessage : Message
     public override int GetHashCode() 
         => HashCode.Combine(base.GetHashCode(), ToolRequests);
 
-    public override string ToString() 
-        => base.ToString();
+    public override string ToString()
+    {
+        if (ToolRequests.Count == 0)
+        {
+            return base.ToString();
+        }
+
+        var toolCalls = string.Join(
+            Environment.NewLine,
+            ToolRequests.Select(tr => $"[tool call] {tr.Name}({tr.Arguments})"));
+
+        return string.IsNullOrWhiteSpace(GetText())
+            ? $"{Role}: {toolCalls}"
+            : $"{base.ToString()}{Environment.NewLine}{toolCalls}";
+    }
 }

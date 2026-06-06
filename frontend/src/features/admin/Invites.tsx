@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { InviteRow } from '../../api/invites';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { useCreateInvite, useInvites, useRevokeInvite } from './hooks/useInvites';
+import { inviteStatus } from './invitesMeta';
 
 export default function Invites() {
   const { data, isLoading } = useInvites();
@@ -93,11 +94,7 @@ export default function Invites() {
           </thead>
           <tbody>
             {data?.map((i) => {
-              const status = i.consumedAt
-                ? 'Used'
-                : new Date(i.expiresAt) < new Date()
-                ? 'Expired'
-                : 'Pending';
+              const status = inviteStatus(i);
               return (
                 <tr key={i.id} data-testid={`invite-row-${i.id}`} className="border-b border-border/50">
                   <td className="py-2">{i.email}</td>

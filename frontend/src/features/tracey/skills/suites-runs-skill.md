@@ -1,7 +1,7 @@
 ---
 name: test-suites-and-runs
 description: Inspect test suites and runs, and start a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
-tools: list_suites, get_suite, list_runs, get_run, start_test_run
+tools: list_suites, get_suite, list_runs, get_run, start_test_run, await_actions
 ---
 
 # Skill: Test suites & runs
@@ -23,6 +23,15 @@ Render results, don't narrate them: a single suite or run → its entity card (`
 shows a Confirm/Cancel card; call the tool and surface the result. You need both a `suiteId`
 (`list_suites`) and an `agentId` (the agent is available via the core `list_agents` / `get_agent`).
 If either is ambiguous, disambiguate with `ask_questions` before starting.
+
+Once confirmed, the user sees a **live progress card** that streams completion and pass/fail as
+cases finish. `start_test_run` returns an `awaitable` handle (`{ kind: "test-run", id }`).
+
+To react to results in the same turn, **wait for the run**: collect the `awaitable` handle(s) and
+call `await_actions` **once** with all of them, then analyze what comes back. Starting several
+runs? Fire every `start_test_run` first, then a single `await_actions([…all handles…])` — never
+one wait per run, and never poll `get_run` in a loop yourself. If a wait reports `timedOut`, tell
+the user the run is still going and to check back.
 
 To go beyond a single run and actually *improve* an agent from its results, load the
 `optimize-agent` skill instead.

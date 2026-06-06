@@ -77,7 +77,8 @@ export interface AgentCallDto {
   model: string;
   provider: string;
   request: MessageDto[];
-  response: MessageDto;
+  /** Null when the captured call produced no completion (HTTP error, empty/dropped completion). */
+  response: MessageDto | null;
   tools: ToolSpecDto[];
   inputTokens: number;
   outputTokens: number;
@@ -167,7 +168,7 @@ export interface LiveTelemetryDto {
   proxyVersion: string;
 }
 export interface AgentTokenUsageDto {
-  date: string;
+  bucketStart: string;
   agentId: string;
   inputTokens: number;
   outputTokens: number;
@@ -188,7 +189,7 @@ export interface LatencyStatDto {
   sampleCount: number;
 }
 export interface TokenUsageDto {
-  date: string;
+  bucketStart: string;
   endPointId: string;
   inputTokens: number;
   outputTokens: number;
@@ -255,7 +256,13 @@ export interface AgentOverviewDto {
 }
 
 /* ── Test Suites ── */
-export interface TestSuiteMessageDto { role: string; content: string; }
+export interface ToolRequestInputDto { name: string; arguments: string; id?: string | null; }
+export interface TestSuiteMessageDto {
+  role: string;
+  content: string;
+  toolRequests?: ToolRequestInputDto[] | null;
+  toolCallId?: string | null;
+}
 export interface TestCaseDto {
   id: string;
   input: TestSuiteMessageDto[];
@@ -490,7 +497,8 @@ export interface CreateApiKeyRequest { name: string; projectId: string; }
 export interface TestCaseMessageFixtureDto {
   role: string;
   content: string;
-  name?: string | null;
+  toolRequests?: ToolRequestDto[] | null;
+  toolCallId?: string | null;
 }
 export interface ToolCallInfoDto { name: string; arguments: unknown; }
 export interface OutputValueDto {
@@ -500,13 +508,26 @@ export interface OutputValueDto {
   name?: string | null;
   arguments?: unknown;
 }
+export interface RequestToolCallDto { id: string; name: string; arguments: string; }
+export interface RequestMessageDto {
+  role: string;
+  content: string | null;
+  toolCalls: RequestToolCallDto[];
+  toolCallId: string | null;
+}
+export interface RequestToolDto { name: string; description: string; jsonSchema: unknown; }
+export interface ModelRequestPreviewDto {
+  model: string;
+  messages: RequestMessageDto[];
+  tools: RequestToolDto[];
+}
+
 export interface BreakdownItemDto { k: string; v: string; match: boolean; }
 export interface EvaluatorFixtureResultDto {
   evaluatorId: string;
   evaluatorKind: string;
   evaluatorName: string;
-  color: string;
-  desc: string;
+  desc?: string | null;
   score: number;
   pass: boolean;
   breakdown: BreakdownItemDto[];
@@ -643,6 +664,9 @@ export interface TheoryDto {
   details: ProposalDetailsDto;
   evidenceTestRunIds: string[];
   resultingProposalId: string | null;
+  baselinePassRate: number | null;
+  projectedPassRate: number | null;
+  pValue: number | null;
   createdAt: string;
   updatedAt: string;
 }

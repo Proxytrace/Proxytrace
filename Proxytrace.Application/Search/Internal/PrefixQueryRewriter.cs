@@ -68,7 +68,7 @@ internal static class PrefixQueryRewriter
                 i++;
             }
             var token = input[start..i];
-            sb.Append(AppendWildcardIfEligible(token));
+            sb.Append(WrapWildcardIfEligible(token));
         }
 
         return sb.ToString();
@@ -82,7 +82,11 @@ internal static class PrefixQueryRewriter
     private static bool IsTokenBoundary(char c) =>
         char.IsWhiteSpace(c) || c is '"' or '(' or ')' or '[' or ']' or '{' or '}' or '&' or '|' or '^' or '~' or '\\';
 
-    private static string AppendWildcardIfEligible(string token)
+    // Wrap bare tokens with leading AND trailing wildcards so a query word matches an indexed
+    // term anywhere it occurs (substring), not just as a prefix. Captured trace content is full
+    // of compound/identifier tokens (e.g. "search_users", "getUserData") that the analyzer keeps
+    // whole; prefix-only matching missed them when the user typed an interior fragment.
+    private static string WrapWildcardIfEligible(string token)
     {
         if (token.Length == 0)
         {
@@ -110,10 +114,10 @@ internal static class PrefixQueryRewriter
             {
                 return token;
             }
-            return field + value + "*";
+            return field + "*" + value + "*";
         }
 
-        return token + "*";
+        return "*" + token + "*";
     }
 
     private static bool ContainsWildcard(string s)

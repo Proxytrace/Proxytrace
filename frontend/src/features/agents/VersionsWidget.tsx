@@ -8,10 +8,12 @@ import { useAgentVersions } from './hooks/useAgentVersions';
 
 interface Props {
   agent: AgentDto;
+  selectedVersion?: number;
+  onSelect?: (versionNumber: number) => void;
   className?: string;
 }
 
-export function VersionsWidget({ agent, className }: Props) {
+export function VersionsWidget({ agent, selectedVersion, onSelect, className }: Props) {
   const { versions, latestVersion, isLoading } = useAgentVersions(agent.id);
   const [moving, setMoving] = useState<AgentVersionDto | null>(null);
   const c = agentColor(agent.id);
@@ -28,9 +30,13 @@ export function VersionsWidget({ agent, className }: Props) {
       {isLoading && <p className="text-body-sm text-muted">Loading…</p>}
       {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted">No versions yet.</p>}
       {!isLoading && ordered.length > 0 && (
-        <ul className="flex flex-col" data-testid="agent-versions-list">
+        <ul
+          className="flex flex-col max-h-[17rem] overflow-y-auto pr-2.5"
+          data-testid="agent-versions-list"
+        >
           {ordered.map((v, i) => {
             const isCurrent = v.versionNumber === latestVersion;
+            const isSelected = v.versionNumber === selectedVersion;
             const isLast = i === ordered.length - 1;
             return (
               <li
@@ -43,33 +49,60 @@ export function VersionsWidget({ agent, className }: Props) {
                   className="absolute left-0 top-[3px] w-[11px] h-[11px] rounded-full border-2 bg-card"
                   style={isCurrent ? { background: c, borderColor: c } : { borderColor: 'var(--border)' }}
                 />
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="font-mono text-title font-bold shrink-0"
-                    style={isCurrent ? { color: c } : undefined}
-                  >
-                    v{v.versionNumber}
-                  </span>
-                  {isCurrent && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  onClick={() => onSelect?.(v.versionNumber)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelect?.(v.versionNumber);
+                    }
+                  }}
+                  data-testid={`agent-version-select-${v.versionNumber}`}
+                  className="px-2.5 py-2.5 -my-1.5 rounded-lg cursor-pointer transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
+                  style={isSelected ? { background: `color-mix(in srgb, ${c} 12%, transparent)` } : undefined}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
-                      style={{ background: `color-mix(in srgb, ${c} 18%, transparent)`, color: c }}
+                      className="font-mono text-title font-bold shrink-0"
+                      style={isCurrent || isSelected ? { color: c } : undefined}
                     >
-                      current
+                      v{v.versionNumber}
                     </span>
-                  )}
-                  <span className="ml-auto shrink-0 text-caption text-muted">{fmtDate(v.createdAt)}</span>
-                </div>
-                <div className="flex items-center gap-2 mt-1 text-caption text-muted">
-                  <span>{v.tools.length} tool{v.tools.length === 1 ? '' : 's'}</span>
-                  <button
-                    type="button"
-                    className="ml-auto shrink-0 text-muted hover:text-primary transition-colors duration-100 cursor-pointer"
-                    onClick={() => setMoving(v)}
-                    data-testid={`agent-version-move-btn-${v.versionNumber}`}
-                  >
-                    Move…
-                  </button>
+                    {isCurrent && (
+                      <span
+                        className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
+                        style={{ background: `color-mix(in srgb, ${c} 18%, transparent)`, color: c }}
+                      >
+                        current
+                      </span>
+                    )}
+                    {isSelected && !isCurrent && (
+                      <span
+                        className="px-1.5 py-px rounded-sm text-caption font-bold shrink-0"
+                        style={{ background: `color-mix(in srgb, ${c} 14%, transparent)`, color: c }}
+                      >
+                        viewing
+                      </span>
+                    )}
+                    <span className="ml-auto shrink-0 text-caption text-muted">{fmtDate(v.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1 text-caption text-muted">
+                    <span>{v.tools.length} tool{v.tools.length === 1 ? '' : 's'}</span>
+                    <button
+                      type="button"
+                      className="ml-auto shrink-0 text-muted hover:text-primary transition-colors duration-100 cursor-pointer"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMoving(v);
+                      }}
+                      data-testid={`agent-version-move-btn-${v.versionNumber}`}
+                    >
+                      Move…
+                    </button>
+                  </div>
                 </div>
               </li>
             );

@@ -17,27 +17,35 @@ export function daysLeft(endsAt: string | null | undefined, now: number = Date.n
 /** Human-readable label per tier. */
 const TIER_LABEL: Record<LicenseTier, string> = { free: 'Free', enterprise: 'Enterprise' };
 
+/**
+ * Visual treatment of the tier chip. Deliberately distinct from the health
+ * ("Online") pill so the two don't read as twins: `premium` is the gold,
+ * crowned Enterprise marque; `pending` flags a re-validation in progress;
+ * `free` is a muted upgrade affordance.
+ */
+export type TierTone = 'premium' | 'pending' | 'free';
+
 export interface TierBadge {
   label: string;
-  /** A CSS color (token reference) for the tinted pill. */
-  color: string;
+  /** Drives the chip's styling and which icon it carries. */
+  tone: TierTone;
   /** Whether the badge should link to the upgrade page (Free only). */
   linkToUpgrade: boolean;
 }
 
 /**
- * Maps the license status/tier to the topbar pill's label, tint color, and
- * whether it doubles as an upgrade affordance. Free is always shown (neutral
- * tint, links to upgrade); licensed installs are green (active) or amber
- * (grace/expired, re-validation pending).
+ * Maps the license status/tier to the topbar tier chip's label, visual tone,
+ * and whether it doubles as an upgrade affordance. Free is always shown (muted,
+ * links to upgrade); a licensed install is the gold "premium" marque when
+ * active, or "pending" (amber) while grace/expired re-validation is in flight.
  */
 export function tierBadge(status: LicenseStatus, tier: LicenseTier): TierBadge {
   if (status === 'free') {
-    return { label: TIER_LABEL.free, color: 'var(--text-secondary)', linkToUpgrade: true };
+    return { label: TIER_LABEL.free, tone: 'free', linkToUpgrade: true };
   }
   return {
     label: TIER_LABEL[tier],
-    color: status === 'active' ? 'var(--success)' : 'var(--warn)',
+    tone: status === 'active' ? 'premium' : 'pending',
     linkToUpgrade: false,
   };
 }

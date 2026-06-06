@@ -1,8 +1,8 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Api.Json;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.TestRun;
@@ -14,12 +14,6 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/test-runs")]
 public class TestRunsController : ControllerBase
 {
-    private static readonly JsonSerializerOptions SseOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     private readonly ITestRunRepository repository;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly TestRunDtoMapper mapper;
@@ -69,6 +63,22 @@ public class TestRunsController : ControllerBase
         return mapper.ToFixtureDto(run, result);
     }
 
+    [HttpGet("{id:guid}/cases/{caseId:guid}/request")]
+    public async Task<ActionResult<ModelRequestPreviewDto>> GetCaseRequest(
+        Guid id, Guid caseId, CancellationToken cancellationToken)
+    {
+        var run = await repository.FindAsync(id, cancellationToken);
+        if (run is null)
+            return NotFound();
+        var testCase = run.Group.Suite.TestCases.FirstOrDefault(tc => tc.Id == caseId);
+        if (testCase is null)
+            return NotFound();
+
+        var client = run.Group.Suite.Agent.CreateClient(customEndpoint: run.Endpoint, skipIngestion: true);
+        var preview = client.BuildRequestPreview(testCase.Input);
+        return mapper.ToRequestDto(preview);
+    }
+
     [HttpGet("{id:guid}/stream")]
     public async Task Stream(Guid id, CancellationToken cancellationToken)
     {
@@ -87,7 +97,7 @@ public class TestRunsController : ControllerBase
         if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
         {
             var completeEvt = RunCompleteEvent.Create(run);
-            var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), SseOptions);
+            var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
             return;
@@ -117,7 +127,7 @@ public class TestRunsController : ControllerBase
             RunCompleteEvent => "run-complete",
             _ => "unknown",
         };
-        var data = JsonSerializer.Serialize(evt, evt.GetType(), SseOptions);
+        var data = JsonSerializer.Serialize(evt, evt.GetType(), ApiJsonOptions.Sse);
         await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
         await Response.Body.FlushAsync(cancellationToken);
     }

@@ -28,24 +28,24 @@ describe('daysLeft', () => {
 });
 
 describe('tierBadge', () => {
-  it('shows a neutral Free pill that links to upgrade', () => {
+  it('shows a muted Free chip that links to upgrade', () => {
     expect(tierBadge('free', 'free')).toEqual({
       label: 'Free',
-      color: 'var(--text-secondary)',
+      tone: 'free',
       linkToUpgrade: true,
     });
   });
 
-  it('shows a green Enterprise pill when active', () => {
+  it('shows the gold premium Enterprise chip when active', () => {
     const badge = tierBadge('active', 'enterprise');
     expect(badge.label).toBe('Enterprise');
-    expect(badge.color).toBe('var(--success)');
+    expect(badge.tone).toBe('premium');
     expect(badge.linkToUpgrade).toBe(false);
   });
 
-  it('shows an amber pill while re-validation is pending', () => {
-    expect(tierBadge('grace', 'enterprise').color).toBe('var(--warn)');
-    expect(tierBadge('expired', 'enterprise').color).toBe('var(--warn)');
+  it('shows a pending (amber) chip while re-validation is in flight', () => {
+    expect(tierBadge('grace', 'enterprise').tone).toBe('pending');
+    expect(tierBadge('expired', 'enterprise').tone).toBe('pending');
   });
 });
 

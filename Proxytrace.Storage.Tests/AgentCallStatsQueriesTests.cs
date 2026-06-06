@@ -46,7 +46,7 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
         var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
         await gen.CreateAsync(CancellationToken);
 
-        var rows = await reader.GetTokenUsageAsync(new StatisticsFilter(), CancellationToken);
+        var rows = await reader.GetTokenUsageAsync(new StatisticsFilter(), StatisticsBucket.Daily, CancellationToken);
 
         rows.Should().NotBeEmpty();
     }

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Playground;
+using Proxytrace.Api.Json;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Playground.Internal;
 
@@ -13,12 +13,6 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/playground")]
 public class PlaygroundController : ControllerBase
 {
-    private static readonly JsonSerializerOptions SseOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
     private readonly IPlaygroundService service;
 
     public PlaygroundController(IPlaygroundService service)
@@ -61,20 +55,20 @@ public class PlaygroundController : ControllerBase
                     _ => ("error", new { message = "unknown event" }),
                 };
 
-                var data = JsonSerializer.Serialize(payload, SseOptions);
+                var data = JsonSerializer.Serialize(payload, ApiJsonOptions.Sse);
                 await Response.WriteAsync($"event: {name}\ndata: {data}\n\n", cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
             }
         }
         catch (NotImplementedException)
         {
-            var data = JsonSerializer.Serialize(new { message = "Playground backend not implemented yet" }, SseOptions);
+            var data = JsonSerializer.Serialize(new { message = "Playground backend not implemented yet" }, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: error\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            var data = JsonSerializer.Serialize(new { message = ex.Message }, SseOptions);
+            var data = JsonSerializer.Serialize(new { message = ex.Message }, ApiJsonOptions.Sse);
             await Response.WriteAsync($"event: error\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

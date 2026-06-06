@@ -130,5 +130,6 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<IInviteRepository>(),
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
+        services.GetRequiredService<IStreamTicketService>(),
         new ConfigurationBuilder().Build());
 }

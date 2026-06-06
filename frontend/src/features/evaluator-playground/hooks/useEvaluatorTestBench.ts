@@ -4,6 +4,7 @@ import { type EvaluationResultDto, type MessageDto } from '../../../api/models';
 import { evaluatorTestBenchApi } from '../../../api/evaluator-testbench';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type { SearchHit } from '../../../api/search';
+import { runLabel } from '../testBenchMeta';
 
 /**
  * Owns the evaluator test-bench workflow: load a default/picked test case, edit
@@ -83,11 +84,6 @@ export function useEvaluatorTestBench(evaluatorId: string) {
   }));
 
   const runDisabled = testCaseId == null || payloadQuery.isLoading || runMutation.isPending;
-  const runLabel = runMutation.isPending
-    ? 'Running…'
-    : lastResult != null
-      ? 'Re-run'
-      : 'Run evaluator';
 
   return {
     selectedLabel: effectivePickedHit?.title ?? null,
@@ -104,7 +100,7 @@ export function useEvaluatorTestBench(evaluatorId: string) {
     onResetActual,
     run: runMutation.mutate,
     runDisabled,
-    runLabel,
+    runLabel: runLabel(runMutation.isPending, lastResult != null),
     runPending: runMutation.isPending,
     runError: runMutation.isError,
     lastResult,

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
 using Proxytrace.Api.Dto.Statistics;
@@ -16,17 +17,20 @@ public class StatisticsController : ControllerBase
     private readonly IAgentStatistics agentStatistics;
     private readonly AgentCallDtoMapper agentCallDtoMapper;
     private readonly AgentDtoMapper agentDtoMapper;
+    private readonly StatisticsOptions options;
 
     public StatisticsController(
         IDashboardStatistics dashboard,
         IAgentStatistics agentStatistics,
         AgentCallDtoMapper agentCallDtoMapper,
-        AgentDtoMapper agentDtoMapper)
+        AgentDtoMapper agentDtoMapper,
+        StatisticsOptions options)
     {
         this.dashboard = dashboard;
         this.agentStatistics = agentStatistics;
         this.agentCallDtoMapper = agentCallDtoMapper;
         this.agentDtoMapper = agentDtoMapper;
+        this.options = options;
     }
 
     [HttpGet("dashboard")]
@@ -34,16 +38,18 @@ public class StatisticsController : ControllerBase
         [FromQuery] DateTimeOffset? from = null,
         [FromQuery] DateTimeOffset? to = null,
         [FromQuery] Guid? projectId = null,
-        [FromQuery] int recentTraceCount = 6,
-        [FromQuery] int agentLimit = 10,
+        [FromQuery] int? recentTraceCount = null,
+        [FromQuery] int? agentLimit = null,
         CancellationToken cancellationToken = default)
     {
         if (from is not null && to is not null && from.Value >= to.Value)
             return BadRequest("Query parameter 'from' must be before 'to'.");
-        recentTraceCount = Math.Clamp(recentTraceCount, 1, 50);
-        agentLimit = Math.Clamp(agentLimit, 1, 100);
+        var resolvedRecentTraceCount = Math.Clamp(
+            recentTraceCount ?? options.DefaultRecentTraceCount, 1, options.MaxRecentTraceCount);
+        var resolvedAgentLimit = Math.Clamp(
+            agentLimit ?? options.DefaultAgentLimit, 1, options.MaxAgentLimit);
         var filter = new StatisticsFilter(from, to, projectId);
-        DashboardView view = await dashboard.GetDashboardViewAsync(filter, recentTraceCount, agentLimit, cancellationToken);
+        DashboardView view = await dashboard.GetDashboardViewAsync(filter, resolvedRecentTraceCount, resolvedAgentLimit, cancellationToken);
 
         return new DashboardViewDto(
             Summary: new SummaryDto(view.Summary.TotalCalls, view.Summary.TotalInputTokens, view.Summary.TotalOutputTokens, view.Summary.AvgLatencyMs, view.Summary.OverallPassRate),
@@ -52,8 +58,8 @@ public class StatisticsController : ControllerBase
             AgentBreakdown: view.AgentBreakdown.Select(r => new AgentBreakdownDto(r.AgentId, r.CallCount)).ToArray(),
             Latency: view.Latency.Select(r => new LatencyDto(r.EndpointId, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray(),
             ModelBreakdown: view.ModelBreakdown.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray(),
-            TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.Date, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray(),
-            TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.Date, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray(),
+            TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.BucketStart, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray(),
+            TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.BucketStart, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray(),
             RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToDto).ToArray(),
             Agents: view.Agents.Select(a => agentDtoMapper.ToDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
     }

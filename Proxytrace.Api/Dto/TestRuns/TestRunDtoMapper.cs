@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Message;
+using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 
@@ -73,18 +74,39 @@ public sealed class TestRunDtoMapper
             Runtime: MapRuntime(result),
             Endpoints: MapEndpoints(run, result));
 
+    public ModelRequestPreviewDto ToRequestDto(ModelRequestPreview preview)
+        => new(
+            preview.Model,
+            preview.Messages.Select(m => new RequestMessageDto(
+                m.Role,
+                m.Content,
+                m.ToolCalls.Select(tc => new RequestToolCallDto(tc.Id, tc.Name, tc.Arguments)).ToArray(),
+                m.ToolCallId)).ToArray(),
+            preview.Tools.Select(t => new RequestToolDto(
+                t.Name,
+                t.Description,
+                JsonSerializer.Deserialize<JsonElement>(t.JsonSchema))).ToArray());
+
     private TestCaseMessageDto[] MapInputMessages(Conversation input)
-        => input.Messages.Select(msg =>
+        => input.Messages.Select(MapInputMessage).ToArray();
+
+    private static TestCaseMessageDto MapInputMessage(Message msg)
+    {
+        switch (msg)
         {
-            var role = msg.Role.ToString().ToLowerInvariant();
-            if (msg is ToolMessage toolMsg)
-            {
+            case AssistantMessage assistant:
+                var requests = assistant.ToolRequests
+                    .Select(tr => new ToolRequestFixtureDto(tr.Id, tr.Name, tr.Arguments))
+                    .ToArray();
+                return new TestCaseMessageDto("assistant", assistant.GetText(), requests, null);
+            case ToolMessage toolMsg:
                 var (id, contents) = toolMsg.Deconstruct();
                 var content = string.Concat(contents.Select(c => c.Text ?? ""));
-                return new TestCaseMessageDto(role, content, id);
-            }
-            return new TestCaseMessageDto(role, msg.GetText(), null);
-        }).ToArray();
+                return new TestCaseMessageDto("tool", content, [], id);
+            default:
+                return new TestCaseMessageDto(msg.Role.ToString().ToLowerInvariant(), msg.GetText(), [], null);
+        }
+    }
 
     private OutputValueDto MapOutput(AssistantMessage msg)
     {
@@ -131,7 +153,7 @@ public sealed class TestRunDtoMapper
             TokOut: result.Usage?.OutputTokenCount,
             Calls: 1,
             Latency: (long)result.Latency.TotalMilliseconds,
-            CostUsd: 0)
+            CostUsd: result.Usage is { } usage ? (double)(run.Endpoint.CalculateCost(usage) ?? 0m) : 0)
     ];
 
     private string EndpointColor(string providerName)

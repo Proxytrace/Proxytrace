@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows, rangeFrom, latencyBarPct, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
+import { buildRows, rangeFrom, latencyBarPct, toolCount, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
@@ -104,6 +104,23 @@ describe('buildRows', () => {
 
   it('returns empty array for empty input', () => {
     expect(buildRows([])).toHaveLength(0);
+  });
+});
+
+// ── toolCount ─────────────────────────────────────────────────────────────────
+
+describe('toolCount', () => {
+  it('counts the tool requests on the response', () => {
+    const tr = { id: 't', name: 'n', arguments: '{}' };
+    expect(toolCount(trace({ id: 'a', response: { role: 'assistant', content: '', toolRequests: [tr, tr], toolCallId: null } }))).toBe(2);
+  });
+
+  it('returns 0 when the call has no response (error / empty completion)', () => {
+    expect(toolCount(trace({ id: 'b', response: null }))).toBe(0);
+  });
+
+  it('returns 0 when the response has no tool requests', () => {
+    expect(toolCount(trace({ id: 'c' }))).toBe(0);
   });
 });
 

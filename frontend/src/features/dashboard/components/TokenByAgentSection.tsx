@@ -1,44 +1,87 @@
-// Token usage by agent — stacked bar chart section.
+// Token usage by agent — donut share + ranked legend.
 
-import { StackedBar } from '../../../components/charts';
+import { useNavigate } from 'react-router-dom';
+import { Donut, type DonutSegment } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { agentColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
 import type { RangeKey } from '../../../lib/time-range';
-import type { TokenByAgent } from '../dashboardMeta';
+import type { TokenAgentShare } from '../dashboardMeta';
+
+const ROW_CLS =
+  'group w-full flex items-center gap-3.5 min-w-0 rounded-md px-2 py-1 -mx-2 cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--accent-primary)_5%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]';
 
 interface TokenByAgentSectionProps {
-  tokenByAgent: TokenByAgent;
-  agentNameById: Map<string, string>;
+  share: TokenAgentShare;
   range: RangeKey;
 }
 
-export function TokenByAgentSection({ tokenByAgent, agentNameById, range }: TokenByAgentSectionProps) {
+const MAX_LEGEND = 7;
+
+export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) {
+  const navigate = useNavigate();
+  const visible = share.agents.slice(0, MAX_LEGEND);
+  const rest = share.agents.slice(MAX_LEGEND);
+  const restTokens = rest.reduce((n, a) => n + a.tokens, 0);
+
+  const segments: DonutSegment[] = visible.map(a => ({ label: a.name, value: a.tokens, color: agentColor(a.id) }));
+  if (restTokens > 0) segments.push({ label: 'Other', value: restTokens, color: 'var(--text-muted)' });
+
   return (
     <section data-testid="token-by-agent" className="rounded-lg bg-card flex flex-col shadow-[var(--shadow-card)]">
-      <header className="flex items-center justify-between gap-3 px-3 pt-2.5 pb-1.5">
-        <div className="min-w-0">
-          <h3 className="text-h2 font-semibold whitespace-nowrap">Token usage by agent</h3>
-          <p className="text-body-sm text-muted mt-0.5 font-mono">{range} · stacked</p>
-        </div>
-        <div className="flex gap-2.5 text-[10.5px] text-secondary flex-wrap justify-end max-w-[320px] font-mono">
-          {tokenByAgent.agentIds.map(id => (
-            <span key={id} data-testid={`token-by-agent-row-${id}`} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-sm" style={{ background: agentColor(id) }} />
-              {agentNameById.get(id) ?? id.slice(0, 6)}
-            </span>
-          ))}
-        </div>
+      <header className="flex items-center justify-between gap-3 px-4 pt-3 pb-1.5">
+        <h3 className="text-h2 font-semibold whitespace-nowrap">Token usage by agent</h3>
+        <p className="text-body-sm text-muted font-mono">
+          {range} · <span className="text-secondary font-semibold">{fmtTokens(share.total)}</span> total
+        </p>
       </header>
-      <div className="px-3 pb-3">
-        {tokenByAgent.data.length > 0 ? (
-          <StackedBar data={tokenByAgent.data} height={160} formatValue={v => `${fmtTokens(v)} tokens`} />
+
+      <div className="flex-1 px-4 pb-4 pt-1 flex items-center">
+        {share.total === 0 ? (
+          <div className="w-full h-[160px] flex items-center justify-center">
+            <EmptyState title="No agent token data" description="Per-agent token usage appears once your agents handle traffic." />
+          </div>
         ) : (
-          <div className="h-[160px] flex items-center justify-center">
-            <EmptyState
-              title="No agent token data"
-              description="Per-agent token usage appears once the backend stat is implemented."
-            />
+          <div className="w-full flex items-center gap-9">
+            <Donut segments={segments} size={172} thickness={24}>
+              <span className="text-[26px] font-extrabold tracking-[-0.03em] leading-none text-primary tabular-nums">
+                {fmtTokens(share.total)}
+              </span>
+              <span className="text-[10px] text-muted tracking-[0.16em] uppercase font-mono mt-1">tokens</span>
+            </Donut>
+
+            <ul className="flex-1 min-w-0 flex flex-col gap-2.5">
+              {visible.map(a => (
+                <li key={a.id} className="flex">
+                  <button
+                    data-testid={`token-by-agent-row-${a.id}`}
+                    onClick={() => navigate(`/agents?id=${a.id}`)}
+                    className={ROW_CLS}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: agentColor(a.id) }} />
+                    <span className="text-body text-secondary group-hover:text-primary transition-colors truncate w-[34%] max-w-[220px] shrink-0 text-left">{a.name}</span>
+                    <span className="flex-1 h-2 rounded-full bg-[var(--border-subtle)] overflow-hidden min-w-[40px]">
+                      <span className="block h-full rounded-full" style={{ width: `${a.share * 100}%`, background: agentColor(a.id) }} />
+                    </span>
+                    <span className="mono text-body text-primary tabular-nums shrink-0 w-16 text-right">{fmtTokens(a.tokens)}</span>
+                    <span className="mono text-body text-muted tabular-nums shrink-0 w-10 text-right">{Math.round(a.share * 100)}%</span>
+                  </button>
+                </li>
+              ))}
+              {rest.length > 0 && (
+                <li className="flex">
+                  <button onClick={() => navigate('/agents')} className={`${ROW_CLS} text-muted font-mono`}>
+                    <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[var(--text-muted)]" />
+                    <span className="text-body w-[34%] max-w-[220px] shrink-0 text-left group-hover:text-secondary transition-colors">+{rest.length} more</span>
+                    <span className="flex-1 h-2 rounded-full bg-[var(--border-subtle)] overflow-hidden min-w-[40px]">
+                      <span className="block h-full rounded-full bg-[var(--text-muted)]" style={{ width: `${(restTokens / share.total) * 100}%` }} />
+                    </span>
+                    <span className="text-body tabular-nums shrink-0 w-16 text-right">{fmtTokens(restTokens)}</span>
+                    <span className="text-body tabular-nums shrink-0 w-10 text-right">{Math.round((restTokens / share.total) * 100)}%</span>
+                  </button>
+                </li>
+              )}
+            </ul>
           </div>
         )}
       </div>

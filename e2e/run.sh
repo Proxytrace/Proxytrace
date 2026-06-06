@@ -15,6 +15,17 @@ $COMPOSE up --build -d --wait
 
 echo "==> Running Playwright tests..."
 cd "$SCRIPT_DIR"
+
+# Load e2e/.env (OPENAI_API_KEY, OPENAI_BASE_URL, LLM_MODEL) into the Playwright process so the
+# @llm specs run instead of skipping, and so setup seeds the provider with the real upstream key.
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  echo "==> Loading e2e/.env"
+  set -a
+  # shellcheck disable=SC1091
+  . "$SCRIPT_DIR/.env"
+  set +a
+fi
+
 npm install --silent
 npx playwright install chromium
 

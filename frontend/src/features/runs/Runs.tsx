@@ -40,10 +40,10 @@ export default function Runs() {
   };
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-3.5 px-1 pt-1">
-      <div className="fade-up grid gap-4 items-start grid-cols-[280px_1fr] [animation-delay:40ms]">
-        {/* Left: group list */}
-        <div className="flex flex-col gap-2 min-w-0">
+    <div className="w-full min-w-0 flex flex-col gap-3.5 px-1 pt-1 flex-1 min-h-0">
+      <div className="fade-up grid gap-4 grid-cols-[280px_1fr] [animation-delay:40ms] flex-1 min-h-0">
+        {/* Left: group list — scrolls independently of the detail panel */}
+        <div className="flex flex-col gap-2 min-w-0 min-h-0 overflow-y-auto pr-1 -mr-1">
           <div className="flex">
             <FilterDropdown
               label="Agent"
@@ -74,7 +74,7 @@ export default function Runs() {
         </div>
 
         {/* Right: detail */}
-        <div className="min-w-0">
+        <div className="min-w-0 min-h-0">
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} group={selectedGroup} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
             : <Card><div className="py-[60px] text-center text-muted text-body">Select a run to see details.</div></Card>

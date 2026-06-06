@@ -41,6 +41,15 @@ internal record OptimizationTheoryEntity : Entity
     /// <summary><see cref="IOptimizationTheory.ResultingProposalId"/></summary>
     public Guid? ResultingProposalId { get; init; }
 
+    /// <summary><see cref="IOptimizationTheory.BaselinePassRate"/></summary>
+    public double? BaselinePassRate { get; init; }
+
+    /// <summary><see cref="IOptimizationTheory.ProjectedPassRate"/></summary>
+    public double? ProjectedPassRate { get; init; }
+
+    /// <summary><see cref="IOptimizationTheory.PValue"/></summary>
+    public double? PValue { get; init; }
+
     /// <summary><see cref="IOptimizationTheory.ContentHash"/></summary>
     public required string ContentHash { get; init; }
 }

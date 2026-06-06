@@ -50,6 +50,13 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         if (licenseService.Current.Jti is null)
             return;
 
+        // Server checks disabled (e.g. local dev builds): keep the startup snapshot, no network.
+        if (!configuration.ServerCheckEnabled)
+        {
+            logger.LogInformation("License server checks are disabled; keeping the startup license snapshot.");
+            return;
+        }
+
         var period = TimeSpan.FromHours(Math.Max(1, configuration.CheckIntervalHours));
 
         // Run once at startup, then on the interval.

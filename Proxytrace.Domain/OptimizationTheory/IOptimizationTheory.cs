@@ -46,6 +46,27 @@ public interface IOptimizationTheory : IDomainEntity
     Guid? ResultingProposalId { get; }
 
     /// <summary>
+    /// Pass rate of the baseline (unchanged agent) A/B run, recorded once the theory has been
+    /// validated or invalidated. Null while still Proposed/Validating, or when the run produced
+    /// no results.
+    /// </summary>
+    double? BaselinePassRate { get; }
+
+    /// <summary>
+    /// Pass rate of the candidate (changed agent) A/B run, recorded once the theory has been
+    /// validated or invalidated. Null while still Proposed/Validating, or when the run produced
+    /// no results.
+    /// </summary>
+    double? ProjectedPassRate { get; }
+
+    /// <summary>
+    /// Two-sided p-value of a two-proportion test between the baseline and candidate runs.
+    /// A large value (≈ ≥ 0.05) means the observed pass-rate difference is statistically
+    /// indistinguishable from noise. Null when sample sizes are insufficient to compute it.
+    /// </summary>
+    double? PValue { get; }
+
+    /// <summary>
     /// Deterministic fingerprint of <see cref="Agent"/> + <see cref="Kind"/> + proposed-change payload.
     /// Shares the same computation as <see cref="IOptimizationProposal.ContentHash"/> so theories and
     /// proposals deduplicate against each other.
@@ -58,12 +79,23 @@ public interface IOptimizationTheory : IDomainEntity
     Task<IOptimizationTheory> SetValidating(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Transitions the theory to <see cref="TheoryStatus.Validated"/> and records the spawned proposal.
+    /// Transitions the theory to <see cref="TheoryStatus.Validated"/>, records the spawned proposal,
+    /// and stores the A/B validation metrics that justified it.
     /// </summary>
-    Task<IOptimizationTheory> SetValidated(Guid resultingProposalId, CancellationToken cancellationToken = default);
+    Task<IOptimizationTheory> SetValidated(
+        Guid resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Transitions the theory to <see cref="TheoryStatus.Invalidated"/>.
+    /// Transitions the theory to <see cref="TheoryStatus.Invalidated"/> and stores the A/B
+    /// validation metrics observed, when available.
     /// </summary>
-    Task<IOptimizationTheory> SetInvalidated(CancellationToken cancellationToken = default);
+    Task<IOptimizationTheory> SetInvalidated(
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
+        CancellationToken cancellationToken = default);
 }

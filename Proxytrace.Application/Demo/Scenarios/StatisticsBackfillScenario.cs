@@ -317,6 +317,7 @@ internal sealed class StatisticsBackfillScenario : IDemoScenario
             suite: fresh.Suite,
             status: fresh.Status,
             completedAt: groupTime.AddMinutes(5),
+            isSystemRun: fresh.IsSystemRun,
             existing: new BackdatedData(fresh.Id, groupTime, fresh.UpdatedAt));
         await backdatedGroup.UpdateAsync(cancellationToken);
     }

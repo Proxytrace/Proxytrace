@@ -98,9 +98,10 @@
   --shadow-topbar: 0 1px 0 rgba(255,255,255,0.025), 0 4px 16px -8px rgba(0,0,0,0.4);
 
   /* Button shadows (gradient buttons + danger variant) */
-  --shadow-btn: 0 4px 14px -4px rgba(201,148,74,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-success: 0 4px 14px -4px rgba(61,170,111,0.40), inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-danger: 0 4px 14px -4px rgba(217,85,85,0.40), inset 0 1px 0 rgba(255,255,255,0.10);
+  /* No colored glow halo — just a subtle inset top highlight (bevel) on filled buttons. */
+  --shadow-btn: inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-success: inset 0 1px 0 rgba(255,255,255,0.15);
+  --shadow-btn-danger: inset 0 1px 0 rgba(255,255,255,0.10);
 
   /* Radii (collapsed scale — sm/md/lg/xl) */
   --radius-sm: 6px;
@@ -249,6 +250,26 @@ a { text-decoration: none; color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .pulse-dot { animation: none; }
+}
+
+/* Indeterminate progress sliver — an A/B validation in flight with no countable progress. */
+@keyframes indeterminate-bar {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+.indeterminate-bar { position: relative; }
+.indeterminate-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  animation: indeterminate-bar 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate-bar::after { animation: none; left: 0; width: 100%; opacity: 0.4; }
 }
 
 /* ── Nav ── */
@@ -431,22 +452,6 @@ a { text-decoration: none; color: inherit; }
   max-width: 560px;
   padding: 28px;
 }
-.drawer-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: 640px;
-  max-width: 95vw;
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border-color);
-  box-shadow: var(--shadow-float);
-  z-index: 50;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
 /* ── Trace rows ── */
 .trace-row {
   display: grid;

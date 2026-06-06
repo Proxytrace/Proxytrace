@@ -139,6 +139,14 @@ the session query is additionally disabled when `useKiosk().enabled`.
   auto-approve is OFF it shows an inline Confirm/Cancel card; when ON it resolves `true`
   immediately. A declined write returns the `CANCELLED` sentinel — never call the mutating API
   on cancel.
+- **Wait tools** (`await_actions`) block until one or more long-running actions reach a terminal
+  state, then return a compact aggregate so Tracey reacts in the *same* turn — no card pushes back
+  to the thread. `confirm: false`. The producing write tools (`start_test_run`,
+  `submit_optimization_theory`) return an `awaitable: { kind, id }` handle; Tracey collects the
+  handles and calls `await_actions` once. It polls the relevant API (`tools/await.ts` +
+  `tools/poll-until-terminal.ts`) until terminal or a 10-minute per-handle cap (`timedOut`). It has
+  no inline card — the per-item live cards already visualize progress, so it falls back to
+  `ToolCallCard`.
 - **Render tools** (`show_chart`, `show_table`, `show_text`) just **return the render spec**;
   the matching `tool-ui/` component draws it inline.
 - **Interactive (human-in-the-loop) tools** (`ask_questions`) define **no `execute`**: the AI SDK

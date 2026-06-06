@@ -1,6 +1,5 @@
 using System.Text.Json;
-using Proxytrace.Domain.Exceptions;
-using Proxytrace.Licensing.Exceptions;
+using Proxytrace.Api.Middleware.Exceptions;
 
 namespace Proxytrace.Api.Middleware;
 
@@ -8,15 +7,18 @@ internal sealed class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate next;
     private readonly ILogger<ExceptionHandlingMiddleware> logger;
+    private readonly IEnumerable<IExceptionMapper> mappers;
     private readonly bool isDevelopment;
 
     public ExceptionHandlingMiddleware(
         RequestDelegate next,
         ILogger<ExceptionHandlingMiddleware> logger,
+        IEnumerable<IExceptionMapper> mappers,
         IWebHostEnvironment env)
     {
         this.next = next;
         this.logger = logger;
+        this.mappers = mappers;
         this.isDevelopment = env.IsDevelopment();
     }
 
@@ -37,35 +39,20 @@ internal sealed class ExceptionHandlingMiddleware
 
             context.Response.ContentType = "application/json";
 
-            var statusCode = ex switch
-            {
-                EntityNotFoundException or EntitiesNotFoundException => StatusCodes.Status404NotFound,
-                EntityAlreadyExistsException or OptimisticConcurrencyException => StatusCodes.Status409Conflict,
-                FeatureNotLicensedException or LicenseLimitExceededException => StatusCodes.Status402PaymentRequired,
-                NotImplementedException => StatusCodes.Status501NotImplemented,
-                _ => StatusCodes.Status500InternalServerError,
-            };
-
-            context.Response.StatusCode = statusCode;
+            var mapping = Resolve(ex);
+            context.Response.StatusCode = mapping.StatusCode;
 
             var error = new Dictionary<string, object?>
             {
                 ["message"] = ex.Message,
-                ["type"] = MapType(ex),
+                ["type"] = mapping.TypeName,
                 ["stacktrace"] = isDevelopment ? ex.ToString() : null,
             };
 
-            switch (ex)
+            if (mapping.AdditionalFields is not null)
             {
-                case FeatureNotLicensedException feature:
-                    error["feature"] = feature.Feature.ToString();
-                    error["tier"] = feature.Tier.ToString();
-                    break;
-                case LicenseLimitExceededException limit:
-                    error["limit"] = limit.Limit.ToString();
-                    error["current"] = limit.Current;
-                    error["max"] = limit.Max;
-                    break;
+                foreach (var (key, value) in mapping.AdditionalFields)
+                    error[key] = value;
             }
 
             var response = JsonSerializer.Serialize(
@@ -76,10 +63,18 @@ internal sealed class ExceptionHandlingMiddleware
         }
     }
 
-    private static string MapType(Exception ex) => ex switch
+    private ExceptionMapping Resolve(Exception exception)
     {
-        FeatureNotLicensedException => "FeatureNotLicensed",
-        LicenseLimitExceededException => "LicenseLimitExceeded",
-        _ => ex.GetType().Name,
-    };
+        foreach (var mapper in mappers)
+        {
+            if (mapper.CanMap(exception))
+                return mapper.Map(exception);
+        }
+
+        return new ExceptionMapping
+        {
+            StatusCode = StatusCodes.Status500InternalServerError,
+            TypeName = exception.GetType().Name,
+        };
+    }
 }

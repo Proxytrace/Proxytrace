@@ -17,14 +17,21 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
     /// <summary>When the last child run finished, or null if still running.</summary>
     DateTimeOffset? CompletedAt { get; }
 
+    /// <summary>
+    /// True for ephemeral A/B runs spawned internally to validate optimization theories.
+    /// These are hidden from the user-facing test-run list by default.
+    /// </summary>
+    bool IsSystemRun { get; }
+
     /// <summary>Factory delegate for creating a new test run group.</summary>
-    public delegate ITestRunGroup CreateNew(ITestSuite suite);
+    public delegate ITestRunGroup CreateNew(ITestSuite suite, bool isSystemRun);
 
     /// <summary>Factory delegate for reconstituting an existing test run group from persistence.</summary>
     public delegate ITestRunGroup CreateExisting(
         ITestSuite suite,
         TestRunStatus status,
         DateTimeOffset? completedAt,
+        bool isSystemRun,
         IDomainEntityData existing);
 
     Task<ITestRunGroup> SetRunning(CancellationToken cancellationToken = default);

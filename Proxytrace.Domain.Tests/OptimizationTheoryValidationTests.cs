@@ -46,29 +46,42 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
     }
 
     [TestMethod]
-    public async Task SetValidated_FromValidating_RecordsResultingProposal()
+    public async Task SetValidated_FromValidating_RecordsResultingProposalAndMetrics()
     {
         IServiceProvider services = GetServices();
         var theory = await CreateTheory(services);
         var validating = await theory.SetValidating(CancellationToken);
         var proposalId = Guid.NewGuid();
 
-        var validated = await validating.SetValidated(proposalId, CancellationToken);
+        var validated = await validating.SetValidated(proposalId, 0.5, 0.7, 0.02, CancellationToken);
 
         validated.Status.Should().Be(TheoryStatus.Validated);
         validated.ResultingProposalId.Should().Be(proposalId);
+        validated.BaselinePassRate.Should().Be(0.5);
+        validated.ProjectedPassRate.Should().Be(0.7);
+        validated.PValue.Should().Be(0.02);
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.ResultingProposalId.Should().Be(proposalId);
+        reloaded.BaselinePassRate.Should().Be(0.5);
+        reloaded.ProjectedPassRate.Should().Be(0.7);
+        reloaded.PValue.Should().Be(0.02);
     }
 
     [TestMethod]
-    public async Task SetInvalidated_FromValidating_TransitionsToInvalidated()
+    public async Task SetInvalidated_FromValidating_TransitionsToInvalidatedAndRecordsMetrics()
     {
         IServiceProvider services = GetServices();
         var theory = await CreateTheory(services);
         var validating = await theory.SetValidating(CancellationToken);
 
-        var invalidated = await validating.SetInvalidated(CancellationToken);
+        var invalidated = await validating.SetInvalidated(0.6, 0.6, 0.41, CancellationToken);
 
         invalidated.Status.Should().Be(TheoryStatus.Invalidated);
+        invalidated.BaselinePassRate.Should().Be(0.6);
+        invalidated.ProjectedPassRate.Should().Be(0.6);
+        invalidated.PValue.Should().Be(0.41);
     }
 
     [TestMethod]
@@ -78,7 +91,7 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
         var theory = await CreateTheory(services);
 
         await FluentActions
-            .Invoking(() => theory.SetValidated(Guid.NewGuid(), CancellationToken))
+            .Invoking(() => theory.SetValidated(Guid.NewGuid(), null, null, null, CancellationToken))
             .Should().ThrowAsync<InvalidOperationException>();
     }
 

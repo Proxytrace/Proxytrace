@@ -105,6 +105,15 @@ export default defineConfig({
       dependencies: ['llm-ingestion'],
     },
     {
+      // Tracey drives a real run through her chat and awaits it; self-seeds its agent + suite, so
+      // it depends only on a completed setup.
+      name: 'llm-tracey',
+      testMatch: /tracey-await\.spec\.ts/,
+      retries: LLM_RETRIES,
+      use: { ...CHROME, storageState: STORAGE_STATE },
+      dependencies: ['setup'],
+    },
+    {
       // Playground drives a live agent against an endpoint; needs an ingested agent present.
       name: 'llm-playground',
       testMatch: ['**/playground.spec.ts'],

@@ -2,30 +2,33 @@ import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
 import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
 
-// EventSource can't set Authorization headers, so the token must ride in the query
-// string. Prefer a short-lived, single-use stream ticket over the long-lived session
-// JWT; fall back to the JWT (silently) until the backend implements the ticket endpoint.
-async function resolveStreamToken(jwt: string): Promise<string> {
+// EventSource can't set Authorization headers, so the credential must ride in the query
+// string. Prefer a short-lived, single-use stream ticket (passed as `stream_ticket`, which
+// the backend redeems once) over the long-lived session JWT; fall back to the JWT in
+// `access_token` only when the ticket endpoint is unreachable.
+type StreamCredential = { param: 'stream_ticket' | 'access_token'; value: string };
+
+async function resolveStreamCredential(jwt: string): Promise<StreamCredential> {
   try {
     const res = await fetch('/api/auth/stream-ticket', {
       headers: { Authorization: `Bearer ${jwt}` },
     });
     if (res.ok) {
       const data = (await res.json()) as { token?: string };
-      if (data.token) return data.token;
+      if (data.token) return { param: 'stream_ticket', value: data.token };
     }
   } catch {
     // ignore — fall back to the JWT below
   }
-  return jwt;
+  return { param: 'access_token', value: jwt };
 }
 
 async function withAuth(url: string): Promise<string> {
   const jwt = getAccessToken();
   if (!jwt) return url;
-  const token = await resolveStreamToken(jwt);
+  const { param, value } = await resolveStreamCredential(jwt);
   const sep = url.includes('?') ? '&' : '?';
-  return `${url}${sep}access_token=${encodeURIComponent(token)}`;
+  return `${url}${sep}${param}=${encodeURIComponent(value)}`;
 }
 
 export function useEventStream<T>(

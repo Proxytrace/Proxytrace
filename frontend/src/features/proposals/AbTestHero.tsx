@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import type { AbTestRunSummaryDto } from '../../api/models';
 import { TestRunStatus } from '../../api/models';
 import { fmtDuration } from '../../lib/format';
-import { TONE_COLOR, TONE_SUBTLE, type DisplayTone } from './shared';
+import { TONE_TEXT, TONE_BG, TONE_SUBTLE_BG, type DisplayTone } from './shared';
 
 interface Props {
   ab: AbTestRunSummaryDto | null;
@@ -61,12 +61,10 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
       {/* Header strip */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-hairline">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold"
-          style={{ background: TONE_SUBTLE[meta.tone], color: TONE_COLOR[meta.tone] }}
+          className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-body-sm font-semibold', TONE_SUBTLE_BG[meta.tone], TONE_TEXT[meta.tone])}
         >
           <span
-            className={cn('inline-block size-1.5 rounded-full', meta.pulse && 'pulse-dot')}
-            style={{ background: TONE_COLOR[meta.tone] }}
+            className={cn('inline-block size-1.5 rounded-full', TONE_BG[meta.tone], meta.pulse && 'pulse-dot')}
           />
           A/B test · {meta.label}
         </span>
@@ -85,15 +83,13 @@ export function AbTestHero({ ab, expectedPassRateDelta }: Props) {
           <div className="text-caption text-muted font-semibold uppercase tracking-[0.07em] mb-1">Pass rate</div>
           <div className="flex items-baseline gap-2.5">
             <span
-              className="text-display font-bold tracking-[-0.02em] mono leading-none"
-              style={{ color: TONE_COLOR[passTone] }}
+              className={cn('text-display font-bold tracking-[-0.02em] mono leading-none', TONE_TEXT[passTone])}
             >
               {hasResults ? `${passRate}%` : '—'}
             </span>
             {deltaTone && deltaPts != null && (
               <span
-                className="mono text-body-sm font-semibold"
-                style={{ color: TONE_COLOR[deltaTone] }}
+                className={cn('mono text-body-sm font-semibold', TONE_TEXT[deltaTone])}
               >
                 {deltaPts > 0 ? '+' : '−'}{Math.abs(deltaPts)}pt
               </span>

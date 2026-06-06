@@ -57,8 +57,8 @@ public sealed class ProjectScopedRepositoryTests : BaseTest<Module>
 
         var suiteA = await suiteRepository.AddAsync(suiteFactory("Suite A", agentA, [], [caseA]), CancellationToken);
         var suiteB = await suiteRepository.AddAsync(suiteFactory("Suite B", agentB, [], [caseB]), CancellationToken);
-        var groupA = await groupRepository.AddAsync(groupFactory(suiteA), CancellationToken);
-        var groupB = await groupRepository.AddAsync(groupFactory(suiteB), CancellationToken);
+        var groupA = await groupRepository.AddAsync(groupFactory(suiteA, false), CancellationToken);
+        var groupB = await groupRepository.AddAsync(groupFactory(suiteB, false), CancellationToken);
 
         var resultsA = await groupRepository.GetByProjectAsync(projectA.Id, CancellationToken);
 

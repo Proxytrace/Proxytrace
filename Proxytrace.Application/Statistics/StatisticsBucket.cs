@@ -22,4 +22,16 @@ public static class StatisticsTime
                 timestamp.Year, timestamp.Month, timestamp.Day, 0, 0, 0, timestamp.Offset),
             _ => timestamp,
         };
+
+    /// <summary>
+    /// Picks a bucket granularity that yields several points for the given window, so short
+    /// (sub-day) ranges still render a curve instead of collapsing to a single daily bucket.
+    /// </summary>
+    public static StatisticsBucket ForWindow(DateTimeOffset from, DateTimeOffset to)
+    {
+        TimeSpan span = to - from;
+        if (span <= TimeSpan.FromHours(2)) return StatisticsBucket.FiveMinutes;
+        if (span <= TimeSpan.FromDays(2)) return StatisticsBucket.Hourly;
+        return StatisticsBucket.Daily;
+    }
 }

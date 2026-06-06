@@ -123,7 +123,10 @@ async function idbClear(scope: string, keep?: ReadonlySet<string>): Promise<void
 
 function lsAvailable(): boolean {
   try {
-    return typeof localStorage !== 'undefined' && localStorage !== null;
+    // Guard against environments that expose a partial/broken `localStorage`
+    // (e.g. Node's experimental Web Storage) where the methods are not callable.
+    return typeof localStorage !== 'undefined' && localStorage !== null
+      && typeof localStorage.getItem === 'function';
   } catch {
     return false;
   }

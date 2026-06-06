@@ -13,7 +13,9 @@ internal abstract class AbstractDocumentMapper<TDomainEntity> : IDocumentMapper
     private readonly ILogger logger;
 
     public abstract SearchKind Kind { get; }
-    
+
+    public Type EntityType => typeof(TDomainEntity);
+
     protected AbstractDocumentMapper(
         IRepository<TDomainEntity> repository,
         ILogger logger)

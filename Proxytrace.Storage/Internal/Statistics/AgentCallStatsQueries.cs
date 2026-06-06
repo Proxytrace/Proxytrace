@@ -48,7 +48,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             OverallPassRate: null);
     }
 
-    public async Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
@@ -58,13 +58,13 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .ToListAsync(cancellationToken);
 
         return raw
-            .GroupBy(c => new { Date = DateOnly.FromDateTime(c.CreatedAt.UtcDateTime), c.EndpointId })
+            .GroupBy(c => new { Bucket = bucket.BucketStart(c.CreatedAt), c.EndpointId })
             .Select(g => new TokenUsageStat(
-                Date: g.Key.Date,
+                BucketStart: g.Key.Bucket,
                 EndpointId: g.Key.EndpointId,
                 InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
                 OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
-            .OrderBy(s => s.Date)
+            .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.EndpointId)
             .ToArray();
     }
@@ -206,7 +206,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .ToArray();
     }
 
-    public async Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AgentTokenUsageStat>> GetTokenUsageByAgentAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
@@ -218,13 +218,13 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .ToListAsync(cancellationToken);
 
         return raw
-            .GroupBy(c => new { Date = DateOnly.FromDateTime(c.CreatedAt.UtcDateTime), c.AgentId })
+            .GroupBy(c => new { Bucket = bucket.BucketStart(c.CreatedAt), c.AgentId })
             .Select(g => new AgentTokenUsageStat(
-                Date: g.Key.Date,
+                BucketStart: g.Key.Bucket,
                 AgentId: g.Key.AgentId,
                 InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
                 OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
-            .OrderBy(s => s.Date)
+            .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.AgentId)
             .ToArray();
     }

@@ -5,10 +5,15 @@ import useCurrentProject from '../../../hooks/useCurrentProject';
 import { DEFAULT_PAGE_SIZE } from '../../../lib/constants';
 import type { AgentCallFilter } from '../../../api/models';
 
+/** Default page size; the user can override it via the page-size selector. */
 export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
+
+/** Selectable page sizes for the traces table. */
+export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 
 interface TraceFilter {
   page: number;
+  pageSize: number;
   range: string;
   agentFilter: string;
   debouncedSearch: string;
@@ -21,7 +26,7 @@ interface TraceFilter {
  * filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
  * survives pagination).
  */
-export function useTraceQueries({ page, agentFilter, debouncedSearch, showSystem, from }: TraceFilter) {
+export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, from }: TraceFilter) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -29,7 +34,7 @@ export function useTraceQueries({ page, agentFilter, debouncedSearch, showSystem
   const trimmedSearch = debouncedSearch.trim();
   const filter: AgentCallFilter = {
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     includeSystemAgents: showSystem,
     ...(projectId ? { projectId } : {}),
     ...(agentFilter ? { agentId: agentFilter } : {}),

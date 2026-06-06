@@ -42,11 +42,14 @@ internal record ToolUpdateTheory : OptimizationTheory, IToolUpdateTheory
         IReadOnlyList<ToolSpecification> proposedTools,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         Guid? resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
         string contentHash,
         IDomainEntityData existing,
         IRepository<IOptimizationTheory> repository)
         : base(agent, suite, status, source, priority, rationale, evidenceTestRunIds,
-            resultingProposalId, contentHash, existing, repository)
+            resultingProposalId, baselinePassRate, projectedPassRate, pValue, contentHash, existing, repository)
     {
         ProposedTools = proposedTools.ToArray();
     }

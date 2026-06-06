@@ -23,6 +23,9 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
     public string Rationale { get; private init; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; private init; }
     public Guid? ResultingProposalId { get; private init; }
+    public double? BaselinePassRate { get; private init; }
+    public double? ProjectedPassRate { get; private init; }
+    public double? PValue { get; private init; }
     public string ContentHash { get; private init; }
 
     protected OptimizationTheory(
@@ -55,6 +58,9 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
         string rationale,
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         Guid? resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
         string contentHash,
         IDomainEntityData existing,
         IRepository<IOptimizationTheory> repository) : base(existing, repository)
@@ -67,6 +73,9 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
         Rationale = rationale;
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ResultingProposalId = resultingProposalId;
+        BaselinePassRate = baselinePassRate;
+        ProjectedPassRate = projectedPassRate;
+        PValue = pValue;
         ContentHash = contentHash;
     }
 
@@ -78,22 +87,46 @@ internal abstract record OptimizationTheory : DomainEntity<IOptimizationTheory>,
         return ApplyAsync(this with { Status = TheoryStatus.Validating }, cancellationToken);
     }
 
-    public Task<IOptimizationTheory> SetValidated(Guid resultingProposalId, CancellationToken cancellationToken = default)
+    public Task<IOptimizationTheory> SetValidated(
+        Guid resultingProposalId,
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
+        CancellationToken cancellationToken = default)
     {
         if (Status != TheoryStatus.Validating)
             throw new InvalidOperationException($"Cannot validate theory {Id} from status {Status}.");
 
         return ApplyAsync(
-            this with { Status = TheoryStatus.Validated, ResultingProposalId = resultingProposalId },
+            this with
+            {
+                Status = TheoryStatus.Validated,
+                ResultingProposalId = resultingProposalId,
+                BaselinePassRate = baselinePassRate,
+                ProjectedPassRate = projectedPassRate,
+                PValue = pValue,
+            },
             cancellationToken);
     }
 
-    public Task<IOptimizationTheory> SetInvalidated(CancellationToken cancellationToken = default)
+    public Task<IOptimizationTheory> SetInvalidated(
+        double? baselinePassRate,
+        double? projectedPassRate,
+        double? pValue,
+        CancellationToken cancellationToken = default)
     {
         if (Status != TheoryStatus.Validating)
             throw new InvalidOperationException($"Cannot invalidate theory {Id} from status {Status}.");
 
-        return ApplyAsync(this with { Status = TheoryStatus.Invalidated }, cancellationToken);
+        return ApplyAsync(
+            this with
+            {
+                Status = TheoryStatus.Invalidated,
+                BaselinePassRate = baselinePassRate,
+                ProjectedPassRate = projectedPassRate,
+                PValue = pValue,
+            },
+            cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

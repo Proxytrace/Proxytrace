@@ -248,18 +248,40 @@ test.describe('Test Suites', () => {
     ).toBeFalsy();
   });
 
-  test('shows the empty state when filtering to an agent with no suites', async ({ page, request }) => {
+  test('agent filter lists only agents that own a suite', async ({ page, request }) => {
     const client = await makeClient(request);
 
-    // A brand-new agent with no suites: filtering to it yields the empty state.
-    const agentName = uniqueName('Empty Agent');
-    await client.createAgent({ name: agentName, endpointId });
+    // One agent with a suite, one agent with none.
+    const suiteAgentName = uniqueName('Suite Agent');
+    const { id: suiteAgentId } = await client.createAgent({
+      name: suiteAgentName,
+      endpointId,
+      systemMessage: uniqueName('suite-agent-prompt'),
+    });
+    const evaluator = await client.createEvaluator(projectId);
+    await client.createTestSuite(uniqueName('Filterable Suite'), suiteAgentId, [evaluator.id], [
+      { userContent: 'hi', expectedContent: 'hello' },
+    ]);
+
+    const emptyAgentName = uniqueName('Empty Agent');
+    await client.createAgent({
+      name: emptyAgentName,
+      endpointId,
+      systemMessage: uniqueName('empty-agent-prompt'),
+    });
 
     await page.goto('/suites', { waitUntil: 'load' });
     await expect(page.getByTestId('suite-list')).toBeVisible();
 
-    // The agent filter tab carries the agent's name; clicking it narrows to zero suites.
-    await page.getByRole('button', { name: new RegExp(agentName) }).click();
-    await expect(page.getByTestId('suite-empty-state')).toBeVisible();
+    // Open the agent filter dropdown.
+    await page.getByRole('button', { name: /All agents/ }).click();
+
+    // The suite-owning agent is offered; the suite-less agent is not.
+    await expect(page.getByRole('option', { name: new RegExp(suiteAgentName) })).toBeVisible();
+    await expect(page.getByRole('option', { name: new RegExp(emptyAgentName) })).toHaveCount(0);
+
+    // Selecting the suite-owning agent narrows the list to its suite.
+    await page.getByRole('option', { name: new RegExp(suiteAgentName) }).click();
+    await expect(page.getByTestId('suite-list')).toContainText('Filterable Suite');
   });
 });

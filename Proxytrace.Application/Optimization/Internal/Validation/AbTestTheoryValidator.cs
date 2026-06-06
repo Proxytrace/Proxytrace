@@ -23,7 +23,7 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
 
     public sealed override bool CanValidate(IOptimizationTheory theory) => theory is TTheory;
 
-    public sealed override async Task<IOptimizationProposal?> ValidateAsync(
+    public sealed override async Task<TheoryValidationOutcome> ValidateAsync(
         IOptimizationTheory theory,
         CancellationToken cancellationToken = default)
     {
@@ -41,14 +41,22 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);
 
-        if (baseline.PassRate is not { } basePassRate
-            || candidate.PassRate is not { } candidatePassRate
-            || candidatePassRate <= basePassRate)
+        if (baseline.PassRate is not { } basePassRate || candidate.PassRate is not { } candidatePassRate)
         {
-            return null;
+            return TheoryValidationOutcome.Inconclusive;
         }
 
-        return BuildProposal(typedTheory, basePassRate, candidatePassRate, candidateRun);
+        (int basePasses, int baseTotal) = PassCounts(baselineRun);
+        (int candPasses, int candTotal) = PassCounts(candidateRun);
+        double? pValue = ProportionStats.TwoSidedPValue(basePasses, baseTotal, candPasses, candTotal);
+
+        if (candidatePassRate <= basePassRate)
+        {
+            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue);
+        }
+
+        var proposal = BuildProposal(typedTheory, basePassRate, candidatePassRate, candidateRun);
+        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue);
     }
 
     /// <summary>Builds the ephemeral agent carrying the proposed change.</summary>
