@@ -43,7 +43,7 @@ substitute in the container instead (see *Injecting fakes* below).
 | `Proxytrace.Application.Tests` | Application services end-to-end (e.g. `TestRunnerService`) with faked infrastructure | `BaseTest<Module>` |
 | `Proxytrace.Api.Tests` | HTTP controllers / routing | `BaseTest<Module>` |
 | `Proxytrace.Infrastructure.Tests` | `ModelClient` and external integration wrappers | `BaseTest<Module>` |
-| `Proxytrace.Serialization.Tests`, `Proxytrace.Common.Tests`, `Proxytrace.Proxy.Tests`, `Proxytrace.Messaging.Tests` | Their respective layers | `BaseTest<Module>` |
+| `Proxytrace.Serialization.Tests`, `Proxytrace.Common.Tests`, `Proxytrace.Proxy.Tests`, `Proxytrace.Messaging.Tests`, `Proxytrace.Licensing.Tests` | Their respective layers | `BaseTest<Module>` |
 
 Each test project ships **one `Module : Autofac.Module`** that wires the layer under test
 plus in-memory storage and the standard infrastructure stubs. This per-project module *is*

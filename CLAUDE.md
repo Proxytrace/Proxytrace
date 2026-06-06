@@ -83,10 +83,14 @@ npm test            # Vitest unit tests
 
 ### All-in-one dev mode
 ```bash
-./dev.sh            # Starts backend (5001) + frontend (4201)
+./dev.sh            # Single-process: API (5001) + frontend (4201) — proxy traffic ingested in-process
+SPLIT=1 ./dev.sh    # Production-shaped split: ingestion proxy (5002) + API (5001) + Redis + PostgreSQL + frontend (4201)
 ```
 
-The `./dev.sh` flow does not auto-seed; use the `/setup` page (or `SetupController`) to populate demo data.
+`SPLIT=1` boots the standalone `Proxytrace.Proxy` service so agent traffic flows through the
+separate ingestion proxy and is published to Redis (requires Docker for Redis + PostgreSQL).
+Default (non-split) mode ingests in-process. The `./dev.sh` flow does not auto-seed; use the
+`/setup` page (or `SetupController`) to populate demo data.
 
 ### End-to-end tests (Playwright, inside `e2e/`)
 The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`).
@@ -103,20 +107,28 @@ Strict layered dependency flow — each layer may only depend on layers below it
 Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxytrace.Common
             →  Proxytrace.Infrastructure  →  Proxytrace.Serialization  →  Proxytrace.Common
             →  Proxytrace.Storage  →  Proxytrace.Application / Proxytrace.Domain
+            →  Proxytrace.Messaging      (ingestion transport, consumer side in Application)
+            →  Proxytrace.Licensing      (feature/limit gates, wired in Api + Application)
+
+Proxytrace.Proxy  (separate deployable service — NOT part of the Api composition root)
+            →  Proxytrace.Domain  →  Proxytrace.Storage (read-only)  →  Proxytrace.Messaging (publish side)
 ```
 
-- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, the OpenAI-compatible proxy endpoint, composition root (`Proxytrace.Api.Module`)
-- **Proxytrace.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
+- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, composition root (`Proxytrace.Api.Module`). Serves the React app and the OpenAPI/proxy management surface; in single-process mode it also hosts in-process ingestion.
+- **Proxytrace.Proxy** — Standalone OpenAI-compatible reverse-proxy service (`OpenAiProxyController`, own `Program.cs`/`Module`/`Dockerfile`). Resolves the bearer token via `IApiKeyResolver` (Proxytrace-issued key or upstream provider key → `ResolvedApiKey { Project, Provider }`), forwards to the upstream, and **publishes** each captured call to the ingestion stream. Reads from `Storage` only; no `Application`/`Infrastructure` on the hot path.
+- **Proxytrace.Messaging** — Ingestion transport abstraction. `IIngestionStream` (publish/consume/ack) carries `IngestMessage` (request/response bodies, duration, status, session, agent name) from proxy → app. Two implementations: `InProcessIngestionStream` (channel) and `RedisIngestionStream` (Redis Streams consumer group), selected by `MessagingConfiguration`. No project references (pure abstraction + impls).
+- **Proxytrace.Licensing** — Feature/limit gating. `ILicenseService` exposes the current `LicenseSnapshot`, `IsFeatureEnabled(LicenseFeature)`, and `GetLimit(LicenseLimit)`. JWT activation (`JwtLicenseValidator`), cached offline (`LicenseCacheStore`), refreshed by a background `LicenseCheckService`. Tiers `Free`/`Enterprise` defined in `LicensePolicy`; gated features include `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`. Depends only on `Common`; the API enforces it via a `LicenseEnforcementFilter`.
+- **Proxytrace.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor` consuming `IIngestionStream`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
 - **Proxytrace.Domain** — Business entities, interfaces, value objects, repository contracts. Pure C#, no I/O.
-- **Proxytrace.Infrastructure** — External service integration. `ModelClient` wraps `Microsoft.Extensions.AI` + the OpenAI SDK to invoke LLMs.
+- **Proxytrace.Infrastructure** — External service integration. `ModelClient` wraps `Microsoft.Extensions.AI` + the OpenAI SDK to invoke LLMs (used by the optimizer and system agents — NOT by the proxy).
 - **Proxytrace.Serialization** — JSON serializers and output formats (`ISerializer`, `IOutputFormat`, `ObjectToInferredTypesConverter`).
-- **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations. Provider auto-detected (SQLite / PostgreSQL / SQL Server).
+- **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations. PostgreSQL for persistent runs, in-memory for tests/kiosk (see Database Configuration).
 - **Proxytrace.Common** — Shared utilities: validation helpers, async/type extensions, DI extensions, randomness.
 - **Proxytrace.Testing** — `BaseTest<TModule>` and shared test infrastructure (MSTest + AwesomeAssertions + NSubstitute).
-- **Proxytrace.Client.Sample** — Console app demonstrating client-side usage of the API.
+- **Proxytrace.Client.Sample** / **sample-client/** — Sample apps demonstrating client-side usage of the proxy.
 - **frontend/** — React 19 + Vite + Tailwind CSS 4 SPA.
 
-DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Proxytrace.Domain.Module`, `Proxytrace.Application.Module`, `Proxytrace.Storage.Module`, `Proxytrace.Infrastructure.Module`, `Proxytrace.Serialization.Module`, `Proxytrace.Common.Module`, `Proxytrace.Api.Module`, `Proxytrace.Testing.Module`). `Proxytrace.Domain.Module` and `Proxytrace.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations for the standard entity pattern. The API serves the compiled React app from `wwwroot/` in production.
+DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Proxytrace.Domain.Module`, `Proxytrace.Application.Module`, `Proxytrace.Storage.Module`, `Proxytrace.Infrastructure.Module`, `Proxytrace.Serialization.Module`, `Proxytrace.Common.Module`, `Proxytrace.Messaging.Module`, `Proxytrace.Licensing.Module`, `Proxytrace.Api.Module`, `Proxytrace.Proxy.Module`, `Proxytrace.Testing.Module`). `Proxytrace.Domain.Module` and `Proxytrace.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations for the standard entity pattern. The API serves the compiled React app from `wwwroot/` in production.
 
 `Proxytrace.Application.Module` takes `(bool isDevelopment, IConfiguration? configuration)` and registers hosted services for ingestion + test running plus the optimization sub-module. `Proxytrace.Storage.Module` takes a `StorageConfiguration` (auto-detected by `Proxytrace.Api.Module`).
 
@@ -134,7 +146,7 @@ Every domain concept requires **five files**:
 
 A `I[Entity]Repository.cs` interface (in `Proxytrace.Domain/[Entity]/`) plus `[Entity]Repository.cs` (in `Proxytrace.Storage/Internal/Entities/[Entity]/`) is only needed for N:M relationships or non-trivial queries. Decorate the storage repository with `[UsedImplicitly]` so reflection-based DI picks it up.
 
-`IDomainEntity` already provides `Id`, `CreatedAt`, `UpdatedAt` — do not redeclare them and do not introduce a separate `I[Entity]Data` interface.
+`IDomainEntity` already provides `Id`, `CreatedAt`, `UpdatedAt` — do not redeclare them and do not introduce a separate `I[Entity]Data` interface. Newer entities declare the generic form `IDomainEntity<I[Entity]>` (enables strongly-typed self-referencing helpers like `MarkConsumedAsync`); both forms are valid.
 
 ### Domain entities vs domain objects
 
@@ -254,32 +266,33 @@ Migrations are PostgreSQL-typed (`uuid`/`boolean`/`timestamptz`). The design-tim
 
 The domain (`Proxytrace.Domain/`) currently models:
 
-- **User, Project** — Tenancy. `Project` references one `IModelEndpoint` (`SystemEndpoint`) used by built-in system agents (e.g. agent-name generation, optimizers).
-- **Agent** — An AI agent: `Name`, `SystemPrompt` (`IPromptTemplate`), `Tools` (`IReadOnlyList<ToolSpecification>`), `Endpoint` (`IModelEndpoint`), `Project`, `IsSystemAgent` flag.
+- **User, Project, Invite** — Tenancy & access. `User` has a `UserRole`; `Invite` is a tokenised, expiring email invitation (`MarkConsumedAsync`) for adding members. `Project` references one `IModelEndpoint` (`SystemEndpoint`) used by built-in system agents (e.g. agent-name generation, optimizers).
+- **Agent, AgentVersion** — `Agent`: `Name`, `SystemPrompt` (`IPromptTemplate`), `Tools` (`IReadOnlyList<ToolSpecification>`), `Endpoint` (`IModelEndpoint`), `Project`, `IsSystemAgent` flag. `AgentVersion` snapshots an agent's `SystemPrompt` + `Tools` at a `VersionNumber` (with `GetAgentAsync`/`MoveToAgentAsync`) so optimization proposals can be applied as new versions.
 - **AgentCall** — A captured LLM interaction (one trace entry).
 - **ModelProvider, Model, ModelEndpoint** — `ModelProvider` is the upstream API (OpenAI, Anthropic, …). `ModelEndpoint` pairs a `Model` with a `ModelProvider` and stores per-token costs (`InputTokenCost`, `OutputTokenCost`); has `CalculateCost(TokenUsage)`.
 - **ApiKey** — Proxytrace-issued key for clients hitting the OpenAI proxy. Tied to a `Project` + `ModelProvider`.
 - **TestSuite, TestCase** — Curated benchmark inputs. `TestSuite` has N:M with `IEvaluator` (junction `TestSuiteEvaluatorEntity`).
 - **TestRun, TestRunGroup, TestResult** — Execution records of a suite against an agent.
 - **Evaluator** (base) + concrete subtypes (`IExactMatchEvaluator`, `INumericMatchEvaluator`, `IJsonSchemaMatchEvaluator`, `IToolUsageEvaluator`, `IHelpfulnessEvaluator`, `ISafetyClassifier`, `IPolitenessEvaluator`, `ICustomEvaluator`, plus the LLM-based `IAgenticEvaluator` group). Each `EvaluateAsync(ITestResult)` returns an `IEvaluation` (domain object).
-- **OptimizationProposal** — Suggestion to improve an agent: `Kind`, `Status` (Review/Approved/Rejected), `Priority`, `Rationale`, typed `ProposalDetails` (e.g. `SwitchModelProposal`, `UpdateSystemPromptProposal`), `EvidenceTestRunIds`.
-- **Domain objects (no storage):** `IPromptTemplate`, `IPrompt`, `Message` + role-specific subtypes (`SystemMessage`, `UserMessage`, `AssistantMessage`, `ToolMessage`), `Conversation`, `ToolSpecification`/`ToolArguments`/`ToolRequest`/`ToolResponse`, `TokenUsage`, `ICompletion`, `IEvaluation`.
+- **OptimizationProposal, OptimizationTheory** — `OptimizationProposal`: a concrete suggestion to improve an agent (`Kind`, `Status` Review/Approved/Rejected, `Priority`, `Rationale`, typed `ProposalDetails` e.g. `SwitchModelProposal`/`UpdateSystemPromptProposal`, `EvidenceTestRunIds`). `OptimizationTheory` is an earlier-stage, agent+suite-scoped hypothesis (`TheoryStatus`, `TheorySource`) that the optimizer promotes into proposals.
+- **ProjectSearchSettings** — Per-project full-text search config (`Enabled`, `IndexedKinds` of `SearchKind`, `AutoReindexOnChange`, `SnippetLength`); backs the in-app search subsystem (`Proxytrace.Domain/Search`).
+- **Domain objects (no storage):** `IPromptTemplate`, `IPrompt`, `Message` + role-specific subtypes (`SystemMessage`, `UserMessage`, `AssistantMessage`, `ToolMessage`), `Conversation`, `ToolSpecification`/`ToolArguments`/`ToolRequest`/`ToolResponse`, `TokenUsage`, `Inference`/`ModelParameters`, `ICompletion`, `IEvaluation`.
 
 ## Frontend Architecture
 
 React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code lives in `frontend/`. Layout:
 
-- `src/api/` — typed fetch services (`agents.ts`, `agent-calls.ts`, `providers.ts`, `evaluators.ts`, `proposals.ts`, `setup.ts`, `statistics.ts`, `test-runs.ts`, `test-run-groups.ts`, `test-suites.ts`, `health.ts`), shared `models.ts`, base `client.ts` wrapper, `query-keys.ts` factory, and SSE hooks in `event-stream.ts`
+- `src/api/` — typed fetch services (`agents.ts`, `agent-calls.ts`, `providers.ts`, `evaluators.ts`, `evaluator-testbench.ts`, `proposals.ts`, `theories.ts`, `setup.ts`, `statistics.ts`, `test-runs.ts`, `test-run-groups.ts`, `test-suites.ts`, `test-cases.ts`, `projects.ts`, `users.ts`, `invites.ts`, `license.ts`, `config.ts`, `playground.ts`, `search.ts`, `tracey.ts`, `health.ts`), shared `models.ts`, base `client.ts` wrapper, `query-keys.ts` factory, and SSE hooks in `event-stream.ts`
 - `src/components/layout/` — top-level chrome (`Shell.tsx`, `NavItem.tsx`)
 - `src/components/overlays/` — `Modal.tsx`, `Drawer.tsx`, `ConfirmDialog.tsx`, `StepWizard.tsx`
 - `src/components/ui/` — shared primitives: `KpiCard`, `Pill`, `Pagination`, `FilterTabs`, `EmptyState`, `CodeBlock`, `StatusDot`, `ProgressBar`, `Toast`
-- `src/features/` — one folder per route: `dashboard`, `traces`, `agents`, `suites`, `evaluators`, `runs`, `providers`, `proposals`, `setup`. Each is a lazy-loaded page component via `React.lazy()` in `App.tsx`
+- `src/features/` — one folder per route, each a lazy-loaded page via `React.lazy()` in `App.tsx`: `dashboard`, `traces`, `agents`, `suites`, `evaluators`, `runs`, `providers`, `proposals`, `setup`, plus `auth` (`Login`/`Signup`), `admin` (`Invites`), `settings` (projects/members/search-indexing/danger-zone tabs), `playground` (ad-hoc agent runs), `evaluator-playground` (evaluator test bench), and `tracey` (the in-app **Tracey AI** assistant — read `frontend/src/features/tracey/TRACEY.md` before touching it; she dogfoods the proxy by routing her own LLM calls through it)
 - `src/lib/` — pure utilities: `format.ts` (number/date formatters), `colors.ts` (model/status color maps), `charts.ts` (SVG path math), `constants.ts`
 - `src/hooks/` — custom React hooks
 - Tailwind CSS 4 via `@tailwindcss/vite`; use Tailwind utility classes for all static styles. Inline `style={{}}` is only acceptable for genuinely dynamic values (e.g. runtime-computed colors, percentage widths from data, a numeric `borderRadius` prop). Complex static values — gradients, shadows, CSS-variable references — must use Tailwind's arbitrary-value syntax: `bg-[linear-gradient(...)]`, `shadow-[var(--shadow-card)]`, `shadow-[0_4px_16px_...]`, etc.
 - Tests use Vitest (`*.spec.ts`)
 
-Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
+The Vite dev server (port 4201) proxies `/api` → backend (`http://localhost:5000`, the default `dotnet run` port) and `/docs` → the VitePress manual (`http://localhost:4202`), mirroring production where both are served from one origin. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
 
 ### Commands
 - `npm run build` -– build the frontend, use this to verify there are no typing issues (output in `dist/`)

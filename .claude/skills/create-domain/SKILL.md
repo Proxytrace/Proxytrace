@@ -351,24 +351,25 @@ internal class TestRunGroupRepository
 
 ## Step 8 — EF Core migration
 
-Run from `Proxytrace.Storage/`:
+Migrations are PostgreSQL-only — supply the design-time connection string and `--startup-project`:
 
 ```bash
-dotnet ef migrations add Add[Entity]
+ConnectionStrings__Default="Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace" \
+  dotnet ef migrations add Add[Entity] --project Proxytrace.Storage --startup-project Proxytrace.Api
 ```
 
 EF generates the structural migration automatically. If the migration needs to backfill existing rows (e.g. creating a parent record for each existing child), add raw SQL after the `CreateTable` call:
 
 ```csharp
-// After CreateTable(...)
+// After CreateTable(...) — PostgreSQL identifiers are double-quoted
 migrationBuilder.Sql(@"
-    INSERT INTO [Entity]Entity (Id, Suite, Status, CreatedAt, UpdatedAt)
-    SELECT Id, ""FkColumn"", 0, CreatedAt, UpdatedAt
-    FROM OtherEntity;
+    INSERT INTO ""[Entity]Entity"" (""Id"", ""Suite"", ""Status"", ""CreatedAt"", ""UpdatedAt"")
+    SELECT ""Id"", ""FkColumn"", 0, ""CreatedAt"", ""UpdatedAt""
+    FROM ""OtherEntity"";
 ");
 
 migrationBuilder.Sql(@"
-    UPDATE OtherEntity SET ""FkColumn"" = Id;
+    UPDATE ""OtherEntity"" SET ""FkColumn"" = ""Id"";
 ");
 ```
 

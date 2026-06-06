@@ -95,16 +95,22 @@ instrumentation, regression testing, iterative optimization — to agent develop
 ### Run everything (recommended)
 
 ```bash
-./dev.sh
+./dev.sh            # Single-process: backend :5001 + frontend :4201, in-process ingestion
+SPLIT=1 ./dev.sh    # Production-shaped split: ingestion proxy :5002 + backend :5001 + Redis + PostgreSQL + frontend :4201
 ```
 
-Starts the backend on **:5001** and the frontend on **:4201**, installs frontend deps if needed, and seeds demo data on first run.
+Installs frontend deps if needed. `SPLIT=1` boots the standalone `Proxytrace.Proxy` service so
+agent traffic flows through the separate ingestion proxy and is published to Redis (requires
+Docker for Redis + PostgreSQL); default mode ingests in-process. Neither mode auto-seeds — use
+the `/setup` page to populate demo data.
 
 | | URL |
 |---|---|
 | Frontend | http://localhost:4201 |
 | Backend | http://localhost:5001 |
 | Swagger (Development) | http://localhost:5001/swagger |
+| Docs (manual) | http://localhost:4201/docs/ |
+| Ingestion proxy (`SPLIT=1` only) | http://localhost:5002 |
 
 ### Run services individually
 
@@ -130,13 +136,13 @@ docker compose -f docker-compose.kiosk.yml up --build    # Kiosk mode, API :5200
 | Concept | Description |
 |---|---|
 | **Trace (AgentCall)** | A fully captured agent invocation: messages, tools, model, parameters, provider, response. |
-| **Agent** | A definition extracted from traces: system prompt, tool set, endpoint (model + provider), project. |
+| **Agent / Agent Version** | A definition extracted from traces (system prompt, tool set, endpoint, project); `AgentVersion` snapshots prompt + tools per version so proposals can be applied as new versions. |
 | **Test Suite / Test Case** | A curated, reproducible benchmark and its individual input/expected-output cases. |
 | **Test Run** | Execution of a suite against an agent, producing per-case evaluations and aggregate metrics. |
 | **Evaluator** | A configurable scoring function (exact match, numeric, JSON schema, tool usage, helpfulness, safety, and LLM-based agentic evaluators). |
-| **Optimization Proposal** | A data-driven recommendation (e.g. switch model, update system prompt) grounded in test-run evidence. |
+| **Optimization Theory / Proposal** | A `Theory` is an early-stage agent+suite-scoped hypothesis the optimizer promotes into a concrete, evidence-backed `Proposal` (e.g. switch model, update system prompt). |
 | **Model Endpoint** | A model paired with a provider, with per-token cost tracking. |
-| **Project / User** | Tenancy constructs grouping agents, suites, runs, and keys. |
+| **Project / User / Invite** | Tenancy and access: projects group agents/suites/runs/keys; users have roles; `Invite` is a tokenised, expiring email invitation. |
 
 ---
 
@@ -148,7 +154,8 @@ docker compose -f docker-compose.kiosk.yml up --build    # Kiosk mode, API :5200
 | **Database** | PostgreSQL via Entity Framework Core (in-memory for unit tests and kiosk mode) |
 | **Frontend** | React 19 + Vite + TypeScript, TanStack Query v5, React Router 7, Tailwind CSS 4 |
 | **Real-time** | Server-Sent Events (SSE) for live traces, test results, and proposals |
-| **Deployment** | Docker Compose (self-hosted) |
+| **Ingestion** | In-process channel, or a standalone proxy publishing to Redis Streams (split deployment) |
+| **Deployment** | Docker Compose (self-hosted) — API, frontend, PostgreSQL, and (split mode) the proxy + Redis |
 
 ---
 
@@ -160,12 +167,20 @@ Strict layered dependency flow — each layer depends only on layers below it:
 Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxytrace.Common
             →  Proxytrace.Infrastructure  →  Proxytrace.Serialization
             →  Proxytrace.Storage
+            →  Proxytrace.Messaging      (ingestion transport)
+            →  Proxytrace.Licensing      (feature/limit gates)
+
+Proxytrace.Proxy  (separate deployable service)
+            →  Proxytrace.Domain  →  Proxytrace.Storage (read-only)  →  Proxytrace.Messaging (publish side)
 ```
 
-- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, the OpenAI-compatible proxy endpoint, composition root.
-- **Proxytrace.Application** — Use-case orchestration: ingestion, test running, optimization, SSE broadcasters, demo seeding.
+- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, composition root; serves the React app and (single-process mode) hosts in-process ingestion.
+- **Proxytrace.Proxy** — Standalone OpenAI-compatible reverse-proxy service. Forwards agent traffic to the upstream and publishes each captured call to the ingestion stream. Reads from `Storage` only.
+- **Proxytrace.Application** — Use-case orchestration: ingestion (consuming the ingestion stream), test running, optimization, SSE broadcasters, demo seeding.
 - **Proxytrace.Domain** — Business entities, interfaces, value objects, repository contracts. Pure C#, no I/O.
-- **Proxytrace.Infrastructure** — External service integration; `ModelClient` invokes LLMs via `Microsoft.Extensions.AI` + the OpenAI SDK.
+- **Proxytrace.Infrastructure** — External service integration; `ModelClient` invokes LLMs via `Microsoft.Extensions.AI` + the OpenAI SDK (optimizer + system agents — not the proxy hot path).
+- **Proxytrace.Messaging** — Ingestion transport (`IIngestionStream`) carrying captured calls from proxy → app; in-process (channel) or Redis Streams implementations.
+- **Proxytrace.Licensing** — Feature/limit gating (`ILicenseService`, JWT activation, `Free`/`Enterprise` tiers).
 - **Proxytrace.Serialization** — JSON serializers and output formats.
 - **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations.
 - **Proxytrace.Common** — Shared utilities.
