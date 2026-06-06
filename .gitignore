@@ -35,3 +35,6 @@ e2e/.auth/licensing-state.json
 e2e/playwright-report/
 e2e/test-results/
 e2e/.env
+
+# Brainstorming visual companion
+.superpowers/
