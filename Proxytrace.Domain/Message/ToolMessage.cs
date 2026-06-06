@@ -101,6 +101,12 @@ public sealed record ToolMessage : Message
         yield return Validation.NotNullOrWhiteSpace(Contents[0].Text);
     }
     
-    public override string ToString() 
-        => base.ToString();
+    public override string ToString()
+    {
+        var id = Contents.Count > 0 ? Contents[0].Text : null;
+        var payload = GetText();
+        return string.IsNullOrWhiteSpace(id)
+            ? $"{Role}: {payload}"
+            : $"{Role} (id: {id}): {payload}";
+    }
 }
