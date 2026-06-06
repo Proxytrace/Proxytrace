@@ -37,7 +37,7 @@ public sealed class TestSuiteDtoMapper
             s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
             s.TestCases.Select(tc => new TestCaseDto(
                 tc.Id,
-                tc.Input.Messages.Select(m => new TestSuiteMessageDto(m.Role.ToString().ToLower(), m.GetText())).ToArray(),
+                tc.Input.Messages.Select(ToInputMessageDto).ToArray(),
                 ToExpectedOutputDto(tc.ExpectedOutput)
             )).ToArray(),
             Description: null,
@@ -78,6 +78,29 @@ public sealed class TestSuiteDtoMapper
             .Select(tr => new ToolRequest(Guid.NewGuid().ToString(), tr.Name, tr.Arguments))
             .ToArray();
         return new AssistantMessage(contents, toolRequests);
+    }
+
+    /// <summary>
+    /// Maps an input conversation message into its DTO, preserving tool requests (assistant
+    /// turns) and tool-call ids (tool result turns) so the UI can pair a tool call with its
+    /// response instead of rendering an orphaned result.
+    /// </summary>
+    private static TestSuiteMessageDto ToInputMessageDto(Message m)
+    {
+        switch (m)
+        {
+            case AssistantMessage assistant:
+                IReadOnlyList<ToolRequestInputDto>? requests = assistant.ToolRequests.Count > 0
+                    ? assistant.ToolRequests.Select(tr => new ToolRequestInputDto(tr.Name, tr.Arguments, tr.Id)).ToArray()
+                    : null;
+                return new TestSuiteMessageDto("assistant", assistant.GetText(), requests);
+            case ToolMessage tool:
+                var (id, contents) = tool.Deconstruct();
+                var content = string.Concat(contents.Select(c => c.Text ?? ""));
+                return new TestSuiteMessageDto("tool", content, null, id);
+            default:
+                return new TestSuiteMessageDto(m.Role.ToString().ToLower(), m.GetText());
+        }
     }
 
     /// <summary>

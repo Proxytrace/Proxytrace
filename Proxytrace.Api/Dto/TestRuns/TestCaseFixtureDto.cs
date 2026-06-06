@@ -11,7 +11,13 @@ public record TestCaseFixtureDto(
 
 public record TestCaseInputDto(TestCaseMessageDto[] Messages);
 
-public record TestCaseMessageDto(string Role, string Content, string? Name);
+public record TestCaseMessageDto(
+    string Role,
+    string Content,
+    ToolRequestFixtureDto[] ToolRequests,
+    string? ToolCallId);
+
+public record ToolRequestFixtureDto(string Id, string Name, string Arguments);
 
 public record OutputValueDto(
     string Kind,

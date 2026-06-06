@@ -27,7 +27,17 @@ function isUpgradeErrorType(type: string | undefined): type is UpgradeErrorType 
   return type === 'FeatureNotLicensed' || type === 'LicenseLimitExceeded';
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+/** Per-request behaviour overrides. */
+export interface RequestOptions {
+  /**
+   * HTTP error statuses the caller treats as an expected outcome rather than a failure.
+   * The request still rejects (so callers/queries see the error), but no red error toast
+   * fires — used e.g. for a 404 when a run has no result for a given test case.
+   */
+  silentStatuses?: number[];
+}
+
+async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -69,6 +79,12 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     error.stacktrace = stacktrace;
     error.type = type;
 
+    // Expected statuses (e.g. a 404 for a missing fixture) still reject so callers can
+    // branch, but must not raise the red error toast.
+    if (opts?.silentStatuses?.includes(res.status)) {
+      throw error;
+    }
+
     const errMessage = message;
     const errStacktrace = stacktrace;
     const errType = type;
@@ -106,7 +122,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(url: string) => request<T>(url),
+  get: <T>(url: string, opts?: RequestOptions) => request<T>(url, undefined, opts),
   post: <T>(url: string, body?: unknown) =>
     request<T>(url, { method: 'POST', body: body != null ? JSON.stringify(body) : undefined }),
   put: <T>(url: string, body?: unknown) =>

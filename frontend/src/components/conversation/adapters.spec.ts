@@ -53,6 +53,22 @@ describe('fromTestCase', () => {
     expect(out).toHaveLength(2);
     expect(out[1]).toMatchObject({ role: 'assistant', content: 'a', label: 'Expected' });
   });
+
+  it('pairs assistant tool calls with their tool results in the input', () => {
+    const tc = {
+      input: [
+        { role: 'user', content: 'forecast it' },
+        { role: 'assistant', content: '', toolRequests: [{ id: 'c1', name: 'arima', arguments: '{"d":90}' }] },
+        { role: 'tool', content: '{"ok":true}', toolCallId: 'c1' },
+      ],
+      expectedOutput: { role: 'assistant', content: 'done' },
+    } as unknown as TestCaseDto;
+
+    const out = fromTestCase(tc);
+
+    expect(out[1].toolCalls).toEqual([{ id: 'c1', name: 'arima', arguments: '{"d":90}' }]);
+    expect(out[2]).toMatchObject({ role: 'tool', toolCallId: 'c1' });
+  });
 });
 
 describe('fromFixtureInput', () => {
@@ -60,9 +76,26 @@ describe('fromFixtureInput', () => {
     const messages = [{ role: 'user', content: 'q' }, { role: 'tool', content: 'r' }];
 
     expect(fromFixtureInput(messages)).toEqual([
-      { role: 'user', content: 'q' },
-      { role: 'tool', content: 'r' },
+      { role: 'user', content: 'q', toolCalls: undefined, toolCallId: undefined },
+      { role: 'tool', content: 'r', toolCalls: undefined, toolCallId: undefined },
     ]);
+  });
+
+  it('carries assistant tool requests and the tool result id so they pair up', () => {
+    const messages = [
+      { role: 'user', content: 'forecast it' },
+      {
+        role: 'assistant',
+        content: '',
+        toolRequests: [{ id: 'call_1', name: 'arima', arguments: '{"days":90}' }],
+      },
+      { role: 'tool', content: '{"ok":true}', toolCallId: 'call_1' },
+    ];
+
+    const out = fromFixtureInput(messages);
+
+    expect(out[1].toolCalls).toEqual([{ id: 'call_1', name: 'arima', arguments: '{"days":90}' }]);
+    expect(out[2]).toMatchObject({ role: 'tool', toolCallId: 'call_1' });
   });
 });
 

@@ -8,5 +8,6 @@ export const testRunsApi = {
   cancel: (id: string) => api.post<void>(`/api/test-runs/${id}/cancel`),
   delete: (id: string) => api.del(`/api/test-runs/${id}`),
   getFixture: (runId: string, caseId: string) =>
-    api.get<TestCaseFixtureDto>(`/api/test-runs/${runId}/cases/${caseId}/fixture`),
+    // A run may have no result for the case (added after the run ran) → 404 is expected, not an error.
+    api.get<TestCaseFixtureDto>(`/api/test-runs/${runId}/cases/${caseId}/fixture`, { silentStatuses: [404] }),
 };

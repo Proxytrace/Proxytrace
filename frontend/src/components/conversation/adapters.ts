@@ -32,13 +32,20 @@ export function fromAgentCall(call: AgentCallDto): ConversationMessage[] {
 /** A curated test case: its input turns plus the expected output (labelled "Expected"). */
 export function fromTestCase(tc: TestCaseDto): ConversationMessage[] {
   return [
-    ...tc.input.map(m => ({ role: toRole(m.role), content: m.content })),
+    ...tc.input.map(m => ({
+      role: toRole(m.role),
+      content: m.content ?? '',
+      toolCalls: m.toolRequests?.length
+        ? m.toolRequests.map((t, i) => ({ id: t.id ?? String(i), name: t.name, arguments: t.arguments }))
+        : undefined,
+      toolCallId: m.toolCallId ?? undefined,
+    })),
     {
       role: toRole(tc.expectedOutput.role),
       content: tc.expectedOutput.content,
       label: 'Expected',
       toolCalls: tc.expectedOutput.toolRequests?.length
-        ? tc.expectedOutput.toolRequests.map((t, i) => ({ id: String(i), name: t.name, arguments: t.arguments }))
+        ? tc.expectedOutput.toolRequests.map((t, i) => ({ id: t.id ?? String(i), name: t.name, arguments: t.arguments }))
         : undefined,
     },
   ];
@@ -46,7 +53,14 @@ export function fromTestCase(tc: TestCaseDto): ConversationMessage[] {
 
 /** The input conversation of a run fixture (expected/actual outputs are compared separately). */
 export function fromFixtureInput(messages: TestCaseMessageFixtureDto[]): ConversationMessage[] {
-  return messages.map(m => ({ role: toRole(m.role), content: m.content }));
+  return messages.map(m => ({
+    role: toRole(m.role),
+    content: m.content ?? '',
+    toolCalls: m.toolRequests?.length
+      ? m.toolRequests.map(tr => ({ id: tr.id, name: tr.name, arguments: tr.arguments }))
+      : undefined,
+    toolCallId: m.toolCallId ?? undefined,
+  }));
 }
 
 /**

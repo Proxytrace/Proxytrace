@@ -256,11 +256,12 @@ export interface AgentOverviewDto {
 }
 
 /* ── Test Suites ── */
-export interface ToolRequestInputDto { name: string; arguments: string; }
+export interface ToolRequestInputDto { name: string; arguments: string; id?: string | null; }
 export interface TestSuiteMessageDto {
   role: string;
   content: string;
   toolRequests?: ToolRequestInputDto[] | null;
+  toolCallId?: string | null;
 }
 export interface TestCaseDto {
   id: string;
@@ -496,7 +497,8 @@ export interface CreateApiKeyRequest { name: string; projectId: string; }
 export interface TestCaseMessageFixtureDto {
   role: string;
   content: string;
-  name?: string | null;
+  toolRequests?: ToolRequestDto[] | null;
+  toolCallId?: string | null;
 }
 export interface ToolCallInfoDto { name: string; arguments: unknown; }
 export interface OutputValueDto {

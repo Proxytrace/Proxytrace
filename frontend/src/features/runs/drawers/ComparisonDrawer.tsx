@@ -75,6 +75,10 @@ function ComparisonColumn({ run, fixture, isLoading, focused }: {
           <EvaluatorList evaluators={fixture.evaluators} />
         </>
       )}
+
+      {!isLoading && !fixture && (
+        <span className="text-body-sm text-muted italic">This case was not run for this model.</span>
+      )}
     </div>
   );
 }
