@@ -13,6 +13,7 @@ using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Local;
 using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Demo;
+using Proxytrace.Application.ErrorLog;
 using Proxytrace.Application.Search;
 using Proxytrace.Api.Dto.AgentCalls;
 using Proxytrace.Api.Dto.Agents;
@@ -80,6 +81,12 @@ internal sealed class Module : Autofac.Module
             .Get<AgentCallCleanupConfiguration>() ?? new AgentCallCleanupConfiguration();
         builder
             .RegisterInstance(agentCallCleanupConfiguration)
+            .SingleInstance();
+
+        var errorLogCleanupConfiguration = configuration.GetSection("ErrorLogCleanup")
+            .Get<ErrorLogCleanupConfiguration>() ?? new ErrorLogCleanupConfiguration();
+        builder
+            .RegisterInstance(errorLogCleanupConfiguration)
             .SingleInstance();
 
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")

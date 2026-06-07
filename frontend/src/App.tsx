@@ -38,6 +38,7 @@ const EvaluatorPlayground = lazy(() => import('./features/evaluator-playground/E
 const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
 const Invites = lazy(() => import('./features/admin/Invites'));
+const ErrorLog = lazy(() => import('./features/error-log/ErrorLog'));
 
 // A 402 license rejection is surfaced as an upgrade dialog rather than the
 // generic error toast / page crash. Routing it from both caches catches every
@@ -175,6 +176,7 @@ function AppRoutes() {
           element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
         />
         {isAdmin && <Route path="admin/invites" element={wrap(<Invites />)} />}
+        {isAdmin && <Route path="error-log" element={wrap(<ErrorLog />)} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

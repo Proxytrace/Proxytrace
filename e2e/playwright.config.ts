@@ -49,6 +49,7 @@ export default defineConfig({
         '**/settings.spec.ts',
         '**/admin.spec.ts',
         '**/error-handling.spec.ts',
+        '**/error-log.spec.ts',
         '**/proposals.spec.ts',
         '**/proposals-kinds.spec.ts',
         '**/theories.spec.ts',

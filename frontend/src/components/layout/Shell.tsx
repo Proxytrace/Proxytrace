@@ -24,19 +24,21 @@ import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon,
+  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon,
   LayoutSidebarIcon, ExternalLinkIcon,
 } from '../icons';
 
 type NavIconName =
   | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
-  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey';
+  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey' | 'alert';
 
 interface NavEntry {
   label: string;
   icon: NavIconName;
   to: string;
   requiresFeature?: LicenseFeature;
+  /** Only rendered for admin users (backend still enforces authorization). */
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -80,6 +82,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Providers', icon: 'server', to: '/providers' },
       { label: 'Settings', icon: 'settings', to: '/settings' },
+      { label: 'Error Log', icon: 'alert', to: '/error-log', adminOnly: true },
     ],
   },
 ];
@@ -99,6 +102,7 @@ const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
   server: <ServerIcon size={16} />,
   settings: <SettingsIcon size={16} />,
   tracey: <MessageSparkleIcon size={16} />,
+  alert: <AlertTriangleIcon size={16} />,
 };
 
 type HealthStatus = 'online' | 'offline' | 'connecting';
@@ -144,6 +148,9 @@ export function Shell() {
     .sort((a, b) => b.to.length - a.to.length)
     .find(n => location.pathname === n.to || location.pathname.startsWith(n.to + '/'))?.label ?? 'Dashboard';
   const currentUser = useCurrentUser();
+  // Role is only populated in local-auth mode; OIDC users won't see admin-only nav (the backend
+  // still enforces authorization regardless).
+  const isAdmin = currentUser?.role === 'Admin';
   const userName = currentUser?.email ?? 'User';
   const userInitials = userName
     .split(/[@.\s_-]+/)
@@ -190,6 +197,8 @@ export function Shell() {
               {group.items
                 // Hide Tracey's nav entry when the kiosk is read-only (no LLM endpoint configured).
                 .filter(item => !(item.to === '/tracey-ai' && !interactive))
+                // Admin-only entries (e.g. Error Log) are hidden for non-admins.
+                .filter(item => !item.adminOnly || isAdmin)
                 .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
