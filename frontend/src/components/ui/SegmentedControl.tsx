@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { FOCUS_RING } from '../../../lib/constants';
+import { FOCUS_RING } from '../../lib/constants';
 
 export interface Segment<T extends string> {
   value: T;
@@ -14,16 +14,16 @@ interface Props<T extends string> {
   value: T;
   onChange: (value: T) => void;
   segments: Segment<T>[];
+  className?: string;
 }
 
 /**
- * Pill-style segmented control used across the runs UI (filter tabs, view toggles,
- * compare/by-model switch). Supports text segments with optional counts and
- * icon-only segments.
+ * Pill-style segmented control for view toggles and compact filter switches.
+ * Supports text segments with optional counts and icon-only segments.
  */
-export function SegmentedToggle<T extends string>({ value, onChange, segments }: Props<T>) {
+export function SegmentedControl<T extends string>({ value, onChange, segments, className }: Props<T>) {
   return (
-    <div className="flex gap-0.5 p-0.5 bg-card-2 rounded-lg">
+    <div className={`flex gap-0.5 p-0.5 bg-card-2 rounded-lg ${className ?? ''}`}>
       {segments.map(seg => {
         const active = seg.value === value;
         const iconOnly = seg.label === undefined;
@@ -33,6 +33,7 @@ export function SegmentedToggle<T extends string>({ value, onChange, segments }:
         return (
           <button
             key={seg.value}
+            type="button"
             onClick={() => onChange(seg.value)}
             aria-pressed={active}
             aria-label={seg.ariaLabel}

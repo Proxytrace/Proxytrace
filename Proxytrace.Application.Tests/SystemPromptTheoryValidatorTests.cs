@@ -104,7 +104,8 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
         var runner = Substitute.For<ITestRunnerService>();
         runner.RunInForegroundAsync(
                 Arg.Any<ITestSuite>(), Arg.Any<IReadOnlyList<IModelEndpoint>>(),
-                Arg.Any<IAgent?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+                Arg.Any<IAgent?>(), Arg.Any<bool>(),
+                Arg.Any<Func<ITestRunGroup, CancellationToken, Task>?>(), Arg.Any<CancellationToken>())
             .Returns(baselineGroup, candidateGroup);
 
         var captured = new Captured();
@@ -187,7 +188,8 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
             var candidateGroup = GroupReturning(candidate);
             Runner.RunInForegroundAsync(
                     Arg.Any<ITestSuite>(), Arg.Any<IReadOnlyList<IModelEndpoint>>(),
-                    Arg.Any<IAgent?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+                    Arg.Any<IAgent?>(), Arg.Any<bool>(),
+                    Arg.Any<Func<ITestRunGroup, CancellationToken, Task>?>(), Arg.Any<CancellationToken>())
                 .Returns(baselineGroup, candidateGroup);
         }
     }

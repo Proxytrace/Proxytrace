@@ -11,6 +11,7 @@ using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.OptimizationProposal;
+using Proxytrace.Storage.Internal.Entities.TestRun;
 using Proxytrace.Storage.Internal.Entities.TestSuite;
 
 namespace Proxytrace.Storage.Internal.Entities.OptimizationTheory;
@@ -65,6 +66,12 @@ internal class OptimizationTheoryConfig :
             .HasForeignKey(e => e.ResultingProposalId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder
+            .HasOne<TestRunEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.ABTestRunId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Property(e => e.ContentHash).HasMaxLength(64);
 
         builder.HasIndex(e => e.Agent);
@@ -112,6 +119,7 @@ internal class OptimizationTheoryConfig :
             baselinePassRate: stored.BaselinePassRate,
             projectedPassRate: stored.ProjectedPassRate,
             pValue: stored.PValue,
+            abTestRunId: stored.ABTestRunId,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -137,6 +145,7 @@ internal class OptimizationTheoryConfig :
             baselinePassRate: stored.BaselinePassRate,
             projectedPassRate: stored.ProjectedPassRate,
             pValue: stored.PValue,
+            abTestRunId: stored.ABTestRunId,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -162,6 +171,7 @@ internal class OptimizationTheoryConfig :
             baselinePassRate: stored.BaselinePassRate,
             projectedPassRate: stored.ProjectedPassRate,
             pValue: stored.PValue,
+            abTestRunId: stored.ABTestRunId,
             contentHash: stored.ContentHash,
             existing: stored);
     }
@@ -195,6 +205,7 @@ internal class OptimizationTheoryConfig :
             BaselinePassRate = domain.BaselinePassRate,
             ProjectedPassRate = domain.ProjectedPassRate,
             PValue = domain.PValue,
+            ABTestRunId = domain.ABTestRunId,
             ContentHash = domain.ContentHash,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

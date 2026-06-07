@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon } from '../../../components/icons';
+import { IconButton } from '../../../components/ui/Button';
 import { showToast } from '../../../components/ui/Toast';
 
 /** Copies the assistant response text to the clipboard, briefly confirming with a check icon. */
@@ -24,15 +25,14 @@ export function CopyMessageButton({ text }: { text: string }) {
   };
 
   return (
-    <button
-      type="button"
+    <IconButton
+      size="sm"
       onClick={onCopy}
       aria-label={copied ? 'Copied' : 'Copy response'}
       title={copied ? 'Copied' : 'Copy response'}
       data-testid="tracey-copy-btn"
-      className="inline-flex size-6 items-center justify-center rounded-md text-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)] cursor-pointer"
     >
       {copied ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
-    </button>
+    </IconButton>
   );
 }

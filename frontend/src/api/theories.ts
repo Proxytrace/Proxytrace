@@ -6,4 +6,5 @@ export const theoriesApi = {
     api.get<TheoryDto[]>(`/api/theories${qs(params ?? {})}`),
   get: (id: string) => api.get<TheoryDto>(`/api/theories/${id}`),
   submit: (request: SubmitTheoryRequest) => api.post<TheoryDto>('/api/theories', request),
+  reset: (id: string) => api.post<TheoryDto>(`/api/theories/${id}/reset`, {}),
 };

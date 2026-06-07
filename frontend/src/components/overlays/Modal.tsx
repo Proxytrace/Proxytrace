@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Button, IconButton } from '../ui/Button';
 import { XIcon } from '../icons';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl';
@@ -35,7 +36,7 @@ export function Modal({ title, onClose, children, footer, maxWidth, size }: Moda
         {title && (
           <div className="flex items-center justify-between mb-5">
             <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
-            <button onClick={onClose} className="btn-icon"><XIcon size={14} /></button>
+            <IconButton onClick={onClose} aria-label="Close"><XIcon size={14} /></IconButton>
           </div>
         )}
         {children}
@@ -62,16 +63,16 @@ interface ModalFooterProps {
 export function ModalFooter({ onCancel, onSubmit, submitLabel, loading, disabled, danger }: ModalFooterProps) {
   return (
     <>
-      <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-      <button
-        data-write
+      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      <Button
+        variant={danger ? 'danger' : 'primary'}
         data-testid="modal-submit"
-        className={danger ? 'btn-danger' : 'btn-primary'}
         onClick={onSubmit}
-        disabled={loading || disabled}
+        loading={loading}
+        disabled={disabled}
       >
         {submitLabel}
-      </button>
+      </Button>
     </>
   );
 }

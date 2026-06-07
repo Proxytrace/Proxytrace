@@ -14,7 +14,8 @@ import {
 import { ToolMessageBubble } from '../../../components/ui/ToolMessageBubble';
 import { CopyButton } from '../../../components/ui/CopyButton';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
-import { Button } from '../../../components/ui/Button';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Tabs } from '../../../components/ui/Tabs';
 import { DetailPanel } from '../../../components/overlays/DetailPanel';
 import { PromoteModal } from '../PromoteModal';
 import { DrawerStat } from './DrawerStat';
@@ -117,15 +118,16 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             </div>
             <div className="mt-[6px] flex items-center gap-2 flex-wrap">
               {trace.agentName && trace.agentId && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   data-testid="trace-detail-agent-name"
                   onClick={() => { onClose(); navigate(`/agents?id=${trace.agentId}`); }}
                   title="Open agent"
-                  className="cursor-pointer bg-transparent border-0 p-0 inline-flex rounded-full transition-opacity duration-150 hover:opacity-80"
+                  className="p-0.5 rounded-full"
                 >
                   <ColoredBadge color={aColor} label={trace.agentName} dot size="md" />
-                </button>
+                </Button>
               )}
               <ColoredBadge color={mColor} label={trace.model} dot size="md" />
               <span className="text-body-sm text-muted">
@@ -134,14 +136,14 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             </div>
           </div>
           {onPrev && (
-            <button onClick={onPrev} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0 rotate-180">
+            <IconButton size="sm" onClick={onPrev} aria-label="Previous trace" className="shrink-0 rotate-180">
               <ChevronRightIcon size={14} strokeWidth={2.5} />
-            </button>
+            </IconButton>
           )}
           {onNext && (
-            <button onClick={onNext} className="w-7 h-7 rounded-[7px] flex items-center justify-center text-muted bg-card-2 shrink-0">
+            <IconButton size="sm" onClick={onNext} aria-label="Next trace" className="shrink-0">
               <ChevronRightIcon size={14} strokeWidth={2.5} />
-            </button>
+            </IconButton>
           )}
           <div className="flex items-center gap-2 shrink-0">
             <Button
@@ -156,14 +158,14 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
               Promote to test case
             </Button>
             {trace.agentId && hasResponse && !suitesQuery.isLoading && suites.length === 0 && (
-              <button
-                type="button"
+              <Button
+                variant="link"
+                className="text-body-sm"
                 onClick={() => { onClose(); navigate('/suites'); }}
                 title="Create a test suite for this agent"
-                className="inline-flex items-center gap-[3px] text-body-sm text-accent cursor-pointer bg-transparent border-0 p-0 hover:underline"
               >
                 Create suite →
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -181,22 +183,29 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
             color="var(--warn)"
             sub={trace.costEur == null
-              ? <button type="button" onClick={() => { onClose(); navigate('/providers'); }} className="inline-flex items-center gap-[3px] text-caption text-accent cursor-pointer bg-transparent border-0 p-0 hover:underline" title="Configure pricing for this model endpoint">Set price →</button>
+              ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/providers'); }} title="Configure pricing for this model endpoint">Set price →</Button>
               : undefined}
           />
         </div>
 
         {/* Tabs */}
-        <div className="px-5 pt-[14px] flex gap-1 border-b border-hairline shrink-0">
-          {TABS.map(([t, count]) => (
-            <button key={t} data-testid={`trace-tab-${t.toLowerCase().replace(/\s+/g, '-')}`} onClick={() => setTab(t)} className={`px-[14px] pt-[9px] pb-[11px] text-body font-medium bg-transparent -mb-px inline-flex items-center gap-1.5 transition-colors duration-[120ms] border-b-2 ${tab === t ? 'text-primary border-b-accent' : 'text-muted border-b-transparent'}`}>
-              {t}
-              {count !== null && (
-                <span className={cn('px-1.5 py-px rounded-full text-caption font-mono font-semibold', tab === t ? 'bg-accent-subtle text-accent-hover' : 'bg-card-2 text-muted')}>{count}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          className="px-5 pt-[14px] shrink-0"
+          value={tab}
+          onChange={t => setTab(t as Tab)}
+          items={TABS.map(([t, count]) => ({
+            value: t,
+            'data-testid': `trace-tab-${t.toLowerCase().replace(/\s+/g, '-')}`,
+            label: (
+              <span className="inline-flex items-center gap-1.5">
+                {t}
+                {count !== null && (
+                  <span className="px-1.5 py-px rounded-full text-caption font-mono font-semibold bg-card-2 text-muted group-data-[state=active]:bg-accent-subtle group-data-[state=active]:text-accent-hover">{count}</span>
+                )}
+              </span>
+            ),
+          }))}
+        />
 
         {/* Tab body */}
         <div

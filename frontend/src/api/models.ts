@@ -382,6 +382,8 @@ export interface TestRunGroupDto {
   agentId: string;
   agentName: string;
   status: TestRunStatus;
+  /** True for ephemeral A/B validation runs; hidden from the runs list unless explicitly shown. */
+  isSystemRun: boolean;
   completedAt: string | null;
   runs: TestRunDto[];
   createdAt: string;
@@ -667,6 +669,8 @@ export interface TheoryDto {
   baselinePassRate: number | null;
   projectedPassRate: number | null;
   pValue: number | null;
+  /** Candidate A/B run id, recorded once validated/invalidated. Null until then. */
+  abTestRunId: string | null;
   createdAt: string;
   updatedAt: string;
 }

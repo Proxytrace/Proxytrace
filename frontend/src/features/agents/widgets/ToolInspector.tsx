@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ToolSpecDto } from '../../../api/models';
 import { ChevronRightIcon } from '../../../components/icons';
+import { RowButton } from '../../../components/ui/RowButton';
 
 // Syntax-highlight palette for JSON-Schema type tags (intentional, not brand colors).
 const TYPE_COLORS: Record<string, string> = {
@@ -24,10 +25,10 @@ export function ToolInspector({ tool, defaultOpen = false, last = false }: Props
 
   return (
     <div className={last ? '' : 'border-b border-hairline'} data-testid={`tool-row-${tool.name}`}>
-      <button
+      <RowButton
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-[var(--bg-wash-hover)] transition-colors duration-100"
+        className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-[var(--bg-wash-hover)] transition-colors duration-100"
       >
         <ChevronRightIcon
           size={12}
@@ -38,7 +39,7 @@ export function ToolInspector({ tool, defaultOpen = false, last = false }: Props
         {tool.description && (
           <span className="ml-auto text-body-sm text-muted truncate max-w-[320px]">{tool.description}</span>
         )}
-      </button>
+      </RowButton>
 
       {open && (
         <div className="px-4 pb-3.5 pl-[38px] flex flex-col gap-3">

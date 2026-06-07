@@ -2,6 +2,7 @@ import { useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { EditIcon } from '../../../../components/icons';
 import { Button } from '../../../../components/ui/Button';
+import { RowButton } from '../../../../components/ui/RowButton';
 import { Textarea } from '../../../../components/ui/Textarea';
 import { cn } from '../../../../lib/cn';
 import { ToolUIFrame } from './ToolUIFrame';
@@ -39,14 +40,13 @@ interface OptionRowProps {
  */
 function OptionRow({ badge, label, muted, selected, multiple, last, onSelect, testId }: OptionRowProps) {
   return (
-    <button
-      type="button"
+    <RowButton
       role={multiple ? 'checkbox' : 'radio'}
       aria-checked={selected}
       onClick={onSelect}
       data-testid={testId}
       className={cn(
-        'flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left cursor-pointer',
+        'flex items-center gap-3 rounded-md px-2.5 py-2.5',
         'transition-colors duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
         !last && 'rounded-b-none',
@@ -70,7 +70,7 @@ function OptionRow({ badge, label, muted, selected, multiple, last, onSelect, te
         {label}
       </span>
       {selected && <span aria-hidden className="shrink-0 pr-1 text-body-sm text-muted">↵</span>}
-    </button>
+    </RowButton>
   );
 }
 

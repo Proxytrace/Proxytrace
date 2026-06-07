@@ -1,6 +1,8 @@
 import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../api/models';
 import { FormField } from '../../components/ui/FormField';
-import { formInputCls } from '../../components/ui/classes';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Textarea } from '../../components/ui/Textarea';
 import { Pill } from '../../components/ui/Pill';
 import { CodeBlock } from '../../components/ui/CodeBlock';
 import type { EvaluatorFormState } from './evaluatorMeta';
@@ -28,20 +30,20 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
     <div className="flex flex-col gap-3">
       {kind === EvaluatorKind.Agentic && showPresetPicker && (
         <FormField label="Preset">
-          <select value={form.presetKey} onChange={e => applyPreset(e.target.value)} className={formInputCls}>
+          <Select value={form.presetKey} onChange={e => applyPreset(e.target.value)}>
             <option value="">Custom (write your own)</option>
             {presets.map(p => <option key={p.key} value={p.key}>{p.name}</option>)}
-          </select>
+          </Select>
         </FormField>
       )}
       {kind === EvaluatorKind.Agentic && (
         <FormField label="Evaluator name">
-          <input data-testid="evaluator-form-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My judge" className={formInputCls} />
+          <Input data-testid="evaluator-form-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="My judge" />
         </FormField>
       )}
       {kind === EvaluatorKind.Agentic && (
         <FormField label="Grading rubric">
-          <textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader. Score how clearly the response answers the user's question. Use the 1–5 scale below; explain briefly in reasoning…" rows={8} className={`${formInputCls} resize-y`} />
+          <Textarea value={form.systemMessage} onChange={e => setForm({ ...form, systemMessage: e.target.value })} placeholder="You are a grader. Score how clearly the response answers the user's question. Use the 1–5 scale below; explain briefly in reasoning…" rows={8} />
           <div className="text-[11px] text-muted mt-1">Schema is appended automatically — only describe what to grade and what each score means.</div>
         </FormField>
       )}
@@ -49,17 +51,17 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       {kind === EvaluatorKind.Agentic && <FinalPromptPreview rubric={form.systemMessage} />}
       {kind === EvaluatorKind.JsonSchemaMatch && (
         <FormField label="JSON Schema">
-          <textarea data-testid="evaluator-form-jsonschema" value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} className={`${formInputCls} resize-y`} />
+          <Textarea data-testid="evaluator-form-jsonschema" value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (
         <FormField label="Extraction pattern (regex)">
-          <input data-testid="evaluator-form-extractionpattern" value={form.extractionPattern} onChange={e => setForm({ ...form, extractionPattern: e.target.value })} placeholder="score: (\d+)" className={formInputCls} />
+          <Input data-testid="evaluator-form-extractionpattern" value={form.extractionPattern} onChange={e => setForm({ ...form, extractionPattern: e.target.value })} placeholder="score: (\d+)" />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (
         <FormField label="Tolerance">
-          <input data-testid="evaluator-form-tolerance" type="number" value={form.tolerance} onChange={e => setForm({ ...form, tolerance: e.target.value })} placeholder="0.01" className={formInputCls} />
+          <Input data-testid="evaluator-form-tolerance" type="number" value={form.tolerance} onChange={e => setForm({ ...form, tolerance: e.target.value })} placeholder="0.01" />
         </FormField>
       )}
     </div>

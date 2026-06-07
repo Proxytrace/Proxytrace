@@ -5,6 +5,7 @@ import { KIND_CATEGORY, META, type TypeCategory } from '../evaluatorMeta';
 import { categoryText, categoryTint14 } from '../categoryClasses';
 import { CategoryIcon } from './evaluatorIcons';
 import { LockIcon } from '../../../components/icons';
+import { RowButton } from '../../../components/ui/RowButton';
 
 /** Per-category hover recipe for the kind picker cards (wash + border tint). */
 const HOVER: Record<TypeCategory, string> = {
@@ -54,15 +55,15 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
   }
 
   return (
-    <button
+    <RowButton
       onClick={() => onPick(kind)}
       data-testid={`evaluator-kind-${kind}`}
       className={cn(
-        'text-left p-3.5 rounded-lg flex gap-3 cursor-pointer transition-all bg-card-2 border border-subtle',
+        'p-3.5 rounded-lg flex gap-3 transition-all bg-card-2 border border-subtle',
         HOVER[cat],
       )}
     >
       {inner}
-    </button>
+    </RowButton>
   );
 }

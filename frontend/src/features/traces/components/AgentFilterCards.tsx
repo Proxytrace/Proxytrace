@@ -1,5 +1,6 @@
 import { agentColor } from '../../../lib/colors';
 import { fmtLatency } from '../../../lib/format';
+import { RowButton } from '../../../components/ui/RowButton';
 import type { AgentDto, AgentBreakdownDto } from '../../../api/models';
 
 interface Props {
@@ -20,11 +21,11 @@ export function AgentFilterCards({ agents, agentBreakdown, agentFilter, p95, onF
         const isActive = agentFilter === a.id;
         const callCount = agentBreakdown.find(b => b.agentId === a.id)?.callCount ?? 0;
         return (
-          <button
+          <RowButton
             key={a.id}
             data-testid={`agent-filter-card-${a.id}`}
             onClick={() => onFilterChange(isActive ? '' : a.id)}
-            className="text-left bg-card rounded-xl px-[14px] py-3 relative overflow-hidden transition-[box-shadow] duration-[150ms] border-none cursor-pointer"
+            className="bg-card rounded-xl px-[14px] py-3 relative overflow-hidden transition-[box-shadow] duration-[150ms]"
             style={{
               boxShadow: isActive
                 ? `0 0 0 1.5px color-mix(in srgb, ${c} 53%, transparent), 0 4px 16px -6px color-mix(in srgb, ${c} 38%, transparent)`
@@ -47,7 +48,7 @@ export function AgentFilterCards({ agents, agentBreakdown, agentFilter, p95, onF
               </span>
               <span className="text-caption text-muted">traces</span>
             </div>
-          </button>
+          </RowButton>
         );
       })}
 

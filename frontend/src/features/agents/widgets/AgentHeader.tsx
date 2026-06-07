@@ -54,15 +54,16 @@ export function AgentHeader({ agent, overview, onDelete, className }: Props) {
               </span>
             )}
             {proposals > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => navigate(`/proposals?agentId=${agent.id}`)}
                 data-testid="agent-proposals-pill"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-body-sm font-medium text-accent bg-accent-subtle shadow-[var(--shadow-pill)] cursor-pointer transition-colors duration-100 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
+                leftIcon={<SparklesIcon size={11} />}
+                className="rounded-full text-accent bg-accent-subtle hover:text-accent-hover shadow-[var(--shadow-pill)]"
               >
-                <SparklesIcon size={11} />
                 {proposals} proposal{proposals > 1 ? 's' : ''} ready
-              </button>
+              </Button>
             )}
           </div>
           <div className="flex items-center gap-2 flex-wrap text-body-sm text-muted">

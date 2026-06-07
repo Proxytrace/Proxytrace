@@ -156,6 +156,25 @@ public class TheoriesController : ControllerBase
     }
 
     /// <summary>
+    /// Resets a Validated or Invalidated theory back to Proposed, deleting any proposal it spawned
+    /// and re-queuing it for fresh validation. Refused when the spawned proposal was already accepted.
+    /// </summary>
+    [HttpPost("{id:guid}/reset")]
+    public async Task<ActionResult<TheoryDto>> Reset(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await validationService.ResetToProposedAsync(id, cancellationToken);
+        return (result.Outcome, result.Theory) switch
+        {
+            (TheoryResetOutcome.Reset, { } reset) => Ok(mapper.ToDto(reset)),
+            (TheoryResetOutcome.NotFound, _) => NotFound($"Theory {id} does not exist."),
+            (TheoryResetOutcome.NotResettable, _) => Conflict("Only Validated or Invalidated theories can be reset."),
+            (TheoryResetOutcome.BlockedByAcceptedProposal, _) => Conflict(
+                "This proposal was already promoted; resetting would not revert the applied change."),
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
+        };
+    }
+
+    /// <summary>
     /// Test-only: seeds a theory directly in a chosen lifecycle state, bypassing the asynchronous
     /// validation pipeline so board states are deterministic in tests.
     /// </summary>
@@ -247,10 +266,10 @@ public class TheoriesController : ControllerBase
                     // The Seed guard guarantees a non-null ResultingProposalId for Validated.
                     if (request.Status == TheoryStatus.Validated && request.ResultingProposalId is { } proposalId)
                         theory = await theory.SetValidated(
-                            proposalId, request.BaselinePassRate, request.ProjectedPassRate, request.PValue, cancellationToken);
+                            proposalId, request.BaselinePassRate, request.ProjectedPassRate, request.PValue, abTestRunId: null, cancellationToken);
                     else if (request.Status == TheoryStatus.Invalidated)
                         theory = await theory.SetInvalidated(
-                            request.BaselinePassRate, request.ProjectedPassRate, request.PValue, cancellationToken);
+                            request.BaselinePassRate, request.ProjectedPassRate, request.PValue, abTestRunId: null, cancellationToken);
                 }
 
                 return theory;

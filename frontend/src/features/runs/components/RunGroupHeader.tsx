@@ -4,7 +4,7 @@ import { fmtDuration, fmtRelative } from '../../../lib/format';
 import { TrashIcon } from '../../../components/icons';
 import { Pill } from '../../../components/ui/Pill';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
-import { Button } from '../../../components/ui/Button';
+import { Button, IconButton } from '../../../components/ui/Button';
 import { passRateColor, passRatePercent, avgLatency, isActive, runStatusColor } from '../results';
 
 /**
@@ -71,7 +71,7 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
             Cancel
           </Button>
         )}
-        <button onClick={onDelete} className="btn-icon btn-icon-danger" aria-label="Delete run group" title="Delete run group"><TrashIcon size={14} /></button>
+        <IconButton danger onClick={onDelete} aria-label="Delete run group" title="Delete run group"><TrashIcon size={14} /></IconButton>
       </div>
     </div>
   );
@@ -81,7 +81,9 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
 function SingleRunStats({ run, createdAt }: { run: TestRunGroupDto['runs'][number]; createdAt: string }) {
   const active = isActive(run.status);
   const hasResults = run.results.length > 0;
-  const pr = passRatePercent(run.passedCases, run.totalCases);
+  // Judged-case denominator (passed+failed), not totalCases — so the live rate matches the final
+  // one instead of reading near-zero until every case lands. Progress is shown separately below.
+  const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);
   const avg = avgLatency(run);
 
   return (

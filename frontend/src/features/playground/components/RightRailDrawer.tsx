@@ -3,7 +3,10 @@
  * and its body (system prompt editor, parameter sliders, or tool editor).
  */
 import { XIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Textarea } from '../../../components/ui/Textarea';
+import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import type { ModelParametersDto } from '../../../api/models';
 import type { PlaygroundOverrides } from '../state/types';
 import { SECTION_TITLES, type SectionKey } from '../playgroundMeta';
@@ -59,15 +62,14 @@ export function RightRailDrawer({
           <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">Settings</span>
           <span className="text-[13px] font-semibold text-primary truncate">{SECTION_TITLES[active]}</span>
         </div>
-        <button
-          type="button"
-          className="ml-auto btn-icon"
+        <IconButton
+          className="ml-auto"
           onClick={onClose}
           title="Close"
           aria-label="Close settings"
         >
           <XIcon size={13} strokeWidth={2.4} />
-        </button>
+        </IconButton>
       </header>
 
       <div className="px-[14px] py-[12px] overflow-y-auto flex-1 flex flex-col gap-[10px]">
@@ -112,8 +114,8 @@ interface SystemSectionProps {
 function SystemSection({ overrides, defaultSystemPrompt, systemPromptModified, onChange }: SystemSectionProps) {
   return (
     <div className="flex flex-col gap-[6px]">
-      <textarea
-        className={`${formInputCls} resize-y mono text-[12px]`}
+      <Textarea
+        className="mono text-[12px]"
         rows={10}
         value={overrides.systemPrompt}
         onChange={e => onChange({ ...overrides, systemPrompt: e.target.value })}
@@ -123,13 +125,9 @@ function SystemSection({ overrides, defaultSystemPrompt, systemPromptModified, o
       <div className="flex justify-between text-[10.5px] text-muted mono">
         <span>{overrides.systemPrompt.length} chars</span>
         {systemPromptModified && defaultSystemPrompt != null && (
-          <button
-            type="button"
-            onClick={() => onChange({ ...overrides, systemPrompt: defaultSystemPrompt })}
-            className="text-accent hover:text-accent-hover transition-colors cursor-pointer"
-          >
+          <Button variant="link" onClick={() => onChange({ ...overrides, systemPrompt: defaultSystemPrompt })}>
             Reset
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -186,9 +184,8 @@ function ParametersSection({
       <div className="grid grid-cols-3 gap-[6px]">
         <label className="flex flex-col gap-[3px]">
           <span className="text-[10.5px] text-muted">Max tokens</span>
-          <input
+          <Input
             type="number" min={1} step={1}
-            className={formInputCls}
             value={overrides.parameters.maxTokens ?? ''}
             placeholder="—"
             onChange={e => setParamRaw('maxTokens', e.target.value)}
@@ -196,9 +193,8 @@ function ParametersSection({
         </label>
         <label className="flex flex-col gap-[3px]">
           <span className="text-[10.5px] text-muted">Seed</span>
-          <input
+          <Input
             type="number" step={1}
-            className={formInputCls}
             value={overrides.parameters.seed ?? ''}
             placeholder="—"
             onChange={e => setParamRaw('seed', e.target.value)}
@@ -206,9 +202,8 @@ function ParametersSection({
         </label>
         <label className="flex flex-col gap-[3px]">
           <span className="text-[10.5px] text-muted">N</span>
-          <input
+          <Input
             type="number" min={1} step={1}
-            className={formInputCls}
             value={overrides.parameters.n ?? ''}
             placeholder="—"
             onChange={e => setParamRaw('n', e.target.value)}
@@ -230,35 +225,14 @@ function ReasoningEffortControl({ overrides, onChange }: ReasoningEffortControlP
   return (
     <div className="flex flex-col gap-[5px]">
       <span className="text-[10.5px] text-muted uppercase tracking-[0.06em] font-semibold">Reasoning effort</span>
-      <div
-        role="radiogroup"
-        aria-label="Reasoning effort"
-        className="inline-flex p-[2px] rounded-[10px] gap-[2px] bg-[rgba(0,0,0,0.18)] border border-border"
-      >
-        {REASONING_OPTIONS.map(opt => {
-          const sel = (overrides.parameters.reasoningEffort ?? null) === opt.value;
-          return (
-            <button
-              key={opt.label}
-              type="button"
-              role="radio"
-              aria-checked={sel}
-              onClick={() => onChange({
-                ...overrides,
-                parameters: { ...overrides.parameters, reasoningEffort: opt.value },
-              })}
-              className={[
-                'flex-1 px-[10px] py-[5px] rounded-[8px] text-[11.5px] font-medium cursor-pointer transition-colors',
-                sel
-                  ? 'bg-accent-subtle text-[var(--accent-hover)] border border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)]'
-                  : 'bg-transparent text-secondary border border-transparent',
-              ].join(' ')}
-            >
-              {opt.label}
-            </button>
-          );
+      <SegmentedControl
+        value={overrides.parameters.reasoningEffort ?? 'off'}
+        onChange={v => onChange({
+          ...overrides,
+          parameters: { ...overrides.parameters, reasoningEffort: v === 'off' ? null : v },
         })}
-      </div>
+        segments={REASONING_OPTIONS.map(opt => ({ value: opt.value ?? 'off', label: opt.label }))}
+      />
     </div>
   );
 }

@@ -34,6 +34,7 @@ public interface ISystemPromptTheory : IOptimizationTheory
         double? baselinePassRate,
         double? projectedPassRate,
         double? pValue,
+        Guid? abTestRunId,
         string contentHash,
         IDomainEntityData existing);
 }

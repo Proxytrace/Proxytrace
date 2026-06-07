@@ -64,6 +64,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
         Guid agentId,
         int page,
         int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
@@ -75,7 +76,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 g => g.Suite,
                 s => s.Id,
                 (g, s) => new { Group = g, Suite = s })
-            .Where(x => x.Suite.Agent == agentId && !x.Group.IsSystemRun)
+            .Where(x => x.Suite.Agent == agentId && (includeSystem || !x.Group.IsSystemRun))
             .Select(x => x.Group);
 
         int total = await query.CountAsync(cancellationToken);
@@ -92,6 +93,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
         Guid projectId,
         int page,
         int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
@@ -107,7 +109,7 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 gs => gs.Suite.Agent,
                 a => a.Id,
                 (gs, a) => new { gs.Group, Agent = a })
-            .Where(x => x.Agent.Project == projectId && !x.Group.IsSystemRun)
+            .Where(x => x.Agent.Project == projectId && (includeSystem || !x.Group.IsSystemRun))
             .Select(x => x.Group);
 
         int total = await query.CountAsync(cancellationToken);

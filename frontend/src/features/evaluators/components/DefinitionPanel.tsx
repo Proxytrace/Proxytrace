@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '../../../lib/cn';
 import { CopyIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { KIND_CATEGORY, extractTemplateVars } from '../evaluatorMeta';
 import { categoryText, categoryTint14, categoryTint18 } from '../categoryClasses';
@@ -72,18 +73,11 @@ export function DefinitionPanel({ evaluator: e, onEdit }: Props) {
         )}
         <div className="ml-auto flex gap-1">
           {systemMessage && (
-            <button
-              onClick={() => navigator.clipboard.writeText(systemMessage)}
-              className="px-[9px] py-[5px] rounded-md text-[11px] text-secondary bg-transparent border-0 inline-flex items-center gap-[5px] cursor-pointer"
-            >
-              <CopyIcon size={11} /> Copy
-            </button>
+            <Button variant="ghost" size="sm" leftIcon={<CopyIcon size={11} />} onClick={() => navigator.clipboard.writeText(systemMessage)}>
+              Copy
+            </Button>
           )}
-          <button
-            onClick={onEdit}
-            data-write
-            className={cn('px-[11px] py-[5px] rounded-md text-[11px] font-semibold border-0 cursor-pointer', categoryText[cat], categoryTint18[cat])}
-          >Edit</button>
+          <Button variant="ghost" size="sm" data-write className={cn(categoryText[cat], categoryTint18[cat])} onClick={onEdit}>Edit</Button>
         </div>
       </header>
       <div className="px-[18px] py-3.5 max-h-[460px] overflow-auto flex-1">{body}</div>

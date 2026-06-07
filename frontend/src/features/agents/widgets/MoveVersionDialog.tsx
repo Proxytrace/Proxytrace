@@ -4,6 +4,7 @@ import { agentsApi, agentVersionsApi } from '../../../api/agents';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type { AgentDto, AgentVersionDto } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
+import { Input } from '../../../components/ui/Input';
 
 const CANDIDATE_FETCH_LIMIT = 500;
 
@@ -60,17 +61,17 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
       </p>
       <label className="block text-sm mb-2">
         Search
-        <input
-          type="text"
+        <Input
           autoFocus
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter agents by name…"
-          className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
+          className="mt-1"
         />
       </label>
       <label className="block text-sm">
         Target agent
+        {/* eslint-disable-next-line no-restricted-syntax -- multi-row listbox (size=N), not a dropdown Select */}
         <select
           className="mt-1 w-full rounded border border-border bg-background p-2 text-sm"
           value={targetAgentId}

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { ChevronDownIcon, TrashIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
+import { Input } from '../../../components/ui/Input';
+import { Textarea } from '../../../components/ui/Textarea';
+import { IconButton } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 import type { PlaygroundToolOverride } from '../state/types';
 
 interface Props {
@@ -68,10 +71,9 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
       className="rounded-[10px] overflow-hidden bg-[rgba(0,0,0,0.18)] border border-border"
     >
       <div className="flex items-center gap-[6px] px-[10px] py-[8px]">
-        <button
-          type="button"
+        <RowButton
           onClick={() => setOpen(o => !o)}
-          className="inline-flex items-center gap-[6px] flex-1 cursor-pointer text-left"
+          className="inline-flex items-center gap-[6px] flex-1"
           aria-expanded={open}
         >
           <ChevronDownIcon
@@ -87,30 +89,22 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
           >
             {argCount} arg{argCount === 1 ? '' : 's'}
           </span>
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          className="btn-icon btn-icon-danger"
-          title="Remove tool"
-          aria-label="Remove tool"
-        >
+        </RowButton>
+        <IconButton danger onClick={onRemove} title="Remove tool" aria-label="Remove tool">
           <TrashIcon size={11} />
-        </button>
+        </IconButton>
       </div>
       {!open && tool.description && (
         <div className="px-[10px] pb-[8px] text-[11px] text-muted leading-[1.45] line-clamp-2">{tool.description}</div>
       )}
       {open && (
         <div className="px-[10px] pb-[10px] flex flex-col gap-[8px]">
-          <input
-            className={formInputCls}
+          <Input
             value={tool.name}
             placeholder="Name"
             onChange={e => onUpdate({ name: e.target.value })}
           />
-          <textarea
-            className={`${formInputCls} resize-y`}
+          <Textarea
             rows={2}
             value={tool.description}
             placeholder="Description"
@@ -138,8 +132,8 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                         {arg.type}
                       </span>
                     </div>
-                    <textarea
-                      className={`${formInputCls} resize-y text-[12px]`}
+                    <Textarea
+                      className="text-[12px]"
                       rows={2}
                       value={arg.description}
                       placeholder="Parameter description"

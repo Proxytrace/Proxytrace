@@ -50,6 +50,7 @@ interface RailIconButtonProps {
 
 function RailIconButton({ active, modified, title, onClick, children }: RailIconButtonProps) {
   return (
+    // eslint-disable-next-line no-restricted-syntax -- bespoke 40px rail toggle button (active tint + modified dot)
     <button
       type="button"
       onClick={onClick}
@@ -137,6 +138,7 @@ export function RightRail({
 
         <div className="my-[4px] h-[1px] w-[24px] bg-[var(--hairline)]" />
 
+        {/* eslint-disable-next-line no-restricted-syntax -- bespoke 40px rail reset button (matches RailIconButton styling) */}
         <button
           type="button"
           onClick={onResetAll}

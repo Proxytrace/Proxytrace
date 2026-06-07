@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ChevronRightIcon } from '../icons';
 import { CopyButton } from './CopyButton';
-import { hoverRevealOverlayCls } from './classes';
 import { cn } from '../../lib/cn';
+import { MessageContent } from '../conversation/MessageContent';
+import { MessageViewSelect } from '../conversation/MessageViewSelect';
+import { detectView, type MessageView } from '../conversation/messageView';
 
 type RoleKey = 'user' | 'assistant' | 'system';
 
@@ -58,6 +60,7 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
   const [open, setOpen] = useState(defaultOpen);
 
   const content = msg.content?.trim() ?? '';
+  const [view, setView] = useState<MessageView>(() => detectView(content));
   if (!content) return null;
 
   const oneLine = content.replace(/\s+/g, ' ');
@@ -69,39 +72,44 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
     <div
       className={cn('relative group rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border)}
     >
-      <CopyButton text={content} label="Copy message" className={hoverRevealOverlayCls} />
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen(o => !o)}
-        className={cn('w-full flex items-center gap-2 pl-3 pr-9 py-[10px] text-left bg-transparent border-0 cursor-pointer transition-colors duration-100', role.hover)}
-      >
-        <span
-          aria-hidden
-          className={cn('inline-flex shrink-0 transition-transform duration-150', role.accentText, open && 'rotate-90')}
+      <div className="flex items-center gap-2 px-3 py-[10px]">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => setOpen(o => !o)}
+          className={cn('flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]', role.hover)}
         >
-          <ChevronRightIcon size={11} strokeWidth={2.5} />
-        </span>
-        <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
-        <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
-          {label ?? role.label}
-        </span>
-        {!open && (
-          <span className="text-[12px] truncate min-w-0 text-secondary">
-            {preview}
+          <span
+            aria-hidden
+            className={cn('inline-flex shrink-0 transition-transform duration-150', role.accentText, open && 'rotate-90')}
+          >
+            <ChevronRightIcon size={11} strokeWidth={2.5} />
           </span>
-        )}
-        <span className="ml-auto font-mono text-[9.5px] tracking-[0.06em] shrink-0 text-muted">
+          <span aria-hidden className={cn('w-[5px] h-[5px] rounded-full shrink-0', role.accentBg)} />
+          <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
+            {label ?? role.label}
+          </span>
+          {!open && (
+            <span className="text-[12px] truncate min-w-0 text-secondary">
+              {preview}
+            </span>
+          )}
+        </button>
+        <CopyButton
+          text={content}
+          label="Copy message"
+          className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-[var(--motion-fast)]"
+        />
+        <span className="font-mono text-[9.5px] tracking-[0.06em] shrink-0 text-muted">
           {charCount.toLocaleString()} chars
         </span>
-      </button>
+        {open && <MessageViewSelect value={view} onChange={setView} />}
+      </div>
 
       {open && (
         <div className="border-t border-t-[rgba(255,255,255,0.05)]">
           <div className={cn('px-[14px] py-[12px]', role.bodyBg)}>
-            <div className={`text-[13px] leading-[1.65] whitespace-pre-wrap ${isSystem ? 'text-secondary italic' : 'text-primary'}`}>
-              {content}
-            </div>
+            <MessageContent content={content} view={view} isSystem={isSystem} />
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ import {
   buildMatrixRows,
   fixtureSummary,
   patchGroupsWithResult,
+  patchGroupsRunStatus,
   scoreLabel,
 } from './results';
 import {
@@ -190,21 +191,19 @@ describe('buildMatrixRows', () => {
     return { id, endpointName: id, results, testCases } as TestRunDto;
   }
 
-  it('orders divergent cases before agreeing ones', () => {
+  it('keeps stable suite order (no reshuffle) and flags divergence per row', () => {
     const r1 = run('m1', [caseResult('a', 'A', [PASS]), caseResult('b', 'B', [PASS])]);
     const r2 = run('m2', [caseResult('a', 'A', [FAIL]), caseResult('b', 'B', [PASS])]);
     const rows = buildMatrixRows([r1, r2]);
     expect(rows.map(r => r.caseId)).toEqual(['a', 'b']);
-    expect(rows[0].divergent).toBe(true);
-    expect(rows[1].divergent).toBe(false);
+    expect(rows.find(r => r.caseId === 'a')?.divergent).toBe(true);
+    expect(rows.find(r => r.caseId === 'b')?.divergent).toBe(false);
   });
 
-  it('breaks ties among non-divergent rows by fail count', () => {
+  it('does not reorder by fail count — ordering is left to filterSortMatrixRows', () => {
     const r1 = run('m1', [caseResult('ok', 'Zok', [PASS]), caseResult('bad', 'Abad', [FAIL])]);
-    const r2 = run('m2', [caseResult('ok', 'Zok', [PASS]), caseResult('bad', 'Abad', [FAIL])]);
-    const rows = buildMatrixRows([r1, r2]);
-    expect(rows.map(r => r.caseId)).toEqual(['bad', 'ok']);
-    expect(rows.every(r => r.divergent)).toBe(false);
+    const rows = buildMatrixRows([r1]);
+    expect(rows.map(r => r.caseId)).toEqual(['ok', 'bad']); // insertion order, not fail-count order
   });
 
   it('emits null cells for a case missing from a run', () => {
@@ -285,6 +284,19 @@ describe('buildEvaluatorHeatmap', () => {
     const [row] = buildEvaluatorHeatmap(group);
     expect(row.cells[0].passRate).toBeNull();
   });
+
+  it('folds live in-flight evaluations into the distribution', () => {
+    const group = { runs: [hmRun('m', [[evaluation({ score: EvaluationScore.Good })]])] } as TestRunGroupDto;
+    const live = new Map([['m:c-live', {
+      runId: 'm', testCaseId: 'c-live', inferenceDone: true,
+      evaluations: [evaluation({ evaluatorId: 'ev', score: EvaluationScore.Bad })],
+    }]]);
+    const [row] = buildEvaluatorHeatmap(group, live);
+    const cell = row.cells[0];
+    expect(cell.total).toBe(2); // one finalized + one live
+    expect(cell.dist[EvaluationScore.Good]).toBe(1);
+    expect(cell.dist[EvaluationScore.Bad]).toBe(1);
+  });
 });
 
 describe('matrixCounts / filterSortMatrixRows', () => {
@@ -301,6 +313,16 @@ describe('matrixCounts / filterSortMatrixRows', () => {
 
   it('counts each filter category', () => {
     expect(matrixCounts(rows)).toEqual({ all: 3, divergent: 1, failing: 2, passing: 1 });
+  });
+
+  it('orders divergent first, then by fail count (sort=order)', () => {
+    // buildMatrixRows gives stable [a, b, c]; sort=order surfaces divergent a, then b (a fail), then c.
+    expect(filterSortMatrixRows(rows, 'all', 'order').map(r => r.caseId)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('freezeOrder keeps the stable suite order regardless of sort', () => {
+    const stable = buildMatrixRows([run('m1', [cr('z', [FAIL]), cr('a', [PASS])])]);
+    expect(filterSortMatrixRows(stable, 'all', 'order', true).map(r => r.caseId)).toEqual(['z', 'a']);
   });
 
   it('filters to divergent / failing / passing', () => {
@@ -334,14 +356,15 @@ describe('patchGroupsWithResult', () => {
     };
   }
 
-  it('appends the result and recomputes pass/fail counts', () => {
+  it('appends the result and recomputes counts with a judged-case pass rate', () => {
     const next = patchGroupsWithResult(page({}), event({ evaluations: [PASS] }));
     const run = next.items[0].runs[0];
     expect(run.results).toHaveLength(1);
     expect(run.results[0]).toMatchObject({ testCaseId: 'c1', testCaseSummary: 'Case one', durationMs: 120 });
     expect(run.passedCases).toBe(1);
     expect(run.failedCases).toBe(0);
-    expect(run.passRate).toBe(50);
+    // 1 of 1 judged case passed — not 1 of 2 total. The running rate matches the final rate.
+    expect(run.passRate).toBe(100);
   });
 
   it('counts a failing result against failedCases', () => {
@@ -350,14 +373,55 @@ describe('patchGroupsWithResult', () => {
     expect(run.failedCases).toBe(1);
   });
 
-  it('is idempotent when the result is already present', () => {
-    const existing = page({ results: [{ ...result([PASS]), testCaseId: 'c1' } as TestResultDto], passedCases: 1, passRate: 50 });
-    const next = patchGroupsWithResult(existing, event());
-    expect(next.items[0].runs[0].results).toHaveLength(1);
+  it('replaces an already-present result instead of dropping the late event', () => {
+    const existing = page({ results: [{ ...result([FAIL]), testCaseId: 'c1' } as TestResultDto], passedCases: 0, failedCases: 1, passRate: 0 });
+    const next = patchGroupsWithResult(existing, event({ evaluations: [PASS] })).items[0].runs[0];
+    expect(next.results).toHaveLength(1);
+    expect(next.passedCases).toBe(1);
+    expect(next.failedCases).toBe(0);
   });
 
   it('leaves the data unchanged when the group is absent', () => {
     const input = page({});
     expect(patchGroupsWithResult(input, event({ groupId: 'other' }))).toEqual(input);
+  });
+
+  it('flips a run’s status on run-complete', () => {
+    const next = patchGroupsRunStatus(page({}), {
+      type: 'run-complete', runId: 'run1', groupId: 'g1', status: TestRunStatus.Completed, completedAt: '2024-01-01T00:00:00Z',
+    });
+    expect(next.items[0].runs[0].status).toBe(TestRunStatus.Completed);
+    expect(next.items[0].runs[0].completedAt).toBe('2024-01-01T00:00:00Z');
+  });
+});
+
+describe('buildMatrixRows live overlay', () => {
+  function run(id: string, results: TestResultDto[], evaluatorCount = 2): TestRunDto {
+    return {
+      id, endpointName: id, results,
+      testCases: [{ id: 'c1', summary: 'Case one' }],
+      evaluators: new Array(evaluatorCount).fill(0).map((_, i) => ({ id: `ev${i}` })),
+    } as TestRunDto;
+  }
+
+  it('marks a case with no result but live progress as running with per-evaluator progress', () => {
+    const live = new Map([['r:c1', { runId: 'r', testCaseId: 'c1', evaluations: [{ evaluatorId: 'ev0' } as EvaluationResultDto], inferenceDone: true }]]);
+    const [row] = buildMatrixRows([run('r', [])], live);
+    expect(row.cells[0].status).toBe('running');
+    expect(row.cells[0].progress).toEqual({ done: 1, total: 2 });
+    expect(row.cells[0].pass).toBeNull();
+  });
+
+  it('marks a case with no result and no live entry as pending', () => {
+    const [row] = buildMatrixRows([run('r', [])]);
+    expect(row.cells[0].status).toBe('pending');
+  });
+
+  it('marks a finalized case as done regardless of live state', () => {
+    const finalized = { id: 'c1-r', testCaseId: 'c1', testCaseSummary: 'Case one', actualResponse: '', evaluations: [PASS], durationMs: 1 } as TestResultDto;
+    const live = new Map([['r:c1', { runId: 'r', testCaseId: 'c1', evaluations: [], inferenceDone: true }]]);
+    const [row] = buildMatrixRows([run('r', [finalized])], live);
+    expect(row.cells[0].status).toBe('done');
+    expect(row.cells[0].pass).toBe(true);
   });
 });

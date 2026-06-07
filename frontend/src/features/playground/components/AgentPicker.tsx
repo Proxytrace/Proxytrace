@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { agentsApi } from '../../../api/agents';
 import type { AgentDto } from '../../../api/models';
 import { ChevronDownIcon, CheckIcon } from '../../../components/icons';
+import { RowButton } from '../../../components/ui/RowButton';
 import { AgentAvatar } from './AgentAvatar';
 
 interface Props {
@@ -42,6 +43,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
 
   return (
     <div ref={ref} className={compact ? 'relative inline-flex' : 'relative'}>
+      {/* eslint-disable-next-line no-restricted-syntax -- bespoke avatar dropdown trigger (compact + full layouts) */}
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -95,14 +97,13 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
           ) : agents.map(a => {
             const active = a.id === selectedAgentId;
             return (
-              <button
+              <RowButton
                 key={a.id}
-                type="button"
                 role="option"
                 aria-selected={active}
                 onClick={() => { onPick(a); setOpen(false); }}
                 data-testid={`agent-picker-option-${a.id}`}
-                className="w-full flex items-center gap-[10px] px-[10px] py-[7px] cursor-pointer text-left transition-colors hover:bg-card"
+                className="flex items-center gap-[10px] px-[10px] py-[7px] transition-colors hover:bg-card"
                 style={active ? { background: 'var(--accent-subtle)' } : undefined}
               >
                 <AgentAvatar seed={a.id} label={a.name} size={26} />
@@ -111,7 +112,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
                   <div className="text-[10.5px] text-muted truncate mono">{a.endpointName}</div>
                 </div>
                 {active && <CheckIcon size={13} strokeWidth={2.5} />}
-              </button>
+              </RowButton>
             );
           })}
         </div>

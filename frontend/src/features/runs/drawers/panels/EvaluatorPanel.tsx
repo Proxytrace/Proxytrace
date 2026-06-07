@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { XIcon, ChevronDownIcon, CheckIcon } from '../../../../components/icons';
+import { RowButton } from '../../../../components/ui/RowButton';
 import { FOCUS_RING } from '../../../../lib/constants';
 import { evaluatorColor, tint } from '../../../../lib/colors';
 import type { EvaluatorFixtureResultDto } from '../../../../api/models';
@@ -13,9 +14,9 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
 
   return (
     <div data-testid={`fixture-evaluator-${ev.evaluatorId}`} className="bg-card-2 rounded-md overflow-hidden border-l-[3px]" style={{ borderLeftColor: color }}>
-      <button
+      <RowButton
         onClick={() => setOpen(o => !o)}
-        className={`w-full px-3.5 py-2.5 flex items-center gap-2 cursor-pointer text-left ${FOCUS_RING}`}
+        className={`px-3.5 py-2.5 flex items-center gap-2 ${FOCUS_RING}`}
       >
         <span className="px-[7px] py-[2px] rounded-full text-caption font-semibold shrink-0" style={{ background: tint(color, 18), color }}>{ev.evaluatorKind}</span>
         <span className="text-title font-semibold flex-1 min-w-0 truncate">{ev.evaluatorName}</span>
@@ -28,7 +29,7 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
             <ChevronDownIcon size={13} />
           </span>
         )}
-      </button>
+      </RowButton>
 
       {open && hasDetails && (
         <div className="border-t border-hairline">

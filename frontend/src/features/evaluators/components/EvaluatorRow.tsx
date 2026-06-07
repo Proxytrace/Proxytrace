@@ -4,6 +4,7 @@ import { Sparkline } from '../../../components/charts';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { KIND_CATEGORY, fmtScoreShort } from '../evaluatorMeta';
 import { categoryBg, categorySelectedRow, categoryColorVar } from '../categoryClasses';
+import { RowButton } from '../../../components/ui/RowButton';
 
 interface Props {
   evaluator: EvaluatorDetailDto;
@@ -17,11 +18,11 @@ interface Props {
 export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, avgScore }: Props) {
   const cat = KIND_CATEGORY[e.kind];
   return (
-    <button
+    <RowButton
       onClick={() => onSelect(e.id)}
       data-testid={`evaluator-rail-item-${e.id}`}
       className={cn(
-        'flex items-center gap-2.5 w-full text-left px-2.5 py-[9px] rounded-[9px] cursor-pointer transition-colors',
+        'flex items-center gap-2.5 px-2.5 py-[9px] rounded-[9px] transition-colors',
         isSelected ? categorySelectedRow[cat] : 'bg-transparent hover:bg-card-2',
       )}
     >
@@ -42,6 +43,6 @@ export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, av
       {sparkline && sparkline.length >= 2 && (
         <Sparkline data={sparkline} color={categoryColorVar[cat]} width={42} height={16} strokeWidth={1.3} />
       )}
-    </button>
+    </RowButton>
   );
 }

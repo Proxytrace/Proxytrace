@@ -1,4 +1,5 @@
-import { ArrowUpRightIcon } from '../../../components/icons';
+import { Link } from 'react-router-dom';
+import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { ProposalDetailsDto, OptimizationProposalDto, TheoryDto } from '../../../api/models';
 import { ProposalStatus, TheoryStatus } from '../../../api/models';
@@ -19,11 +20,13 @@ interface Props {
   proposal: OptimizationProposalDto | null;
   suiteName: string | undefined;
   onSetStatus: (status: ProposalStatus) => void;
+  onReset: () => void;
   actionPending: boolean;
+  resetPending: boolean;
 }
 
 /** The detail drawer body: the theory's lifecycle as a top-to-bottom decision flow. */
-export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, actionPending }: Props) {
+export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending }: Props) {
   const stages = buildDecisionFlow(theory, proposal);
 
   return (
@@ -42,7 +45,9 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, actionP
             proposal={proposal}
             suiteName={suiteName}
             onSetStatus={onSetStatus}
+            onReset={onReset}
             actionPending={actionPending}
+            resetPending={resetPending}
           />
         </FlowStep>
       ))}
@@ -51,7 +56,7 @@ export function DecisionFlow({ theory, proposal, suiteName, onSetStatus, actionP
 }
 
 function StageBody({
-  stageKey, theory, proposal, suiteName, onSetStatus, actionPending,
+  stageKey, theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending,
 }: { stageKey: FlowStageKey } & Props) {
   switch (stageKey) {
     case 'evidence':
@@ -85,7 +90,14 @@ function StageBody({
 
     case 'outcome':
       return (
-        <OutcomeBody theory={theory} proposal={proposal} onSetStatus={onSetStatus} actionPending={actionPending} />
+        <OutcomeBody
+          theory={theory}
+          proposal={proposal}
+          onSetStatus={onSetStatus}
+          onReset={onReset}
+          actionPending={actionPending}
+          resetPending={resetPending}
+        />
       );
   }
 }
@@ -105,6 +117,14 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
       <div className="flex flex-col gap-2">
         <p className="text-body-sm text-secondary m-0">Benchmarking the change against the current agent…</p>
         <div className="h-[3px] rounded-full overflow-hidden bg-card-2 indeterminate-bar" />
+        {theory.abTestRunId && (
+          <Link
+            to={`/runs?run=${theory.abTestRunId}`}
+            className="inline-flex items-center gap-1 self-start text-body-sm text-secondary hover:text-primary transition-colors"
+          >
+            View A/B run <ExternalLinkIcon size={11} />
+          </Link>
+        )}
       </div>
     );
   }
@@ -115,25 +135,35 @@ function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: Optimiz
   // Validated/Invalidated without a detailed A/B run summary — fall back to the recorded metrics.
   const t = passRateTransition(theory);
   return (
-    <div className="flex items-center gap-2.5 rounded-md bg-card-2 px-3.5 py-2.5">
-      {t ? (
-        <>
-          <span className="mono text-h2 text-secondary">{t.fromPct}%</span>
-          <span className="text-muted">→</span>
-          <span className={cn('mono text-h2 font-semibold', t.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{t.toPct}%</span>
-          {t.deltaPt !== 0 && (
-            <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', t.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
-              {t.deltaPt > 0 ? '+' : '−'}{Math.abs(t.deltaPt)}pt
-            </span>
-          )}
-        </>
-      ) : (
-        <span className="text-body-sm text-muted">No pass-rate metrics recorded.</span>
-      )}
-      {theory.pValue != null && (
-        <span className="mono ml-auto text-caption text-muted">
-          {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? 'inside noise' : 'significant'}
-        </span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2.5 rounded-md bg-card-2 px-3.5 py-2.5">
+        {t ? (
+          <>
+            <span className="mono text-h2 text-secondary">{t.fromPct}%</span>
+            <span className="text-muted">→</span>
+            <span className={cn('mono text-h2 font-semibold', t.deltaPt > 0 ? 'text-success' : 'text-secondary')}>{t.toPct}%</span>
+            {t.deltaPt !== 0 && (
+              <span className={cn('mono rounded-full px-2 py-[1px] text-body-sm font-semibold', t.deltaPt > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger')}>
+                {t.deltaPt > 0 ? '+' : '−'}{Math.abs(t.deltaPt)}pt
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="text-body-sm text-muted">No pass-rate metrics recorded.</span>
+        )}
+        {theory.pValue != null && (
+          <span className="mono ml-auto text-caption text-muted">
+            {formatPValue(theory.pValue)} · {isInsideNoise(theory.pValue) ? 'inside noise' : 'significant'}
+          </span>
+        )}
+      </div>
+      {theory.abTestRunId && (
+        <Link
+          to={`/runs?run=${theory.abTestRunId}`}
+          className="inline-flex items-center gap-1 self-start text-body-sm text-secondary hover:text-primary transition-colors"
+        >
+          View A/B run <ExternalLinkIcon size={11} />
+        </Link>
       )}
     </div>
   );
@@ -154,10 +184,21 @@ function ProposalBody({ theory, proposal }: { theory: TheoryDto; proposal: Optim
 }
 
 function OutcomeBody({
-  theory, proposal, onSetStatus, actionPending,
-}: { theory: TheoryDto; proposal: OptimizationProposalDto | null; onSetStatus: (s: ProposalStatus) => void; actionPending: boolean }) {
+  theory, proposal, onSetStatus, onReset, actionPending, resetPending,
+}: {
+  theory: TheoryDto;
+  proposal: OptimizationProposalDto | null;
+  onSetStatus: (s: ProposalStatus) => void;
+  onReset: () => void;
+  actionPending: boolean;
+  resetPending: boolean;
+}) {
   const context = outcomeContext(theory, proposal);
   const reviewable = theory.status === TheoryStatus.Validated && proposal?.status === ProposalStatus.Draft;
+  // A reset re-runs validation from scratch; refused server-side once a proposal is promoted, so
+  // hide it there — the applied change cannot be un-applied by resetting.
+  const terminal = theory.status === TheoryStatus.Validated || theory.status === TheoryStatus.Invalidated;
+  const canReset = terminal && proposal?.status !== ProposalStatus.Accepted;
 
   return (
     <div className="flex flex-col gap-3">
@@ -178,6 +219,18 @@ function OutcomeBody({
             data-testid="flow-dismiss-btn"
           >
             Dismiss
+          </Button>
+        </div>
+      )}
+      {canReset && (
+        <div className="flex">
+          <Button
+            variant="ghost" size="sm" loading={resetPending} disabled={actionPending}
+            leftIcon={<ResetIcon size={12} />}
+            onClick={onReset}
+            data-testid="flow-reset-btn"
+          >
+            Reset to Proposed
           </Button>
         </div>
       )}

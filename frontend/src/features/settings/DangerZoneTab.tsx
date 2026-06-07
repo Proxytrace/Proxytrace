@@ -4,6 +4,7 @@ import { setupApi } from '../../api/setup';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useToast from '../../hooks/useToast';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
+import { Button } from '../../components/ui/Button';
 import { TrashIcon } from '../../components/icons';
 
 const DELETED = [
@@ -79,14 +80,14 @@ export function DangerZoneTab() {
           </div>
 
           <div>
-            <button
+            <Button
+              variant="dangerOutline"
+              size="sm"
+              leftIcon={<TrashIcon size={14} />}
               onClick={() => setConfirm(true)}
-              data-write
-              className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle"
             >
-              <TrashIcon size={14} />
               Delete all non-model data
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -31,6 +31,8 @@ to preview; `npm run docs:build` to verify it builds.
 
 The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §14). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
 
+**UI primitives are mandatory.** Every control renders through the `frontend/src/components/ui/` primitives — `Button`/`IconButton`/`RowButton`, `Input`/`Select`/`Textarea`/`Checkbox`/`Radio`/`Switch`/`SegmentedControl`/`Combobox`, and the headless-Radix `Tabs`/`Menu`/`Tooltip`. Raw `<button>`/`<input>`/`<select>`/`<textarea>` outside that layer are blocked by ESLint (`no-restricted-syntax`); for a genuinely bespoke control add a one-line `// eslint-disable-next-line no-restricted-syntax -- <reason>`.
+
 ## Commands
 
 ### Backend (.NET 10)

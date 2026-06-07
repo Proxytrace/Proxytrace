@@ -30,13 +30,14 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
 
     public override async Task<TheoryValidationOutcome> ValidateAsync(
         IOptimizationTheory theory,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        CandidateRunObserver? onCandidateRun = null)
     {
         var modelSwitchTheory = (IModelSwitchTheory)theory;
         var agent = theory.Agent;
 
         ITestRun baselineRun = await ResolveRunAsync(theory, agent, agent.Endpoint, cancellationToken);
-        ITestRun candidateRun = await ResolveRunAsync(theory, agent, modelSwitchTheory.ProposedEndpoint, cancellationToken);
+        ITestRun candidateRun = await ResolveRunAsync(theory, agent, modelSwitchTheory.ProposedEndpoint, cancellationToken, onCandidateRun);
 
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);
@@ -61,7 +62,7 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
         bool faster = latencyDelta < TimeSpan.Zero;
         if (candidatePassRate < basePassRate || (!cheaper && !faster))
         {
-            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue);
+            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue, candidateRun.Id);
         }
 
         var proposal = proposalFactory(
@@ -76,6 +77,6 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
             evidenceTestRunIds: theory.EvidenceTestRunIds,
             abTestRun: candidateRun);
 
-        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue);
+        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue, candidateRun.Id);
     }
 }

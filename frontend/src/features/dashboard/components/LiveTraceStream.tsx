@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import type { AgentCallDto } from '../../../api/models';
@@ -30,9 +31,9 @@ export function LiveTraceStream({ traces, isLoading, freshIds }: LiveTraceStream
             auto-refresh · {traces.length} most recent
           </p>
         </div>
-        <button onClick={() => navigate('/traces')} className="text-body-sm font-medium text-accent-hover cursor-pointer">
+        <Button variant="link" className="text-body-sm" onClick={() => navigate('/traces')}>
           View all →
-        </button>
+        </Button>
       </header>
 
       <div className={`${LIVE_STREAM_GRID} px-1.5 pb-2.5 text-[9.5px] font-bold text-muted tracking-[0.12em] uppercase font-mono border-b border-border-subtle`}>

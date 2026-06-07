@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SearchHit } from '../../../api/search';
 import { UnifiedSearch } from '../../../components/search/UnifiedSearch';
+import { RowButton } from '../../../components/ui/RowButton';
 import { SearchIcon } from '../../../components/icons';
 
 interface Props {
@@ -31,11 +32,10 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
 
   return (
     <div ref={rootRef} className="relative w-full">
-      <button
-        type="button"
+      <RowButton
         onClick={() => setOpen(o => !o)}
         data-testid="test-result-picker"
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-left text-[12.5px] text-primary cursor-pointer transition-colors hover:bg-card-2"
+        className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card text-[12.5px] text-primary transition-colors hover:bg-card-2"
         aria-haspopup="listbox"
         aria-expanded={open}
         disabled={projectId == null}
@@ -45,7 +45,7 @@ export function TestResultPicker({ projectId, selectedLabel, onSelect }: Props) 
           {selectedLabel ?? (projectId == null ? 'Pick a project first.' : 'Search a past test result…')}
         </span>
         <span className="text-muted text-[10px]">▾</span>
-      </button>
+      </RowButton>
 
       {open && projectId != null && (
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30">

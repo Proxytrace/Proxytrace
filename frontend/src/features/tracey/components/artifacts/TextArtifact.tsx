@@ -1,6 +1,6 @@
 import { CodeBlock } from '../../../../components/ui/CodeBlock';
 import type { TextArtifact as TextArtifactData } from '../../tracey-artifacts';
-import { Markdown } from '../Markdown';
+import { Markdown } from '../../../../components/markdown/Markdown';
 
 /**
  * Renders a text artifact. Markdown is rendered through the shared, DESIGN-themed renderer

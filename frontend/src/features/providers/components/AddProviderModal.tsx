@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ModelProviderKind } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
 import { FormField } from '../../../components/ui/FormField';
-import { formInputCls } from '../../../components/ui/classes';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { PROVIDER_KIND_OPTIONS } from '../providerMeta';
 import { useCreateProvider } from '../hooks/useProviderMutations';
 
@@ -39,20 +40,20 @@ export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) 
       <div className="flex flex-col gap-3.5">
         {FIELDS.map(f => (
           <FormField key={f.key} label={f.label}>
-            <input
+            <Input
               data-testid={`provider-field-${f.key}`}
               type={f.type}
               value={form[f.key]}
               onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
               placeholder={f.placeholder}
-              className={`${formInputCls} ${f.mono ? 'font-mono' : ''}`}
+              className={f.mono ? 'font-mono' : undefined}
             />
           </FormField>
         ))}
         <FormField label="Provider kind">
-          <select data-testid="provider-field-kind" value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value as ModelProviderKind }))} className={formInputCls}>
+          <Select data-testid="provider-field-kind" value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value as ModelProviderKind }))}>
             {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          </Select>
         </FormField>
       </div>
     </Modal>

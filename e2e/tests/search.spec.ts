@@ -154,7 +154,7 @@ test.describe('Search', () => {
     await api.updateSearchSettings(project.id, { ...start, autoReindexOnChange: target });
 
     await page.goto('/settings', { waitUntil: 'load' });
-    await page.getByRole('button', { name: 'Search indexing' }).click();
+    await page.getByRole('tab', { name: 'Search indexing' }).click();
     await expect(page.getByTestId('search-indexing-tab')).toBeVisible();
     await page.getByTestId(`search-project-row-${project.id}`).click();
 

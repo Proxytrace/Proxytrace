@@ -1,3 +1,4 @@
+import { Button } from '../ui/Button';
 import { CheckIcon } from '../icons';
 import { cn } from '../../lib/cn';
 
@@ -73,21 +74,21 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
 
       {/* Navigation */}
       <div className="flex justify-between items-center pt-1">
-        <button type="button" className="btn-ghost" onClick={onBack} disabled={currentStep === 0}>
+        <Button variant="ghost" onClick={onBack} disabled={currentStep === 0}>
           ← Back
-        </button>
+        </Button>
         <div className="flex items-center gap-3">
           <span className="text-[11px] text-muted hidden sm:inline">
             Step {currentStep + 1} of {steps.length}
           </span>
           {isLast ? (
-            <button type="button" className="btn-primary" onClick={onSubmit} disabled={!canAdvance || loading}>
-              {loading ? 'Creating…' : submitLabel}
-            </button>
+            <Button variant="primary" onClick={onSubmit} disabled={!canAdvance} loading={loading}>
+              {submitLabel}
+            </Button>
           ) : (
-            <button type="button" className="btn-primary" onClick={onNext} disabled={!canAdvance}>
+            <Button variant="primary" onClick={onNext} disabled={!canAdvance}>
               Next →
-            </button>
+            </Button>
           )}
         </div>
       </div>

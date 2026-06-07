@@ -4,6 +4,9 @@ import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
 import { cn } from '../../lib/cn';
 import { fmtRelative } from '../../lib/format';
+import { IconButton } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
 
 interface Props {
@@ -29,30 +32,18 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
 
   return (
     <div className="flex flex-col gap-3 min-h-0">
-      <div className="relative">
-        <SearchIcon
-          size={13}
-          className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted"
-        />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search agents…"
-          className="w-full bg-card rounded-md pl-[30px] pr-[30px] py-[7px] text-body text-primary placeholder:text-muted outline-none border border-border-subtle focus:border-border transition-colors shadow-[var(--shadow-card)]"
-        />
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 btn-icon"
-            aria-label="Clear search"
-          >
-            <XIcon size={12} />
-          </button>
-        )}
-      </div>
+      <Input
+        leftAddon={<SearchIcon size={13} />}
+        rightAddon={search ? (
+          <IconButton size="sm" onClick={() => setSearch('')} aria-label="Clear search"><XIcon size={12} /></IconButton>
+        ) : undefined}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search agents…"
+      />
 
       {onToggleSystem && (
+        // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control)
         <button
           type="button"
           role="switch"
@@ -108,10 +99,10 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
   const initial = agent.name[0]?.toUpperCase() ?? '?';
 
   return (
-    <button
+    <RowButton
       onClick={onClick}
       data-testid={`agent-card-${agent.id}`}
-      className={`text-left rounded-lg relative overflow-hidden cursor-pointer transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] border-0 ${
+      className={`rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] ${
         selected ? '' : 'bg-card hover:bg-card-2 shadow-[var(--shadow-card)]'
       }`}
       style={
@@ -151,6 +142,6 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
         <span className="shrink-0">{agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}</span>
         <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
       </div>
-    </button>
+    </RowButton>
   );
 }

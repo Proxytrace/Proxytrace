@@ -1,6 +1,6 @@
-import { cn } from '../../../lib/cn';
 import { fmtPct, fmtLatency } from '../../../lib/format';
 import { AreaChart } from '../../../components/charts';
+import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { type RangeKey } from '../../../lib/time-range';
 import { EvaluatorKind, type EvaluatorDetailDto, type EvaluatorOverviewDto } from '../../../api/models';
 import { KIND_CATEGORY, passFractionSeries } from '../evaluatorMeta';
@@ -32,21 +32,12 @@ export function PerformancePanel({ evaluator: e, overview, range, onRangeChange 
         <span className="text-[11px] text-muted font-mono">
           {(summary?.totalEvaluations ?? 0).toLocaleString()} runs · {range}
         </span>
-        <div className="ml-auto flex gap-0.5 p-[3px] bg-card-2 rounded-md">
-          {RANGES.map(r => (
-            <button
-              key={r}
-              onClick={() => onRangeChange(r)}
-              aria-pressed={range === r}
-              className={cn(
-                'px-3 py-1 rounded-md text-[11px] font-medium border-0 cursor-pointer font-mono',
-                range === r
-                  ? 'bg-card text-primary shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_1px_2px_rgba(0,0,0,0.25)]'
-                  : 'bg-transparent text-muted',
-              )}
-            >{r}</button>
-          ))}
-        </div>
+        <SegmentedControl
+          className="ml-auto"
+          value={range}
+          onChange={onRangeChange}
+          segments={RANGES.map(r => ({ value: r, label: r }))}
+        />
       </div>
 
       <div className="grid grid-cols-4 border-b border-hairline">

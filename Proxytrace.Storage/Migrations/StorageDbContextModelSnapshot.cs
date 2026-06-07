@@ -470,6 +470,9 @@ namespace Proxytrace.Storage.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ABTestRunId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("Agent")
                         .HasColumnType("uuid");
 
@@ -524,6 +527,8 @@ namespace Proxytrace.Storage.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ABTestRunId");
 
                     b.HasIndex("Agent");
 
@@ -1002,6 +1007,11 @@ namespace Proxytrace.Storage.Migrations
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.OptimizationTheory.OptimizationTheoryEntity", b =>
                 {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestRun.TestRunEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ABTestRunId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
                         .WithMany()
                         .HasForeignKey("Agent")

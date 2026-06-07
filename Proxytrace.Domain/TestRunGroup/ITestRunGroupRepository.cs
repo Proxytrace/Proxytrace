@@ -12,12 +12,14 @@ public interface ITestRunGroupRepository : IRepository<ITestRunGroup>
         Guid agentId,
         int page,
         int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default);
 
     Task<PagedResult<ITestRunGroup>> GetByProjectPagedAsync(
         Guid projectId,
         int page,
         int pageSize,
+        bool includeSystem = false,
         CancellationToken cancellationToken = default);
 
     /// <summary>

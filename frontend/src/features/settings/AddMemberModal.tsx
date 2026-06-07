@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../../components/overlays/Modal';
 import { Avatar } from '../../components/ui/Avatar';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Input } from '../../components/ui/Input';
+import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { usersApi } from '../../api/users';
 import { LIST_PAGE_SIZE } from '../../lib/constants';
-import { formInputCls } from '../../components/ui/classes';
 
 interface AddMemberModalProps {
   excludeIds: string[];
@@ -45,12 +46,12 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
 
   return (
     <Modal title="Add member" onClose={onCancel}>
-      <input
+      <Input
         autoFocus
         value={query}
         onChange={e => setQuery(e.target.value)}
         placeholder="Search users by name…"
-        className={`${formInputCls} mb-3`}
+        className="mb-3"
       />
       <div className="max-h-[360px] overflow-y-auto border border-hairline rounded-[10px]" data-testid="add-member-modal">
         {isLoading ? (
@@ -62,13 +63,12 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
           />
         ) : (
           candidates.map(u => (
-            <button
+            <RowButton
               key={u.id}
-              type="button"
               data-testid={`add-member-candidate-${u.id}`}
               onClick={() => onPick(u.id)}
               disabled={loading}
-              className="flex items-center gap-3 w-full px-3 py-[10px] text-left text-[13px] bg-transparent border-none border-b border-hairline last:border-b-0 cursor-pointer hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-3 px-3 py-[10px] text-[13px] border-b border-hairline last:border-b-0 hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Avatar
                 initials={initials(u.email)}
@@ -76,7 +76,7 @@ export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMem
                 className="w-7 h-7 rounded-md text-[10px]"
               />
               <span className="text-primary font-semibold">{u.email}</span>
-            </button>
+            </RowButton>
           ))
         )}
       </div>

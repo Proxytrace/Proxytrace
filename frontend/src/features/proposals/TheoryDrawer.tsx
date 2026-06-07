@@ -9,7 +9,9 @@ interface Props {
   proposal: OptimizationProposalDto | null;
   suiteName: string | undefined;
   onSetStatus: (status: ProposalStatus) => void;
+  onReset: () => void;
   actionPending: boolean;
+  resetPending: boolean;
   onClose: () => void;
 }
 
@@ -17,7 +19,7 @@ interface Props {
  * Right-side detail for a board card: the theory's full lifecycle as a decision flow —
  * evidence → theory → A/B validation → proposal → outcome.
  */
-export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, actionPending, onClose }: Props) {
+export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending, onClose }: Props) {
   return (
     <Drawer
       title={`${theoryShortId(theory.id)} · ${KIND_META[theory.kind].label}`}
@@ -29,7 +31,9 @@ export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, actionP
         proposal={proposal}
         suiteName={suiteName}
         onSetStatus={onSetStatus}
+        onReset={onReset}
         actionPending={actionPending}
+        resetPending={resetPending}
       />
     </Drawer>
   );

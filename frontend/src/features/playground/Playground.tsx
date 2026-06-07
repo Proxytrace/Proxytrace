@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { PlayIcon, SearchIcon, TrashIcon } from '../../components/icons';
+import { IconButton } from '../../components/ui/Button';
 import { UnifiedSearch } from '../../components/search/UnifiedSearch';
 import { loadMessagesForHit } from './lib/seed';
 import { makeMessage, overridesFromAgent, usePlaygroundSession } from './state/usePlaygroundSession';
@@ -149,20 +150,16 @@ export default function Playground() {
             onPick={a => dispatch({ type: 'pickAgent', agent: a })}
             compact
           />
-          <button
-            type="button"
-            className="btn-icon"
+          <IconButton
             onClick={onClearConversation}
             disabled={!state.agentId || state.messages.length === 0}
             title="Clear conversation"
             aria-label="Clear conversation"
           >
             <TrashIcon size={13} strokeWidth={2.2} />
-          </button>
+          </IconButton>
           <div ref={seedAnchorRef} className="relative">
-            <button
-              type="button"
-              className="btn-icon"
+            <IconButton
               onClick={() => setShowSeed(o => !o)}
               disabled={!state.agentId}
               title="Load from trace or test case"
@@ -171,7 +168,7 @@ export default function Playground() {
               aria-haspopup="listbox"
             >
               <SearchIcon size={13} strokeWidth={2.2} />
-            </button>
+            </IconButton>
             {showSeed && (
               <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[480px] max-w-[80vw]">
                 <UnifiedSearch
@@ -193,9 +190,7 @@ export default function Playground() {
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className="btn-icon"
+          <IconButton
             onClick={onRunCompletion}
             disabled={!canRunCompletion}
             data-write
@@ -203,7 +198,7 @@ export default function Playground() {
             aria-label="Run completion on current conversation"
           >
             <PlayIcon size={13} strokeWidth={2.4} />
-          </button>
+          </IconButton>
           <div className="ml-auto">
             <CompletionStats stats={state.lastStats} streaming={state.isStreaming} />
           </div>

@@ -67,6 +67,14 @@ public interface IOptimizationTheory : IDomainEntity
     double? PValue { get; }
 
     /// <summary>
+    /// Id of the candidate (changed agent) A/B test run executed during validation, recorded once
+    /// the theory has been validated or invalidated. Null while still Proposed/Validating, or when
+    /// the run produced no comparable results. The run is a system run, surfaced in the runs view
+    /// only when A/B runs are explicitly shown.
+    /// </summary>
+    Guid? ABTestRunId { get; }
+
+    /// <summary>
     /// Deterministic fingerprint of <see cref="Agent"/> + <see cref="Kind"/> + proposed-change payload.
     /// Shares the same computation as <see cref="IOptimizationProposal.ContentHash"/> so theories and
     /// proposals deduplicate against each other.
@@ -79,6 +87,13 @@ public interface IOptimizationTheory : IDomainEntity
     Task<IOptimizationTheory> SetValidating(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Records the candidate A/B run id while the theory is still <see cref="TheoryStatus.Validating"/>,
+    /// so the in-flight run can be linked before the comparison completes. Idempotent; the final
+    /// <see cref="SetValidated"/>/<see cref="SetInvalidated"/> transition re-affirms the same id.
+    /// </summary>
+    Task<IOptimizationTheory> AttachAbTestRun(Guid abTestRunId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Transitions the theory to <see cref="TheoryStatus.Validated"/>, records the spawned proposal,
     /// and stores the A/B validation metrics that justified it.
     /// </summary>
@@ -87,6 +102,7 @@ public interface IOptimizationTheory : IDomainEntity
         double? baselinePassRate,
         double? projectedPassRate,
         double? pValue,
+        Guid? abTestRunId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -97,5 +113,14 @@ public interface IOptimizationTheory : IDomainEntity
         double? baselinePassRate,
         double? projectedPassRate,
         double? pValue,
+        Guid? abTestRunId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns a terminal theory (<see cref="TheoryStatus.Validated"/> or
+    /// <see cref="TheoryStatus.Invalidated"/>) to <see cref="TheoryStatus.Proposed"/>, clearing the
+    /// recorded proposal reference, A/B metrics, and run link so it can be validated afresh. Callers
+    /// are responsible for deleting any spawned proposal and re-queuing the theory.
+    /// </summary>
+    Task<IOptimizationTheory> ResetToProposed(CancellationToken cancellationToken = default);
 }

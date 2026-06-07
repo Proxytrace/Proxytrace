@@ -24,6 +24,7 @@ public record TheoryDto(
     double? BaselinePassRate,
     double? ProjectedPassRate,
     double? PValue,
+    Guid? AbTestRunId,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 

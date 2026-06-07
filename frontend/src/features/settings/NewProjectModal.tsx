@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { FormField } from '../../components/ui/FormField';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import type { ModelEndpointDto } from '../../api/models';
-import { formInputCls } from '../../components/ui/classes';
 
 interface NewProjectModalProps {
   endpoints: ModelEndpointDto[];
@@ -33,28 +34,23 @@ export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewP
     >
       <div className="flex flex-col gap-4" data-testid="new-project-modal">
         <FormField label="Name">
-          <input
+          <Input
             autoFocus
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="e.g. Production analytics"
             data-testid="project-name-input"
-            className={formInputCls}
           />
         </FormField>
         <FormField label="System endpoint">
-          <select
-            value={systemEndpointId}
-            onChange={e => setSystemEndpointId(e.target.value)}
-            className={formInputCls}
-          >
+          <Select value={systemEndpointId} onChange={e => setSystemEndpointId(e.target.value)}>
             {endpoints.length === 0 && <option value="">No endpoints available</option>}
             {endpoints.map(e => (
               <option key={e.id} value={e.id}>
                 {e.providerName} · {e.modelName}
               </option>
             ))}
-          </select>
+          </Select>
         </FormField>
       </div>
     </Modal>

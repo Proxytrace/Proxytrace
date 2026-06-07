@@ -1,6 +1,6 @@
 import type { KeyboardEvent } from 'react';
 import { FormField } from '../../../components/ui/FormField';
-import { formInputCls } from '../../../components/ui/classes';
+import { Input } from '../../../components/ui/Input';
 
 interface ProjectStepProps {
   projectName: string;
@@ -13,8 +13,7 @@ export function ProjectStep({ projectName, error, onProjectNameChange, onKeyDown
   return (
     <div className="flex flex-col gap-4">
       <FormField label="Project name" error={error ?? undefined}>
-        <input
-          className={formInputCls}
+        <Input
           placeholder="e.g. Customer Support Bot"
           value={projectName}
           onChange={e => onProjectNameChange(e.target.value)}

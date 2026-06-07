@@ -12,6 +12,7 @@ export function ToolChips() {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {QUICK_ACTIONS.map(action => (
+        // eslint-disable-next-line no-restricted-syntax -- Badge-wrapping quick-action chip (composer prefill)
         <button
           key={action.id}
           type="button"

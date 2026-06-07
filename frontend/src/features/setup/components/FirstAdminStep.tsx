@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { FormField } from '../../../components/ui/FormField';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { PasswordRequirements } from '../../../components/auth/PasswordRequirements';
-import { formInputCls } from '../../../components/ui/classes';
 import { localAuthApi } from '../../../auth/local/localAuthApi';
 import useLocalAuth from '../../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../../auth/password';
@@ -52,8 +53,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
           </p>
         </div>
         <FormField label="Email">
-          <input
-            className={formInputCls}
+          <Input
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
@@ -63,8 +63,7 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
           />
         </FormField>
         <FormField label="Password">
-          <input
-            className={formInputCls}
+          <Input
             type="password"
             autoComplete="new-password"
             value={password}
@@ -74,13 +73,14 @@ export function FirstAdminStep({ onDone }: FirstAdminStepProps) {
         </FormField>
         <PasswordRequirements password={password} />
         {err && <p className="text-sm text-danger">{err}</p>}
-        <button
+        <Button
           type="submit"
-          disabled={submitting || !passwordIsValid(password) || email.trim() === ''}
-          className="w-full rounded-[9px] bg-accent px-4 py-[10px] text-[13px] font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          fullWidth
+          loading={submitting}
+          disabled={!passwordIsValid(password) || email.trim() === ''}
         >
-          {submitting ? 'Creating…' : 'Create admin'}
-        </button>
+          Create admin
+        </Button>
       </form>
     </div>
   );

@@ -16,6 +16,7 @@ public interface ITestRunnerService
         IReadOnlyList<IModelEndpoint> endpoints,
         IAgent? customAgent = null,
         bool isSystemTestRun = false,
+        Func<ITestRunGroup, CancellationToken, Task>? onGroupCreated = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

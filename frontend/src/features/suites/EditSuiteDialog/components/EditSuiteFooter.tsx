@@ -1,3 +1,5 @@
+import { Button } from '../../../../components/ui/Button';
+
 interface Props {
   dirtyCount: number;
   saving: boolean;
@@ -12,17 +14,18 @@ export function EditSuiteFooter({ dirtyCount, saving, onCancel, onSave }: Props)
         {dirtyCount === 0 ? 'Up to date' : `Save will apply ${dirtyCount} change${dirtyCount === 1 ? '' : 's'}.`}
       </span>
       <div className="flex items-center gap-2">
-        <button className="btn-ghost" onClick={onCancel} disabled={saving}>
+        <Button variant="ghost" onClick={onCancel} disabled={saving}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           data-testid="edit-suite-save-btn"
-          className="btn-primary"
           onClick={onSave}
-          disabled={dirtyCount === 0 || saving}
+          loading={saving}
+          disabled={dirtyCount === 0}
         >
-          {saving ? 'Saving…' : 'Save changes'}
-        </button>
+          Save changes
+        </Button>
       </div>
     </div>
   );

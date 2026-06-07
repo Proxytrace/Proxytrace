@@ -188,6 +188,7 @@ DESIGN.md owns *which* tokens to use. This section owns *how* you apply them in 
 - **Extract repeated class strings to `components/ui/classes.ts`** when a class recipe is reused (the file already does this for inputs). A class string copy-pasted 3+ times is a missing `classes.ts` entry or a missing component.
 - **Inline `style={{}}` only for genuinely runtime-computed values** — a percent width from data, a runtime hex from `colors.ts`. Static values are Tailwind utilities (DESIGN.md §6). The 185 inline styles in `Evaluators.tsx` are almost all static and wrong; do not reproduce that.
 - **No new primitive when one exists.** Before writing a button/card/pill/modal, check `components/ui/` and `components/overlays/` (DESIGN.md §3 has the inventory). Reuse beats re-implement.
+- **No raw styled control elements.** `<button>`/`<input>`/`<select>`/`<textarea>` are ESLint-forbidden (`no-restricted-syntax`) outside the `components/ui/` primitive layer — render `Button`/`IconButton`/`RowButton`/`Input`/`Select`/`Textarea`/`Checkbox`/`Radio`/`Switch`/`SegmentedControl`/`Combobox`/`Tabs`/`Menu`/`Tooltip` instead. A genuinely bespoke control (range slider, labeled switch-pill, command palette, assistant-ui `asChild` target) is the documented exception: add a one-line `// eslint-disable-next-line no-restricted-syntax -- <reason>` directly above it. Radix-backed widgets (`Tabs`/`Menu`/`Tooltip`/`Combobox`) replace hand-rolled `createPortal` dropdowns.
 
 ---
 
@@ -374,6 +375,7 @@ Pair this with DESIGN.md §10 (visual checklist). Both must pass.
 - [ ] No `any`, no `as any`, no `!`.
 - [ ] Loading + empty + error states all present for async views.
 - [ ] Clickable = real button/anchor; icon-only has `aria-label`.
+- [ ] No raw `<button>`/`<input>`/`<select>`/`<textarea>` outside `components/ui/` — a primitive is used (or a justified `// eslint-disable-next-line no-restricted-syntax`).
 - [ ] Pure logic extracted to a `.ts` file and unit-tested.
 - [ ] New routes added to `ROUTES` in `e2e/tests/smoke.spec.ts`.
 - [ ] New CRUD flows covered by an E2E test in `e2e/tests/`.

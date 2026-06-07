@@ -4,6 +4,8 @@ import type { AgentCallDto, TestCaseDto } from '../../../api/models';
 import { agentCallsApi } from '../../../api/agent-calls';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { FilterTabs } from '../../../components/ui/FilterTabs';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SearchIcon, XIcon, PlusIcon } from '../../../components/icons';
@@ -77,19 +79,13 @@ export function TestCasesPanel({
         />
       </div>
 
-      <label className="flex items-center gap-2 px-3 rounded-[9px] bg-card-2 border border-border focus-within:border-[var(--accent-primary)] transition-colors cursor-text">
-        <SearchIcon size={13} />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder={sub === 'current' ? 'Search cases…' : 'Search traces…'}
-          className="flex-1 min-w-0 bg-transparent border-0 py-[8px] text-[13px] outline-none text-primary placeholder:text-muted"
-        />
-        {search && (
-          <button type="button" onClick={() => setSearch('')} className="text-[11px] text-muted hover:text-primary cursor-pointer bg-transparent border-0">clear</button>
-        )}
-      </label>
+      <Input
+        leftAddon={<SearchIcon size={13} />}
+        rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}>clear</Button> : undefined}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder={sub === 'current' ? 'Search cases…' : 'Search traces…'}
+      />
 
       <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card">
         {sub === 'current' && (
@@ -163,14 +159,15 @@ function CurrentCasesList({
               >
                 {snippet || <span className="text-muted italic">No user message</span>}
               </span>
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); onToggleRemove(tc.id); }}
-                className={removing ? 'text-[11px] text-accent font-semibold cursor-pointer bg-transparent border-0 shrink-0' : 'btn-icon btn-icon-danger shrink-0'}
-                title={removing ? 'Undo remove' : 'Remove'}
-              >
-                {removing ? 'Undo' : <XIcon size={12} />}
-              </button>
+              {removing ? (
+                <Button variant="link" className="text-[11px] shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(tc.id); }} title="Undo remove">
+                  Undo
+                </Button>
+              ) : (
+                <IconButton danger className="shrink-0" onClick={e => { e.stopPropagation(); onToggleRemove(tc.id); }} aria-label="Remove" title="Remove">
+                  <XIcon size={12} />
+                </IconButton>
+              )}
             </div>
             {removing && (
               <div className="mt-[3px] text-[10.5px] text-warn font-semibold uppercase tracking-[0.08em]">Pending removal</div>
@@ -232,17 +229,15 @@ function AddTracesList({
               <ColoredBadge color={modelColor(t.model)} label={t.model} dot size="sm" />
               <span className="text-[11px] font-mono text-muted shrink-0">{fmtRelative(t.createdAt)}</span>
               <span className="text-[11px] font-mono text-secondary shrink-0">{fmtTokens(t.inputTokens)}→{fmtTokens(t.outputTokens)}</span>
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                className={`ml-auto shrink-0 ${staged ? 'bg-accent-subtle border-accent text-accent' : ''}`}
+                leftIcon={staged ? <XIcon size={10} /> : <PlusIcon size={10} />}
                 onClick={e => { e.stopPropagation(); onToggleAdd(t.id); }}
-                className={`ml-auto inline-flex items-center gap-1 px-2 py-[3px] rounded-[6px] text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
-                  staged
-                    ? 'bg-[var(--accent-subtle)] border-[var(--accent-primary)] text-accent'
-                    : 'bg-card-2 border-border text-secondary hover:text-primary'
-                }`}
               >
-                {staged ? <><XIcon size={10} /> Staged</> : <><PlusIcon size={10} /> Add</>}
-              </button>
+                {staged ? 'Staged' : 'Add'}
+              </Button>
             </div>
             <div className="mt-[5px] text-[12px] text-secondary truncate min-w-0">
               {snippet ? snippet : <span className="text-muted italic">No user message</span>}

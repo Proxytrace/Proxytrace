@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 import { providersApi } from '../../../api/providers';
 import { cn } from '../../../lib/cn';
 
@@ -84,6 +86,7 @@ export function ComposeBox({
             : 'border-border shadow-[var(--shadow-pill)]',
         )}
       >
+        {/* eslint-disable-next-line no-restricted-syntax -- bespoke auto-resizing borderless composer textarea */}
         <textarea
           ref={taRef}
           data-testid="compose-box"
@@ -101,6 +104,7 @@ export function ComposeBox({
         <div className="flex items-center gap-[8px] px-[10px] pb-[8px] pt-[2px]">
           {onEndpointChange && (
             <div ref={pickerRef} className="relative">
+              {/* eslint-disable-next-line no-restricted-syntax -- bespoke endpoint pill trigger (ZapIcon + modified dot) */}
               <button
                 type="button"
                 onClick={() => setPickerOpen(o => !o)}
@@ -133,13 +137,13 @@ export function ComposeBox({
                   <div className="px-[10px] pt-[2px] pb-[6px] flex items-center justify-between">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Endpoint</span>
                     {defaultEndpointId && endpointId !== defaultEndpointId && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="link"
+                        className="text-[10px] uppercase tracking-[0.08em]"
                         onClick={() => { onEndpointChange(defaultEndpointId); setPickerOpen(false); }}
-                        className="text-[10px] font-semibold text-accent uppercase tracking-[0.08em] cursor-pointer"
                       >
                         Reset
-                      </button>
+                      </Button>
                     )}
                   </div>
                   {endpoints.length === 0 ? (
@@ -147,14 +151,14 @@ export function ComposeBox({
                   ) : endpoints.map(ep => {
                     const active = ep.id === endpointId;
                     return (
-                      <button
+                      <RowButton
                         key={ep.id}
                         role="option"
                         aria-selected={active}
                         onClick={() => { onEndpointChange(ep.id); setPickerOpen(false); }}
                         data-testid={`endpoint-picker-option-${ep.id}`}
                         className={cn(
-                          'w-full flex items-center gap-[8px] px-[10px] py-[6px] text-left cursor-pointer hover:bg-card transition-colors',
+                          'flex items-center gap-[8px] px-[10px] py-[6px] hover:bg-card transition-colors',
                           active && 'bg-accent-subtle',
                         )}
                       >
@@ -165,7 +169,7 @@ export function ComposeBox({
                           <span className="text-[10.5px] text-muted truncate mono">{ep.providerName}</span>
                         </div>
                         {active && <CheckIcon size={12} strokeWidth={2.5} />}
-                      </button>
+                      </RowButton>
                     );
                   })}
                 </div>
@@ -176,18 +180,17 @@ export function ComposeBox({
             <span title="Approximate tokens (chars / 4)">~{tokens} tok</span>
             <span>{text.length} chars</span>
           </div>
-          <button
-            type="button"
-            className="btn-primary inline-flex items-center gap-[8px] py-[6px] px-[12px] text-[12.5px]"
+          <Button
+            variant="primary"
+            className="gap-[8px] py-[6px] px-[12px] text-[12.5px]"
             onClick={send}
             disabled={!canSend}
-            data-write
             data-testid="compose-send"
             aria-label="Send message"
           >
             Send
             <span className="kbd-hint">⌘↵</span>
-          </button>
+          </Button>
         </div>
       </div>
       {disabled && disabledReason && (

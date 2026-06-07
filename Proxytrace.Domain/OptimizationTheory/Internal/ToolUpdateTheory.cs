@@ -45,11 +45,12 @@ internal record ToolUpdateTheory : OptimizationTheory, IToolUpdateTheory
         double? baselinePassRate,
         double? projectedPassRate,
         double? pValue,
+        Guid? abTestRunId,
         string contentHash,
         IDomainEntityData existing,
         IRepository<IOptimizationTheory> repository)
         : base(agent, suite, status, source, priority, rationale, evidenceTestRunIds,
-            resultingProposalId, baselinePassRate, projectedPassRate, pValue, contentHash, existing, repository)
+            resultingProposalId, baselinePassRate, projectedPassRate, pValue, abTestRunId, contentHash, existing, repository)
     {
         ProposedTools = proposedTools.ToArray();
     }

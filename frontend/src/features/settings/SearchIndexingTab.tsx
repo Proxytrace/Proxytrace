@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { type SearchIndexingSettings, type SearchKind } from '../../api/search';
+import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Input } from '../../components/ui/Input';
+import { RowButton } from '../../components/ui/RowButton';
 import { Skeleton, SkeletonList } from '../../components/ui/Skeleton';
 import { FormField } from '../../components/ui/FormField';
 import { SearchIcon, ZapIcon, ClockIcon } from '../../components/icons';
 import { fmtRelative } from '../../lib/format';
-import { formInputCls } from '../../components/ui/classes';
 import { useReindex, useSearchSettings, useSearchStatus, useUpdateSearchSettings } from './hooks/useSearchIndexing';
 import { useProjectSelection } from './hooks/useProjectSelection';
 import { StatusCell } from './components/StatusCell';
@@ -74,12 +76,7 @@ export function SearchIndexingTab() {
       {/* Project list */}
       <aside className="flex flex-col bg-card border border-hairline rounded-[14px] overflow-hidden">
         <div className="p-3 border-b border-hairline shrink-0">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search projects…"
-            className={formInputCls}
-          />
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" />
         </div>
         <div className="flex-1 overflow-y-auto">
           {projectsLoading ? (
@@ -90,12 +87,11 @@ export function SearchIndexingTab() {
             filtered.map(p => {
               const isActive = p.id === effectiveId;
               return (
-                <button
+                <RowButton
                   key={p.id}
-                  type="button"
                   data-testid={`search-project-row-${p.id}`}
                   onClick={() => setSelectedId(p.id)}
-                  className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
+                  className={`flex flex-col items-start gap-0.5 px-3 py-[10px] border-b border-hairline ${
                     isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
                   }`}
                 >
@@ -103,7 +99,7 @@ export function SearchIndexingTab() {
                   <span className="text-[11px] text-muted">
                     {p.members.length} {p.members.length === 1 ? 'member' : 'members'}
                   </span>
-                </button>
+                </RowButton>
               );
             })
           )}
@@ -138,16 +134,17 @@ export function SearchIndexingTab() {
             <div className="bg-card-2 border border-hairline rounded-[12px] p-4 flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-[14px] font-bold m-0 text-primary">Index status</h3>
-                <button
-                  onClick={() => reindex.mutate(selectedProject.id)}
-                  data-write
+                <Button
+                  variant="primary"
+                  size="sm"
                   data-testid="reindex-btn"
+                  leftIcon={<ZapIcon size={14} />}
+                  loading={reindex.isPending || status?.isReindexing}
                   disabled={reindex.isPending || status?.isReindexing}
-                  className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => reindex.mutate(selectedProject.id)}
                 >
-                  <ZapIcon size={14} />
-                  {status?.isReindexing || reindex.isPending ? 'Reindexing…' : 'Reindex now'}
-                </button>
+                  Reindex now
+                </Button>
               </div>
 
               {statusLoading && !status ? (
@@ -213,9 +210,11 @@ export function SearchIndexingTab() {
                       {KIND_OPTIONS.map(opt => {
                         const checked = draft.indexedKinds.includes(opt.value);
                         return (
+                          // eslint-disable-next-line no-restricted-syntax -- multi-select toggle pill; no Button variant fits this shape
                           <button
                             key={opt.value}
                             type="button"
+                            aria-pressed={checked}
                             onClick={() => toggleKind(opt.value)}
                             className={`px-3 py-[6px] rounded-full text-[12px] font-semibold cursor-pointer border transition-colors ${
                               checked
@@ -232,36 +231,36 @@ export function SearchIndexingTab() {
 
                   {/* Snippet length */}
                   <FormField label="Snippet length (characters)">
-                    <input
+                    <Input
                       type="number"
                       min={20}
                       max={1000}
                       value={draft.snippetLength}
-                      onChange={(e) =>
-                        setDraft({ ...draft, snippetLength: Number(e.target.value) || 0 })
-                      }
-                      className={`${formInputCls} max-w-[200px]`}
+                      onChange={(e) => setDraft({ ...draft, snippetLength: Number(e.target.value) || 0 })}
+                      className="max-w-[200px]"
                     />
                   </FormField>
 
                   {/* Save bar */}
                   <div className="flex items-center gap-2 pt-2 border-t border-hairline">
-                    <button
-                      onClick={() => updateSettings.mutate({ projectId: selectedProject.id, next: draft })}
-                      data-write
+                    <Button
+                      variant="primary"
+                      size="sm"
                       data-testid="search-settings-save-btn"
+                      loading={updateSettings.isPending}
                       disabled={!dirty || updateSettings.isPending}
-                      className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[12.5px] font-semibold text-white cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => updateSettings.mutate({ projectId: selectedProject.id, next: draft })}
                     >
-                      {updateSettings.isPending ? 'Saving…' : 'Save changes'}
-                    </button>
-                    <button
-                      onClick={() => settings && setDraft(settings)}
+                      Save changes
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       disabled={!dirty || updateSettings.isPending}
-                      className="px-4 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-hairline text-secondary hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={() => settings && setDraft(settings)}
                     >
                       Discard
-                    </button>
+                    </Button>
                     {dirty && (
                       <span className="text-[12px] text-muted ml-1">Unsaved changes.</span>
                     )}

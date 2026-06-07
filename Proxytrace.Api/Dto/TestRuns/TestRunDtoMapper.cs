@@ -15,7 +15,10 @@ public sealed class TestRunDtoMapper
 {
     public TestRunDto ToDto(ITestRun r)
     {
-        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Score >= EvaluationScore.Acceptable));
+        // A case passes only when it has been judged (≥1 evaluation) and every evaluation passed.
+        // Use the domain's error-aware IEvaluation.Passed — consistent with ITestResult.Passed and
+        // the frontend's isEvalPass — rather than re-deriving from Score (which ignores errors).
+        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Passed));
         var completed = r.TestResults.Count;
         var total = r.Group.Suite.TestCases.Count;
         var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;

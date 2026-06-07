@@ -3,6 +3,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Donut, type DonutSegment } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { RowButton } from '../../../components/ui/RowButton';
 import { agentColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
 import type { RangeKey } from '../../../lib/time-range';
@@ -53,7 +54,7 @@ export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) 
             <ul className="flex-1 min-w-0 flex flex-col gap-2.5">
               {visible.map(a => (
                 <li key={a.id} className="flex">
-                  <button
+                  <RowButton
                     data-testid={`token-by-agent-row-${a.id}`}
                     onClick={() => navigate(`/agents?id=${a.id}`)}
                     className={ROW_CLS}
@@ -65,12 +66,12 @@ export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) 
                     </span>
                     <span className="mono text-body text-primary tabular-nums shrink-0 w-16 text-right">{fmtTokens(a.tokens)}</span>
                     <span className="mono text-body text-muted tabular-nums shrink-0 w-10 text-right">{Math.round(a.share * 100)}%</span>
-                  </button>
+                  </RowButton>
                 </li>
               ))}
               {rest.length > 0 && (
                 <li className="flex">
-                  <button onClick={() => navigate('/agents')} className={`${ROW_CLS} text-muted font-mono`}>
+                  <RowButton onClick={() => navigate('/agents')} className={`${ROW_CLS} text-muted font-mono`}>
                     <span className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[var(--text-muted)]" />
                     <span className="text-body w-[34%] max-w-[220px] shrink-0 text-left group-hover:text-secondary transition-colors">+{rest.length} more</span>
                     <span className="flex-1 h-2 rounded-full bg-[var(--border-subtle)] overflow-hidden min-w-[40px]">
@@ -78,7 +79,7 @@ export function TokenByAgentSection({ share, range }: TokenByAgentSectionProps) 
                     </span>
                     <span className="text-body tabular-nums shrink-0 w-16 text-right">{fmtTokens(restTokens)}</span>
                     <span className="text-body tabular-nums shrink-0 w-10 text-right">{Math.round((restTokens / share.total) * 100)}%</span>
-                  </button>
+                  </RowButton>
                 </li>
               )}
             </ul>

@@ -9,7 +9,7 @@ function theory(overrides: Partial<TheoryDto> = {}): TheoryDto {
     agentId: 'a1', agentName: 'Agent', suiteId: 's1', priority: Priority.Medium, rationale: 'r',
     details: { kind: 'SystemPrompt', currentSystemMessage: 'a', proposedSystemMessage: 'b' },
     evidenceTestRunIds: ['r1', 'r2'], resultingProposalId: null,
-    baselinePassRate: null, projectedPassRate: null, pValue: null,
+    baselinePassRate: null, projectedPassRate: null, pValue: null, abTestRunId: null,
     createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z', ...overrides,
   };
 }

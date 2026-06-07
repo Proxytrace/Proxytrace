@@ -5,8 +5,9 @@ import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { DataTable, type DataColumn } from '../../../components/ui/DataTable';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { FormField } from '../../../components/ui/FormField';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { CopyIcon, PlusIcon, TrashIcon, XIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
 import { fmtDate } from '../../../lib/format';
 import { ingestionUrl } from '../../../lib/ingestion';
 import useToast from '../../../hooks/useToast';
@@ -100,12 +101,12 @@ export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTa
           <div className="text-title font-semibold text-primary">Generate new key</div>
           <div className="grid grid-cols-2 gap-2.5">
             <FormField label="Key name">
-              <input data-testid="key-name-input" value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" className={formInputCls} />
+              <Input data-testid="key-name-input" value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" />
             </FormField>
             <FormField label="Project">
-              <select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))} className={formInputCls}>
+              <Select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))}>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              </Select>
             </FormField>
           </div>
           <div className="flex gap-2 justify-end">

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '../overlays/Modal';
 import { XIcon } from '../icons';
+import { Button } from './Button';
 import { FormField } from './FormField';
+import { Textarea } from './Textarea';
 import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
 import { cn } from '../../lib/cn';
 
@@ -195,26 +197,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             )}
 
             <FormField label="Description">
-              <textarea
+              <Textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="What were you doing when this error occurred?"
                 rows={3}
-                className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary font-[inherit] outline-none transition-[border-color,box-shadow] duration-[var(--motion-fast)] focus:border-accent focus:ring-1 focus:ring-[color-mix(in_srgb,var(--accent-primary)_45%,transparent)] resize-none"
+                className="resize-none"
               />
             </FormField>
           </div>
 
           <div className="mt-5 flex justify-end gap-2">
-            <button className="btn-ghost" onClick={closeReport}>Cancel</button>
-            <button
-              data-write
-              className="btn-primary"
+            <Button variant="ghost" onClick={closeReport}>Cancel</Button>
+            <Button
+              variant="primary"
               onClick={handleSend}
-              disabled={sending || !description.trim()}
+              loading={sending}
+              disabled={!description.trim()}
             >
-              {sending ? 'Sending…' : 'Send report'}
-            </button>
+              Send report
+            </Button>
           </div>
         </Modal>
       )}

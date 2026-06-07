@@ -1,6 +1,6 @@
 import { MarkdownTextPrimitive } from '@assistant-ui/react-markdown';
 import remarkGfm from 'remark-gfm';
-import { markdownComponents } from './markdown-components';
+import { markdownComponents } from '../../../components/markdown/markdown-components';
 
 /**
  * Renders assistant message text as Markdown, themed with DESIGN.md tokens. Element overrides keep

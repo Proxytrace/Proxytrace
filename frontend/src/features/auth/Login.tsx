@@ -4,6 +4,8 @@ import { useAuth } from 'react-oidc-context';
 import { useAuthMode } from '../../auth/authMode';
 import { localAuthApi } from '../../auth/local/localAuthApi';
 import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
 import { BrandMark } from '../../components/ui/BrandMark';
@@ -20,7 +22,7 @@ export default function Login() {
 function OidcLogin() {
   const auth = useAuth();
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg text-fg">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface text-primary">
       <div className="flex items-center gap-3">
         <BrandMark size={36} />
         <span className="text-2xl font-bold tracking-[-0.02em] leading-none">
@@ -33,14 +35,9 @@ function OidcLogin() {
           {auth.error.message}
         </div>
       )}
-      <button
-        type="button"
-        className="rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-        onClick={() => void auth.signinRedirect()}
-        disabled={auth.isLoading}
-      >
-        {auth.isLoading ? 'Redirecting…' : 'Sign in'}
-      </button>
+      <Button loading={auth.isLoading} onClick={() => void auth.signinRedirect()}>
+        Sign in
+      </Button>
     </div>
   );
 }
@@ -54,10 +51,10 @@ function LocalLogin() {
   const [submitting, setSubmitting] = useState(false);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
+    <div className="flex min-h-screen items-center justify-center bg-surface text-primary">
       <form
         data-testid="login-form"
-        className="w-80 space-y-3 rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]"
+        className="w-80 space-y-3 rounded-xl border border-border bg-surface-2 p-6 shadow-[var(--shadow-card)]"
         onSubmit={async (e) => {
           e.preventDefault();
           setErr(null);
@@ -74,9 +71,8 @@ function LocalLogin() {
         }}
       >
         <h1 className="text-lg font-semibold">Sign in</h1>
-        <input
+        <Input
           data-testid="login-email"
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           placeholder="Email"
           type="email"
           autoComplete="email"
@@ -84,9 +80,8 @@ function LocalLogin() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <input
+        <Input
           data-testid="login-password"
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           placeholder="Password"
           type="password"
           autoComplete="current-password"
@@ -95,14 +90,9 @@ function LocalLogin() {
           required
         />
         {err && <p data-testid="login-error" className="text-sm text-danger">{err}</p>}
-        <button
-          data-testid="login-submit"
-          className="w-full rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          type="submit"
-          disabled={submitting}
-        >
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
+        <Button data-testid="login-submit" type="submit" fullWidth loading={submitting}>
+          Sign in
+        </Button>
       </form>
     </div>
   );
@@ -118,9 +108,9 @@ function LegacyClaim() {
   const valid = passwordIsValid(password);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
+    <div className="flex min-h-screen items-center justify-center bg-surface text-primary">
       <form
-        className="w-96 space-y-3 rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]"
+        className="w-96 space-y-3 rounded-xl border border-border bg-surface-2 p-6 shadow-[var(--shadow-card)]"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!valid) return;
@@ -141,8 +131,7 @@ function LegacyClaim() {
         <p className="text-xs text-muted">
           Local authentication was enabled on this install. Confirm your email and choose a password to finish migrating your existing user.
         </p>
-        <input
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+        <Input
           placeholder="Email"
           type="email"
           autoComplete="email"
@@ -150,8 +139,7 @@ function LegacyClaim() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <input
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+        <Input
           placeholder="New password"
           type="password"
           autoComplete="new-password"
@@ -161,13 +149,9 @@ function LegacyClaim() {
         />
         <PasswordRequirements password={password} />
         {err && <p className="text-sm text-danger">{err}</p>}
-        <button
-          className="w-full rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          type="submit"
-          disabled={submitting || !valid}
-        >
-          {submitting ? 'Setting password…' : 'Set password & sign in'}
-        </button>
+        <Button type="submit" fullWidth loading={submitting} disabled={!valid}>
+          Set password &amp; sign in
+        </Button>
       </form>
     </div>
   );
