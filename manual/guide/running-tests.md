@@ -14,18 +14,21 @@ Each case in the suite is executed against the agent, and every attached
 
 ## Watching progress
 
-Runs stream their progress live via Server-Sent Events, without refreshing the page. You see
-the run unfold at two levels of detail:
+Runs stream their progress live via Server-Sent Events, without refreshing the page.
 
-- In the **test case matrix**, an in-flight case shows a pulsing indicator with the evaluators
-  that have reported so far (e.g. `2/3`) — so a long-running case isn't a blank cell.
-- In the **evaluator breakdown**, each evaluator's score distribution grows as its individual
-  judgements arrive, not only when a whole case finishes.
+The **run header** shows a progress bar with three pieces of information at a glance:
+`cases done / total · overall % · estimated time remaining`. The ETA updates continuously
+as judgements arrive, so you always know roughly when the run will settle.
 
-Pass rate is always shown over the cases **judged so far**, so the live number matches the
-final one as it climbs — it never starts near zero and jumps at the end. Related runs can be
-grouped together (a **test run group**) so you can compare, for example, the same suite across
-several agent versions.
+In the **test case matrix**, each cell contains one slot per evaluator attached to the suite.
+Slots start grey (queued) and fill with color as each evaluator reports back — green for pass,
+red for fail, amber for error. You can watch individual judgements land in real time rather
+than waiting for every evaluator in a case to finish before anything appears.
+
+Pass rate is always shown over the cases **judged so far**, so the live number tracks
+smoothly toward the final value — it never starts near zero and jumps at the end. Related
+runs can be grouped together (a **test run group**) so you can compare, for example, the
+same suite across several agent versions.
 
 ### A/B validation runs
 
@@ -37,21 +40,30 @@ theory's *View run* link also reveals the linked A/B run automatically and selec
 
 ## Reading results
 
-A completed run gives you:
+### Test case matrix
 
-- **Test case matrix** — one row per case, one column per endpoint, showing each
-  evaluator's verdict and latency. The same table layout is used whether you ran against
-  a single endpoint or several, so divergent rows are easy to spot when comparing models.
-  Click any cell or row to open the full input/output and evaluator detail.
-- **Aggregate metrics** — pass rates and scores rolled up across the suite.
-- **Comparisons** — how this run stacks up against previous runs of the same suite.
+The matrix shows one row per case and one column per model (endpoint). Each cell contains
+one slot per evaluator — the same layout is used whether the run targets a single model or
+several. Click any cell to open the **comparison drawer**: it shows the case input, each
+model's full output, and the per-evaluator verdicts side by side, so divergent behaviour is
+easy to spot without leaving the page.
 
-When you open a case, each model column has a **Request** button. It shows the exact
-request that run sends to the model — the resolved model name, the full message list (with
-the agent's system prompt merged in), and the **tool definitions** the model receives. Use
-it to confirm the agent is offering the tools a case expects; if a tool is missing here, the
-model can't call it. The request is rebuilt on demand from the agent's current configuration,
-so it reflects what a re-run would send.
+Each model column also has a **Request** button. It shows the exact request that run sends to
+the model — the resolved model name, the full message list (with the agent's system prompt
+merged in), and the **tool definitions** the model receives. Use it to confirm the agent is
+offering the tools a case expects; if a tool is missing here, the model can't call it. The
+request is rebuilt on demand from the agent's current configuration, so it reflects what a
+re-run would send.
+
+### Per-model performance summary
+
+Every run — single-model and multi-model alike — includes a **per-model performance summary**
+below the matrix. It shows pass rate, average latency, and cost for each model in the run.
+The numbers update live while the run is in progress.
+
+**Best / Fast / Cheap** winner badges and comparative coloring (highlighting which model won
+each metric) appear only once the entire run group has finished. During an active run the
+summary is visible but stays neutral — no model is crowned a winner until all results are in.
 
 ## What runs feed into
 
