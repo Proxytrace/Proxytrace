@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../api/models';
 import { EvaluatorTestBench } from './EvaluatorTestBench';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Select } from '../../components/ui/Select';
 import { ScaleIcon, BeakerIcon } from '../../components/icons';
 import { useEvaluatorList } from './hooks/useEvaluatorList';
 
@@ -94,21 +95,23 @@ function PageHeader({ evaluator, evaluators, onSelect, loading }: {
         >
           Evaluator
         </label>
-        <select
-          id="evaluator-playground-select"
-          data-testid="evaluator-playground-select"
-          value={evaluator?.id ?? ''}
-          onChange={e => onSelect(e.target.value)}
-          disabled={loading || evaluators.length === 0}
-          className="px-2.5 py-1.5 rounded-md bg-card-2 border border-hairline text-[12px] text-primary outline-none focus:ring-1 focus:ring-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 min-w-[200px]"
-        >
-          {evaluators.length === 0 && <option value="">No evaluators</option>}
-          {evaluators.map(e => (
-            <option key={e.id} value={e.id}>
-              {e.name} · {KIND_LABEL[e.kind]}
-            </option>
-          ))}
-        </select>
+        <div className="min-w-[200px]">
+          <Select
+            id="evaluator-playground-select"
+            data-testid="evaluator-playground-select"
+            inputSize="sm"
+            value={evaluator?.id ?? ''}
+            onChange={e => onSelect(e.target.value)}
+            disabled={loading || evaluators.length === 0}
+          >
+            {evaluators.length === 0 && <option value="">No evaluators</option>}
+            {evaluators.map(e => (
+              <option key={e.id} value={e.id}>
+                {e.name} · {KIND_LABEL[e.kind]}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
     </header>
   );

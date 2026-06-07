@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Modal } from '../../../components/overlays/Modal';
+import { IconButton } from '../../../components/ui/Button';
 import { ExpandIcon, ChevronDownIcon } from '../../../components/icons';
 
 interface WidgetProps {
@@ -68,14 +69,13 @@ export function Widget({
           <div className="ml-auto flex items-center gap-2" onClick={e => e.stopPropagation()}>
             {right}
             {hasExpand && (
-              <button
+              <IconButton
                 onClick={() => setExpanded(true)}
-                className="btn-icon"
                 title="Expand"
                 aria-label={`Expand ${title ?? 'widget'}`}
               >
                 <ExpandIcon size={13} />
-              </button>
+              </IconButton>
             )}
           </div>
         </div>

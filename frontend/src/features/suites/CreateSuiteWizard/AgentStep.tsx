@@ -1,6 +1,7 @@
 import type { AgentDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { RowButton } from '../../../components/ui/RowButton';
 
 interface Props {
   agents: AgentDto[];
@@ -20,12 +21,11 @@ export function AgentStep({ agents, value, onChange }: Props) {
           const c = agentColor(a.id);
           const selected = value === a.id;
           return (
-            <button
+            <RowButton
               key={a.id}
-              type="button"
               data-testid={`wizard-agent-option-${a.id}`}
               onClick={() => onChange(a.id)}
-              className="text-left rounded-[10px] cursor-pointer transition-colors duration-150"
+              className="rounded-[10px] transition-colors duration-150"
               style={{
                 padding: '12px 14px',
                 border: `1px solid ${selected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
@@ -37,7 +37,7 @@ export function AgentStep({ agents, value, onChange }: Props) {
                 <span className="text-[13px] font-semibold">{a.name}</span>
               </div>
               <div className="text-[11px] text-muted mt-1">{a.projectName}</div>
-            </button>
+            </RowButton>
           );
         })}
       </div>

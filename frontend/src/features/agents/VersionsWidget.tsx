@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AgentDto, AgentVersionDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { fmtDate } from '../../lib/format';
+import { Button } from '../../components/ui/Button';
 import { Widget } from './widgets/Widget';
 import { MoveVersionDialog } from './widgets/MoveVersionDialog';
 import { useAgentVersions } from './hooks/useAgentVersions';
@@ -91,9 +92,10 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-caption text-muted">
                     <span>{v.tools.length} tool{v.tools.length === 1 ? '' : 's'}</span>
-                    <button
-                      type="button"
-                      className="ml-auto shrink-0 text-muted hover:text-primary transition-colors duration-100 cursor-pointer"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto text-muted"
                       onClick={e => {
                         e.stopPropagation();
                         setMoving(v);
@@ -101,7 +103,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                       data-testid={`agent-version-move-btn-${v.versionNumber}`}
                     >
                       Move…
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </li>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 import type { ToolSpecDto } from '../../../api/models';
 import { Input } from '../../../components/ui/Input';
+import { RowButton } from '../../../components/ui/RowButton';
 import { ChevronDownIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
 
@@ -74,6 +75,7 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
         onChange={e => { onChange(e.target.value); if (!open) setOpen(true); }}
         onFocus={() => setOpen(true)}
       />
+      {/* eslint-disable-next-line no-restricted-syntax -- inline chevron affordance positioned inside the field (tabIndex -1) */}
       <button
         type="button"
         tabIndex={-1}
@@ -99,20 +101,19 @@ export function ToolNameCombobox({ value, tools, invalid, onChange, onPickTool }
             <div className="px-[10px] py-2 text-[12px] text-muted">No matching tools — keep typing for a custom name.</div>
           ) : (
             matches.map(tool => (
-              <button
+              <RowButton
                 key={tool.name}
-                type="button"
                 role="option"
                 aria-selected={tool.name === value}
                 onClick={() => { onPickTool(tool); close(); }}
-                className="w-full flex flex-col items-start gap-[1px] px-[10px] py-[7px] text-left cursor-pointer transition-colors duration-100 hover:bg-[rgba(255,255,255,0.05)]"
+                className="flex flex-col items-start gap-[1px] px-[10px] py-[7px] transition-colors duration-100 hover:bg-[rgba(255,255,255,0.05)]"
               >
                 <span className="mono text-[12.5px] text-primary truncate max-w-full">{tool.name}</span>
                 <span className="text-[10.5px] text-muted truncate max-w-full">
                   {tool.arguments.length} param{tool.arguments.length !== 1 ? 's' : ''}
                   {tool.description ? ` · ${tool.description}` : ''}
                 </span>
-              </button>
+              </RowButton>
             ))
           )}
         </div>,

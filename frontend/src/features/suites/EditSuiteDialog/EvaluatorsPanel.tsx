@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { EVALUATOR_KIND_COLOR, EVALUATOR_KIND_CATEGORY } from '../../../lib/colors';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SearchIcon, CheckIcon } from '../../../components/icons';
@@ -31,19 +33,13 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
         <DiffSummary baseline={baselineIds} staged={stagedIds} />
       </div>
 
-      <label className="flex items-center gap-2 px-3 rounded-[9px] bg-card-2 border border-border focus-within:border-[var(--accent-primary)] transition-colors cursor-text">
-        <SearchIcon size={13} />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search evaluators…"
-          className="flex-1 min-w-0 bg-transparent border-0 py-[8px] text-[13px] outline-none text-primary placeholder:text-muted"
-        />
-        {search && (
-          <button type="button" onClick={() => setSearch('')} className="text-[11px] text-muted hover:text-primary cursor-pointer bg-transparent border-0">clear</button>
-        )}
-      </label>
+      <Input
+        leftAddon={<SearchIcon size={13} />}
+        rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}>clear</Button> : undefined}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="Search evaluators…"
+      />
 
       <div className="flex-1 min-h-0 overflow-y-auto rounded-[12px] border border-border bg-card p-1">
         {evaluators.length === 0 && (
@@ -77,6 +73,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                   }}
                 >
                   <div className="flex items-center gap-2">
+                    {/* eslint-disable-next-line no-restricted-syntax -- per-kind colored checkbox toggle (data-driven color) */}
                     <button
                       type="button"
                       data-testid={`edit-suite-evaluator-toggle-${e.id}`}

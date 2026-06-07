@@ -3,6 +3,7 @@ import { ComposerPrimitive, useComposer, useComposerRuntime } from '@assistant-u
 import { QUICK_ACTIONS } from '../tracey-quick-actions';
 import { TRACEY_TOOLS_META } from '../tracey-tools';
 import { ArrowUpIcon, MessagePlusIcon, SparklesIcon } from '../../../components/icons';
+import { IconButton } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
 import { SlashMenu, type SlashItem } from './SlashMenu';
 import { ToolChips } from './ToolChips';
@@ -32,6 +33,7 @@ function matches(item: SlashItem, query: string): boolean {
 /** Pill-style toggle that gates write tools behind a confirmation prompt when off. */
 function AutoApproveToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
   return (
+    // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label)
     <button
       type="button"
       role="switch"
@@ -148,15 +150,13 @@ export function TraceyComposer({ autoApprove, setAutoApprove, onClear, showStart
           <div className="flex items-center justify-between gap-2">
             <AutoApproveToggle checked={autoApprove} onChange={setAutoApprove} />
             <div className="flex items-center gap-1">
-              <button
-                type="button"
+              <IconButton
                 onClick={onClear}
                 aria-label="New conversation"
                 title="New conversation"
-                className="btn-icon"
               >
                 <MessagePlusIcon size={16} />
-              </button>
+              </IconButton>
               <ComposerPrimitive.Send
                 aria-label="Send"
                 title="Send"

@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { localAuthApi } from '../../auth/local/localAuthApi';
 import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
 
@@ -24,7 +26,7 @@ export default function Signup() {
 
   if (expired) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg p-6 text-center text-fg">
+      <div className="flex min-h-screen items-center justify-center bg-surface p-6 text-center text-primary">
         <div>
           <h1 className="text-lg font-semibold">Invite expired or already used</h1>
           <p className="mt-2 text-sm text-muted">Ask an admin for a new invite link.</p>
@@ -36,9 +38,9 @@ export default function Signup() {
   if (!preview) return null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg text-fg">
+    <div className="flex min-h-screen items-center justify-center bg-surface text-primary">
       <form
-        className="w-96 space-y-3 rounded-xl border border-border bg-surface p-6 shadow-[var(--shadow-card)]"
+        className="w-96 space-y-3 rounded-xl border border-border bg-surface-2 p-6 shadow-[var(--shadow-card)]"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!passwordIsValid(password)) return;
@@ -57,16 +59,11 @@ export default function Signup() {
       >
         <h1 className="text-lg font-semibold">Create your account</h1>
         <p className="text-xs text-muted">
-          Role: <span className="text-fg">{preview.role}</span>
+          Role: <span className="text-primary">{preview.role}</span>
         </p>
-        <input
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-muted"
-          value={preview.email}
-          readOnly
-        />
-        <input
+        <Input value={preview.email} readOnly className="text-muted" />
+        <Input
           data-testid="signup-password"
-          className="w-full rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           type="password"
           placeholder="Password"
           autoComplete="new-password"
@@ -76,14 +73,9 @@ export default function Signup() {
         />
         <PasswordRequirements password={password} />
         {err && <p data-testid="signup-error" className="text-sm text-danger">{err}</p>}
-        <button
-          data-testid="signup-submit"
-          className="w-full rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          type="submit"
-          disabled={submitting || !passwordIsValid(password)}
-        >
-          {submitting ? 'Creating…' : 'Create account'}
-        </button>
+        <Button data-testid="signup-submit" type="submit" fullWidth loading={submitting} disabled={!passwordIsValid(password)}>
+          Create account
+        </Button>
       </form>
     </div>
   );

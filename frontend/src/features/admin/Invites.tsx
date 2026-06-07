@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { InviteRow } from '../../api/invites';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { useCreateInvite, useInvites, useRevokeInvite } from './hooks/useInvites';
 import { inviteStatus } from './invitesMeta';
 
@@ -36,46 +39,39 @@ export default function Invites() {
           submit();
         }}
       >
-        <input
-          className="rounded border border-border bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
-          placeholder="Email"
-          type="email"
-          data-testid="invite-email-input"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <select
-          className="rounded border border-border bg-bg px-3 py-2 text-sm"
-          data-testid="invite-role-select"
-          value={role}
-          onChange={(e) => setRole(e.target.value as typeof role)}
-        >
-          <option>Viewer</option>
-          <option>Member</option>
-          <option>Admin</option>
-        </select>
-        <button
-          className="rounded bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
-          type="submit"
-          data-write
-          data-testid="invite-create-btn"
-          disabled={create.isPending}
-        >
-          {create.isPending ? 'Creating…' : 'Create invite'}
-        </button>
+        <div className="w-64">
+          <Input
+            placeholder="Email"
+            type="email"
+            data-testid="invite-email-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="w-40">
+          <Select
+            data-testid="invite-role-select"
+            value={role}
+            onChange={(e) => setRole(e.target.value as typeof role)}
+          >
+            <option>Viewer</option>
+            <option>Member</option>
+            <option>Admin</option>
+          </Select>
+        </div>
+        <Button type="submit" loading={create.isPending} data-testid="invite-create-btn">
+          Create invite
+        </Button>
       </form>
 
       {createdUrl && (
         <div className="flex items-center gap-2 rounded border border-border bg-surface p-3 text-sm">
           <span className="text-muted">Share this link:</span>
           <code className="flex-1 truncate">{createdUrl}</code>
-          <button
-            onClick={copy}
-            className="rounded border border-border px-2 py-1 text-xs hover:bg-surface-2"
-          >
+          <Button variant="secondary" size="sm" onClick={copy}>
             {copied ? 'Copied!' : 'Copy'}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -103,14 +99,15 @@ export default function Invites() {
                   <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
                   <td className="py-2 text-right">
                     {!i.consumedAt && (
-                      <button
-                        onClick={() => revoke.mutate(i.id)}
+                      <Button
+                        variant="link"
                         data-write
                         data-testid={`invite-revoke-btn-${i.id}`}
-                        className="text-xs text-danger hover:underline"
+                        onClick={() => revoke.mutate(i.id)}
+                        className="text-danger hover:text-danger text-body-sm"
                       >
                         Revoke
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>

@@ -1,7 +1,8 @@
 import type { ModelEndpointDto, TestSuiteDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { PlayFilledIcon } from '../../../components/icons';
-import { cn } from '../../../lib/cn';
+import { Button } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 
 interface Props {
   suite: TestSuiteDto;
@@ -42,10 +43,10 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
             const mc = modelColor(ep.modelName);
             const isOn = selectedEndpoints.has(ep.id);
             return (
-              <button
+              <RowButton
                 key={ep.id}
                 onClick={() => onToggle(ep.id)}
-                className="flex items-center gap-[10px] px-3 py-[9px] rounded-md text-left transition-all duration-[120ms] cursor-pointer"
+                className="flex items-center gap-[10px] px-3 py-[9px] rounded-md transition-all duration-[120ms]"
                 style={{
                   background: isOn ? `color-mix(in srgb, ${mc} 8%, transparent)` : 'var(--bg-card-2)',
                   boxShadow: isOn
@@ -71,7 +72,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
                   {ep.modelName}
                 </span>
                 <span className="text-[11px] text-muted">{ep.providerName}</span>
-              </button>
+              </RowButton>
             );
           })}
 
@@ -84,32 +85,18 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
       </div>
 
       <div className="flex gap-2 justify-end">
-        <button
-          onClick={onCancel}
-          className="px-[18px] py-[9px] bg-card-2 rounded-[10px] text-body font-medium text-secondary shadow-[var(--shadow-pill)]"
-        >
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           onClick={onSubmit}
-          disabled={loading || !hasSelection}
-          className={cn(
-            'px-5 py-[9px] rounded-[10px] text-body font-semibold inline-flex items-center gap-[7px] transition-all duration-[150ms]',
-            hasSelection
-              ? 'bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)]'
-              : 'bg-card-2 text-muted shadow-none',
-            loading ? 'opacity-70' : 'opacity-100',
-          )}
+          disabled={!hasSelection}
+          loading={loading}
+          leftIcon={<PlayFilledIcon size={12} />}
         >
-          {loading ? (
-            <>
-              <span className="w-3 h-3 rounded-full border-2 border-[rgba(255,255,255,0.3)] border-t-white animate-spin block" />
-              Running…
-            </>
-          ) : (
-            <><PlayFilledIcon size={12} /> {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}</>
-          )}
-        </button>
+          {isMulti ? `Run on ${selectedEndpoints.size} endpoints` : 'Start run'}
+        </Button>
       </div>
     </>
   );

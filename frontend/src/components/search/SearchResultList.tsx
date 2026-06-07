@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { SearchHit, SearchKind } from '../../api/search';
+import { RowButton } from '../ui/RowButton';
 import { searchHitToHref } from '../../lib/search-routes';
 import { KIND_META } from './searchMeta';
 import {
@@ -84,16 +85,15 @@ export function SearchResultList({
                   </>
                 );
                 return onSelect ? (
-                  <button
+                  <RowButton
                     key={`${hit.kind}-${hit.entityId}`}
-                    type="button"
                     data-testid={`search-result-${hit.entityId}`}
                     onMouseEnter={() => onHover(globalIndex)}
                     onClick={() => onCommit(hit)}
                     className={itemCls}
                   >
                     {itemContent}
-                  </button>
+                  </RowButton>
                 ) : (
                   <Link
                     key={`${hit.kind}-${hit.entityId}`}

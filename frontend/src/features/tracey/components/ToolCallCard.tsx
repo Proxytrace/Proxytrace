@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { CheckIcon, ChevronRightIcon, XIcon } from '../../../components/icons';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
+import { RowButton } from '../../../components/ui/RowButton';
 import { cn } from '../../../lib/cn';
 
 type ToolStatus = 'pending' | 'success' | 'failed';
@@ -82,11 +83,10 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
 
   return (
     <div className="my-1 rounded-md border border-hairline bg-card text-xs">
-      <button
-        type="button"
+      <RowButton
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
+        className="flex items-center gap-2 px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
       >
         <ChevronRightIcon
           size={12}
@@ -99,7 +99,7 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
           )}
           <StatusBadge status={toolStatus} />
         </span>
-      </button>
+      </RowButton>
 
       {open && (
         <div className="space-y-2 border-t border-hairline px-2.5 py-2">

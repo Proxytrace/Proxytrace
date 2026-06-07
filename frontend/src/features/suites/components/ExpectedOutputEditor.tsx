@@ -1,5 +1,6 @@
 import type { ToolRequestInputDto, ToolSpecDto } from '../../../api/models';
 import { Textarea } from '../../../components/ui/Textarea';
+import { Button, IconButton } from '../../../components/ui/Button';
 import { FilterTabs } from '../../../components/ui/FilterTabs';
 import { PlusIcon, TrashIcon } from '../../../components/icons';
 import { cn } from '../../../lib/cn';
@@ -86,14 +87,9 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
                     onChange={name => setRow(i, { name })}
                     onPickTool={tool => pickTool(i, tool)}
                   />
-                  <button
-                    type="button"
-                    aria-label="Remove tool request"
-                    onClick={() => removeRow(i)}
-                    className="btn-icon cursor-pointer shrink-0"
-                  >
+                  <IconButton aria-label="Remove tool request" onClick={() => removeRow(i)} className="shrink-0">
                     <TrashIcon size={14} />
-                  </button>
+                  </IconButton>
                 </div>
                 <Textarea
                   className={cn('mono text-[12px]', fill && 'flex-1 min-h-0 resize-none')}
@@ -110,13 +106,15 @@ export function ExpectedOutputEditor({ value, tools, onChange, fill }: Props) {
             );
           })}
 
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            fullWidth
+            className="shrink-0 text-accent border border-dashed border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)] hover:bg-accent-subtle"
+            leftIcon={<PlusIcon size={13} strokeWidth={2.5} />}
             onClick={addRow}
-            className="shrink-0 flex items-center justify-center gap-1.5 text-[12px] text-accent border border-dashed border-[color-mix(in_srgb,var(--accent-primary)_40%,transparent)] rounded-md py-2 cursor-pointer hover:bg-accent-subtle transition-colors"
           >
-            <PlusIcon size={13} strokeWidth={2.5} /> Add tool request
-          </button>
+            Add tool request
+          </Button>
         </div>
       )}
     </div>

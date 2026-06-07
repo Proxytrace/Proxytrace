@@ -15,7 +15,8 @@ import {
   validateExpected,
 } from '../suites/components/expectedOutput';
 import useToast from '../../hooks/useToast';
-import { Button } from '../../components/ui/Button';
+import { Button, IconButton } from '../../components/ui/Button';
+import { RowButton } from '../../components/ui/RowButton';
 
 interface Props {
   trace: AgentCallDto;
@@ -78,13 +79,9 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
           </div>
           <ColoredBadge color={aColor} label={agentLabel} dot size="md" />
           <span className="mono text-[11px] text-muted">{trace.id.slice(0, 10)}…</span>
-          <button
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="btn-icon cursor-pointer"
-          >
+          <IconButton onClick={onClose} aria-label="Close dialog">
             <XIcon size={14} />
-          </button>
+          </IconButton>
         </div>
 
         {/* Body — two columns */}
@@ -139,13 +136,12 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
               {suites.map(s => {
                 const isSel = s.id === suiteId;
                 return (
-                  <button
+                  <RowButton
                     key={s.id}
-                    type="button"
                     data-testid={`promote-suite-option-${s.id}`}
                     onClick={() => setSuiteId(s.id)}
                     className={cn(
-                      'text-left rounded-md px-3 py-2.5 cursor-pointer transition-all duration-150 flex items-start gap-2',
+                      'rounded-md px-3 py-2.5 transition-all duration-150 flex items-start gap-2',
                       isSel
                         ? 'bg-accent-subtle shadow-[inset_0_0_0_1.5px_color-mix(in_srgb,var(--accent-primary)_67%,transparent)]'
                         : 'bg-card-2 shadow-[inset_0_0_0_1px_var(--border-color)]',
@@ -169,7 +165,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                         {s.testCases.length} case{s.testCases.length !== 1 ? 's' : ''} · {s.evaluators.length} evaluator{s.evaluators.length !== 1 ? 's' : ''}
                       </span>
                     </span>
-                  </button>
+                  </RowButton>
                 );
               })}
             </div>

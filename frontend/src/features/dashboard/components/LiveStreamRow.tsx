@@ -2,6 +2,7 @@
 // collapsed multi-turn conversation summary. Clicking drills into the Traces tab.
 
 import { Pill } from '../../../components/ui/Pill';
+import { RowButton } from '../../../components/ui/RowButton';
 import { modelColor, statusColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
 import { firstUserMessage } from '../../../lib/trace';
@@ -28,7 +29,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
     const sc = statusColor(t.httpStatus);
     const isFresh = freshIds.has(t.id);
     return (
-      <button
+      <RowButton
         data-testid={`live-trace-row-${t.id}`}
         onClick={() => onSelect(t.id)}
         className={`${rowCls} ${isFresh ? 'slide-in' : ''}`}
@@ -42,7 +43,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
         <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{t.httpStatus}</span>
         <span className="text-secondary text-right min-w-[54px]">{fmtTokens(t.inputTokens + t.outputTokens)}</span>
         <span className="text-muted text-right min-w-[58px]">{fmtLatency(t.durationMs)}</span>
-      </button>
+      </RowButton>
     );
   }
 
@@ -54,7 +55,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
   const sc = allOk ? 'var(--success)' : 'var(--warn)';
   const isFresh = turns.some(t => freshIds.has(t.id));
   return (
-    <button
+    <RowButton
       data-testid={`live-trace-group-${conversationId}`}
       onClick={() => onSelect(head.id)}
       className={`${rowCls} ${isFresh ? 'slide-in' : ''}`}
@@ -70,6 +71,6 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
       <span className="text-[10.5px] font-semibold text-center" style={{ color: sc }}>{allOk ? '2xx' : 'mixed'}</span>
       <span className="text-secondary text-right min-w-[54px]">{fmtTokens(totalTokens)}</span>
       <span className="text-muted text-right min-w-[58px]">{fmtLatency(totalMs)}</span>
-    </button>
+    </RowButton>
   );
 }

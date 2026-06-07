@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CopyIcon, CheckIcon, GitCompareIcon, ChevronDownIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
 import { useAgentVersions } from '../hooks/useAgentVersions';
 import { Widget } from './Widget';
 import { SystemPromptDiffDialog } from './SystemPromptDiffDialog';
@@ -48,27 +49,27 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
     <div className="flex items-center gap-2">
       {meta}
       {previous && !isEmpty && (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setDiffOpen(true)}
           data-testid="system-prompt-diff-btn"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium bg-card-2 text-secondary hover:text-primary cursor-pointer transition-colors duration-150"
+          leftIcon={<GitCompareIcon size={12} />}
         >
-          <GitCompareIcon size={12} />
           Diff vs v{previous.versionNumber}
-        </button>
+        </Button>
       )}
       {clipped && (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => setExpanded(e => !e)}
           aria-expanded={expanded}
           data-testid="system-prompt-expand-btn"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium bg-card-2 text-secondary hover:text-primary cursor-pointer transition-colors duration-150"
+          leftIcon={<ChevronDownIcon size={12} className={`transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />}
         >
-          <ChevronDownIcon size={12} className={`transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`} />
           {expanded ? 'Collapse' : 'Expand'}
-        </button>
+        </Button>
       )}
       <CopyButton value={trimmed} disabled={isEmpty} />
     </div>
@@ -118,8 +119,9 @@ export function SystemPromptWidget({ agentId, systemMessage, activeVersion, isLa
 function CopyButton({ value, disabled }: { value: string; disabled?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
+      size="sm"
       disabled={disabled}
       onClick={() => {
         navigator.clipboard.writeText(value).catch(() => {});
@@ -127,10 +129,9 @@ function CopyButton({ value, disabled }: { value: string; disabled?: boolean }) 
         setTimeout(() => setCopied(false), 1500);
       }}
       aria-label="Copy system prompt"
-      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-body-sm font-medium bg-card-2 text-secondary hover:text-primary cursor-pointer transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+      leftIcon={copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
     >
-      {copied ? <CheckIcon size={11} /> : <CopyIcon size={11} />}
       {copied ? 'Copied' : 'Copy'}
-    </button>
+    </Button>
   );
 }

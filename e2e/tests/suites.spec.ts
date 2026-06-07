@@ -277,11 +277,11 @@ test.describe('Test Suites', () => {
     await page.getByRole('button', { name: /All agents/ }).click();
 
     // The suite-owning agent is offered; the suite-less agent is not.
-    await expect(page.getByRole('option', { name: new RegExp(suiteAgentName) })).toBeVisible();
-    await expect(page.getByRole('option', { name: new RegExp(emptyAgentName) })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name: new RegExp(suiteAgentName) })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: new RegExp(emptyAgentName) })).toHaveCount(0);
 
     // Selecting the suite-owning agent narrows the list to its suite.
-    await page.getByRole('option', { name: new RegExp(suiteAgentName) }).click();
+    await page.getByRole('menuitem', { name: new RegExp(suiteAgentName) }).click();
     await expect(page.getByTestId('suite-list')).toContainText('Filterable Suite');
   });
 });

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { JsonBlock } from '../../../components/ui/JsonBlock';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Textarea } from '../../../components/ui/Textarea';
+import { XIcon } from '../../../components/icons';
 import type { PlaygroundToolRequest } from '../state/types';
 
 interface Props {
@@ -45,7 +47,7 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
         <span className="font-bold text-success">Tool requested:</span>
         <span>{request.name}</span>
         <span className="text-muted text-[10px]">{request.id}</span>
-        <button className="btn-icon ml-auto" onClick={onCancel} title="Cancel turn">✕</button>
+        <IconButton className="ml-auto" onClick={onCancel} title="Cancel turn" aria-label="Cancel turn"><XIcon size={13} /></IconButton>
       </div>
 
       <div>
@@ -54,12 +56,14 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       </div>
 
       <div className="flex items-center gap-1 border-b border-border">
+        {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
           className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'result' ? 'border-success text-primary' : 'border-transparent text-muted'}`}
           onClick={() => { setTab('result'); setValidationError(null); }}
         >
           Provide result
         </button>
+        {/* eslint-disable-next-line no-restricted-syntax -- semantic result/error tabs (success/danger underline by state) */}
         <button
           className={`px-3 py-[6px] text-[11.5px] font-semibold border-b-2 ${tab === 'error' ? 'border-danger text-primary' : 'border-transparent text-muted'}`}
           onClick={() => { setTab('error'); setValidationError(null); }}
@@ -69,16 +73,15 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       </div>
 
       {tab === 'result' ? (
-        <textarea
-          className={`${formInputCls} resize-y font-mono text-[12px]`}
+        <Textarea
+          className="font-mono text-[12px]"
           rows={6}
           value={resultText}
           onChange={e => { setResultText(e.target.value); setValidationError(null); }}
           placeholder='{"result": "..."}'
         />
       ) : (
-        <textarea
-          className={`${formInputCls} resize-y`}
+        <Textarea
           rows={4}
           value={errorText}
           onChange={e => { setErrorText(e.target.value); setValidationError(null); }}
@@ -91,10 +94,10 @@ export function ToolRequestPrompt({ request, onSubmit, onCancel }: Props) {
       )}
 
       <div className="flex items-center justify-end gap-2">
-        <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-        <button data-write className={tab === 'error' ? 'btn-danger' : 'btn-primary'} onClick={submit}>
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button variant={tab === 'error' ? 'danger' : 'primary'} onClick={submit}>
           {tab === 'error' ? 'Send error' : 'Send result'}
-        </button>
+        </Button>
       </div>
     </div>
   );

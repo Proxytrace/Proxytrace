@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Modal } from './Modal';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 interface ConfirmDialogProps {
   entityName: string;
@@ -19,22 +21,21 @@ export function ConfirmDialog({ entityName, displayName, onConfirm, onCancel, lo
       onClose={onCancel}
       footer={
         <>
-          <button className="btn-ghost" onClick={onCancel}>Cancel</button>
-          <button data-write className="btn-danger" onClick={onConfirm} disabled={!match || loading}>
-            {loading ? 'Deleting…' : 'Delete'}
-          </button>
+          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+          <Button variant="danger" onClick={onConfirm} disabled={!match} loading={loading}>
+            Delete
+          </Button>
         </>
       }
     >
       <p className="text-[13px] text-secondary m-0 mb-4">
         This action cannot be undone. Type <strong className="text-primary">{entityName}</strong> to confirm.
       </p>
-      <input
+      <Input
         autoFocus
         value={input}
         onChange={e => setInput(e.target.value)}
         placeholder={entityName}
-        className="w-full px-3 py-[9px] bg-surface border border-border rounded-lg text-[13px] text-primary font-[inherit] outline-none"
       />
     </Modal>
   );

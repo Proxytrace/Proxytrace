@@ -1,5 +1,6 @@
 import { SearchIcon } from '../../../components/icons';
 import { FilterDropdown } from '../../../components/ui/FilterDropdown';
+import { Input } from '../../../components/ui/Input';
 import { agentColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
 import { RANGES } from '../tracesMeta';
@@ -23,13 +24,12 @@ export function TraceToolbar({
 }: Props) {
   return (
     <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0 [animation-delay:80ms]">
-      <div className="flex-1 min-w-[260px] max-w-[420px] flex items-center gap-2 px-3 py-2 bg-card rounded-[10px] text-body-title text-muted shadow-[var(--shadow-pill)]">
-        <SearchIcon size={13} className="shrink-0" />
-        <input
+      <div className="flex-1 min-w-[260px] max-w-[420px]">
+        <Input
+          leftAddon={<SearchIcon size={13} />}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search by trace ID, content, or model…"
-          className="flex-1 bg-transparent border-none outline-none text-primary text-body-title font-[inherit]"
         />
       </div>
 
@@ -55,6 +55,7 @@ export function TraceToolbar({
         width={140}
       />
 
+      {/* eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control) */}
       <button
         type="button"
         role="switch"

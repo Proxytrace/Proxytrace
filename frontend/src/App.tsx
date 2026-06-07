@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
 import { Shell } from './components/layout/Shell';
 import { ToastProvider } from './components/ui/Toast';
+import { TooltipProvider } from './components/ui/Tooltip';
 import { UpgradeModalProvider, showUpgradeModal } from './components/license/UpgradeModal';
 import { UpgradeRequiredError } from './api/client';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -238,9 +239,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <UpgradeModalProvider>
-          <ModeShell />
-        </UpgradeModalProvider>
+        <TooltipProvider>
+          <UpgradeModalProvider>
+            <ModeShell />
+          </UpgradeModalProvider>
+        </TooltipProvider>
       </ToastProvider>
     </QueryClientProvider>
   );

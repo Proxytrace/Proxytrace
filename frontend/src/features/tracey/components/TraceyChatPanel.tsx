@@ -1,5 +1,6 @@
 import { useThread } from '@assistant-ui/react';
 import { SparklesIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
 import { cn } from '../../../lib/cn';
 import type { TraceyChat } from '../useTraceyChat';
 import { TraceyConversation } from '../TraceyConversation';
@@ -41,12 +42,12 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
             <div className="rounded-lg border border-[color-mix(in_srgb,var(--warn)_35%,transparent)] bg-warn-subtle px-3 py-2.5">
               <div className="text-[13px] text-primary">{pendingConfirmation.summary}</div>
               <div className="mt-2 flex gap-2">
-                <button onClick={() => resolveConfirmation(true)} className="btn-primary px-3 py-1 text-xs">
+                <Button variant="primary" size="sm" onClick={() => resolveConfirmation(true)}>
                   Confirm
-                </button>
-                <button onClick={() => resolveConfirmation(false)} className="btn-ghost px-3 py-1 text-xs">
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => resolveConfirmation(false)}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           </div>

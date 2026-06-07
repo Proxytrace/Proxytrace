@@ -1,16 +1,20 @@
+import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
+import { Label } from './Label';
 
 interface FormFieldProps {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  htmlFor?: string;
+  required?: boolean;
+  children: ReactNode;
   className?: string;
 }
 
-export function FormField({ label, error, children, className }: FormFieldProps) {
+export function FormField({ label, error, htmlFor, required, children, className }: FormFieldProps) {
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <label className="text-caption font-semibold text-muted uppercase tracking-[0.05em]">{label}</label>
+      <Label htmlFor={htmlFor} required={required}>{label}</Label>
       {children}
       {error && <span className="text-body-sm text-danger">{error}</span>}
     </div>

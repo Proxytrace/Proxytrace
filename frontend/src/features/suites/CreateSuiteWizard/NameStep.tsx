@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { FormField } from '../../../components/ui/FormField';
-import { formInputCls } from '../../../components/ui/classes';
+import { Input } from '../../../components/ui/Input';
 
 interface Preset {
   key: string;
@@ -46,6 +46,7 @@ export function NameStep({ value, onChange }: Props) {
           {PRESETS.map(p => {
             const selected = active === p.key;
             return (
+              // eslint-disable-next-line no-restricted-syntax -- single-select preset toggle pill
               <button
                 key={p.key}
                 type="button"
@@ -61,6 +62,7 @@ export function NameStep({ value, onChange }: Props) {
               </button>
             );
           })}
+          {/* eslint-disable-next-line no-restricted-syntax -- "custom name" toggle pill */}
           <button
             type="button"
             onClick={() => { setActive(null); onChange(''); inputRef.current?.focus(); }}
@@ -76,14 +78,13 @@ export function NameStep({ value, onChange }: Props) {
       </div>
 
       <FormField label="Suite name">
-        <input
+        <Input
           ref={inputRef}
           data-testid="wizard-name-input"
           value={value}
           onChange={e => { setActive(null); onChange(e.target.value); }}
           placeholder="My regression suite"
           autoFocus
-          className={formInputCls}
         />
       </FormField>
     </div>

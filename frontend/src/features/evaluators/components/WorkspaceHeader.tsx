@@ -1,6 +1,7 @@
 import { cn } from '../../../lib/cn';
 import { fmtRelative } from '../../../lib/format';
 import { PlayFilledIcon, EditPencilIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
 import { TypeIconBox } from './TypeIconBox';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import { KIND_CATEGORY, TYPE_META } from '../evaluatorMeta';
@@ -43,27 +44,20 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <button
-            onClick={onTestBench}
-            className="px-3 py-2 rounded-md text-[12px] text-primary inline-flex items-center gap-1.5 border border-subtle bg-card-2 cursor-pointer"
-          >
-            <PlayFilledIcon size={11} /> Test
-          </button>
-          <button
-            onClick={onDelete}
-            data-write
+          <Button variant="secondary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onTestBench}>
+            Test
+          </Button>
+          <Button
+            variant="dangerOutline"
+            size="sm"
             data-testid={`evaluator-delete-btn-${e.id}`}
-            className="px-3 py-2 rounded-md text-[12px] text-danger inline-flex items-center gap-1.5 border border-[color-mix(in_srgb,var(--danger)_22%,transparent)] bg-danger-subtle cursor-pointer"
+            onClick={onDelete}
           >
             Delete
-          </button>
-          <button
-            onClick={onEdit}
-            data-write
-            className="px-3.5 py-2 rounded-md text-[12px] font-semibold text-white border-0 inline-flex items-center gap-1.5 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
-          >
-            <EditPencilIcon size={11} /> Edit
-          </button>
+          </Button>
+          <Button variant="primary" size="sm" leftIcon={<EditPencilIcon size={11} />} onClick={onEdit}>
+            Edit
+          </Button>
         </div>
       </div>
     </header>

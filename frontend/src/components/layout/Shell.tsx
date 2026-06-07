@@ -9,6 +9,7 @@ import { LicenseBadge } from '../license/LicenseBadge';
 import { GracePeriodBanner } from '../license/GracePeriodBanner';
 import { QuotaBanner } from '../license/QuotaBanner';
 import { Avatar } from '../ui/Avatar';
+import { IconButton } from '../ui/Button';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
@@ -239,9 +240,9 @@ export function Shell() {
         <header
           className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
-          <button onClick={() => setCollapsed(c => !c)} className="btn-icon">
+          <IconButton onClick={() => setCollapsed(c => !c)} aria-label="Toggle sidebar">
             <LayoutSidebarIcon size={16} />
-          </button>
+          </IconButton>
 
           <div className="flex items-center gap-2 text-[13px]">
             <span className="text-muted">{currentProject?.name ?? '—'}</span>
@@ -274,26 +275,25 @@ export function Shell() {
           <LicenseBadge />
 
           {traceyAvailable && (
-            <button
-              type="button"
+            <IconButton
               data-testid="tracey-toggle"
               onClick={() => navigate('/tracey-ai')}
               title="Tracey — AI assistant"
-              className={cn('btn-icon', location.pathname.startsWith('/tracey-ai') && 'text-accent')}
+              aria-label="Tracey — AI assistant"
+              className={cn(location.pathname.startsWith('/tracey-ai') && 'text-accent')}
             >
               <MessageSparkleIcon size={16} />
-            </button>
+            </IconButton>
           )}
 
-          <button
-            type="button"
+          <IconButton
             data-testid="logout-btn"
             onClick={() => currentUser?.signOut()}
             title={`Sign out (${userName})`}
-            className="cursor-pointer"
+            aria-label={`Sign out (${userName})`}
           >
             <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
-          </button>
+          </IconButton>
         </header>
 
         {/* Page content — single vertical scroll container for the app */}

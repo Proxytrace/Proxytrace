@@ -69,6 +69,7 @@ export default function Runs() {
               accent={agentFilter ? agentColor(agentFilter) : undefined}
               width={240}
             />
+            {/* eslint-disable-next-line no-restricted-syntax -- single bespoke filter toggle pill */}
             <button
               type="button"
               onClick={() => setShowSystem(v => !v)}

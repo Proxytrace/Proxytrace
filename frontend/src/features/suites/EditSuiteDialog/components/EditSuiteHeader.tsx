@@ -1,5 +1,6 @@
 import type { TestSuiteDto } from '../../../../api/models';
 import { XIcon } from '../../../../components/icons';
+import { IconButton } from '../../../../components/ui/Button';
 
 interface Props {
   suite: TestSuiteDto;
@@ -49,9 +50,9 @@ export function EditSuiteHeader({ suite, agentColorHex: c, onClose }: Props) {
           )}
         </div>
       </div>
-      <button onClick={onClose} className="btn-icon shrink-0" aria-label="Close dialog">
+      <IconButton onClick={onClose} className="shrink-0" aria-label="Close dialog">
         <XIcon size={14} />
-      </button>
+      </IconButton>
     </div>
   );
 }

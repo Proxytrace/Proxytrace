@@ -301,42 +301,7 @@ a { text-decoration: none; color: inherit; }
   border-left-color: var(--accent-primary);
 }
 
-/* ── Buttons ── */
-.btn-primary {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--accent-primary), #a57038);
-  color: #fff;
-  transition: opacity 0.15s;
-}
-.btn-primary:hover { opacity: 0.88; }
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.btn-ghost {
-  padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s;
-}
-.btn-ghost:hover { background: var(--bg-card); color: var(--text-primary); }
-
-.btn-danger {
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  background: var(--danger-subtle);
-  color: var(--danger);
-  border: 1px solid rgba(239,68,68,0.2);
-  transition: background 0.15s;
-}
-.btn-danger:hover { background: rgba(239,68,68,0.2); }
-.btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+/* ── Buttons (icon-only; text buttons are the <Button> primitive in components/ui) ── */
 
 .btn-icon {
   display: inline-flex;
@@ -354,6 +319,7 @@ a { text-decoration: none; color: inherit; }
 .btn-icon:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
 .btn-icon.btn-icon-danger { color: var(--danger); }
 .btn-icon.btn-icon-danger:hover { background: rgba(217,85,85,0.12); color: var(--danger); }
+.btn-icon-sm { padding: 4px; border-radius: 6px; }
 
 /* ── Cards ── */
 .dash-card {
@@ -523,12 +489,8 @@ a { text-decoration: none; color: inherit; }
   letter-spacing: 0.04em;
 }
 
-/* ── kiosk read-only: disable write actions ── */
-body.kiosk [data-write],
-body.kiosk .btn-primary,
-body.kiosk .btn-danger,
-body.kiosk .btn-success,
-body.kiosk .btn-icon-danger {
+/* ── kiosk read-only: disable write actions (every write control emits data-write) ── */
+body.kiosk [data-write] {
   opacity: 0.4 !important;
   pointer-events: none !important;
   cursor: not-allowed !important;

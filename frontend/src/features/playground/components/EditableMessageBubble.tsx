@@ -6,7 +6,8 @@ import {
   TrashIcon,
 } from '../../../components/icons';
 import { ToolCallBlock } from '../../../components/conversation/ToolCallBlock';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { Textarea } from '../../../components/ui/Textarea';
 import type { PlaygroundMessage, PlaygroundRole } from '../state/types';
 
 interface RoleStyle {
@@ -143,23 +144,23 @@ export function EditableMessageBubble(props: Props) {
           <span className="text-[10px] text-danger mono uppercase tracking-[0.05em]">error</span>
         )}
         <div className="ml-auto flex items-center gap-[2px] opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-          <button type="button" className="btn-icon" title="Edit" onClick={beginEdit} aria-label="Edit" data-testid="editable-message-edit">
+          <IconButton title="Edit" onClick={beginEdit} aria-label="Edit" data-testid="editable-message-edit">
             <EditIcon size={12} strokeWidth={2.2} />
-          </button>
-          <button type="button" className="btn-icon" title="Copy to clipboard" onClick={copyContent} aria-label="Copy to clipboard">
+          </IconButton>
+          <IconButton title="Copy to clipboard" onClick={copyContent} aria-label="Copy to clipboard">
             <CopyIcon size={12} strokeWidth={2.2} />
-          </button>
-          <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={onDelete} aria-label="Delete">
+          </IconButton>
+          <IconButton danger title="Delete" onClick={onDelete} aria-label="Delete">
             <TrashIcon size={12} strokeWidth={2.2} />
-          </button>
+          </IconButton>
         </div>
       </div>
 
       <div className="px-[16px] pb-[12px]">
         {editing ? (
           <div className="flex flex-col gap-[8px]">
-            <textarea
-              className={`${formInputCls} resize-y mono text-[12.5px]`}
+            <Textarea
+              className="mono text-[12.5px]"
               rows={Math.min(20, Math.max(3, draft.split('\n').length + 1))}
               value={draft}
               onChange={e => setDraft(e.target.value)}
@@ -167,8 +168,8 @@ export function EditableMessageBubble(props: Props) {
               data-testid="editable-message-input"
             />
             <div className="flex items-center gap-2 justify-end">
-              <button className="btn-ghost" onClick={() => setEditing(false)}>Cancel</button>
-              <button className="btn-primary" onClick={saveEdit} data-testid="editable-message-save">Save</button>
+              <Button variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+              <Button variant="primary" onClick={saveEdit} data-testid="editable-message-save">Save</Button>
             </div>
           </div>
         ) : (

@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import type { ProjectMemberDto } from '../../api/models';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
+import { Button, IconButton } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { Avatar } from '../../components/ui/Avatar';
 import { FormField } from '../../components/ui/FormField';
@@ -9,7 +13,6 @@ import { PlusIcon, TrashIcon, EditIcon, CheckIcon, XIcon } from '../../component
 import { fmtDate } from '../../lib/format';
 import { NewProjectModal } from './NewProjectModal';
 import { AddMemberModal } from './AddMemberModal';
-import { formInputCls } from '../../components/ui/classes';
 import { initials, colorFor, endpointLabel } from './projectsMeta';
 import {
   useModelEndpoints, useProject,
@@ -49,21 +52,17 @@ export function ProjectsTab() {
       {/* List */}
       <aside className="flex flex-col bg-card border border-hairline rounded-[14px] overflow-hidden">
         <div className="p-3 border-b border-hairline shrink-0 flex flex-col gap-2">
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search projects…"
-            className={formInputCls}
-          />
-          <button
-            onClick={() => setShowNew(true)}
-            data-write
+          <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects…" />
+          <Button
+            variant="primary"
+            size="sm"
+            fullWidth
             data-testid="project-create-btn"
-            className="flex items-center justify-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-white whitespace-nowrap shrink-0 cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
+            leftIcon={<PlusIcon size={14} />}
+            onClick={() => setShowNew(true)}
           >
-            <PlusIcon size={14} />
             New project
-          </button>
+          </Button>
         </div>
         <div className="flex-1 overflow-y-auto">
           {projectsLoading ? (
@@ -74,12 +73,11 @@ export function ProjectsTab() {
             filtered.map(p => {
               const isActive = p.id === effectiveId;
               return (
-                <button
+                <RowButton
                   key={p.id}
-                  type="button"
                   data-testid={`project-row-${p.id}`}
                   onClick={() => setSelectedId(p.id)}
-                  className={`flex flex-col items-start gap-0.5 w-full px-3 py-[10px] text-left bg-transparent border-none border-b border-hairline cursor-pointer ${
+                  className={`flex flex-col items-start gap-0.5 px-3 py-[10px] border-b border-hairline ${
                     isActive ? 'bg-[color-mix(in_srgb,_var(--accent-primary)_6%,_transparent)]' : 'hover:bg-[color-mix(in_srgb,_var(--accent-primary)_4%,_transparent)]'
                   }`}
                 >
@@ -87,7 +85,7 @@ export function ProjectsTab() {
                   <span className="text-[11px] text-muted" data-testid={`project-row-members-${p.id}`}>
                     {p.members.length} {p.members.length === 1 ? 'member' : 'members'}
                   </span>
-                </button>
+                </RowButton>
               );
             })
           )}
@@ -108,15 +106,14 @@ export function ProjectsTab() {
               <div className="min-w-0 flex-1">
                 {editName ? (
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       autoFocus
                       value={nameDraft}
                       onChange={e => setNameDraft(e.target.value)}
-                      className={formInputCls}
                     />
-                    <button
-                      className="btn-icon"
+                    <IconButton
                       data-write
+                      aria-label="Save name"
                       onClick={() =>
                         updateProject.mutate(
                           { id: selected.id, req: { name: nameDraft.trim(), systemEndpointId: selected.systemEndpointId } },
@@ -126,32 +123,32 @@ export function ProjectsTab() {
                       disabled={!nameDraft.trim() || nameDraft.trim() === selected.name}
                     >
                       <CheckIcon size={14} />
-                    </button>
-                    <button className="btn-icon" onClick={() => { setEditName(false); setNameDraft(selected.name); }}>
+                    </IconButton>
+                    <IconButton aria-label="Cancel" onClick={() => { setEditName(false); setNameDraft(selected.name); }}>
                       <XIcon size={14} />
-                    </button>
+                    </IconButton>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <h2 className="text-[20px] font-bold m-0 text-primary truncate">{selected.name}</h2>
-                    <button className="btn-icon" data-write onClick={() => { setNameDraft(selected.name); setEditName(true); }}>
+                    <IconButton data-write aria-label="Edit name" onClick={() => { setNameDraft(selected.name); setEditName(true); }}>
                       <EditIcon size={14} />
-                    </button>
+                    </IconButton>
                   </div>
                 )}
                 <div className="text-[12px] text-muted mt-1">
                   Created {fmtDate(selected.createdAt)} · Updated {fmtDate(selected.updatedAt)}
                 </div>
               </div>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                data-write
+              <Button
+                variant="dangerOutline"
+                size="sm"
                 data-testid="project-delete-btn"
-                className="flex items-center gap-1.5 px-3 py-[7px] rounded-lg text-[12.5px] font-semibold cursor-pointer bg-transparent border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] text-danger hover:bg-danger-subtle"
+                leftIcon={<TrashIcon size={14} />}
+                onClick={() => setConfirmDelete(true)}
               >
-                <TrashIcon size={14} />
                 Delete
-              </button>
+              </Button>
             </div>
 
             {/* System endpoint */}
@@ -159,21 +156,22 @@ export function ProjectsTab() {
               <FormField label="System endpoint">
                 {editEndpoint ? (
                   <div className="flex items-center gap-2">
-                    <select
-                      autoFocus
-                      value={endpointDraft}
-                      onChange={e => setEndpointDraft(e.target.value)}
-                      className={formInputCls}
-                    >
-                      {endpoints.map(e => (
-                        <option key={e.id} value={e.id}>
-                          {e.providerName} · {e.modelName}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      className="btn-icon"
+                    <div className="flex-1 min-w-0">
+                      <Select
+                        autoFocus
+                        value={endpointDraft}
+                        onChange={e => setEndpointDraft(e.target.value)}
+                      >
+                        {endpoints.map(e => (
+                          <option key={e.id} value={e.id}>
+                            {e.providerName} · {e.modelName}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <IconButton
                       data-write
+                      aria-label="Save endpoint"
                       onClick={() =>
                         updateProject.mutate(
                           { id: selected.id, req: { name: selected.name, systemEndpointId: endpointDraft } },
@@ -183,22 +181,22 @@ export function ProjectsTab() {
                       disabled={endpointDraft === selected.systemEndpointId}
                     >
                       <CheckIcon size={14} />
-                    </button>
-                    <button
-                      className="btn-icon"
+                    </IconButton>
+                    <IconButton
+                      aria-label="Cancel"
                       onClick={() => { setEditEndpoint(false); setEndpointDraft(selected.systemEndpointId); }}
                     >
                       <XIcon size={14} />
-                    </button>
+                    </IconButton>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] text-primary">
                       {endpointLabel(endpoints, selected.systemEndpointId)}
                     </span>
-                    <button className="btn-icon" data-write onClick={() => { setEndpointDraft(selected.systemEndpointId); setEditEndpoint(true); }}>
+                    <IconButton data-write aria-label="Edit endpoint" onClick={() => { setEndpointDraft(selected.systemEndpointId); setEditEndpoint(true); }}>
                       <EditIcon size={14} />
-                    </button>
+                    </IconButton>
                   </div>
                 )}
               </FormField>
@@ -210,15 +208,16 @@ export function ProjectsTab() {
                 <h3 className="text-[14px] font-bold m-0 text-primary">
                   Members <span className="text-muted font-normal">({selected.members.length})</span>
                 </h3>
-                <button
-                  onClick={() => setShowAddMember(true)}
+                <Button
+                  variant="secondary"
+                  size="sm"
                   data-write
                   data-testid="add-member-btn"
-                  className="flex items-center gap-1.5 px-3 py-[6px] rounded-lg text-[12px] font-semibold cursor-pointer bg-card-2 border border-hairline text-primary hover:bg-[color-mix(in_srgb,_var(--accent-primary)_8%,_transparent)]"
+                  leftIcon={<PlusIcon size={12} />}
+                  onClick={() => setShowAddMember(true)}
                 >
-                  <PlusIcon size={12} />
                   Add member
-                </button>
+                </Button>
               </div>
               {selected.members.length === 0 ? (
                 <EmptyState
@@ -239,14 +238,14 @@ export function ProjectsTab() {
                         className="w-7 h-7 rounded-md text-[10px]"
                       />
                       <span className="flex-1 text-[13px] font-semibold text-primary">{m.email}</span>
-                      <button
-                        className="btn-icon text-muted hover:text-danger"
+                      <IconButton
                         data-write
-                        onClick={() => setRemoveMember(m)}
                         aria-label={`Remove ${m.email}`}
+                        className="text-muted hover:text-danger"
+                        onClick={() => setRemoveMember(m)}
                       >
                         <TrashIcon size={14} />
-                      </button>
+                      </IconButton>
                     </div>
                   ))}
                 </div>

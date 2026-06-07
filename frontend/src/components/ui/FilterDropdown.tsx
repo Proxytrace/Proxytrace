@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { CheckIcon, ChevronDownIcon } from '../icons';
 import { cn } from '../../lib/cn';
 
@@ -22,6 +21,10 @@ interface FilterDropdownProps {
   width?: number;
 }
 
+/**
+ * Labelled single-select filter pill (Radix DropdownMenu-backed: portalled,
+ * collision-aware, keyboard-navigable). API-compatible drop-in.
+ */
 export function FilterDropdown({
   label,
   value,
@@ -33,107 +36,58 @@ export function FilterDropdown({
   direction = 'down',
   width = 200,
 }: FilterDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  const close = useCallback(() => setOpen(false), []);
-
-  const updatePosition = useCallback(() => {
-    const btn = buttonRef.current;
-    if (!btn) return;
-    const rect = btn.getBoundingClientRect();
-    const top = direction === 'up' ? rect.top - 6 : rect.bottom + 6;
-    const left = align === 'right' ? rect.right - width : rect.left;
-    setPos({ top, left });
-  }, [align, direction, width]);
-
-  useLayoutEffect(() => {
-    if (open) updatePosition();
-  }, [open, updatePosition]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDocDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-      close();
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    const onScrollOrResize = () => updatePosition();
-    document.addEventListener('mousedown', onDocDown);
-    document.addEventListener('keydown', onKey);
-    window.addEventListener('resize', onScrollOrResize);
-    window.addEventListener('scroll', onScrollOrResize, true);
-    return () => {
-      document.removeEventListener('mousedown', onDocDown);
-      document.removeEventListener('keydown', onKey);
-      window.removeEventListener('resize', onScrollOrResize);
-      window.removeEventListener('scroll', onScrollOrResize, true);
-    };
-  }, [open, close, updatePosition]);
-
   const selected = options.find(o => o.key === value);
   const displayLabel = selected?.label ?? value;
 
   return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className={cn(
-          'inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
-          active
-            ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
-            : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
-        )}
-      >
-        {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
-        {label && <span className="text-muted font-medium">{label}</span>}
-        <span>{displayLabel}</span>
-        <ChevronDownIcon
-          size={12}
-          strokeWidth={2.5}
-          className={`text-muted ml-[2px] transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {open && pos && createPortal(
-        <div
-          ref={menuRef}
-          role="listbox"
-          className="fixed z-[60] bg-card-2 rounded-[10px] py-1 max-h-[280px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
-          style={{
-            top: pos.top,
-            left: pos.left,
-            minWidth: width,
-            // 'up' anchors the menu's bottom edge at the trigger top so it grows upward.
-            transform: direction === 'up' ? 'translateY(-100%)' : undefined,
-          }}
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className={cn(
+            'group inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
+            active
+              ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
+              : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
+          )}
+        >
+          {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
+          {label && <span className="text-muted font-medium">{label}</span>}
+          <span>{displayLabel}</span>
+          <ChevronDownIcon
+            size={12}
+            strokeWidth={2.5}
+            className="text-muted ml-[2px] transition-transform duration-150 group-data-[state=open]:rotate-180"
+          />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align={align === 'right' ? 'end' : 'start'}
+          side={direction === 'up' ? 'top' : 'bottom'}
+          sideOffset={6}
+          style={{ minWidth: width }}
+          className="z-[60] bg-card-2 rounded-[10px] py-1 max-h-[280px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
         >
           {options.map(opt => {
             const isSel = opt.key === value;
             return (
-              <button
+              <DropdownMenu.Item
                 key={opt.key}
-                role="option"
-                aria-selected={isSel}
-                onClick={() => { onChange(opt.key); close(); }}
-                className={`w-full flex items-center gap-2 px-[10px] py-[7px] text-[12.5px] text-left cursor-pointer transition-colors duration-100 hover:bg-[rgba(255,255,255,0.05)] ${isSel ? 'text-primary' : 'text-secondary'}`}
+                onSelect={() => onChange(opt.key)}
+                className={cn(
+                  'flex items-center gap-2 px-[10px] py-[7px] text-[12.5px] text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
+                  isSel ? 'text-primary' : 'text-secondary',
+                )}
               >
                 {opt.accent && <span className="w-[8px] h-[8px] rounded-[2px] shrink-0" style={{ background: opt.accent }} />}
                 <span className="flex-1 truncate">{opt.label}</span>
                 {isSel && <CheckIcon size={12} strokeWidth={2.5} className="text-accent shrink-0" />}
-              </button>
+              </DropdownMenu.Item>
             );
           })}
-        </div>,
-        document.body
-      )}
-    </>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }

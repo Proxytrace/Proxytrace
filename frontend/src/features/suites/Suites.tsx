@@ -6,6 +6,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
+import { Button } from '../../components/ui/Button';
 import { agentColor } from '../../lib/colors';
 import { useFilter } from '../../hooks/useFilter';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
@@ -167,13 +168,14 @@ export default function Suites() {
         <span className="text-body text-muted">
           {visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}
         </span>
-        <button
+        <Button
+          variant="primary"
           data-testid="suite-create-btn"
+          className="ml-auto"
           onClick={() => { setCreateOpen(true); resetCreate(); }}
-          className="btn-primary inline-flex items-center gap-[7px] whitespace-nowrap ml-auto"
         >
           + New suite
-        </button>
+        </Button>
       </div>
 
       {/* Loading skeletons */}

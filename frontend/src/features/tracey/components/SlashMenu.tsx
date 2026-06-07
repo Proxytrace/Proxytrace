@@ -41,6 +41,7 @@ export function SlashMenu({ items, activeIndex, onSelect, onHover }: SlashMenuPr
           <div key={item.kind === 'action' ? item.action.id : item.name}>
             {index === 0 && item.kind === 'action' && <SectionLabel>Quick actions</SectionLabel>}
             {index === firstToolIndex && firstToolIndex >= 0 && <SectionLabel>Tools</SectionLabel>}
+            {/* eslint-disable-next-line no-restricted-syntax -- composer slash-menu option; focus/keyboard coupled to the composer (see TRACEY.md) */}
             <button
               type="button"
               role="option"

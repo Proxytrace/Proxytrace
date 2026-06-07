@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { IconButton } from '../../../components/ui/Button';
 import { XIcon, ChevronRightIcon } from '../../../components/icons';
-import { FOCUS_RING, ID_SHORT_LEN } from '../../../lib/constants';
+import { ID_SHORT_LEN } from '../../../lib/constants';
 import { useDrawerKeys } from './useDrawerKeys';
 
 interface Props {
@@ -21,8 +22,6 @@ interface Props {
   /** Content below the sticky header — owns its own scroll/shrink layout. */
   children: ReactNode;
 }
-
-const NAV_BTN = 'w-7 h-7 rounded-md flex items-center justify-center text-secondary bg-card border border-border';
 
 /**
  * Portal + backdrop + right-side sliding panel with a sticky header (case id,
@@ -69,17 +68,15 @@ export function DrawerShell({
           )}
 
           <div className="flex gap-[3px] shrink-0">
-            <button
-              onClick={onPrev} disabled={!onPrev} aria-label="Previous case"
-              className={`${NAV_BTN} ${onPrev ? `cursor-pointer ${FOCUS_RING}` : 'opacity-30 cursor-not-allowed'}`}
-            ><ChevronRightIcon size={14} className="rotate-180" /></button>
-            <button
-              onClick={onNext} disabled={!onNext} aria-label="Next case"
-              className={`${NAV_BTN} ${onNext ? `cursor-pointer ${FOCUS_RING}` : 'opacity-30 cursor-not-allowed'}`}
-            ><ChevronRightIcon size={14} /></button>
+            <IconButton size="sm" onClick={onPrev} disabled={!onPrev} aria-label="Previous case" className="disabled:opacity-30">
+              <ChevronRightIcon size={14} className="rotate-180" />
+            </IconButton>
+            <IconButton size="sm" onClick={onNext} disabled={!onNext} aria-label="Next case" className="disabled:opacity-30">
+              <ChevronRightIcon size={14} />
+            </IconButton>
           </div>
 
-          <button onClick={onClose} className="btn-icon" aria-label="Close"><XIcon size={14} /></button>
+          <IconButton onClick={onClose} aria-label="Close"><XIcon size={14} /></IconButton>
         </div>
 
         {children}

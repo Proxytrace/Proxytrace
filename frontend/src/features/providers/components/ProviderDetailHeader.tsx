@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { type ModelProviderKind, type ProviderDto } from '../../../api/models';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
+import { Select } from '../../../components/ui/Select';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { CopyIcon, TrashIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
 import { providerColor } from '../../../lib/colors';
 import useToast from '../../../hooks/useToast';
 import { PROVIDER_KIND_OPTIONS, kindColor, kindLabel, maskKey } from '../providerMeta';
@@ -34,23 +34,28 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
           <div className="flex items-center gap-2 mb-1">
             <h2 data-testid="provider-detail-name" className="text-h1 font-semibold m-0 text-primary truncate">{provider.name}</h2>
             {!editingKind ? (
-              <button
-                onClick={() => { setEditKindValue(provider.kind); setEditingKind(true); }}
+              <Button
+                variant="ghost"
+                size="sm"
                 data-write
                 aria-label="Change provider kind"
-                className="cursor-pointer border-none bg-transparent p-0"
+                className="px-1 py-0.5"
+                onClick={() => { setEditKindValue(provider.kind); setEditingKind(true); }}
               >
                 <ColoredBadge color={kindColor(provider.kind)} label={kindLabel(provider.kind)} />
-              </button>
+              </Button>
             ) : (
               <div className="flex items-center gap-1.5">
-                <select
-                  value={editKindValue}
-                  onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
-                  className={`${formInputCls} h-7 py-0 text-body-sm`}
-                >
-                  {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <div className="w-44">
+                  <Select
+                    inputSize="sm"
+                    value={editKindValue}
+                    onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
+                    className="h-7 py-0"
+                  >
+                    {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </Select>
+                </div>
                 <Button
                   data-write size="sm" variant="primary" loading={updateKind.isPending}
                   onClick={() => updateKind.mutate({ provider, kind: editKindValue }, { onSuccess: () => setEditingKind(false) })}

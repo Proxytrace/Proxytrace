@@ -1,5 +1,6 @@
 import { PlusIcon } from '../../../components/icons';
 import { FlaskIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
 
 /** Placeholder shown in the detail pane when no evaluator is selected. */
 export function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: () => void }) {
@@ -18,13 +19,9 @@ export function EmptyDetail({ hasAny, onCreate }: { hasAny: boolean; onCreate: (
             : 'Create your first evaluator to start scoring agent responses.'}
         </div>
       </div>
-      <button
-        onClick={onCreate}
-        data-write
-        className="mt-1 px-4 py-[9px] rounded-md text-[13px] font-semibold text-white border-0 inline-flex items-center gap-[7px] cursor-pointer bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)]"
-      >
-        <PlusIcon size={13} /> New evaluator
-      </button>
+      <Button variant="primary" className="mt-1" leftIcon={<PlusIcon size={13} />} onClick={onCreate}>
+        New evaluator
+      </Button>
     </div>
   );
 }

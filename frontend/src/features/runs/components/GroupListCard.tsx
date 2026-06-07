@@ -4,6 +4,8 @@ import { fmtRelative } from '../../../lib/format';
 import { agentColor, modelColor, tint } from '../../../lib/colors';
 import { TrashIcon, TargetIcon } from '../../../components/icons';
 import { Pill } from '../../../components/ui/Pill';
+import { IconButton } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 import { passRateColor, passRatePercent } from '../results';
 
 /** Card in the left-hand run-group list. Identical layout for single- and multi-model groups. */
@@ -20,11 +22,11 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
     // Wrapper is a positioning + hover context so the delete control is a real
     // sibling button, not nested inside the card button (invalid HTML / a11y).
     <div className="group/card relative" data-testid={`group-list-card-${group.id}`}>
-      <button
+      <RowButton
         onClick={onSelect}
         aria-pressed={isSelected}
         data-testid={`group-list-card-btn-${group.id}`}
-        className={`relative w-full text-left rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 cursor-pointer shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
+        className={`relative rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
         style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
       >
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
@@ -43,15 +45,16 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         </div>
 
         <ModelStack runs={group.runs} />
-      </button>
+      </RowButton>
 
-      <button
+      <IconButton
+        danger
         onClick={onDelete}
-        className={`btn-icon btn-icon-danger absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
+        className={`absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
         aria-label="Delete run group"
       >
         <TrashIcon size={13} />
-      </button>
+      </IconButton>
     </div>
   );
 }

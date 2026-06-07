@@ -4,8 +4,9 @@ import { Button, IconButton } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { FormField } from '../../../components/ui/FormField';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { EditIcon, PlusIcon, TrashIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
 import { useAvailableModels } from '../hooks/useProviderQueries';
 import { useCreateModel, useDeleteModel, useUpdateModelPricing } from '../hooks/useProviderMutations';
 
@@ -82,23 +83,23 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
             ) : availableError ? (
               <div className="flex flex-col gap-1.5">
                 <div className="text-body text-danger">Could not discover models from endpoint. Enter manually:</div>
-                <input data-testid="model-name-input" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className={`${formInputCls} font-mono`} />
+                <Input data-testid="model-name-input" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className="font-mono" />
               </div>
             ) : selectable.length === 0 ? (
               <div className="text-body text-muted py-2">All discovered models are already added.</div>
             ) : (
-              <select data-testid="model-name-select" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className={`${formInputCls} font-mono`}>
+              <Select data-testid="model-name-select" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className="font-mono">
                 <option value="">Select a model…</option>
                 {selectable.map(name => <option key={name} value={name}>{name}</option>)}
-              </select>
+              </Select>
             )}
           </FormField>
           <div className="grid grid-cols-2 gap-2.5">
             <FormField label="Input cost / 1M tokens (€)">
-              <input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" className={formInputCls} />
+              <Input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" />
             </FormField>
             <FormField label="Output cost / 1M tokens (€)">
-              <input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" className={formInputCls} />
+              <Input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" />
             </FormField>
           </div>
           <div className="flex gap-2 justify-end">
@@ -138,10 +139,10 @@ export function ModelsTab({ providerId, models }: ModelsTabProps) {
                   <div className="text-body-sm font-semibold text-secondary">Edit pricing for <span className="font-mono text-primary">{m.modelName}</span></div>
                   <div className="grid grid-cols-2 gap-2.5">
                     <FormField label="Input / 1M (€)">
-                      <input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" className={formInputCls} />
+                      <Input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" />
                     </FormField>
                     <FormField label="Output / 1M (€)">
-                      <input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" className={formInputCls} />
+                      <Input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" />
                     </FormField>
                   </div>
                   <div className="flex gap-2 justify-end">

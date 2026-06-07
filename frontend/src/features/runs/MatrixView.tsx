@@ -8,7 +8,8 @@ import { Card } from '../../components/ui/Card';
 import { passRateColor, passRatePercent, avgLatency, buildMatrixRows, isErrored, isEvalPass } from './results';
 import { matrixCounts, filterSortMatrixRows, type MatrixFilter, type MatrixSort } from './comparison';
 import { ModelTag } from './components/ModelTag';
-import { SegmentedToggle } from './components/SegmentedToggle';
+import { SegmentedControl } from '../../components/ui/SegmentedControl';
+import { RowButton } from '../../components/ui/RowButton';
 import { ComparisonDrawer } from './drawers';
 
 /** Cases × models grid, divergence-first. */
@@ -42,7 +43,7 @@ export function MatrixView({ group, activeCaseIds }: {
           </span>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <SegmentedToggle
+          <SegmentedControl
             value={filter}
             onChange={setFilter}
             segments={[
@@ -52,7 +53,7 @@ export function MatrixView({ group, activeCaseIds }: {
               { value: 'passing', label: 'Passing', count: counts.passing },
             ]}
           />
-          <SegmentedToggle
+          <SegmentedControl
             value={sort}
             onChange={setSort}
             segments={[{ value: 'order', label: 'Order' }, { value: 'worst', label: 'Worst' }]}
@@ -92,10 +93,10 @@ export function MatrixView({ group, activeCaseIds }: {
                   {ri > 0 && <div aria-hidden className="h-px bg-hairline col-span-full" />}
 
                   {/* Test case + verdict / divergence indicator */}
-                  <button
+                  <RowButton
                     onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary })}
                     data-testid={`matrix-row-${row.caseId}`}
-                    className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 text-left cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
+                    className={cn('px-4 py-2.5 flex items-center gap-2.5 min-w-0 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', stripe, selBg, FOCUS_RING)}
                     title={`Compare all models — ${row.summary}`}
                   >
                     {multi ? (
@@ -107,7 +108,7 @@ export function MatrixView({ group, activeCaseIds }: {
                       <span className="truncate text-body">{row.summary}</span>
                       <span className="mono text-caption text-muted truncate">{row.caseId.slice(0, 8)}</span>
                     </span>
-                  </button>
+                  </RowButton>
 
                   {/* Avg latency */}
                   <div className={cn('px-3 py-2.5 flex items-center justify-end', selBg)}>
@@ -118,16 +119,16 @@ export function MatrixView({ group, activeCaseIds }: {
                   {row.cells.map((cell, ci) => (
                     <div key={ci} className={cn('flex items-stretch', selBg)}>
                       {cell.result ? (
-                        <button
+                        <RowButton
                           onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusRunId: cell.run.id })}
                           title={`${cell.run.endpointName}: ${cell.pass === true ? 'pass' : cell.pass === false ? 'fail' : 'no verdict'} — click to compare`}
-                          className={cn('w-full px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', FOCUS_RING)}
+                          className={cn('px-3 py-2.5 flex items-center gap-2 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', FOCUS_RING)}
                         >
                           {cell.pass === true ? <CheckIcon size={12} strokeWidth={2.5} className="text-success shrink-0" />
                             : cell.pass === false ? <XIcon size={12} strokeWidth={2.5} className="text-danger shrink-0" /> : null}
                           <EvalDots evaluations={cell.result.evaluations} />
                           <span className="mono text-caption text-muted shrink-0">{fmtDuration(cell.result.durationMs)}</span>
-                        </button>
+                        </RowButton>
                       ) : (
                         <span className="w-full px-3 py-2.5 flex items-center text-muted">
                           {activeCaseIds?.has(row.caseId)

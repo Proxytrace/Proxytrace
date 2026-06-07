@@ -20,6 +20,7 @@ export function TraceyConversation() {
       </ThreadPrimitive.Viewport>
 
       <ThreadPrimitive.ScrollToBottom asChild>
+        {/* eslint-disable-next-line no-restricted-syntax -- assistant-ui ScrollToBottom asChild target; native button with bespoke floating style */}
         <button
           type="button"
           aria-label="Scroll to latest"

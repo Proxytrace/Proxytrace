@@ -3,6 +3,7 @@ import { agentColor, EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { fmtRelative, fmtDate } from '../../../lib/format';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EditIcon, TrashIcon, PlayFilledIcon } from '../../../components/icons';
+import { Button, IconButton } from '../../../components/ui/Button';
 import { sparklinePath } from '../../../lib/charts';
 import { passRateColor } from '../suitesMeta';
 import { cn } from '../../../lib/cn';
@@ -61,19 +62,15 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
           </div>
 
           <div className="flex gap-1 shrink-0">
-            <button
-              onClick={onRun}
-              data-write
-              className="inline-flex items-center gap-[6px] px-[14px] py-2 rounded-md text-[12.5px] font-semibold bg-[image:var(--grad-accent)] text-white shadow-[var(--shadow-btn)] whitespace-nowrap hover:opacity-[0.88] transition-opacity duration-[120ms]"
-            >
-              <PlayFilledIcon size={11} /> {hasRuns ? 'Run again' : 'Run now'}
-            </button>
-            <button onClick={onEdit} data-write data-testid={`suite-edit-btn-${suite.id}`} className="btn-icon" aria-label="Edit suite">
+            <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onRun}>
+              {hasRuns ? 'Run again' : 'Run now'}
+            </Button>
+            <IconButton onClick={onEdit} data-write data-testid={`suite-edit-btn-${suite.id}`} aria-label="Edit suite">
               <EditIcon size={13} />
-            </button>
-            <button onClick={onDelete} data-testid={`suite-delete-btn-${suite.id}`} className="btn-icon btn-icon-danger" aria-label="Delete suite">
+            </IconButton>
+            <IconButton danger onClick={onDelete} data-testid={`suite-delete-btn-${suite.id}`} aria-label="Delete suite">
               <TrashIcon size={13} />
-            </button>
+            </IconButton>
           </div>
         </div>
 
@@ -184,12 +181,9 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-hairline text-[11px] text-muted">
           <span>Created {fmtDate(suite.createdAt)}</span>
-          <button
-            className="text-[11.5px] text-[color:var(--accent-hover)] font-medium"
-            onClick={onEdit}
-          >
+          <Button variant="link" className="text-[11.5px]" onClick={onEdit}>
             View cases ›
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -10,6 +10,8 @@ import { cn } from '../../../lib/cn';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { StatusDot } from '../../../components/ui/StatusDot';
 import { FilterDropdown } from '../../../components/ui/FilterDropdown';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SearchIcon } from '../../../components/icons';
 import { TracePreviewPanel } from './TracePreviewPanel';
@@ -92,23 +94,14 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
     <div data-testid="wizard-step-traces" className="flex flex-col gap-3 min-h-0">
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 rounded-[9px] bg-card-2 border border-border focus-within:border-[var(--accent-primary)] transition-colors">
-          <SearchIcon size={13} />
-          <input
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            leftAddon={<SearchIcon size={13} />}
+            rightAddon={search ? <Button variant="link" className="text-[11px]" onClick={() => setSearch('')}>clear</Button> : undefined}
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search prompts and responses…"
-            className="flex-1 bg-transparent border-0 py-[9px] text-[13px] outline-none text-primary placeholder:text-muted"
           />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              className="text-[11px] text-muted hover:text-primary cursor-pointer bg-transparent border-0"
-            >
-              clear
-            </button>
-          )}
         </div>
         <FilterDropdown
           label="Range"
@@ -130,13 +123,9 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
           {selected.size} selected
         </span>
         {selected.size > 0 && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-[11.5px] text-muted hover:text-primary cursor-pointer bg-transparent border-0"
-          >
+          <Button variant="link" className="text-[11.5px]" onClick={onClear}>
             Clear
-          </button>
+          </Button>
         )}
       </div>
 

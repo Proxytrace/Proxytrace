@@ -1,7 +1,8 @@
 import type { KeyboardEvent } from 'react';
 import { FormField } from '../../../components/ui/FormField';
-import { ChevronDownIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 
 interface ModelStepProps {
   modelName: string;
@@ -36,42 +37,21 @@ export function ModelStep({
     <div className="flex flex-col gap-4">
       <FormField label="Model" error={error ?? undefined}>
         {modelsLoading ? (
-          <input
-            className={formInputCls}
-            value="Loading models…"
-            disabled
-            readOnly
-          />
+          <Input value="Loading models…" disabled readOnly />
         ) : models && models.length > 0 ? (
           <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <select
-                className={`${formInputCls} appearance-none pr-9 cursor-pointer`}
-                value={modelName}
-                onChange={e => onModelChange(e.target.value)}
-                autoFocus
-              >
+            <div className="flex-1">
+              <Select value={modelName} onChange={e => onModelChange(e.target.value)} autoFocus>
                 {models.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
-              </select>
-              <ChevronDownIcon
-                size={16}
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-              />
+              </Select>
             </div>
-            <button
-              type="button"
-              onClick={onLoadModels}
-              className="cursor-pointer text-[12px] font-medium px-3 py-[9px] rounded-[9px] border border-border bg-card-2 text-secondary hover:text-primary hover:border-[color:var(--hairline)] transition-colors duration-150"
-            >
-              Refresh
-            </button>
+            <Button variant="secondary" size="sm" onClick={onLoadModels}>Refresh</Button>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <input
-              className={formInputCls}
+            <Input
               placeholder="e.g. claude-sonnet-4-5"
               value={modelName}
               onChange={e => onModelChange(e.target.value)}
@@ -83,46 +63,36 @@ export function ModelStep({
                 Could not list models from provider: {modelsError}. Enter the model name manually.
               </span>
             )}
-            <button
-              type="button"
-              onClick={onLoadModels}
-              className="self-start cursor-pointer text-[11px] font-medium px-2 py-1 rounded-md border border-border bg-card-2 text-secondary hover:text-primary transition-colors duration-150"
-            >
+            <Button variant="secondary" size="sm" className="self-start" onClick={onLoadModels}>
               Retry loading models
-            </button>
+            </Button>
           </div>
         )}
       </FormField>
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Input cost / 1M tokens">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-muted pointer-events-none">$</span>
-            <input
-              className={`${formInputCls} pl-6`}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="3.00"
-              value={inputCost}
-              onChange={e => onInputCostChange(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-          </div>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="3.00"
+            leftAddon="$"
+            value={inputCost}
+            onChange={e => onInputCostChange(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
         </FormField>
         <FormField label="Output cost / 1M tokens">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-muted pointer-events-none">$</span>
-            <input
-              className={`${formInputCls} pl-6`}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="15.00"
-              value={outputCost}
-              onChange={e => onOutputCostChange(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-          </div>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="15.00"
+            leftAddon="$"
+            value={outputCost}
+            onChange={e => onOutputCostChange(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
         </FormField>
       </div>
       <p className="text-[11px] text-muted leading-relaxed">

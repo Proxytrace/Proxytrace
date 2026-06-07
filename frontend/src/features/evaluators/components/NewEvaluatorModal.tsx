@@ -1,4 +1,6 @@
 import { cn } from '../../../lib/cn';
+import { Button, IconButton } from '../../../components/ui/Button';
+import { XIcon } from '../../../components/icons';
 import { useFeature } from '../../../api/license';
 import { EvaluatorKind, type AgenticEvaluatorPresetDto } from '../../../api/models';
 import { EvaluatorForm } from '../EvaluatorForm';
@@ -37,7 +39,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
               {pickedKind ? 'Configure your evaluator.' : 'Choose how this evaluator scores agent responses.'}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-muted p-1.5 rounded-md text-[18px] bg-transparent border-0 cursor-pointer">×</button>
+          <IconButton onClick={onClose} aria-label="Close"><XIcon size={16} /></IconButton>
         </div>
 
         <div className="p-5">
@@ -62,10 +64,7 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
                 )}>
                   {META[pickedKind].label}
                 </span>
-                <button
-                  onClick={() => setPickedKind(null)}
-                  className="text-[11px] text-muted px-2 py-[3px] rounded-md border border-border bg-transparent cursor-pointer"
-                >← Change</button>
+                <Button variant="secondary" size="sm" onClick={() => setPickedKind(null)}>← Change</Button>
               </div>
               <EvaluatorForm form={form} setForm={setForm} kind={pickedKind} presets={presets} />
             </div>
@@ -75,22 +74,17 @@ export function NewEvaluatorModal({ pickedKind, setPickedKind, form, setForm, pr
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-hairline">
           <span className="text-[11.5px] text-muted">You can change the configuration later from the evaluator's settings.</span>
           <div className="flex gap-2">
-            <button onClick={onClose} className="px-3.5 py-2 rounded-md text-[12px] text-secondary bg-transparent border-0 cursor-pointer">Cancel</button>
-            <button
+            <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={onSubmit}
-              data-write
               data-testid="evaluator-form-submit"
-              disabled={!pickedKind || loading}
-              className={cn(
-                'px-4 py-2 rounded-md text-[12px] font-semibold border-0',
-                pickedKind
-                  ? 'text-white bg-[image:var(--grad-accent)] shadow-[var(--shadow-btn)] cursor-pointer'
-                  : 'text-muted bg-card-2 cursor-not-allowed',
-                loading && 'opacity-60',
-              )}
+              disabled={!pickedKind}
+              loading={loading}
             >
-              {loading ? 'Creating…' : 'Create'}
-            </button>
+              Create
+            </Button>
           </div>
         </div>
       </div>

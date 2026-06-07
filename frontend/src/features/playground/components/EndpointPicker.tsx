@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button } from '../../../components/ui/Button';
+import { Select } from '../../../components/ui/Select';
 
 interface Props {
   value: string;
@@ -19,27 +20,18 @@ export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
       <div className="flex items-center justify-between">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-[0.05em]">Endpoint</label>
         {defaultEndpointId && value !== defaultEndpointId && (
-          <button
-            type="button"
-            onClick={() => onChange(defaultEndpointId)}
-            className="text-[10.5px] font-semibold text-accent uppercase tracking-[0.05em] cursor-pointer bg-transparent border-0 p-0"
-          >
+          <Button variant="link" className="text-[10.5px]" onClick={() => onChange(defaultEndpointId)}>
             Reset
-          </button>
+          </Button>
         )}
       </div>
-      <select
-        className={formInputCls}
-        value={value}
-        disabled={isLoading}
-        onChange={e => onChange(e.target.value)}
-      >
+      <Select value={value} disabled={isLoading} onChange={e => onChange(e.target.value)}>
         {endpoints.map(ep => (
           <option key={ep.id} value={ep.id}>
             {ep.providerName} · {ep.modelName}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }

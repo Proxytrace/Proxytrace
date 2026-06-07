@@ -124,7 +124,9 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 `frontend/src/components/ui/` already covers the system. Default to importing, not rebuilding. Inventory:
 
-**Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `FormField`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
+**Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
+
+`Tabs`, `Tooltip`, `Menu`, and `Combobox` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab with manual `createPortal` + `getBoundingClientRect` again; reach for these.
 
 **Surfaces:** `Card` (with `Card.Header`/`Body`/`Footer`), `KpiCard`, `EmptyState`, `Skeleton`, `Spinner`.
 
@@ -136,15 +138,19 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 ### 3.1 Button rules
 
-`<Button variant="primary|secondary|ghost|danger|success" size="sm|md|lg">`. Defaults: `primary`, `md`. Use:
+`<Button variant="primary|secondary|ghost|danger|dangerOutline|success|link" size="sm|md|lg">`. Defaults: `primary`, `md`. Use:
 
 - **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite.
 - **secondary** — neutral siblings. Cancel, Close, Edit.
 - **ghost** — tertiary in toolbars and inline rows.
-- **danger** — irreversible. Always paired with `ConfirmDialog`.
+- **danger** — irreversible, solid red. Always paired with `ConfirmDialog`.
+- **dangerOutline** — lower-emphasis destructive (outlined, tints on hover) — e.g. a header-row "Delete".
 - **success** — only for "approve" / "promote" semantics; do not use for generic save.
+- **link** — inline text action ("Set price →", "View cases ›"): no padding, accent text, underline on hover.
 
-Never style a raw `<button>` with Tailwind for shape. If you need an icon-only control, use `IconButton`.
+`loading` shows a spinner + disables; `leftIcon`/`rightIcon` for icons; `fullWidth` to fill; `asChild` renders the single child (`<a>` / router `<Link>`) with button styling instead of `<div onClick>`. Write variants (`primary`/`danger`/`dangerOutline`/`success`) auto-emit `data-write` for kiosk gating — pass `data-write` explicitly on a `ghost`/`secondary`/`link`/`IconButton` that mutates.
+
+**Raw `<button>`/`<input>`/`<select>`/`<textarea>` are ESLint-forbidden** (`no-restricted-syntax`) everywhere except the `components/ui/` primitive layer — use the primitive. Icon-only → `IconButton`; clickable list/grid row → `RowButton`. For a genuinely bespoke control (range slider, labeled switch-pill, command palette) add a one-line `// eslint-disable-next-line no-restricted-syntax -- <reason>`.
 
 ### 3.2 Card rules
 
@@ -169,6 +175,12 @@ Use `DataTable` for any tabular dataset > 5 rows. For trace lists specifically, 
 - **Empty:** `EmptyState` with a one-line headline + one-line hint + optional CTA. No clipart.
 - **Loading:** `Skeleton` for shaped placeholders (always reserve the final layout's height to prevent jump). `Spinner` only for inline button loading and indeterminate small areas. `streaming-border` class on a card whose contents are mid-stream.
 - **Error:** Inline `text-danger` message near the failing control. For full-page failures, `EmptyState` variant with the danger color.
+
+### 3.6 Form controls, toggles, and menus
+
+- **Text/number/password** → `Input` (`leftAddon`/`rightAddon` for icons/affordances); **long text** → `Textarea`; **short option list** → native `Select`; **searchable/entity list** → `Combobox`. Wrap each in `FormField` (or pair with `Label`). Inline (flex-row) fields need a width wrapper — `Input`/`Select` are `w-full`.
+- **Boolean** → `Switch` (on/off) or `Checkbox`; **one-of-N** → `Radio`/`RadioGroup`, or `SegmentedControl` for a compact toggle bar.
+- **Tabs** → `Tabs` (pass `data-testid` per item where e2e needs it). **Dropdown menu** → `Menu` + `Menu.Item`/`Menu.Separator`. **Tooltip** → `Tooltip` (the single `TooltipProvider` is already mounted in `App.tsx`).
 
 ---
 

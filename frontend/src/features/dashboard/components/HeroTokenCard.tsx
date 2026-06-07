@@ -2,6 +2,7 @@
 
 import { AreaChart } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
+import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { ArrowUpRightIcon } from '../../../components/icons';
 import type { SummaryDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
@@ -52,18 +53,11 @@ export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRange
             <span><span className="text-secondary font-semibold">{(summary?.totalCalls ?? 0).toLocaleString()}</span> traces</span>
           </div>
         </div>
-        <div className="flex gap-1 p-1 bg-card-2 rounded-md shadow-[var(--shadow-pill)]" role="group" aria-label="Time range">
-          {RANGES.map(r => (
-            <button
-              key={r}
-              onClick={() => onRangeChange(r)}
-              aria-pressed={range === r}
-              className={`px-2.5 py-[5px] text-body-sm font-semibold rounded-sm font-mono tracking-[0.04em] cursor-pointer transition-colors ${range === r ? 'bg-card text-accent-hover shadow-[var(--shadow-pill)]' : 'text-muted hover:text-secondary'}`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={range}
+          onChange={onRangeChange}
+          segments={RANGES.map(r => ({ value: r, label: r }))}
+        />
       </div>
 
       {/* Area chart */}

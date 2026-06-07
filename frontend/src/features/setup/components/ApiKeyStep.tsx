@@ -1,8 +1,8 @@
 import type { KeyboardEvent } from 'react';
 import { FormField } from '../../../components/ui/FormField';
+import { Input } from '../../../components/ui/Input';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
 import { CheckIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
 
 interface ApiKeyStepProps {
   done: boolean;
@@ -45,8 +45,7 @@ export function ApiKeyStep({ done, apiKeyValue, keyName, error, onKeyNameChange,
   return (
     <div className="flex flex-col gap-4">
       <FormField label="Key name" error={error ?? undefined}>
-        <input
-          className={formInputCls}
+        <Input
           placeholder="default"
           value={keyName}
           onChange={e => onKeyNameChange(e.target.value)}

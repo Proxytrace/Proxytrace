@@ -6,6 +6,7 @@ import type { ModelEndpointDto, TestSuiteDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Modal } from '../../components/overlays/Modal';
+import { Button } from '../../components/ui/Button';
 import { RunForm } from './components/RunForm';
 
 interface Props {
@@ -100,12 +101,9 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
         ) : null}
         .
       </p>
-      <button
-        onClick={onNavigate}
-        className="px-7 py-[10px] bg-[image:var(--grad-accent)] rounded-md text-body font-semibold text-white shadow-[var(--shadow-btn)]"
-      >
+      <Button variant="primary" onClick={onNavigate}>
         View Test Runs →
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PlusIcon, SearchIcon } from '../../../components/icons';
+import { Button } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 import { cn } from '../../../lib/cn';
 import type { PlaygroundRole } from '../state/types';
 
@@ -61,23 +63,24 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
 
   return (
     <div className="mt-[2px]">
-      <button
+      <Button
         ref={buttonRef}
-        type="button"
-        onClick={() => setOpen(o => !o)}
+        variant="ghost"
+        fullWidth
         data-testid="add-message-bar"
         className={cn(
-          'group w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[10px] cursor-pointer transition-colors border border-dashed',
+          'group py-[10px] rounded-[10px] border border-dashed',
           open
             ? 'bg-accent-subtle border-[color-mix(in_srgb,var(--accent-primary)_32%,transparent)] text-accent-hover'
-            : 'bg-transparent border-border text-muted',
+            : 'border-border text-muted',
         )}
+        leftIcon={<PlusIcon size={13} strokeWidth={2.4} />}
         aria-haspopup="menu"
         aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
       >
-        <PlusIcon size={13} strokeWidth={2.4} />
         <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em]">Add message</span>
-      </button>
+      </Button>
       {open && pos && createPortal(
         <div
           ref={menuRef}
@@ -89,13 +92,12 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
             New message role
           </div>
           {ROLE_OPTIONS.map(opt => (
-            <button
+            <RowButton
               key={opt.value}
-              type="button"
               role="menuitem"
               onClick={() => { onAdd(opt.value); close(); }}
               data-testid={`add-message-role-${opt.value}`}
-              className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
+              className="flex items-center gap-[10px] px-[10px] py-[7px] hover:bg-card transition-colors"
             >
               <span
                 aria-hidden
@@ -111,16 +113,15 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                 <span className="text-[12.5px] text-primary font-semibold">{opt.label}</span>
                 <span className="text-[10.5px] text-muted">{opt.description}</span>
               </span>
-            </button>
+            </RowButton>
           ))}
           {onLoadFromTrace && (
             <>
               <div className="my-[4px] mx-[10px] border-t border-border" />
-              <button
-                type="button"
+              <RowButton
                 role="menuitem"
                 onClick={() => { onLoadFromTrace(); close(); }}
-                className="w-full flex items-center gap-[10px] px-[10px] py-[7px] text-left cursor-pointer hover:bg-card transition-colors"
+                className="flex items-center gap-[10px] px-[10px] py-[7px] hover:bg-card transition-colors"
               >
                 <span
                   aria-hidden
@@ -132,7 +133,7 @@ export function AddMessageBar({ onAdd, onLoadFromTrace }: Props) {
                   <span className="text-[12.5px] text-primary font-semibold">Load from trace</span>
                   <span className="text-[10.5px] text-muted">Seed conversation from past trace or test case</span>
                 </span>
-              </button>
+              </RowButton>
             </>
           )}
         </div>,

@@ -1,7 +1,8 @@
 import type { KeyboardEvent } from 'react';
 import { FormField } from '../../../components/ui/FormField';
-import { ChevronDownIcon } from '../../../components/icons';
-import { formInputCls } from '../../../components/ui/classes';
+import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
 import { ModelProviderKind } from '../../../api/models';
 import { PROVIDER_KIND_OPTIONS } from '../setupMeta';
 
@@ -41,25 +42,14 @@ export function ProviderStep({
   return (
     <div className="flex flex-col gap-4">
       <FormField label="Provider type">
-        <div className="relative">
-          <select
-            className={`${formInputCls} appearance-none pr-9 cursor-pointer`}
-            value={providerKind}
-            onChange={e => onKindChange(e.target.value as ModelProviderKind)}
-          >
-            {PROVIDER_KIND_OPTIONS.map(opt => (
-              <option key={opt.kind} value={opt.kind}>{opt.label}</option>
-            ))}
-          </select>
-          <ChevronDownIcon
-            size={16}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-          />
-        </div>
+        <Select value={providerKind} onChange={e => onKindChange(e.target.value as ModelProviderKind)}>
+          {PROVIDER_KIND_OPTIONS.map(opt => (
+            <option key={opt.kind} value={opt.kind}>{opt.label}</option>
+          ))}
+        </Select>
       </FormField>
       <FormField label="Provider name">
-        <input
-          className={formInputCls}
+        <Input
           placeholder="e.g. Anthropic Production"
           value={providerName}
           onChange={e => onNameChange(e.target.value)}
@@ -67,8 +57,7 @@ export function ProviderStep({
         />
       </FormField>
       <FormField label="Endpoint URL">
-        <input
-          className={formInputCls}
+        <Input
           placeholder="https://api.anthropic.com/v1"
           value={providerEndpoint}
           onChange={e => onEndpointChange(e.target.value)}
@@ -76,8 +65,7 @@ export function ProviderStep({
         />
       </FormField>
       <FormField label="Upstream API key" error={error ?? undefined}>
-        <input
-          className={formInputCls}
+        <Input
           type="password"
           placeholder="sk-..."
           value={providerApiKey}
@@ -87,14 +75,15 @@ export function ProviderStep({
         />
       </FormField>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={onTestConnection}
           disabled={!providerFilled || testing}
-          className="cursor-pointer text-[12px] font-medium px-3 py-[9px] rounded-[9px] border border-border bg-card-2 text-secondary hover:text-primary hover:border-[color:var(--hairline)] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          loading={testing}
         >
-          {testing ? 'Testing…' : 'Test connection'}
-        </button>
+          Test connection
+        </Button>
         {testResult && (
           <span className={`text-[12px] ${testResult.ok ? 'text-success' : 'text-danger'}`}>
             {testResult.message}

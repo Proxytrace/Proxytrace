@@ -18,3 +18,6 @@ export const hoverRevealOverlayCls = cn(
   'opacity-0 transition-opacity duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
   'group-hover:opacity-100 focus-visible:opacity-100',
 );
+
+/** Canonical form-field label (uppercase eyebrow). Shared by `Label` + `FormField`. */
+export const fieldLabelCls = 'text-caption font-semibold text-muted uppercase tracking-[0.05em]';
