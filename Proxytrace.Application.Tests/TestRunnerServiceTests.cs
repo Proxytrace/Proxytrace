@@ -92,6 +92,39 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task RunInForeground_InvokesOnGroupCreated_WithPendingGroupBeforeExecution()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config => RegisterFakeModelClient(config, expectedOutput));
+
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        TestRunStatus? statusAtCallback = null;
+        Guid? observedRunId = null;
+
+        var group = await runner.RunInForegroundAsync(
+            suite,
+            [endpoint],
+            onGroupCreated: async (createdGroup, ct) =>
+            {
+                statusAtCallback = createdGroup.Status;
+                var createdRuns = await createdGroup.GetTestRuns(ct);
+                observedRunId = createdRuns.First().Id;
+            },
+            cancellationToken: CancellationToken);
+
+        // The hook must see the group before it executes, with its run already persisted.
+        statusAtCallback.Should().Be(TestRunStatus.Pending);
+        observedRunId.Should().NotBeNull();
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        var runs = await testRunRepository.GetByGroupAsync(group.Id, CancellationToken);
+        runs.Should().ContainSingle(r => r.Id == observedRunId);
+    }
+
+    [TestMethod]
     public async Task RunAsync_WhenResponseDiffersFromExpected_ProducesFailResult()
     {
         var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);

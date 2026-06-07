@@ -50,6 +50,9 @@ internal record OptimizationTheoryEntity : Entity
     /// <summary><see cref="IOptimizationTheory.PValue"/></summary>
     public double? PValue { get; init; }
 
+    /// <summary><see cref="IOptimizationTheory.ABTestRunId"/></summary>
+    public Guid? ABTestRunId { get; init; }
+
     /// <summary><see cref="IOptimizationTheory.ContentHash"/></summary>
     public required string ContentHash { get; init; }
 }

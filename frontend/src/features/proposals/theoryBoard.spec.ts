@@ -27,6 +27,7 @@ function makeTheory(overrides: Partial<TheoryDto> = {}): TheoryDto {
     baselinePassRate: null,
     projectedPassRate: null,
     pValue: null,
+    abTestRunId: null,
     createdAt: '2026-06-01T00:00:00Z',
     updatedAt: '2026-06-01T00:00:00Z',
     ...overrides,

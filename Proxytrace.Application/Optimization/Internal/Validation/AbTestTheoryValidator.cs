@@ -25,7 +25,8 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
 
     public sealed override async Task<TheoryValidationOutcome> ValidateAsync(
         IOptimizationTheory theory,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        CandidateRunObserver? onCandidateRun = null)
     {
         var typedTheory = (TTheory)theory;
         var agent = theory.Agent;
@@ -36,7 +37,7 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
         // any drift in the agent since that run, especially when a theory waits in the queue.
         ITestRun baselineRun = await RunAsync(theory.Suite, agent, agent.Endpoint, cancellationToken);
         IAgent candidateAgent = BuildCandidateAgent(agent, typedTheory);
-        ITestRun candidateRun = await RunAsync(theory.Suite, candidateAgent, agent.Endpoint, cancellationToken);
+        ITestRun candidateRun = await RunAsync(theory.Suite, candidateAgent, agent.Endpoint, cancellationToken, onCandidateRun);
 
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);
@@ -52,11 +53,11 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
 
         if (candidatePassRate <= basePassRate)
         {
-            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue);
+            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue, candidateRun.Id);
         }
 
         var proposal = BuildProposal(typedTheory, basePassRate, candidatePassRate, candidateRun);
-        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue);
+        return TheoryValidationOutcome.Won(proposal, basePassRate, candidatePassRate, pValue, candidateRun.Id);
     }
 
     /// <summary>Builds the ephemeral agent carrying the proposed change.</summary>

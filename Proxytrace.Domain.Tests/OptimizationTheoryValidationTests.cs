@@ -52,14 +52,16 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
         var theory = await CreateTheory(services);
         var validating = await theory.SetValidating(CancellationToken);
         var proposalId = Guid.NewGuid();
+        var abTestRunId = Guid.NewGuid();
 
-        var validated = await validating.SetValidated(proposalId, 0.5, 0.7, 0.02, CancellationToken);
+        var validated = await validating.SetValidated(proposalId, 0.5, 0.7, 0.02, abTestRunId, CancellationToken);
 
         validated.Status.Should().Be(TheoryStatus.Validated);
         validated.ResultingProposalId.Should().Be(proposalId);
         validated.BaselinePassRate.Should().Be(0.5);
         validated.ProjectedPassRate.Should().Be(0.7);
         validated.PValue.Should().Be(0.02);
+        validated.ABTestRunId.Should().Be(abTestRunId);
 
         var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
         var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
@@ -67,6 +69,7 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
         reloaded.BaselinePassRate.Should().Be(0.5);
         reloaded.ProjectedPassRate.Should().Be(0.7);
         reloaded.PValue.Should().Be(0.02);
+        reloaded.ABTestRunId.Should().Be(abTestRunId);
     }
 
     [TestMethod]
@@ -75,13 +78,108 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
         IServiceProvider services = GetServices();
         var theory = await CreateTheory(services);
         var validating = await theory.SetValidating(CancellationToken);
+        var abTestRunId = Guid.NewGuid();
 
-        var invalidated = await validating.SetInvalidated(0.6, 0.6, 0.41, CancellationToken);
+        var invalidated = await validating.SetInvalidated(0.6, 0.6, 0.41, abTestRunId, CancellationToken);
 
         invalidated.Status.Should().Be(TheoryStatus.Invalidated);
         invalidated.BaselinePassRate.Should().Be(0.6);
         invalidated.ProjectedPassRate.Should().Be(0.6);
         invalidated.PValue.Should().Be(0.41);
+        invalidated.ABTestRunId.Should().Be(abTestRunId);
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.ABTestRunId.Should().Be(abTestRunId);
+    }
+
+    [TestMethod]
+    public async Task AttachAbTestRun_WhileValidating_RecordsRunIdAndPersists()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var abTestRunId = Guid.NewGuid();
+
+        var attached = await validating.AttachAbTestRun(abTestRunId, CancellationToken);
+
+        attached.Status.Should().Be(TheoryStatus.Validating);
+        attached.ABTestRunId.Should().Be(abTestRunId);
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.ABTestRunId.Should().Be(abTestRunId);
+    }
+
+    [TestMethod]
+    public async Task AttachAbTestRun_FromProposed_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+
+        await FluentActions
+            .Invoking(() => theory.AttachAbTestRun(Guid.NewGuid(), CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task ResetToProposed_FromInvalidated_ClearsMetricsAndPersists()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var invalidated = await validating.SetInvalidated(0.6, 0.6, 0.41, Guid.NewGuid(), CancellationToken);
+
+        var reset = await invalidated.ResetToProposed(CancellationToken);
+
+        reset.Status.Should().Be(TheoryStatus.Proposed);
+        reset.ResultingProposalId.Should().BeNull();
+        reset.BaselinePassRate.Should().BeNull();
+        reset.ProjectedPassRate.Should().BeNull();
+        reset.PValue.Should().BeNull();
+        reset.ABTestRunId.Should().BeNull();
+
+        var repo = services.GetRequiredService<IRepository<IOptimizationTheory>>();
+        var reloaded = await repo.GetAsync(theory.Id, CancellationToken);
+        reloaded.Status.Should().Be(TheoryStatus.Proposed);
+        reloaded.ABTestRunId.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ResetToProposed_FromValidated_ClearsProposalReference()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+        var validated = await validating.SetValidated(Guid.NewGuid(), 0.5, 0.7, 0.02, Guid.NewGuid(), CancellationToken);
+
+        var reset = await validated.ResetToProposed(CancellationToken);
+
+        reset.Status.Should().Be(TheoryStatus.Proposed);
+        reset.ResultingProposalId.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ResetToProposed_FromProposed_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+
+        await FluentActions
+            .Invoking(() => theory.ResetToProposed(CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task ResetToProposed_FromValidating_Throws()
+    {
+        IServiceProvider services = GetServices();
+        var theory = await CreateTheory(services);
+        var validating = await theory.SetValidating(CancellationToken);
+
+        await FluentActions
+            .Invoking(() => validating.ResetToProposed(CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
     }
 
     [TestMethod]
@@ -91,7 +189,7 @@ public sealed class OptimizationTheoryValidationTests : DomainTest<Module>
         var theory = await CreateTheory(services);
 
         await FluentActions
-            .Invoking(() => theory.SetValidated(Guid.NewGuid(), null, null, null, CancellationToken))
+            .Invoking(() => theory.SetValidated(Guid.NewGuid(), null, null, null, null, CancellationToken))
             .Should().ThrowAsync<InvalidOperationException>();
     }
 

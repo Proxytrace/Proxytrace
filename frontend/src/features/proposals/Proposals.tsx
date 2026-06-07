@@ -10,14 +10,20 @@ import { useProposals } from './hooks/useProposals';
 import { useTheories } from './hooks/useTheories';
 import { useSuiteNames } from './hooks/useSuiteNames';
 import { useSetProposalStatus } from './hooks/useSetProposalStatus';
-import { ProposalStatus } from '../../api/models';
+import { useResetTheory } from './hooks/useResetTheory';
+import { ProposalStatus, TheoryStatus } from '../../api/models';
 import { BOARD_COLUMNS, boardStats, groupByColumn } from './theoryBoard';
 
 export default function Proposals() {
   const { theories, isLoading } = useTheories();
-  const { proposals } = useProposals();
+  // While any theory is still validating, proposals can appear/change server-side — poll alongside.
+  const hasActiveTheories = theories.some(
+    t => t.status === TheoryStatus.Proposed || t.status === TheoryStatus.Validating,
+  );
+  const { proposals } = useProposals(hasActiveTheories);
   const suiteName = useSuiteNames();
   const setStatus = useSetProposalStatus();
+  const resetTheory = useResetTheory();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -88,7 +94,9 @@ export default function Proposals() {
           proposal={selectedProposal}
           suiteName={suiteName(selectedTheory.suiteId)}
           onSetStatus={(status) => { if (selectedProposal) setStatus.mutate({ id: selectedProposal.id, status }); }}
+          onReset={() => resetTheory.mutate(selectedTheory.id)}
           actionPending={setStatus.isPending}
+          resetPending={resetTheory.isPending}
           onClose={() => setSelectedId(null)}
         />
       )}

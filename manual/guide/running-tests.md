@@ -18,6 +18,14 @@ Runs stream their results live via Server-Sent Events — results fill in as cas
 without refreshing the page. Related runs can be grouped together (a **test run group**)
 so you can compare, for example, the same suite across several agent versions.
 
+### A/B validation runs
+
+When the optimizer validates an [optimization theory](/guide/optimization-theories), it
+executes ephemeral **A/B runs** (baseline vs. candidate). These are hidden from the run list
+by default to keep it focused on the runs you started. Toggle **A/B runs** above the list to
+reveal them; revealed groups are tagged with an **A/B** badge. Opening a proposal's or
+theory's *View run* link also reveals the linked A/B run automatically and selects it.
+
 ## Reading results
 
 A completed run gives you:

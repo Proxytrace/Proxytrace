@@ -35,43 +35,63 @@ internal abstract class TheoryValidatorBase : ITheoryValidator
 
     public abstract bool CanValidate(IOptimizationTheory theory);
 
-    public abstract Task<TheoryValidationOutcome> ValidateAsync(IOptimizationTheory theory, CancellationToken cancellationToken = default);
+    public abstract Task<TheoryValidationOutcome> ValidateAsync(
+        IOptimizationTheory theory,
+        CancellationToken cancellationToken = default,
+        CandidateRunObserver? onCandidateRun = null);
 
     /// <summary>
     /// Returns the evidence run executed against <paramref name="endpoint"/> if one exists,
     /// otherwise executes a fresh run of <paramref name="agent"/> against that endpoint.
+    /// When <paramref name="onRunResolved"/> is supplied it is invoked with the run id as soon as
+    /// the run is resolved (a reused evidence run) or created (a fresh run, before it executes).
     /// </summary>
     protected async Task<ITestRun> ResolveRunAsync(
         IOptimizationTheory theory,
         IAgent agent,
         IModelEndpoint endpoint,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        CandidateRunObserver? onRunResolved = null)
     {
         foreach (var evidenceId in theory.EvidenceTestRunIds)
         {
             var run = await testRuns.FindAsync(evidenceId, cancellationToken);
             if (run is not null && run.Endpoint.Id == endpoint.Id)
+            {
+                if (onRunResolved is not null)
+                    await onRunResolved(run.Id, cancellationToken);
                 return run;
+            }
         }
 
-        return await RunAsync(theory.Suite, agent, endpoint, cancellationToken);
+        return await RunAsync(theory.Suite, agent, endpoint, cancellationToken, onRunResolved);
     }
 
     /// <summary>
     /// Executes an ephemeral A/B run of <paramref name="agent"/> against <paramref name="endpoint"/>
     /// over the supplied suite. The run is flagged as a system run so it does not re-trigger optimization.
+    /// When <paramref name="onRunCreated"/> is supplied it is invoked with the run id the moment the run
+    /// is created — before it executes — so an in-flight run can be linked while validation is still running.
     /// </summary>
     protected async Task<ITestRun> RunAsync(
         ITestSuite suite,
         IAgent agent,
         IModelEndpoint endpoint,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        CandidateRunObserver? onRunCreated = null)
     {
         var group = await testRunnerService.Value.RunInForegroundAsync(
             suite: suite,
             endpoints: [endpoint],
             customAgent: agent,
             isSystemTestRun: true,
+            onGroupCreated: onRunCreated is null
+                ? null
+                : async (createdGroup, ct) =>
+                {
+                    var createdRuns = await createdGroup.GetTestRuns(ct);
+                    await onRunCreated(createdRuns.First().Id, ct);
+                },
             cancellationToken: cancellationToken);
 
         var runs = await group.GetTestRuns(cancellationToken);

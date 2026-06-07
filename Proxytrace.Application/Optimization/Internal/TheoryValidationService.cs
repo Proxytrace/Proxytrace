@@ -87,6 +87,39 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         return new TheorySubmissionResult(TheorySubmissionOutcome.Accepted, persisted);
     }
 
+    public async Task<TheoryResetResult> ResetToProposedAsync(Guid theoryId, CancellationToken cancellationToken = default)
+    {
+        var theory = await theories.FindAsync(theoryId, cancellationToken);
+        if (theory is null)
+            return new TheoryResetResult(TheoryResetOutcome.NotFound, null);
+
+        if (theory.Status is not (TheoryStatus.Validated or TheoryStatus.Invalidated))
+            return new TheoryResetResult(TheoryResetOutcome.NotResettable, null);
+
+        var proposalId = theory.ResultingProposalId;
+        if (proposalId is { } id)
+        {
+            var proposal = await proposals.FindAsync(id, cancellationToken);
+            if (proposal is { Status: ProposalStatus.Accepted })
+                return new TheoryResetResult(TheoryResetOutcome.BlockedByAcceptedProposal, null);
+        }
+
+        // Clear the theory's proposal reference before deleting the proposal so the two writes
+        // stay consistent if interrupted; both happen in one transaction.
+        var reset = await transaction.InvokeAsync(async () =>
+        {
+            var resetTheory = await theory.ResetToProposed(cancellationToken);
+            if (proposalId is { } pid)
+                await proposals.RemoveAsync(pid, cancellationToken);
+            return resetTheory;
+        });
+
+        theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(reset));
+        await channel.Writer.WriteAsync(reset.Id, cancellationToken);
+
+        return new TheoryResetResult(TheoryResetOutcome.Reset, reset);
+    }
+
     private async Task<bool> ShouldSuppressAsync(IOptimizationTheory theory, CancellationToken cancellationToken)
     {
         var priorTheory = await theories.FindLatestByContentHashAsync(
@@ -148,10 +181,20 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             theory = await theory.SetValidating(cancellationToken);
             theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
 
+            // Link the candidate A/B run to the theory the moment it is created — while still
+            // Validating — so reviewers can watch the in-flight run, not just the finished one.
+            async Task OnCandidateRun(Guid candidateRunId, CancellationToken ct)
+            {
+                if (theory is null)
+                    return;
+                theory = await theory.AttachAbTestRun(candidateRunId, ct);
+                theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+            }
+
             var validator = validators.FirstOrDefault(v => v.CanValidate(theory));
             TheoryValidationOutcome outcome = validator is null
                 ? TheoryValidationOutcome.Inconclusive
-                : await validator.ValidateAsync(theory, cancellationToken);
+                : await validator.ValidateAsync(theory, cancellationToken, OnCandidateRun);
 
             if (outcome.Proposal is { } proposal)
             {
@@ -162,7 +205,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
                 {
                     var savedProposal = await proposals.AddAsync(proposal, cancellationToken);
                     var savedTheory = await theory.SetValidated(
-                        savedProposal.Id, outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue, cancellationToken);
+                        savedProposal.Id, outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue,
+                        outcome.CandidateRunId ?? theory.ABTestRunId, cancellationToken);
                     return (savedProposal, savedTheory);
                 });
 
@@ -172,8 +216,11 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             }
             else
             {
+                // Inconclusive outcomes carry no run id, but the observer may already have linked the
+                // candidate run while validating — never downgrade a known link back to null.
                 theory = await theory.SetInvalidated(
-                    outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue, cancellationToken);
+                    outcome.BaselinePassRate, outcome.ProjectedPassRate, outcome.PValue,
+                    outcome.CandidateRunId ?? theory.ABTestRunId, cancellationToken);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
                 logger.LogInformation("Theory {TheoryId} invalidated — no improvement", theoryId);
             }
@@ -196,7 +243,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             var theory = await theories.FindAsync(theoryId, cancellationToken);
             if (theory is { Status: TheoryStatus.Validating })
             {
-                theory = await theory.SetInvalidated(null, null, null, cancellationToken);
+                // Preserve any A/B run already linked while validating; only the metrics are unknown.
+                theory = await theory.SetInvalidated(null, null, null, theory.ABTestRunId, cancellationToken);
                 theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
             }
         }

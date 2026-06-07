@@ -59,6 +59,7 @@ public record TestRunGroupDto(
     Guid AgentId,
     string AgentName,
     TestRunStatus Status,
+    bool IsSystemRun,
     DateTimeOffset? CompletedAt,
     IReadOnlyList<TestRunDto> Runs,
     DateTimeOffset CreatedAt,

@@ -148,9 +148,9 @@ internal sealed class OptimizationTheorySeedScenario : IDemoScenario
                 if (saved.Status == TheoryStatus.Validating)
                 {
                     if (target == TheoryStatus.Validated && proposalId is { } id)
-                        await saved.SetValidated(id, baseline, projected, pValue, cancellationToken);
+                        await saved.SetValidated(id, baseline, projected, pValue, abTestRunId: null, cancellationToken);
                     else if (target == TheoryStatus.Invalidated)
-                        await saved.SetInvalidated(baseline, projected, pValue, cancellationToken);
+                        await saved.SetInvalidated(baseline, projected, pValue, abTestRunId: null, cancellationToken);
                 }
                 return;
             }

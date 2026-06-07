@@ -76,9 +76,12 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         IReadOnlyList<IModelEndpoint> endpoints,
         IAgent? customAgent = null,
         bool isSystemTestRun = false,
+        Func<ITestRunGroup, CancellationToken, Task>? onGroupCreated = null,
         CancellationToken cancellationToken = default)
     {
         ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemTestRun, cancellationToken);
+        if (onGroupCreated is not null)
+            await onGroupCreated(group, cancellationToken);
         return await ExecuteGroupAsync(group, customAgent, isSystemTestRun, cancellationToken);
     }
 

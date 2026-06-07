@@ -33,6 +33,7 @@ public sealed class TheoryDtoMapper
             t.BaselinePassRate,
             t.ProjectedPassRate,
             t.PValue,
+            t.ABTestRunId,
             t.CreatedAt,
             t.UpdatedAt);
 

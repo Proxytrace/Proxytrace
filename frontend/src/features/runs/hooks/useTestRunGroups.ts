@@ -6,15 +6,16 @@ import { REFETCH_INTERVAL_LIVE } from '../../../lib/constants';
 import { isActive } from '../results';
 
 /** Group list for the current project (optionally filtered by agent). Polls only while a run is active. */
-export function useTestRunGroups(agentFilter: string) {
+export function useTestRunGroups(agentFilter: string, includeSystem = false) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
 
   const query = useQuery({
-    queryKey: QUERY_KEYS.testRunGroups(agentFilter, projectId),
+    queryKey: QUERY_KEYS.testRunGroups(agentFilter, projectId, includeSystem),
     queryFn: () => testRunGroupsApi.list({
       agentId: agentFilter || undefined,
       projectId: agentFilter ? undefined : projectId,
+      includeSystem: includeSystem || undefined,
       pageSize: 100,
     }),
     refetchInterval: q => {
