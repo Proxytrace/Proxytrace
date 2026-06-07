@@ -15,8 +15,6 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
   const live = useRunGroupStream(group.id, active);
   const cancelGroup = useCancelTestRunGroup(group.id);
 
-  const multipleRuns = group.runs.length > 1;
-
   // Single- and multi-endpoint groups render identically: the matrix is the canonical results
   // view (one column per endpoint) and the only scroller, so this column fills the viewport and
   // never spills a page scrollbar.
@@ -29,7 +27,7 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
         cancelPending={cancelGroup.isPending}
       />
 
-      {multipleRuns && <PerformanceSummary runs={group.runs} />}
+      <PerformanceSummary runs={group.runs} />
 
       <EvaluatorHeatmap group={group} live={live} />
 
