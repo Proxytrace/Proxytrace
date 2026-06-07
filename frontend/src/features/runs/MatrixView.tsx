@@ -139,7 +139,7 @@ export function MatrixView({ group, live }: {
               const avg = avgLatency(run);
               return (
                 <div key={run.id} className="sticky bottom-0 z-20 bg-card px-3 py-2 border-t border-hairline flex flex-col items-start justify-center gap-0.5">
-                  <span className="mono text-title font-bold" style={{ color: passRateColor(pr) }}>{pr !== null ? `${pr}%` : '—'}</span>
+                  <span className="mono text-title font-bold" style={{ color: active ? 'var(--text-muted)' : passRateColor(pr) }}>{pr !== null ? `${pr}%` : '—'}</span>
                   <span className="mono text-caption text-muted">{avg !== null ? `~${fmtDuration(avg)}` : '—'}</span>
                 </div>
               );
