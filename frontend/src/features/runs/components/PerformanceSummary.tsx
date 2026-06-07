@@ -3,9 +3,14 @@ import { buildLeaderboard } from '../comparison';
 import { runsComplete } from '../results';
 import { ModelSummaryCard } from './ModelSummaryCard';
 
-/** Per-model comparison cards shown above the matrix for a multi-model run group. */
-export function ModelLeaderboard({ runs }: { runs: TestRunDto[] }) {
-  const entries = buildLeaderboard(runs, runsComplete(runs));
+/**
+ * Per-model performance summary shown above the matrix for every run group — a grid of one
+ * card per model (a single-model group is just the N-of-1 case). Winner badges and comparative
+ * coloring only appear once the whole group has settled (see {@link buildLeaderboard}).
+ */
+export function PerformanceSummary({ runs }: { runs: TestRunDto[] }) {
+  const complete = runsComplete(runs);
+  const entries = buildLeaderboard(runs, complete);
   const multi = runs.length > 1;
   if (entries.length === 0) return null;
 

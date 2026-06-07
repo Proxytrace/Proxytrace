@@ -3,7 +3,7 @@ import { isActive } from './results';
 import { useCancelTestRunGroup } from './hooks/useCancelTestRunGroup';
 import { useRunGroupStream } from './hooks/useRunGroupStream';
 import { RunGroupHeader } from './components/RunGroupHeader';
-import { ModelLeaderboard } from './components/ModelLeaderboard';
+import { PerformanceSummary } from './components/PerformanceSummary';
 import { EvaluatorHeatmap } from './components/EvaluatorHeatmap';
 import { MatrixView } from './MatrixView';
 
@@ -29,7 +29,7 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
         cancelPending={cancelGroup.isPending}
       />
 
-      {multipleRuns && <ModelLeaderboard runs={group.runs} />}
+      {multipleRuns && <PerformanceSummary runs={group.runs} />}
 
       <EvaluatorHeatmap group={group} live={live} />
 
