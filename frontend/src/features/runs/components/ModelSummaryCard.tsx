@@ -9,7 +9,7 @@ import { Spinner } from '../../../components/ui/Spinner';
 import { ModelTag } from './ModelTag';
 
 /** One per-model comparison card: headline pass rate, counts, cost/token/duration meta. */
-export function ModelLeaderboardCard({ entry, multi }: { entry: LeaderboardEntry; multi: boolean }) {
+export function ModelSummaryCard({ entry, multi }: { entry: LeaderboardEntry; multi: boolean }) {
   const { run, passRate, passed, failed, pending } = entry;
   const running = run.status === TestRunStatus.Running;
   const pendingRun = run.status === TestRunStatus.Pending;
