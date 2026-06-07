@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 
 export interface KioskState {
   enabled: boolean;
-  /** Full read-write available — non-kiosk: always; kiosk: only when an LLM endpoint is configured. */
+  /** Full read-write + Tracey available. Non-kiosk: always; kiosk: only when an LLM endpoint is configured. */
   interactive: boolean;
 }
 

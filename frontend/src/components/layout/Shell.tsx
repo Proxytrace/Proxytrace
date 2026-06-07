@@ -129,7 +129,7 @@ export function Shell() {
   const licenseFeatures = license?.features ?? [];
   const location = useLocation();
   const { currentProject } = useCurrentProject();
-  // Tracey makes real LLM calls; in kiosk she's only available when an LLM endpoint is configured.
+  // interactive == full read-write kiosk (LLM endpoint configured); also whether Tracey is usable.
   const { interactive } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
@@ -188,7 +188,7 @@ export function Shell() {
                 </div>
               )}
               {group.items
-                // Tracey needs a usable LLM endpoint; hide her nav entry when unavailable (kiosk without one).
+                // Hide Tracey's nav entry when the kiosk is read-only (no LLM endpoint configured).
                 .filter(item => !(item.to === '/tracey-ai' && !interactive))
                 .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (

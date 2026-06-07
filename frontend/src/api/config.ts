@@ -2,7 +2,7 @@ import { api } from './client';
 
 export interface AppConfig {
   kiosk: boolean;
-  /** Full read-write — always true outside kiosk; in kiosk only when an LLM endpoint is configured. */
+  /** Full read-write available. Always true outside kiosk; in kiosk only when an LLM endpoint is configured — also gates Tracey. */
   interactive: boolean;
 }
 
