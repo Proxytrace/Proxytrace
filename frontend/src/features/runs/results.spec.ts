@@ -233,8 +233,8 @@ describe('buildMatrixRows', () => {
   function caseResult(testCaseId: string, summary: string, evals: EvaluationResultDto[]): TestResultDto {
     return { id: `${testCaseId}-r`, testCaseId, testCaseSummary: summary, actualResponse: '', evaluations: evals, durationMs: 100 };
   }
-  function run(id: string, results: TestResultDto[], testCases: { id: string; summary: string }[] = []): TestRunDto {
-    return { id, endpointName: id, results, testCases } as TestRunDto;
+  function run(id: string, results: TestResultDto[], testCases: { id: string; summary: string }[] = [], evaluatorCount = 0): TestRunDto {
+    return { id, endpointName: id, results, testCases, evaluators: new Array(evaluatorCount).fill({ id: 'ev', kind: EvaluatorKind.ExactMatch, name: 'E' }) } as TestRunDto;
   }
 
   it('keeps stable suite order (no reshuffle) and flags divergence per row', () => {
@@ -259,6 +259,14 @@ describe('buildMatrixRows', () => {
     const bRow = buildMatrixRows([r1, r2]).find(r => r.caseId === 'b');
     expect(bRow?.summary).toBe('B');
     expect(bRow?.cells.every(c => c.result === null && c.pass === null)).toBe(true);
+  });
+
+  it('gives pending cells a zero-of-N evaluator slot count', () => {
+    const cases = [{ id: 'a', summary: 'A' }];
+    const r = run('m1', [], cases, 3); // 3 evaluators, no results yet
+    const cell = buildMatrixRows([r])[0].cells[0];
+    expect(cell.status).toBe('pending');
+    expect(cell.progress).toEqual({ done: 0, total: 3 });
   });
 });
 

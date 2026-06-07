@@ -254,7 +254,11 @@ function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): 
       progress: { done: liveCase.evaluations.length, total: run.evaluators.length },
     };
   }
-  return { run, result: null, idx: -1, pass: null, score: null, status: 'pending', liveEvaluations: [], progress: null };
+  return {
+    run, result: null, idx: -1, pass: null, score: null,
+    status: 'pending', liveEvaluations: [],
+    progress: { done: 0, total: run.evaluators?.length ?? 0 },
+  };
 }
 
 // ── Live cache patching (SSE) ─────────────────────────────────────────────────
