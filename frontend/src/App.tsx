@@ -181,13 +181,16 @@ function AppRoutes() {
   );
 }
 
-function KioskShell({ traceyAvailable }: { traceyAvailable: boolean }) {
+function KioskShell({ interactive }: { interactive: boolean }) {
   useEffect(() => {
+    // The `kiosk` body class drives the read-only [data-write] kill-switch (index.css). Only
+    // apply it for a read-only kiosk; an interactive kiosk leaves write controls live.
+    if (interactive) return;
     document.body.classList.add('kiosk');
     return () => document.body.classList.remove('kiosk');
-  }, []);
+  }, [interactive]);
   return (
-    <KioskContext.Provider value={{ enabled: true, traceyAvailable }}>
+    <KioskContext.Provider value={{ enabled: true, interactive }}>
       <BrowserRouter>
         <CurrentUserContext.Provider value={{ email: 'demo@proxytrace.dev', signOut: () => {} }}>
           <AppRoutes />
@@ -204,7 +207,7 @@ function ModeShell() {
     staleTime: Infinity,
   });
   const { data, isLoading, error } = useAuthMode();
-  if (appConfig?.kiosk) return <KioskShell traceyAvailable={!!appConfig.tracey} />;
+  if (appConfig?.kiosk) return <KioskShell interactive={!!appConfig.interactive} />;
   if (isLoading) return <PageLoader />;
   if (error || !data) {
     return (

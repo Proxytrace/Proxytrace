@@ -2,8 +2,8 @@ import { api } from './client';
 
 export interface AppConfig {
   kiosk: boolean;
-  /** Whether Tracey is usable — always true outside kiosk; in kiosk only when an LLM endpoint is configured. */
-  tracey: boolean;
+  /** Full read-write — always true outside kiosk; in kiosk only when an LLM endpoint is configured. */
+  interactive: boolean;
 }
 
 export const configApi = {

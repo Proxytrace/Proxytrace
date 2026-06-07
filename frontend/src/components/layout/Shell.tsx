@@ -130,7 +130,7 @@ export function Shell() {
   const location = useLocation();
   const { currentProject } = useCurrentProject();
   // Tracey makes real LLM calls; in kiosk she's only available when an LLM endpoint is configured.
-  const { traceyAvailable } = useKiosk();
+  const { interactive } = useKiosk();
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
@@ -189,7 +189,7 @@ export function Shell() {
               )}
               {group.items
                 // Tracey needs a usable LLM endpoint; hide her nav entry when unavailable (kiosk without one).
-                .filter(item => !(item.to === '/tracey-ai' && !traceyAvailable))
+                .filter(item => !(item.to === '/tracey-ai' && !interactive))
                 .map(item =>
                 isNavEntryLocked(item.requiresFeature, licenseFeatures) ? (
                   <LockedNavItem
@@ -274,7 +274,7 @@ export function Shell() {
 
           <LicenseBadge />
 
-          {traceyAvailable && (
+          {interactive && (
             <IconButton
               data-testid="tracey-toggle"
               onClick={() => navigate('/tracey-ai')}
