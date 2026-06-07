@@ -11,9 +11,9 @@ export function EvalSlots({ arrived, total }: { arrived: EvaluationResultDto[]; 
   const emptyCount = Math.max(0, total - arrived.length);
   return (
     <span className="flex items-center gap-1" data-testid="eval-slots">
-      {arrived.map((e, i) => (
+      {arrived.map(e => (
         <span
-          key={`f${i}`}
+          key={e.evaluatorId}
           title={`${e.evaluatorName}: ${isErrored(e) ? 'error' : isEvalPass(e) ? 'pass' : 'fail'}`}
           className={cn('w-2 h-2 rounded-full shrink-0', isErrored(e) ? 'bg-warn' : isEvalPass(e) ? 'bg-success' : 'bg-danger')}
         />
