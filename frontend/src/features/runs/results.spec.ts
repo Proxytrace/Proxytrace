@@ -17,6 +17,7 @@ import {
   compositePercent,
   avgLatency,
   isActive,
+  runsComplete,
   isDivergent,
   buildMatrixRows,
   fixtureSummary,
@@ -125,6 +126,23 @@ describe('isActive', () => {
     expect(isActive(TestRunStatus.Pending)).toBe(true);
     expect(isActive(TestRunStatus.Completed)).toBe(false);
     expect(isActive(TestRunStatus.Failed)).toBe(false);
+  });
+});
+
+describe('runsComplete', () => {
+  const r = (status: TestRunStatus): TestRunDto => ({ status } as TestRunDto);
+
+  it('is false when there are no runs', () => {
+    expect(runsComplete([])).toBe(false);
+  });
+
+  it('is false while any run is pending or running', () => {
+    expect(runsComplete([r(TestRunStatus.Completed), r(TestRunStatus.Running)])).toBe(false);
+    expect(runsComplete([r(TestRunStatus.Pending)])).toBe(false);
+  });
+
+  it('is true once every run is in a terminal state', () => {
+    expect(runsComplete([r(TestRunStatus.Completed), r(TestRunStatus.Failed)])).toBe(true);
   });
 });
 

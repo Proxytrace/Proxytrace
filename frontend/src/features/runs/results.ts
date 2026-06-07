@@ -109,6 +109,14 @@ export function avgLatency(run: TestRunDto): number | null {
 export const isActive = (s: TestRunStatus): boolean =>
   s === TestRunStatus.Running || s === TestRunStatus.Pending;
 
+/**
+ * True once every run in the group has settled (none pending/running). Single source
+ * of truth for when comparative verdicts (winner badges, "best" coloring) become
+ * authoritative — until then the UI shows progress, not conclusions.
+ */
+export const runsComplete = (runs: TestRunDto[]): boolean =>
+  runs.length > 0 && !runs.some(r => isActive(r.status));
+
 export function runStatusColor(s: TestRunStatus): string {
   if (s === TestRunStatus.Completed) return SUCCESS;
   if (s === TestRunStatus.Running) return ACCENT;
