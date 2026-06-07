@@ -659,6 +659,49 @@ public sealed class ModelClientTests : BaseTest<Module>
         capturedOptions.ModelId.Should().Be(overrideModel);
     }
 
+    // ── Kiosk mode guards ─────────────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task CompleteAsync_KioskEnabledWithoutEndpoint_Throws()
+    {
+        var response = new ChatResponse([new ChatMessage(ChatRole.Assistant, "hi")]);
+        var services = GetServices(config =>
+        {
+            RegisterEndpoint(config);
+            RegisterChatClient(config, response);
+            config.RegisterInstance(new KioskOptions { Enabled = true }).AsSelf();
+            config.RegisterInstance(new KioskEndpointOptions()).AsSelf();
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        await FluentActions
+            .Invoking(() => client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken))
+            .Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [TestMethod]
+    public async Task CompleteAsync_KioskEnabledWithConfiguredEndpoint_DoesNotThrow()
+    {
+        var response = new ChatResponse([new ChatMessage(ChatRole.Assistant, "hi")]);
+        var services = GetServices(config =>
+        {
+            RegisterEndpoint(config);
+            RegisterChatClient(config, response);
+            config.RegisterInstance(new KioskOptions { Enabled = true }).AsSelf();
+            config.RegisterInstance(new KioskEndpointOptions
+            {
+                BaseUrl = "https://api.openai.com/v1",
+                ApiKey = "sk-test",
+                Model = "gpt-4o",
+            }).AsSelf();
+        });
+
+        var client = services.GetRequiredService<IModelClient>();
+        var completion = await client.CompleteAsync(SimpleConversation(), cancellationToken: CancellationToken);
+
+        completion.Should().NotBeNull();
+    }
+
     // ── Constructor / provider kind validation ────────────────────────────────
 
     [TestMethod]

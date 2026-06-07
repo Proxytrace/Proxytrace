@@ -2,6 +2,7 @@ using Autofac;
 using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Proxytrace.Application.Streaming;
 using Proxytrace.Application.TestRun;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -201,6 +202,36 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var storedResult = await resultRepo.GetAsync(testRun.TestResults[0].Id, CancellationToken);
         storedResult.Evaluations.Should().ContainSingle()
             .Which.Score.Should().Be(EvaluationScore.Terrible);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_PublishesTestResultArrivedEvent_CarryingTheEvaluations()
+    {
+        // Regression: the live SSE event that completes a matrix cell must carry the case's
+        // evaluations, not just its latency. Previously the runner built the event from the
+        // result object it created with an empty evaluation list (the evaluations were added
+        // to reloaded copies), so cells finished with no evaluator dots until the final refetch.
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var broadcaster = Substitute.For<ITestResultBroadcaster>();
+        var published = new List<TestRunEvent>();
+        broadcaster.When(b => b.Publish(Arg.Any<TestRunEvent>()))
+            .Do(ci => published.Add(ci.Arg<TestRunEvent>()));
+
+        var services = GetServices(config =>
+        {
+            RegisterFakeModelClient(config, expectedOutput);
+            config.RegisterInstance(broadcaster).As<ITestResultBroadcaster>();
+        });
+
+        var suite = await BuildSuiteAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        await runner.RunInForegroundAsync(suite, [endpoint], cancellationToken: CancellationToken);
+
+        var resultArrived = published.OfType<TestResultArrivedEvent>().Should().ContainSingle().Subject;
+        resultArrived.Evaluations.Should().ContainSingle()
+            .Which.Score.Should().Be(EvaluationScore.Acceptable);
     }
 
     [TestMethod]

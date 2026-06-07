@@ -210,5 +210,6 @@ Tracey's chat runs **same-origin**: the browser calls the Proxytrace API with yo
 session (JWT), and the API forwards each request to your model provider server-side. Your
 upstream provider credentials never reach the browser.
 
-> Tracey makes real model calls, so she needs a configured provider with a valid key and is
-> unavailable in read-only demo (kiosk) mode.
+> Tracey makes real model calls, so she needs a configured provider with a valid key.
+> Interactive features including Tracey are unavailable in read-only kiosk mode (no
+> `Kiosk:Endpoint` configured); they are fully enabled in interactive kiosk mode.

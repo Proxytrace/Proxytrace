@@ -22,6 +22,7 @@ internal class ModelClient : IModelClient
     private readonly IAgent agent;
     private readonly bool skipIngestion;
     private readonly KioskOptions kioskOptions;
+    private readonly KioskEndpointOptions kioskEndpoint;
     private readonly ICompletion.Create completionFactory;
     private readonly IAgentCall.CreateNew agentCallFactory;
     private readonly IModelEndpoint endpoint;
@@ -33,6 +34,7 @@ internal class ModelClient : IModelClient
         IModelEndpoint? customEndpoint,
         bool skipIngestion,
         KioskOptions kioskOptions,
+        KioskEndpointOptions kioskEndpoint,
         ICompletion.Create completionFactory,
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory)
@@ -41,6 +43,7 @@ internal class ModelClient : IModelClient
         this.agent = agent;
         this.skipIngestion = skipIngestion;
         this.kioskOptions = kioskOptions;
+        this.kioskEndpoint = kioskEndpoint;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
@@ -51,6 +54,7 @@ internal class ModelClient : IModelClient
         IAgent agent,
         IModelEndpoint? customEndpoint,
         KioskOptions kioskOptions,
+        KioskEndpointOptions kioskEndpoint,
         ICompletion.Create completionFactory,
         IAgentCall.CreateNew agentCallFactory,
         IOutputFormat.Create outputFormatFactory,
@@ -59,6 +63,7 @@ internal class ModelClient : IModelClient
         endpoint = customEndpoint ?? agent.Endpoint;
         this.agent = agent;
         this.kioskOptions = kioskOptions;
+        this.kioskEndpoint = kioskEndpoint;
         this.completionFactory = completionFactory;
         this.agentCallFactory = agentCallFactory;
         this.outputFormatFactory = outputFormatFactory;
@@ -150,10 +155,11 @@ internal class ModelClient : IModelClient
         ModelOptions? options,
         CancellationToken cancellationToken)
     {
-        if (kioskOptions.Enabled)
+        if (kioskOptions.Enabled && !kioskEndpoint.IsConfigured)
         {
             throw new InvalidOperationException(
-                "Model calls are disabled in kiosk mode. This instance of ModelClient is not functional.");
+                "Model calls are disabled in read-only kiosk mode (no LLM endpoint configured). " +
+                "This instance of ModelClient is not functional.");
         }
         
         options ??= ModelOptions.FromAgent(agent, endpoint.Model);

@@ -23,7 +23,8 @@ public class ConfigController : ControllerBase
     {
         kiosk = kioskOptions.Enabled,
 
-        // Tracey is always available outside kiosk; in kiosk only when a real LLM endpoint is configured.
-        tracey = !kioskOptions.Enabled || kioskEndpoint.IsConfigured,
+        // Interactive = full read-write. Always true outside kiosk; in kiosk only when a
+        // real LLM endpoint is configured (unlocks runs, evaluations, proposals, CRUD).
+        interactive = !kioskOptions.Enabled || kioskEndpoint.IsConfigured,
     };
 }

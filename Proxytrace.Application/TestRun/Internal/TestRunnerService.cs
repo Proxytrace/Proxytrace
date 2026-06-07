@@ -262,6 +262,11 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         testRun = await testRun.ReloadAsync(cancellationToken);
         testRun = await testRun.SetTestResult(testResult, cancellationToken);
 
+        // Reload the result before broadcasting: the evaluations were added to reloaded copies
+        // inside RunEvaluator, so this local reference still holds the empty list it was created
+        // with. Without the reload the completing SSE event carries no evaluations and a finished
+        // matrix cell shows no evaluator dots until the terminal group refetch.
+        testResult = await testResult.ReloadAsync(cancellationToken);
         broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
     }
 

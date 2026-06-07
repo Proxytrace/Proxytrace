@@ -97,7 +97,11 @@ public sealed class Module : Autofac.Module
                 => services.AddSingleton<IHostedService>(sc =>
                 {
                     var kiosk = sc.GetRequiredService<KioskOptions>();
-                    return kiosk.Enabled
+                    var endpoint = sc.GetRequiredService<KioskEndpointOptions>();
+
+                    // Disabled only in a read-only kiosk (no LLM endpoint). A configured
+                    // endpoint makes kiosk fully interactive, so background test runs execute.
+                    return kiosk.Enabled && !endpoint.IsConfigured
                         ? new NullHostedService()
                         : sc.GetRequiredService<TestRunnerService>();
                 }));

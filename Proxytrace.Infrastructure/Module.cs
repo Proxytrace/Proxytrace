@@ -1,4 +1,5 @@
 using Autofac;
+using Proxytrace.Application.Demo;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Infrastructure.Internal;
@@ -19,5 +20,10 @@ public class Module : Autofac.Module
 
         builder.RegisterType<ProviderClient>()
             .As<IProviderClient>();
+
+        builder.Register(_ => new KioskEndpointOptions())
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(KioskEndpointOptions));
     }
 }

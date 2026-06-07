@@ -63,11 +63,12 @@ DB. The split/Redis transport is only for the standalone-proxy production deploy
 }
 ```
 
-### Functional kiosk (real LLM endpoint)
+### Interactive kiosk (real LLM endpoint)
 
-By default the seeded providers carry no credentials, so Tracey chat and test runs cannot
-reach a real model. To make the kiosk **fully functional**, add a `Kiosk:Endpoint` section
-with a real provider endpoint, API key and model — typically in
+By default, kiosk is **read-only**: the seeded providers carry no credentials, so you can
+browse the demo dataset but cannot run test suites, generate optimization proposals, or use
+Tracey chat. To switch kiosk into **interactive mode**, add a `Kiosk:Endpoint` section with a
+real provider endpoint, API key, and model — typically in
 `Proxytrace.Api/appsettings.local.json` so the secret stays out of source control:
 
 ```json
@@ -87,21 +88,30 @@ with a real provider endpoint, API key and model — typically in
 }
 ```
 
-When this section is present, kiosk seeding creates a real model provider, model and
-endpoint, makes it the project's **system endpoint** (which powers Tracey chat), and routes
-all demo agents through it so test runs call the real model. The **Tracey AI** assistant also
-becomes visible and usable in the kiosk — her chat is the one write the read-only demo permits.
-Each Tracey exchange is captured through the in-process ingestion pipeline and shows up as a new
-trace attributed to the Tracey system agent.
+When `Kiosk:Endpoint` is present, kiosk becomes fully read-write for a single user:
+
+- **Run test suites and evaluations** against the demo agents (real model calls are made).
+- **Generate optimization proposals** and inspect the Tracey-produced rationale.
+- **Create, edit, and delete** agents, test suites, and providers — the full UI is unlocked.
+- **Chat with Tracey** — the AI assistant becomes visible and usable. Each exchange is
+  captured through the in-process ingestion pipeline and shows up as a new trace attributed
+  to the Tracey system agent.
+
+All data remains **in-memory only** and is lost when the process restarts. Interactive kiosk
+is intended for a single user or a private hands-on demo — it is not designed for a shared
+public instance.
+
+The seeded model provider, model, and endpoint are created from the `Kiosk:Endpoint` values
+and become the project's **system endpoint** powering all interactive features.
 
 - `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
   is missing or invalid, the API fails fast on startup with a clear error.
 - `Kind` is one of `OpenAi`, `Anthropic`, or `OpenAiCompatible` (default `OpenAi`).
 - `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional.
 
-If `Kiosk:Endpoint` is omitted, the kiosk still seeds the full demo dataset, but with
-credential-less providers (LLM calls will not succeed); **Tracey stays hidden** in that case,
-since she has no real model to call.
+If `Kiosk:Endpoint` is omitted, the kiosk seeds the full demo dataset with credential-less
+providers (LLM calls will not succeed); interactive features including Tracey stay hidden
+since there is no real model to call.
 
 ## Demo data
 

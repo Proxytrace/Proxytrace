@@ -109,6 +109,38 @@ export function avgLatency(run: TestRunDto): number | null {
 export const isActive = (s: TestRunStatus): boolean =>
   s === TestRunStatus.Running || s === TestRunStatus.Pending;
 
+/**
+ * True once every run in the group has settled (none pending/running). Single source
+ * of truth for when comparative verdicts (winner badges, "best" coloring) become
+ * authoritative — until then the UI shows progress, not conclusions.
+ */
+export const runsComplete = (runs: TestRunDto[]): boolean =>
+  runs.length > 0 && !runs.some(r => isActive(r.status));
+
+export interface RunGroupProgress {
+  done: number;
+  total: number;
+  percent: number;
+  /** Rough estimate of remaining time, or `null` before any case finishes / when done. */
+  etaMs: number | null;
+}
+
+/**
+ * Aggregate live progress across every run in a group: finished vs total cases, percent,
+ * and a coarse ETA (mean finished-case duration × remaining cases). Counts are monotonic
+ * because finished results are only ever upserted, never removed.
+ */
+export function runGroupProgress(runs: TestRunDto[]): RunGroupProgress {
+  const total = runs.reduce((s, r) => s + r.totalCases, 0);
+  const done = runs.reduce((s, r) => s + r.results.length, 0);
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const durations = runs.flatMap(r => r.results.map(res => res.durationMs));
+  const avg = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
+  const remaining = total - done;
+  const etaMs = avg !== null && remaining > 0 ? Math.round(avg * remaining) : null;
+  return { done, total, percent, etaMs };
+}
+
 export function runStatusColor(s: TestRunStatus): string {
   if (s === TestRunStatus.Completed) return SUCCESS;
   if (s === TestRunStatus.Running) return ACCENT;
@@ -222,7 +254,11 @@ function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): 
       progress: { done: liveCase.evaluations.length, total: run.evaluators.length },
     };
   }
-  return { run, result: null, idx: -1, pass: null, score: null, status: 'pending', liveEvaluations: [], progress: null };
+  return {
+    run, result: null, idx: -1, pass: null, score: null,
+    status: 'pending', liveEvaluations: [],
+    progress: { done: 0, total: run.evaluators?.length ?? 0 },
+  };
 }
 
 // ── Live cache patching (SSE) ─────────────────────────────────────────────────
