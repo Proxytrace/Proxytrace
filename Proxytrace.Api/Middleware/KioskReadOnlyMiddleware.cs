@@ -32,7 +32,7 @@ internal sealed class KioskReadOnlyMiddleware
         }
         
         var method = context.Request.Method;
-        if (!ReadMethods.Contains(method) && !IsAllowedWrite(context.Request))
+        if (!ReadMethods.Contains(method) && !IsAllowedWrite())
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/json";
@@ -49,9 +49,8 @@ internal sealed class KioskReadOnlyMiddleware
         await next(context);
     }
 
-    // Tracey chat is the one interactive write permitted in kiosk: it forwards to the configured
-    // demo LLM endpoint. Only allow it when that endpoint exists; otherwise the demo stays read-only.
-    private bool IsAllowedWrite(HttpRequest request)
-        => endpoint.IsConfigured
-           && request.Path.StartsWithSegments("/api/tracey", StringComparison.OrdinalIgnoreCase);
+    // When a real LLM endpoint is configured, kiosk becomes a fully interactive single-user
+    // instance: lift the read-only restriction entirely. Without an endpoint the demo stays
+    // read-only (and the Tracey write path is unreachable anyway, since it needs the endpoint).
+    private bool IsAllowedWrite() => endpoint.IsConfigured;
 }

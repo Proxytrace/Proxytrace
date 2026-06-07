@@ -57,13 +57,23 @@ public sealed class KioskReadOnlyMiddlewareTests
     }
 
     [TestMethod]
-    public async Task InvokeAsync_KioskEnabled_WriteRequest_ReturnsForbidden()
+    public async Task InvokeAsync_KioskEnabled_WriteWithoutEndpoint_ReturnsForbidden()
     {
         var (ctx, next) = await InvokeAsync(
             "POST", "/api/agents", new KioskOptions { Enabled = true }, new KioskEndpointOptions());
 
         next.Should().BeFalse();
         ctx.Response.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_KioskEnabled_WriteWithConfiguredEndpoint_PassesThrough()
+    {
+        var (ctx, next) = await InvokeAsync(
+            "POST", "/api/test-run-groups", new KioskOptions { Enabled = true }, ConfiguredEndpoint());
+
+        next.Should().BeTrue();
+        ctx.Response.StatusCode.Should().NotBe(StatusCodes.Status403Forbidden);
     }
 
     [TestMethod]
