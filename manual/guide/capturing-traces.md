@@ -45,6 +45,19 @@ conversation as a stack of expandable blocks:
   click a block's header to expand it. User and assistant messages start expanded.
 - **Hover any message block** to reveal a **copy** button that puts that block's content on
   your clipboard (the message text, or the tool call's name, arguments, and result).
+- **Switch how a message body is displayed** with the format dropdown in the top-right of
+  each expanded user/assistant/system message header:
+  - **RAW** — the captured text exactly as sent, preserving whitespace.
+  - **JSON** — pretty-printed and syntax-highlighted (for JSON payloads).
+  - **Markdown** — rendered prose (headings, lists, tables, code, links).
+  - **HTML** — the content rendered as HTML. Markup is always sanitized first (scripts,
+    event handlers, and unsafe links are stripped); a warning appears when anything was
+    removed.
+
+  When you expand a message, Proxytrace **auto-picks** the most useful format — valid JSON
+  opens as JSON, content with Markdown syntax opens as Markdown, everything else as RAW
+  (HTML is opt-in). If a body isn't valid for the chosen format (e.g. JSON that won't parse),
+  a warning shows and the raw text is displayed instead.
 
 Close the panel by pressing `Esc` or clicking outside it. Use the arrow buttons (or the
 `←`/`→` keys) to step to the previous/next trace.

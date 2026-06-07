@@ -10,7 +10,8 @@ export function clean<T extends object>(props: T): Omit<T, 'node'> {
 /**
  * Element overrides that keep react-markdown output inside the DESIGN.md visual system
  * (no library default styles leak in). Shared by the streaming chat renderer
- * ({@link ./MarkdownText}) and the static artifact renderer ({@link ./Markdown}).
+ * ({@link ../../features/tracey/components/MarkdownText}), the static artifact renderer,
+ * and the message-bubble Markdown view ({@link ./Markdown}).
  */
 export const markdownComponents: Components = {
   p: (props) => <p className="mb-2 last:mb-0" {...clean(props)} />,

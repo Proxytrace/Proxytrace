@@ -93,7 +93,7 @@ export function FilterDropdown({
         )}
       >
         {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
-        <span className="text-muted font-medium">{label}</span>
+        {label && <span className="text-muted font-medium">{label}</span>}
         <span>{displayLabel}</span>
         <ChevronDownIcon
           size={12}
