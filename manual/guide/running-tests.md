@@ -14,9 +14,18 @@ Each case in the suite is executed against the agent, and every attached
 
 ## Watching progress
 
-Runs stream their results live via Server-Sent Events — results fill in as cases complete,
-without refreshing the page. Related runs can be grouped together (a **test run group**)
-so you can compare, for example, the same suite across several agent versions.
+Runs stream their progress live via Server-Sent Events, without refreshing the page. You see
+the run unfold at two levels of detail:
+
+- In the **test case matrix**, an in-flight case shows a pulsing indicator with the evaluators
+  that have reported so far (e.g. `2/3`) — so a long-running case isn't a blank cell.
+- In the **evaluator breakdown**, each evaluator's score distribution grows as its individual
+  judgements arrive, not only when a whole case finishes.
+
+Pass rate is always shown over the cases **judged so far**, so the live number matches the
+final one as it climbs — it never starts near zero and jumps at the end. Related runs can be
+grouped together (a **test run group**) so you can compare, for example, the same suite across
+several agent versions.
 
 ### A/B validation runs
 

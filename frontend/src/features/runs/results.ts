@@ -6,6 +6,7 @@ import { TestRunStatus, EvaluationScore } from '../../api/models';
 import type {
   EvaluationResultDto,
   PagedResult,
+  RunCompleteEvent,
   TestCaseFixtureDto,
   TestResultArrivedEvent,
   TestResultDto,
@@ -13,6 +14,7 @@ import type {
   TestRunGroupDto,
 } from '../../api/models';
 import { PASS_RATE_WARN, PASS_RATE_DANGER, SCORE_WARN, SCORE_DANGER } from '../../lib/constants';
+import { liveCaseFor, type LiveProgress } from './live';
 
 const SUCCESS = 'var(--success)';
 const WARN = 'var(--warn)';
@@ -144,12 +146,25 @@ export const isDivergent = (states: boolean[]): boolean =>
 
 // ── Model-comparison matrix (pivot) ──────────────────────────────────────────
 
+/**
+ * A cell's lifecycle in the (case × model) grid:
+ * - `done` — the case finished for this model; `result`/`pass`/`score` are authoritative.
+ * - `running` — inference/evaluation is in flight; `liveEvaluations` + `progress` fill in live.
+ * - `pending` — not started for this model yet.
+ */
+export type CellStatus = 'done' | 'running' | 'pending';
+
 export interface MatrixCell {
   run: TestRunDto;
   result: TestResultDto | null;
   pass: boolean | null;
   score: number | null;
   idx: number;
+  status: CellStatus;
+  /** Evaluations reported so far while `status === 'running'`; empty otherwise. */
+  liveEvaluations: EvaluationResultDto[];
+  /** Evaluator progress while running: how many of the run's evaluators have reported. */
+  progress: { done: number; total: number } | null;
 }
 
 export interface MatrixRow {
@@ -161,65 +176,107 @@ export interface MatrixRow {
 }
 
 /**
- * Pivots a group's runs into a (case × model) grid. `testCaseId` is shared across
- * runs in a group. Ordered divergence-first, then most failures, then alphabetical.
+ * Pivots a group's runs into a (case × model) grid in **stable suite order** (the order cases
+ * first appear across the runs). `testCaseId` is shared across runs in a group. `live` (optional)
+ * overlays in-flight progress for cases with no finalized result yet, so a running case shows
+ * per-evaluator progress instead of a bare placeholder.
+ *
+ * Ordering is intentionally stable here so rows don't reshuffle on every event while a run is in
+ * flight — divergence/worst ordering is applied later by {@link filterSortMatrixRows}, and only
+ * once the run has settled (see its `freezeOrder` argument).
  */
-export function buildMatrixRows(runs: TestRunDto[]): MatrixRow[] {
+export function buildMatrixRows(runs: TestRunDto[], live?: LiveProgress): MatrixRow[] {
   const caseMap = new Map<string, string>();
   runs.forEach(run => {
     run.testCases.forEach(tc => { if (!caseMap.has(tc.id)) caseMap.set(tc.id, tc.summary); });
     run.results.forEach(r => { if (!caseMap.has(r.testCaseId)) caseMap.set(r.testCaseId, r.testCaseSummary); });
   });
 
-  const rows: MatrixRow[] = [...caseMap.entries()].map(([caseId, summary]) => {
-    const cells: MatrixCell[] = runs.map(run => {
-      const idx = run.results.findIndex(r => r.testCaseId === caseId);
-      const result = idx >= 0 ? run.results[idx] : null;
-      return { run, result, pass: result ? resultPass(result) : null, score: result ? resultScore(result) : null, idx };
-    });
+  return [...caseMap.entries()].map(([caseId, summary]) => {
+    const cells: MatrixCell[] = runs.map(run => buildMatrixCell(run, caseId, live));
     const states = cells.flatMap(c => (c.result && c.pass !== null ? [c.pass] : []));
     return { caseId, summary, cells, divergent: isDivergent(states), failCount: cells.filter(c => c.pass === false).length };
   });
+}
 
-  rows.sort((a, b) => (Number(b.divergent) - Number(a.divergent)) || (b.failCount - a.failCount) || a.summary.localeCompare(b.summary));
-  return rows;
+/** Builds one (run, case) cell, preferring a finalized result and falling back to live progress. */
+function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): MatrixCell {
+  const idx = run.results.findIndex(r => r.testCaseId === caseId);
+  if (idx >= 0) {
+    const result = run.results[idx];
+    return {
+      run, result, idx,
+      pass: resultPass(result),
+      score: resultScore(result),
+      status: 'done',
+      liveEvaluations: [],
+      progress: null,
+    };
+  }
+  const liveCase = liveCaseFor(live, run.id, caseId);
+  if (liveCase) {
+    return {
+      run, result: null, idx: -1, pass: null, score: null,
+      status: 'running',
+      liveEvaluations: liveCase.evaluations,
+      progress: { done: liveCase.evaluations.length, total: run.evaluators.length },
+    };
+  }
+  return { run, result: null, idx: -1, pass: null, score: null, status: 'pending', liveEvaluations: [], progress: null };
 }
 
 // ── Live cache patching (SSE) ─────────────────────────────────────────────────
 
 /**
- * Folds a `test-result-arrived` event into a cached group-list page: appends the
- * arriving result to its run and recomputes that run's pass/fail counts. Returns
- * the page unchanged if the group/run is absent or the result is already present
- * (idempotent), so SSE never triggers a refetch.
+ * Folds a `test-result-arrived` event into a cached group-list page: upserts the arriving
+ * (finalized) result into its run and recomputes that run's pass/fail counts. If the case is
+ * already present its result is *replaced* with the authoritative one (a late event must not be
+ * silently dropped). Returns the page unchanged when the group/run is absent, so SSE never
+ * triggers a refetch.
  */
 export function patchGroupsWithResult(
   page: PagedResult<TestRunGroupDto>,
   e: TestResultArrivedEvent,
 ): PagedResult<TestRunGroupDto> {
+  return mapRun(page, e.groupId, e.runId, run => {
+    const result: TestResultDto = {
+      id: e.testCaseId,
+      testCaseId: e.testCaseId,
+      testCaseSummary: run.testCases.find(tc => tc.id === e.testCaseId)?.summary ?? '',
+      actualResponse: '',
+      evaluations: e.evaluations,
+      durationMs: e.durationMs,
+    };
+    const results = [...run.results.filter(r => r.testCaseId !== e.testCaseId), result];
+    return withCounts(run, results);
+  });
+}
+
+/** Flips a single run's status/completion in the cached page on a `run-complete` event. */
+export function patchGroupsRunStatus(
+  page: PagedResult<TestRunGroupDto>,
+  e: RunCompleteEvent,
+): PagedResult<TestRunGroupDto> {
+  return mapRun(page, e.groupId, e.runId, run => ({ ...run, status: e.status, completedAt: e.completedAt }));
+}
+
+/** Recomputes pass/fail counts and (judged-denominator) pass rate from a run's results. */
+function withCounts(run: TestRunDto, results: TestResultDto[]): TestRunDto {
+  const passedCases = results.filter(r => resultPass(r) === true).length;
+  const failedCases = results.filter(r => resultPass(r) === false).length;
+  return { ...run, results, passedCases, failedCases, passRate: compositePercent(passedCases, passedCases + failedCases) ?? 0 };
+}
+
+/** Applies `fn` to the one matching run inside the cached page; everything else is untouched. */
+function mapRun(
+  page: PagedResult<TestRunGroupDto>,
+  groupId: string,
+  runId: string,
+  fn: (run: TestRunDto) => TestRunDto,
+): PagedResult<TestRunGroupDto> {
   return {
     ...page,
     items: page.items.map(g =>
-      g.id !== e.groupId
-        ? g
-        : {
-            ...g,
-            runs: g.runs.map(run => {
-              if (run.id !== e.runId || run.results.some(r => r.testCaseId === e.testCaseId)) return run;
-              const result: TestResultDto = {
-                id: e.testCaseId,
-                testCaseId: e.testCaseId,
-                testCaseSummary: run.testCases.find(tc => tc.id === e.testCaseId)?.summary ?? '',
-                actualResponse: '',
-                evaluations: e.evaluations,
-                durationMs: e.durationMs,
-              };
-              const results = [...run.results, result];
-              const passedCases = results.filter(r => resultPass(r) === true).length;
-              const failedCases = results.filter(r => resultPass(r) === false).length;
-              return { ...run, results, passedCases, failedCases, passRate: compositePercent(passedCases, run.totalCases) ?? 0 };
-            }),
-          },
-    ),
+      g.id !== groupId ? g : { ...g, runs: g.runs.map(run => (run.id === runId ? fn(run) : run)) }),
   };
 }

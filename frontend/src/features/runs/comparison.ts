@@ -4,11 +4,13 @@
 
 import { TestRunStatus, EvaluationScore } from '../../api/models';
 import type {
+  EvaluationResultDto,
   RunEvaluatorDto,
   TestRunDto,
   TestRunGroupDto,
 } from '../../api/models';
 import { passRatePercent, type MatrixRow } from './results';
+import type { LiveProgress } from './live';
 
 const SUCCESS = 'var(--success)';
 const WARN = 'var(--warn)';
@@ -124,26 +126,43 @@ const emptyDist = (): Record<ScoreBucket, number> =>
 /**
  * For each evaluator (rows) × each run (columns), tallies how its judgements were
  * distributed across the score buckets, plus the per-cell judged total and pass rate.
+ * `live` (optional) folds in evaluations that have arrived for in-flight cases, so the
+ * distribution grows per evaluator *during* a run rather than jumping only when a case ends.
  */
-export function buildEvaluatorHeatmap(group: TestRunGroupDto): HeatmapRow[] {
+export function buildEvaluatorHeatmap(group: TestRunGroupDto, live?: LiveProgress): HeatmapRow[] {
   const evaluators = new Map<string, RunEvaluatorDto>();
   group.runs.forEach(run => run.evaluators.forEach(ev => { if (!evaluators.has(ev.id)) evaluators.set(ev.id, ev); }));
+  const liveByRun = groupLiveByRun(live);
 
   return [...evaluators.values()].map(evaluator => ({
     evaluator,
     cells: group.runs.map(run => {
       const dist = emptyDist();
       let total = 0;
-      run.results.forEach(res => res.evaluations.forEach(e => {
+      const tally = (e: { evaluatorId: string; errorMessage: string | null; score: EvaluationScore | null }) => {
         if (e.evaluatorId !== evaluator.id) return;
         const bucket: ScoreBucket = e.errorMessage !== null || e.score === null ? 'Error' : e.score;
         dist[bucket]++;
         total++;
-      }));
+      };
+      run.results.forEach(res => res.evaluations.forEach(tally));
+      (liveByRun.get(run.id) ?? []).forEach(tally);
       const passes = dist[EvaluationScore.Excellent] + dist[EvaluationScore.Good] + dist[EvaluationScore.Acceptable];
       return { run, dist, total, passRate: total > 0 ? Math.round((passes / total) * 100) : null };
     }),
   }));
+}
+
+/** Buckets all in-flight evaluations by their run id for the heatmap tally. */
+function groupLiveByRun(live: LiveProgress | undefined): Map<string, EvaluationResultDto[]> {
+  const byRun = new Map<string, EvaluationResultDto[]>();
+  if (!live) return byRun;
+  for (const liveCase of live.values()) {
+    const bucket = byRun.get(liveCase.runId) ?? [];
+    bucket.push(...liveCase.evaluations);
+    byRun.set(liveCase.runId, bucket);
+  }
+  return byRun;
 }
 
 // ── Matrix filter / sort ──────────────────────────────────────────────────────
@@ -168,12 +187,28 @@ export const matrixCounts = (rows: MatrixRow[]): MatrixCounts => ({
   passing: rows.filter(rowPassing).length,
 });
 
-/** Applies the toolbar filter then sort to the (already divergence-first) matrix rows. */
-export function filterSortMatrixRows(rows: MatrixRow[], filter: MatrixFilter, sort: MatrixSort): MatrixRow[] {
+/**
+ * Applies the toolbar filter, then orders the rows. Input is in stable suite order
+ * (see {@link buildMatrixRows}).
+ *
+ * - `freezeOrder` (set while a run is active) keeps that stable order so rows never reshuffle
+ *   mid-run as partial verdicts arrive — the cause of "frantic" flicker under parallel runs.
+ * - Otherwise `'order'` surfaces divergent rows first, then most failures, then alphabetical;
+ *   `'worst'` orders by lowest per-cell score.
+ */
+export function filterSortMatrixRows(
+  rows: MatrixRow[],
+  filter: MatrixFilter,
+  sort: MatrixSort,
+  freezeOrder = false,
+): MatrixRow[] {
   let out = rows;
   if (filter === 'divergent') out = out.filter(r => r.divergent);
   else if (filter === 'failing') out = out.filter(rowFailing);
   else if (filter === 'passing') out = out.filter(rowPassing);
-  if (sort === 'worst') out = [...out].sort((a, b) => rowMinScore(a) - rowMinScore(b));
-  return out;
+
+  if (freezeOrder) return out;
+  if (sort === 'worst') return [...out].sort((a, b) => rowMinScore(a) - rowMinScore(b));
+  return [...out].sort((a, b) =>
+    (Number(b.divergent) - Number(a.divergent)) || (b.failCount - a.failCount) || a.summary.localeCompare(b.summary));
 }

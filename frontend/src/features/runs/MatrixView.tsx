@@ -1,30 +1,33 @@
 import { useState, useMemo, Fragment } from 'react';
-import type { TestRunGroupDto, EvaluationResultDto } from '../../api/models';
+import type { TestRunGroupDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
 import { cn } from '../../lib/cn';
 import { fmtDuration } from '../../lib/format';
-import { CheckIcon, XIcon } from '../../components/icons';
 import { Card } from '../../components/ui/Card';
-import { passRateColor, passRatePercent, avgLatency, buildMatrixRows, isErrored, isEvalPass } from './results';
+import { passRateColor, passRatePercent, avgLatency, buildMatrixRows, isActive } from './results';
+import type { LiveProgress } from './live';
 import { matrixCounts, filterSortMatrixRows, type MatrixFilter, type MatrixSort } from './comparison';
 import { ModelTag } from './components/ModelTag';
+import { MatrixCellContent } from './components/MatrixCell';
 import { SegmentedControl } from '../../components/ui/SegmentedControl';
 import { RowButton } from '../../components/ui/RowButton';
 import { ComparisonDrawer } from './drawers';
 
-/** Cases × models grid, divergence-first. */
-export function MatrixView({ group, activeCaseIds }: {
+/** Cases × models grid, divergence-first. Live progress overlays in-flight cases during a run. */
+export function MatrixView({ group, live }: {
   group: TestRunGroupDto;
-  activeCaseIds?: Set<string>;
+  live?: LiveProgress;
 }) {
   const runs = group.runs;
   const [filter, setFilter] = useState<MatrixFilter>('all');
   const [sort, setSort] = useState<MatrixSort>('order');
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
 
-  const allRows = useMemo(() => buildMatrixRows(runs), [runs]);
+  // Freeze row order while any run is in flight so rows don't reshuffle on every partial verdict.
+  const active = runs.some(r => isActive(r.status));
+  const allRows = useMemo(() => buildMatrixRows(runs, live), [runs, live]);
   const counts = matrixCounts(allRows);
-  const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort), [allRows, filter, sort]);
+  const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort, active), [allRows, filter, sort, active]);
 
   const multi = runs.length > 1;
   const gridCols = `minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`;
@@ -118,24 +121,10 @@ export function MatrixView({ group, activeCaseIds }: {
                   {/* Per-model cells */}
                   {row.cells.map((cell, ci) => (
                     <div key={ci} className={cn('flex items-stretch', selBg)}>
-                      {cell.result ? (
-                        <RowButton
-                          onClick={() => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusRunId: cell.run.id })}
-                          title={`${cell.run.endpointName}: ${cell.pass === true ? 'pass' : cell.pass === false ? 'fail' : 'no verdict'} — click to compare`}
-                          className={cn('px-3 py-2.5 flex items-center gap-2 hover:bg-card-2 transition-colors duration-[var(--motion-fast)]', FOCUS_RING)}
-                        >
-                          {cell.pass === true ? <CheckIcon size={12} strokeWidth={2.5} className="text-success shrink-0" />
-                            : cell.pass === false ? <XIcon size={12} strokeWidth={2.5} className="text-danger shrink-0" /> : null}
-                          <EvalDots evaluations={cell.result.evaluations} />
-                          <span className="mono text-caption text-muted shrink-0">{fmtDuration(cell.result.durationMs)}</span>
-                        </RowButton>
-                      ) : (
-                        <span className="w-full px-3 py-2.5 flex items-center text-muted">
-                          {activeCaseIds?.has(row.caseId)
-                            ? <span className="pulse-dot w-1.5 h-1.5 rounded-full bg-accent inline-block" />
-                            : '—'}
-                        </span>
-                      )}
+                      <MatrixCellContent
+                        cell={cell}
+                        onCompare={runId => setSelectedCase({ caseId: row.caseId, summary: row.summary, focusRunId: runId })}
+                      />
                     </div>
                   ))}
                 </Fragment>
@@ -173,21 +162,6 @@ export function MatrixView({ group, activeCaseIds }: {
         />
       )}
     </Card>
-  );
-}
-
-/** One dot per evaluator (left→right = suite order), colored pass/fail/error. */
-function EvalDots({ evaluations }: { evaluations: EvaluationResultDto[] }) {
-  return (
-    <span className="flex items-center gap-1">
-      {evaluations.map((e, i) => (
-        <span
-          key={i}
-          title={`${e.evaluatorName}: ${isErrored(e) ? 'error' : isEvalPass(e) ? 'pass' : 'fail'}`}
-          className={cn('w-2 h-2 rounded-full shrink-0', isErrored(e) ? 'bg-warn' : isEvalPass(e) ? 'bg-success' : 'bg-danger')}
-        />
-      ))}
-    </span>
   );
 }
 

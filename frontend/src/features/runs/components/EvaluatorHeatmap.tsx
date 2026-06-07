@@ -1,13 +1,14 @@
 import type { TestRunGroupDto } from '../../../api/models';
 import { buildEvaluatorHeatmap, scoreBucketColor, SCORE_LEVELS } from '../comparison';
+import type { LiveProgress } from '../live';
 import { EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { Card } from '../../../components/ui/Card';
 import { ModelTag } from './ModelTag';
 import { DistributionBar } from './DistributionBar';
 
-/** Score-distribution table: evaluators (rows) × models (columns). */
-export function EvaluatorHeatmap({ group }: { group: TestRunGroupDto }) {
-  const rows = buildEvaluatorHeatmap(group);
+/** Score-distribution table: evaluators (rows) × models (columns). Live evals fold in during a run. */
+export function EvaluatorHeatmap({ group, live }: { group: TestRunGroupDto; live?: LiveProgress }) {
+  const rows = buildEvaluatorHeatmap(group, live);
   const runs = group.runs;
   const hasJudgements = rows.some(r => r.cells.some(c => c.total > 0));
   if (rows.length === 0 || !hasJudgements) return null;

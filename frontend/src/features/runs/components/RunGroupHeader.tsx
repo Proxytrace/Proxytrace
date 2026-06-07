@@ -81,7 +81,9 @@ export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
 function SingleRunStats({ run, createdAt }: { run: TestRunGroupDto['runs'][number]; createdAt: string }) {
   const active = isActive(run.status);
   const hasResults = run.results.length > 0;
-  const pr = passRatePercent(run.passedCases, run.totalCases);
+  // Judged-case denominator (passed+failed), not totalCases — so the live rate matches the final
+  // one instead of reading near-zero until every case lands. Progress is shown separately below.
+  const pr = passRatePercent(run.passedCases, run.passedCases + run.failedCases);
   const avg = avgLatency(run);
 
   return (
