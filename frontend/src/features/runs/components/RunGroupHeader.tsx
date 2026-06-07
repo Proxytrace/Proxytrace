@@ -9,10 +9,9 @@ import { isActive, runStatusColor } from '../results';
 import { RunProgressBar } from './RunProgressBar';
 
 /**
- * Header for a run group. For a single-model group it folds the run's headline
- * metrics (pass rate, cases, duration/progress, avg latency) inline so no separate
- * KPI band is needed; for a multi-model group it shows the run count instead — the
- * per-model numbers live in the comparison matrix below.
+ * Header for a run group: title, agent, status, and a unified meta line (id · age · model
+ * count) for single- and multi-model groups alike. While a run is active it hosts the live
+ * RunProgressBar; per-model metrics live in the PerformanceSummary cards below.
  */
 export function RunGroupHeader({ group, onDelete, onCancel, cancelPending }: {
   group: TestRunGroupDto;
