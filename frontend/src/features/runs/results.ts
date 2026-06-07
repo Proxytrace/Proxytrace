@@ -117,6 +117,30 @@ export const isActive = (s: TestRunStatus): boolean =>
 export const runsComplete = (runs: TestRunDto[]): boolean =>
   runs.length > 0 && !runs.some(r => isActive(r.status));
 
+export interface RunGroupProgress {
+  done: number;
+  total: number;
+  percent: number;
+  /** Rough estimate of remaining time, or `null` before any case finishes / when done. */
+  etaMs: number | null;
+}
+
+/**
+ * Aggregate live progress across every run in a group: finished vs total cases, percent,
+ * and a coarse ETA (mean finished-case duration × remaining cases). Counts are monotonic
+ * because finished results are only ever upserted, never removed.
+ */
+export function runGroupProgress(runs: TestRunDto[]): RunGroupProgress {
+  const total = runs.reduce((s, r) => s + r.totalCases, 0);
+  const done = runs.reduce((s, r) => s + r.results.length, 0);
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const durations = runs.flatMap(r => r.results.map(res => res.durationMs));
+  const avg = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
+  const remaining = total - done;
+  const etaMs = avg !== null && remaining > 0 ? Math.round(avg * remaining) : null;
+  return { done, total, percent, etaMs };
+}
+
 export function runStatusColor(s: TestRunStatus): string {
   if (s === TestRunStatus.Completed) return SUCCESS;
   if (s === TestRunStatus.Running) return ACCENT;

@@ -18,6 +18,7 @@ import {
   avgLatency,
   isActive,
   runsComplete,
+  runGroupProgress,
   isDivergent,
   buildMatrixRows,
   fixtureSummary,
@@ -143,6 +144,33 @@ describe('runsComplete', () => {
 
   it('is true once every run is in a terminal state', () => {
     expect(runsComplete([r(TestRunStatus.Completed), r(TestRunStatus.Failed)])).toBe(true);
+  });
+});
+
+describe('runGroupProgress', () => {
+  const run = (totalCases: number, durations: number[]): TestRunDto => ({
+    totalCases,
+    results: durations.map((durationMs, i) => ({ testCaseId: `c${i}`, durationMs })),
+  } as TestRunDto);
+
+  it('returns zeroed progress with no ETA before anything runs', () => {
+    expect(runGroupProgress([run(4, [])])).toEqual({ done: 0, total: 4, percent: 0, etaMs: null });
+  });
+
+  it('sums done/total across runs and computes percent', () => {
+    const p = runGroupProgress([run(4, [100, 100]), run(4, [100])]);
+    expect(p.done).toBe(3);
+    expect(p.total).toBe(8);
+    expect(p.percent).toBe(38); // round(3/8 * 100)
+  });
+
+  it('estimates ETA from average case duration times remaining cases', () => {
+    const p = runGroupProgress([run(4, [200, 200])]); // avg 200ms, 2 remaining
+    expect(p.etaMs).toBe(400);
+  });
+
+  it('has no ETA once everything is done', () => {
+    expect(runGroupProgress([run(2, [100, 100])]).etaMs).toBeNull();
   });
 });
 
