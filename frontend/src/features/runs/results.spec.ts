@@ -282,7 +282,7 @@ describe('buildLeaderboard', () => {
   it('flags best pass rate, fastest and cheapest among completed runs', () => {
     const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
     const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
-    const [ea, eb] = buildLeaderboard([a, b]);
+    const [ea, eb] = buildLeaderboard([a, b], true);
     expect(ea.passRate).toBe(90);
     expect(ea.isBest).toBe(true);
     expect(eb.isFastest).toBe(true);
@@ -293,7 +293,7 @@ describe('buildLeaderboard', () => {
 
   it('derives pending from totalCases minus delivered results', () => {
     const r = lbRun({ totalCases: 10, passedCases: 4, failedCases: 1, results: [{ testCaseId: 'c0' }, { testCaseId: 'c1' }, { testCaseId: 'c2' }, { testCaseId: 'c3' }, { testCaseId: 'c4' }] as TestResultDto[] });
-    const [e] = buildLeaderboard([r]);
+    const [e] = buildLeaderboard([r], true);
     expect(e.pending).toBe(5);
     expect(e.passRate).toBe(80); // 4 / (4+1)
   });
@@ -301,9 +301,18 @@ describe('buildLeaderboard', () => {
   it('excludes non-completed runs from winner selection', () => {
     const done = lbRun({ id: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
     const running = lbRun({ id: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
-    const entries = buildLeaderboard([done, running]);
+    const entries = buildLeaderboard([done, running], true);
     expect(entries.find(e => e.run.id === 'd')?.isBest).toBe(true);
     expect(entries.find(e => e.run.id === 'x')?.isBest).toBe(false);
+  });
+
+  it('reports no winners and null deltas while the group is not yet complete', () => {
+    const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
+    const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
+    const entries = buildLeaderboard([a, b], false);
+    expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest)).toBe(true);
+    expect(entries.every(e => e.deltaVsBest === null)).toBe(true);
+    expect(entries.find(e => e.run.id === 'a')?.passRate).toBe(90);
   });
 });
 

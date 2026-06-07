@@ -74,7 +74,7 @@ export interface LeaderboardEntry {
  * counts, pass rate, and run-level cost/token totals, plus best/fastest/cheapest
  * flags computed across the group's completed runs.
  */
-export function buildLeaderboard(runs: TestRunDto[]): LeaderboardEntry[] {
+export function buildLeaderboard(runs: TestRunDto[], complete: boolean): LeaderboardEntry[] {
   const base = runs.map(run => ({
     run,
     passed: run.passedCases,
@@ -87,13 +87,15 @@ export function buildLeaderboard(runs: TestRunDto[]): LeaderboardEntry[] {
     tokensOut: run.tokensOut,
   }));
 
-  const completed = base.filter(e => e.run.status === TestRunStatus.Completed && e.passRate !== null);
+  // Winners are computed only once the whole group has settled — otherwise badges flip
+  // between models on partial data every SSE frame.
+  const pool = complete ? base.filter(e => e.run.status === TestRunStatus.Completed && e.passRate !== null) : [];
   const pick = <T>(items: T[], better: (a: T, b: T) => boolean): T | null =>
     items.reduce<T | null>((best, x) => (best === null || better(x, best) ? x : best), null);
 
-  const best = pick(completed, (a, b) => (a.passRate as number) > (b.passRate as number));
-  const fastest = pick(completed.filter(e => e.durationMs !== null), (a, b) => (a.durationMs as number) < (b.durationMs as number));
-  const cheapest = pick(completed.filter(e => e.costUsd !== null), (a, b) => (a.costUsd as number) < (b.costUsd as number));
+  const best = pick(pool, (a, b) => (a.passRate as number) > (b.passRate as number));
+  const fastest = pick(pool.filter(e => e.durationMs !== null), (a, b) => (a.durationMs as number) < (b.durationMs as number));
+  const cheapest = pick(pool.filter(e => e.costUsd !== null), (a, b) => (a.costUsd as number) < (b.costUsd as number));
 
   return base.map(e => ({
     ...e,

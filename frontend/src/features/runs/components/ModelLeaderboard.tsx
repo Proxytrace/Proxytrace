@@ -1,10 +1,11 @@
 import type { TestRunDto } from '../../../api/models';
 import { buildLeaderboard } from '../comparison';
+import { runsComplete } from '../results';
 import { ModelLeaderboardCard } from './ModelLeaderboardCard';
 
 /** Per-model comparison cards shown above the matrix for a multi-model run group. */
 export function ModelLeaderboard({ runs }: { runs: TestRunDto[] }) {
-  const entries = buildLeaderboard(runs);
+  const entries = buildLeaderboard(runs, runsComplete(runs));
   const multi = runs.length > 1;
   if (entries.length === 0) return null;
 
