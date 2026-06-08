@@ -104,6 +104,27 @@ public class AgentCallsController : ControllerBase
             latencyTask.Result.Select(r => new LatencyDto(r.EndpointId, r.P50Ms, r.P95Ms, r.P99Ms, r.MinMs, r.MaxMs, r.SampleCount)).ToArray());
     }
 
+    [HttpGet("histogram")]
+    public async Task<IReadOnlyList<TraceHistogramBucketDto>> GetHistogram(
+        [FromQuery] Guid? projectId = null,
+        [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? endpointId = null,
+        [FromQuery] string? model = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] int? httpStatus = null,
+        [FromQuery] bool includeSystemAgents = true,
+        [FromQuery] string? q = null,
+        [FromQuery] Guid? conversationId = null,
+        [FromQuery] int buckets = 60,
+        CancellationToken cancellationToken = default)
+    {
+        buckets = Math.Clamp(buckets, 1, 240);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
+        var result = await repository.GetHistogramAsync(filter, buckets, cancellationToken);
+        return result.Select(b => new TraceHistogramBucketDto(b.Start, b.Total, b.Errors)).ToList();
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<AgentCallDto>> Get(Guid id, CancellationToken cancellationToken)
     {
