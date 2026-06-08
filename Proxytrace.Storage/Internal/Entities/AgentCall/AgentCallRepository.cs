@@ -37,6 +37,81 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
+        var query = await BuildFilteredQueryAsync(context, filter, cancellationToken);
+        if (query is null)
+        {
+            return ([], 0);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var stored = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = await Map(stored, cancellationToken);
+        return (items, total);
+    }
+
+    public async Task<IReadOnlyList<AgentCallHistogramBucket>> GetHistogramAsync(
+        AgentCallFilter filter,
+        int buckets,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = await BuildFilteredQueryAsync(context, filter, cancellationToken);
+        if (query is null)
+        {
+            return [];
+        }
+
+        var to = filter.To ?? DateTimeOffset.UtcNow;
+        DateTimeOffset from;
+        if (filter.From.HasValue)
+        {
+            from = filter.From.Value;
+        }
+        else
+        {
+            if (!await query.AnyAsync(cancellationToken))
+            {
+                return [];
+            }
+
+            from = await query.MinAsync(e => e.CreatedAt, cancellationToken);
+        }
+
+        if (to <= from)
+        {
+            to = from.AddSeconds(1);
+        }
+
+        var rows = await query
+            .Where(e => e.CreatedAt >= from && e.CreatedAt <= to)
+            .Select(e => new { e.CreatedAt, e.HttpStatus })
+            .ToListAsync(cancellationToken);
+
+        if (rows.Count == 0)
+        {
+            return [];
+        }
+
+        var calls = rows.Select(r => (r.CreatedAt, r.HttpStatus)).ToList();
+        return AgentCallHistogram.Build(calls, from, to, buckets);
+    }
+
+    /// <summary>
+    /// Builds the filtered (but unpaged, unordered) query shared by list + histogram reads.
+    /// Returns <see langword="null"/> when the filter provably matches nothing (e.g. a fulltext
+    /// query with no hits, or a fulltext query without a project scope).
+    /// </summary>
+    private async Task<IQueryable<AgentCallEntity>?> BuildFilteredQueryAsync(
+        StorageDbContext context,
+        AgentCallFilter filter,
+        CancellationToken cancellationToken)
+    {
         var query = context.Set<AgentCallEntity>().AsNoTracking();
 
         if (filter.AgentId.HasValue)
@@ -96,7 +171,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         {
             if (filter.ProjectId is null)
             {
-                return ([], 0);
+                return null;
             }
 
             var matchingIds = await searchService.SearchEntityIdsAsync(
@@ -108,7 +183,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
             if (matchingIds.Count == 0)
             {
-                return ([], 0);
+                return null;
             }
 
             var idSet = matchingIds.ToHashSet();
@@ -125,16 +200,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => nonSystemVersionIds.Contains(e.AgentVersionId));
         }
 
-        var total = await query.CountAsync(cancellationToken);
-
-        var stored = await query
-            .OrderByDescending(e => e.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
-
-        var items = await Map(stored, cancellationToken);
-        return (items, total);
+        return query;
     }
 
     public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(
