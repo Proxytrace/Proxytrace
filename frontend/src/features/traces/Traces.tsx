@@ -3,7 +3,8 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows, rangeFrom, nowMs } from './tracesMeta';
+import { buildRows } from './tracesMeta';
+import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRange';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
@@ -24,45 +25,44 @@ export default function Traces() {
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('traces.pageSize', PAGE_SIZE);
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
-  const [range, setRange] = useState('24h');
+  const [timeRange, setTimeRange] = useState<TimeRange>(ALL_TIME);
+  // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
+  const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
   const [agentFilter, setAgentFilter] = useState('');
   const [search, setSearch] = useState('');
   const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
-  const [brush, setBrush] = useState<{ from: number; to: number } | null>(null);
 
   const { currentProjectId } = useCurrentProject();
   const debouncedSearch = useDebounce(search, 200);
-  // Memoize so `from` is stable across renders; recomputing `Date.now()` each
-  // render would churn the queryKeys below and cause an infinite refetch loop.
-  const from = useMemo(() => rangeFrom(range), [range]);
-  // The timeline's right edge re-anchors to "now" only when the preset changes.
+
+  // Single source of truth for the window: presets resolve to `from`..now, absolute ranges
+  // carry both ends. Memoized on `timeRange` so `from`/`to` stay stable across renders
+  // (recomputing relative presets every render would churn the query keys).
+  const resolved = useMemo(() => resolveRange(timeRange), [timeRange]);
+  const { from, to } = resolved;
+  // Concrete window for the timeline: fall back to the earliest bucket / now when open-ended.
   const windowFrom = useMemo(() => (from ? new Date(from).getTime() : null), [from]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally re-anchored on preset change
-  const windowTo = useMemo(() => nowMs(), [from]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- re-anchored to "now" only when the range changes
+  const windowTo = useMemo(() => (to ? new Date(to).getTime() : nowMs()), [to, from]);
 
   // On first load, auto-pick the smallest preset that still contains data.
-  useAutoDefaultRange(currentProjectId !== null, currentProjectId ?? undefined, setRange);
-
-  // Brush narrows the table to a sub-range; otherwise the table uses the full preset window.
-  const tableFrom = brush ? new Date(brush.from).toISOString() : from;
-  const tableTo = brush ? new Date(brush.to).toISOString() : undefined;
+  useAutoDefaultRange(currentProjectId !== null, currentProjectId ?? undefined, setTimeRange);
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,
     pageSize,
-    range,
     agentFilter,
     debouncedSearch,
     showSystem,
-    from: tableFrom,
-    to: tableTo,
+    from,
+    to,
   });
 
-  // Histogram spans the full preset window and respects every filter except the brush.
-  const { buckets } = useTraceHistogram({ from, agentFilter, debouncedSearch, showSystem });
+  // Histogram spans the active window and respects every filter; brushing it zooms the window.
+  const { buckets } = useTraceHistogram({ from, to, agentFilter, debouncedSearch, showSystem });
 
   // Only surface agents that actually have traces in the current range — an agent with a
   // zero count is noise on the Traces tab (it has nothing to show).
@@ -90,8 +90,8 @@ export default function Traces() {
   const handleFocusTrace = useCallback((trace: AgentCallDto) => {
     setSelectedTrace(trace);
     setPendingScrollId(trace.id);
-    setRange('all');
-    setBrush(null);
+    setTimeRange(ALL_TIME);
+    setZoomStack([]);
     setAgentFilter('');
     setSearch('');
     setShowSystem(true);
@@ -126,9 +126,25 @@ export default function Traces() {
     setPage(1);
   }
 
-  function handleRangeChange(key: string) {
-    setRange(key);
-    setBrush(null);
+  // Picking from the time-range picker is a fresh context — drop any zoom history.
+  function handleTimeRangeChange(range: TimeRange) {
+    setTimeRange(range);
+    setZoomStack([]);
+    setPage(1);
+  }
+
+  // Drag-select on the timeline: remember the current window, then zoom into the selection.
+  function handleZoom(range: { from: number; to: number }) {
+    setZoomStack(s => [...s, timeRange]);
+    setTimeRange({ kind: 'absolute', from: new Date(range.from).toISOString(), to: new Date(range.to).toISOString() });
+    setPage(1);
+  }
+
+  // Double-click the timeline: step back one zoom level.
+  function handleZoomOut() {
+    if (zoomStack.length === 0) return;
+    setTimeRange(zoomStack[zoomStack.length - 1]);
+    setZoomStack(zoomStack.slice(0, -1));
     setPage(1);
   }
 
@@ -159,12 +175,12 @@ export default function Traces() {
 
       <TraceToolbar
         search={search}
-        range={range}
+        timeRange={timeRange}
         agentFilter={agentFilter}
         showSystem={showSystem}
         agents={agents}
         onSearchChange={handleSearchChange}
-        onRangeChange={handleRangeChange}
+        onTimeRangeChange={handleTimeRangeChange}
         onAgentFilterChange={handleAgentFilterChange}
         onShowSystemChange={handleShowSystemChange}
       />
@@ -174,8 +190,9 @@ export default function Traces() {
           buckets={buckets}
           from={windowFrom ?? new Date(buckets[0].start).getTime()}
           to={windowTo}
-          selection={brush}
-          onSelect={range => { setBrush(range); setPage(1); }}
+          onZoom={handleZoom}
+          onZoomOut={handleZoomOut}
+          canZoomOut={zoomStack.length > 0}
         />
       )}
 

@@ -42,15 +42,24 @@ range, so you can spot ingestion hotspots at a glance. Each bar's height is the 
 for that slice of time; the **red** portion at the bottom marks failed calls (HTTP errors),
 making error spikes easy to find. Hover a bar to see its exact time, count, and error count.
 
-- **Drag across the timeline** to select a start/end window — the table instantly narrows to
-  traces in that range.
-- **Click anywhere** on the timeline to clear the selection and return to the full range.
+- **Drag across the timeline** to zoom into that window. The view re-spans to your selection —
+  the bars redraw at higher resolution *and* the table narrows to the same range, so you can
+  drill straight into a spike.
+- **Double-click** the timeline to zoom back out one level (each drag is remembered, so you can
+  zoom in repeatedly and step back out).
 - The timeline reflects the **same agent, search, and system-trace filters** as the table,
   so its shape always matches what you're looking at.
 
-When you first open Traces, the range automatically snaps to the smallest preset (1h / 24h /
-7d / 30d) that still contains data, so you never land on an empty view. Changing the **Range**
-dropdown re-spans the timeline and clears any selection.
+### The time-range picker
+
+The **time-range picker** (the clock button in the toolbar) controls the window. It offers
+one-click **quick ranges** (last 15 minutes through last 30 days) and a **custom range** with
+explicit From/To date-times — the same picker used on the Error Log. Drag-zooming the timeline
+simply sets a custom range, which the picker then shows. Use **Clear** (or the ✕) to return to
+all-time.
+
+When you first open Traces, the range automatically snaps to the smallest quick range that
+still contains data, so you never land on an empty view.
 
 ### The trace detail panel
 

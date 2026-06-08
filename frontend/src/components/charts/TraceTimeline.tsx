@@ -5,20 +5,24 @@ import type { TraceHistogramBucket } from '../../api/models';
 
 interface Props {
   buckets: TraceHistogramBucket[];
-  /** Window bounds in epoch ms (preset span). */
+  /** Window bounds in epoch ms (the active time-range). */
   from: number;
   to: number;
-  /** Active brush selection in epoch ms, or null. */
-  selection: { from: number; to: number } | null;
-  onSelect: (range: { from: number; to: number } | null) => void;
+  /** Drag-selected a sub-range: zoom the window (and filter) into it. */
+  onZoom: (range: { from: number; to: number }) => void;
+  /** Double-click: step one zoom level back out. */
+  onZoomOut: () => void;
+  /** Whether a zoom-out is possible (controls the hint affordance). */
+  canZoomOut: boolean;
   height?: number;
 }
 
-export function TraceTimeline({ buckets, from, to, selection, onSelect, height = 72 }: Props) {
+export function TraceTimeline({ buckets, from, to, onZoom, onZoomOut, canZoomOut, height = 72 }: Props) {
   const [ref, measuredWidth] = useElementWidth<HTMLDivElement>(600);
   const w = measuredWidth || 600;
   const geo = useMemo(() => computeTimeline(buckets, w, height), [buckets, w, height]);
   const drag = useRef<{ startX: number } | null>(null);
+  const [dragSel, setDragSel] = useState<{ from: number; to: number } | null>(null);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const pxToTime = (clientX: number) => {
@@ -46,16 +50,19 @@ export function TraceTimeline({ buckets, from, to, selection, onSelect, height =
     if (!drag.current) return;
     const a = pxToTime(drag.current.startX);
     const b = pxToTime(e.clientX);
-    onSelect({ from: Math.min(a, b), to: Math.max(a, b) });
+    setDragSel({ from: Math.min(a, b), to: Math.max(a, b) });
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (drag.current && Math.abs(e.clientX - drag.current.startX) < 4) onSelect(null); // click clears
+    if (drag.current && dragSel && Math.abs(e.clientX - drag.current.startX) >= 4) {
+      onZoom(dragSel);
+    }
     drag.current = null;
+    setDragSel(null);
   };
 
-  const selX1 = selection ? timeToX(selection.from, from, to, geo.plotL, geo.plotR) : 0;
-  const selX2 = selection ? timeToX(selection.to, from, to, geo.plotL, geo.plotR) : 0;
+  const selX1 = dragSel ? timeToX(dragSel.from, from, to, geo.plotL, geo.plotR) : 0;
+  const selX2 = dragSel ? timeToX(dragSel.to, from, to, geo.plotL, geo.plotR) : 0;
   const hoverBucket = hoverIdx !== null ? buckets[hoverIdx] : null;
 
   return (
@@ -66,6 +73,8 @@ export function TraceTimeline({ buckets, from, to, selection, onSelect, height =
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={() => setHoverIdx(null)}
+      onDoubleClick={onZoomOut}
+      title={canZoomOut ? 'Drag to zoom in · double-click to zoom out' : 'Drag to zoom into a time range'}
     >
       <svg viewBox={`0 0 ${w} ${height}`} width="100%" height={height} className="block">
         <line x1={geo.plotL} x2={geo.plotR} y1={geo.baselineY} y2={geo.baselineY} stroke="var(--border-color)" />
@@ -79,18 +88,12 @@ export function TraceTimeline({ buckets, from, to, selection, onSelect, height =
             )}
           </g>
         ))}
-        {selection && (
+        {dragSel && (
           <rect
             x={selX1} y={geo.plotT} width={Math.max(selX2 - selX1, 1)} height={geo.baselineY - geo.plotT}
             fill="var(--accent-primary)" opacity={0.12} stroke="var(--accent-primary)" strokeOpacity={0.5}
           />
         )}
-        {selection && [selX1, selX2].map((x, i) => (
-          <rect
-            key={i} x={x - 2} y={geo.plotT} width={4} height={geo.baselineY - geo.plotT}
-            fill="var(--accent-primary)" className="cursor-ew-resize" rx={1}
-          />
-        ))}
       </svg>
       {hoverBucket && (
         <div className="pointer-events-none absolute top-1 left-1 rounded-sm bg-card px-2 py-1 text-caption text-secondary shadow-[var(--shadow-float)]">

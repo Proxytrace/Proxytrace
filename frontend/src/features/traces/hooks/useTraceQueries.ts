@@ -14,7 +14,6 @@ export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 interface TraceFilter {
   page: number;
   pageSize: number;
-  range: string;
   agentFilter: string;
   debouncedSearch: string;
   showSystem: boolean;

@@ -29,7 +29,9 @@ React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code live
 
 Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
 
-Charts are custom SVG (no chart library): pure geometry helpers live in `src/components/charts/chart-math.ts` (unit-tested) and render-only components alongside them. The Traces page's brushable time-range timeline (`TraceTimeline.tsx` + `computeTimeline`) is backed by `GET /api/agent-calls/histogram`, which returns per-bucket `{ start, total, errors }` for the active filter window. Bucketing happens in the app layer (`AgentCallHistogram.Build`), not in SQL, so it works identically on PostgreSQL and the in-memory test provider — no migration.
+Charts are custom SVG (no chart library): pure geometry helpers live in `src/components/charts/chart-math.ts` (unit-tested) and render-only components alongside them. The Traces page's brushable time-range timeline (`TraceTimeline.tsx` + `computeTimeline`) is backed by `GET /api/agent-calls/histogram`, which returns per-bucket `{ start, total, errors }` for the active filter window. Bucketing happens in the app layer (`AgentCallHistogram.Build`), not in SQL, so it works identically on PostgreSQL and the in-memory test provider — no migration. Drag-selecting on the timeline *zooms* the window (sets an absolute range at higher resolution and filters the table); double-click steps back out.
+
+The time-range filter UI is shared: the `TimeRange` model (`all` / `preset` / `absolute`) lives in `src/lib/timeRange.ts` and the popover control in `src/components/ui/TimeRangePicker.tsx` (`testId` prop for per-page e2e hooks). Both the Error Log and Traces use it. Note the separate, simpler `src/lib/time-range.ts` (`RANGE_KEYS`) used by the dashboard/agents segmented tabs — different concern, don't conflate.
 
 ## Commands
 

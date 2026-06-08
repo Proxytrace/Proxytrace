@@ -2,43 +2,26 @@
 // in tracesMeta.spec.ts.
 
 import type { AgentCallDto } from '../../api/models';
+import { ALL_TIME, type TimeRange, type TimeRangePreset } from '../../lib/timeRange';
 
 // ── Time range helpers ────────────────────────────────────────────────────────
 
-export const RANGES = [
-  { key: '1h', label: '1h' },
-  { key: '24h', label: '24h' },
-  { key: '7d', label: '7d' },
-  { key: '30d', label: '30d' },
-  { key: 'all', label: 'All' },
-] as const;
+/** Auto-default thresholds: smallest preset whose window still contains the newest trace. */
+const AUTO_THRESHOLDS: readonly { maxAgeMs: number; preset: TimeRangePreset }[] = [
+  { maxAgeMs: 15 * 60_000, preset: '15m' },
+  { maxAgeMs: 60 * 60_000, preset: '1h' },
+  { maxAgeMs: 6 * 60 * 60_000, preset: '6h' },
+  { maxAgeMs: 24 * 60 * 60_000, preset: '24h' },
+  { maxAgeMs: 7 * 24 * 60 * 60_000, preset: '7d' },
+  { maxAgeMs: 30 * 24 * 60 * 60_000, preset: '30d' },
+];
 
-export type RangeKey = (typeof RANGES)[number]['key'];
-
-/** Current wall-clock time in ms. Isolated in this module so component render stays lint-pure
- * (mirrors how {@link rangeFrom} encapsulates its own `Date.now()` call). */
-export function nowMs(): number {
-  return Date.now();
-}
-
-export function rangeFrom(key: string): string | undefined {
-  const now = Date.now();
-  if (key === '1h') return new Date(now - 3_600_000).toISOString();
-  if (key === '24h') return new Date(now - 86_400_000).toISOString();
-  if (key === '7d') return new Date(now - 7 * 86_400_000).toISOString();
-  if (key === '30d') return new Date(now - 30 * 86_400_000).toISOString();
-  return undefined;
-}
-
-/** Smallest range preset whose window still contains the newest trace; "all" when none. */
-export function autoPreset(newestTraceIso: string | null, now: number = Date.now()): RangeKey {
-  if (!newestTraceIso) return 'all';
+/** Smallest preset window that still contains the newest trace; "all time" when none/too old. */
+export function autoTimeRange(newestTraceIso: string | null, now: number = Date.now()): TimeRange {
+  if (!newestTraceIso) return ALL_TIME;
   const age = now - new Date(newestTraceIso).getTime();
-  if (age <= 3_600_000) return '1h';
-  if (age <= 86_400_000) return '24h';
-  if (age <= 7 * 86_400_000) return '7d';
-  if (age <= 30 * 86_400_000) return '30d';
-  return 'all';
+  const match = AUTO_THRESHOLDS.find(t => age <= t.maxAgeMs);
+  return match ? { kind: 'preset', preset: match.preset } : ALL_TIME;
 }
 
 // ── Row types / grouping (shared with the dashboard live stream) ───────────────

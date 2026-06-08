@@ -8,13 +8,14 @@ const BUCKETS = 64;
 
 interface Params {
   from: string | undefined;
+  to: string | undefined;
   agentFilter: string;
   debouncedSearch: string;
   showSystem: boolean;
 }
 
-/** Count+error timeline for the current preset window, ignoring the brush sub-range. */
-export function useTraceHistogram({ from, agentFilter, debouncedSearch, showSystem }: Params): {
+/** Count+error timeline for the active time-range window, respecting all other filters. */
+export function useTraceHistogram({ from, to, agentFilter, debouncedSearch, showSystem }: Params): {
   buckets: TraceHistogramBucket[];
   isFetching: boolean;
 } {
@@ -29,6 +30,7 @@ export function useTraceHistogram({ from, agentFilter, debouncedSearch, showSyst
     ...(projectId ? { projectId } : {}),
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
     ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),
   };
 

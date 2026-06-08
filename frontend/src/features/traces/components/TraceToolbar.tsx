@@ -1,26 +1,27 @@
 import { SearchIcon } from '../../../components/icons';
 import { FilterDropdown } from '../../../components/ui/FilterDropdown';
+import { TimeRangePicker } from '../../../components/ui/TimeRangePicker';
 import { Input } from '../../../components/ui/Input';
 import { agentColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
-import { RANGES } from '../tracesMeta';
+import type { TimeRange } from '../../../lib/timeRange';
 import type { AgentDto } from '../../../api/models';
 
 interface Props {
   search: string;
-  range: string;
+  timeRange: TimeRange;
   agentFilter: string;
   showSystem: boolean;
   agents: AgentDto[];
   onSearchChange: (v: string) => void;
-  onRangeChange: (v: string) => void;
+  onTimeRangeChange: (r: TimeRange) => void;
   onAgentFilterChange: (v: string) => void;
   onShowSystemChange: (v: boolean) => void;
 }
 
 export function TraceToolbar({
-  search, range, agentFilter, showSystem, agents,
-  onSearchChange, onRangeChange, onAgentFilterChange, onShowSystemChange,
+  search, timeRange, agentFilter, showSystem, agents,
+  onSearchChange, onTimeRangeChange, onAgentFilterChange, onShowSystemChange,
 }: Props) {
   return (
     <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0 [animation-delay:80ms]">
@@ -46,14 +47,7 @@ export function TraceToolbar({
         width={220}
       />
 
-      <FilterDropdown
-        label="Range:"
-        value={range}
-        active
-        options={RANGES.map(r => ({ key: r.key, label: r.label }))}
-        onChange={onRangeChange}
-        width={140}
-      />
+      <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} testId="traces-time" />
 
       {/* eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control) */}
       <button

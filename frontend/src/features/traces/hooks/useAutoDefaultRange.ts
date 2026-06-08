@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { autoPreset } from '../tracesMeta';
+import { autoTimeRange } from '../tracesMeta';
+import type { TimeRange } from '../../../lib/timeRange';
 
-/** On first load, set the range preset to the smallest window containing the newest trace. */
+/** On first load, set the time range to the smallest preset window containing the newest trace. */
 export function useAutoDefaultRange(
   enabled: boolean,
   projectId: string | undefined,
-  setRange: (key: string) => void,
+  setTimeRange: (range: TimeRange) => void,
 ) {
   const applied = useRef(false);
   const { data } = useQuery({
@@ -18,6 +19,6 @@ export function useAutoDefaultRange(
   useEffect(() => {
     if (applied.current || !data) return;
     applied.current = true;
-    setRange(autoPreset(data.items[0]?.createdAt ?? null));
-  }, [data, setRange]);
+    setTimeRange(autoTimeRange(data.items[0]?.createdAt ?? null));
+  }, [data, setTimeRange]);
 }
