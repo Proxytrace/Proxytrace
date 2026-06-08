@@ -142,6 +142,55 @@ export function roundedTopRectPath(x: number, y: number, w: number, h: number, r
   return `M ${x.toFixed(1)} ${(y + h).toFixed(1)} L ${x.toFixed(1)} ${(y + rr).toFixed(1)} Q ${x.toFixed(1)} ${y.toFixed(1)} ${(x + rr).toFixed(1)} ${y.toFixed(1)} L ${(x + w - rr).toFixed(1)} ${y.toFixed(1)} Q ${(x + w).toFixed(1)} ${y.toFixed(1)} ${(x + w).toFixed(1)} ${(y + rr).toFixed(1)} L ${(x + w).toFixed(1)} ${(y + h).toFixed(1)} Z`;
 }
 
+export interface TimelineBarRect {
+  x: number; w: number;
+  totalY: number; totalH: number;
+  errorY: number; errorH: number;
+}
+export interface TimelineData {
+  bars: TimelineBarRect[];
+  baselineY: number;
+  plotL: number; plotR: number; plotT: number; plotB: number;
+}
+
+/** Stacked count+error bars filling the full width (no axis gutter — full-bleed timeline strip). */
+export function computeTimeline(
+  buckets: { total: number; errors: number }[],
+  width: number,
+  height: number,
+): TimelineData {
+  const padL = 2, padR = 2, padT = 6, padB = 16;
+  const w = Math.max(width - padL - padR, 0);
+  const h = Math.max(height - padT - padB, 0);
+  const baselineY = padT + h;
+  const max = Math.max(...buckets.map(b => b.total), 0) * 1.1 || 1;
+  const slot = buckets.length > 0 ? w / buckets.length : w;
+  const bw = slot * 0.82, gap = slot * 0.18;
+  const bars: TimelineBarRect[] = buckets.map((b, i) => {
+    const x = padL + i * slot + gap / 2;
+    const totalH = (b.total / max) * h;
+    const errorH = (b.errors / max) * h;
+    return {
+      x, w: bw,
+      totalY: baselineY - totalH, totalH,
+      errorY: baselineY - errorH, errorH,
+    };
+  });
+  return { bars, baselineY, plotL: padL, plotR: padL + w, plotT: padT, plotB: baselineY };
+}
+
+export function timeToX(t: number, from: number, to: number, plotL: number, plotR: number): number {
+  if (to <= from) return plotL;
+  const frac = Math.min(1, Math.max(0, (t - from) / (to - from)));
+  return plotL + frac * (plotR - plotL);
+}
+
+export function xToTime(x: number, from: number, to: number, plotL: number, plotR: number): number {
+  if (plotR <= plotL) return from;
+  const frac = Math.min(1, Math.max(0, (x - plotL) / (plotR - plotL)));
+  return from + frac * (to - from);
+}
+
 export interface GaugeSegment { x1: number; y1: number; x2: number; y2: number; color: string; active: boolean; glow: boolean; }
 export interface SegmentedGaugeData { segments: GaugeSegment[]; cx: number; cy: number; }
 

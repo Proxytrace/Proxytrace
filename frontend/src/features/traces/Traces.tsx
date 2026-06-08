@@ -3,7 +3,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows, rangeFrom } from './tracesMeta';
+import { buildRows, rangeFrom, nowMs } from './tracesMeta';
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
@@ -13,6 +13,10 @@ import { useTraceSseStream } from './hooks/useTraceSseStream';
 import { AgentFilterCards } from './components/AgentFilterCards';
 import { TraceToolbar } from './components/TraceToolbar';
 import { TraceTable } from './components/TraceTable';
+import { TraceTimeline } from '../../components/charts/TraceTimeline';
+import { useTraceHistogram } from './hooks/useTraceHistogram';
+import { useAutoDefaultRange } from './hooks/useAutoDefaultRange';
+import useCurrentProject from '../../hooks/useCurrentProject';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export default function Traces() {
@@ -27,11 +31,24 @@ export default function Traces() {
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
+  const [brush, setBrush] = useState<{ from: number; to: number } | null>(null);
 
+  const { currentProjectId } = useCurrentProject();
   const debouncedSearch = useDebounce(search, 200);
   // Memoize so `from` is stable across renders; recomputing `Date.now()` each
   // render would churn the queryKeys below and cause an infinite refetch loop.
   const from = useMemo(() => rangeFrom(range), [range]);
+  // The timeline's right edge re-anchors to "now" only when the preset changes.
+  const windowFrom = useMemo(() => (from ? new Date(from).getTime() : null), [from]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally re-anchored on preset change
+  const windowTo = useMemo(() => nowMs(), [from]);
+
+  // On first load, auto-pick the smallest preset that still contains data.
+  useAutoDefaultRange(currentProjectId !== null, currentProjectId ?? undefined, setRange);
+
+  // Brush narrows the table to a sub-range; otherwise the table uses the full preset window.
+  const tableFrom = brush ? new Date(brush.from).toISOString() : from;
+  const tableTo = brush ? new Date(brush.to).toISOString() : undefined;
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,
@@ -40,8 +57,12 @@ export default function Traces() {
     agentFilter,
     debouncedSearch,
     showSystem,
-    from,
+    from: tableFrom,
+    to: tableTo,
   });
+
+  // Histogram spans the full preset window and respects every filter except the brush.
+  const { buckets } = useTraceHistogram({ from, agentFilter, debouncedSearch, showSystem });
 
   // Only surface agents that actually have traces in the current range — an agent with a
   // zero count is noise on the Traces tab (it has nothing to show).
@@ -70,6 +91,7 @@ export default function Traces() {
     setSelectedTrace(trace);
     setPendingScrollId(trace.id);
     setRange('all');
+    setBrush(null);
     setAgentFilter('');
     setSearch('');
     setShowSystem(true);
@@ -106,6 +128,7 @@ export default function Traces() {
 
   function handleRangeChange(key: string) {
     setRange(key);
+    setBrush(null);
     setPage(1);
   }
 
@@ -145,6 +168,16 @@ export default function Traces() {
         onAgentFilterChange={handleAgentFilterChange}
         onShowSystemChange={handleShowSystemChange}
       />
+
+      {buckets.length > 0 && (
+        <TraceTimeline
+          buckets={buckets}
+          from={windowFrom ?? new Date(buckets[0].start).getTime()}
+          to={windowTo}
+          selection={brush}
+          onSelect={range => { setBrush(range); setPage(1); }}
+        />
+      )}
 
       <TraceTable
         rows={rows}

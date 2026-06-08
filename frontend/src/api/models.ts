@@ -564,6 +564,12 @@ export interface TestCaseFixtureDto {
   endpoints: EndpointUsageDto[];
 }
 
+export interface TraceHistogramBucket {
+  start: string;
+  total: number;
+  errors: number;
+}
+
 /* ── Filters ── */
 export interface AgentCallFilter {
   projectId?: string;

@@ -15,6 +15,12 @@ export const RANGES = [
 
 export type RangeKey = (typeof RANGES)[number]['key'];
 
+/** Current wall-clock time in ms. Isolated in this module so component render stays lint-pure
+ * (mirrors how {@link rangeFrom} encapsulates its own `Date.now()` call). */
+export function nowMs(): number {
+  return Date.now();
+}
+
 export function rangeFrom(key: string): string | undefined {
   const now = Date.now();
   if (key === '1h') return new Date(now - 3_600_000).toISOString();
@@ -22,6 +28,17 @@ export function rangeFrom(key: string): string | undefined {
   if (key === '7d') return new Date(now - 7 * 86_400_000).toISOString();
   if (key === '30d') return new Date(now - 30 * 86_400_000).toISOString();
   return undefined;
+}
+
+/** Smallest range preset whose window still contains the newest trace; "all" when none. */
+export function autoPreset(newestTraceIso: string | null, now: number = Date.now()): RangeKey {
+  if (!newestTraceIso) return 'all';
+  const age = now - new Date(newestTraceIso).getTime();
+  if (age <= 3_600_000) return '1h';
+  if (age <= 86_400_000) return '24h';
+  if (age <= 7 * 86_400_000) return '7d';
+  if (age <= 30 * 86_400_000) return '30d';
+  return 'all';
 }
 
 // ── Row types / grouping (shared with the dashboard live stream) ───────────────

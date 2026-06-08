@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows, rangeFrom, latencyBarPct, toolCount, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
+import { buildRows, rangeFrom, latencyBarPct, toolCount, autoPreset, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
@@ -193,5 +193,23 @@ describe('latencyBarPct', () => {
 describe('GRID_TEMPLATE', () => {
   it('is a string joining all COL_WIDTHS with spaces', () => {
     expect(GRID_TEMPLATE).toBe(COL_WIDTHS.join(' '));
+  });
+});
+
+// ── autoPreset ─────────────────────────────────────────────────────────────────
+
+describe('autoPreset', () => {
+  const now = new Date('2026-06-08T12:00:00Z').getTime();
+
+  it('returns all when there is no trace', () => {
+    expect(autoPreset(null, now)).toBe('all');
+  });
+
+  it('picks the smallest preset containing the newest trace', () => {
+    expect(autoPreset(new Date(now - 30 * 60_000).toISOString(), now)).toBe('1h');
+    expect(autoPreset(new Date(now - 5 * 3_600_000).toISOString(), now)).toBe('24h');
+    expect(autoPreset(new Date(now - 3 * 86_400_000).toISOString(), now)).toBe('7d');
+    expect(autoPreset(new Date(now - 20 * 86_400_000).toISOString(), now)).toBe('30d');
+    expect(autoPreset(new Date(now - 90 * 86_400_000).toISOString(), now)).toBe('all');
   });
 });

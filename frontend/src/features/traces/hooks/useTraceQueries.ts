@@ -19,6 +19,7 @@ interface TraceFilter {
   debouncedSearch: string;
   showSystem: boolean;
   from: string | undefined;
+  to: string | undefined;
 }
 
 /**
@@ -26,7 +27,7 @@ interface TraceFilter {
  * filter-bar overview (agents + breakdown + latency, keyed only on range/agent/project so it
  * survives pagination).
  */
-export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, from }: TraceFilter) {
+export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, showSystem, from, to }: TraceFilter) {
   const { currentProjectId } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -39,6 +40,7 @@ export function useTraceQueries({ page, pageSize, agentFilter, debouncedSearch, 
     ...(projectId ? { projectId } : {}),
     ...(agentFilter ? { agentId: agentFilter } : {}),
     ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
     ...(trimmedSearch.length >= 2 ? { q: trimmedSearch } : {}),
   };
 
