@@ -15,6 +15,9 @@ backend — request handling, background services, the ingestion consumer, the o
 on. This is broader than just failed HTTP requests: errors that never surface as a response are
 still recorded.
 
+Expected cancellations (client disconnect or shutdown, i.e. `OperationCanceledException` /
+`TaskCanceledException`) are **not** recorded — they are normal, not faults.
+
 Each entry stores:
 
 - **Message** — the log/exception message.

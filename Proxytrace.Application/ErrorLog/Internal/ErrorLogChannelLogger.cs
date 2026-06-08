@@ -7,6 +7,7 @@ namespace Proxytrace.Application.ErrorLog.Internal;
 /// Captures every <c>Error</c>/<c>Critical</c> log entry onto the <see cref="IErrorLogChannel"/>.
 /// Categories under the error-log pipeline itself and EF Core are skipped: a failed DB write makes
 /// EF (and our own writer/cleanup) log at Error level, which must not re-enter the channel and loop.
+/// Cancellation exceptions (client disconnect, shutdown) are also skipped — they are expected, not faults.
 /// </summary>
 internal sealed class ErrorLogChannelLogger : ILogger
 {
@@ -33,7 +34,7 @@ internal sealed class ErrorLogChannelLogger : ILogger
         Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        if (!IsEnabled(logLevel) || ShouldSkip(category))
+        if (!IsEnabled(logLevel) || ShouldSkip(category) || IsExpected(exception))
         {
             return;
         }
@@ -62,4 +63,9 @@ internal sealed class ErrorLogChannelLogger : ILogger
     private static bool ShouldSkip(string category)
         => category.StartsWith(SelfCategoryPrefix, StringComparison.Ordinal)
            || category.StartsWith(EfCategoryPrefix, StringComparison.Ordinal);
+
+    // Cancellation is expected (client disconnect, shutdown) — not a real fault, never log it.
+    // Covers TaskCanceledException, which derives from OperationCanceledException.
+    private static bool IsExpected(Exception? exception)
+        => exception is OperationCanceledException;
 }

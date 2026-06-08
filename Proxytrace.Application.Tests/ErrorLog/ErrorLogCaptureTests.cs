@@ -86,6 +86,32 @@ public sealed class ErrorLogCaptureTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Logger_OperationCanceledException_IsSkipped()
+    {
+        var channel = new ErrorLogChannel();
+        ILogger logger = new ErrorLogChannelLogger("Cat", channel);
+
+        logger.LogError(new OperationCanceledException("cancelled"), "request aborted");
+
+        var entries = await DrainAsync(channel);
+
+        entries.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Logger_TaskCanceledException_IsSkipped()
+    {
+        var channel = new ErrorLogChannel();
+        ILogger logger = new ErrorLogChannelLogger("Cat", channel);
+
+        logger.LogError(new TaskCanceledException("cancelled"), "task aborted");
+
+        var entries = await DrainAsync(channel);
+
+        entries.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public async Task Writer_DrainsChannel_AndPersistsError()
     {
         var services = GetServices();
