@@ -55,10 +55,11 @@ interface Props {
   agentId: string;
   selected: Set<string>;
   onToggle: (id: string) => void;
+  onSelectAll: (ids: string[]) => void;
   onClear: () => void;
 }
 
-export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
+export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }: Props) {
   const [range, setRange] = useState<string>('7d');
   const [search, setSearch] = useState<string>('');
   const [focusedIdState, setFocusedIdState] = useState<string | null>(null);
@@ -90,6 +91,8 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
   const focused = traces.find(t => t.id === focusedId) ?? null;
   const truncated = data && data.total > TRACE_PAGE_SIZE;
 
+  const allVisibleSelected = traces.length > 0 && traces.every(t => selected.has(t.id));
+
   return (
     <div data-testid="wizard-step-traces" className="flex flex-col gap-3 min-h-0">
       {/* Toolbar */}
@@ -112,6 +115,15 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
         />
         <span className="text-[11.5px] text-muted ml-1">{traces.length} of {allTraces.length} shown</span>
         <div className="flex-1" />
+        <Button
+          variant="secondary"
+          size="sm"
+          data-testid="wizard-trace-select-all"
+          disabled={traces.length === 0}
+          onClick={() => (allVisibleSelected ? onClear() : onSelectAll(traces.map(t => t.id)))}
+        >
+          {allVisibleSelected ? 'Select none' : 'Select all'}
+        </Button>
         <span
           className={cn(
             'px-3 py-[5px] rounded-full text-[12px] font-semibold border',
@@ -122,11 +134,6 @@ export function TracesStep({ agentId, selected, onToggle, onClear }: Props) {
         >
           {selected.size} selected
         </span>
-        {selected.size > 0 && (
-          <Button variant="link" className="text-[11.5px]" onClick={onClear}>
-            Clear
-          </Button>
-        )}
       </div>
 
       <p className="text-[11.5px] text-muted m-0">Only successful traces (2xx) are shown — errored traces aren't useful for benchmarking.</p>

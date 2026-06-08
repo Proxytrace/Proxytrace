@@ -13,9 +13,10 @@ interface Props {
   onRun: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  highlight?: boolean;
 }
 
-export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
+export function SuiteCard({ suite, onRun, onEdit, onDelete, highlight = false }: Props) {
   const c = agentColor(suite.agentId);
   const hasRuns = suite.totalRuns > 0;
   const passColor = passRateColor(suite.passRate);
@@ -27,7 +28,11 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete }: Props) {
   return (
     <div
       data-testid={`suite-card-${suite.id}`}
-      className="bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--suite-accent)_25%,transparent)]"
+      className={cn(
+        'bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--suite-accent)_25%,transparent)]',
+        highlight &&
+          'ring-1 ring-inset ring-[color-mix(in_srgb,var(--suite-accent)_55%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--suite-accent)_18%,transparent),0_4px_20px_rgba(0,0,0,0.45)]',
+      )}
       style={{ ['--suite-accent' as string]: c }}
     >
       {/* Accent bar — runtime colour */}

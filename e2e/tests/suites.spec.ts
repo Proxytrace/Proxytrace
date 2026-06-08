@@ -70,16 +70,16 @@ test.describe('Test Suites', () => {
     await page.getByTestId(`wizard-agent-option-${agentId}`).click();
     await page.getByRole('button', { name: 'Next →' }).click();
 
-    // Step 2: name the suite.
-    await expect(page.getByTestId('wizard-step-name')).toBeVisible();
-    await page.getByTestId('wizard-name-input').fill(suiteName);
-    await page.getByRole('button', { name: 'Next →' }).click();
-
-    // Step 3: select traces (must pick at least one to advance).
+    // Step 2: select traces (must pick at least one to advance).
     await expect(page.getByTestId('wizard-step-traces')).toBeVisible();
     const traceOption = page.locator('[data-testid^="wizard-trace-option-"]').first();
     await expect(traceOption).toBeVisible();
     await traceOption.click();
+    await page.getByRole('button', { name: 'Next →' }).click();
+
+    // Step 3: name the suite.
+    await expect(page.getByTestId('wizard-step-name')).toBeVisible();
+    await page.getByTestId('wizard-name-input').fill(suiteName);
     await page.getByRole('button', { name: 'Next →' }).click();
 
     // Step 4: evaluators (optional) — submit.
