@@ -10,8 +10,8 @@ import { ApplicationErrorLevel, type ApplicationErrorDto } from '../../api/model
 import { useErrorLogQuery, PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useErrorLogQueries';
 import { ErrorLogTable } from './components/ErrorLogTable';
 import { ErrorLogDetail } from './components/ErrorLogDetail';
-import { TimeRangePicker } from './components/TimeRangePicker';
-import { ALL_TIME, resolveRange, type TimeRange } from './timeRange';
+import { TimeRangePicker } from '../../components/ui/TimeRangePicker';
+import { ALL_TIME, resolveRange, type TimeRange } from '../../lib/timeRange';
 
 type LevelFilter = 'all' | ApplicationErrorLevel;
 
@@ -85,7 +85,7 @@ export default function ErrorLog() {
             data-testid="error-log-search"
           />
         </div>
-        <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} />
+        <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} testId="error-log-time" />
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Button, IconButton } from '../../../components/ui/Button';
-import { Popover } from '../../../components/ui/Popover';
-import { Input } from '../../../components/ui/Input';
-import { FormField } from '../../../components/ui/FormField';
-import { RowButton } from '../../../components/ui/RowButton';
-import { ClockIcon, ChevronDownIcon, XIcon, CheckIcon } from '../../../components/icons';
-import { cn } from '../../../lib/cn';
+import { Button, IconButton } from './Button';
+import { Popover } from './Popover';
+import { Input } from './Input';
+import { FormField } from './FormField';
+import { RowButton } from './RowButton';
+import { ClockIcon, ChevronDownIcon, XIcon, CheckIcon } from '../icons';
+import { cn } from '../../lib/cn';
 import {
   TIME_PRESETS,
   ALL_TIME,
@@ -16,11 +16,13 @@ import {
   presetWindow,
   type TimeRange,
   type TimeRangePreset,
-} from '../timeRange';
+} from '../../lib/timeRange';
 
 interface TimeRangePickerProps {
   value: TimeRange;
   onChange: (range: TimeRange) => void;
+  /** Prefix for the component's data-testid hooks (e.g. "error-log-time", "traces-time"). */
+  testId?: string;
 }
 
 interface Draft {
@@ -43,7 +45,7 @@ function seedDraft(value: TimeRange): Draft {
  * From/To time-range filter for the Error Log. Combines one-click relative presets with an
  * absolute custom range, in a single popover. Pure range logic lives in `../timeRange.ts`.
  */
-export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
+export function TimeRangePicker({ value, onChange, testId = 'time-range' }: TimeRangePickerProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Draft>(() => seedDraft(value));
 
@@ -87,7 +89,7 @@ export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
       leftIcon={<ClockIcon size={13} />}
       rightIcon={<ChevronDownIcon size={12} strokeWidth={2.5} className="text-muted" />}
       className={cn('font-medium', active && 'text-primary border-accent/60')}
-      data-testid="error-log-time-trigger"
+      data-testid={`${testId}-trigger`}
     >
       {formatRangeLabel(value)}
     </Button>
@@ -96,7 +98,7 @@ export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
   return (
     <div className="inline-flex items-center gap-1">
       <Popover open={open} onOpenChange={handleOpenChange} align="end" trigger={trigger}>
-        <div className="flex flex-col sm:flex-row" data-testid="error-log-time-popover">
+        <div className="flex flex-col sm:flex-row" data-testid={`${testId}-popover`}>
           <div className="flex flex-col gap-0.5 p-1.5 sm:w-[176px] border-b sm:border-b-0 sm:border-r border-hairline">
             <span className="px-2 pt-1 pb-1 text-caption font-medium uppercase tracking-wide text-muted">
               Quick ranges
@@ -107,7 +109,7 @@ export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
                 <RowButton
                   key={p.preset}
                   onClick={() => applyPreset(p.preset)}
-                  data-testid={`error-log-time-preset-${p.preset}`}
+                  data-testid={`${testId}-preset-${p.preset}`}
                   className={cn(
                     'flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-body transition-colors duration-[var(--motion-fast)]',
                     isActive ? 'text-primary bg-[var(--bg-wash-active)]' : 'text-secondary hover:text-primary hover:bg-[var(--bg-wash-hover)]',
@@ -122,35 +124,35 @@ export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
 
           <div className="flex flex-col gap-3 p-3 sm:w-[272px]">
             <span className="text-caption font-medium uppercase tracking-wide text-muted">Custom range</span>
-            <FormField label="From" htmlFor="error-log-time-from">
+            <FormField label="From" htmlFor={`${testId}-from`}>
               <Input
-                id="error-log-time-from"
+                id={`${testId}-from`}
                 type="datetime-local"
                 inputSize="sm"
                 value={draft.from}
                 onChange={e => setDraft(d => ({ ...d, from: e.target.value }))}
                 invalid={invalid}
                 leftAddon={<ClockIcon size={12} />}
-                data-testid="error-log-time-from"
+                data-testid={`${testId}-from`}
               />
             </FormField>
-            <FormField label="To" htmlFor="error-log-time-to" error={invalid ? '"From" must be before "To".' : undefined}>
+            <FormField label="To" htmlFor={`${testId}-to`} error={invalid ? '"From" must be before "To".' : undefined}>
               <Input
-                id="error-log-time-to"
+                id={`${testId}-to`}
                 type="datetime-local"
                 inputSize="sm"
                 value={draft.to}
                 onChange={e => setDraft(d => ({ ...d, to: e.target.value }))}
                 invalid={invalid}
                 leftAddon={<ClockIcon size={12} />}
-                data-testid="error-log-time-to"
+                data-testid={`${testId}-to`}
               />
             </FormField>
             <div className="flex items-center justify-end gap-2 pt-1">
-              <Button variant="ghost" size="sm" onClick={clear} data-testid="error-log-time-reset">
+              <Button variant="ghost" size="sm" onClick={clear} data-testid={`${testId}-reset`}>
                 Clear
               </Button>
-              <Button variant="primary" size="sm" onClick={applyCustom} disabled={invalid} data-testid="error-log-time-apply">
+              <Button variant="primary" size="sm" onClick={applyCustom} disabled={invalid} data-testid={`${testId}-apply`}>
                 Apply
               </Button>
             </div>
@@ -163,7 +165,7 @@ export function TimeRangePicker({ value, onChange }: TimeRangePickerProps) {
           size="sm"
           aria-label="Clear time filter"
           onClick={() => onChange(ALL_TIME)}
-          data-testid="error-log-time-clear"
+          data-testid={`${testId}-clear`}
         >
           <XIcon size={13} />
         </IconButton>

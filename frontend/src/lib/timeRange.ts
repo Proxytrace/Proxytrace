@@ -1,6 +1,7 @@
 /**
- * Pure time-range model for the Error Log filter. Kept framework-free and unit-tested
- * (`timeRange.spec.ts`) so the picker component stays a thin presentational shell.
+ * Pure time-range model shared by the time-range filter UI (Error Log, Traces). Kept
+ * framework-free and unit-tested (`timeRange.spec.ts`) so the picker component stays a thin
+ * presentational shell.
  *
  * A range is one of three shapes:
  *  - `all`      — no time bound (default).
@@ -9,7 +10,7 @@
  *  - `absolute` — explicit `from`/`to` ISO instants, either end optional (open-ended).
  */
 
-import { fmtDateTimeShort } from '../../lib/format';
+import { fmtDateTimeShort } from './format';
 
 export type TimeRangePreset = '15m' | '1h' | '6h' | '24h' | '7d' | '30d';
 
@@ -19,6 +20,11 @@ export type TimeRange =
   | { kind: 'absolute'; from: string | null; to: string | null };
 
 export const ALL_TIME: TimeRange = { kind: 'all' };
+
+/** Current wall-clock time in ms. Isolated here so component render stays lint-pure. */
+export function nowMs(): number {
+  return Date.now();
+}
 
 /** Window length per preset, in milliseconds. */
 const PRESET_MS: Record<TimeRangePreset, number> = {
