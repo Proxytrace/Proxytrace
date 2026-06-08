@@ -112,7 +112,13 @@ export default function Runs() {
       </div>
 
       {deleteGroupId && deleteTarget && (
-        <ConfirmDialog entityName={deleteTarget.suiteName} onConfirm={confirmDelete} onCancel={() => setDeleteGroupId(null)} loading={delGroup.isPending} />
+        <ConfirmDialog
+          title={`Delete run for "${deleteTarget.suiteName}"?`}
+          message="This permanently deletes the run and its results. This action cannot be undone."
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteGroupId(null)}
+          loading={delGroup.isPending}
+        />
       )}
     </div>
   );
