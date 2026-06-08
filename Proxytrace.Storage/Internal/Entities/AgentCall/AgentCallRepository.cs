@@ -102,8 +102,8 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             return [];
         }
 
-        var calls = rows.Select(r => (r.CreatedAt, r.HttpStatus)).ToList();
-        return AgentCallHistogram.Build(calls, from, to, buckets);
+        // Reshape anon → tuple lazily; Build enumerates once, so no second list is allocated.
+        return AgentCallHistogram.Build(rows.Select(r => (r.CreatedAt, r.HttpStatus)), from, to, buckets);
     }
 
     /// <summary>

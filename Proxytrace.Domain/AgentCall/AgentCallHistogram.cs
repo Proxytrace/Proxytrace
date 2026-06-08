@@ -13,7 +13,7 @@ public static class AgentCallHistogram
     public const int ErrorStatusThreshold = 400;
 
     public static IReadOnlyList<AgentCallHistogramBucket> Build(
-        IReadOnlyList<(DateTimeOffset CreatedAt, int HttpStatus)> calls,
+        IEnumerable<(DateTimeOffset CreatedAt, int HttpStatus)> calls,
         DateTimeOffset from,
         DateTimeOffset to,
         int buckets)
