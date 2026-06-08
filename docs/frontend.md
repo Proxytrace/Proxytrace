@@ -29,6 +29,8 @@ React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code live
 
 Backend endpoints are proxied through Vite when running `./dev.sh` (`/api` → backend 5001). Frontend runs on port 4201. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
 
+Charts are custom SVG (no chart library): pure geometry helpers live in `src/components/charts/chart-math.ts` (unit-tested) and render-only components alongside them. The Traces page's brushable time-range timeline (`TraceTimeline.tsx` + `computeTimeline`) is backed by `GET /api/agent-calls/histogram`, which returns per-bucket `{ start, total, errors }` for the active filter window. Bucketing happens in the app layer (`AgentCallHistogram.Build`), not in SQL, so it works identically on PostgreSQL and the in-memory test provider — no migration.
+
 ## Commands
 
 - `npm run build` — build the frontend, use this to verify there are no typing issues (output in `dist/`)

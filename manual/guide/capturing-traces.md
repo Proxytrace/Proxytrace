@@ -35,6 +35,23 @@ Typical things you can do:
 - **Per page** lets you choose how many traces to show at once (20, 50, 100, or 200). The
   total trace count for the current filter is shown alongside the pager.
 
+### The timeline
+
+Above the table a **timeline strip** plots how many traces were captured over the selected
+range, so you can spot ingestion hotspots at a glance. Each bar's height is the trace count
+for that slice of time; the **red** portion at the bottom marks failed calls (HTTP errors),
+making error spikes easy to find. Hover a bar to see its exact time, count, and error count.
+
+- **Drag across the timeline** to select a start/end window — the table instantly narrows to
+  traces in that range.
+- **Click anywhere** on the timeline to clear the selection and return to the full range.
+- The timeline reflects the **same agent, search, and system-trace filters** as the table,
+  so its shape always matches what you're looking at.
+
+When you first open Traces, the range automatically snaps to the smallest preset (1h / 24h /
+7d / 30d) that still contains data, so you never land on an empty view. Changing the **Range**
+dropdown re-spans the timeline and clears any selection.
+
 ### The trace detail panel
 
 Click a trace to open its detail panel. The header shows the trace ID with a **copy**
