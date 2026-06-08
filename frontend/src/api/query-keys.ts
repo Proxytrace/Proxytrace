@@ -67,4 +67,8 @@ export const QUERY_KEYS = {
     ['evaluator-test-bench-recent', evaluatorId, count] as const,
 
   traceySession: (projectId?: string) => ['tracey-session', projectId ?? null] as const,
+
+  errorLog: (filter: object) => ['error-log', filter] as const,
+  /** Prefix matching every error-log query — use for invalidation. */
+  errorLogRoot: ['error-log'] as const,
 };

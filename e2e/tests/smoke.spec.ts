@@ -17,6 +17,7 @@ const ROUTES = [
   { path: '/providers', label: 'providers' },
   { path: '/settings', label: 'settings' },
   { path: '/admin/invites', label: 'admin invites' },
+  { path: '/error-log', label: 'error log' },
 ];
 
 for (const { path, label } of ROUTES) {

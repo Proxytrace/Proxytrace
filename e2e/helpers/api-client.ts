@@ -859,6 +859,32 @@ export class ProxytraceApiClient {
     return this.getList('/api/test-run-groups', params);
   }
 
+  /** Test-only: emit a real Error/Critical backend log that the capture pipeline persists. */
+  async logBackendError(message: string, critical = false): Promise<void> {
+    const res = await this.request.post('/api/test/log-error', {
+      headers: this.headers(),
+      data: { message, critical },
+    });
+    if (!res.ok()) throw new Error(`log-error failed: ${res.status()} ${await res.text()}`);
+  }
+
+  async listErrorLog(
+    params: { page?: number; pageSize?: number; level?: string } = {},
+  ): Promise<{
+    total: number;
+    items: Array<{
+      id: string;
+      message: string;
+      level: string;
+      category: string;
+      exceptionType: string | null;
+      stackTrace: string | null;
+      createdAt: string;
+    }>;
+  }> {
+    return this.getList('/api/error-log', params);
+  }
+
   private async getList<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {
     const qs = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) if (v != null) qs.set(k, String(v));

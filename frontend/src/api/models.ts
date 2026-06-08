@@ -725,3 +725,25 @@ export type TestRunEvent =
   | TestResultArrivedEvent
   | RunCompleteEvent
   | GroupRunCompleteEvent;
+
+/* ── Application Errors (Error Log) ── */
+export enum ApplicationErrorLevel {
+  Error = 'Error',
+  Critical = 'Critical',
+}
+
+export interface ApplicationErrorDto {
+  id: string;
+  message: string;
+  level: ApplicationErrorLevel;
+  category: string;
+  exceptionType: string | null;
+  stackTrace: string | null;
+  createdAt: string;
+}
+
+export interface ApplicationErrorFilter {
+  page: number;
+  pageSize: number;
+  level?: ApplicationErrorLevel;
+}

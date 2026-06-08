@@ -43,7 +43,7 @@ test.describe('@llm test run', () => {
     await expect(page.getByText('E2E Suite').first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test('single-model run renders group card, run detail, heatmap and per-case scores', async ({ page, request }) => {
+  test('single-model run renders unified matrix, per-model summary, heatmap and per-case scores', async ({ page, request }) => {
     test.setTimeout(120_000);
 
     const api = new ProxytraceApiClient(request);
@@ -60,7 +60,7 @@ test.describe('@llm test run', () => {
       { userContent: 'Reply with exactly: pong', expectedContent: 'pong' },
     ]);
 
-    // Identify the test case so we can target its CaseTile by id.
+    // Identify the test case so we can target its matrix row by id.
     const suite = await api.getTestSuite(suiteId);
     const caseId = suite.testCases[0].id;
 
@@ -80,20 +80,26 @@ test.describe('@llm test run', () => {
     // Status badge shows the terminal state.
     await expect(page.getByTestId(`group-status-${groupId}`)).toContainText(/Completed|Failed/);
 
-    // Single-model group renders the RunDetail body with the case-results grid.
-    await expect(page.getByTestId('run-detail')).toBeVisible();
-    await expect(page.getByTestId('case-dot-legend')).toBeVisible();
+    // Unified layout: the (cases × models) matrix is the canonical results view for a
+    // single-model run too — one column for the run's endpoint, one row for the case.
+    await expect(page.getByTestId('matrix-view')).toBeVisible();
+    await expect(page.getByTestId(`matrix-col-${agent.endpointId}`)).toBeVisible();
+    await expect(page.getByTestId(`matrix-row-${caseId}`)).toBeVisible();
 
-    // The CaseTile for our case is rendered and carries a pass/fail state attribute.
-    const tile = page.getByTestId(`case-tile-${caseId}`);
-    await expect(tile).toBeVisible();
-    await expect(tile).toHaveAttribute('data-case-state', /pass|fail/);
+    // Rework: the per-model performance summary now renders for a single-model run (it used
+    // to be gated to multi-model groups), with exactly one entry for the run's endpoint.
+    await expect(page.getByTestId('model-leaderboard')).toBeVisible();
+    await expect(page.getByTestId(`model-leaderboard-entry-${agent.endpointId}`)).toBeVisible();
+    await expect(page.locator('[data-testid^="model-leaderboard-entry-"]')).toHaveCount(1);
 
-    // EvaluatorHeatmap renders with a cell for our evaluator × the run's endpoint.
+    // Rework: a completed matrix cell shows one evaluator slot per evaluator.
+    await expect(page.getByTestId('eval-slots').first()).toBeVisible();
+
+    // EvaluatorHeatmap renders for the evaluator × the run's endpoint.
     await expect(page.getByTestId('evaluator-heatmap')).toBeVisible();
 
-    // Open the case fixture drawer → per-evaluator scores listed.
-    await tile.click();
+    // Click the case row → comparison drawer lists the per-evaluator scores.
+    await page.getByTestId(`matrix-row-${caseId}`).click();
     await expect(page.getByTestId('fixture-evaluator-list')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId(`fixture-evaluator-${evaluatorId}`)).toBeVisible();
   });

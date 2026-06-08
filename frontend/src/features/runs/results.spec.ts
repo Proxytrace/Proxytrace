@@ -17,6 +17,8 @@ import {
   compositePercent,
   avgLatency,
   isActive,
+  runsComplete,
+  runGroupProgress,
   isDivergent,
   buildMatrixRows,
   fixtureSummary,
@@ -128,6 +130,50 @@ describe('isActive', () => {
   });
 });
 
+describe('runsComplete', () => {
+  const r = (status: TestRunStatus): TestRunDto => ({ status } as TestRunDto);
+
+  it('is false when there are no runs', () => {
+    expect(runsComplete([])).toBe(false);
+  });
+
+  it('is false while any run is pending or running', () => {
+    expect(runsComplete([r(TestRunStatus.Completed), r(TestRunStatus.Running)])).toBe(false);
+    expect(runsComplete([r(TestRunStatus.Pending)])).toBe(false);
+  });
+
+  it('is true once every run is in a terminal state', () => {
+    expect(runsComplete([r(TestRunStatus.Completed), r(TestRunStatus.Failed)])).toBe(true);
+  });
+});
+
+describe('runGroupProgress', () => {
+  const run = (totalCases: number, durations: number[]): TestRunDto => ({
+    totalCases,
+    results: durations.map((durationMs, i) => ({ testCaseId: `c${i}`, durationMs })),
+  } as TestRunDto);
+
+  it('returns zeroed progress with no ETA before anything runs', () => {
+    expect(runGroupProgress([run(4, [])])).toEqual({ done: 0, total: 4, percent: 0, etaMs: null });
+  });
+
+  it('sums done/total across runs and computes percent', () => {
+    const p = runGroupProgress([run(4, [100, 100]), run(4, [100])]);
+    expect(p.done).toBe(3);
+    expect(p.total).toBe(8);
+    expect(p.percent).toBe(38); // round(3/8 * 100)
+  });
+
+  it('estimates ETA from average case duration times remaining cases', () => {
+    const p = runGroupProgress([run(4, [200, 200])]); // avg 200ms, 2 remaining
+    expect(p.etaMs).toBe(400);
+  });
+
+  it('has no ETA once everything is done', () => {
+    expect(runGroupProgress([run(2, [100, 100])]).etaMs).toBeNull();
+  });
+});
+
 describe('isDivergent', () => {
   it('is true only when both pass and fail are present', () => {
     expect(isDivergent([true, false])).toBe(true);
@@ -187,8 +233,8 @@ describe('buildMatrixRows', () => {
   function caseResult(testCaseId: string, summary: string, evals: EvaluationResultDto[]): TestResultDto {
     return { id: `${testCaseId}-r`, testCaseId, testCaseSummary: summary, actualResponse: '', evaluations: evals, durationMs: 100 };
   }
-  function run(id: string, results: TestResultDto[], testCases: { id: string; summary: string }[] = []): TestRunDto {
-    return { id, endpointName: id, results, testCases } as TestRunDto;
+  function run(id: string, results: TestResultDto[], testCases: { id: string; summary: string }[] = [], evaluatorCount = 0): TestRunDto {
+    return { id, endpointName: id, results, testCases, evaluators: new Array(evaluatorCount).fill({ id: 'ev', kind: EvaluatorKind.ExactMatch, name: 'E' }) } as TestRunDto;
   }
 
   it('keeps stable suite order (no reshuffle) and flags divergence per row', () => {
@@ -214,6 +260,14 @@ describe('buildMatrixRows', () => {
     expect(bRow?.summary).toBe('B');
     expect(bRow?.cells.every(c => c.result === null && c.pass === null)).toBe(true);
   });
+
+  it('gives pending cells a zero-of-N evaluator slot count', () => {
+    const cases = [{ id: 'a', summary: 'A' }];
+    const r = run('m1', [], cases, 3); // 3 evaluators, no results yet
+    const cell = buildMatrixRows([r])[0].cells[0];
+    expect(cell.status).toBe('pending');
+    expect(cell.progress).toEqual({ done: 0, total: 3 });
+  });
 });
 
 describe('buildLeaderboard', () => {
@@ -228,7 +282,7 @@ describe('buildLeaderboard', () => {
   it('flags best pass rate, fastest and cheapest among completed runs', () => {
     const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 3000, costUsd: 0.9 });
     const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 1000, costUsd: 0.1 });
-    const [ea, eb] = buildLeaderboard([a, b]);
+    const [ea, eb] = buildLeaderboard([a, b], true);
     expect(ea.passRate).toBe(90);
     expect(ea.isBest).toBe(true);
     expect(eb.isFastest).toBe(true);
@@ -239,7 +293,7 @@ describe('buildLeaderboard', () => {
 
   it('derives pending from totalCases minus delivered results', () => {
     const r = lbRun({ totalCases: 10, passedCases: 4, failedCases: 1, results: [{ testCaseId: 'c0' }, { testCaseId: 'c1' }, { testCaseId: 'c2' }, { testCaseId: 'c3' }, { testCaseId: 'c4' }] as TestResultDto[] });
-    const [e] = buildLeaderboard([r]);
+    const [e] = buildLeaderboard([r], true);
     expect(e.pending).toBe(5);
     expect(e.passRate).toBe(80); // 4 / (4+1)
   });
@@ -247,9 +301,18 @@ describe('buildLeaderboard', () => {
   it('excludes non-completed runs from winner selection', () => {
     const done = lbRun({ id: 'd', endpointName: 'd', passedCases: 5, failedCases: 5 });
     const running = lbRun({ id: 'x', endpointName: 'x', status: TestRunStatus.Running, passedCases: 10, failedCases: 0 });
-    const entries = buildLeaderboard([done, running]);
+    const entries = buildLeaderboard([done, running], true);
     expect(entries.find(e => e.run.id === 'd')?.isBest).toBe(true);
     expect(entries.find(e => e.run.id === 'x')?.isBest).toBe(false);
+  });
+
+  it('reports no winners and null deltas while the group is not yet complete', () => {
+    const a = lbRun({ id: 'a', endpointName: 'a', passedCases: 9, failedCases: 1, durationMs: 1000, costUsd: 0.1 });
+    const b = lbRun({ id: 'b', endpointName: 'b', passedCases: 6, failedCases: 4, durationMs: 3000, costUsd: 0.9 });
+    const entries = buildLeaderboard([a, b], false);
+    expect(entries.every(e => !e.isBest && !e.isFastest && !e.isCheapest)).toBe(true);
+    expect(entries.every(e => e.deltaVsBest === null)).toBe(true);
+    expect(entries.find(e => e.run.id === 'a')?.passRate).toBe(90);
   });
 });
 

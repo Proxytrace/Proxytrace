@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Agent;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Auth.Internal;
@@ -10,6 +11,8 @@ using Proxytrace.Application.Cleanup;
 using Proxytrace.Application.Cleanup.Internal;
 using Proxytrace.Application.Demo;
 using Proxytrace.Application.Demo.Internal;
+using Proxytrace.Application.ErrorLog;
+using Proxytrace.Application.ErrorLog.Internal;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Evaluator.Internal;
 using Proxytrace.Application.Ingestion;
@@ -97,7 +100,11 @@ public sealed class Module : Autofac.Module
                 => services.AddSingleton<IHostedService>(sc =>
                 {
                     var kiosk = sc.GetRequiredService<KioskOptions>();
-                    return kiosk.Enabled
+                    var endpoint = sc.GetRequiredService<KioskEndpointOptions>();
+
+                    // Disabled only in a read-only kiosk (no LLM endpoint). A configured
+                    // endpoint makes kiosk fully interactive, so background test runs execute.
+                    return kiosk.Enabled && !endpoint.IsConfigured
                         ? new NullHostedService()
                         : sc.GetRequiredService<TestRunnerService>();
                 }));
@@ -168,6 +175,44 @@ public sealed class Module : Autofac.Module
                 // and persists captured calls (e.g. Tracey chats) into the in-memory demo DB.
                 services.AddSingleton<IHostedService>(sc =>
                     sc.GetRequiredService<AgentCallIngestionWorker>());
+            });
+        }
+
+        // Error log capture pipeline: a custom ILoggerProvider taps every Error/Critical log entry
+        // into a bounded channel; ErrorLogWriter drains it to the ApplicationError table;
+        // ErrorLogCleanupService rotates old rows + caps the table size.
+        builder.RegisterType<ErrorLogChannel>()
+            .As<IErrorLogChannel>()
+            .SingleInstance()
+            .IfNotRegistered(typeof(IErrorLogChannel));
+
+        builder.Register(_ => new ErrorLogCleanupConfiguration())
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(ErrorLogCleanupConfiguration));
+
+        builder.RegisterType<ErrorLogWriter>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(ErrorLogWriter));
+
+        builder.RegisterType<ErrorLogCleanupService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(ErrorLogCleanupService));
+
+        const string errorLogKey = "Proxytrace.Application.ErrorLog.Registered";
+        if (!builder.Properties.ContainsKey(errorLogKey))
+        {
+            builder.Properties[errorLogKey] = true;
+            builder.RegisterServiceCollection(services =>
+            {
+                // The logging framework auto-discovers every ILoggerProvider in the container, so no
+                // Program.cs change is needed to wire up capture.
+                services.AddSingleton<ILoggerProvider>(sp =>
+                    new ErrorLogChannelLoggerProvider(sp.GetRequiredService<IErrorLogChannel>()));
+                services.AddHostedService(sp => sp.GetRequiredService<ErrorLogWriter>());
+                services.AddHostedService(sp => sp.GetRequiredService<ErrorLogCleanupService>());
             });
         }
 

@@ -225,6 +225,45 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("ApiKeyEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.ApplicationError.ApplicationErrorEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExceptionType")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)");
+
+                    b.Property<string>("StackTrace")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("ApplicationErrorEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Evaluator.EvaluatorEntity", b =>
                 {
                     b.Property<Guid>("Id")

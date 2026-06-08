@@ -3,7 +3,7 @@ import { isActive } from './results';
 import { useCancelTestRunGroup } from './hooks/useCancelTestRunGroup';
 import { useRunGroupStream } from './hooks/useRunGroupStream';
 import { RunGroupHeader } from './components/RunGroupHeader';
-import { ModelLeaderboard } from './components/ModelLeaderboard';
+import { PerformanceSummary } from './components/PerformanceSummary';
 import { EvaluatorHeatmap } from './components/EvaluatorHeatmap';
 import { MatrixView } from './MatrixView';
 
@@ -14,8 +14,6 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
   // and surfaces per-evaluator in-flight progress — no polling, no refetch until the run ends.
   const live = useRunGroupStream(group.id, active);
   const cancelGroup = useCancelTestRunGroup(group.id);
-
-  const multipleRuns = group.runs.length > 1;
 
   // Single- and multi-endpoint groups render identically: the matrix is the canonical results
   // view (one column per endpoint) and the only scroller, so this column fills the viewport and
@@ -29,7 +27,7 @@ export function GroupDetail({ group, onDelete }: { group: TestRunGroupDto; onDel
         cancelPending={cancelGroup.isPending}
       />
 
-      {multipleRuns && <ModelLeaderboard runs={group.runs} />}
+      <PerformanceSummary runs={group.runs} />
 
       <EvaluatorHeatmap group={group} live={live} />
 
