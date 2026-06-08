@@ -13,7 +13,7 @@ import { useTraceSseStream } from './hooks/useTraceSseStream';
 import { AgentFilterCards } from './components/AgentFilterCards';
 import { TraceToolbar } from './components/TraceToolbar';
 import { TraceTable } from './components/TraceTable';
-import { useDebounce } from './hooks/useDebounce';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export default function Traces() {
   const [page, setPage] = useState(1);

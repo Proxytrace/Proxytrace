@@ -126,13 +126,13 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 **Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
 
-`Tabs`, `Tooltip`, `Menu`, and `Combobox` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab with manual `createPortal` + `getBoundingClientRect` again; reach for these.
+`Tabs`, `Tooltip`, `Menu`, `Combobox`, and `Popover` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab/popover with manual `createPortal` + `getBoundingClientRect` again; reach for these.
 
 **Surfaces:** `Card` (with `Card.Header`/`Body`/`Footer`), `KpiCard`, `EmptyState`, `Skeleton`, `Spinner`.
 
 **Data display:** `DataTable`, `Badge`, `Pill`, `ColoredBadge`, `StatusDot`, `ProgressBar`, `Avatar`, `CodeBlock`, `JsonBlock`, `MessageBubble`, `ToolMessageBubble`, `ModelParametersGrid`, `Collapsible`, `Toast`.
 
-**Overlays:** `Modal`, `Drawer`, `ConfirmDialog`, `StepWizard` (`components/overlays/`).
+**Overlays:** `Modal`, `Drawer`, `ConfirmDialog`, `StepWizard` (`components/overlays/`), `Popover` (Radix-backed floating panel for rich filter/picker content — for a flat action list use `Menu`).
 
 **Layout:** `Shell`, `NavItem`, `ProjectSelector` (`components/layout/`).
 

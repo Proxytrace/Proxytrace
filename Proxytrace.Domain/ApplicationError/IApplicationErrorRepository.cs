@@ -9,12 +9,17 @@ namespace Proxytrace.Domain.ApplicationError;
 public interface IApplicationErrorRepository : IRepository<IApplicationError>
 {
     /// <summary>
-    /// Returns a page of errors ordered newest-first, optionally filtered by <paramref name="level"/>.
+    /// Returns a page of errors ordered newest-first, optionally filtered by <paramref name="level"/>,
+    /// a case-insensitive infix <paramref name="search"/> matched against the message and stacktrace,
+    /// and an inclusive <paramref name="from"/>..<paramref name="to"/> time window on the capture time.
     /// </summary>
     Task<PagedResult<IApplicationError>> GetPagedNewestFirstAsync(
         int page,
         int pageSize,
         ApplicationErrorLevel? level,
+        string? search,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
         CancellationToken cancellationToken = default);
 
     /// <summary>

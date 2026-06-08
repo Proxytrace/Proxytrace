@@ -34,8 +34,19 @@ so client-reported issues do not appear in the Error Log.
 
 ## Using the page
 
-- The list is newest-first and paginated.
+- The list is newest-first and paginated. Use the **Per page** selector to change how many
+  rows are shown at once, and the pager to move between pages.
+- The **search box** does a case-insensitive infix match against both the **message** and the
+  **stacktrace**, so you can find an error by any substring of either (typing starts filtering
+  after two characters).
 - The **All / Error / Critical** toggle filters by severity.
+- The **time-range picker** (the clock button next to the search box) restricts the list to
+  errors captured within a window. Open it to pick a relative **quick range** (Last 15
+  minutes, hour, 6 hours, 24 hours, 7 days, 30 days) for a one-click filter, or enter an
+  explicit **From**/**To** under *Custom range* and press **Apply** — either end may be left
+  blank for an open-ended bound. Times are entered and shown in your local timezone. The
+  **×** beside the button clears the filter back to *All time*.
+- The **When** column shows the absolute date and time the error occurred.
 - Selecting a row opens a detail panel with the full stacktrace (copyable).
 - The page refetches when you return to the tab; there is no live stream.
 

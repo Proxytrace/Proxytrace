@@ -746,4 +746,9 @@ export interface ApplicationErrorFilter {
   page: number;
   pageSize: number;
   level?: ApplicationErrorLevel;
+  search?: string;
+  /** Inclusive lower time bound (ISO 8601). Errors at or after this instant. */
+  from?: string;
+  /** Inclusive upper time bound (ISO 8601). Errors at or before this instant. */
+  to?: string;
 }

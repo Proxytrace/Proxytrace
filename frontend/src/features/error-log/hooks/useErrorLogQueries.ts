@@ -1,7 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { errorLogApi } from '../../../api/error-log';
 import { QUERY_KEYS } from '../../../api/query-keys';
+import { DEFAULT_PAGE_SIZE } from '../../../lib/constants';
 import type { ApplicationErrorFilter } from '../../../api/models';
+
+/** Default page size; the user can override it via the page-size selector. */
+export const PAGE_SIZE = DEFAULT_PAGE_SIZE;
+
+/** Selectable page sizes for the error-log table. */
+export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**
  * Paginated application-error list. Refetches on window focus so an operator returning to the
