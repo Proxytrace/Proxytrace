@@ -75,12 +75,16 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         }
         else
         {
-            if (!await query.AnyAsync(cancellationToken))
+            // One round-trip: a nullable Min is null exactly when nothing matches (index-backed).
+            var earliest = await query
+                .Select(e => (DateTimeOffset?)e.CreatedAt)
+                .MinAsync(cancellationToken);
+            if (earliest is null)
             {
                 return [];
             }
 
-            from = await query.MinAsync(e => e.CreatedAt, cancellationToken);
+            from = earliest.Value;
         }
 
         if (to <= from)
