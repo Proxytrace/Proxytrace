@@ -12,8 +12,9 @@ import { useTraceFilters } from './hooks/useTraceFilters';
 import { useFocusTrace } from './hooks/useFocusTrace';
 import { useScrollToTrace } from './hooks/useScrollToTrace';
 import { useTraceSseStream } from './hooks/useTraceSseStream';
-import { AgentFilterCards } from './components/AgentFilterCards';
 import { TraceToolbar } from './components/TraceToolbar';
+import { TraceSummary } from './components/TraceSummary';
+import { summarizeTraces } from './traceSummary';
 import { TraceTable } from './components/TraceTable';
 import { TraceTimeline } from '../../components/charts/TraceTimeline';
 import { useTraceHistogram } from './hooks/useTraceHistogram';
@@ -52,7 +53,7 @@ export default function Traces() {
   // user has no saved window, so a restored range is never clobbered.
   useAutoDefaultRange(currentProjectId !== null && !rangeWasRestored, currentProjectId ?? undefined, setTimeRange);
 
-  const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
+  const { traces, total, isFetching, allAgents, agentBreakdown } = useTraceQueries({
     page,
     pageSize,
     agentFilter,
@@ -75,6 +76,8 @@ export default function Traces() {
   const agents = visibleAgents.filter(a => (callCounts.get(a.id) ?? 0) > 0);
 
   const rows = useMemo(() => buildRows(traces), [traces]);
+  // At-a-glance aggregate of the current page slice (recomputes as page/filter/range changes).
+  const summary = useMemo(() => summarizeTraces(traces), [traces]);
 
   // Flat list of all individual traces for prev/next navigation in the drawer
   const flatTraces = rows.flatMap(r => r.type === 'flat' ? [r.trace] : r.turns);
@@ -166,14 +169,6 @@ export default function Traces() {
 
   return (
     <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
-      <AgentFilterCards
-        agents={agents}
-        agentBreakdown={agentBreakdown}
-        agentFilter={agentFilter}
-        p95={p95}
-        onFilterChange={handleAgentFilterChange}
-      />
-
       <TraceToolbar
         search={search}
         timeRange={timeRange}
@@ -198,6 +193,8 @@ export default function Traces() {
           canZoomOut={zoomStack.length > 0}
         />
       )}
+
+      <TraceSummary stats={summary} />
 
       <TraceTable
         rows={rows}

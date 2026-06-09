@@ -27,8 +27,12 @@ Typical things you can do:
 
 ### Filtering, search, and paging
 
-- **Agent cards** at the top let you focus on one agent. Only agents that actually have
-  traces in the selected time range are shown.
+- **Page summary** is the band of stat cards just above the table: number of traces on the
+  current page, total tokens (with the input/output split), total cost, average latency (with
+  its ± spread), and the error rate (share of non-2xx calls). It rolls up only the traces on
+  the *current page* and recomputes as you page, filter, or change the time range.
+- **Agent filter** (the *Agent:* dropdown in the toolbar) focuses the table on one agent. Only
+  agents that actually have traces in the selected time range are listed.
 - **Search** matches anywhere inside captured message content (and the response), not just
   at the start of a word — searching `efund` finds a trace mentioning `refund`. You can also
   search by model name or the short trace ID.

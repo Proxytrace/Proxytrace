@@ -1,5 +1,5 @@
 import { test, expect } from '../helpers/fixtures';
-import type { APIRequestContext } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Traces page (/traces) coverage.
@@ -23,6 +23,12 @@ async function makeClient(request: APIRequestContext): Promise<ProxytraceApiClie
   const { token } = await client.login('admin@e2e.test', 'E2ePassword1!');
   client.setToken(token);
   return client;
+}
+
+// Narrow the table to one agent via the toolbar "Agent:" dropdown.
+async function selectAgentFilter(page: Page, agentId: string): Promise<void> {
+  await page.getByTestId('traces-agent-filter').click();
+  await page.getByTestId(`traces-agent-filter-option-${agentId}`).click();
 }
 
 test.describe('Traces', () => {
@@ -49,7 +55,7 @@ test.describe('Traces', () => {
     await expect(page.getByTestId('trace-table')).toBeVisible();
 
     // Filter to this agent so the assertion is independent of other tests' data.
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    await selectAgentFilter(page, agentId);
 
     for (const c of calls) {
       await expect(page.getByTestId(`trace-row-${c.id}`)).toBeVisible();
@@ -65,7 +71,7 @@ test.describe('Traces', () => {
     const call = await client.seedAgentCall({ agentId, userContent: userText, assistantContent: 'detail reply here' });
 
     await page.goto('/traces', { waitUntil: 'load' });
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    await selectAgentFilter(page, agentId);
 
     await page.getByTestId(`trace-row-${call.id}`).click();
 
@@ -87,7 +93,7 @@ test.describe('Traces', () => {
     await expect(metadataTab).toContainText('http_status');
   });
 
-  test('AgentFilterCards narrows the table to a single agent', async ({ page, request }) => {
+  test('agent filter narrows the table to a single agent', async ({ page, request }) => {
     const client = await makeClient(request);
 
     const agentAName = uniqueName('Filter Agent A');
@@ -102,7 +108,7 @@ test.describe('Traces', () => {
     await expect(page.getByTestId('trace-table')).toBeVisible();
 
     // Filter to agent A: A's trace is visible, B's is not.
-    await page.getByTestId(`agent-filter-card-${agentAId}`).click();
+    await selectAgentFilter(page, agentAId);
     await expect(page.getByTestId(`trace-row-${callA.id}`)).toBeVisible();
     await expect(page.getByTestId(`trace-row-${callB.id}`)).toBeHidden();
   });
@@ -118,7 +124,7 @@ test.describe('Traces', () => {
     const c2 = await client.seedAgentCall({ agentId, userContent: 'flat two', assistantContent: 'r2' });
 
     await page.goto('/traces', { waitUntil: 'load' });
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    await selectAgentFilter(page, agentId);
 
     // Each seeded call is an individually-clickable flat row (not nested under a conversation).
     await expect(page.getByTestId(`trace-row-${c1.id}`)).toBeVisible();
@@ -143,7 +149,7 @@ test.describe('Traces', () => {
     });
 
     await page.goto('/traces', { waitUntil: 'load' });
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    await selectAgentFilter(page, agentId);
 
     await page.getByTestId(`trace-row-${promoteCall.id}`).click();
     await expect(page.getByTestId('trace-detail')).toBeVisible();
@@ -176,7 +182,7 @@ test.describe('Traces', () => {
 
     await page.goto('/traces', { waitUntil: 'load' });
     // Filter to this agent so exactly 25 traces drive the pagination.
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    await selectAgentFilter(page, agentId);
     await expect(page.getByTestId('trace-table')).toBeVisible();
 
     // Pagination control is present (total 25 > pageSize 20).

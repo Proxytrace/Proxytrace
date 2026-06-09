@@ -37,6 +37,7 @@ export function TraceToolbar({
 
       <FilterDropdown
         label="Agent:"
+        testId="traces-agent-filter"
         value={agentFilter || '__all'}
         active={!!agentFilter}
         accent={agentFilter ? agentColor(agentFilter) : undefined}

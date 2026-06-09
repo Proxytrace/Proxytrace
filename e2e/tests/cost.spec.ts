@@ -118,8 +118,9 @@ test.describe('Cost', () => {
     await page.goto('/traces', { waitUntil: 'load' });
     await expect(page.getByTestId('trace-table')).toBeVisible();
 
-    // Narrow to this agent so the row is deterministic in the shared tenant.
-    await page.getByTestId(`agent-filter-card-${agentId}`).click();
+    // Narrow to this agent (via the toolbar Agent filter) so the row is deterministic.
+    await page.getByTestId('traces-agent-filter').click();
+    await page.getByTestId(`traces-agent-filter-option-${agentId}`).click();
 
     // Open the detail drawer and switch to the Metadata tab where cost_eur is rendered.
     await page.getByTestId(`trace-row-${call.id}`).click();

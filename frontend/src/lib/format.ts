@@ -68,3 +68,9 @@ export function fmtCost(usd: number | null | undefined): string {
   if (usd < 0.001) return '<$0.001';
   return `$${usd.toFixed(4)}`;
 }
+
+export function fmtCostEur(eur: number | null | undefined): string {
+  if (eur == null) return '—';
+  if (eur > 0 && eur < 0.001) return '<€0.001';
+  return `€${eur.toFixed(4)}`;
+}
