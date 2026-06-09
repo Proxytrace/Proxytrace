@@ -275,6 +275,36 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Reload_UpdatesExistingModelPrice()
+    {
+        var providerClient = Substitute.For<IProviderClient>();
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var model = await services.GetRequiredService<IModelRepository>().GetOrCreateAsync("gpt-4o", CancellationToken);
+
+        // Create the provider with an initial price.
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([new PricedModel(model, new ModelPrice(1.0m, 2.0m))]));
+        var controller = ResolveController(services);
+        var createResult = await controller.Create(
+            new CreateModelProviderRequest("Acme", "https://api.acme.test/", "sk-test", ModelProviderKind.OpenAiCompatible),
+            CancellationToken);
+        var createdDto = (ModelProviderDto?)((CreatedAtActionResult)(createResult.Result ?? throw new InvalidOperationException())).Value;
+        createdDto.Should().NotBeNull();
+        var providerId = createdDto.Id;
+
+        // Reload with a different price for the same model → the existing endpoint is updated.
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([new PricedModel(model, new ModelPrice(3.0m, 9.0m))]));
+        await controller.Reload(providerId, CancellationToken);
+
+        var endpoints = await services.GetRequiredService<IModelEndpointRepository>().GetByProviderAsync(providerId, CancellationToken);
+        var endpoint = endpoints.Should().ContainSingle().Subject;
+        endpoint.InputTokenCost.Should().Be(3.0m);
+        endpoint.OutputTokenCost.Should().Be(9.0m);
+    }
+
+    [TestMethod]
     public async Task Reload_UnknownProvider_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

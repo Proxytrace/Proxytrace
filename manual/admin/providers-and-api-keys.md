@@ -19,13 +19,14 @@ Manage these from the **Providers** area of the UI.
 When you add a provider, Proxytrace **discovers its models and fetches their prices
 automatically**, so you usually start with a populated, priced model list. Each provider's
 detail view shows its **Models** section (above its **API keys** section) with a per-model
-input/output price. A **Reload models & prices** button re-runs discovery on demand if the
-upstream catalogue changes.
+input/output price. The **Reload models & prices** button re-runs discovery and **refreshes the
+price of every model** (new and existing) from the catalogue. Prices are managed entirely by
+Proxytrace — there is no manual price entry.
 
 The upstream **endpoint** is shown in the provider header only when it differs from the
 provider kind's default (for example, the canonical `https://api.openai.com/v1` and
 `https://api.anthropic.com/v1` are hidden; a custom or self-hosted endpoint is shown). You can
-always add a model by hand or edit any model's price manually.
+add a model by hand; its price is filled on the next reload.
 
 ### Azure OpenAI
 
@@ -38,10 +39,10 @@ the full upstream model list).
 All providers are priced from the **LiteLLM** model catalogue (quoted in USD) and converted to EUR
 using **European Central Bank (ECB)** exchange rates. Azure providers prefer the catalogue's
 `azure/<model>` entry, falling back to the bare model name. A model that isn't in the catalogue
-loads without a price — set it manually.
+loads without a price (shown as `—`).
 
-Every stored price is normalised to **EUR per 1M tokens**. Auto-fetched prices are only a
-starting point — you can override any model's input/output price manually at any time.
+Every stored price is normalised to **EUR per 1M tokens** and is refreshed from the catalogue on
+each reload.
 
 Operators can point the pricing feeds at different sources via the `Pricing` section of
 `appsettings` (see [Configuration](/admin/configuration)): `Pricing:LiteLlmFeedUrl` and

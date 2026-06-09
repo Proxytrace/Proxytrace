@@ -2,7 +2,7 @@ import { api } from './client';
 import type {
   ApiKeyDto, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
   ModelEndpointDto, ModelProviderKind,
-  ProviderDto, ProvidersOverviewDto, UpdateModelEndpointPricingRequest,
+  ProviderDto, ProvidersOverviewDto,
 } from './models';
 
 export const providersApi = {
@@ -18,8 +18,6 @@ export const providersApi = {
   getAvailableModels: (providerId: string) => api.get<string[]>(`/api/providers/${providerId}/available-models`),
   createModel: (providerId: string, req: CreateModelEndpointRequest) =>
     api.post<ModelEndpointDto>(`/api/providers/${providerId}/models`, req),
-  updateModelPricing: (providerId: string, endpointId: string, req: UpdateModelEndpointPricingRequest) =>
-    api.put<ModelEndpointDto>(`/api/providers/${providerId}/models/${endpointId}`, req),
   deleteModel: (endpointId: string) =>
     api.del(`/api/providers/endpoints/${endpointId}`),
   reload: (providerId: string) =>

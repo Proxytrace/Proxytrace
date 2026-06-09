@@ -6,9 +6,9 @@ import { EmptyState } from '../../../components/ui/EmptyState';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
-import { EditIcon, PlusIcon, TrashIcon } from '../../../components/icons';
+import { PlusIcon, TrashIcon } from '../../../components/icons';
 import { useAvailableModels } from '../hooks/useProviderQueries';
-import { useCreateModel, useDeleteModel, useUpdateModelPricing } from '../hooks/useProviderMutations';
+import { useCreateModel, useDeleteModel } from '../hooks/useProviderMutations';
 
 const GRID = 'grid grid-cols-[2fr_1fr_1fr_auto]';
 
@@ -21,9 +21,7 @@ interface ModelsSectionProps {
 
 export function ModelsSection({ providerId, models, reloading, onReload }: ModelsSectionProps) {
   const [showNew, setShowNew] = useState(false);
-  const [newModel, setNewModel] = useState({ modelName: '', inputTokenCost: '', outputTokenCost: '' });
-  const [editing, setEditing] = useState<ModelEndpointDto | null>(null);
-  const [editPricing, setEditPricing] = useState({ inputTokenCost: '', outputTokenCost: '' });
+  const [newModelName, setNewModelName] = useState('');
   const [toDelete, setToDelete] = useState<ModelEndpointDto | null>(null);
 
   const { data: availableModels, isLoading: availableLoading, error: availableError } = useAvailableModels(providerId, showNew);
@@ -32,29 +30,11 @@ export function ModelsSection({ providerId, models, reloading, onReload }: Model
 
   const createModel = useCreateModel(providerId);
   const deleteModel = useDeleteModel();
-  const updatePricing = useUpdateModelPricing(providerId);
 
   function submitNew() {
     createModel.mutate(
-      {
-        modelName: newModel.modelName,
-        inputTokenCost: newModel.inputTokenCost ? parseFloat(newModel.inputTokenCost) : null,
-        outputTokenCost: newModel.outputTokenCost ? parseFloat(newModel.outputTokenCost) : null,
-      },
-      { onSuccess: () => { setShowNew(false); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); } },
-    );
-  }
-
-  function submitPricing(endpointId: string) {
-    updatePricing.mutate(
-      {
-        endpointId,
-        req: {
-          inputTokenCost: editPricing.inputTokenCost ? parseFloat(editPricing.inputTokenCost) : null,
-          outputTokenCost: editPricing.outputTokenCost ? parseFloat(editPricing.outputTokenCost) : null,
-        },
-      },
-      { onSuccess: () => setEditing(null) },
+      { modelName: newModelName, inputTokenCost: null, outputTokenCost: null },
+      { onSuccess: () => { setShowNew(false); setNewModelName(''); } },
     );
   }
 
@@ -63,7 +43,7 @@ export function ModelsSection({ providerId, models, reloading, onReload }: Model
       <div className="flex items-center justify-between">
         <div>
           <div className="text-h2 font-semibold text-primary mb-0.5">Models</div>
-          <div className="text-body-sm text-muted">Set pricing to compute trace costs.</div>
+          <div className="text-body-sm text-muted">Prices load automatically; reload to refresh them.</div>
         </div>
         <div className="flex items-center gap-2">
           <Button data-testid="model-reload-btn" variant="ghost" size="sm" loading={reloading} onClick={() => onReload()}>
@@ -74,7 +54,7 @@ export function ModelsSection({ providerId, models, reloading, onReload }: Model
             variant="secondary"
             size="sm"
             leftIcon={<PlusIcon size={13} />}
-            onClick={() => { setShowNew(true); setEditing(null); setNewModel({ modelName: '', inputTokenCost: '', outputTokenCost: '' }); }}
+            onClick={() => { setShowNew(true); setNewModelName(''); }}
           >
             Add model
           </Button>
@@ -90,28 +70,21 @@ export function ModelsSection({ providerId, models, reloading, onReload }: Model
             ) : availableError ? (
               <div className="flex flex-col gap-1.5">
                 <div className="text-body text-danger">Could not discover models from endpoint. Enter manually:</div>
-                <Input data-testid="model-name-input" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} placeholder="e.g. claude-sonnet-4-5" className="font-mono" />
+                <Input data-testid="model-name-input" value={newModelName} onChange={e => setNewModelName(e.target.value)} placeholder="e.g. claude-sonnet-4-5" className="font-mono" />
               </div>
             ) : selectable.length === 0 ? (
               <div className="text-body text-muted py-2">All discovered models are already added.</div>
             ) : (
-              <Select data-testid="model-name-select" value={newModel.modelName} onChange={e => setNewModel(m => ({ ...m, modelName: e.target.value }))} className="font-mono">
+              <Select data-testid="model-name-select" value={newModelName} onChange={e => setNewModelName(e.target.value)} className="font-mono">
                 <option value="">Select a model…</option>
                 {selectable.map(name => <option key={name} value={name}>{name}</option>)}
               </Select>
             )}
           </FormField>
-          <div className="grid grid-cols-2 gap-2.5">
-            <FormField label="Input cost / 1M tokens (€)">
-              <Input type="number" value={newModel.inputTokenCost} onChange={e => setNewModel(m => ({ ...m, inputTokenCost: e.target.value }))} placeholder="e.g. 3.00" />
-            </FormField>
-            <FormField label="Output cost / 1M tokens (€)">
-              <Input type="number" value={newModel.outputTokenCost} onChange={e => setNewModel(m => ({ ...m, outputTokenCost: e.target.value }))} placeholder="e.g. 15.00" />
-            </FormField>
-          </div>
+          <div className="text-body-sm text-muted">Pricing is fetched automatically — use “Reload models &amp; prices” after adding.</div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button data-testid="model-add-submit" data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModel.modelName} onClick={submitNew}>
+            <Button data-testid="model-add-submit" data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModelName} onClick={submitNew}>
               Add model
             </Button>
           </div>
@@ -133,31 +106,11 @@ export function ModelsSection({ providerId, models, reloading, onReload }: Model
                 <span className="text-body text-secondary">{m.inputTokenCost != null ? m.inputTokenCost.toFixed(4) : '—'}</span>
                 <span className="text-body text-secondary">{m.outputTokenCost != null ? m.outputTokenCost.toFixed(4) : '—'}</span>
                 <div className="flex items-center gap-1">
-                  <IconButton aria-label="Edit pricing" onClick={() => { setEditing(m); setEditPricing({ inputTokenCost: m.inputTokenCost?.toString() ?? '', outputTokenCost: m.outputTokenCost?.toString() ?? '' }); setShowNew(false); }}>
-                    <EditIcon size={13} />
-                  </IconButton>
                   <IconButton aria-label="Delete model" danger onClick={() => setToDelete(m)}>
                     <TrashIcon size={13} />
                   </IconButton>
                 </div>
               </div>
-              {editing?.id === m.id && (
-                <div className="px-4 py-3.5 bg-card border-t border-hairline flex flex-col gap-3">
-                  <div className="text-body-sm font-semibold text-secondary">Edit pricing for <span className="font-mono text-primary">{m.modelName}</span></div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <FormField label="Input / 1M (€)">
-                      <Input type="number" value={editPricing.inputTokenCost} onChange={e => setEditPricing(p => ({ ...p, inputTokenCost: e.target.value }))} placeholder="not set" />
-                    </FormField>
-                    <FormField label="Output / 1M (€)">
-                      <Input type="number" value={editPricing.outputTokenCost} onChange={e => setEditPricing(p => ({ ...p, outputTokenCost: e.target.value }))} placeholder="not set" />
-                    </FormField>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>Cancel</Button>
-                    <Button data-write variant="primary" size="sm" loading={updatePricing.isPending} onClick={() => submitPricing(m.id)}>Save</Button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>

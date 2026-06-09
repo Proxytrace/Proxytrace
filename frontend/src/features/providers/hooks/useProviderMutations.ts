@@ -3,7 +3,7 @@ import { providersApi } from '../../../api/providers';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type {
   CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
-  ModelProviderKind, UpdateModelEndpointPricingRequest,
+  ModelProviderKind,
 } from '../../../api/models';
 
 /** Creates a provider; invalidates the list. Caller selects the new provider via `mutate`'s onSuccess. */
@@ -53,16 +53,6 @@ export function useDeleteModel() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (endpointId: string) => providersApi.deleteModel(endpointId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
-  });
-}
-
-/** Updates per-token pricing on a model endpoint. */
-export function useUpdateModelPricing(providerId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (args: { endpointId: string; req: UpdateModelEndpointPricingRequest }) =>
-      providersApi.updateModelPricing(providerId, args.endpointId, args.req),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }

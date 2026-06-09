@@ -116,9 +116,6 @@ public class ModelProvidersController : ControllerBase
         CancellationToken cancellationToken)
     {
         IReadOnlyList<IModelEndpoint> existing = await endpointRepository.GetByProviderAsync(provider.Id, cancellationToken);
-        var existingNames = existing
-            .Select(e => e.Model.Name)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         IReadOnlyList<PricedModel> discovered;
         try
@@ -127,15 +124,27 @@ public class ModelProvidersController : ControllerBase
         }
         catch
         {
-            return; // fail-soft: provider stays usable, no endpoints added
+            return; // fail-soft: provider stays usable, no endpoints touched
         }
 
         foreach (PricedModel pm in discovered)
         {
-            if (existingNames.Contains(pm.Model.Name))
-                continue;
-            IModelEndpoint endpoint = createEndpoint(pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
-            await endpointRepository.AddAsync(endpoint, cancellationToken);
+            IModelEndpoint? existingEndpoint = existing.FirstOrDefault(
+                e => string.Equals(e.Model.Name, pm.Model.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (existingEndpoint is not null)
+            {
+                // Always refresh the price of an existing endpoint from the resolved value.
+                IModelEndpoint updated = updateEndpoint(
+                    existingEndpoint.Model, existingEndpoint.Provider,
+                    pm.Price.InputTokenCost, pm.Price.OutputTokenCost, existingEndpoint);
+                await endpointRepository.UpdateAsync(updated, cancellationToken);
+            }
+            else
+            {
+                IModelEndpoint endpoint = createEndpoint(pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
+                await endpointRepository.AddAsync(endpoint, cancellationToken);
+            }
         }
     }
 
