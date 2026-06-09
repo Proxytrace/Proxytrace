@@ -2,26 +2,27 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { useSelectedId } from '../../hooks/useSelectedId';
 import { AgentList } from './AgentList';
 import { AgentDetail } from './AgentDetail';
 import { useAgents, useDeleteAgent } from './hooks/useAgents';
 
 export default function Agents() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const preselect = searchParams.get('id');
+  // Selection lives in ?id= (survives refresh); ?tool= is a transient deep-link from a trace.
+  const [selectedId, setSelectedId] = useSelectedId();
+  const [searchParams] = useSearchParams();
   const highlightTool = searchParams.get('tool');
 
   const { allAgents, isLoading } = useAgents();
 
   const [showSystem, setShowSystem] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(preselect ?? null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const preselectIsSystem = preselect
-    ? allAgents.some(a => a.id === preselect && a.isSystemAgent)
+  const selectedIsSystem = selectedId
+    ? allAgents.some(a => a.id === selectedId && a.isSystemAgent)
     : false;
 
-  const agents = (showSystem || preselectIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent);
+  const agents = (showSystem || selectedIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent);
 
   const effectiveSelectedId = (selectedId && agents.some(a => a.id === selectedId))
     ? selectedId
@@ -29,13 +30,7 @@ export default function Agents() {
 
   const selected = agents.find(a => a.id === effectiveSelectedId) ?? null;
 
-  const handleSelect = (id: string) => {
-    setSelectedId(id);
-    const next = new URLSearchParams(searchParams);
-    next.set('id', id);
-    next.delete('tool');
-    setSearchParams(next, { replace: true });
-  };
+  const handleSelect = (id: string) => setSelectedId(id, ['tool']);
 
   const delAgent = useDeleteAgent(id => {
     const remaining = agents.filter(a => a.id !== id);

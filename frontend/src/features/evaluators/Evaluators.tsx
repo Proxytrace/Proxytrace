@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useCurrentProject from '../../hooks/useCurrentProject';
+import { useSelectedId } from '../../hooks/useSelectedId';
 import { EvaluatorKind, type EvaluatorDetailDto } from '../../api/models';
 import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { type RangeKey } from '../../lib/time-range';
@@ -23,7 +24,9 @@ import {
 
 export default function Evaluators() {
   const navigate = useNavigate();
-  const { id: routeId } = useParams<{ id: string }>();
+  // Selection lives in ?id= (survives refresh, shareable). The default (first
+  // evaluator) is derived below, not written to the URL.
+  const [selectedId, setSelectedId] = useSelectedId();
   const { currentProjectId } = useCurrentProject();
 
   const [range, setRange] = useState<RangeKey>('7d');
@@ -38,15 +41,12 @@ export default function Evaluators() {
   const { data: presets = [] } = useAgenticPresets();
   const { sparklineById, avgScoreById } = sparklines;
 
-  const selected = routeId ? evaluators.find(e => e.id === routeId) ?? null : null;
+  const effectiveId = (selectedId && evaluators.some(e => e.id === selectedId))
+    ? selectedId
+    : evaluators[0]?.id ?? null;
+  const selected = evaluators.find(e => e.id === effectiveId) ?? null;
   const editTarget = evaluators.find(e => e.id === editTargetId) ?? null;
   const deleteTarget = evaluators.find(e => e.id === deleteTargetId) ?? null;
-
-  useEffect(() => {
-    if (!routeId && evaluators.length > 0) {
-      navigate(`/evaluators/${evaluators[0].id}`, { replace: true });
-    }
-  }, [routeId, evaluators, navigate]);
 
   const attachedSuites = selected
     ? suites
@@ -64,7 +64,7 @@ export default function Evaluators() {
       { kind: pickedKind, projectId: currentProjectId, form: createForm },
       {
         onSuccess: e => {
-          navigate(`/evaluators/${e.id}`);
+          setSelectedId(e.id);
           setShowNew(false);
           setPickedKind(null);
           setCreateForm(initForm());
@@ -86,7 +86,7 @@ export default function Evaluators() {
     const targetId = deleteTargetId;
     deleteEval.mutate(targetId, {
       onSuccess: () => {
-        if (routeId === targetId) navigate('/evaluators');
+        if (selectedId === targetId) setSelectedId(null);
         setDeleteTargetId(null);
       },
     });
@@ -109,8 +109,8 @@ export default function Evaluators() {
         <EvalRail
           evaluators={evaluators}
           isLoading={isLoading}
-          selectedId={routeId ?? null}
-          onSelect={id => navigate(`/evaluators/${id}`)}
+          selectedId={effectiveId}
+          onSelect={id => setSelectedId(id)}
           onNew={openNew}
           sparklineById={sparklineById}
           avgScoreById={avgScoreById}

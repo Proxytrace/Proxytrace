@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { SparklesIcon } from '../../components/icons';
+import { useSelectedId } from '../../hooks/useSelectedId';
+import { agentColor } from '../../lib/colors';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { BoardStats } from './components/BoardStats';
 import { TheoryCard } from './components/TheoryCard';
@@ -25,10 +28,29 @@ export default function Proposals() {
   const setStatus = useSetProposalStatus();
   const resetTheory = useResetTheory();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // The open theory drawer is encoded in ?id= so it survives refresh and links.
+  const [selectedId, setSelectedId] = useSelectedId();
+  // Agent filter lives in ?agentId= — shareable, survives refresh, and is the deep-link
+  // target from agent/theory cards elsewhere in the app.
+  const [agentFilter, setAgentFilter] = useSelectedId('agentId');
 
-  const groups = groupByColumn(theories);
-  const stats = boardStats(theories);
+  const agentOptions = useMemo<FilterDropdownOption[]>(() => {
+    const byAgent = new Map<string, { name: string; count: number }>();
+    for (const t of theories) {
+      const existing = byAgent.get(t.agentId);
+      if (existing) existing.count += 1;
+      else byAgent.set(t.agentId, { name: t.agentName, count: 1 });
+    }
+    return [
+      { key: '', label: `All agents (${theories.length})` },
+      ...Array.from(byAgent, ([id, { name, count }]) => ({ key: id, label: `${name} (${count})`, accent: agentColor(id) })),
+    ];
+  }, [theories]);
+
+  const visibleTheories = agentFilter ? theories.filter(t => t.agentId === agentFilter) : theories;
+
+  const groups = groupByColumn(visibleTheories);
+  const stats = boardStats(visibleTheories);
 
   const selectedTheory = selectedId ? theories.find(t => t.id === selectedId) ?? null : null;
   const selectedProposal = selectedTheory?.resultingProposalId
@@ -52,6 +74,24 @@ export default function Proposals() {
         </div>
         <BoardStats stats={stats} />
       </div>
+
+      {/* Agent filter */}
+      {theories.length > 0 && (
+        <div className="fade-up flex items-center gap-3 shrink-0 [animation-delay:30ms]" data-testid="proposals-agent-filter">
+          <FilterDropdown
+            label="Agent"
+            value={agentFilter ?? ''}
+            options={agentOptions}
+            onChange={key => setAgentFilter(key || null)}
+            active={!!agentFilter}
+            accent={agentFilter ? agentColor(agentFilter) : undefined}
+            width={240}
+          />
+          <span className="text-body-sm text-muted">
+            {visibleTheories.length} theor{visibleTheories.length === 1 ? 'y' : 'ies'}
+          </span>
+        </div>
+      )}
 
       {/* Board */}
       {!isLoading && theories.length === 0 ? (

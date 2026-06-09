@@ -137,6 +137,7 @@ Acceptable effects already in the repo, for reference: `hooks/useElementWidth.ts
 - **Local UI state** (open/closed, hovered, active tab) → `useState` in the lowest component that needs it.
 - **Server state** → Query cache (§3).
 - **Cross-route / app state** (current project, toasts, auth, kiosk) → the existing Contexts (`contexts/ProjectContext`, `ToastContext`, `KioskContext`). Do not add a new global state library; React Context + Query covers this app's needs.
+- **Master/detail selection → the URL, via `hooks/useSelectedId.ts`.** Which agent/evaluator/theory/run/suite is selected lives in `?id=` (one shared hook, `{ replace: true }`), not `useState` — so it survives refresh, back/forward, and link sharing. Read the raw param and **derive** the effective default (first item) without writing that default to the URL. This is the standard for every master-detail view; don't reintroduce a path param (`/x/:id`) or per-view `useState` for selection.
 - **Derive, don't store.** If a value can be computed from existing state/props, compute it. Don't mirror it into another `useState`.
 
 ### 4.3 Forms

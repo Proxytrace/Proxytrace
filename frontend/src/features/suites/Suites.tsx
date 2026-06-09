@@ -10,6 +10,7 @@ import { StepWizard } from '../../components/overlays/StepWizard';
 import { Button } from '../../components/ui/Button';
 import { agentColor } from '../../lib/colors';
 import { useFilter } from '../../hooks/useFilter';
+import { useSelectedId } from '../../hooks/useSelectedId';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 import { RunConfirmModal } from './RunConfirmModal';
 import { EditSuiteDialog } from './EditSuiteDialog';
@@ -17,6 +18,7 @@ import { SuiteCard } from './components/SuiteCard';
 import { useSuites, useSuiteAgents, useSuiteEvaluators } from './hooks/useSuiteQueries';
 import { useStartRun, useDeleteSuite, useCreateSuite } from './hooks/useSuiteMutations';
 import { useSuiteFocus } from './hooks/useSuiteFocus';
+import { useScrollToSelectedSuite } from './hooks/useScrollToSelectedSuite';
 import { computeSuiteStats } from './suitesMeta';
 
 export default function Suites() {
@@ -39,6 +41,11 @@ export default function Suites() {
   const [searchParams] = useSearchParams();
   const initialAgentFilter = searchParams.get('agentId') ?? '';
   const highlightSuiteId = useSuiteFocus(!isLoading);
+
+  // Persisted selection: ?id= keeps the chosen suite highlighted across refresh / links,
+  // and is brought back on-screen on load.
+  const [selectedSuiteId, setSelectedSuiteId] = useSelectedId();
+  useScrollToSelectedSuite(selectedSuiteId, !isLoading);
 
   const startRun = useStartRun(() => setRunDone(true));
   const delSuite = useDeleteSuite(() => setDeleteSuite(null));
@@ -210,6 +217,8 @@ export default function Suites() {
             key={suite.id}
             suite={suite}
             highlight={highlightSuiteId === suite.id}
+            selected={selectedSuiteId === suite.id}
+            onSelect={() => setSelectedSuiteId(suite.id)}
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
             onEdit={() => setEditSuite(suite)}
             onDelete={() => setDeleteSuite(suite)}

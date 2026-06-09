@@ -3,13 +3,15 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 
 // Evaluators feature (/evaluators). The create flow is UI-driven:
 //   NewEvaluatorModal → KindPickerCard (evaluator-kind-${kind}) → EvaluatorForm → submit.
-// On a successful create the page navigates to /evaluators/${id}, so we read the new id
-// back from the URL. Data the UI can't easily set up (attached suites) is seeded via the API.
+// On a successful create the page selects the new evaluator via /evaluators?id=${id}, so we read
+// the new id back from the URL. The legacy /evaluators/${id} path form still works (it redirects
+// to the query form), so both shapes are accepted. Data the UI can't easily set up (attached
+// suites) is seeded via the API.
 //
 // NOTE: the API supports only four evaluator kinds — ExactMatch, NumericMatch, JsonSchemaMatch
 // and Agentic. There is no ToolUsage create path, so no ToolUsage test exists here.
 
-const EVALUATOR_ID_RE = /\/evaluators\/([0-9a-f-]{36})/i;
+const EVALUATOR_ID_RE = /\/evaluators(?:\/|\?id=)([0-9a-f-]{36})/i;
 
 /** Reads the evaluator id the page navigated to after a successful create. */
 async function evaluatorIdFromUrl(url: string): Promise<string> {

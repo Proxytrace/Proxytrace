@@ -4,8 +4,10 @@ import { fmtRelative, fmtDate } from '../../../lib/format';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EditIcon, TrashIcon, PlayFilledIcon } from '../../../components/icons';
 import { Button, IconButton } from '../../../components/ui/Button';
+import { RowButton } from '../../../components/ui/RowButton';
 import { sparklinePath } from '../../../lib/charts';
 import { passRateColor } from '../suitesMeta';
+import { FOCUS_RING } from '../../../lib/constants';
 import { cn } from '../../../lib/cn';
 
 interface Props {
@@ -13,10 +15,14 @@ interface Props {
   onRun: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onSelect: () => void;
+  /** Persistent URL-driven selection ring. */
+  selected?: boolean;
+  /** Transient deep-link focus flash. */
   highlight?: boolean;
 }
 
-export function SuiteCard({ suite, onRun, onEdit, onDelete, highlight = false }: Props) {
+export function SuiteCard({ suite, onRun, onEdit, onDelete, onSelect, selected = false, highlight = false }: Props) {
   const c = agentColor(suite.agentId);
   const hasRuns = suite.totalRuns > 0;
   const passColor = passRateColor(suite.passRate);
@@ -30,11 +36,21 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete, highlight = false }:
       data-testid={`suite-card-${suite.id}`}
       className={cn(
         'bg-card rounded-lg shadow-[var(--shadow-card)] flex flex-col overflow-hidden relative transition-shadow duration-[180ms] hover:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_4px_20px_rgba(0,0,0,0.45),0_0_0_1px_color-mix(in_srgb,var(--suite-accent)_25%,transparent)]',
-        highlight &&
+        (selected || highlight) &&
           'ring-1 ring-inset ring-[color-mix(in_srgb,var(--suite-accent)_55%,transparent)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--suite-accent)_18%,transparent),0_4px_20px_rgba(0,0,0,0.45)]',
       )}
       style={{ ['--suite-accent' as string]: c }}
     >
+      {/* Stretched select target: fills the card, sits under the action buttons (z-[2])
+          so they stay clickable while clicking anywhere else selects the suite. */}
+      <RowButton
+        onClick={onSelect}
+        aria-pressed={selected}
+        aria-label={`Select suite ${suite.name}`}
+        data-testid={`suite-select-${suite.id}`}
+        className={cn('absolute inset-0 z-[1] rounded-lg', FOCUS_RING)}
+      />
+
       {/* Accent bar — runtime colour */}
       <div
         className="h-[3px]"
@@ -66,7 +82,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete, highlight = false }:
             </span>
           </div>
 
-          <div className="flex gap-1 shrink-0">
+          <div className="relative z-[2] flex gap-1 shrink-0">
             <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onRun}>
               {hasRuns ? 'Run again' : 'Run now'}
             </Button>
@@ -184,7 +200,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete, highlight = false }:
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-2 border-t border-hairline text-[11px] text-muted">
+        <div className="relative z-[2] flex items-center justify-between pt-2 border-t border-hairline text-[11px] text-muted">
           <span>Created {fmtDate(suite.createdAt)}</span>
           <Button variant="link" className="text-[11.5px]" onClick={onEdit}>
             View cases ›
