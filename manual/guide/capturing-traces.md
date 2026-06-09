@@ -63,8 +63,13 @@ explicit From/To date-times — the same picker used on the Error Log. Drag-zoom
 simply sets a custom range, which the picker then shows. Use **Clear** (or the ✕) to return to
 all-time.
 
-When you first open Traces, the range automatically snaps to the smallest quick range that
-still contains data, so you never land on an empty view.
+When you **first** open Traces, the range automatically snaps to the smallest quick range that
+still contains data, so you never land on an empty view. After that, your filter bar — time
+range, agent, search, and the system-trace toggle — is **remembered in your browser**, so it
+survives a refresh or navigating away and back. The auto-snap only runs until you have a saved
+range; once you've picked one it is always restored. The agent filter is remembered **per
+project** (agents belong to a project), while the time range, search, and toggle are shared
+across projects.
 
 ### The trace detail panel
 

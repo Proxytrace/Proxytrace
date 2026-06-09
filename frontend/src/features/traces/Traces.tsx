@@ -8,6 +8,7 @@ import { ALL_TIME, resolveRange, nowMs, type TimeRange } from '../../lib/timeRan
 import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useTraceQueries';
 import { useTraceQueries } from './hooks/useTraceQueries';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
+import { useTraceFilters } from './hooks/useTraceFilters';
 import { useFocusTrace } from './hooks/useFocusTrace';
 import { useScrollToTrace } from './hooks/useScrollToTrace';
 import { useTraceSseStream } from './hooks/useTraceSseStream';
@@ -21,21 +22,20 @@ import useCurrentProject from '../../hooks/useCurrentProject';
 import { useDebounce } from '../../hooks/useDebounce';
 
 export default function Traces() {
+  const { currentProjectId } = useCurrentProject();
   const [page, setPage] = useState(1);
   const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('traces.pageSize', PAGE_SIZE);
   // Guard against a stale/garbage stored value — only accept a known option.
   const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
-  const [timeRange, setTimeRange] = useState<TimeRange>(ALL_TIME);
+  // Filter bar persists across refresh / navigation (agent filter is project-scoped).
+  const { timeRange, setTimeRange, search, setSearch, showSystem, setShowSystem, agentFilter, setAgentFilter, rangeWasRestored } =
+    useTraceFilters(currentProjectId);
   // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
   const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
-  const [agentFilter, setAgentFilter] = useState('');
-  const [search, setSearch] = useState('');
-  const [showSystem, setShowSystem] = useState(false);
   const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
-  const { currentProjectId } = useCurrentProject();
   const debouncedSearch = useDebounce(search, 200);
 
   // Single source of truth for the window: presets resolve to `from`..now, absolute ranges
@@ -48,8 +48,9 @@ export default function Traces() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- re-anchored to "now" only when the range changes
   const windowTo = useMemo(() => (to ? new Date(to).getTime() : nowMs()), [to, from]);
 
-  // On first load, auto-pick the smallest preset that still contains data.
-  useAutoDefaultRange(currentProjectId !== null, currentProjectId ?? undefined, setTimeRange);
+  // On first load, auto-pick the smallest preset that still contains data — but only when the
+  // user has no saved window, so a restored range is never clobbered.
+  useAutoDefaultRange(currentProjectId !== null && !rangeWasRestored, currentProjectId ?? undefined, setTimeRange);
 
   const { traces, total, isFetching, allAgents, agentBreakdown, p95 } = useTraceQueries({
     page,
@@ -96,7 +97,7 @@ export default function Traces() {
     setSearch('');
     setShowSystem(true);
     setPage(1);
-  }, []);
+  }, [setTimeRange, setAgentFilter, setSearch, setShowSystem]);
 
   useFocusTrace({
     onTrace: handleFocusTrace,

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { rangeFrom, type RangeKey } from '../../lib/time-range';
+import { rangeFrom, RANGE_KEYS, type RangeKey } from '../../lib/time-range';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import {
   computeLatencyStats,
   computeTokenVolume,
@@ -25,7 +26,10 @@ import { AgentsSection } from './components/AgentsSection';
 
 export default function Dashboard() {
   const qc = useQueryClient();
-  const [range, setRange] = useState<RangeKey>('24h');
+  // Range selector persists across refresh / navigation.
+  const [storedRange, setRange] = useLocalStorageState<RangeKey>('dashboard.range', '24h');
+  // Guard against a stale/garbage stored value — only accept a known key.
+  const range = RANGE_KEYS.includes(storedRange) ? storedRange : '24h';
   // Memoize so `from` is stable across renders; recomputing `new Date()` each
   // render would churn every queryKey below and cause an infinite refetch loop.
   const from = useMemo(() => rangeFrom(range), [range]);
