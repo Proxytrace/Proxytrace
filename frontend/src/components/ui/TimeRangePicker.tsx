@@ -88,7 +88,7 @@ export function TimeRangePicker({ value, onChange, testId = 'time-range' }: Time
       size="sm"
       leftIcon={<ClockIcon size={13} />}
       rightIcon={<ChevronDownIcon size={12} strokeWidth={2.5} className="text-muted" />}
-      className={cn('font-medium', active && 'text-primary border-accent/60')}
+      className={cn('h-9 font-medium', active && 'text-primary border-accent/60')}
       data-testid={`${testId}-trigger`}
     >
       {formatRangeLabel(value)}

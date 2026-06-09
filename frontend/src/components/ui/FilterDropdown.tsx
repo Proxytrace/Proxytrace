@@ -45,7 +45,7 @@ export function FilterDropdown({
         <button
           type="button"
           className={cn(
-            'group inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
+            'group inline-flex items-center gap-[6px] h-9 px-[10px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
             active
               ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
               : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',

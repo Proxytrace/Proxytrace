@@ -23,6 +23,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
   --color-accent-glow: var(--accent-glow);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-text: var(--accent-text);
 
   /* Semantic */
   --color-success: var(--success);
@@ -78,6 +80,10 @@
   /* Accent (amber/gold) */
   --accent-primary: #c9944a;
   --accent-hover: #deb073;
+  --accent-press: #b9843c;           /* solid-gold active/pressed */
+  --accent-ink: #241803;             /* text/icon ON gold fills (AA on accent) */
+  --accent-text: #e9c488;            /* gold text on dark — active chip / status */
+  --accent-border: rgba(201, 148, 74, 0.45); /* gold hairline — active chip / status */
   --accent-subtle: rgba(201, 148, 74, 0.12);
   --accent-glow: rgba(201, 148, 74, 0.22);
 
@@ -171,15 +177,20 @@ body::before {
 
 * { box-sizing: border-box; }
 
-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  color: inherit;
-}
+/* Bare-element resets live in @layer base so Tailwind utilities (@layer utilities)
+   override them — unlayered rules beat layered ones regardless of specificity,
+   which previously made `bg-accent`/`bg-danger` etc. silently transparent on <button>. */
+@layer base {
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: inherit;
+  }
 
-a { text-decoration: none; color: inherit; }
+  a { text-decoration: none; color: inherit; }
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 10px; height: 10px; }

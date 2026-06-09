@@ -24,13 +24,14 @@ export function TraceToolbar({
   onSearchChange, onTimeRangeChange, onAgentFilterChange, onShowSystemChange,
 }: Props) {
   return (
-    <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0 [animation-delay:80ms]">
+    <div className="fade-up relative z-20 flex items-center gap-2 flex-wrap shrink-0 [animation-delay:80ms]">
       <div className="flex-1 min-w-[260px] max-w-[420px]">
         <Input
           leftAddon={<SearchIcon size={13} />}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search by trace ID, content, or model…"
+          className="h-9"
         />
       </div>
 
@@ -57,7 +58,7 @@ export function TraceToolbar({
         onClick={() => onShowSystemChange(!showSystem)}
         title={showSystem ? 'Hide traces from system agents' : 'Show traces from system agents'}
         className={cn(
-          'inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+          'inline-flex items-center gap-2 h-9 px-3 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
           showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card',
         )}
         style={{
