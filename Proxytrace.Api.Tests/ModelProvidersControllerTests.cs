@@ -19,19 +19,6 @@ namespace Proxytrace.Api.Tests;
 [TestClass]
 public sealed class ModelProvidersControllerTests : BaseTest<Module>
 {
-    protected override void ConfigureContainer(ContainerBuilder builder)
-    {
-        base.ConfigureContainer(builder);
-        // Stub IPricingService for all tests; individual tests override with RegisterInstance when
-        // they need to assert on calls or control returned prices.
-        builder.RegisterStub<IPricingService>(stub =>
-            stub.ResolveAsync(
-                    Arg.Any<IModelProvider>(),
-                    Arg.Any<DiscoveredModel>(),
-                    Arg.Any<CancellationToken>())
-                .Returns(Task.FromResult(ModelPrice.Unknown)));
-    }
-
     [TestMethod]
     public async Task Create_PersistsProvider()
     {
@@ -212,22 +199,11 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     public async Task Create_DiscoveredModel_CreatesEndpointWithPrices()
     {
         var providerClient = Substitute.For<IProviderClient>();
-        providerClient.DiscoverModelsAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<DiscoveredModel>>(
-                [new DiscoveredModel("gpt-4o", "gpt-4o")]));
-
-        var pricingService = Substitute.For<IPricingService>();
-        pricingService.ResolveAsync(
-                Arg.Any<IModelProvider>(),
-                Arg.Any<DiscoveredModel>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new ModelPrice(2.5m, 10.0m)));
-
         IServiceProvider services = GetServices(builder =>
-        {
-            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient);
-            builder.RegisterInstance(pricingService).As<IPricingService>();
-        });
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var model = await services.GetRequiredService<IModelRepository>().GetOrCreateAsync("gpt-4o", CancellationToken);
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([new PricedModel(model, new ModelPrice(2.5m, 10.0m))]));
 
         var controller = ResolveController(services);
 
@@ -247,22 +223,11 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     public async Task Reload_NoDuplicates_WhenModelAlreadyExists()
     {
         var providerClient = Substitute.For<IProviderClient>();
-        providerClient.DiscoverModelsAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<DiscoveredModel>>(
-                [new DiscoveredModel("gpt-4o", "gpt-4o")]));
-
-        var pricingService = Substitute.For<IPricingService>();
-        pricingService.ResolveAsync(
-                Arg.Any<IModelProvider>(),
-                Arg.Any<DiscoveredModel>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(new ModelPrice(2.5m, 10.0m)));
-
         IServiceProvider services = GetServices(builder =>
-        {
-            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient);
-            builder.RegisterInstance(pricingService).As<IPricingService>();
-        });
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var model = await services.GetRequiredService<IModelRepository>().GetOrCreateAsync("gpt-4o", CancellationToken);
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([new PricedModel(model, new ModelPrice(2.5m, 10.0m))]));
 
         var controller = ResolveController(services);
 
@@ -286,25 +251,14 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Reload_ResolvesPriceForEachDiscoveredModel()
+    public async Task Reload_CreatesEndpointsFromClientModelsWithResolvedPrices()
     {
         var providerClient = Substitute.For<IProviderClient>();
-        providerClient.DiscoverModelsAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<DiscoveredModel>>(
-                [new DiscoveredModel("gpt-4o", "gpt-4o")]));
-
-        var pricingService = Substitute.For<IPricingService>();
-        pricingService.ResolveAsync(
-                Arg.Any<IModelProvider>(),
-                Arg.Any<DiscoveredModel>(),
-                Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(ModelPrice.Unknown));
-
         IServiceProvider services = GetServices(builder =>
-        {
-            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient);
-            builder.RegisterInstance(pricingService).As<IPricingService>();
-        });
+            builder.RegisterInstance<IProviderClient.Factory>(_ => providerClient));
+        var model = await services.GetRequiredService<IModelRepository>().GetOrCreateAsync("gpt-4o", CancellationToken);
+        providerClient.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([new PricedModel(model, new ModelPrice(1.0m, 2.0m))]));
 
         var controller = ResolveController(services);
 
@@ -312,10 +266,12 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
 
         await controller.Reload(provider.Id, CancellationToken);
 
-        await pricingService.Received(1).ResolveAsync(
-            Arg.Any<IModelProvider>(),
-            Arg.Is<DiscoveredModel>(m => m.PricingModelName == "gpt-4o"),
-            Arg.Any<CancellationToken>());
+        var endpointRepo = services.GetRequiredService<IModelEndpointRepository>();
+        var endpoints = await endpointRepo.GetByProviderAsync(provider.Id, CancellationToken);
+        var endpoint = endpoints.Should().ContainSingle().Subject;
+        endpoint.Model.Name.Should().Be("gpt-4o");
+        endpoint.InputTokenCost.Should().Be(1.0m);
+        endpoint.OutputTokenCost.Should().Be(2.0m);
     }
 
     [TestMethod]
@@ -340,6 +296,5 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelRepository>(),
         services.GetRequiredService<IModelEndpoint.CreateNew>(),
         services.GetRequiredService<IModelEndpoint.CreateExisting>(),
-        services.GetRequiredService<ModelProviderDtoMapper>(),
-        services.GetRequiredService<IPricingService>());
+        services.GetRequiredService<ModelProviderDtoMapper>());
 }

@@ -15,15 +15,18 @@ internal sealed class ProviderClient : IProviderClient
     private readonly IModelProvider provider;
     private readonly IModelRepository modelRepository;
     private readonly HttpClient http;
+    private readonly IPricingService pricingService;
 
     public ProviderClient(
         IModelProvider provider,
         IModelRepository modelRepository,
-        HttpClient http)
+        HttpClient http,
+        IPricingService pricingService)
     {
         this.provider = provider;
         this.modelRepository = modelRepository;
         this.http = http;
+        this.pricingService = pricingService;
     }
 
     public async Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default)
@@ -39,33 +42,23 @@ internal sealed class ProviderClient : IProviderClient
         }
     }
 
-    public async Task<IReadOnlyList<IModel>> GetModelsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PricedModel>> GetModelsAsync(CancellationToken cancellationToken = default)
     {
         EnsureSupportedKind();
 
-        IEnumerable<string> modelNames;
-        if (ProviderEndpoints.IsAzure(provider.Endpoint))
-        {
-            IReadOnlyList<DiscoveredModel> deployments = await GetAzureDeploymentsAsync(cancellationToken);
-            modelNames = deployments.Count > 0
-                ? deployments.Select(d => d.Name).ToArray()
-                : await GetOpenAiModelNamesAsync(cancellationToken);
-        }
-        else
-        {
-            modelNames = await GetOpenAiModelNamesAsync(cancellationToken);
-        }
+        IReadOnlyList<DiscoveredModel> discovered = await DiscoverAsync(cancellationToken);
 
-        var models = new List<IModel>();
-        foreach (var name in modelNames)
+        var result = new List<PricedModel>(discovered.Count);
+        foreach (DiscoveredModel dm in discovered)
         {
-            IModel model = await modelRepository.GetOrCreateAsync(name, cancellationToken);
-            models.Add(model);
+            ModelPrice price = await pricingService.ResolveAsync(provider, dm, cancellationToken);
+            IModel model = await modelRepository.GetOrCreateAsync(dm.Name, cancellationToken);
+            result.Add(new PricedModel(model, price));
         }
-        return models;
+        return result;
     }
 
-    public async Task<IReadOnlyList<DiscoveredModel>> DiscoverModelsAsync(CancellationToken cancellationToken = default)
+    private async Task<IReadOnlyList<DiscoveredModel>> DiscoverAsync(CancellationToken cancellationToken)
     {
         if (ProviderEndpoints.IsAzure(provider.Endpoint))
         {

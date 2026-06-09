@@ -29,7 +29,6 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IModelEndpoint.CreateExisting updateEndpoint;
     private readonly ModelProviderDtoMapper mapper;
-    private readonly IPricingService pricingService;
 
     public ModelProvidersController(
         IRepository<IModelProvider> providerRepository,
@@ -42,8 +41,7 @@ public class ModelProvidersController : ControllerBase
         IModelRepository modelRepository,
         IModelEndpoint.CreateNew createEndpoint,
         IModelEndpoint.CreateExisting updateEndpoint,
-        ModelProviderDtoMapper mapper,
-        IPricingService pricingService)
+        ModelProviderDtoMapper mapper)
     {
         this.providerRepository = providerRepository;
         this.apiKeyRepository = apiKeyRepository;
@@ -56,7 +54,6 @@ public class ModelProvidersController : ControllerBase
         this.createEndpoint = createEndpoint;
         this.updateEndpoint = updateEndpoint;
         this.mapper = mapper;
-        this.pricingService = pricingService;
     }
 
     [HttpGet]
@@ -118,29 +115,26 @@ public class ModelProvidersController : ControllerBase
         IModelProvider provider,
         CancellationToken cancellationToken)
     {
-        IReadOnlyList<IModelEndpoint> existing = await endpointRepository.GetAllAsync(cancellationToken);
+        IReadOnlyList<IModelEndpoint> existing = await endpointRepository.GetByProviderAsync(provider.Id, cancellationToken);
         var existingNames = existing
-            .Where(e => e.Provider.Id == provider.Id)
             .Select(e => e.Model.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        IReadOnlyList<DiscoveredModel> discovered;
+        IReadOnlyList<PricedModel> discovered;
         try
         {
-            discovered = await provider.CreateClient().DiscoverModelsAsync(cancellationToken);
+            discovered = await provider.CreateClient().GetModelsAsync(cancellationToken);
         }
         catch
         {
             return; // fail-soft: provider stays usable, no endpoints added
         }
 
-        foreach (DiscoveredModel dm in discovered)
+        foreach (PricedModel pm in discovered)
         {
-            if (existingNames.Contains(dm.Name))
+            if (existingNames.Contains(pm.Model.Name))
                 continue;
-            ModelPrice price = await pricingService.ResolveAsync(provider, dm, cancellationToken);
-            IModel model = await modelRepository.GetOrCreateAsync(dm.Name, cancellationToken);
-            IModelEndpoint endpoint = createEndpoint(model, provider, price.InputTokenCost, price.OutputTokenCost);
+            IModelEndpoint endpoint = createEndpoint(pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
             await endpointRepository.AddAsync(endpoint, cancellationToken);
         }
     }
@@ -188,16 +182,16 @@ public class ModelProvidersController : ControllerBase
 
         await PopulateModelsAsync(provider, cancellationToken);
 
-        var all = await endpointRepository.GetAllAsync(cancellationToken);
-        return all.Where(e => e.Provider.Id == providerId).Select(mapper.ToEndpointDto).ToArray();
+        var endpoints = await endpointRepository.GetByProviderAsync(providerId, cancellationToken);
+        return endpoints.Select(mapper.ToEndpointDto).ToArray();
     }
 
     [HttpGet("{providerId:guid}/available-models")]
     public async Task<ActionResult<IReadOnlyList<string>>> GetAvailableModels(Guid providerId, CancellationToken cancellationToken)
     {
         var provider = await providerRepository.GetAsync(providerId, cancellationToken);
-        var discovered = await provider.CreateClient().DiscoverModelsAsync(cancellationToken);
-        return discovered.Select(d => d.Name).OrderBy(n => n).ToArray();
+        var discovered = await provider.CreateClient().GetModelsAsync(cancellationToken);
+        return discovered.Select(m => m.Model.Name).OrderBy(n => n).ToArray();
     }
 
     [HttpGet("{providerId:guid}/models")]
@@ -205,8 +199,8 @@ public class ModelProvidersController : ControllerBase
     {
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
             return NotFound("Provider not found.");
-        var all = await endpointRepository.GetAllAsync(cancellationToken);
-        return all.Where(e => e.Provider.Id == providerId).Select(mapper.ToEndpointDto).ToArray();
+        var endpoints = await endpointRepository.GetByProviderAsync(providerId, cancellationToken);
+        return endpoints.Select(mapper.ToEndpointDto).ToArray();
     }
 
     [HttpPost("{providerId:guid}/models")]
@@ -219,8 +213,8 @@ public class ModelProvidersController : ControllerBase
         if (provider is null)
             return NotFound("Provider not found.");
 
-        var all = await endpointRepository.GetAllAsync(cancellationToken);
-        if (all.Any(e => e.Provider.Id == providerId && e.Model.Name == request.ModelName))
+        var providerEndpoints = await endpointRepository.GetByProviderAsync(providerId, cancellationToken);
+        if (providerEndpoints.Any(e => e.Model.Name == request.ModelName))
             return Conflict(new { error = $"A model endpoint for '{request.ModelName}' already exists for this provider." });
 
         var allModels = await modelRepository.GetAllAsync(cancellationToken);

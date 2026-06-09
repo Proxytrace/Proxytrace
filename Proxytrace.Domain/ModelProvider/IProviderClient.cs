@@ -1,5 +1,3 @@
-using Proxytrace.Domain.Model;
-
 namespace Proxytrace.Domain.ModelProvider;
 
 public interface IProviderClient
@@ -8,7 +6,9 @@ public interface IProviderClient
 
     Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<IModel>> GetModelsAsync(CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<DiscoveredModel>> DiscoverModelsAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Discovers the provider's models and resolves each one's price. For Azure providers only the
+    /// deployed models are returned (never the full upstream model list).
+    /// </summary>
+    Task<IReadOnlyList<PricedModel>> GetModelsAsync(CancellationToken cancellationToken = default);
 }

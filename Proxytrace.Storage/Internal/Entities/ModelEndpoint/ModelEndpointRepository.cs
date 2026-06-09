@@ -54,4 +54,21 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         var endpoint = createNewEndpoint(modelEntity, provider, null, null);
         return await AddAsync(endpoint, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<IModelEndpoint>> GetByProviderAsync(
+        Guid providerId,
+        CancellationToken cancellationToken = default)
+    {
+        var entities = await contextFactory().Set<ModelEndpointEntity>()
+            .AsNoTracking()
+            .Where(e => e.Provider == providerId)
+            .ToListAsync(cancellationToken);
+
+        var result = new List<IModelEndpoint>(entities.Count);
+        foreach (var entity in entities)
+        {
+            result.Add(await mapper.Map(entity, cancellationToken));
+        }
+        return result;
+    }
 }
