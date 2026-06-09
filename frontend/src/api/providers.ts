@@ -1,6 +1,6 @@
 import { api } from './client';
 import type {
-  ApiKeyDto, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
+  ApiKeyDto, CreateApiKeyRequest, CreateProviderRequest,
   ModelEndpointDto, ModelProviderKind,
   ProviderDto, ProvidersOverviewDto,
 } from './models';
@@ -15,9 +15,6 @@ export const providersApi = {
   delete: (id: string) => api.del(`/api/providers/${id}`),
 
   getAllModels: () => api.get<ModelEndpointDto[]>('/api/model-endpoints'),
-  getAvailableModels: (providerId: string) => api.get<string[]>(`/api/providers/${providerId}/available-models`),
-  createModel: (providerId: string, req: CreateModelEndpointRequest) =>
-    api.post<ModelEndpointDto>(`/api/providers/${providerId}/models`, req),
   deleteModel: (endpointId: string) =>
     api.del(`/api/providers/endpoints/${endpointId}`),
   reload: (providerId: string) =>

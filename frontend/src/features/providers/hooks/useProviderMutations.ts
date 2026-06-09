@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type {
-  CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
+  CreateApiKeyRequest, CreateProviderRequest,
   ModelProviderKind,
 } from '../../../api/models';
 
@@ -35,15 +35,6 @@ export function useDeleteProvider() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (providerId: string) => providersApi.delete(providerId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
-  });
-}
-
-/** Adds a model endpoint to a provider. */
-export function useCreateModel(providerId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (req: CreateModelEndpointRequest) => providersApi.createModel(providerId, req),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }

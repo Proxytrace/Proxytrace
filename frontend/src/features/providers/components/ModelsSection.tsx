@@ -3,12 +3,8 @@ import type { ModelEndpointDto } from '../../../api/models';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { FormField } from '../../../components/ui/FormField';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { PlusIcon, TrashIcon } from '../../../components/icons';
-import { useAvailableModels } from '../hooks/useProviderQueries';
-import { useCreateModel, useDeleteModel } from '../hooks/useProviderMutations';
+import { TrashIcon } from '../../../components/icons';
+import { useDeleteModel } from '../hooks/useProviderMutations';
 
 const GRID = 'grid grid-cols-[2fr_1fr_1fr_auto]';
 
@@ -19,80 +15,24 @@ interface ModelsSectionProps {
   onReload: () => void;
 }
 
-export function ModelsSection({ providerId, models, reloading, onReload }: ModelsSectionProps) {
-  const [showNew, setShowNew] = useState(false);
-  const [newModelName, setNewModelName] = useState('');
+export function ModelsSection({ models, reloading, onReload }: ModelsSectionProps) {
   const [toDelete, setToDelete] = useState<ModelEndpointDto | null>(null);
-
-  const { data: availableModels, isLoading: availableLoading, error: availableError } = useAvailableModels(providerId, showNew);
-  const existingNames = new Set(models.map(m => m.modelName));
-  const selectable = (availableModels ?? []).filter(n => !existingNames.has(n));
-
-  const createModel = useCreateModel(providerId);
   const deleteModel = useDeleteModel();
-
-  function submitNew() {
-    createModel.mutate(
-      { modelName: newModelName, inputTokenCost: null, outputTokenCost: null },
-      { onSuccess: () => { setShowNew(false); setNewModelName(''); } },
-    );
-  }
 
   return (
     <>
       <div className="flex items-center justify-between">
         <div>
           <div className="text-h2 font-semibold text-primary mb-0.5">Models</div>
-          <div className="text-body-sm text-muted">Prices load automatically; reload to refresh them.</div>
+          <div className="text-body-sm text-muted">Pulled from the provider; prices load automatically.</div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button data-testid="model-reload-btn" variant="ghost" size="sm" loading={reloading} onClick={() => onReload()}>
-            Reload models &amp; prices
-          </Button>
-          <Button
-            data-testid="model-add-btn"
-            variant="secondary"
-            size="sm"
-            leftIcon={<PlusIcon size={13} />}
-            onClick={() => { setShowNew(true); setNewModelName(''); }}
-          >
-            Add model
-          </Button>
-        </div>
+        <Button data-testid="model-reload-btn" variant="ghost" size="sm" loading={reloading} onClick={() => onReload()}>
+          Reload models &amp; prices
+        </Button>
       </div>
 
-      {showNew && (
-        <div className="p-4 bg-card-2 rounded-lg border border-hairline flex flex-col gap-3">
-          <div className="text-title font-semibold text-primary">Add model</div>
-          <FormField label="Model">
-            {availableLoading ? (
-              <div className="text-body text-muted py-2">Discovering available models…</div>
-            ) : availableError ? (
-              <div className="flex flex-col gap-1.5">
-                <div className="text-body text-danger">Could not discover models from endpoint. Enter manually:</div>
-                <Input data-testid="model-name-input" value={newModelName} onChange={e => setNewModelName(e.target.value)} placeholder="e.g. claude-sonnet-4-5" className="font-mono" />
-              </div>
-            ) : selectable.length === 0 ? (
-              <div className="text-body text-muted py-2">All discovered models are already added.</div>
-            ) : (
-              <Select data-testid="model-name-select" value={newModelName} onChange={e => setNewModelName(e.target.value)} className="font-mono">
-                <option value="">Select a model…</option>
-                {selectable.map(name => <option key={name} value={name}>{name}</option>)}
-              </Select>
-            )}
-          </FormField>
-          <div className="text-body-sm text-muted">Pricing is fetched automatically — use “Reload models &amp; prices” after adding.</div>
-          <div className="flex gap-2 justify-end">
-            <Button variant="ghost" size="sm" onClick={() => setShowNew(false)}>Cancel</Button>
-            <Button data-testid="model-add-submit" data-write variant="primary" size="sm" loading={createModel.isPending} disabled={!newModelName} onClick={submitNew}>
-              Add model
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {models.length === 0 && !showNew && (
-        <EmptyState title="No models yet" description="Add one or let Proxytrace auto-discover them from traces." />
+      {models.length === 0 && (
+        <EmptyState title="No models yet" description="Reload to pull this provider's models, or let Proxytrace auto-discover them from traces." />
       )}
       {models.length > 0 && (
         <div className="bg-card-2 rounded-lg border border-hairline overflow-hidden">

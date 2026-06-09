@@ -27,8 +27,9 @@ manual price entry.
 
 The upstream **endpoint** is shown in the provider header only when it differs from the
 provider kind's default (for example, the canonical `https://api.openai.com/v1` and
-`https://api.anthropic.com/v1` are hidden; a custom or self-hosted endpoint is shown). You can
-add a model by hand; its price is filled on the next reload.
+`https://api.anthropic.com/v1` are hidden; a custom or self-hosted endpoint is shown). The model
+list is **pulled from the provider** — there is no manual "add model" control; use reload (or wait
+for the periodic refresh) to pick up newly deployed models.
 
 ### Azure OpenAI
 

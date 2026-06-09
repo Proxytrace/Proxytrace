@@ -14,24 +14,6 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 const ADMIN_EMAIL = 'admin@e2e.test';
 const ADMIN_PASSWORD = 'E2ePassword1!';
 
-// Polls the providers overview until the named model exists under the provider, returning its id.
-async function pollModelId(api: ProxytraceApiClient, providerId: string, modelName: string): Promise<string> {
-  let modelId: string | null = null;
-  await expect
-    .poll(
-      async () => {
-        const overview = await api.getProvidersOverview();
-        const provider = overview.providers.find((p) => p.provider.id === providerId);
-        modelId = provider?.models.find((m) => m.modelName === modelName)?.id ?? null;
-        return modelId;
-      },
-      { timeout: 10_000, message: 'model did not appear in overview' },
-    )
-    .not.toBeNull();
-  if (modelId === null) throw new Error('model id not resolved');
-  return modelId;
-}
-
 // Reads back the id of a named API key under a provider from the overview, asserting it exists.
 async function findKeyId(api: ProxytraceApiClient, providerId: string, keyName: string): Promise<string> {
   const overview = await api.getProvidersOverview();
@@ -102,7 +84,10 @@ test.describe('Providers page', () => {
     await expect(page.getByTestId(`model-row-${model.id}`)).toBeVisible();
   });
 
-  test('adds a model under a provider and lists it in the Models section', async ({ page }) => {
+  test('lists a provider\'s models in the Models section', async ({ page }) => {
+    // Models are pulled from the provider (discovery / reload / background refresh); there is no
+    // manual "add model" control in the UI. Seed a model via the API and verify the read-only
+    // Models list renders it.
     const name = `E2E Model Provider ${Date.now()}`;
     const { id } = await api.createProvider({
       name,
@@ -111,33 +96,13 @@ test.describe('Providers page', () => {
       kind: 'OpenAi',
     });
     const modelName = `e2e-model-${Date.now()}`;
+    const model = await api.addModelToProvider(id, modelName);
 
     await page.goto('/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
-    // The Models section is always rendered (no tabs); the add control is reachable directly.
-    await page.getByTestId('model-add-btn').click();
-
-    // Model discovery hits the upstream endpoint, which is a fake unreachable host here. When
-    // discovery fails the form exposes a manual text input; when it succeeds (or returns empty)
-    // the manual input is absent, so we fall back to adding the model via the API and verify the
-    // list still renders it. Either path exercises the ModelsTab list rendering.
-    const manualInput = page.getByTestId('model-name-input');
-    let modelId: string;
-    if (await manualInput.isVisible({ timeout: 10_000 }).catch(() => false)) {
-      await manualInput.fill(modelName);
-      await page.getByTestId('model-add-submit').click();
-      // The submit mutation persists the model; poll the API until it appears, then read its id.
-      modelId = await pollModelId(api, id, modelName);
-    } else {
-      const model = await api.addModelToProvider(id, modelName);
-      modelId = model.id;
-      await page.reload({ waitUntil: 'load' });
-      await page.getByTestId(`provider-row-${id}`).click();
-    }
-
-    await expect(page.getByTestId(`model-row-${modelId}`)).toBeVisible();
+    await expect(page.getByTestId(`model-row-${model.id}`)).toBeVisible();
     await expect(page.getByText(modelName)).toBeVisible();
   });
 
