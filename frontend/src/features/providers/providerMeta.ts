@@ -44,9 +44,3 @@ export function isAzureEndpoint(endpoint: string): boolean {
     return endpoint.toLowerCase().includes('azure.com');
   }
 }
-
-export const AZURE_DEPLOYMENT_TYPE_OPTIONS = [
-  { value: 'GlobalStandard', label: 'Global Standard' },
-  { value: 'DataZoneStandard', label: 'Data Zone Standard' },
-  { value: 'Standard', label: 'Standard (Regional)' },
-] as const;

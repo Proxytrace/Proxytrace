@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
 import { QUERY_KEYS } from '../../../api/query-keys';
-import { AzureDeploymentType } from '../../../api/models';
 import type {
   CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
   ModelProviderKind, UpdateModelEndpointPricingRequest,
@@ -90,7 +89,7 @@ export function useDeleteKey(providerId: string) {
 export function useReloadProvider(providerId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (deploymentType: AzureDeploymentType) => providersApi.reload(providerId, deploymentType),
+    mutationFn: () => providersApi.reload(providerId),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }

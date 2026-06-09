@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { ModelEndpointDto } from '../../../api/models';
-import { AzureDeploymentType } from '../../../api/models';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -8,7 +7,6 @@ import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { EditIcon, PlusIcon, TrashIcon } from '../../../components/icons';
-import { AZURE_DEPLOYMENT_TYPE_OPTIONS } from '../providerMeta';
 import { useAvailableModels } from '../hooks/useProviderQueries';
 import { useCreateModel, useDeleteModel, useUpdateModelPricing } from '../hooks/useProviderMutations';
 
@@ -17,13 +15,11 @@ const GRID = 'grid grid-cols-[2fr_1fr_1fr_auto]';
 interface ModelsSectionProps {
   providerId: string;
   models: ModelEndpointDto[];
-  isAzure: boolean;
   reloading: boolean;
-  onReload: (t: AzureDeploymentType) => void;
+  onReload: () => void;
 }
 
-export function ModelsSection({ providerId, models, isAzure, reloading, onReload }: ModelsSectionProps) {
-  const [reloadType, setReloadType] = useState<AzureDeploymentType>(AzureDeploymentType.GlobalStandard);
+export function ModelsSection({ providerId, models, reloading, onReload }: ModelsSectionProps) {
   const [showNew, setShowNew] = useState(false);
   const [newModel, setNewModel] = useState({ modelName: '', inputTokenCost: '', outputTokenCost: '' });
   const [editing, setEditing] = useState<ModelEndpointDto | null>(null);
@@ -70,14 +66,7 @@ export function ModelsSection({ providerId, models, isAzure, reloading, onReload
           <div className="text-body-sm text-muted">Set pricing to compute trace costs.</div>
         </div>
         <div className="flex items-center gap-2">
-          {isAzure && (
-            <div className="w-44">
-              <Select inputSize="sm" value={reloadType} onChange={e => setReloadType(e.target.value as AzureDeploymentType)}>
-                {AZURE_DEPLOYMENT_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </Select>
-            </div>
-          )}
-          <Button data-testid="model-reload-btn" variant="ghost" size="sm" loading={reloading} onClick={() => onReload(reloadType)}>
+          <Button data-testid="model-reload-btn" variant="ghost" size="sm" loading={reloading} onClick={() => onReload()}>
             Reload models &amp; prices
           </Button>
           <Button

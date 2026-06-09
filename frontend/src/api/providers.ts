@@ -1,6 +1,6 @@
 import { api } from './client';
 import type {
-  ApiKeyDto, AzureDeploymentType, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
+  ApiKeyDto, CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
   ModelEndpointDto, ModelProviderKind,
   ProviderDto, ProvidersOverviewDto, UpdateModelEndpointPricingRequest,
 } from './models';
@@ -22,8 +22,8 @@ export const providersApi = {
     api.put<ModelEndpointDto>(`/api/providers/${providerId}/models/${endpointId}`, req),
   deleteModel: (endpointId: string) =>
     api.del(`/api/providers/endpoints/${endpointId}`),
-  reload: (providerId: string, deploymentType: AzureDeploymentType) =>
-    api.post<ModelEndpointDto[]>(`/api/providers/${providerId}/reload?deploymentType=${deploymentType}`, {}),
+  reload: (providerId: string) =>
+    api.post<ModelEndpointDto[]>(`/api/providers/${providerId}/reload`, {}),
 
   createKey: (providerId: string, req: CreateApiKeyRequest) =>
     api.post<ApiKeyDto>(`/api/providers/${providerId}/keys`, req),

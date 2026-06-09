@@ -30,9 +30,10 @@ always add a model by hand or edit any model's price manually.
 ### Azure OpenAI
 
 A provider whose endpoint host contains `azure.com` is treated as **Azure OpenAI**. For Azure
-providers, discovery loads only the models you have actually **deployed**, and a
-**deployment-type selector** — **Global Standard**, **Data Zone Standard**, or **Standard** —
-controls which Azure price tier is fetched on reload.
+providers, discovery loads only the models you have actually **deployed**. Prices are fetched for
+the **Global Standard** tier, because the deployment tier cannot be read with an api-key (it lives
+on the Azure management plane). If your deployments use a different tier (Data Zone or Regional),
+override the affected model's price manually.
 
 ### Where prices come from
 

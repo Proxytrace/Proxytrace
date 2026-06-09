@@ -1,9 +1,8 @@
-import type { ApiKeyDto, AzureDeploymentType, ModelEndpointDto, ProjectDto, ProviderDto } from '../../../api/models';
+import type { ApiKeyDto, ModelEndpointDto, ProjectDto, ProviderDto } from '../../../api/models';
 import { Card } from '../../../components/ui/Card';
 import { ProviderDetailHeader } from './ProviderDetailHeader';
 import { ModelsSection } from './ModelsSection';
 import { KeysSection } from './KeysSection';
-import { isAzureEndpoint } from '../providerMeta';
 import { useReloadProvider } from '../hooks/useProviderMutations';
 
 interface ProviderDetailProps {
@@ -24,9 +23,8 @@ export function ProviderDetail({ provider, models, keys, projects, defaultProjec
         <ModelsSection
           providerId={provider.id}
           models={models}
-          isAzure={isAzureEndpoint(provider.endpoint)}
           reloading={reload.isPending}
-          onReload={(t: AzureDeploymentType) => reload.mutate(t)}
+          onReload={() => reload.mutate()}
         />
         <KeysSection providerId={provider.id} keys={keys} projects={projects} defaultProjectId={defaultProjectId} />
       </div>
