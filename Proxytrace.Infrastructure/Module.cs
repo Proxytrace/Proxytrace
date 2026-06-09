@@ -21,7 +21,8 @@ public class Module : Autofac.Module
             .AsSelf();
 
         builder.RegisterType<ProviderClient>()
-            .As<IProviderClient>();
+            .As<IProviderClient>()
+            .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"));
 
         builder.Register(c =>
             {

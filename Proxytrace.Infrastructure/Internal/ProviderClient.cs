@@ -14,13 +14,16 @@ internal sealed class ProviderClient : IProviderClient
 
     private readonly IModelProvider provider;
     private readonly IModelRepository modelRepository;
+    private readonly HttpClient http;
 
     public ProviderClient(
         IModelProvider provider,
-        IModelRepository modelRepository)
+        IModelRepository modelRepository,
+        HttpClient http)
     {
         this.provider = provider;
         this.modelRepository = modelRepository;
+        this.http = http;
     }
 
     public async Task<bool> VerifyConnectionAsync(CancellationToken cancellationToken = default)
@@ -40,10 +43,18 @@ internal sealed class ProviderClient : IProviderClient
     {
         EnsureSupportedKind();
 
-        IReadOnlyList<string>? deploymentIds = await TryGetAzureDeploymentNamesAsync(cancellationToken);
-        IEnumerable<string> modelNames = deploymentIds is { Count: > 0 }
-            ? deploymentIds
-            : await GetOpenAiModelNamesAsync(cancellationToken);
+        IEnumerable<string> modelNames;
+        if (ProviderEndpoints.IsAzure(provider.Endpoint))
+        {
+            IReadOnlyList<DiscoveredModel> deployments = await GetAzureDeploymentsAsync(cancellationToken);
+            modelNames = deployments.Count > 0
+                ? deployments.Select(d => d.Name).ToArray()
+                : await GetOpenAiModelNamesAsync(cancellationToken);
+        }
+        else
+        {
+            modelNames = await GetOpenAiModelNamesAsync(cancellationToken);
+        }
 
         var models = new List<IModel>();
         foreach (var name in modelNames)
@@ -52,6 +63,61 @@ internal sealed class ProviderClient : IProviderClient
             models.Add(model);
         }
         return models;
+    }
+
+    public async Task<IReadOnlyList<DiscoveredModel>> DiscoverModelsAsync(CancellationToken cancellationToken = default)
+    {
+        if (ProviderEndpoints.IsAzure(provider.Endpoint))
+        {
+            // Azure: deployed models only; never fall back to the (far too large) /models list.
+            return await GetAzureDeploymentsAsync(cancellationToken);
+        }
+
+        IReadOnlyList<string> names = await GetOpenAiModelNamesAsync(cancellationToken);
+        return names.Select(n => new DiscoveredModel(n, n)).ToArray();
+    }
+
+    private async Task<IReadOnlyList<DiscoveredModel>> GetAzureDeploymentsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            string basePath = StripOpenAiSuffix(provider.Endpoint.AbsolutePath);
+            var builder = new UriBuilder(provider.Endpoint)
+            {
+                Path = $"{basePath}/openai/deployments",
+                Query = $"api-version={AzureDeploymentsApiVersion}",
+            };
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
+            request.Headers.Add("api-key", provider.ApiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+            using HttpResponseMessage response = await http.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return [];
+
+            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using JsonDocument doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || data.ValueKind != JsonValueKind.Array)
+                return [];
+
+            var models = new List<DiscoveredModel>();
+            foreach (JsonElement item in data.EnumerateArray())
+            {
+                string? id = item.TryGetProperty("id", out JsonElement idEl) && idEl.ValueKind == JsonValueKind.String
+                    ? idEl.GetString() : null;
+                if (string.IsNullOrWhiteSpace(id))
+                    continue;
+                string baseModel = item.TryGetProperty("model", out JsonElement mEl) && mEl.ValueKind == JsonValueKind.String
+                    ? mEl.GetString() ?? id : id;
+                models.Add(new DiscoveredModel(id, baseModel));
+            }
+            return models;
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private async Task<IReadOnlyList<string>> GetOpenAiModelNamesAsync(CancellationToken cancellationToken)
@@ -65,50 +131,6 @@ internal sealed class ProviderClient : IProviderClient
         catch
         {
             return [];
-        }
-    }
-
-    private async Task<IReadOnlyList<string>?> TryGetAzureDeploymentNamesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            string basePath = StripOpenAiSuffix(provider.Endpoint.AbsolutePath);
-            var builder = new UriBuilder(provider.Endpoint)
-            {
-                Path = $"{basePath}/openai/deployments",
-                Query = $"api-version={AzureDeploymentsApiVersion}",
-            };
-
-            using var http = new HttpClient();
-            using var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
-            request.Headers.Add("api-key", provider.ApiKey);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
-
-            using HttpResponseMessage response = await http.SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using JsonDocument doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-            if (!doc.RootElement.TryGetProperty("data", out JsonElement data) || data.ValueKind != JsonValueKind.Array)
-                return null;
-
-            var ids = new List<string>();
-            foreach (JsonElement item in data.EnumerateArray())
-            {
-                if (item.TryGetProperty("id", out JsonElement idElement) && idElement.ValueKind == JsonValueKind.String)
-                {
-                    string? id = idElement.GetString();
-                    if (!string.IsNullOrWhiteSpace(id))
-                        ids.Add(id);
-                }
-            }
-            return ids;
-        }
-        catch
-        {
-            return null;
         }
     }
 
