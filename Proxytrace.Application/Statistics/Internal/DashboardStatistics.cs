@@ -32,8 +32,9 @@ internal class DashboardStatistics : IDashboardStatistics
         Task<IReadOnlyList<AgentBreakdownStat>> agentBreakdownTask = GetAgentBreakdownAsync(filter, cancellationToken);
         Task<IReadOnlyList<LatencyStat>> latencyTask = GetLatencyAsync(filter, cancellationToken);
         Task<IReadOnlyList<ModelBreakdownStat>> modelBreakdownTask = GetModelBreakdownAsync(filter, cancellationToken);
-        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, ResolveTokenBucket(filter), cancellationToken);
-        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, ResolveTokenBucket(filter), cancellationToken);
+        StatisticsBucket tokenBucket = await ResolveTokenBucketAsync(filter, cancellationToken);
+        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, tokenBucket, cancellationToken);
+        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, tokenBucket, cancellationToken);
         Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = agentCalls.GetFilteredAsync(
             new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From),
             page: 1,
@@ -63,6 +64,7 @@ internal class DashboardStatistics : IDashboardStatistics
             ModelBreakdown: modelBreakdownTask.Result,
             TokenUsage: tokenUsageTask.Result,
             TokenUsageByAgent: tokenByAgentTask.Result,
+            TokenBucket: tokenBucket,
             RecentTraces: recentTask.Result.Items,
             Agents: topAgents,
             AgentLastCallTimes: lastCallTimes);
@@ -91,14 +93,16 @@ internal class DashboardStatistics : IDashboardStatistics
         => callStats.GetTokenUsageAsync(filter, bucket, cancellationToken);
 
     /// <summary>
-    /// Derives the token-volume bucket width from the requested window so short ranges (1h/24h)
-    /// resolve to sub-day buckets and still produce a multi-point series.
+    /// Derives the token-volume bucket width from the window so short ranges (1h/24h) resolve to
+    /// sub-day buckets and still produce a multi-point series. The all-time view has no lower bound,
+    /// so the window is measured from the earliest matching call instead — a few hours of history
+    /// then renders at 5-minute/hourly resolution rather than collapsing into one daily bar.
     /// </summary>
-    private static StatisticsBucket ResolveTokenBucket(StatisticsFilter filter)
+    private async Task<StatisticsBucket> ResolveTokenBucketAsync(StatisticsFilter filter, CancellationToken cancellationToken)
     {
         DateTimeOffset to = filter.To ?? DateTimeOffset.UtcNow;
-        DateTimeOffset from = filter.From ?? to.AddDays(-1);
-        return StatisticsTime.ForWindow(from, to);
+        DateTimeOffset? from = filter.From ?? await callStats.GetEarliestCallAsync(filter, cancellationToken);
+        return from is null ? StatisticsBucket.Daily : StatisticsTime.ForWindow(from.Value, to);
     }
 
     internal Task<IReadOnlyList<ModelBreakdownStat>> GetModelBreakdownAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)

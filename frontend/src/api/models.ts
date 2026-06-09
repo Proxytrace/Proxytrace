@@ -1,3 +1,5 @@
+import type { StatisticsBucket } from '../lib/time-range';
+
 export enum TestRunStatus {
   Pending = 'Pending',
   Running = 'Running',
@@ -137,6 +139,8 @@ export interface DashboardViewDto {
   modelBreakdown: ModelBreakdownDto[];
   tokenUsage: TokenUsageDto[];
   tokenUsageByAgent: AgentTokenUsageDto[];
+  /** Bucket granularity used for the token series (backend-resolved; drives the chart's time axis). */
+  tokenBucket: StatisticsBucket;
   recentTraces: AgentCallDto[];
   agents: AgentDto[];
 }

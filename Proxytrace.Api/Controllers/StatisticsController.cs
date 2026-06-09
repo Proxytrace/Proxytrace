@@ -60,6 +60,12 @@ public class StatisticsController : ControllerBase
             ModelBreakdown: view.ModelBreakdown.Select(r => new ModelBreakdownDto(r.EndpointId, r.ModelName, r.CallCount, r.TotalInputTokens ?? 0, r.TotalOutputTokens ?? 0, r.AvgDurationMs ?? 0)).ToArray(),
             TokenUsage: view.TokenUsage.Select(r => new TokenUsageDto(r.BucketStart, r.EndpointId, r.InputTokens ?? 0, r.OutputTokens ?? 0)).ToArray(),
             TokenUsageByAgent: view.TokenUsageByAgent.Select(r => new AgentTokenUsageDto(r.BucketStart, r.AgentId, r.InputTokens, r.OutputTokens)).ToArray(),
+            TokenBucket: view.TokenBucket switch
+            {
+                StatisticsBucket.FiveMinutes => "fiveMinutes",
+                StatisticsBucket.Hourly => "hourly",
+                _ => "daily",
+            },
             RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToDto).ToArray(),
             Agents: view.Agents.Select(a => agentDtoMapper.ToDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
     }

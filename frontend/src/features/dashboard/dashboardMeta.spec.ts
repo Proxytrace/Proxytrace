@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   teleFmt,
   computeLatencyStats,
-  computeTokenVolume,
+  computeTokenSeries,
+  fillTokenGrid,
   computeModelSplit,
   computeLatencyHist,
   computeTokenAgentShare,
@@ -40,19 +41,78 @@ describe('computeLatencyStats', () => {
   });
 });
 
-// ── computeTokenVolume ───────────────────────────────────────────────────────
+// ── fillTokenGrid ────────────────────────────────────────────────────────────
 
-describe('computeTokenVolume', () => {
-  it('returns [] for empty', () => expect(computeTokenVolume([])).toEqual([]));
+const DAY = 24 * 60 * 60_000;
 
-  it('sums input+output per bucket and sorts chronologically', () => {
+describe('fillTokenGrid', () => {
+  it('emits a continuous grid, gap-filling missing buckets with 0', () => {
+    const d0 = Date.parse('2024-01-01T00:00:00Z');
+    const d2 = d0 + 2 * DAY;
+    // Data on day 0 and day 2 — day 1 is a gap that must render as 0.
+    const sums = new Map<number, number>([[d0, 30], [d2, 45]]);
+    const result = fillTokenGrid(sums, d0, d2, DAY);
+    expect(result.values).toEqual([30, 0, 45]);
+    expect(result.buckets).toEqual([
+      '2024-01-01T00:00:00.000Z',
+      '2024-01-02T00:00:00.000Z',
+      '2024-01-03T00:00:00.000Z',
+    ]);
+  });
+
+  it('produces equal-length values/buckets spanning the whole window', () => {
+    const start = Date.parse('2024-03-01T00:00:00Z');
+    const end = start + 29 * DAY; // 30-day window
+    const { values, buckets } = fillTokenGrid(new Map(), start, end, DAY);
+    expect(values).toHaveLength(30);
+    expect(buckets).toHaveLength(30);
+    expect(values.every(v => v === 0)).toBe(true);
+  });
+});
+
+// ── computeTokenSeries ───────────────────────────────────────────────────────
+
+describe('computeTokenSeries', () => {
+  it('returns empty arrays for empty', () => expect(computeTokenSeries([], 'all', 'daily')).toEqual({ values: [], buckets: [] }));
+
+  // Real bucketStart values are UTC-aligned (backend truncates), so tests use aligned boundaries.
+  const todayUtc = Date.now() - (Date.now() % DAY);
+
+  it('sums duplicate buckets and pads to >=2 points so a single-bucket all-time view still renders', () => {
+    const iso = new Date(todayUtc).toISOString();
     const data = [
-      { bucketStart: '2024-01-02T00:00:00+00:00', inputTokens: 10, outputTokens: 20 },
-      { bucketStart: '2024-01-01T00:00:00+00:00', inputTokens: 5, outputTokens: 15 },
-      { bucketStart: '2024-01-02T00:00:00+00:00', inputTokens: 10, outputTokens: 5 },
+      { bucketStart: iso, inputTokens: 10, outputTokens: 20 },
+      { bucketStart: iso, inputTokens: 10, outputTokens: 5 },
     ];
-    const result = computeTokenVolume(data);
-    expect(result).toEqual([20, 45]); // [bucket1 total, bucket2 total] sorted by bucketStart
+    const result = computeTokenSeries(data, 'all', 'daily');
+    expect(result.values).toEqual([0, 45]); // padded leading bucket + today's sum
+  });
+
+  it('gap-fills real time spacing rather than collapsing sparse buckets equidistantly', () => {
+    const recent = new Date(todayUtc).toISOString();
+    const twoDaysAgo = new Date(todayUtc - 2 * DAY).toISOString();
+    const result = computeTokenSeries(
+      [
+        { bucketStart: twoDaysAgo, inputTokens: 100, outputTokens: 0 },
+        { bucketStart: recent, inputTokens: 50, outputTokens: 0 },
+      ],
+      'all',
+      'daily',
+    );
+    // 3 daily buckets (gap day filled with 0), not 2 equidistant points.
+    expect(result.values).toEqual([100, 0, 50]);
+  });
+
+  it('steps at the supplied granularity (hourly), so short all-time spans keep detail', () => {
+    const HOUR = 60 * 60_000;
+    const nowHour = Date.now() - (Date.now() % HOUR);
+    const data = [
+      { bucketStart: new Date(nowHour - 2 * HOUR).toISOString(), inputTokens: 7, outputTokens: 0 },
+      { bucketStart: new Date(nowHour).toISOString(), inputTokens: 3, outputTokens: 0 },
+    ];
+    const result = computeTokenSeries(data, 'all', 'hourly');
+    // 3 hourly buckets spanning the 2-hour data window, gap hour filled with 0.
+    expect(result.values).toEqual([7, 0, 3]);
   });
 });
 
