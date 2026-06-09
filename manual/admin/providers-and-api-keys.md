@@ -14,6 +14,39 @@ its own API keys. This page covers the operator's view; for the client-side setu
 
 Manage these from the **Providers** area of the UI.
 
+## Adding a provider — models & prices auto-load
+
+When you add a provider, Proxytrace **discovers its models and fetches their prices
+automatically**, so you usually start with a populated, priced model list. Each provider's
+detail view shows its **Models** section (above its **API keys** section) with a per-model
+input/output price. A **Reload models & prices** button re-runs discovery on demand if the
+upstream catalogue changes.
+
+The upstream **endpoint** is shown in the provider header only when it differs from the
+provider kind's default (for example, the canonical `https://api.openai.com/v1` and
+`https://api.anthropic.com/v1` are hidden; a custom or self-hosted endpoint is shown). You can
+always add a model by hand or edit any model's price manually.
+
+### Azure OpenAI
+
+A provider whose endpoint host contains `azure.com` is treated as **Azure OpenAI**. For Azure
+providers, discovery loads only the models you have actually **deployed**, and a
+**deployment-type selector** — **Global Standard**, **Data Zone Standard**, or **Standard** —
+controls which Azure price tier is fetched on reload.
+
+### Where prices come from
+
+- **Azure** providers are priced from the **Azure Retail Prices API** (quoted in EUR).
+- **All other** providers are priced from the **LiteLLM** model catalogue (quoted in USD) and
+  converted to EUR using **European Central Bank (ECB)** exchange rates.
+
+Every stored price is normalised to **EUR per 1M tokens**. Auto-fetched prices are only a
+starting point — you can override any model's input/output price manually at any time.
+
+Operators can point the pricing feeds at different sources via the `Pricing` section of
+`appsettings` (see [Configuration](/admin/configuration)): `Pricing:LiteLlmFeedUrl`,
+`Pricing:AzureRetailApiUrl`, and `Pricing:FxApiUrl`.
+
 ## API keys
 
 A Proxytrace **API Key** is the credential clients use against the OpenAI-compatible proxy.

@@ -44,6 +44,28 @@ override with `Frontend:AllowedOrigin`:
 }
 ```
 
+### Model pricing feeds
+
+Proxytrace auto-fetches model prices when a provider is added (and when its **Reload models &
+prices** button is used) — see [Providers & API Keys](/admin/providers-and-api-keys). The
+source feeds are configurable under `Pricing`:
+
+```json
+{
+  "Pricing": {
+    "LiteLlmFeedUrl": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+    "AzureRetailApiUrl": "https://prices.azure.com/api/retail/prices",
+    "FxApiUrl": "https://api.frankfurter.app/latest"
+  }
+}
+```
+
+- `LiteLlmFeedUrl` — the LiteLLM model-price catalogue (USD) used for non-Azure providers.
+- `AzureRetailApiUrl` — the Azure Retail Prices API (EUR) used for Azure OpenAI providers.
+- `FxApiUrl` — the ECB exchange-rate source used to convert USD prices to EUR.
+
+All prices are stored as EUR per 1M tokens and can be overridden manually per model.
+
 ## Kiosk mode
 
 Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a rich demo
