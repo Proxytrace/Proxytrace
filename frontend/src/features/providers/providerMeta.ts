@@ -20,3 +20,33 @@ export function kindColor(k: ModelProviderKind): string {
 export function maskKey(k: string): string {
   return k.length <= 8 ? '••••••••' : k.slice(0, 7) + '••••••••••••' + k.slice(-4);
 }
+
+const DEFAULT_ENDPOINT: Partial<Record<ModelProviderKind, string>> = {
+  [ModelProviderKind.Anthropic]: 'https://api.anthropic.com/v1',
+  [ModelProviderKind.OpenAi]: 'https://api.openai.com/v1',
+};
+
+function normalizeUrl(u: string): string {
+  return u.trim().replace(/\/+$/, '').toLowerCase();
+}
+
+/** True when the endpoint equals the canonical default for its kind (so it can be hidden). */
+export function isDefaultEndpoint(kind: ModelProviderKind, endpoint: string): boolean {
+  const def = DEFAULT_ENDPOINT[kind];
+  return def != null && normalizeUrl(def) === normalizeUrl(endpoint);
+}
+
+/** True when the endpoint host indicates an Azure OpenAI resource. */
+export function isAzureEndpoint(endpoint: string): boolean {
+  try {
+    return new URL(endpoint).host.toLowerCase().includes('azure.com');
+  } catch {
+    return endpoint.toLowerCase().includes('azure.com');
+  }
+}
+
+export const AZURE_DEPLOYMENT_TYPE_OPTIONS = [
+  { value: 'GlobalStandard', label: 'Global Standard' },
+  { value: 'DataZoneStandard', label: 'Data Zone Standard' },
+  { value: 'Standard', label: 'Standard (Regional)' },
+] as const;
