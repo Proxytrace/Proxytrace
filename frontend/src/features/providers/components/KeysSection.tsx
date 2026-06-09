@@ -14,14 +14,14 @@ import useToast from '../../../hooks/useToast';
 import { maskKey } from '../providerMeta';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
 
-interface KeysTabProps {
+interface KeysSectionProps {
   providerId: string;
   keys: ApiKeyDto[];
   projects: ProjectDto[];
   defaultProjectId: string;
 }
 
-export function KeysTab({ providerId, keys, projects, defaultProjectId }: KeysTabProps) {
+export function KeysSection({ providerId, keys, projects, defaultProjectId }: KeysSectionProps) {
   const { show: toast } = useToast();
   const [showNew, setShowNew] = useState(false);
   const [newKey, setNewKey] = useState({ name: '', projectId: '' });
