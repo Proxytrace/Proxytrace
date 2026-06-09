@@ -3,17 +3,23 @@ namespace Proxytrace.Domain.AgentCall;
 public record AgentCallHistogramBucket(DateTimeOffset Start, int Total, int Errors);
 
 /// <summary>
-/// Buckets agent-call timestamps into a fixed number of equal-width slots spanning [from, to].
-/// Each bucket carries the total call count and the count whose HTTP status indicates an error
-/// (>= <see cref="ErrorStatusThreshold"/>). Pure and provider-agnostic so it runs identically over
-/// PostgreSQL-sourced and in-memory rows.
+/// Shapes a sparse, DB-aggregated histogram into a dense, ordered array of equal-width slots
+/// spanning [from, to]. The database does the heavy lifting — a single <c>GROUP BY</c> returns one
+/// row per non-empty bucket as <c>(Index, Total, Errors)</c>; this fills the gaps with zeroes and
+/// stamps each slot's start time. Pure and provider-agnostic so it produces identical output
+/// whether the grouping ran on PostgreSQL or the in-memory provider.
 /// </summary>
 public static class AgentCallHistogram
 {
     public const int ErrorStatusThreshold = 400;
 
-    public static IReadOnlyList<AgentCallHistogramBucket> Build(
-        IEnumerable<(DateTimeOffset CreatedAt, int HttpStatus)> calls,
+    /// <summary>
+    /// Expand DB-aggregated <c>(Index, Total, Errors)</c> rows into a dense <paramref name="buckets"/>-long
+    /// array. Indices outside <c>[0, buckets)</c> are clamped into the nearest edge slot (a call landing
+    /// exactly on <paramref name="to"/> hashes to <c>buckets</c> and folds into the last bucket).
+    /// </summary>
+    public static IReadOnlyList<AgentCallHistogramBucket> Expand(
+        IEnumerable<(int Index, int Total, int Errors)> aggregated,
         DateTimeOffset from,
         DateTimeOffset to,
         int buckets)
@@ -23,18 +29,17 @@ public static class AgentCallHistogram
 
         var totals = new int[buckets];
         var errors = new int[buckets];
-        var width = (to - from).Ticks / (double)buckets;
 
-        foreach (var (createdAt, httpStatus) in calls)
+        foreach (var (index, total, error) in aggregated)
         {
-            if (createdAt < from || createdAt > to) continue;
-            var idx = (int)((createdAt - from).Ticks / width);
-            if (idx < 0) idx = 0;
-            if (idx >= buckets) idx = buckets - 1;
-            totals[idx]++;
-            if (httpStatus >= ErrorStatusThreshold) errors[idx]++;
+            var i = index;
+            if (i < 0) i = 0;
+            if (i >= buckets) i = buckets - 1;
+            totals[i] += total;
+            errors[i] += error;
         }
 
+        var width = (to - from).Ticks / (double)buckets;
         var result = new AgentCallHistogramBucket[buckets];
         for (var i = 0; i < buckets; i++)
             result[i] = new AgentCallHistogramBucket(from.AddTicks((long)(i * width)), totals[i], errors[i]);

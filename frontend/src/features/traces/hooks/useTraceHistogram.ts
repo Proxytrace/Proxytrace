@@ -4,7 +4,11 @@ import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
 import type { AgentCallFilter, TraceHistogramBucket } from '../../../api/models';
 
-const BUCKETS = 64;
+// Bucketing is done in-memory server-side (AgentCallHistogram.Build) after the rows are already
+// projected, so a higher count costs nothing on the DB — only a marginally larger JSON payload.
+// 120 ≈ 2px-wide bars at typical strip widths: crisp resolution without over-fetching. The API
+// clamps to 240.
+const BUCKETS = 120;
 
 interface Params {
   from: string | undefined;

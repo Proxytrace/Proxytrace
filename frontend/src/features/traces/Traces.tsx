@@ -185,7 +185,9 @@ export default function Traces() {
         onShowSystemChange={handleShowSystemChange}
       />
 
-      {buckets.length > 0 && (
+      {/* Keep the timeline mounted whenever the window is concrete — even if it holds no traces
+          (e.g. after zooming into an empty slice) — so the user can always scroll/zoom back out. */}
+      {(windowFrom !== null || buckets.length > 0) && (
         <TraceTimeline
           buckets={buckets}
           from={windowFrom ?? new Date(buckets[0].start).getTime()}

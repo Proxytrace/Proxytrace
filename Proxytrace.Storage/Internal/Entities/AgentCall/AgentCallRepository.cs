@@ -92,18 +92,32 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             to = from.AddSeconds(1);
         }
 
-        var rows = await query
+        // Bucket and aggregate in the database: GROUP BY an integer slot index derived from each
+        // row's offset into the window. The provider translates this to a single grouped aggregate
+        // query, so only one row per non-empty bucket crosses the wire — O(buckets), not O(rows).
+        // floor() (not a bare (int) cast) gives correct truncation: Npgsql renders a CAST-to-int as
+        // a *rounding* CAST, which would misbucket boundary timestamps.
+        var widthMs = (to - from).TotalMilliseconds / buckets;
+        if (widthMs <= 0) widthMs = 1;
+
+        var aggregated = await query
             .Where(e => e.CreatedAt >= from && e.CreatedAt <= to)
-            .Select(e => new { e.CreatedAt, e.HttpStatus })
+            .GroupBy(e => (int)Math.Floor((e.CreatedAt - from).TotalMilliseconds / widthMs))
+            .Select(g => new
+            {
+                Index = g.Key,
+                Total = g.Count(),
+                Errors = g.Count(e => e.HttpStatus >= AgentCallHistogram.ErrorStatusThreshold),
+            })
             .ToListAsync(cancellationToken);
 
-        if (rows.Count == 0)
+        if (aggregated.Count == 0)
         {
             return [];
         }
 
-        // Reshape anon → tuple lazily; Build enumerates once, so no second list is allocated.
-        return AgentCallHistogram.Build(rows.Select(r => (r.CreatedAt, r.HttpStatus)), from, to, buckets);
+        return AgentCallHistogram.Expand(
+            aggregated.Select(a => (a.Index, a.Total, a.Errors)), from, to, buckets);
     }
 
     /// <summary>

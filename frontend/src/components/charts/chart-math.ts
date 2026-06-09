@@ -191,6 +191,40 @@ export function xToTime(x: number, from: number, to: number, plotL: number, plot
   return from + frac * (to - from);
 }
 
+/** Shrink (or grow) the window [from, to] by `factor`, keeping `pivot` at the same relative spot. */
+export function zoomTowardPivot(
+  pivot: number, from: number, to: number, factor: number,
+): { from: number; to: number } {
+  return { from: pivot - (pivot - from) * factor, to: pivot + (to - pivot) * factor };
+}
+
+export interface TimeAxisTick { x: number; label: string; anchor: 'start' | 'middle' | 'end'; }
+
+const DAY_MS = 86_400_000;
+
+/** Format an epoch-ms instant for a timeline axis tick, picking granularity from the window span. */
+export function formatAxisTime(ms: number, spanMs: number): string {
+  const d = new Date(ms);
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (spanMs <= 2 * DAY_MS) return time;
+  const date = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  if (spanMs <= 14 * DAY_MS) return `${date} ${time}`;
+  return date;
+}
+
+/** Evenly-spaced time ticks across [from, to]; edge ticks anchor inward so labels never clip. */
+export function timelineAxisTicks(
+  from: number, to: number, plotL: number, plotR: number, count: number,
+): TimeAxisTick[] {
+  if (to <= from || plotR <= plotL || count < 2) return [];
+  const span = to - from;
+  return Array.from({ length: count }, (_, i) => {
+    const frac = i / (count - 1);
+    const anchor: TimeAxisTick['anchor'] = i === 0 ? 'start' : i === count - 1 ? 'end' : 'middle';
+    return { x: plotL + frac * (plotR - plotL), label: formatAxisTime(from + frac * span, span), anchor };
+  });
+}
+
 export interface GaugeSegment { x1: number; y1: number; x2: number; y2: number; color: string; active: boolean; glow: boolean; }
 export interface SegmentedGaugeData { segments: GaugeSegment[]; cx: number; cy: number; }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeTimeline, timeToX, xToTime } from './chart-math';
+import { computeTimeline, timeToX, xToTime, timelineAxisTicks, formatAxisTime, zoomTowardPivot } from './chart-math';
 
 describe('computeTimeline', () => {
   const buckets = [
@@ -43,5 +43,49 @@ describe('timeToX / xToTime', () => {
   it('clamps outside the plot range', () => {
     expect(xToTime(-50, 1000, 5000, 10, 410)).toBe(1000);
     expect(xToTime(9999, 1000, 5000, 10, 410)).toBe(5000);
+  });
+});
+
+describe('timelineAxisTicks', () => {
+  it('spreads ticks evenly across the plot with inward-anchored edges', () => {
+    const ticks = timelineAxisTicks(0, 4000, 10, 410, 5);
+    expect(ticks).toHaveLength(5);
+    expect(ticks[0].x).toBeCloseTo(10, 5);
+    expect(ticks[2].x).toBeCloseTo(210, 5);
+    expect(ticks[4].x).toBeCloseTo(410, 5);
+    expect(ticks[0].anchor).toBe('start');
+    expect(ticks[2].anchor).toBe('middle');
+    expect(ticks[4].anchor).toBe('end');
+  });
+
+  it('returns nothing for a degenerate window or count', () => {
+    expect(timelineAxisTicks(5, 5, 0, 100, 5)).toEqual([]);
+    expect(timelineAxisTicks(0, 10, 50, 50, 5)).toEqual([]);
+    expect(timelineAxisTicks(0, 10, 0, 100, 1)).toEqual([]);
+  });
+});
+
+describe('zoomTowardPivot', () => {
+  it('shrinks the window by the factor while keeping the pivot fixed in place', () => {
+    const { from, to } = zoomTowardPivot(2000, 0, 4000, 0.8);
+    expect(to - from).toBeCloseTo(3200, 5);          // 4000 * 0.8
+    // pivot keeps its relative position (centered here → stays centered)
+    expect((2000 - from) / (to - from)).toBeCloseTo(0.5, 5);
+  });
+
+  it('keeps an off-center pivot at the same fraction', () => {
+    const before = (3000 - 0) / (4000 - 0);          // 0.75
+    const { from, to } = zoomTowardPivot(3000, 0, 4000, 0.5);
+    expect((3000 - from) / (to - from)).toBeCloseTo(before, 5);
+  });
+});
+
+describe('formatAxisTime', () => {
+  const t = Date.UTC(2026, 5, 9, 14, 30);
+  it('shows a clock time for intraday spans', () => {
+    expect(formatAxisTime(t, 3_600_000)).toMatch(/:/);
+  });
+  it('drops the clock and shows a date for multi-week spans', () => {
+    expect(formatAxisTime(t, 30 * 86_400_000)).not.toMatch(/:/);
   });
 });

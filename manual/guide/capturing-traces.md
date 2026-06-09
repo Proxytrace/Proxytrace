@@ -40,13 +40,18 @@ Typical things you can do:
 Above the table a **timeline strip** plots how many traces were captured over the selected
 range, so you can spot ingestion hotspots at a glance. Each bar's height is the trace count
 for that slice of time; the **red** portion at the bottom marks failed calls (HTTP errors),
-making error spikes easy to find. Hover a bar to see its exact time, count, and error count.
+making error spikes easy to find. A **time axis** along the bottom labels the window, and
+hovering a bar shows its exact time, count, and error count.
 
 - **Drag across the timeline** to zoom into that window. The view re-spans to your selection —
   the bars redraw at higher resolution *and* the table narrows to the same range, so you can
   drill straight into a spike.
-- **Double-click** the timeline to zoom back out one level (each drag is remembered, so you can
-  zoom in repeatedly and step back out).
+- **Scroll up** over the timeline to zoom in toward the cursor; **scroll down** to step back
+  out one level (each zoom-in is remembered, so you can drill in repeatedly and reverse out).
+- **Click a bar** to focus its time bucket directly.
+
+If you zoom into a window with no traces, the strip stays put (showing *"No traces in this
+range"*) so you can always scroll back out.
 - The timeline reflects the **same agent, search, and system-trace filters** as the table,
   so its shape always matches what you're looking at.
 
