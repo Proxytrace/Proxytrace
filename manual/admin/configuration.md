@@ -54,14 +54,12 @@ source feeds are configurable under `Pricing`:
 {
   "Pricing": {
     "LiteLlmFeedUrl": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
-    "AzureRetailApiUrl": "https://prices.azure.com/api/retail/prices",
     "FxApiUrl": "https://api.frankfurter.app/latest"
   }
 }
 ```
 
-- `LiteLlmFeedUrl` — the LiteLLM model-price catalogue (USD) used for non-Azure providers.
-- `AzureRetailApiUrl` — the Azure Retail Prices API (EUR) used for Azure OpenAI providers.
+- `LiteLlmFeedUrl` — the LiteLLM model-price catalogue (USD) used for all providers (Azure providers prefer its `azure/<model>` entries).
 - `FxApiUrl` — the ECB exchange-rate source used to convert USD prices to EUR.
 
 All prices are stored as EUR per 1M tokens and can be overridden manually per model.

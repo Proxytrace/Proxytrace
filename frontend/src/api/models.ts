@@ -497,11 +497,6 @@ export interface CreateProviderRequest {
   upstreamApiKey: string;
   kind: ModelProviderKind;
 }
-export enum AzureDeploymentType {
-  GlobalStandard = 'GlobalStandard',
-  DataZoneStandard = 'DataZoneStandard',
-  Standard = 'Standard',
-}
 export interface CreateApiKeyRequest { name: string; projectId: string; }
 
 /* ── Fixture ── */

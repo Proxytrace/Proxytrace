@@ -31,7 +31,6 @@ public class Module : Autofac.Module
                 return new PricingOptions
                 {
                     LiteLlmFeedUrl = cfg["LiteLlmFeedUrl"] ?? defaults.LiteLlmFeedUrl,
-                    AzureRetailApiUrl = cfg["AzureRetailApiUrl"] ?? defaults.AzureRetailApiUrl,
                     FxApiUrl = cfg["FxApiUrl"] ?? defaults.FxApiUrl,
                 };
             })
@@ -48,11 +47,6 @@ public class Module : Autofac.Module
             .SingleInstance();
 
         builder.RegisterType<LiteLlmCatalogResolver>()
-            .AsSelf()
-            .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"))
-            .SingleInstance();
-
-        builder.RegisterType<AzureRetailPriceResolver>()
             .AsSelf()
             .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"))
             .SingleInstance();

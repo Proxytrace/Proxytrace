@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using AwesomeAssertions;
 using NSubstitute;
+using Proxytrace.Common.Async;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Infrastructure.Internal;
 
@@ -12,33 +13,54 @@ public sealed class PricingServiceTests
 {
     public required TestContext TestContext { get; init; }
 
+    private const string Catalog =
+        """
+        {
+          "gpt-4o": { "input_cost_per_token": 0.000001, "output_cost_per_token": 0.000002 },
+          "azure/gpt-4o": { "input_cost_per_token": 0.000003, "output_cost_per_token": 0.000002 }
+        }
+        """;
+
     [TestMethod]
-    public async Task Resolve_AzureProvider_UsesAzureResolver()
+    public async Task Resolve_AzureProvider_PrefersAzureCatalogEntry()
     {
-        const string azureBody =
-            """{"Items":[{"currencyCode":"EUR","retailPrice":0.002,"unitOfMeasure":"1K","meterName":"gpt 4o Inp glbl","serviceName":"Cognitive Services","skuName":"Standard"}]}""";
-        var sut = BuildService(azureBody, liteLlmBody: "{}", fx: 0.9m);
+        var sut = BuildService(fx: 1.0m);
 
         var price = await sut.ResolveAsync(
             StubProvider("https://x.openai.azure.com/"),
-            new DiscoveredModel("d", "gpt-4o"),
-            AzureDeploymentType.GlobalStandard, TestContext.CancellationToken);
+            new DiscoveredModel("my-deploy", "gpt-4o"),
+            TestContext.CancellationToken);
 
-        price.InputTokenCost.Should().Be(2.0m);
+        // azure/gpt-4o (0.000003 × 1e6 × 1.0) wins over bare gpt-4o.
+        price.InputTokenCost.Should().Be(3.0m);
     }
 
     [TestMethod]
-    public async Task Resolve_NonAzureProvider_UsesLiteLlmResolver()
+    public async Task Resolve_NonAzureProvider_UsesBareModelName()
     {
-        const string catalog = """{"gpt-4o":{"input_cost_per_token":0.000001,"output_cost_per_token":0.000002}}""";
-        var sut = BuildService(azureBody: "{}", liteLlmBody: catalog, fx: 0.5m);
+        var sut = BuildService(fx: 0.5m);
 
         var price = await sut.ResolveAsync(
             StubProvider("https://api.openai.com/v1"),
             new DiscoveredModel("gpt-4o", "gpt-4o"),
-            AzureDeploymentType.GlobalStandard, TestContext.CancellationToken);
+            TestContext.CancellationToken);
 
+        // bare gpt-4o (0.000001 × 1e6 × 0.5).
         price.InputTokenCost.Should().Be(0.5m);
+    }
+
+    [TestMethod]
+    public async Task Resolve_AzureProvider_FallsBackToBareName_WhenNoAzureEntry()
+    {
+        const string bareOnly = """{"gpt-4o":{"input_cost_per_token":0.000001,"output_cost_per_token":0.000002}}""";
+        var sut = BuildService(fx: 1.0m, catalog: bareOnly);
+
+        var price = await sut.ResolveAsync(
+            StubProvider("https://x.openai.azure.com/"),
+            new DiscoveredModel("my-deploy", "gpt-4o"),
+            TestContext.CancellationToken);
+
+        price.InputTokenCost.Should().Be(1.0m);
     }
 
     private static IModelProvider StubProvider(string endpoint)
@@ -48,14 +70,12 @@ public sealed class PricingServiceTests
         return p;
     }
 
-    private static PricingService BuildService(string azureBody, string liteLlmBody, decimal fx)
+    private static PricingService BuildService(decimal fx, string catalog = Catalog)
     {
-        var opts = new PricingOptions();
-        var azure = new AzureRetailPriceResolver(new HttpClient(new StubHandler(azureBody)), opts);
         var fxProvider = Substitute.For<IFxRateProvider>();
         fxProvider.GetUsdToEurAsync(Arg.Any<CancellationToken>()).Returns(fx);
-        var liteLlm = new LiteLlmCatalogResolver(new HttpClient(new StubHandler(liteLlmBody)), opts, fxProvider);
-        return new PricingService(azure, liteLlm);
+        var liteLlm = new LiteLlmCatalogResolver(new HttpClient(new StubHandler(catalog)), new PricingOptions(), fxProvider, Substitute.For<IAsyncLock>());
+        return new PricingService(liteLlm);
     }
 
     private sealed class StubHandler(string body) : HttpMessageHandler

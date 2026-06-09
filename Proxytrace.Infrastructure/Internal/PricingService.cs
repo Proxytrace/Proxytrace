@@ -2,23 +2,28 @@ using Proxytrace.Domain.ModelProvider;
 
 namespace Proxytrace.Infrastructure.Internal;
 
+/// <summary>
+/// Resolves model prices (EUR / 1M tokens) via the LiteLLM catalog for every provider kind. Azure
+/// providers (endpoint host contains <c>azure.com</c>) prefer the catalog's <c>azure/&lt;model&gt;</c>
+/// entry, falling back to the bare model name. Unresolved → <see cref="ModelPrice.Unknown"/>.
+/// </summary>
 internal sealed class PricingService : IPricingService
 {
-    private readonly AzureRetailPriceResolver azureResolver;
     private readonly LiteLlmCatalogResolver liteLlmResolver;
 
-    public PricingService(AzureRetailPriceResolver azureResolver, LiteLlmCatalogResolver liteLlmResolver)
+    public PricingService(LiteLlmCatalogResolver liteLlmResolver)
     {
-        this.azureResolver = azureResolver;
         this.liteLlmResolver = liteLlmResolver;
     }
 
     public Task<ModelPrice> ResolveAsync(
         IModelProvider provider,
         DiscoveredModel model,
-        AzureDeploymentType deploymentType = AzureDeploymentType.GlobalStandard,
         CancellationToken cancellationToken = default)
-        => ProviderEndpoints.IsAzure(provider.Endpoint)
-            ? azureResolver.ResolveAsync(model, deploymentType, cancellationToken)
-            : liteLlmResolver.ResolveAsync(model, cancellationToken);
+    {
+        string[] candidates = ProviderEndpoints.IsAzure(provider.Endpoint)
+            ? [$"azure/{model.PricingModelName}", model.PricingModelName]
+            : [model.PricingModelName];
+        return liteLlmResolver.ResolveAsync(candidates, cancellationToken);
+    }
 }

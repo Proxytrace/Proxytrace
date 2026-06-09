@@ -30,23 +30,22 @@ always add a model by hand or edit any model's price manually.
 ### Azure OpenAI
 
 A provider whose endpoint host contains `azure.com` is treated as **Azure OpenAI**. For Azure
-providers, discovery loads only the models you have actually **deployed**. Prices are fetched for
-the **Global Standard** tier, because the deployment tier cannot be read with an api-key (it lives
-on the Azure management plane). If your deployments use a different tier (Data Zone or Regional),
-override the affected model's price manually.
+providers, discovery loads only the models you have actually **deployed** (it never falls back to
+the full upstream model list).
 
 ### Where prices come from
 
-- **Azure** providers are priced from the **Azure Retail Prices API** (quoted in EUR).
-- **All other** providers are priced from the **LiteLLM** model catalogue (quoted in USD) and
-  converted to EUR using **European Central Bank (ECB)** exchange rates.
+All providers are priced from the **LiteLLM** model catalogue (quoted in USD) and converted to EUR
+using **European Central Bank (ECB)** exchange rates. Azure providers prefer the catalogue's
+`azure/<model>` entry, falling back to the bare model name. A model that isn't in the catalogue
+loads without a price — set it manually.
 
 Every stored price is normalised to **EUR per 1M tokens**. Auto-fetched prices are only a
 starting point — you can override any model's input/output price manually at any time.
 
 Operators can point the pricing feeds at different sources via the `Pricing` section of
-`appsettings` (see [Configuration](/admin/configuration)): `Pricing:LiteLlmFeedUrl`,
-`Pricing:AzureRetailApiUrl`, and `Pricing:FxApiUrl`.
+`appsettings` (see [Configuration](/admin/configuration)): `Pricing:LiteLlmFeedUrl` and
+`Pricing:FxApiUrl`.
 
 ## API keys
 

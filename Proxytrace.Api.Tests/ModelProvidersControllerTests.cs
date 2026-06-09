@@ -28,7 +28,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             stub.ResolveAsync(
                     Arg.Any<IModelProvider>(),
                     Arg.Any<DiscoveredModel>(),
-                    Arg.Any<AzureDeploymentType>(),
                     Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(ModelPrice.Unknown)));
     }
@@ -221,7 +220,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         pricingService.ResolveAsync(
                 Arg.Any<IModelProvider>(),
                 Arg.Any<DiscoveredModel>(),
-                Arg.Any<AzureDeploymentType>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new ModelPrice(2.5m, 10.0m)));
 
@@ -257,7 +255,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         pricingService.ResolveAsync(
                 Arg.Any<IModelProvider>(),
                 Arg.Any<DiscoveredModel>(),
-                Arg.Any<AzureDeploymentType>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new ModelPrice(2.5m, 10.0m)));
 
@@ -278,7 +275,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         var providerId = createdDto.Id;
 
         // Second: reload — same model discovered again
-        var reloadResult = await controller.Reload(providerId, AzureDeploymentType.GlobalStandard, CancellationToken);
+        var reloadResult = await controller.Reload(providerId, CancellationToken);
 
         var endpoints = (IReadOnlyList<ModelEndpointDto>?)reloadResult.Value;
         endpoints.Should().ContainSingle(e => e.ModelName == "gpt-4o");
@@ -289,7 +286,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task Reload_PassesDeploymentTypeToPricingService()
+    public async Task Reload_ResolvesPriceForEachDiscoveredModel()
     {
         var providerClient = Substitute.For<IProviderClient>();
         providerClient.DiscoverModelsAsync(Arg.Any<CancellationToken>())
@@ -300,7 +297,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         pricingService.ResolveAsync(
                 Arg.Any<IModelProvider>(),
                 Arg.Any<DiscoveredModel>(),
-                Arg.Any<AzureDeploymentType>(),
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(ModelPrice.Unknown));
 
@@ -314,12 +310,11 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
 
         var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
 
-        await controller.Reload(provider.Id, AzureDeploymentType.DataZoneStandard, CancellationToken);
+        await controller.Reload(provider.Id, CancellationToken);
 
         await pricingService.Received(1).ResolveAsync(
             Arg.Any<IModelProvider>(),
-            Arg.Any<DiscoveredModel>(),
-            AzureDeploymentType.DataZoneStandard,
+            Arg.Is<DiscoveredModel>(m => m.PricingModelName == "gpt-4o"),
             Arg.Any<CancellationToken>());
     }
 
@@ -329,7 +324,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         IServiceProvider services = GetServices();
         var controller = ResolveController(services);
 
-        var result = await controller.Reload(Guid.NewGuid(), AzureDeploymentType.GlobalStandard, CancellationToken);
+        var result = await controller.Reload(Guid.NewGuid(), CancellationToken);
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
     }

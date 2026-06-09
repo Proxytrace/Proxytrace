@@ -110,12 +110,13 @@ public class ModelProvidersController : ControllerBase
     {
         var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
-        await PopulateModelsAsync(saved, AzureDeploymentType.GlobalStandard, cancellationToken);
+        await PopulateModelsAsync(saved, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, mapper.ToDto(saved));
     }
 
     private async Task PopulateModelsAsync(
-        IModelProvider provider, AzureDeploymentType deploymentType, CancellationToken cancellationToken)
+        IModelProvider provider,
+        CancellationToken cancellationToken)
     {
         IReadOnlyList<IModelEndpoint> existing = await endpointRepository.GetAllAsync(cancellationToken);
         var existingNames = existing
@@ -137,7 +138,7 @@ public class ModelProvidersController : ControllerBase
         {
             if (existingNames.Contains(dm.Name))
                 continue;
-            ModelPrice price = await pricingService.ResolveAsync(provider, dm, deploymentType, cancellationToken);
+            ModelPrice price = await pricingService.ResolveAsync(provider, dm, cancellationToken);
             IModel model = await modelRepository.GetOrCreateAsync(dm.Name, cancellationToken);
             IModelEndpoint endpoint = createEndpoint(model, provider, price.InputTokenCost, price.OutputTokenCost);
             await endpointRepository.AddAsync(endpoint, cancellationToken);
@@ -179,14 +180,13 @@ public class ModelProvidersController : ControllerBase
     [HttpPost("{providerId:guid}/reload")]
     public async Task<ActionResult<IReadOnlyList<ModelEndpointDto>>> Reload(
         Guid providerId,
-        [FromQuery] AzureDeploymentType deploymentType = AzureDeploymentType.GlobalStandard,
         CancellationToken cancellationToken = default)
     {
         var provider = await providerRepository.FindAsync(providerId, cancellationToken);
         if (provider is null)
             return NotFound("Provider not found.");
 
-        await PopulateModelsAsync(provider, deploymentType, cancellationToken);
+        await PopulateModelsAsync(provider, cancellationToken);
 
         var all = await endpointRepository.GetAllAsync(cancellationToken);
         return all.Where(e => e.Provider.Id == providerId).Select(mapper.ToEndpointDto).ToArray();
