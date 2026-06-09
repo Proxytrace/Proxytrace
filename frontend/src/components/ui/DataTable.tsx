@@ -30,7 +30,7 @@ export function DataTable<T>({
         className="grid px-4 py-[10px] text-[10.5px] font-semibold text-muted tracking-[0.07em] uppercase border-b border-hairline"
         style={{ gridTemplateColumns: gridCols }}
       >
-        {columns.map(c => <span key={c.key} className={c.className}>{c.label}</span>)}
+        {columns.map(c => <span key={c.key} className={`min-w-0 ${c.className ?? ''}`}>{c.label}</span>)}
       </div>
 
       {/* Empty state */}
@@ -54,7 +54,7 @@ export function DataTable<T>({
               onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'color-mix(in srgb, var(--accent-primary) 4%, transparent)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = bg; }}
             >
-              {columns.map(c => <span key={c.key} className={c.className}>{c.render(row, index)}</span>)}
+              {columns.map(c => <span key={c.key} className={`min-w-0 ${c.className ?? ''}`}>{c.render(row, index)}</span>)}
             </button>
           );
         }
@@ -64,7 +64,7 @@ export function DataTable<T>({
             className={sharedRowClass}
             style={{ gridTemplateColumns: gridCols, background: bg }}
           >
-            {columns.map(c => <span key={c.key} className={c.className}>{c.render(row, index)}</span>)}
+            {columns.map(c => <span key={c.key} className={`min-w-0 ${c.className ?? ''}`}>{c.render(row, index)}</span>)}
           </div>
         );
       })}
