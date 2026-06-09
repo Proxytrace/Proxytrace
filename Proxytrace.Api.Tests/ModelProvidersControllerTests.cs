@@ -274,7 +274,8 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
             new CreateModelProviderRequest("Acme", "https://api.acme.test/", "sk-test", ModelProviderKind.OpenAiCompatible),
             CancellationToken);
         var createdDto = (ModelProviderDto?)((CreatedAtActionResult)(createResult.Result ?? throw new InvalidOperationException())).Value;
-        var providerId = createdDto!.Id;
+        createdDto.Should().NotBeNull();
+        var providerId = createdDto.Id;
 
         // Second: reload — same model discovered again
         var reloadResult = await controller.Reload(providerId, AzureDeploymentType.GlobalStandard, CancellationToken);
