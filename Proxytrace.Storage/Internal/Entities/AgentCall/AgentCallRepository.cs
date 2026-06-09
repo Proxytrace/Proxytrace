@@ -37,6 +37,99 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
+        var query = await BuildFilteredQueryAsync(context, filter, cancellationToken);
+        if (query is null)
+        {
+            return ([], 0);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var stored = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = await Map(stored, cancellationToken);
+        return (items, total);
+    }
+
+    public async Task<IReadOnlyList<AgentCallHistogramBucket>> GetHistogramAsync(
+        AgentCallFilter filter,
+        int buckets,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = await BuildFilteredQueryAsync(context, filter, cancellationToken);
+        if (query is null)
+        {
+            return [];
+        }
+
+        var to = filter.To ?? DateTimeOffset.UtcNow;
+        DateTimeOffset from;
+        if (filter.From.HasValue)
+        {
+            from = filter.From.Value;
+        }
+        else
+        {
+            // One round-trip: a nullable Min is null exactly when nothing matches (index-backed).
+            var earliest = await query
+                .Select(e => (DateTimeOffset?)e.CreatedAt)
+                .MinAsync(cancellationToken);
+            if (earliest is null)
+            {
+                return [];
+            }
+
+            from = earliest.Value;
+        }
+
+        if (to <= from)
+        {
+            to = from.AddSeconds(1);
+        }
+
+        // Bucket and aggregate in the database: GROUP BY an integer slot index derived from each
+        // row's offset into the window. The provider translates this to a single grouped aggregate
+        // query, so only one row per non-empty bucket crosses the wire — O(buckets), not O(rows).
+        // floor() (not a bare (int) cast) gives correct truncation: Npgsql renders a CAST-to-int as
+        // a *rounding* CAST, which would misbucket boundary timestamps.
+        var widthMs = (to - from).TotalMilliseconds / buckets;
+        if (widthMs <= 0) widthMs = 1;
+
+        var aggregated = await query
+            .Where(e => e.CreatedAt >= from && e.CreatedAt <= to)
+            .GroupBy(e => (int)Math.Floor((e.CreatedAt - from).TotalMilliseconds / widthMs))
+            .Select(g => new
+            {
+                Index = g.Key,
+                Total = g.Count(),
+                Errors = g.Count(e => e.HttpStatus >= AgentCallHistogram.ErrorStatusThreshold),
+            })
+            .ToListAsync(cancellationToken);
+
+        if (aggregated.Count == 0)
+        {
+            return [];
+        }
+
+        return AgentCallHistogram.Expand(
+            aggregated.Select(a => (a.Index, a.Total, a.Errors)), from, to, buckets);
+    }
+
+    /// <summary>
+    /// Builds the filtered (but unpaged, unordered) query shared by list + histogram reads.
+    /// Returns <see langword="null"/> when the filter provably matches nothing (e.g. a fulltext
+    /// query with no hits, or a fulltext query without a project scope).
+    /// </summary>
+    private async Task<IQueryable<AgentCallEntity>?> BuildFilteredQueryAsync(
+        StorageDbContext context,
+        AgentCallFilter filter,
+        CancellationToken cancellationToken)
+    {
         var query = context.Set<AgentCallEntity>().AsNoTracking();
 
         if (filter.AgentId.HasValue)
@@ -96,7 +189,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         {
             if (filter.ProjectId is null)
             {
-                return ([], 0);
+                return null;
             }
 
             var matchingIds = await searchService.SearchEntityIdsAsync(
@@ -108,7 +201,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
 
             if (matchingIds.Count == 0)
             {
-                return ([], 0);
+                return null;
             }
 
             var idSet = matchingIds.ToHashSet();
@@ -125,16 +218,7 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             query = query.Where(e => nonSystemVersionIds.Contains(e.AgentVersionId));
         }
 
-        var total = await query.CountAsync(cancellationToken);
-
-        var stored = await query
-            .OrderByDescending(e => e.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
-
-        var items = await Map(stored, cancellationToken);
-        return (items, total);
+        return query;
     }
 
     public async Task<IReadOnlyDictionary<Guid, DateTimeOffset>> GetLastCallTimesAsync(

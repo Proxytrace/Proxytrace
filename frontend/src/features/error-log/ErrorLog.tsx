@@ -1,11 +1,17 @@
 import { useState } from 'react';
+import { SearchIcon } from '../../components/icons';
+import { Input } from '../../components/ui/Input';
 import { SegmentedControl, type Segment } from '../../components/ui/SegmentedControl';
+import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { Pagination } from '../../components/ui/Pagination';
-import { DEFAULT_PAGE_SIZE } from '../../lib/constants';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { ApplicationErrorLevel, type ApplicationErrorDto } from '../../api/models';
-import { useErrorLogQuery } from './hooks/useErrorLogQueries';
+import { useErrorLogQuery, PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useErrorLogQueries';
 import { ErrorLogTable } from './components/ErrorLogTable';
 import { ErrorLogDetail } from './components/ErrorLogDetail';
+import { TimeRangePicker } from '../../components/ui/TimeRangePicker';
+import { ALL_TIME, resolveRange, type TimeRange } from '../../lib/timeRange';
 
 type LevelFilter = 'all' | ApplicationErrorLevel;
 
@@ -17,17 +23,42 @@ const LEVEL_SEGMENTS: Segment<LevelFilter>[] = [
 
 export default function ErrorLog() {
   const [page, setPage] = useState(1);
+  const [storedPageSize, setStoredPageSize] = useLocalStorageState<number>('errorLog.pageSize', PAGE_SIZE);
+  // Guard against a stale/garbage stored value — only accept a known option.
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(storedPageSize) ? storedPageSize : PAGE_SIZE;
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
+  const [search, setSearch] = useState('');
+  const [timeRange, setTimeRange] = useState<TimeRange>(ALL_TIME);
   const [selected, setSelected] = useState<ApplicationErrorDto | null>(null);
+
+  const debouncedSearch = useDebounce(search, 200);
+  const trimmedSearch = debouncedSearch.trim();
 
   const { errors, total, isFetching } = useErrorLogQuery({
     page,
-    pageSize: DEFAULT_PAGE_SIZE,
+    pageSize,
     ...(levelFilter !== 'all' ? { level: levelFilter } : {}),
+    ...(trimmedSearch.length >= 2 ? { search: trimmedSearch } : {}),
+    ...resolveRange(timeRange),
   });
 
   function handleLevelChange(value: LevelFilter) {
     setLevelFilter(value);
+    setPage(1);
+  }
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  function handleTimeRangeChange(range: TimeRange) {
+    setTimeRange(range);
+    setPage(1);
+  }
+
+  function handlePageSizeChange(value: number) {
+    setStoredPageSize(value);
     setPage(1);
   }
 
@@ -43,6 +74,20 @@ export default function ErrorLog() {
         <SegmentedControl value={levelFilter} onChange={handleLevelChange} segments={LEVEL_SEGMENTS} />
       </header>
 
+      <div className="shrink-0 flex items-center gap-3 flex-wrap">
+        <div className="flex-1 min-w-[220px] max-w-[460px]">
+          <Input
+            leftAddon={<SearchIcon size={13} />}
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            placeholder="Search message or stacktrace…"
+            aria-label="Search errors by message or stacktrace"
+            data-testid="error-log-search"
+          />
+        </div>
+        <TimeRangePicker value={timeRange} onChange={handleTimeRangeChange} testId="error-log-time" />
+      </div>
+
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <ErrorLogTable
           errors={errors}
@@ -52,9 +97,18 @@ export default function ErrorLog() {
         />
       </div>
 
-      <footer className="flex items-center justify-between">
-        <span className="text-xs text-muted">{total} {total === 1 ? 'error' : 'errors'}</span>
-        <Pagination page={page} total={total} pageSize={DEFAULT_PAGE_SIZE} onChange={setPage} />
+      <footer data-testid="error-log-pagination" className="flex items-center justify-between gap-3 shrink-0">
+        <FilterDropdown
+          label="Per page:"
+          value={String(pageSize)}
+          active
+          direction="up"
+          options={PAGE_SIZE_OPTIONS.map(n => ({ key: String(n), label: String(n) }))}
+          onChange={key => handlePageSizeChange(Number(key))}
+          width={110}
+        />
+        <Pagination page={page} total={total} pageSize={pageSize} onChange={setPage} />
+        <span className="text-xs text-muted whitespace-nowrap">{total.toLocaleString()} {total === 1 ? 'error' : 'errors'}</span>
       </footer>
 
       {selected && <ErrorLogDetail error={selected} onClose={() => setSelected(null)} />}

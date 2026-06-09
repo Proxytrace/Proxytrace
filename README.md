@@ -15,7 +15,7 @@ improvements — closing the loop between **deployment** and **optimization**.
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-336791?logo=postgresql&logoColor=white)](DATABASE.md)
+[![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-336791?logo=postgresql&logoColor=white)](docs/database.md)
 ![Status: early architecture](https://img.shields.io/badge/status-early%20architecture-c9944a)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 
@@ -186,7 +186,7 @@ Proxytrace.Proxy  (separate deployable service)
 - **Proxytrace.Common** — Shared utilities.
 - **frontend/** — React 19 + Vite SPA, served from the API's `wwwroot/` in production.
 
-DI is wired with Autofac; each project ships a `Module : Autofac.Module`. See [CLAUDE.md](CLAUDE.md) for the full domain entity pattern and conventions.
+DI is wired with Autofac; each project ships a `Module : Autofac.Module`. See [docs/](docs/) for the full domain entity pattern and conventions.
 
 ### Database configuration
 
@@ -197,7 +197,7 @@ Persistent storage is PostgreSQL only; set the connection string in `Proxytrace.
 | PostgreSQL (debug/release/e2e) | `Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace` |
 | In-memory (unit tests/kiosk) | none — set `Kiosk:Enabled=true` |
 
-PostgreSQL applies EF Core migrations on startup; the in-memory provider uses code-first initialization. See [DATABASE.md](DATABASE.md) for details.
+PostgreSQL applies EF Core migrations on startup; the in-memory provider uses code-first initialization. See [docs/database.md](docs/database.md) for details.
 
 ---
 
@@ -251,8 +251,8 @@ See [`e2e/GUIDE.md`](e2e/GUIDE.md) for selectors, auth, polling patterns, and de
 ## Documentation
 
 - **User & operator manual** — a searchable HTML manual built from markdown in [`manual/`](manual/) (VitePress), served by the app at **`/docs`**. Run it locally with `cd manual && npm install && npm run docs:dev` (http://localhost:4202).
-- [CLAUDE.md](CLAUDE.md) — architecture, conventions, and the domain entity pattern
-- [DATABASE.md](DATABASE.md) — database providers and migrations
+- [docs/](docs/) — AI assistant guides: architecture, code style, domain entity pattern, validation, testing, commands
+- [docs/database.md](docs/database.md) — database providers and migrations
 - [frontend/DESIGN.md](frontend/DESIGN.md) — frontend visual system
 - [frontend/BEST_PRACTICES.md](frontend/BEST_PRACTICES.md) — frontend code architecture
 

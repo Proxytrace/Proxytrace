@@ -1,5 +1,6 @@
 import { ChevronDownIcon } from '../icons';
 import { cn } from '../../lib/cn';
+import { FOCUS_RING } from '../../lib/constants';
 
 interface FilterChipProps {
   label: string;
@@ -14,16 +15,23 @@ export function FilterChip({ label, value, active, onClick, accent }: FilterChip
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer',
+        'inline-flex items-center gap-[7px] h-9 px-[11px] rounded-[8px] text-body font-medium',
+        'whitespace-nowrap cursor-pointer border',
+        'transition-[background,border-color,color] duration-[var(--motion-fast)] ease-[var(--ease-standard)]',
+        FOCUS_RING,
         active
-          ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
-          : 'bg-card text-secondary shadow-[var(--shadow-pill)]',
+          ? 'bg-accent-subtle border-[var(--accent-border)] text-accent-text'
+          : 'bg-card text-secondary border-border hover:bg-card-2',
       )}
     >
-      {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
-      <span className="text-muted font-medium">{label}</span>
+      {accent && <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: accent }} />}
+      <span className={cn('font-medium', active ? 'text-accent' : 'text-muted')}>{label}</span>
       <span>{value}</span>
-      <ChevronDownIcon size={12} strokeWidth={2.5} className="text-muted ml-[2px]" />
+      <ChevronDownIcon
+        size={12}
+        strokeWidth={2.5}
+        className={cn('ml-[2px]', active ? 'text-accent-text' : 'text-muted')}
+      />
     </button>
   );
 }

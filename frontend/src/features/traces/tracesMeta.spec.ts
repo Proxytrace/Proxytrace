@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { AgentCallDto } from '../../api/models';
-import { buildRows, rangeFrom, latencyBarPct, toolCount, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
+import { buildRows, latencyBarPct, toolCount, autoTimeRange, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
@@ -124,53 +124,6 @@ describe('toolCount', () => {
   });
 });
 
-// ── rangeFrom ─────────────────────────────────────────────────────────────────
-
-describe('rangeFrom', () => {
-  it('returns undefined for "all"', () => {
-    expect(rangeFrom('all')).toBeUndefined();
-  });
-
-  it('returns an ISO string for "1h" approximately 1 hour ago', () => {
-    const before = Date.now() - 3_600_000;
-    const result = rangeFrom('1h');
-    expect(result).toBeDefined();
-    const parsed = new Date(result as string).getTime();
-    expect(parsed).toBeGreaterThanOrEqual(before - 100);
-    expect(parsed).toBeLessThanOrEqual(before + 100);
-  });
-
-  it('returns an ISO string for "24h" approximately 24 hours ago', () => {
-    const before = Date.now() - 86_400_000;
-    const result = rangeFrom('24h');
-    expect(result).toBeDefined();
-    const parsed = new Date(result as string).getTime();
-    expect(parsed).toBeGreaterThanOrEqual(before - 100);
-    expect(parsed).toBeLessThanOrEqual(before + 100);
-  });
-
-  it('returns an ISO string for "7d"', () => {
-    const before = Date.now() - 7 * 86_400_000;
-    const result = rangeFrom('7d');
-    expect(result).toBeDefined();
-    const parsed = new Date(result as string).getTime();
-    expect(parsed).toBeGreaterThanOrEqual(before - 100);
-    expect(parsed).toBeLessThanOrEqual(before + 100);
-  });
-
-  it('returns an ISO string for "30d"', () => {
-    const before = Date.now() - 30 * 86_400_000;
-    const result = rangeFrom('30d');
-    expect(result).toBeDefined();
-    const parsed = new Date(result as string).getTime();
-    expect(parsed).toBeGreaterThanOrEqual(before - 100);
-    expect(parsed).toBeLessThanOrEqual(before + 100);
-  });
-
-  it('returns undefined for unknown keys', () => {
-    expect(rangeFrom('unknown')).toBeUndefined();
-  });
-});
 
 // ── latencyBarPct ─────────────────────────────────────────────────────────────
 
@@ -193,5 +146,25 @@ describe('latencyBarPct', () => {
 describe('GRID_TEMPLATE', () => {
   it('is a string joining all COL_WIDTHS with spaces', () => {
     expect(GRID_TEMPLATE).toBe(COL_WIDTHS.join(' '));
+  });
+});
+
+// ── autoTimeRange ──────────────────────────────────────────────────────────────
+
+describe('autoTimeRange', () => {
+  const now = new Date('2026-06-08T12:00:00Z').getTime();
+
+  it('returns all-time when there is no trace', () => {
+    expect(autoTimeRange(null, now)).toEqual({ kind: 'all' });
+  });
+
+  it('picks the smallest preset containing the newest trace', () => {
+    expect(autoTimeRange(new Date(now - 5 * 60_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '15m' });
+    expect(autoTimeRange(new Date(now - 30 * 60_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '1h' });
+    expect(autoTimeRange(new Date(now - 3 * 3_600_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '6h' });
+    expect(autoTimeRange(new Date(now - 12 * 3_600_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '24h' });
+    expect(autoTimeRange(new Date(now - 3 * 86_400_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '7d' });
+    expect(autoTimeRange(new Date(now - 20 * 86_400_000).toISOString(), now)).toEqual({ kind: 'preset', preset: '30d' });
+    expect(autoTimeRange(new Date(now - 90 * 86_400_000).toISOString(), now)).toEqual({ kind: 'all' });
   });
 });

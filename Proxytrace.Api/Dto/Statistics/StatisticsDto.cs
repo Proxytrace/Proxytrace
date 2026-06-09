@@ -16,6 +16,8 @@ public record DashboardViewDto(
     IReadOnlyList<ModelBreakdownDto> ModelBreakdown,
     IReadOnlyList<TokenUsageDto> TokenUsage,
     IReadOnlyList<AgentTokenUsageDto> TokenUsageByAgent,
+    /// <summary>Bucket granularity used for the token series, e.g. "fiveMinutes", "hourly", "daily".</summary>
+    string TokenBucket,
     IReadOnlyList<AgentCallDto> RecentTraces,
     IReadOnlyList<AgentDto> Agents);
 

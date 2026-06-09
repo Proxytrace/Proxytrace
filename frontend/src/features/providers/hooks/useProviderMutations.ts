@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { providersApi } from '../../../api/providers';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import type {
-  CreateApiKeyRequest, CreateModelEndpointRequest, CreateProviderRequest,
-  ModelProviderKind, UpdateModelEndpointPricingRequest,
+  CreateApiKeyRequest, CreateProviderRequest,
+  ModelProviderKind,
 } from '../../../api/models';
 
 /** Creates a provider; invalidates the list. Caller selects the new provider via `mutate`'s onSuccess. */
@@ -39,30 +39,11 @@ export function useDeleteProvider() {
   });
 }
 
-/** Adds a model endpoint to a provider. */
-export function useCreateModel(providerId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (req: CreateModelEndpointRequest) => providersApi.createModel(providerId, req),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
-  });
-}
-
 /** Deletes a model endpoint by id. */
 export function useDeleteModel() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (endpointId: string) => providersApi.deleteModel(endpointId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
-  });
-}
-
-/** Updates per-token pricing on a model endpoint. */
-export function useUpdateModelPricing(providerId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (args: { endpointId: string; req: UpdateModelEndpointPricingRequest }) =>
-      providersApi.updateModelPricing(providerId, args.endpointId, args.req),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }
@@ -81,6 +62,15 @@ export function useDeleteKey(providerId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (keyId: string) => providersApi.deleteKey(providerId, keyId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
+  });
+}
+
+/** Re-discovers a provider's models and refreshes pricing; invalidates the overview. */
+export function useReloadProvider(providerId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => providersApi.reload(providerId),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.providersOverview }),
   });
 }

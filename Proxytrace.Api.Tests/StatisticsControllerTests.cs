@@ -31,6 +31,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 ModelBreakdown: [new ModelBreakdownStat(endpointId, "gpt-4o", CallCount: 3, TotalInputTokens: null, TotalOutputTokens: null, AvgDurationMs: null)],
                 TokenUsage: [new TokenUsageStat(date.ToDateTime(TimeOnly.MinValue), endpointId, InputTokens: 10, OutputTokens: 20)],
                 TokenUsageByAgent: [new AgentTokenUsageStat(date.ToDateTime(TimeOnly.MinValue), agentId, InputTokens: 5, OutputTokens: 6)],
+                TokenBucket: StatisticsBucket.Hourly,
                 RecentTraces: [],
                 Agents: [],
                 AgentLastCallTimes: new Dictionary<Guid, DateTimeOffset>()));
@@ -48,6 +49,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
         dto.ModelBreakdown[0].TotalInputTokens.Should().Be(0); // null coerced
         dto.TokenUsage[0].InputTokens.Should().Be(10);
         dto.TokenUsageByAgent[0].OutputTokens.Should().Be(6);
+        dto.TokenBucket.Should().Be("hourly");
         dto.RecentTraces.Should().BeEmpty();
         dto.Agents.Should().BeEmpty();
     }
@@ -62,6 +64,7 @@ public sealed class StatisticsControllerTests : BaseTest<Module>
                 new LiveTelemetry(0, 0, 0, 0, 0, "v"),
                 new DashboardTrends([], [], [], []),
                 [], [], [], [], [],
+                StatisticsBucket.Daily,
                 [], [], new Dictionary<Guid, DateTimeOffset>()));
         var controller = ResolveController(dashboard);
         var projectId = Guid.NewGuid();

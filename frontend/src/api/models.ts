@@ -1,3 +1,5 @@
+import type { StatisticsBucket } from '../lib/time-range';
+
 export enum TestRunStatus {
   Pending = 'Pending',
   Running = 'Running',
@@ -137,6 +139,8 @@ export interface DashboardViewDto {
   modelBreakdown: ModelBreakdownDto[];
   tokenUsage: TokenUsageDto[];
   tokenUsageByAgent: AgentTokenUsageDto[];
+  /** Bucket granularity used for the token series (backend-resolved; drives the chart's time axis). */
+  tokenBucket: StatisticsBucket;
   recentTraces: AgentCallDto[];
   agents: AgentDto[];
 }
@@ -564,6 +568,12 @@ export interface TestCaseFixtureDto {
   endpoints: EndpointUsageDto[];
 }
 
+export interface TraceHistogramBucket {
+  start: string;
+  total: number;
+  errors: number;
+}
+
 /* ── Filters ── */
 export interface AgentCallFilter {
   projectId?: string;
@@ -746,4 +756,9 @@ export interface ApplicationErrorFilter {
   page: number;
   pageSize: number;
   level?: ApplicationErrorLevel;
+  search?: string;
+  /** Inclusive lower time bound (ISO 8601). Errors at or after this instant. */
+  from?: string;
+  /** Inclusive upper time bound (ISO 8601). Errors at or before this instant. */
+  to?: string;
 }

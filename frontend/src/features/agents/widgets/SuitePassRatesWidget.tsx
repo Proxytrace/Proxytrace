@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import type { AgentSuitePassRateDto } from '../../../api/models';
 import { fmtRelative } from '../../../lib/format';
+import { RowButton } from '../../../components/ui/RowButton';
 import { Widget } from './Widget';
 
 interface Props {
   suitePassRates: AgentSuitePassRateDto[];
+  agentId: string;
   className?: string;
 }
 
@@ -13,7 +16,8 @@ function color(pct: number): string {
   return 'var(--warn)';
 }
 
-export function SuitePassRatesWidget({ suitePassRates, className }: Props) {
+export function SuitePassRatesWidget({ suitePassRates, agentId, className }: Props) {
+  const navigate = useNavigate();
   if (suitePassRates.length === 0) {
     return (
       <Widget title="Suite Pass Rates" className={className}>
@@ -33,19 +37,25 @@ export function SuitePassRatesWidget({ suitePassRates, className }: Props) {
           const pct = s.testCases > 0 ? (s.passed / s.testCases) * 100 : 0;
           const clr = color(pct);
           return (
-            <div key={s.suiteId} className="flex flex-col gap-1.5" data-testid={`suite-pass-rate-${s.suiteId}`}>
-              <div className="flex items-baseline justify-between gap-2 text-body-sm">
+            <RowButton
+              key={s.suiteId}
+              data-testid={`suite-pass-rate-${s.suiteId}`}
+              onClick={() => navigate(`/suites?agentId=${agentId}&suiteId=${s.suiteId}`)}
+              title={`Open ${s.suiteName}`}
+              className="flex flex-col gap-1.5 rounded-md px-2 py-2 -mx-2 transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
+            >
+              <div className="flex items-baseline justify-between gap-2 text-body-sm w-full">
                 <span className="font-medium text-primary truncate">{s.suiteName}</span>
                 <span className="shrink-0 flex items-baseline gap-1.5 font-mono">
                   <span className="text-muted">{s.passed}/{s.testCases}</span>
                   <span className="font-semibold" style={{ color: clr }}>{Math.round(pct)}%</span>
                 </span>
               </div>
-              <div className="h-[6px] rounded-full bg-card-2 overflow-hidden">
+              <div className="h-[6px] rounded-full bg-card-2 overflow-hidden w-full">
                 <div className="h-full transition-[width] duration-300" style={{ width: `${pct}%`, background: clr }} />
               </div>
               <span className="text-caption text-muted">{fmtRelative(s.latestRunAt)}</span>
-            </div>
+            </RowButton>
           );
         })}
       </div>

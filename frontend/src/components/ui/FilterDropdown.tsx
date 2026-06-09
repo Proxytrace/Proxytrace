@@ -19,6 +19,8 @@ interface FilterDropdownProps {
   /** Whether the menu opens below ('down', default) or above ('up') the trigger. */
   direction?: 'down' | 'up';
   width?: number;
+  /** When set, tags the trigger `{testId}` and each option `{testId}-option-{key}` for e2e. */
+  testId?: string;
 }
 
 /**
@@ -35,6 +37,7 @@ export function FilterDropdown({
   align = 'left',
   direction = 'down',
   width = 200,
+  testId,
 }: FilterDropdownProps) {
   const selected = options.find(o => o.key === value);
   const displayLabel = selected?.label ?? value;
@@ -44,8 +47,9 @@ export function FilterDropdown({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
+          data-testid={testId}
           className={cn(
-            'group inline-flex items-center gap-[6px] px-[10px] py-[6px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
+            'group inline-flex items-center gap-[6px] h-9 px-[10px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
             active
               ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
               : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
@@ -74,6 +78,7 @@ export function FilterDropdown({
             return (
               <DropdownMenu.Item
                 key={opt.key}
+                data-testid={testId ? `${testId}-option-${opt.key}` : undefined}
                 onSelect={() => onChange(opt.key)}
                 className={cn(
                   'flex items-center gap-2 px-[10px] py-[7px] text-[12.5px] text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',

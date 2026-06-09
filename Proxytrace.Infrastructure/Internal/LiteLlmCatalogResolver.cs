@@ -1,0 +1,114 @@
+using System.Text.Json;
+using Proxytrace.Common.Async;
+using Proxytrace.Domain.ModelProvider;
+
+namespace Proxytrace.Infrastructure.Internal;
+
+/// <summary>
+/// Resolves prices from the LiteLLM catalog (USD per token), converting to EUR / 1M tokens via the
+/// FX provider. The catalog is fetched once and cached in memory. Used for all provider kinds —
+/// Azure providers pass an <c>azure/&lt;model&gt;</c> candidate ahead of the bare model name.
+/// </summary>
+internal sealed class LiteLlmCatalogResolver
+{
+    private static readonly Guid LockKey = Guid.NewGuid();
+
+    private readonly HttpClient http;
+    private readonly PricingOptions options;
+    private readonly IFxRateProvider fxRateProvider;
+    private readonly IAsyncLock gate;
+    private IReadOnlyDictionary<string, (decimal? Input, decimal? Output)>? cache;
+
+    public LiteLlmCatalogResolver(
+        HttpClient http,
+        PricingOptions options,
+        IFxRateProvider fxRateProvider,
+        IAsyncLock gate)
+    {
+        this.http = http;
+        this.options = options;
+        this.fxRateProvider = fxRateProvider;
+        this.gate = gate;
+    }
+
+    /// <summary>
+    /// Resolves the price for the first <paramref name="candidateModelNames"/> present in the
+    /// catalog (tried in order). Returns <see cref="ModelPrice.Unknown"/> if none match or the FX
+    /// rate is unavailable.
+    /// </summary>
+    public async Task<ModelPrice> ResolveAsync(
+        IReadOnlyList<string> candidateModelNames,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyDictionary<string, (decimal? Input, decimal? Output)> catalog =
+            await GetCatalogAsync(cancellationToken);
+
+        (decimal? Input, decimal? Output)? entry = null;
+        foreach (string name in candidateModelNames)
+        {
+            if (catalog.TryGetValue(name, out var found))
+            {
+                entry = found;
+                break;
+            }
+        }
+
+        if (entry is null)
+            return ModelPrice.Unknown;
+
+        decimal? fx = await fxRateProvider.GetUsdToEurAsync(cancellationToken);
+        return fx is null 
+            ? ModelPrice.Unknown 
+            : new ModelPrice(ToEurPer1M(entry.Value.Input, fx.Value), ToEurPer1M(entry.Value.Output, fx.Value));
+    }
+
+    private static decimal? ToEurPer1M(decimal? usdPerToken, decimal fx)
+        => usdPerToken * 1_000_000m * fx;
+
+    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?)>> GetCatalogAsync(
+        CancellationToken cancellationToken)
+    {
+        if (cache is not null)
+            return cache;
+
+        using var _ = await gate.LockAsync(LockKey, cancellationToken);
+        if (cache is not null)
+            return cache;
+        cache = await FetchAsync(cancellationToken);
+        return cache;
+    }
+
+    private async Task<IReadOnlyDictionary<string, (decimal?, decimal?)>> FetchAsync(
+        CancellationToken cancellationToken)
+    {
+        var result = new Dictionary<string, (decimal?, decimal?)>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            using HttpResponseMessage response = await http.GetAsync(options.LiteLlmFeedUrl, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return result;
+
+            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using JsonDocument doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
+            {
+                if (prop.Value.ValueKind != JsonValueKind.Object)
+                    continue;
+                result[prop.Name] = (
+                    ReadDecimal(prop.Value, "input_cost_per_token"),
+                    ReadDecimal(prop.Value, "output_cost_per_token"));
+            }
+        }
+        catch
+        {
+            // fail-soft: empty catalog → callers get ModelPrice.Unknown
+        }
+
+        return result;
+    }
+
+    private static decimal? ReadDecimal(JsonElement obj, string name) =>
+        obj.TryGetProperty(name, out JsonElement el) && el.ValueKind == JsonValueKind.Number
+            ? el.GetDecimal()
+            : null;
+}

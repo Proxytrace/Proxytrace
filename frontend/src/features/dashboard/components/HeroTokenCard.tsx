@@ -3,24 +3,33 @@
 import { AreaChart } from '../../../components/charts';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
-import { ArrowUpRightIcon } from '../../../components/icons';
 import type { SummaryDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { fmtTokens } from '../../../lib/format';
-import type { RangeKey } from '../../../lib/time-range';
+import { bucketAxisLabel, rangeWindowLabel, type RangeKey, type StatisticsBucket } from '../../../lib/time-range';
 import { RANGES, splitTokenStr, type ModelSplit } from '../dashboardMeta';
 
 interface HeroTokenCardProps {
   summary: SummaryDto | undefined;
   tokenVolume: number[];
+  /** Bucket-start ISO timestamps aligned 1:1 with `tokenVolume`, for the x time axis. */
+  tokenBuckets: string[];
+  /** Backend-resolved bucket granularity, for axis-label formatting. */
+  bucket: StatisticsBucket;
   modelSplit: ModelSplit;
   range: RangeKey;
   onRangeChange: (r: RangeKey) => void;
 }
 
-export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRangeChange }: HeroTokenCardProps) {
+export function HeroTokenCard({ summary, tokenVolume, tokenBuckets, bucket, modelSplit, range, onRangeChange }: HeroTokenCardProps) {
   const totalTokens = (summary?.totalInputTokens ?? 0) + (summary?.totalOutputTokens ?? 0);
   const { num: tokenNum, suffix: tokenSuffix } = splitTokenStr(totalTokens);
+
+  // Time axis: ~5 evenly spaced labels formatted from the bucket timestamps.
+  const labelStep = Math.max(1, Math.ceil((tokenBuckets.length - 1) / 4));
+  const xLabelFn = (i: number, n: number): string | null =>
+    (i % labelStep === 0 || i === n - 1) && tokenBuckets[i] ? bucketAxisLabel(tokenBuckets[i], bucket) : null;
+  const tooltipLabelFn = (i: number): string => (tokenBuckets[i] ? bucketAxisLabel(tokenBuckets[i], bucket) : '');
 
   return (
     <div data-testid="hero-token-card" className="relative overflow-hidden rounded-lg bg-card px-4 pt-3 pb-3.5 flex flex-col gap-2.5 shadow-[var(--shadow-card)]">
@@ -31,7 +40,7 @@ export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRange
       <div className="relative flex items-start justify-between">
         <div>
           <div className="text-[9px] text-muted tracking-[0.16em] uppercase font-bold font-mono mb-1">
-            Token Volume · rolling {range}
+            Token Volume · {rangeWindowLabel(range)}
           </div>
           <div className="flex items-baseline gap-2.5 flex-wrap">
             <span
@@ -40,9 +49,6 @@ export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRange
               className="text-[44px] font-extrabold tracking-[-0.04em] leading-[0.92] text-primary tabular-nums"
             >
               {tokenNum}<span className="text-accent">{tokenSuffix}</span>
-            </span>
-            <span className="inline-flex items-center gap-[3px] text-body-sm font-bold text-success px-2 py-[3px] bg-success-subtle rounded-full">
-              <ArrowUpRightIcon size={11} /> +12%
             </span>
           </div>
           <div className="mt-1.5 flex gap-2.5 text-[10.5px] font-mono text-muted items-center flex-wrap">
@@ -65,14 +71,16 @@ export function HeroTokenCard({ summary, tokenVolume, modelSplit, range, onRange
         {tokenVolume.length >= 2 ? (
           <AreaChart
             data={tokenVolume}
-            height={120}
+            height={140}
             color="var(--accent-primary)"
             gradientId="heroVolGrad"
-            showAxis={false}
+            showAxis
+            xLabelFn={xLabelFn}
+            tooltipLabelFn={tooltipLabelFn}
             formatValue={v => `${fmtTokens(v)} tokens`}
           />
         ) : (
-          <div className="h-[120px] flex items-center justify-center">
+          <div className="h-[140px] flex items-center justify-center">
             <EmptyState title="No token data yet" description="Volume appears once traces are captured." />
           </div>
         )}

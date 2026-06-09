@@ -8,7 +8,8 @@ import { QUERY_KEYS } from '../../../api/query-keys';
 import { REFETCH_INTERVAL_FAST } from '../../../lib/constants';
 
 interface DashboardQueryOptions {
-  from: string;
+  /** Lower time bound, or `undefined` for the all-time bucket. */
+  from: string | undefined;
   projectId: string | undefined;
   enabled: boolean;
 }

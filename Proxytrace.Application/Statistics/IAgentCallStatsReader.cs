@@ -9,6 +9,9 @@ public interface IAgentCallStatsReader
 {
     Task<StatisticsSummary> GetSummaryAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
 
+    /// <summary>Timestamp of the earliest matching call, or <c>null</c> when the filter matches nothing.</summary>
+    Task<DateTimeOffset?> GetEarliestCallAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default);

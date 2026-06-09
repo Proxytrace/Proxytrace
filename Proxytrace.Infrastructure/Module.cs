@@ -1,4 +1,6 @@
 using Autofac;
+using Autofac.Core;
+using Microsoft.Extensions.Configuration;
 using Proxytrace.Application.Demo;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
@@ -19,7 +21,39 @@ public class Module : Autofac.Module
             .AsSelf();
 
         builder.RegisterType<ProviderClient>()
-            .As<IProviderClient>();
+            .As<IProviderClient>()
+            .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"));
+
+        builder.Register(c =>
+            {
+                var cfg = c.Resolve<IConfiguration>().GetSection("Pricing");
+                var defaults = new PricingOptions();
+                return new PricingOptions
+                {
+                    LiteLlmFeedUrl = cfg["LiteLlmFeedUrl"] ?? defaults.LiteLlmFeedUrl,
+                    FxApiUrl = cfg["FxApiUrl"] ?? defaults.FxApiUrl,
+                };
+            })
+            .AsSelf()
+            .SingleInstance();
+
+        builder.Register(_ => new HttpClient())
+            .Named<HttpClient>("pricing")
+            .SingleInstance();
+
+        builder.RegisterType<FrankfurterFxRateProvider>()
+            .As<IFxRateProvider>()
+            .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"))
+            .SingleInstance();
+
+        builder.RegisterType<LiteLlmCatalogResolver>()
+            .AsSelf()
+            .WithParameter(ResolvedParameter.ForNamed<HttpClient>("pricing"))
+            .SingleInstance();
+
+        builder.RegisterType<PricingService>()
+            .As<IPricingService>()
+            .SingleInstance();
 
         builder.Register(_ => new KioskEndpointOptions())
             .AsSelf()

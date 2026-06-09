@@ -79,9 +79,12 @@ Pick an agent from the searchable list on the left to open its detail panel:
   prior revision), followed by the **tools** list (click a tool to expand its parameters,
   types, and enum values inline).
 - **Version history** (right rail) — a timeline of every captured version, newest first,
-  each showing its date and tool count with the current version highlighted; use **Move…**
-  to re-parent a version (see [Fixing a misclassification](#fixing-a-misclassification)).
-  Below it, **suite pass rates** show how the agent scores per test suite, and the full
+  each showing its date and tool count with the current version highlighted. Click any
+  version to view its system prompt and tools in the main column; use **Move…** to
+  re-parent a version (see [Fixing a misclassification](#fixing-a-misclassification)).
+  Below it, **suite pass rates** show how the agent scores per test suite — click a row to
+  jump to that suite — followed by **recent traces** (the latest calls for the agent; click
+  one to open it in the [Traces](/guide/capturing-traces) view), and the full
   model-parameter set sits in a collapsible panel that summarises temperature and max
   tokens when collapsed.
 

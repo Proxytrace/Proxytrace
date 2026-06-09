@@ -99,6 +99,7 @@ public record DashboardView(
     IReadOnlyList<ModelBreakdownStat> ModelBreakdown,
     IReadOnlyList<TokenUsageStat> TokenUsage,
     IReadOnlyList<AgentTokenUsageStat> TokenUsageByAgent,
+    StatisticsBucket TokenBucket,
     IReadOnlyList<IAgentCall> RecentTraces,
     IReadOnlyList<IAgent> Agents,
     IReadOnlyDictionary<Guid, DateTimeOffset> AgentLastCallTimes);

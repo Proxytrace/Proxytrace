@@ -1,7 +1,7 @@
 import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { fmtRelative } from '../../../lib/format';
+import { fmtDateTime } from '../../../lib/format';
 import type { ApplicationErrorDto } from '../../../api/models';
 import { LEVEL_COLOR } from '../errorLogMeta';
 
@@ -27,7 +27,7 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
       data-testid="error-log-table"
       className={`flex flex-col ${isFetching ? 'opacity-60 transition-opacity' : ''}`}
     >
-      <div className="grid grid-cols-[90px_1fr_220px_120px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
+      <div className="grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted border-b border-hairline">
         <span>Level</span>
         <span>Message</span>
         <span>Source</span>
@@ -38,7 +38,7 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
           key={error.id}
           data-testid={`error-log-row-${error.id}`}
           onClick={() => onSelect(error)}
-          className={`grid grid-cols-[90px_1fr_220px_120px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors ${
+          className={`grid grid-cols-[90px_1fr_200px_190px] gap-3 px-3 py-2.5 items-center border-b border-hairline transition-colors ${
             error.id === selectedId ? 'bg-accent-subtle' : 'hover:bg-card-2'
           }`}
         >
@@ -49,7 +49,7 @@ export function ErrorLogTable({ errors, selectedId, onSelect, isFetching }: Erro
           <span className="min-w-0 truncate text-xs text-muted font-mono" title={error.category}>
             {error.exceptionType ?? error.category}
           </span>
-          <span className="text-right text-xs text-muted whitespace-nowrap">{fmtRelative(error.createdAt)}</span>
+          <span className="text-right text-xs text-muted font-mono whitespace-nowrap tabular-nums">{fmtDateTime(error.createdAt)}</span>
         </RowButton>
       ))}
     </div>

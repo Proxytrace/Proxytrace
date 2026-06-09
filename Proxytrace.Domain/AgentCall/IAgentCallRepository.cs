@@ -17,6 +17,17 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Buckets matching calls into <paramref name="buckets"/> equal-width time slots spanning the
+    /// filter window. When <see cref="AgentCallFilter.From"/> is null the window starts at the
+    /// earliest matching call; when <see cref="AgentCallFilter.To"/> is null it ends at "now".
+    /// Returns an empty list when nothing matches.
+    /// </summary>
+    Task<IReadOnlyList<AgentCallHistogramBucket>> GetHistogramAsync(
+        AgentCallFilter filter,
+        int buckets,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns the timestamp of the most recent call for each agent, keyed by agent ID.
     /// Agents with no calls are omitted.
     /// </summary>

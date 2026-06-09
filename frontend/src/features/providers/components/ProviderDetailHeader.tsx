@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { CopyIcon, TrashIcon } from '../../../components/icons';
 import { providerColor } from '../../../lib/colors';
 import useToast from '../../../hooks/useToast';
-import { PROVIDER_KIND_OPTIONS, kindColor, kindLabel, maskKey } from '../providerMeta';
+import { PROVIDER_KIND_OPTIONS, kindColor, kindLabel, maskKey, isDefaultEndpoint, isAzureEndpoint } from '../providerMeta';
 import { useDeleteProvider, useUpdateProviderKind } from '../hooks/useProviderMutations';
 
 interface ProviderDetailHeaderProps {
@@ -66,7 +66,16 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
               </div>
             )}
           </div>
-          <div className="font-mono text-body text-muted truncate">{provider.endpoint}</div>
+          {!isDefaultEndpoint(provider.kind, provider.endpoint) && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              {isAzureEndpoint(provider.endpoint) && (
+                <ColoredBadge color="var(--teal)" label="Azure" />
+              )}
+              <span className="font-mono text-body text-muted truncate" title={provider.endpoint}>
+                {provider.endpoint}
+              </span>
+            </div>
+          )}
         </div>
         <Button
           data-testid={`provider-delete-btn-${provider.id}`}

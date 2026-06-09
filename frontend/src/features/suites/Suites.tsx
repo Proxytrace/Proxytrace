@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
@@ -9,12 +10,15 @@ import { StepWizard } from '../../components/overlays/StepWizard';
 import { Button } from '../../components/ui/Button';
 import { agentColor } from '../../lib/colors';
 import { useFilter } from '../../hooks/useFilter';
+import { useSelectedId } from '../../hooks/useSelectedId';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 import { RunConfirmModal } from './RunConfirmModal';
 import { EditSuiteDialog } from './EditSuiteDialog';
 import { SuiteCard } from './components/SuiteCard';
 import { useSuites, useSuiteAgents, useSuiteEvaluators } from './hooks/useSuiteQueries';
 import { useStartRun, useDeleteSuite, useCreateSuite } from './hooks/useSuiteMutations';
+import { useSuiteFocus } from './hooks/useSuiteFocus';
+import { useScrollToSelectedSuite } from './hooks/useScrollToSelectedSuite';
 import { computeSuiteStats } from './suitesMeta';
 
 export default function Suites() {
@@ -33,6 +37,16 @@ export default function Suites() {
   const { agents } = useSuiteAgents();
   const { evaluators } = useSuiteEvaluators();
 
+  // Deep-link from the agent detail view: ?agentId pre-filters, ?suiteId scrolls + highlights.
+  const [searchParams] = useSearchParams();
+  const initialAgentFilter = searchParams.get('agentId') ?? '';
+  const highlightSuiteId = useSuiteFocus(!isLoading);
+
+  // Persisted selection: ?id= keeps the chosen suite highlighted across refresh / links,
+  // and is brought back on-screen on load.
+  const [selectedSuiteId, setSelectedSuiteId] = useSelectedId();
+  useScrollToSelectedSuite(selectedSuiteId, !isLoading);
+
   const startRun = useStartRun(() => setRunDone(true));
   const delSuite = useDeleteSuite(() => setDeleteSuite(null));
   const createSuite = useCreateSuite(() => { setCreateOpen(false); resetCreate(); });
@@ -40,7 +54,7 @@ export default function Suites() {
   const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(
     suites,
     (s, id: string) => !id || s.agentId === id,
-    '',
+    initialAgentFilter,
   );
 
   const { totalCases, totalRuns, avgPassRate } = computeSuiteStats(suites);
@@ -59,6 +73,14 @@ export default function Suites() {
     setSelectedCalls(prev => {
       const s = new Set(prev);
       if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+
+  function selectAllCalls(ids: string[]) {
+    setSelectedCalls(prev => {
+      const s = new Set(prev);
+      ids.forEach(id => s.add(id));
       return s;
     });
   }
@@ -91,16 +113,12 @@ export default function Suites() {
   }, [suites]);
 
   const canAdvanceCreate =
-    ([!!createAgentId, !!createName.trim(), selectedCalls.size > 0, true] as boolean[])[createStep] ?? false;
+    ([!!createAgentId, selectedCalls.size > 0, !!createName.trim(), true] as boolean[])[createStep] ?? false;
 
   const wizardSteps = [
     {
       label: 'Select agent',
       content: <AgentStep agents={agents} value={createAgentId} onChange={setCreateAgentId} />,
-    },
-    {
-      label: 'Name suite',
-      content: <NameStep value={createName} onChange={setCreateName} />,
     },
     {
       label: 'Select traces',
@@ -109,9 +127,14 @@ export default function Suites() {
           agentId={createAgentId}
           selected={selectedCalls}
           onToggle={toggleSelectedCall}
+          onSelectAll={selectAllCalls}
           onClear={() => setSelectedCalls(new Set())}
         />
       ),
+    },
+    {
+      label: 'Name suite',
+      content: <NameStep value={createName} onChange={setCreateName} />,
     },
     {
       label: 'Select evaluators',
@@ -193,6 +216,9 @@ export default function Suites() {
           <SuiteCard
             key={suite.id}
             suite={suite}
+            highlight={highlightSuiteId === suite.id}
+            selected={selectedSuiteId === suite.id}
+            onSelect={() => setSelectedSuiteId(suite.id)}
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
             onEdit={() => setEditSuite(suite)}
             onDelete={() => setDeleteSuite(suite)}

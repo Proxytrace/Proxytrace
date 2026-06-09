@@ -35,7 +35,7 @@ export function Switch({
         'relative shrink-0 w-10 h-6 rounded-full transition-colors cursor-pointer',
         FOCUS_RING,
         'disabled:opacity-50 disabled:cursor-not-allowed',
-        checked ? 'bg-[image:var(--grad-accent)]' : 'bg-card-2 border border-hairline',
+        checked ? 'bg-accent' : 'bg-card-2 border border-hairline',
       )}
     >
       <span

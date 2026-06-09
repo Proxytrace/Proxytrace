@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
-import { rangeFrom, type RangeKey } from '../../lib/time-range';
+import { bucketFor, rangeFromOpt, RANGE_KEYS, type RangeKey } from '../../lib/time-range';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import {
   computeLatencyStats,
-  computeTokenVolume,
+  computeTokenSeries,
   computeModelSplit,
   computeLatencyHist,
   computeTokenAgentShare,
@@ -25,10 +26,15 @@ import { AgentsSection } from './components/AgentsSection';
 
 export default function Dashboard() {
   const qc = useQueryClient();
-  const [range, setRange] = useState<RangeKey>('24h');
+  // Range selector persists across refresh / navigation. Defaults to the all-time bucket
+  // until the user picks a window.
+  const [storedRange, setRange] = useLocalStorageState<RangeKey>('dashboard.range', 'all');
+  // Guard against a stale/garbage stored value — only accept a known key.
+  const range = RANGE_KEYS.includes(storedRange) ? storedRange : 'all';
   // Memoize so `from` is stable across renders; recomputing `new Date()` each
   // render would churn every queryKey below and cause an infinite refetch loop.
-  const from = useMemo(() => rangeFrom(range), [range]);
+  // `undefined` for the all-time bucket (no `from` filter).
+  const from = useMemo(() => rangeFromOpt(range), [range]);
   const { currentProjectId, currentProject } = useCurrentProject();
   const projectId = currentProjectId ?? undefined;
   const enabled = currentProjectId !== null;
@@ -58,7 +64,8 @@ export default function Dashboard() {
   const freshIds = useFreshTraces(recentTraces);
 
   const latencyStats = computeLatencyStats(dashboard?.latency ?? []);
-  const tokenVolume = computeTokenVolume(dashboard?.tokenUsage ?? []);
+  const tokenBucket = dashboard?.tokenBucket ?? bucketFor(range);
+  const tokenSeries = computeTokenSeries(dashboard?.tokenUsage ?? [], range, tokenBucket);
   const modelSplit = computeModelSplit(dashboard?.modelBreakdown ?? []);
   const latencyHist = computeLatencyHist(dashboard?.latency ?? []);
   const tokenAgentShare = computeTokenAgentShare(dashboard?.tokenUsageByAgent ?? [], agents);
@@ -91,7 +98,9 @@ export default function Dashboard() {
       >
         <HeroTokenCard
           summary={summary}
-          tokenVolume={tokenVolume}
+          tokenVolume={tokenSeries.values}
+          tokenBuckets={tokenSeries.buckets}
+          bucket={tokenBucket}
           modelSplit={modelSplit}
           range={range}
           onRangeChange={setRange}

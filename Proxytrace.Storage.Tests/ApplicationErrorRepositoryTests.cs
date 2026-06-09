@@ -19,7 +19,7 @@ public sealed class ApplicationErrorRepositoryTests : BaseTest<Module>
         var middle = await generator.CreateAsync(DateTimeOffset.UtcNow.AddMinutes(-20), CancellationToken);
         var newest = await generator.CreateAsync(DateTimeOffset.UtcNow.AddMinutes(-10), CancellationToken);
 
-        var paged = await repository.GetPagedNewestFirstAsync(1, 50, null, CancellationToken);
+        var paged = await repository.GetPagedNewestFirstAsync(1, 50, null, null, null, null, CancellationToken);
 
         paged.Total.Should().Be(3);
         paged.Items.Select(e => e.Id).Should().ContainInOrder(newest.Id, middle.Id, oldest.Id);
@@ -36,10 +36,100 @@ public sealed class ApplicationErrorRepositoryTests : BaseTest<Module>
         await factory("err1", ApplicationErrorLevel.Error, "Cat", null, null).AddAsync(CancellationToken);
         await factory("err2", ApplicationErrorLevel.Error, "Cat", null, null).AddAsync(CancellationToken);
 
-        var criticals = await repository.GetPagedNewestFirstAsync(1, 50, ApplicationErrorLevel.Critical, CancellationToken);
+        var criticals = await repository.GetPagedNewestFirstAsync(1, 50, ApplicationErrorLevel.Critical, null, null, null, CancellationToken);
 
         criticals.Total.Should().Be(1);
         criticals.Items.Should().ContainSingle(e => e.Message == "crit");
+    }
+
+    [TestMethod]
+    public async Task GetPagedNewestFirst_WithSearch_MatchesMessageCaseInsensitively()
+    {
+        var services = GetServices();
+        var factory = services.GetRequiredService<IApplicationError.CreateNew>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        await factory("Database timeout while saving", ApplicationErrorLevel.Error, "Cat", null, null).AddAsync(CancellationToken);
+        await factory("Unrelated failure", ApplicationErrorLevel.Error, "Cat", null, null).AddAsync(CancellationToken);
+
+        var matches = await repository.GetPagedNewestFirstAsync(1, 50, null, "TIMEOUT", null, null, CancellationToken);
+
+        matches.Total.Should().Be(1);
+        matches.Items.Should().ContainSingle(e => e.Message == "Database timeout while saving");
+    }
+
+    [TestMethod]
+    public async Task GetPagedNewestFirst_WithSearch_MatchesStackTrace()
+    {
+        var services = GetServices();
+        var factory = services.GetRequiredService<IApplicationError.CreateNew>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        await factory("Boom", ApplicationErrorLevel.Error, "Cat", "System.Exception", "   at Acme.Widget.Spin()").AddAsync(CancellationToken);
+        await factory("Boom", ApplicationErrorLevel.Error, "Cat", "System.Exception", "   at Acme.Gadget.Whirl()").AddAsync(CancellationToken);
+
+        var matches = await repository.GetPagedNewestFirstAsync(1, 50, null, "Widget.Spin", null, null, CancellationToken);
+
+        matches.Total.Should().Be(1);
+        matches.Items.Should().ContainSingle(e => e.StackTrace != null && e.StackTrace.Contains("Widget.Spin"));
+    }
+
+    [TestMethod]
+    public async Task GetPagedNewestFirst_WithFromBound_ReturnsOnlyAtOrAfter()
+    {
+        var services = GetServices();
+        var generator = services.GetRequiredService<IApplicationErrorGenerator>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        var old = await generator.CreateAsync(DateTimeOffset.UtcNow.AddHours(-3), CancellationToken);
+        var recent = await generator.CreateAsync(DateTimeOffset.UtcNow.AddMinutes(-30), CancellationToken);
+
+        var paged = await repository.GetPagedNewestFirstAsync(
+            1, 50, null, null, DateTimeOffset.UtcNow.AddHours(-1), null, CancellationToken);
+
+        paged.Total.Should().Be(1);
+        paged.Items.Should().ContainSingle(e => e.Id == recent.Id);
+        paged.Items.Should().NotContain(e => e.Id == old.Id);
+    }
+
+    [TestMethod]
+    public async Task GetPagedNewestFirst_WithToBound_ReturnsOnlyAtOrBefore()
+    {
+        var services = GetServices();
+        var generator = services.GetRequiredService<IApplicationErrorGenerator>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        var old = await generator.CreateAsync(DateTimeOffset.UtcNow.AddHours(-3), CancellationToken);
+        var recent = await generator.CreateAsync(DateTimeOffset.UtcNow.AddMinutes(-30), CancellationToken);
+
+        var paged = await repository.GetPagedNewestFirstAsync(
+            1, 50, null, null, null, DateTimeOffset.UtcNow.AddHours(-1), CancellationToken);
+
+        paged.Total.Should().Be(1);
+        paged.Items.Should().ContainSingle(e => e.Id == old.Id);
+        paged.Items.Should().NotContain(e => e.Id == recent.Id);
+    }
+
+    [TestMethod]
+    public async Task GetPagedNewestFirst_WithFromAndTo_ReturnsOnlyWithinWindow()
+    {
+        var services = GetServices();
+        var generator = services.GetRequiredService<IApplicationErrorGenerator>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        var beforeWindow = await generator.CreateAsync(DateTimeOffset.UtcNow.AddHours(-5), CancellationToken);
+        var insideWindow = await generator.CreateAsync(DateTimeOffset.UtcNow.AddHours(-3), CancellationToken);
+        var afterWindow = await generator.CreateAsync(DateTimeOffset.UtcNow.AddMinutes(-10), CancellationToken);
+
+        var paged = await repository.GetPagedNewestFirstAsync(
+            1, 50, null, null,
+            DateTimeOffset.UtcNow.AddHours(-4),
+            DateTimeOffset.UtcNow.AddHours(-2),
+            CancellationToken);
+
+        paged.Total.Should().Be(1);
+        paged.Items.Should().ContainSingle(e => e.Id == insideWindow.Id);
+        paged.Items.Select(e => e.Id).Should().NotContain([beforeWindow.Id, afterWindow.Id]);
     }
 
     [TestMethod]

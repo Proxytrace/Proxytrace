@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { agentColor } from '../../lib/colors';
+import { useSelectedId } from '../../hooks/useSelectedId';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { Card } from '../../components/ui/Card';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
@@ -18,7 +19,9 @@ export default function Runs() {
   const runParam = searchParams.get('run');
 
   const [agentFilter, setAgentFilter] = useState('');
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  // Selected group lives in ?id= (survives refresh); ?run= is a one-shot deep-link
+  // into a specific run that resolves to its owning group, then yields to ?id=.
+  const [selectedGroupId, setSelectedGroupId] = useSelectedId();
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
   // A/B (system) runs are hidden by default; deep-linking to one (?run=) reveals them.
   const [showSystem, setShowSystem] = useState(() => runParam != null);
@@ -92,7 +95,7 @@ export default function Runs() {
               key={group.id}
               group={group}
               isSelected={selectedGroup?.id === group.id}
-              onSelect={() => setSelectedGroupId(group.id)}
+              onSelect={() => setSelectedGroupId(group.id, ['run'])}
               onDelete={() => setDeleteGroupId(group.id)}
             />
           ))}
@@ -112,7 +115,13 @@ export default function Runs() {
       </div>
 
       {deleteGroupId && deleteTarget && (
-        <ConfirmDialog entityName={deleteTarget.suiteName} onConfirm={confirmDelete} onCancel={() => setDeleteGroupId(null)} loading={delGroup.isPending} />
+        <ConfirmDialog
+          title={`Delete run for "${deleteTarget.suiteName}"?`}
+          message="This permanently deletes the run and its results. This action cannot be undone."
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteGroupId(null)}
+          loading={delGroup.isPending}
+        />
       )}
     </div>
   );

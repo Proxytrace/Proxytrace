@@ -9,8 +9,8 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 //
 // The default project the dashboard renders is `projects[0]` (see ProjectProvider),
 // which is the same `firstProjectId()` we seed against, so the seeded data lands in
-// the default dashboard view. Seeded calls carry `CreatedAt = now`, inside the
-// dashboard's default `24h` range.
+// the default dashboard view. Seeded calls carry `CreatedAt = now`, which falls inside
+// the dashboard's default `all`-time range (and every narrower window too).
 //
 // Because the shared e2e tenant may already hold data from other specs, assertions
 // prefer "non-zero" / ">= seeded" over exact equality to stay robust.

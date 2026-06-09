@@ -128,7 +128,7 @@ internal class SetupService : ISetupService
         IModelProvider provider = CreateProvider(input);
         var client = provider.CreateClient();
         var availableModels = await client.GetModelsAsync(cancellationToken);
-        return availableModels.Select(m => m.Name).ToArray();
+        return availableModels.Select(m => m.Model.Name).ToArray();
     }
 
     private IModelProvider CreateProvider(ProviderConnectionInput input)

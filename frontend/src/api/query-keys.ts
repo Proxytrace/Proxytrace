@@ -9,10 +9,11 @@ export const QUERY_KEYS = {
   /** Prefix matching every agent-calls query — use for invalidation. */
   agentCallsRoot: ['agent-calls'] as const,
   agentCallsOverview: (from?: string, agentId?: string, projectId?: string) => ['agent-calls', 'overview', from, agentId, projectId ?? null] as const,
+  agentCallsHistogram: (filter: object) => ['agent-calls', 'histogram', filter] as const,
   agentCallsForSuiteCreate: (agentId: string, from?: string) => ['agent-calls', 'suite-create', agentId, from ?? null] as const,
   agentCallsForSuiteEdit: (agentId?: string) => ['agent-calls', 'suite-edit', agentId] as const,
 
-  statisticsDashboard: (from: string, projectId?: string) => ['statistics-dashboard', from, projectId ?? null] as const,
+  statisticsDashboard: (from: string | undefined, projectId?: string) => ['statistics-dashboard', from ?? null, projectId ?? null] as const,
   statisticsPassRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-pass-rates', from, agentId, projectId ?? null] as const,
   statisticsErrorRates: (from?: string, agentId?: string, projectId?: string) => ['statistics-error-rates', from, agentId, projectId ?? null] as const,
   statisticsCostEstimate: (from?: string, agentId?: string, projectId?: string) => ['statistics-cost-estimate', from, agentId, projectId ?? null] as const,

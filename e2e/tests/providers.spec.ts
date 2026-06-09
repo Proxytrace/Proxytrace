@@ -2,33 +2,17 @@ import { test, expect } from '../helpers/fixtures';
 import { ProxytraceApiClient } from '../helpers/api-client';
 
 // The Providers page (/providers) lists upstream model providers in a left rail (ProviderList),
-// and renders the selected provider's detail on the right (ProviderDetail) with a Models tab and
-// an API-keys tab. Setup seeds one provider ('E2E Test Provider') with a model and a project, so
-// the tenant is never truly empty — the empty-state test is handled defensively below.
+// and renders the selected provider's detail on the right (ProviderDetail) as stacked sections —
+// a Models section above an API-keys section, both always rendered (no tabs). The detail header
+// shows the upstream endpoint only when it differs from the kind's canonical default. Setup seeds
+// one provider ('E2E Test Provider') with a model and a project, so the tenant is never truly
+// empty — the empty-state test is handled defensively below.
 //
 // Prerequisites (provider/project) are created via the API client in beforeAll so the tests are
 // fast and independent. Each test navigates fresh and asserts through stable data-testids.
 
 const ADMIN_EMAIL = 'admin@e2e.test';
 const ADMIN_PASSWORD = 'E2ePassword1!';
-
-// Polls the providers overview until the named model exists under the provider, returning its id.
-async function pollModelId(api: ProxytraceApiClient, providerId: string, modelName: string): Promise<string> {
-  let modelId: string | null = null;
-  await expect
-    .poll(
-      async () => {
-        const overview = await api.getProvidersOverview();
-        const provider = overview.providers.find((p) => p.provider.id === providerId);
-        modelId = provider?.models.find((m) => m.modelName === modelName)?.id ?? null;
-        return modelId;
-      },
-      { timeout: 10_000, message: 'model did not appear in overview' },
-    )
-    .not.toBeNull();
-  if (modelId === null) throw new Error('model id not resolved');
-  return modelId;
-}
 
 // Reads back the id of a named API key under a provider from the overview, asserting it exists.
 async function findKeyId(api: ProxytraceApiClient, providerId: string, keyName: string): Promise<string> {
@@ -80,8 +64,8 @@ test.describe('Providers page', () => {
     await expect(page.getByTestId(`provider-row-${created.provider.id}`)).toBeVisible();
   });
 
-  test('detail header shows the provider name and model count', async ({ page }) => {
-    // Seed an isolated provider with a known model via the API so the count is deterministic.
+  test('detail header shows the provider name and lists its seeded model', async ({ page }) => {
+    // Seed an isolated provider with a known model via the API so the detail is deterministic.
     const name = `E2E Header Provider ${Date.now()}`;
     const { id } = await api.createProvider({
       name,
@@ -89,18 +73,21 @@ test.describe('Providers page', () => {
       upstreamApiKey: 'sk-e2e-fake-key',
       kind: 'OpenAi',
     });
-    await api.addModelToProvider(id, 'gpt-4o-mini');
+    const model = await api.addModelToProvider(id, 'gpt-4o-mini');
 
     await page.goto('/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
 
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
     await expect(page.getByTestId('provider-detail-name')).toHaveText(name);
-    // The model count badge sits in the Models tab; it reflects the single seeded model.
-    await expect(page.getByTestId('provider-model-count')).toHaveText('1');
+    // The Models section is always rendered (no tabs); the seeded model row is visible directly.
+    await expect(page.getByTestId(`model-row-${model.id}`)).toBeVisible();
   });
 
-  test('adds a model under a provider and lists it in the Models tab', async ({ page }) => {
+  test('lists a provider\'s models in the Models section', async ({ page }) => {
+    // Models are pulled from the provider (discovery / reload / background refresh); there is no
+    // manual "add model" control in the UI. Seed a model via the API and verify the read-only
+    // Models list renders it.
     const name = `E2E Model Provider ${Date.now()}`;
     const { id } = await api.createProvider({
       name,
@@ -109,38 +96,17 @@ test.describe('Providers page', () => {
       kind: 'OpenAi',
     });
     const modelName = `e2e-model-${Date.now()}`;
+    const model = await api.addModelToProvider(id, modelName);
 
     await page.goto('/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
-    // The Models tab is the default tab; ensure it is active.
-    await page.getByTestId('models-tab').click();
-    await page.getByTestId('model-add-btn').click();
-
-    // Model discovery hits the upstream endpoint, which is a fake unreachable host here. When
-    // discovery fails the form exposes a manual text input; when it succeeds (or returns empty)
-    // the manual input is absent, so we fall back to adding the model via the API and verify the
-    // list still renders it. Either path exercises the ModelsTab list rendering.
-    const manualInput = page.getByTestId('model-name-input');
-    let modelId: string;
-    if (await manualInput.isVisible({ timeout: 10_000 }).catch(() => false)) {
-      await manualInput.fill(modelName);
-      await page.getByTestId('model-add-submit').click();
-      // The submit mutation persists the model; poll the API until it appears, then read its id.
-      modelId = await pollModelId(api, id, modelName);
-    } else {
-      const model = await api.addModelToProvider(id, modelName);
-      modelId = model.id;
-      await page.reload({ waitUntil: 'load' });
-      await page.getByTestId(`provider-row-${id}`).click();
-    }
-
-    await expect(page.getByTestId(`model-row-${modelId}`)).toBeVisible();
+    await expect(page.getByTestId(`model-row-${model.id}`)).toBeVisible();
     await expect(page.getByText(modelName)).toBeVisible();
   });
 
-  test('issues an API key, reveals it once, and lists it in the Keys tab', async ({ page }) => {
+  test('issues an API key, reveals it once, and lists it in the Keys section', async ({ page }) => {
     const name = `E2E Key Provider ${Date.now()}`;
     const { id } = await api.createProvider({
       name,
@@ -154,7 +120,7 @@ test.describe('Providers page', () => {
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
-    await page.getByTestId('keys-tab').click();
+    // The API-keys section is always rendered below Models (no tabs); the create control is direct.
     await page.getByTestId('key-create-btn').click();
 
     await page.getByTestId('key-name-input').fill(keyName);
@@ -170,7 +136,7 @@ test.describe('Providers page', () => {
     await expect(page.getByTestId(`key-row-${keyId}`)).toBeVisible();
   });
 
-  test('revokes an API key and removes it from the Keys tab', async ({ page }) => {
+  test('revokes an API key and removes it from the Keys section', async ({ page }) => {
     const name = `E2E Revoke Provider ${Date.now()}`;
     const { id } = await api.createProvider({
       name,
@@ -186,7 +152,7 @@ test.describe('Providers page', () => {
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
-    await page.getByTestId('keys-tab').click();
+    // The API-keys section is always rendered (no tabs); the seeded key row is visible directly.
     await expect(page.getByTestId(`key-row-${keyId}`)).toBeVisible();
 
     // The per-row delete trigger opens a confirm dialog that requires typing the key name.
@@ -220,6 +186,62 @@ test.describe('Providers page', () => {
     await expect(page.getByTestId(`provider-row-${id}`)).toHaveCount(0);
     await expect(page.getByTestId('provider-detail-name')).not.toHaveText(name);
     await expect(page.getByTestId('provider-list')).toBeVisible();
+  });
+
+  test('detail panel has no tabs — Models and Keys sections are stacked', async ({ page }) => {
+    // The detail panel was refactored from tabs to always-rendered stacked sections. Assert the
+    // tab affordances are gone: no role=tab elements and neither tab testid is present.
+    const name = `E2E NoTabs Provider ${Date.now()}`;
+    const { id } = await api.createProvider({
+      name,
+      endpoint: 'https://api.openai.com/v1',
+      upstreamApiKey: 'sk-e2e-fake-key',
+      kind: 'OpenAi',
+    });
+
+    await page.goto('/providers', { waitUntil: 'load' });
+    await page.getByTestId(`provider-row-${id}`).click();
+    await expect(page.getByTestId('provider-detail-header')).toBeVisible();
+
+    await expect(page.getByRole('tab')).toHaveCount(0);
+    await expect(page.getByTestId('models-tab')).toHaveCount(0);
+    await expect(page.getByTestId('keys-tab')).toHaveCount(0);
+
+    // Both sections' primary controls are reachable without any tab interaction.
+    await expect(page.getByTestId('model-add-btn')).toBeVisible();
+    await expect(page.getByTestId('key-create-btn')).toBeVisible();
+  });
+
+  test('hides the upstream endpoint when it matches the kind default, shows it when custom', async ({ page }) => {
+    // A provider on the canonical OpenAI endpoint hides the endpoint in its header; a provider on
+    // a custom endpoint shows it. The endpoint host is the only differentiator here.
+    const defaultName = `E2E Default Endpoint ${Date.now()}`;
+    const { id: defaultId } = await api.createProvider({
+      name: defaultName,
+      endpoint: 'https://api.openai.com/v1',
+      upstreamApiKey: 'sk-e2e-fake-key',
+      kind: 'OpenAi',
+    });
+    const customEndpoint = 'https://my-proxy.example.com/v1';
+    const customName = `E2E Custom Endpoint ${Date.now()}`;
+    const { id: customId } = await api.createProvider({
+      name: customName,
+      endpoint: customEndpoint,
+      upstreamApiKey: 'sk-e2e-fake-key',
+      kind: 'OpenAiCompatible',
+    });
+
+    await page.goto('/providers', { waitUntil: 'load' });
+
+    // Canonical OpenAI endpoint: hidden in the header.
+    await page.getByTestId(`provider-row-${defaultId}`).click();
+    await expect(page.getByTestId('provider-detail-name')).toHaveText(defaultName);
+    await expect(page.getByTestId('provider-detail-header')).not.toContainText('https://api.openai.com/v1');
+
+    // Custom endpoint: shown verbatim in the header.
+    await page.getByTestId(`provider-row-${customId}`).click();
+    await expect(page.getByTestId('provider-detail-name')).toHaveText(customName);
+    await expect(page.getByTestId('provider-detail-header')).toContainText(customEndpoint);
   });
 
   test('renders the providers empty state when no providers exist', async ({ page }) => {

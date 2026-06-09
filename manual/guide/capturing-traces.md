@@ -27,13 +27,53 @@ Typical things you can do:
 
 ### Filtering, search, and paging
 
-- **Agent cards** at the top let you focus on one agent. Only agents that actually have
-  traces in the selected time range are shown.
+- **Page summary** is the band of stat cards just above the table: number of traces on the
+  current page, total tokens (with the input/output split), total cost, average latency (with
+  its ± spread), and the error rate (share of non-2xx calls). It rolls up only the traces on
+  the *current page* and recomputes as you page, filter, or change the time range.
+- **Agent filter** (the *Agent:* dropdown in the toolbar) focuses the table on one agent. Only
+  agents that actually have traces in the selected time range are listed.
 - **Search** matches anywhere inside captured message content (and the response), not just
   at the start of a word — searching `efund` finds a trace mentioning `refund`. You can also
   search by model name or the short trace ID.
 - **Per page** lets you choose how many traces to show at once (20, 50, 100, or 200). The
   total trace count for the current filter is shown alongside the pager.
+
+### The timeline
+
+Above the table a **timeline strip** plots how many traces were captured over the selected
+range, so you can spot ingestion hotspots at a glance. Each bar's height is the trace count
+for that slice of time; the **red** portion at the bottom marks failed calls (HTTP errors),
+making error spikes easy to find. A **time axis** along the bottom labels the window, and
+hovering a bar shows its exact time, count, and error count.
+
+- **Drag across the timeline** to zoom into that window. The view re-spans to your selection —
+  the bars redraw at higher resolution *and* the table narrows to the same range, so you can
+  drill straight into a spike.
+- **Scroll up** over the timeline to zoom in toward the cursor; **scroll down** to step back
+  out one level (each zoom-in is remembered, so you can drill in repeatedly and reverse out).
+- **Click a bar** to focus its time bucket directly.
+
+If you zoom into a window with no traces, the strip stays put (showing *"No traces in this
+range"*) so you can always scroll back out.
+- The timeline reflects the **same agent, search, and system-trace filters** as the table,
+  so its shape always matches what you're looking at.
+
+### The time-range picker
+
+The **time-range picker** (the clock button in the toolbar) controls the window. It offers
+one-click **quick ranges** (last 15 minutes through last 30 days) and a **custom range** with
+explicit From/To date-times — the same picker used on the Error Log. Drag-zooming the timeline
+simply sets a custom range, which the picker then shows. Use **Clear** (or the ✕) to return to
+all-time.
+
+When you **first** open Traces, the range automatically snaps to the smallest quick range that
+still contains data, so you never land on an empty view. After that, your filter bar — time
+range, agent, search, and the system-trace toggle — is **remembered in your browser**, so it
+survives a refresh or navigating away and back. The auto-snap only runs until you have a saved
+range; once you've picked one it is always restored. The agent filter is remembered **per
+project** (agents belong to a project), while the time range, search, and toggle are shared
+across projects.
 
 ### The trace detail panel
 

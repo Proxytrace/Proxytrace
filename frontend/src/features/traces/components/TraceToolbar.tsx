@@ -1,40 +1,43 @@
 import { SearchIcon } from '../../../components/icons';
 import { FilterDropdown } from '../../../components/ui/FilterDropdown';
+import { TimeRangePicker } from '../../../components/ui/TimeRangePicker';
 import { Input } from '../../../components/ui/Input';
 import { agentColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
-import { RANGES } from '../tracesMeta';
+import type { TimeRange } from '../../../lib/timeRange';
 import type { AgentDto } from '../../../api/models';
 
 interface Props {
   search: string;
-  range: string;
+  timeRange: TimeRange;
   agentFilter: string;
   showSystem: boolean;
   agents: AgentDto[];
   onSearchChange: (v: string) => void;
-  onRangeChange: (v: string) => void;
+  onTimeRangeChange: (r: TimeRange) => void;
   onAgentFilterChange: (v: string) => void;
   onShowSystemChange: (v: boolean) => void;
 }
 
 export function TraceToolbar({
-  search, range, agentFilter, showSystem, agents,
-  onSearchChange, onRangeChange, onAgentFilterChange, onShowSystemChange,
+  search, timeRange, agentFilter, showSystem, agents,
+  onSearchChange, onTimeRangeChange, onAgentFilterChange, onShowSystemChange,
 }: Props) {
   return (
-    <div className="fade-up relative z-20 flex items-center gap-[10px] flex-wrap shrink-0 [animation-delay:80ms]">
+    <div className="fade-up relative z-20 flex items-center gap-2 flex-wrap shrink-0 [animation-delay:80ms]">
       <div className="flex-1 min-w-[260px] max-w-[420px]">
         <Input
           leftAddon={<SearchIcon size={13} />}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search by trace ID, content, or model…"
+          className="h-9"
         />
       </div>
 
       <FilterDropdown
         label="Agent:"
+        testId="traces-agent-filter"
         value={agentFilter || '__all'}
         active={!!agentFilter}
         accent={agentFilter ? agentColor(agentFilter) : undefined}
@@ -46,14 +49,7 @@ export function TraceToolbar({
         width={220}
       />
 
-      <FilterDropdown
-        label="Range:"
-        value={range}
-        active
-        options={RANGES.map(r => ({ key: r.key, label: r.label }))}
-        onChange={onRangeChange}
-        width={140}
-      />
+      <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} testId="traces-time" />
 
       {/* eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control) */}
       <button
@@ -63,7 +59,7 @@ export function TraceToolbar({
         onClick={() => onShowSystemChange(!showSystem)}
         title={showSystem ? 'Hide traces from system agents' : 'Show traces from system agents'}
         className={cn(
-          'inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+          'inline-flex items-center gap-2 h-9 px-3 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
           showSystem ? 'text-accent bg-accent-subtle' : 'text-secondary bg-card',
         )}
         style={{

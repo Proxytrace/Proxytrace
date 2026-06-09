@@ -9,9 +9,30 @@ export function fmtTokens(n: number): string {
   return String(n);
 }
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Browser-local date, "dd.MM.yyyy". App-wide canonical date format — 24-hour, day-first,
+ * dot-separated. Do not re-implement date formatting in features; reuse these helpers.
+ */
 export function fmtDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
+
+/** Date + 24h time to the minute, "dd.MM.yyyy HH:mm". For compact displays (chips, headers, pickers). */
+export function fmtDateTimeShort(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${fmtDate(iso)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/** Date + 24h time with seconds, "dd.MM.yyyy HH:mm:ss". For log rows where exact time matters. */
+export function fmtDateTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${fmtDateTimeShort(iso)}:${pad2(d.getSeconds())}`;
 }
 
 export function fmtRelative(iso: string): string {
@@ -46,4 +67,10 @@ export function fmtCost(usd: number | null | undefined): string {
   if (usd == null) return '—';
   if (usd < 0.001) return '<$0.001';
   return `$${usd.toFixed(4)}`;
+}
+
+export function fmtCostEur(eur: number | null | undefined): string {
+  if (eur == null) return '—';
+  if (eur > 0 && eur < 0.001) return '<€0.001';
+  return `€${eur.toFixed(4)}`;
 }

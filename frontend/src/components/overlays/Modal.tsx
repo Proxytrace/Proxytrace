@@ -12,11 +12,12 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  headerActions?: React.ReactNode;
   maxWidth?: number;
   size?: ModalSize;
 }
 
-export function Modal({ title, onClose, children, footer, maxWidth, size }: ModalProps) {
+export function Modal({ title, onClose, children, footer, headerActions, maxWidth, size }: ModalProps) {
   const resolvedMaxWidth = maxWidth ?? (size ? SIZE_PX[size] : SIZE_PX.sm);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -34,8 +35,11 @@ export function Modal({ title, onClose, children, footer, maxWidth, size }: Moda
         style={{ maxWidth: `min(${resolvedMaxWidth}px, 94vw)`, width: '100%' }}
       >
         {title && (
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="m-0 text-base font-bold text-primary">{title}</h2>
+          <div className="flex items-center justify-between gap-2 mb-5">
+            <div className="flex items-center gap-2 min-w-0">
+              <h2 className="m-0 text-base font-bold text-primary truncate">{title}</h2>
+              {headerActions}
+            </div>
             <IconButton onClick={onClose} aria-label="Close"><XIcon size={14} /></IconButton>
           </div>
         )}

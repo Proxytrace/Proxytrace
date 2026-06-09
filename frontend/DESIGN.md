@@ -42,6 +42,10 @@ Dark-only, single warm-amber accent.
 | Text muted | `text-muted` | `#67645e` | Captions, placeholders |
 | Accent | `text-accent`, `bg-accent` | `#c9944a` | Primary CTAs, active nav, focus ring |
 | Accent hover | `accent-hover` | `#deb073` | Hover only |
+| Accent ink | `text-accent-ink` | `#241803` | Dark text/icon **on** a gold fill (primary button) — AA on accent |
+| Accent text | `text-accent-text` | `#e9c488` | Gold text on dark (active filter chip / status pill) |
+| Accent press | `var(--accent-press)` | `#b9843c` | Pressed/active gold fill |
+| Accent border | `var(--accent-border)` | rgba(201,148,74,0.45) | Gold hairline (active chip / status) |
 | Success | `text-success`, `bg-success` | `#3daa6f` | Pass, healthy, run-green |
 | Warn | `text-warn` | `#d4915c` | Throttle, slow, 4xx |
 | Danger | `text-danger` | `#d95555` | Fail, error, destructive |
@@ -126,13 +130,13 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 **Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
 
-`Tabs`, `Tooltip`, `Menu`, and `Combobox` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab with manual `createPortal` + `getBoundingClientRect` again; reach for these.
+`Tabs`, `Tooltip`, `Menu`, `Combobox`, and `Popover` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab/popover with manual `createPortal` + `getBoundingClientRect` again; reach for these.
 
 **Surfaces:** `Card` (with `Card.Header`/`Body`/`Footer`), `KpiCard`, `EmptyState`, `Skeleton`, `Spinner`.
 
 **Data display:** `DataTable`, `Badge`, `Pill`, `ColoredBadge`, `StatusDot`, `ProgressBar`, `Avatar`, `CodeBlock`, `JsonBlock`, `MessageBubble`, `ToolMessageBubble`, `ModelParametersGrid`, `Collapsible`, `Toast`.
 
-**Overlays:** `Modal`, `Drawer`, `ConfirmDialog`, `StepWizard` (`components/overlays/`).
+**Overlays:** `Modal`, `Drawer`, `ConfirmDialog`, `StepWizard` (`components/overlays/`), `Popover` (Radix-backed floating panel for rich filter/picker content — for a flat action list use `Menu`).
 
 **Layout:** `Shell`, `NavItem`, `ProjectSelector` (`components/layout/`).
 
@@ -140,7 +144,7 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 `<Button variant="primary|secondary|ghost|danger|dangerOutline|success|link" size="sm|md|lg">`. Defaults: `primary`, `md`. Use:
 
-- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite.
+- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite. **Solid gold fill with dark ink** (`bg-accent` + `text-accent-ink`) — this filled treatment is the primary action's alone; never gold-fill a label, tab, chip, or input. One per toolbar/region.
 - **secondary** — neutral siblings. Cancel, Close, Edit.
 - **ghost** — tertiary in toolbars and inline rows.
 - **danger** — irreversible, solid red. Always paired with `ConfirmDialog`.

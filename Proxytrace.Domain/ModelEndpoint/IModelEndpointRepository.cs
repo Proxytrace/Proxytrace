@@ -14,5 +14,12 @@ public interface IModelEndpointRepository : IRepository<IModelEndpoint>
         string modelName,
         IModelProvider provider,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all model endpoints belonging to the given provider.
+    /// </summary>
+    Task<IReadOnlyList<IModelEndpoint>> GetByProviderAsync(
+        Guid providerId,
+        CancellationToken cancellationToken = default);
 }
 

@@ -9,6 +9,7 @@ import { SystemPromptWidget } from './widgets/SystemPromptWidget';
 import { ToolsWidget } from './widgets/ToolsWidget';
 import { ModelParametersWidget } from './widgets/ModelParametersWidget';
 import { SuitePassRatesWidget } from './widgets/SuitePassRatesWidget';
+import { RecentTracesWidget } from './widgets/RecentTracesWidget';
 import { VersionsWidget } from './VersionsWidget';
 
 interface Props {
@@ -59,9 +60,11 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
             <Skeleton height={120} className="rounded-lg" />
           ) : (
             overview && overview.suitePassRates.length > 0 && (
-              <SuitePassRatesWidget suitePassRates={overview.suitePassRates} />
+              <SuitePassRatesWidget suitePassRates={overview.suitePassRates} agentId={agent.id} />
             )
           )}
+
+          <RecentTracesWidget agentId={agent.id} />
 
           <ModelParametersWidget params={agent.modelParameters} />
         </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
@@ -126,6 +126,14 @@ function LocalAuthGate({ children }: { children: React.ReactNode }) {
   return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;
 }
 
+// The evaluators detail moved from a path param (/evaluators/:id) to a query
+// param (/evaluators?id=) for consistency with the other master-detail views.
+// This keeps old bookmarks and shared links working.
+function EvaluatorDeepLinkRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={id ? `/evaluators?id=${encodeURIComponent(id)}` : '/evaluators'} replace />;
+}
+
 function AppRoutes() {
   const { data: setupStatus } = useQuery({
     queryKey: QUERY_KEYS.setupStatus,
@@ -164,7 +172,8 @@ function AppRoutes() {
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />
         <Route path="evaluators" element={wrap(<Evaluators />)} />
-        <Route path="evaluators/:id" element={wrap(<Evaluators />)} />
+        {/* Legacy/deep-link path form → canonical ?id= query selection. */}
+        <Route path="evaluators/:id" element={<EvaluatorDeepLinkRedirect />} />
         <Route path="runs" element={wrap(<Runs />)} />
         <Route path="playground" element={wrap(<Playground />)} />
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />

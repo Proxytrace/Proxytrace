@@ -25,6 +25,9 @@ internal class ApplicationErrorRepository
         int page,
         int pageSize,
         ApplicationErrorLevel? level,
+        string? search,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
         CancellationToken cancellationToken = default)
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
@@ -33,6 +36,24 @@ internal class ApplicationErrorRepository
         if (level.HasValue)
         {
             query = query.Where(e => e.Level == level.Value);
+        }
+
+        if (from.HasValue)
+        {
+            query = query.Where(e => e.CreatedAt >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(e => e.CreatedAt <= to.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(e =>
+                EF.Functions.Like(e.Message, pattern) ||
+                (e.StackTrace != null && EF.Functions.Like(e.StackTrace, pattern)));
         }
 
         int total = await query.CountAsync(cancellationToken);

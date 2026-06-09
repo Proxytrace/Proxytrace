@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { AgentDto, AgentVersionDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { fmtDate } from '../../lib/format';
+import { cn } from '../../lib/cn';
 import { Button } from '../../components/ui/Button';
 import { Widget } from './widgets/Widget';
 import { MoveVersionDialog } from './widgets/MoveVersionDialog';
@@ -32,7 +33,7 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
       {!isLoading && versions.length === 0 && <p className="text-body-sm text-muted">No versions yet.</p>}
       {!isLoading && ordered.length > 0 && (
         <ul
-          className="flex flex-col max-h-[17rem] overflow-y-auto pr-2.5"
+          className="flex flex-col gap-0.5 max-h-[17rem] overflow-y-auto pr-1.5"
           data-testid="agent-versions-list"
         >
           {ordered.map((v, i) => {
@@ -43,11 +44,11 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
               <li
                 key={v.id}
                 data-testid={`agent-version-row-${v.versionNumber}`}
-                className={`relative pl-6 ${isLast ? '' : 'pb-4'}`}
+                className="relative pl-6"
               >
-                {!isLast && <span className="absolute left-[5px] top-4 bottom-0 border-l border-hairline" />}
+                {!isLast && <span className="absolute left-[5px] top-[21px] -bottom-0.5 border-l border-hairline" />}
                 <span
-                  className="absolute left-0 top-[3px] w-[11px] h-[11px] rounded-full border-2 bg-card"
+                  className="absolute left-0 top-[10px] w-[11px] h-[11px] rounded-full border-2 bg-card"
                   style={isCurrent ? { background: c, borderColor: c } : { borderColor: 'var(--border)' }}
                 />
                 <div
@@ -62,8 +63,15 @@ export function VersionsWidget({ agent, selectedVersion, onSelect, className }: 
                     }
                   }}
                   data-testid={`agent-version-select-${v.versionNumber}`}
-                  className="px-2.5 py-2.5 -my-1.5 rounded-lg cursor-pointer transition-colors duration-100 hover:bg-[var(--bg-wash-hover)]"
-                  style={isSelected ? { background: `color-mix(in srgb, ${c} 12%, transparent)` } : undefined}
+                  className={cn(
+                    'px-2.5 py-2 rounded-md cursor-pointer transition-colors duration-100',
+                    !isSelected && 'hover:bg-[var(--bg-wash-hover)]',
+                  )}
+                  style={
+                    isSelected
+                      ? { background: `color-mix(in srgb, ${c} 13%, transparent)`, boxShadow: `inset 2px 0 0 ${c}` }
+                      : undefined
+                  }
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <span

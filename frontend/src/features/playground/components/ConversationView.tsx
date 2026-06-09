@@ -32,10 +32,16 @@ export function ConversationView({
   onLoadFromTrace,
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(messages.length);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   useEffect(() => {
+    // Only stick to the bottom when a turn is appended or while streaming —
+    // not on delete, edit, or reorder.
+    const grew = messages.length > prevCountRef.current;
+    prevCountRef.current = messages.length;
+    if (!grew && !isStreaming) return;
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;

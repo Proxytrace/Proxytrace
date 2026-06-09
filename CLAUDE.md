@@ -6,303 +6,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Proxytrace is an AI agent observability platform that acts as an OpenAI-compatible proxy, capturing every LLM interaction, then lets teams curate those traces into benchmark test suites and generate data-driven optimization proposals. It is in an early architecture phase.
 
-## Workflow
+## AI Assistant Docs
 
-After completing any implementation, you MUST always do a round of critical review of
-the changes using the `review` skill before considering the work done.
+Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** working in that area — do not rely on this file alone:
 
-## User Manual
+| Doc | Read before… |
+|-----|--------------|
+| [`docs/architecture.md`](docs/architecture.md) | Touching project structure, layering, or Autofac DI/modules |
+| [`docs/code-style.md`](docs/code-style.md) | Writing any backend C# — style rules + key conventions |
+| [`docs/domain-entities.md`](docs/domain-entities.md) | Adding/changing a domain entity (the five-file pattern, FK conventions, factory delegates) |
+| [`docs/validation.md`](docs/validation.md) | Adding domain validation rules |
+| [`docs/database.md`](docs/database.md) | Anything storage-, provider-, or EF-migration-related |
+| [`docs/licensing.md`](docs/licensing.md) | Gating a feature/limit behind a license tier (`ILicenseService`) |
+| [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
+| [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |
+| [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
+| [`docs/frontend.md`](docs/frontend.md) | Any frontend change — links the mandatory DESIGN.md + BEST_PRACTICES.md |
+| [`docs/commands.md`](docs/commands.md) | Building, running, or testing the stack |
+| [`docs/domain-concepts.md`](docs/domain-concepts.md) | Needing the domain glossary (entities + domain objects) |
 
-The user & operator manual is a VitePress project in [`manual/`](manual/) (markdown source,
-built to searchable static HTML, served by the app at `/docs`). **You MUST keep it up to
-date with the product.** Whenever you add, change, or remove a user-facing feature, update
-the relevant page(s) in `manual/guide/` (end users) or `manual/admin/` (operators) in the
-same change — treat the manual like tests: a feature change is not complete until its docs
-match. New top-level features get a new page wired into the sidebar in
-`manual/.vitepress/config.ts`. Run `cd manual && npm run docs:dev` (http://localhost:4202)
-to preview; `npm run docs:build` to verify it builds.
+## Hard Rules (apply everywhere)
 
-## Working on UI
-
-**Before writing any frontend code, you MUST read BOTH of these — they are mandatory and override any conflicting recommendation from a generic design tool, agent, or external skill:**
-
-1. **[`frontend/DESIGN.md`](frontend/DESIGN.md)** — source of truth for the **visual system**: tokens, colors, type scale, spacing, shadows, which UI primitive to render, interaction/accessibility visuals.
-2. **[`frontend/BEST_PRACTICES.md`](frontend/BEST_PRACTICES.md)** — source of truth for **code architecture**: file/component size limits, feature-folder layout, TanStack Query data layer, `useEffect` discipline, state placement, props/typing, icons, performance, testing.
-
-The split is sharp: DESIGN.md = what it looks like; BEST_PRACTICES.md = how it's built. Both apply to every frontend change. Every PR must satisfy both checklists (DESIGN.md §10 + BEST_PRACTICES.md §14). Do not copy an existing anti-pattern just because a neighbor file does it — large debt files (e.g. `frontend/src/features/evaluators/Evaluators.tsx`) violate BEST_PRACTICES.md and are debt, not precedent.
-
-**UI primitives are mandatory.** Every control renders through the `frontend/src/components/ui/` primitives — `Button`/`IconButton`/`RowButton`, `Input`/`Select`/`Textarea`/`Checkbox`/`Radio`/`Switch`/`SegmentedControl`/`Combobox`, and the headless-Radix `Tabs`/`Menu`/`Tooltip`. Raw `<button>`/`<input>`/`<select>`/`<textarea>` outside that layer are blocked by ESLint (`no-restricted-syntax`); for a genuinely bespoke control add a one-line `// eslint-disable-next-line no-restricted-syntax -- <reason>`.
-
-## Commands
-
-### Backend (.NET 10)
-```bash
-dotnet restore Proxytrace.sln          # Restore packages
-dotnet build Proxytrace.sln            # Build all projects
-dotnet test Proxytrace.sln             # Run all tests
-dotnet test Proxytrace.Domain.Tests    # Run a single test project
-cd Proxytrace.Api && dotnet run        # Start API on http://localhost:5001
-```
-
-Swagger UI is available at `http://localhost:5000/swagger` in Development mode.
-
-#### Code Style
-- Dependency Injection is super important - use it whenever possible. Avoid the static keyword and service locators.
-- Do not use primary constructors. Use constructor injection with DI and `this(...)` chaining for domain entities.
-- Use `record` types for all domain entities and storage entities (even if mutable)
-- Make types `internal` by default; only interfaces or POCO types should be `public`
-- Use `required` properties with `init` accessors for storage entities
-- Prefer immutability and statelessness; storage entities can be mutable if needed for EF Core
-- Use `var` when the type is obvious from the right-hand side, otherwise be explicit
-- Use expression-bodied members for simple one-liners; otherwise use block bodies with braces
-- Use `this(...)` constructor chaining to avoid duplication between "new" and "existing" constructors on domain entities
-- Use `nameof(...)` for all parameter names in exceptions and validation
-- Prefer collection expressions when possible
-- Supressing nullable warnings with `!` is strictly forbidden everywhere!
-- Injecting `IServiceProvider` shall be strongly avoided
-- Static members shall be avoided (except for extension methods and constants)
-- Docstrings: newline after `<summary>` and before `</summary>` (minimum 3-line blocks), e.g.:
-  ```csharp
-  /// <summary>
-  /// Does the thing.
-  /// </summary>
-  ```
-
-### EF Core Migrations (PostgreSQL-only; supply a Postgres connection string at design time)
-```bash
-ConnectionStrings__Default="Host=localhost;Port=5432;Database=proxytrace;Username=proxytrace;Password=proxytrace" \
-  dotnet ef migrations add <MigrationName> --project Proxytrace.Storage --startup-project Proxytrace.Api
-dotnet ef database update --project Proxytrace.Storage --startup-project Proxytrace.Api
-```
-
-### Frontend (React 19 / Vite, inside `frontend/`)
-```bash
-npm install
-npm run dev         # Dev server on http://localhost:4201
-npm run build       # Production build
-npm test            # Vitest unit tests
-```
-
-### All-in-one dev mode
-```bash
-./dev.sh            # Single-process: API (5001) + frontend (4201) — proxy traffic ingested in-process
-SPLIT=1 ./dev.sh    # Production-shaped split: ingestion proxy (5002) + API (5001) + Redis + PostgreSQL + frontend (4201)
-```
-
-`SPLIT=1` boots the standalone `Proxytrace.Proxy` service so agent traffic flows through the
-separate ingestion proxy and is published to Redis (requires Docker for Redis + PostgreSQL).
-Default (non-split) mode ingests in-process. The `./dev.sh` flow does not auto-seed; use the
-`/setup` page (or `SetupController`) to populate demo data.
-
-### End-to-end tests (Playwright, inside `e2e/`)
-The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`).
-**Do not run the e2e tests if Docker is not installed** — they require a working
-Docker daemon and will fail without one. Check first (e.g. `docker --version` and
-`docker info`); if Docker is unavailable, skip the e2e suite and say so rather than
-attempting to run it. See the `run-e2e-tests` skill for how to execute and triage them.
-
-## Architecture
-
-Strict layered dependency flow — each layer may only depend on layers below it:
-
-```
-Proxytrace.Api  →  Proxytrace.Application  →  Proxytrace.Domain  →  Proxytrace.Common
-            →  Proxytrace.Infrastructure  →  Proxytrace.Serialization  →  Proxytrace.Common
-            →  Proxytrace.Storage  →  Proxytrace.Application / Proxytrace.Domain
-            →  Proxytrace.Messaging      (ingestion transport, consumer side in Application)
-            →  Proxytrace.Licensing      (feature/limit gates, wired in Api + Application)
-
-Proxytrace.Proxy  (separate deployable service — NOT part of the Api composition root)
-            →  Proxytrace.Domain  →  Proxytrace.Storage (read-only)  →  Proxytrace.Messaging (publish side)
-```
-
-- **Proxytrace.Api** — ASP.NET Core controllers, DTOs, composition root (`Proxytrace.Api.Module`). Serves the React app and the OpenAPI/proxy management surface; in single-process mode it also hosts in-process ingestion.
-- **Proxytrace.Proxy** — Standalone OpenAI-compatible reverse-proxy service (`OpenAiProxyController`, own `Program.cs`/`Module`/`Dockerfile`). Resolves the bearer token via `IApiKeyResolver` (Proxytrace-issued key or upstream provider key → `ResolvedApiKey { Project, Provider }`), forwards to the upstream, and **publishes** each captured call to the ingestion stream. Reads from `Storage` only; no `Application`/`Infrastructure` on the hot path.
-- **Proxytrace.Messaging** — Ingestion transport abstraction. `IIngestionStream` (publish/consume/ack) carries `IngestMessage` (request/response bodies, duration, status, session, agent name) from proxy → app. Two implementations: `InProcessIngestionStream` (channel) and `RedisIngestionStream` (Redis Streams consumer group), selected by `MessagingConfiguration`. No project references (pure abstraction + impls).
-- **Proxytrace.Licensing** — Feature/limit gating. `ILicenseService` exposes the current `LicenseSnapshot`, `IsFeatureEnabled(LicenseFeature)`, and `GetLimit(LicenseLimit)`. JWT activation (`JwtLicenseValidator`), cached offline (`LicenseCacheStore`), refreshed by a background `LicenseCheckService`. Tiers `Free`/`Enterprise` defined in `LicensePolicy`; gated features include `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`. Depends only on `Common`; the API enforces it via a `LicenseEnforcementFilter`.
-- **Proxytrace.Application** — Use-case orchestration: ingestion (`OpenAiCallParser`, `AgentCallIngestor` consuming `IIngestionStream`), test running (`TestRunnerService`), optimization, SSE broadcasters (`TraceBroadcaster`, `TestResultBroadcaster`, `ProposalBroadcaster`), demo data seeding (`IDatabaseInitializer`)
-- **Proxytrace.Domain** — Business entities, interfaces, value objects, repository contracts. Pure C#, no I/O.
-- **Proxytrace.Infrastructure** — External service integration. `ModelClient` wraps `Microsoft.Extensions.AI` + the OpenAI SDK to invoke LLMs (used by the optimizer and system agents — NOT by the proxy).
-- **Proxytrace.Serialization** — JSON serializers and output formats (`ISerializer`, `IOutputFormat`, `ObjectToInferredTypesConverter`).
-- **Proxytrace.Storage** — EF Core entities, configurations, mappers, migrations. PostgreSQL for persistent runs, in-memory for tests/kiosk (see Database Configuration).
-- **Proxytrace.Common** — Shared utilities: validation helpers, async/type extensions, DI extensions, randomness.
-- **Proxytrace.Testing** — `BaseTest<TModule>` and shared test infrastructure (MSTest + AwesomeAssertions + NSubstitute).
-- **Proxytrace.Client.Sample** / **sample-client/** — Sample apps demonstrating client-side usage of the proxy.
-- **frontend/** — React 19 + Vite + Tailwind CSS 4 SPA.
-
-DI is wired with Autofac. Each project ships a `Module : Autofac.Module` (`Proxytrace.Domain.Module`, `Proxytrace.Application.Module`, `Proxytrace.Storage.Module`, `Proxytrace.Infrastructure.Module`, `Proxytrace.Serialization.Module`, `Proxytrace.Common.Module`, `Proxytrace.Messaging.Module`, `Proxytrace.Licensing.Module`, `Proxytrace.Api.Module`, `Proxytrace.Proxy.Module`, `Proxytrace.Testing.Module`). `Proxytrace.Domain.Module` and `Proxytrace.Storage.Module` discover entities, generators, configurations, and repositories by reflection — no manual registrations for the standard entity pattern. The API serves the compiled React app from `wwwroot/` in production.
-
-`Proxytrace.Application.Module` takes `(bool isDevelopment, IConfiguration? configuration)` and registers hosted services for ingestion + test running plus the optimization sub-module. `Proxytrace.Storage.Module` takes a `StorageConfiguration` (auto-detected by `Proxytrace.Api.Module`).
-
-## Domain Entity Pattern
-
-Every domain concept requires **five files**:
-
-| File | Location | Purpose |
-|------|----------|---------|
-| `I[Entity].cs` | `Proxytrace.Domain/[Entity]/` | Public interface declaring properties + `CreateNew`/`CreateExisting` delegates (extends `IDomainEntity`) |
-| `[Entity].cs` | `Proxytrace.Domain/[Entity]/Internal/` | Immutable `internal record` implementing `I[Entity]`, extends `DomainEntity` |
-| `[Entity]Generator.cs` | `Proxytrace.Domain/[Entity]/Internal/` | Test data factory, extends `DomainEntityGenerator<I[Entity]>` |
-| `[Entity]Entity.cs` | `Proxytrace.Storage/Internal/Entities/[Entity]/` | EF `internal record` extending `Entity`, decorated with `[StoredDomainEntity(typeof(I[Entity]))]` |
-| `[Entity]Config.cs` | `Proxytrace.Storage/Internal/Entities/[Entity]/` | Extends `AbstractEntityConfiguration<[Entity]Entity>`, implements `IMapper<I[Entity], [Entity]Entity>` |
-
-A `I[Entity]Repository.cs` interface (in `Proxytrace.Domain/[Entity]/`) plus `[Entity]Repository.cs` (in `Proxytrace.Storage/Internal/Entities/[Entity]/`) is only needed for N:M relationships or non-trivial queries. Decorate the storage repository with `[UsedImplicitly]` so reflection-based DI picks it up.
-
-`IDomainEntity` already provides `Id`, `CreatedAt`, `UpdatedAt` — do not redeclare them and do not introduce a separate `I[Entity]Data` interface. Newer entities declare the generic form `IDomainEntity<I[Entity]>` (enables strongly-typed self-referencing helpers like `MarkConsumedAsync`); both forms are valid.
-
-### Domain entities vs domain objects
-
-- **`IDomainEntity`** — persistent root with `Id`/`CreatedAt`/`UpdatedAt`. Has a storage entity, mapper, and repository.
-- **`IDomainObject`** — value object with no identity (e.g. `IPromptTemplate`, `IPrompt`, `Message`, `ToolSpecification`, `TokenUsage`, `Conversation`). No storage entity; embedded in or serialized inside the parent's stored representation. Generators implement `IDomainObjectGenerator<T>` and are auto-registered alongside entity generators.
-
-### Factory delegates
-Each domain interface declares exactly two delegates. `CreateExisting` takes the same positional properties as `CreateNew` plus a trailing `IDomainEntityData existing`:
-```csharp
-public delegate IProject CreateNew(string name, IModelEndpoint systemEndpoint);
-public delegate IProject CreateExisting(string name, IModelEndpoint systemEndpoint, IDomainEntityData existing);
-```
-
-### Domain entity constructors
-Mirror the delegate signatures one-to-one:
-```csharp
-// New — base ctor assigns fresh Id, CreatedAt, UpdatedAt
-public Project(string name, IModelEndpoint systemEndpoint)
-{
-    Name = name;
-    SystemEndpoint = systemEndpoint;
-}
-
-// Existing — base(existing) copies Id, CreatedAt, UpdatedAt
-public Project(string name, IModelEndpoint systemEndpoint, IDomainEntityData existing) : base(existing)
-{
-    Name = name;
-    SystemEndpoint = systemEndpoint;
-}
-```
-
-### Validation
-Domain entities are validated by Autofac on activation (`OnActivated` runs `Validator.ValidateObject`) and again before repository `Add`/`Update`. Override `Validate(ValidationContext)` and yield `base.Validate(...)` first. Use helpers from `Proxytrace.Common.Validation`:
-```csharp
-Validation.NotNullOrWhiteSpace(Name, nameof(Name))   // note: capital S in "WhiteSpace"
-Validation.NotNull(SystemEndpoint, nameof(SystemEndpoint))
-Validation.NotDefault(SomeGuid, nameof(SomeGuid))
-Validation.InPast(CreatedAt, nameof(CreatedAt))
-Validation.NotBefore(UpdatedAt, CreatedAt, nameof(UpdatedAt))
-```
-For referenced entities, cascade validation: `foreach (var r in SystemEndpoint.Validate(validationContext)) yield return r;`.
-
-### Foreign key conventions
-The boundary is sharp: **domain layer references the full entity, storage layer holds the `Guid`.**
-
-- **1:N** — domain holds the parent as `IModelEndpoint SystemEndpoint { get; }`; storage holds `Guid SystemEndpoint`; mapper resolves the parent via the parent's repository in `Map(stored, ct)`. Configure with `HasOne<ModelEndpointEntity>().WithMany().HasForeignKey(e => e.SystemEndpoint).OnDelete(DeleteBehavior.Restrict)`.
-- **N:M** — domain holds `IReadOnlyCollection<IEvaluator> Evaluators { get; }`; storage uses a junction entity (e.g. `TestSuiteEvaluatorEntity` with `TestSuiteId`/`EvaluatorId`) and a navigation collection on the parent storage entity. Junction entities have **no domain counterpart** and are registered explicitly in `Proxytrace.Storage.Module`. The custom repository overrides `UpdateRelationsAsync` to sync the junction rows during `Update` (see `TestSuiteRepository`).
-- **Delete behavior** — `Restrict` for optional references, `Cascade` for owned children.
-
-## Testing Conventions
-
-**Before writing or modifying any backend test, you MUST invoke the `test` skill
-(`.claude/skills/test/SKILL.md`) and follow it.** It is the source of truth for the test
-harness: per-test `BaseTest<TModule>` containers, the `ConfigureContainer` / `GetServices`
-DI hooks, NSubstitute substitution patterns, and the hard rules against shared
-state/fields and `[TestFixture]`-style helper classes. The summary below is orientation
-only; the skill overrides it where they differ.
-
-All tests extend `BaseTest<TModule>` (MSTest + AwesomeAssertions):
-
-```csharp
-[TestClass]
-public class MyTests : BaseTest<Module>
-{
-    public required TestContext TestContext { get; init; }
-
-    [TestMethod]
-    public async Task SomeTest()
-    {
-        IServiceProvider services = GetServices();
-        var repo = services.GetRequiredService<IRepository<IUser>>();
-        var generator = services.GetRequiredService<IDomainEntityGenerator<IUser>>();
-
-        IUser entity = await generator.CreateAsync(CancellationToken); // persists
-        IUser result = await repo.GetAsync(entity.Id, CancellationToken);
-
-        result.Id.Should().Be(entity.Id);
-    }
-}
-```
-
-- Each test gets an isolated in-memory database (unique name via `Guid.NewGuid()`)
-- `CancellationToken` comes from `TestContext.CancellationToken`
-- Override `ConfigureContainer(ContainerBuilder)` to customize the DI container for a test class
-- Use `generator.GenerateAsync()` for in-memory-only test objects; `CreateAsync()` to persist
-
-**Exception assertions** — use `FluentActions.Invoking(...).Should().ThrowAsync<T>()`:
-```csharp
-await FluentActions
-    .Invoking(() => repo.UpdateAsync(entity, CancellationToken))
-    .Should().ThrowAsync<EntityNotFoundException>();
-```
-
-## Key Conventions
-
-- All timestamps are `DateTimeOffset`, never `DateTime`
-- Domain entities are immutable `internal record` types — no setters on domain-layer properties
-- Domain interfaces are `public`; implementations and storage entities are `internal`
-- Repositories return domain entities (`I[Entity]`), never storage entities
-- Always pass `CancellationToken` to every async method
-- Domain references hold the related entity (e.g. `IModelEndpoint`, `IReadOnlyCollection<IEvaluator>`); storage entities hold the `Guid` foreign key
-- Storage entities use `required` properties with `init` accessors and extend `Entity`
-- Decorate custom storage repositories with `[UsedImplicitly]` so reflection-based DI discovers them
-
-## Database Configuration
-
-Storage is **PostgreSQL only** for persistent runs (debug/release/e2e) and **in-memory** for unit tests and kiosk mode. SQLite and SQL Server have been removed.
-
-| Mode | Selected when | Schema init |
-|------|---------------|-------------|
-| PostgreSQL | non-kiosk (connection string from `Proxytrace.Api/appsettings.json`) | EF migrations (`MigrateAsync`) on startup |
-| In-memory | `Kiosk:Enabled=true`, and all unit tests | `EnsureCreatedAsync` (no migrations) |
-
-Migrations are PostgreSQL-typed (`uuid`/`boolean`/`timestamptz`). The design-time factory always targets PostgreSQL using `ConnectionStrings:Default`; regenerate with `ConnectionStrings__Default=Host=...` set. Transactions use a single shared EF `IDbContextTransaction` per logical unit (`AmbientDbContext` + `Transaction`), so writes never promote to a 2-phase transaction. See `DATABASE.md` for full details.
-
-## Domain Concepts
-
-The domain (`Proxytrace.Domain/`) currently models:
-
-- **User, Project, Invite** — Tenancy & access. `User` has a `UserRole`; `Invite` is a tokenised, expiring email invitation (`MarkConsumedAsync`) for adding members. `Project` references one `IModelEndpoint` (`SystemEndpoint`) used by built-in system agents (e.g. agent-name generation, optimizers).
-- **Agent, AgentVersion** — `Agent`: `Name`, `SystemPrompt` (`IPromptTemplate`), `Tools` (`IReadOnlyList<ToolSpecification>`), `Endpoint` (`IModelEndpoint`), `Project`, `IsSystemAgent` flag. `AgentVersion` snapshots an agent's `SystemPrompt` + `Tools` at a `VersionNumber` (with `GetAgentAsync`/`MoveToAgentAsync`) so optimization proposals can be applied as new versions.
-- **AgentCall** — A captured LLM interaction (one trace entry).
-- **ModelProvider, Model, ModelEndpoint** — `ModelProvider` is the upstream API (OpenAI, Anthropic, …). `ModelEndpoint` pairs a `Model` with a `ModelProvider` and stores per-token costs (`InputTokenCost`, `OutputTokenCost`); has `CalculateCost(TokenUsage)`.
-- **ApiKey** — Proxytrace-issued key for clients hitting the OpenAI proxy. Tied to a `Project` + `ModelProvider`.
-- **TestSuite, TestCase** — Curated benchmark inputs. `TestSuite` has N:M with `IEvaluator` (junction `TestSuiteEvaluatorEntity`).
-- **TestRun, TestRunGroup, TestResult** — Execution records of a suite against an agent.
-- **Evaluator** (base) + concrete subtypes (`IExactMatchEvaluator`, `INumericMatchEvaluator`, `IJsonSchemaMatchEvaluator`, `IToolUsageEvaluator`, `IHelpfulnessEvaluator`, `ISafetyClassifier`, `IPolitenessEvaluator`, `ICustomEvaluator`, plus the LLM-based `IAgenticEvaluator` group). Each `EvaluateAsync(ITestResult)` returns an `IEvaluation` (domain object).
-- **OptimizationProposal, OptimizationTheory** — `OptimizationProposal`: a concrete suggestion to improve an agent (`Kind`, `Status` Review/Approved/Rejected, `Priority`, `Rationale`, typed `ProposalDetails` e.g. `SwitchModelProposal`/`UpdateSystemPromptProposal`, `EvidenceTestRunIds`). `OptimizationTheory` is an earlier-stage, agent+suite-scoped hypothesis (`TheoryStatus`, `TheorySource`) that the optimizer promotes into proposals.
-- **ProjectSearchSettings** — Per-project full-text search config (`Enabled`, `IndexedKinds` of `SearchKind`, `AutoReindexOnChange`, `SnippetLength`); backs the in-app search subsystem (`Proxytrace.Domain/Search`).
-- **Domain objects (no storage):** `IPromptTemplate`, `IPrompt`, `Message` + role-specific subtypes (`SystemMessage`, `UserMessage`, `AssistantMessage`, `ToolMessage`), `Conversation`, `ToolSpecification`/`ToolArguments`/`ToolRequest`/`ToolResponse`, `TokenUsage`, `Inference`/`ModelParameters`, `ICompletion`, `IEvaluation`.
-
-## Frontend Architecture
-
-React 19 with Vite, TypeScript, TanStack Query v5, and React Router 7. Code lives in `frontend/`. Layout:
-
-- `src/api/` — typed fetch services (`agents.ts`, `agent-calls.ts`, `providers.ts`, `evaluators.ts`, `evaluator-testbench.ts`, `proposals.ts`, `theories.ts`, `setup.ts`, `statistics.ts`, `test-runs.ts`, `test-run-groups.ts`, `test-suites.ts`, `test-cases.ts`, `projects.ts`, `users.ts`, `invites.ts`, `license.ts`, `config.ts`, `playground.ts`, `search.ts`, `tracey.ts`, `health.ts`), shared `models.ts`, base `client.ts` wrapper, `query-keys.ts` factory, and SSE hooks in `event-stream.ts`
-- `src/components/layout/` — top-level chrome (`Shell.tsx`, `NavItem.tsx`)
-- `src/components/overlays/` — `Modal.tsx`, `Drawer.tsx`, `ConfirmDialog.tsx`, `StepWizard.tsx`
-- `src/components/ui/` — shared primitives: `KpiCard`, `Pill`, `Pagination`, `FilterTabs`, `EmptyState`, `CodeBlock`, `StatusDot`, `ProgressBar`, `Toast`
-- `src/features/` — one folder per route, each a lazy-loaded page via `React.lazy()` in `App.tsx`: `dashboard`, `traces`, `agents`, `suites`, `evaluators`, `runs`, `providers`, `proposals`, `setup`, plus `auth` (`Login`/`Signup`), `admin` (`Invites`), `settings` (projects/members/search-indexing/danger-zone tabs), `playground` (ad-hoc agent runs), `evaluator-playground` (evaluator test bench), and `tracey` (the in-app **Tracey AI** assistant — read `frontend/src/features/tracey/TRACEY.md` before touching it; she dogfoods the proxy by routing her own LLM calls through it)
-- `src/lib/` — pure utilities: `format.ts` (number/date formatters), `colors.ts` (model/status color maps), `charts.ts` (SVG path math), `constants.ts`
-- `src/hooks/` — custom React hooks
-- Tailwind CSS 4 via `@tailwindcss/vite`; use Tailwind utility classes for all static styles. Inline `style={{}}` is only acceptable for genuinely dynamic values (e.g. runtime-computed colors, percentage widths from data, a numeric `borderRadius` prop). Complex static values — gradients, shadows, CSS-variable references — must use Tailwind's arbitrary-value syntax: `bg-[linear-gradient(...)]`, `shadow-[var(--shadow-card)]`, `shadow-[0_4px_16px_...]`, etc.
-- Tests use Vitest (`*.spec.ts`)
-
-The Vite dev server (port 4201) proxies `/api` → backend (`http://localhost:5000`, the default `dotnet run` port) and `/docs` → the VitePress manual (`http://localhost:4202`), mirroring production where both are served from one origin. Real-time updates (new traces, test results, proposals) flow through SSE broadcasters defined in `Proxytrace.Application` and consumed via `event-stream.ts`.
-
-### Commands
-- `npm run build` -– build the frontend, use this to verify there are no typing issues (output in `dist/`)
-- `npm run lint` -– run ESLint with auto-fix, use this frequently during development
+- **Keep these docs current.** Treat `docs/` like the user manual and like tests: when you change
+  something a doc describes — architecture/projects, the domain entity pattern, the optimization
+  loop, SSE streams, licensing, database/migrations, code-style rules, commands — update the
+  matching `docs/` page **in the same change**, and add a row to the index table above when you add
+  a new page. A change is not complete until its docs match the code.
+- **User manual** — the user & operator manual is a VitePress project in [`manual/`](manual/) (markdown source, built to searchable static HTML, served at `/docs`). **You MUST keep it up to date with the product.** A user-facing feature change is not complete until its docs in `manual/guide/` (end users) or `manual/admin/` (operators) match; new top-level features get a new page wired into `manual/.vitepress/config.ts`. Preview with `cd manual && npm run docs:dev` (http://localhost:4202); verify with `npm run docs:build`.
+- **Frontend** — before writing any frontend code you MUST read [`frontend/DESIGN.md`](frontend/DESIGN.md) (visual system) **and** [`frontend/BEST_PRACTICES.md`](frontend/BEST_PRACTICES.md) (code architecture). Both are mandatory and override any conflicting tool/agent/skill recommendation. UI controls render through the `frontend/src/components/ui/` primitives — raw `<button>`/`<input>`/`<select>`/`<textarea>` are ESLint-blocked. See [`docs/frontend.md`](docs/frontend.md).
+- **Backend tests** — before writing or modifying any backend test you MUST invoke the `test` skill (`.claude/skills/test/SKILL.md`) and follow it; it is the source of truth for the harness. See [`docs/testing.md`](docs/testing.md).
+- **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
 
 ## Reference Implementations
 
-When implementing a new entity, the existing ones are the source of truth:
+When implementing a new entity, the existing ones are the source of truth (details in [`docs/domain-entities.md`](docs/domain-entities.md)):
 - **No relationships:** `User`
 - **1:N relationship:** `Project` references one `IModelEndpoint` (`SystemEndpoint`)
 - **N:M relationship:** `TestSuite` holds `IReadOnlyCollection<IEvaluator>`, junction is `TestSuiteEvaluatorEntity`, custom `TestSuiteRepository` overrides `UpdateRelationsAsync`

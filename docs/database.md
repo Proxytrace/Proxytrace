@@ -1,8 +1,16 @@
 # Database Configuration
 
-Proxytrace uses **PostgreSQL** for all persistent deployments (debug, release, and e2e) and an
+Storage is **PostgreSQL** for all persistent deployments (debug, release, and e2e) and an
 **in-memory** store for unit tests and kiosk (single-process demo) mode. SQLite and SQL Server are
 no longer supported.
+
+| Mode | Selected when | Schema init |
+|------|---------------|-------------|
+| PostgreSQL | non-kiosk (connection string from `Proxytrace.Api/appsettings.json`) | EF migrations (`MigrateAsync`) on startup |
+| In-memory | `Kiosk:Enabled=true`, and all unit tests | `EnsureCreatedAsync` (no migrations) |
+
+Transactions use a single shared EF `IDbContextTransaction` per logical unit (`AmbientDbContext` +
+`Transaction`), so writes never promote to a 2-phase transaction.
 
 ## Supported storage modes
 

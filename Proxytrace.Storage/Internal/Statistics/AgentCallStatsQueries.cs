@@ -48,6 +48,15 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             OverallPassRate: null);
     }
 
+    public async Task<DateTimeOffset?> GetEarliestCallAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
+    {
+        StorageDbContext context = contextFactory();
+        return await Query(context, filter)
+            .OrderBy(c => c.CreatedAt)
+            .Select(c => (DateTimeOffset?)c.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<TokenUsageStat>> GetTokenUsageAsync(StatisticsFilter filter, StatisticsBucket bucket, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();

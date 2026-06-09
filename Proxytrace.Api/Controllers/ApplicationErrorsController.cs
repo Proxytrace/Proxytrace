@@ -28,9 +28,12 @@ public class ApplicationErrorsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         [FromQuery] ApplicationErrorLevel? level = null,
+        [FromQuery] string? search = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
         CancellationToken cancellationToken = default)
     {
-        var paged = await repository.GetPagedNewestFirstAsync(page, pageSize, level, cancellationToken);
+        var paged = await repository.GetPagedNewestFirstAsync(page, pageSize, level, search, from, to, cancellationToken);
         return paged.Map(ToDto);
     }
 

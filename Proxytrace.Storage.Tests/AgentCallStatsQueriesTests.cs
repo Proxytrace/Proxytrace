@@ -52,6 +52,32 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetEarliestCall_EmptyDb_ReturnsNull()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+
+        var earliest = await reader.GetEarliestCallAsync(new StatisticsFilter(), CancellationToken);
+
+        earliest.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetEarliestCall_AfterSeedingCalls_ReturnsOldestTimestamp()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        var first = await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+
+        var earliest = await reader.GetEarliestCallAsync(new StatisticsFilter(), CancellationToken);
+
+        earliest.Should().NotBeNull();
+        earliest.Should().BeOnOrBefore(first.CreatedAt);
+    }
+
+    [TestMethod]
     public async Task GetErrorRates_EmptyDb_ReturnsEmpty()
     {
         IServiceProvider services = GetServices();

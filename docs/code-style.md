@@ -1,0 +1,38 @@
+# Backend Code Style
+
+> **`TreatWarningsAsErrors=true`** is set solution-wide in `Directory.Build.props` — the build
+> fails on *any* compiler warning. Leave no unused usings/variables, no obsolete-API calls, no
+> nullable warnings. This is why suppressing nullable warnings with `!` is both forbidden and
+> pointless (it would only move the failure). Run `dotnet build Proxytrace.sln` before claiming done.
+
+- Dependency Injection is super important - use it whenever possible. Avoid the static keyword and service locators.
+- Do not use primary constructors. Use constructor injection with DI and `this(...)` chaining for domain entities.
+- Use `record` types for all domain entities and storage entities (even if mutable)
+- Make types `internal` by default; only interfaces or POCO types should be `public`
+- Use `required` properties with `init` accessors for storage entities
+- Prefer immutability and statelessness; storage entities can be mutable if needed for EF Core
+- Use `var` when the type is obvious from the right-hand side, otherwise be explicit
+- Use expression-bodied members for simple one-liners; otherwise use block bodies with braces
+- Use `this(...)` constructor chaining to avoid duplication between "new" and "existing" constructors on domain entities
+- Use `nameof(...)` for all parameter names in exceptions and validation
+- Prefer collection expressions when possible
+- Supressing nullable warnings with `!` is strictly forbidden everywhere!
+- Injecting `IServiceProvider` shall be strongly avoided
+- Static members shall be avoided (except for extension methods and constants)
+- Docstrings: newline after `<summary>` and before `</summary>` (minimum 3-line blocks), e.g.:
+  ```csharp
+  /// <summary>
+  /// Does the thing.
+  /// </summary>
+  ```
+
+## Key Conventions
+
+- All timestamps are `DateTimeOffset`, never `DateTime`
+- Domain entities are immutable `internal record` types — no setters on domain-layer properties
+- Domain interfaces are `public`; implementations and storage entities are `internal`
+- Repositories return domain entities (`I[Entity]`), never storage entities
+- Always pass `CancellationToken` to every async method
+- Domain references hold the related entity (e.g. `IModelEndpoint`, `IReadOnlyCollection<IEvaluator>`); storage entities hold the `Guid` foreign key
+- Storage entities use `required` properties with `init` accessors and extend `Entity`
+- Decorate custom storage repositories with `[UsedImplicitly]` so reflection-based DI discovers them

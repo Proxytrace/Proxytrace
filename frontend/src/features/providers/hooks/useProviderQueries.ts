@@ -13,13 +13,3 @@ export function useProvidersOverview() {
     queryFn: providersApi.overview,
   });
 }
-
-/** Models the upstream endpoint advertises — only discovered while the add form is open. */
-export function useAvailableModels(providerId: string, enabled: boolean) {
-  return useQuery({
-    queryKey: QUERY_KEYS.providerAvailableModels(providerId),
-    queryFn: () => providersApi.getAvailableModels(providerId),
-    enabled: enabled && !!providerId,
-    retry: false,
-  });
-}

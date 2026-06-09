@@ -6,13 +6,12 @@ import { Card } from '../../components/ui/Card';
 import { PlusIcon } from '../../components/icons';
 import { useProvidersOverview } from './hooks/useProviderQueries';
 import { ProviderList } from './components/ProviderList';
-import { ProviderDetail, type ProviderTab } from './components/ProviderDetail';
+import { ProviderDetail } from './components/ProviderDetail';
 import { AddProviderModal } from './components/AddProviderModal';
 
 export default function Providers() {
   const { currentProjectId } = useCurrentProject();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<ProviderTab>('models');
   const [showNewProvider, setShowNewProvider] = useState(false);
 
   const { data: overview, isLoading: providersLoading } = useProvidersOverview();
@@ -61,8 +60,6 @@ export default function Providers() {
             keys={selectedItem.keys}
             projects={projects}
             defaultProjectId={currentProjectId ?? projects[0]?.id ?? ''}
-            tab={tab}
-            onTabChange={setTab}
             onDeleted={handleDeleted}
           />
         ) : (
