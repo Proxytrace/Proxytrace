@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.ApiKeys;
+using Proxytrace.Application.Pricing;
 using Proxytrace.Api.Dto.ModelProviders;
 using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Domain;
@@ -29,6 +30,7 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelEndpoint.CreateNew createEndpoint;
     private readonly IModelEndpoint.CreateExisting updateEndpoint;
     private readonly ModelProviderDtoMapper mapper;
+    private readonly IModelPriceRefresher priceRefresher;
 
     public ModelProvidersController(
         IRepository<IModelProvider> providerRepository,
@@ -41,7 +43,8 @@ public class ModelProvidersController : ControllerBase
         IModelRepository modelRepository,
         IModelEndpoint.CreateNew createEndpoint,
         IModelEndpoint.CreateExisting updateEndpoint,
-        ModelProviderDtoMapper mapper)
+        ModelProviderDtoMapper mapper,
+        IModelPriceRefresher priceRefresher)
     {
         this.providerRepository = providerRepository;
         this.apiKeyRepository = apiKeyRepository;
@@ -54,6 +57,7 @@ public class ModelProvidersController : ControllerBase
         this.createEndpoint = createEndpoint;
         this.updateEndpoint = updateEndpoint;
         this.mapper = mapper;
+        this.priceRefresher = priceRefresher;
     }
 
     [HttpGet]
@@ -107,45 +111,8 @@ public class ModelProvidersController : ControllerBase
     {
         var provider = createProvider(request.Name, new Uri(request.Endpoint), request.UpstreamApiKey, request.Kind);
         var saved = await providerRepository.AddAsync(provider, cancellationToken);
-        await PopulateModelsAsync(saved, cancellationToken);
+        await priceRefresher.RefreshProviderAsync(saved, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, mapper.ToDto(saved));
-    }
-
-    private async Task PopulateModelsAsync(
-        IModelProvider provider,
-        CancellationToken cancellationToken)
-    {
-        IReadOnlyList<IModelEndpoint> existing = await endpointRepository.GetByProviderAsync(provider.Id, cancellationToken);
-
-        IReadOnlyList<PricedModel> discovered;
-        try
-        {
-            discovered = await provider.CreateClient().GetModelsAsync(cancellationToken);
-        }
-        catch
-        {
-            return; // fail-soft: provider stays usable, no endpoints touched
-        }
-
-        foreach (PricedModel pm in discovered)
-        {
-            IModelEndpoint? existingEndpoint = existing.FirstOrDefault(
-                e => string.Equals(e.Model.Name, pm.Model.Name, StringComparison.OrdinalIgnoreCase));
-
-            if (existingEndpoint is not null)
-            {
-                // Always refresh the price of an existing endpoint from the resolved value.
-                IModelEndpoint updated = updateEndpoint(
-                    existingEndpoint.Model, existingEndpoint.Provider,
-                    pm.Price.InputTokenCost, pm.Price.OutputTokenCost, existingEndpoint);
-                await endpointRepository.UpdateAsync(updated, cancellationToken);
-            }
-            else
-            {
-                IModelEndpoint endpoint = createEndpoint(pm.Model, provider, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
-                await endpointRepository.AddAsync(endpoint, cancellationToken);
-            }
-        }
     }
 
     [HttpPut("{id:guid}")]
@@ -189,7 +156,7 @@ public class ModelProvidersController : ControllerBase
         if (provider is null)
             return NotFound("Provider not found.");
 
-        await PopulateModelsAsync(provider, cancellationToken);
+        await priceRefresher.RefreshProviderAsync(provider, cancellationToken);
 
         var endpoints = await endpointRepository.GetByProviderAsync(providerId, cancellationToken);
         return endpoints.Select(mapper.ToEndpointDto).ToArray();

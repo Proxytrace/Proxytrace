@@ -18,6 +18,8 @@ using Proxytrace.Application.Evaluator.Internal;
 using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Ingestion.Internal;
 using Proxytrace.Application.Playground;
+using Proxytrace.Application.Pricing;
+using Proxytrace.Application.Pricing.Internal;
 using Proxytrace.Application.Search;
 using Proxytrace.Application.Setup;
 using Proxytrace.Application.Setup.Internal;
@@ -59,6 +61,15 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
         builder.RegisterServiceCollection(services =>
             services.AddHostedService(sc => sc.GetRequiredService<AgentCallCleanupService>()));
+
+        builder.RegisterType<ModelPriceRefresher>()
+            .As<IModelPriceRefresher>()
+            .SingleInstance();
+        builder.RegisterType<PriceRefreshService>()
+            .AsSelf()
+            .SingleInstance();
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService(sc => sc.GetRequiredService<PriceRefreshService>()));
 
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()

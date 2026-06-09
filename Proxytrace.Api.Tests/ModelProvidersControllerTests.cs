@@ -6,6 +6,7 @@ using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.ApiKeys;
 using Proxytrace.Api.Dto.ModelProviders;
+using Proxytrace.Application.Pricing;
 using Proxytrace.Domain;
 using Proxytrace.Domain.ApiKey;
 using Proxytrace.Domain.Model;
@@ -326,5 +327,6 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
         services.GetRequiredService<IModelRepository>(),
         services.GetRequiredService<IModelEndpoint.CreateNew>(),
         services.GetRequiredService<IModelEndpoint.CreateExisting>(),
-        services.GetRequiredService<ModelProviderDtoMapper>());
+        services.GetRequiredService<ModelProviderDtoMapper>(),
+        services.GetRequiredService<IModelPriceRefresher>());
 }

@@ -20,8 +20,10 @@ When you add a provider, Proxytrace **discovers its models and fetches their pri
 automatically**, so you usually start with a populated, priced model list. Each provider's
 detail view shows its **Models** section (above its **API keys** section) with a per-model
 input/output price. The **Reload models & prices** button re-runs discovery and **refreshes the
-price of every model** (new and existing) from the catalogue. Prices are managed entirely by
-Proxytrace — there is no manual price entry.
+price of every model** (new and existing) from the catalogue, and a background service does the
+same automatically on a configurable interval (default hourly — see
+[Configuration](/admin/configuration)). Prices are managed entirely by Proxytrace — there is no
+manual price entry.
 
 The upstream **endpoint** is shown in the provider header only when it differs from the
 provider kind's default (for example, the canonical `https://api.openai.com/v1` and

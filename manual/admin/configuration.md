@@ -54,15 +54,18 @@ source feeds are configurable under `Pricing`:
 {
   "Pricing": {
     "LiteLlmFeedUrl": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
-    "FxApiUrl": "https://api.frankfurter.app/latest"
+    "FxApiUrl": "https://api.frankfurter.app/latest",
+    "RefreshIntervalHours": 1
   }
 }
 ```
 
 - `LiteLlmFeedUrl` — the LiteLLM model-price catalogue (USD) used for all providers (Azure providers prefer its `azure/<model>` entries).
 - `FxApiUrl` — the ECB exchange-rate source used to convert USD prices to EUR.
+- `RefreshIntervalHours` — how often the background service re-resolves prices for every provider's models (default `1`; minimum 1 hour).
 
-All prices are stored as EUR per 1M tokens and can be overridden manually per model.
+All prices are stored as EUR per 1M tokens. A background service refreshes them on the configured
+interval, and the **Reload models & prices** button triggers a refresh on demand.
 
 ## Kiosk mode
 
