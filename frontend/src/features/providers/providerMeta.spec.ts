@@ -4,7 +4,6 @@ import { kindLabel, kindColor, maskKey, isDefaultEndpoint, isAzureEndpoint } fro
 
 describe('kindLabel', () => {
   it('maps known kinds', () => {
-    expect(kindLabel(ModelProviderKind.Anthropic)).toBe('Anthropic');
     expect(kindLabel(ModelProviderKind.OpenAi)).toBe('OpenAI');
     expect(kindLabel(ModelProviderKind.OpenAiCompatible)).toBe('OpenAI-compatible');
   });
@@ -15,7 +14,6 @@ describe('kindLabel', () => {
 
 describe('kindColor', () => {
   it('maps each kind to a token', () => {
-    expect(kindColor(ModelProviderKind.Anthropic)).toBe('var(--warn)');
     expect(kindColor(ModelProviderKind.OpenAi)).toBe('var(--success)');
     expect(kindColor(ModelProviderKind.OpenAiCompatible)).toBe('var(--teal)');
     expect(kindColor(ModelProviderKind.Unknown)).toBe('var(--text-muted)');
@@ -33,8 +31,7 @@ describe('maskKey', () => {
 });
 
 describe('isDefaultEndpoint', () => {
-  it('treats canonical Anthropic/OpenAI endpoints as default', () => {
-    expect(isDefaultEndpoint(ModelProviderKind.Anthropic, 'https://api.anthropic.com/v1')).toBe(true);
+  it('treats the canonical OpenAI endpoint as default', () => {
     expect(isDefaultEndpoint(ModelProviderKind.OpenAi, 'https://api.openai.com/v1')).toBe(true);
   });
   it('treats custom endpoints as non-default', () => {

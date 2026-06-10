@@ -49,7 +49,7 @@ the Providers area of the UI (operators can also manage these — see
 [Providers & API Keys](/admin/providers-and-api-keys)).
 
 1. Open **Providers**.
-2. Choose the upstream provider the key should route to (e.g. OpenAI, Anthropic).
+2. Choose the upstream provider the key should route to (e.g. OpenAI).
 3. Generate a key and copy it — treat it like a secret.
 
 ## Point your client at the proxy

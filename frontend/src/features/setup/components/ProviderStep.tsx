@@ -50,7 +50,7 @@ export function ProviderStep({
       </FormField>
       <FormField label="Provider name">
         <Input
-          placeholder="e.g. Anthropic Production"
+          placeholder="e.g. OpenAI Production"
           value={providerName}
           onChange={e => onNameChange(e.target.value)}
           onKeyDown={onKeyDown}
@@ -58,7 +58,7 @@ export function ProviderStep({
       </FormField>
       <FormField label="Endpoint URL">
         <Input
-          placeholder="https://api.anthropic.com/v1"
+          placeholder="https://api.openai.com/v1"
           value={providerEndpoint}
           onChange={e => onEndpointChange(e.target.value)}
           onKeyDown={onKeyDown}

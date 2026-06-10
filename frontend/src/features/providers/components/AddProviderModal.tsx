@@ -8,9 +8,9 @@ import { PROVIDER_KIND_OPTIONS } from '../providerMeta';
 import { useCreateProvider } from '../hooks/useProviderMutations';
 
 const FIELDS = [
-  { label: 'Provider name', key: 'name', placeholder: 'e.g. Anthropic', type: 'text', mono: false },
-  { label: 'Endpoint URL', key: 'endpoint', placeholder: 'https://api.anthropic.com/v1', type: 'text', mono: true },
-  { label: 'Upstream API key', key: 'upstreamApiKey', placeholder: 'sk-ant-…', type: 'password', mono: true },
+  { label: 'Provider name', key: 'name', placeholder: 'e.g. OpenAI', type: 'text', mono: false },
+  { label: 'Endpoint URL', key: 'endpoint', placeholder: 'https://api.openai.com/v1', type: 'text', mono: true },
+  { label: 'Upstream API key', key: 'upstreamApiKey', placeholder: 'sk-…', type: 'password', mono: true },
 ] as const;
 
 interface AddProviderModalProps {
@@ -19,7 +19,7 @@ interface AddProviderModalProps {
 }
 
 export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) {
-  const [form, setForm] = useState({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.Anthropic });
+  const [form, setForm] = useState({ name: '', endpoint: '', upstreamApiKey: '', kind: ModelProviderKind.OpenAi });
   const createProvider = useCreateProvider();
 
   return (

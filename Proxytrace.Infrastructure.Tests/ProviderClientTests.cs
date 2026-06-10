@@ -24,18 +24,6 @@ public sealed class ProviderClientTests
     }
 
     [TestMethod]
-    public async Task GetModels_AnthropicKind_Throws()
-    {
-        var provider = StubProvider(ModelProviderKind.Anthropic);
-        var client = new ProviderClient(provider, Substitute.For<IModelRepository>(), new HttpClient(), Substitute.For<IPricingService>());
-
-        await FluentActions
-            .Invoking(() => client.GetModelsAsync(TestContext.CancellationToken))
-            .Should()
-            .ThrowAsync<NotSupportedException>();
-    }
-
-    [TestMethod]
     public async Task VerifyConnection_UnsupportedKind_ReturnsFalse()
     {
         var provider = StubProvider(ModelProviderKind.Unknown);

@@ -25,7 +25,6 @@ export interface AgenticEvaluatorPresetDto {
 
 export enum ModelProviderKind {
   Unknown = 'Unknown',
-  Anthropic = 'Anthropic',
   OpenAi = 'OpenAi',
   OpenAiCompatible = 'OpenAiCompatible',
 }

@@ -96,7 +96,7 @@ internal sealed class CoreSeedScenario : IDemoScenario
             "Anthropic (demo)",
             new Uri("https://api.anthropic.com/v1"),
             "DEMO-NO-KEY",
-            ModelProviderKind.Anthropic), cancellationToken);
+            ModelProviderKind.OpenAiCompatible), cancellationToken);
 
         var gpt4o = await models.AddAsync(modelFactory("gpt-4o"), cancellationToken);
         var gpt4oMini = await models.AddAsync(modelFactory("gpt-4o-mini"), cancellationToken);

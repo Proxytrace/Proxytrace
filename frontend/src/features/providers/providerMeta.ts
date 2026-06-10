@@ -1,7 +1,6 @@
 import { ModelProviderKind } from '../../api/models';
 
 export const PROVIDER_KIND_OPTIONS: { value: ModelProviderKind; label: string }[] = [
-  { value: ModelProviderKind.Anthropic, label: 'Anthropic' },
   { value: ModelProviderKind.OpenAi, label: 'OpenAI' },
   { value: ModelProviderKind.OpenAiCompatible, label: 'OpenAI-compatible' },
 ];
@@ -11,7 +10,6 @@ export function kindLabel(k: ModelProviderKind): string {
 }
 
 export function kindColor(k: ModelProviderKind): string {
-  if (k === ModelProviderKind.Anthropic) return 'var(--warn)';
   if (k === ModelProviderKind.OpenAi) return 'var(--success)';
   if (k === ModelProviderKind.OpenAiCompatible) return 'var(--teal)';
   return 'var(--text-muted)';
@@ -22,7 +20,6 @@ export function maskKey(k: string): string {
 }
 
 const DEFAULT_ENDPOINT: Partial<Record<ModelProviderKind, string>> = {
-  [ModelProviderKind.Anthropic]: 'https://api.anthropic.com/v1',
   [ModelProviderKind.OpenAi]: 'https://api.openai.com/v1',
 };
 

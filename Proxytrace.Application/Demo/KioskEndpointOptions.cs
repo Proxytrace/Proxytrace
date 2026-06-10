@@ -26,7 +26,7 @@ public sealed record KioskEndpointOptions
     public string? Model { get; init; }
 
     /// <summary>
-    /// The provider kind, parsed to <see cref="ModelProviderKind"/> (e.g. <c>OpenAi</c>, <c>Anthropic</c>).
+    /// The provider kind, parsed to <see cref="ModelProviderKind"/> (e.g. <c>OpenAi</c>, <c>OpenAiCompatible</c>).
     /// </summary>
     public string Kind { get; init; } = nameof(ModelProviderKind.OpenAi);
 
@@ -78,7 +78,7 @@ public sealed record KioskEndpointOptions
         {
             throw new InvalidOperationException(
                 $"Kiosk:Endpoint:Kind '{Kind}' is not a valid provider kind "
-                + $"({nameof(ModelProviderKind.OpenAi)}, {nameof(ModelProviderKind.Anthropic)}, "
+                + $"({nameof(ModelProviderKind.OpenAi)}, "
                 + $"{nameof(ModelProviderKind.OpenAiCompatible)}).");
         }
 

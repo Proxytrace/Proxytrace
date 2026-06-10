@@ -2,17 +2,17 @@
 namespace Proxytrace.Domain.ModelProvider;
 
 /// <summary>
-/// A model provider (e.g. Anthropic, OpenAI) with its API endpoint and credentials.
+/// A model provider (e.g. OpenAI) with its API endpoint and credentials.
 /// </summary>
 public interface IModelProvider : IDomainEntity
 {
     /// <summary>
-    /// The name of the model provider (e.g. Anthropic)
+    /// The name of the model provider (e.g. OpenAI)
     /// </summary>
     string Name { get; }
 
     /// <summary>
-    /// The endpoint URL for the model provider's API (e.g. https://api.anthropic.com/v1)
+    /// The endpoint URL for the model provider's API (e.g. https://api.openai.com/v1)
     /// </summary>
     Uri Endpoint { get; }
 

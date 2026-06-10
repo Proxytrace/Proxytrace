@@ -38,22 +38,22 @@ public sealed class KioskEndpointOptionsTests : BaseTest<Module>
     {
         var options = new KioskEndpointOptions
         {
-            BaseUrl = "https://api.anthropic.com/v1",
+            BaseUrl = "https://api.openai.com/v1",
             ApiKey = "sk-real",
-            Model = "claude-sonnet-4.5",
-            Kind = "anthropic",
-            ProviderName = "Demo Anthropic",
+            Model = "gpt-4o",
+            Kind = "openaicompatible",
+            ProviderName = "Demo Provider",
             InputTokenCost = 0.000003m,
             OutputTokenCost = 0.000015m,
         };
 
         var resolved = options.Resolve();
 
-        resolved.BaseUrl.Should().Be(new Uri("https://api.anthropic.com/v1"));
+        resolved.BaseUrl.Should().Be(new Uri("https://api.openai.com/v1"));
         resolved.ApiKey.Should().Be("sk-real");
-        resolved.Model.Should().Be("claude-sonnet-4.5");
-        resolved.Kind.Should().Be(ModelProviderKind.Anthropic);
-        resolved.ProviderName.Should().Be("Demo Anthropic");
+        resolved.Model.Should().Be("gpt-4o");
+        resolved.Kind.Should().Be(ModelProviderKind.OpenAiCompatible);
+        resolved.ProviderName.Should().Be("Demo Provider");
         resolved.InputTokenCost.Should().Be(0.000003m);
         resolved.OutputTokenCost.Should().Be(0.000015m);
     }

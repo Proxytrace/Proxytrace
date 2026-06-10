@@ -6,7 +6,6 @@ namespace Proxytrace.Domain.ModelProvider;
 public enum ModelProviderKind
 {
     Unknown = 0,
-    Anthropic = 1,
     OpenAi = 2,
     OpenAiCompatible = 3,
 }

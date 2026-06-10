@@ -15,7 +15,7 @@ public interface IModelEndpoint : IDomainEntity
     IModel Model { get; }
     
     /// <summary>
-    /// The provider that serves the model (e.g. <c>Anthropic</c>).
+    /// The provider that serves the model (e.g. <c>OpenAI</c>).
     /// </summary>
     IModelProvider Provider { get; }
     

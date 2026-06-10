@@ -129,7 +129,7 @@ and become the project's **system endpoint** powering all interactive features.
 
 - `BaseUrl`, `ApiKey` and `Model` are **required**. If the section is present but any of them
   is missing or invalid, the API fails fast on startup with a clear error.
-- `Kind` is one of `OpenAi`, `Anthropic`, or `OpenAiCompatible` (default `OpenAi`).
+- `Kind` is one of `OpenAi` or `OpenAiCompatible` (default `OpenAi`).
 - `ProviderName`, `InputTokenCost` and `OutputTokenCost` are optional.
 
 If `Kiosk:Endpoint` is omitted, the kiosk seeds the full demo dataset with credential-less
