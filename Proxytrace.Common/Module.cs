@@ -37,7 +37,7 @@ public class Module : Autofac.Module
             .As<ISerializer>()
             .SingleInstance();
 
-        builder.RegisterType<AsyncLock>().As<IAsyncLock>();
+        builder.RegisterType<AsyncLock>().As<IAsyncLock>().SingleInstance();
 
         builder.RegisterType<SystemClock>().As<IClock>().SingleInstance();
 
