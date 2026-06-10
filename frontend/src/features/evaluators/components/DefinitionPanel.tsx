@@ -9,7 +9,6 @@ import { NumberedCode } from './NumberedCode';
 
 interface Props {
   evaluator: EvaluatorDetailDto;
-  onEdit: () => void;
 }
 
 /** Renders the kind-specific definition body (rubric / schema / regex+tolerance / preset). */
@@ -55,8 +54,8 @@ function definitionBody(e: EvaluatorDetailDto): { body: ReactNode; vars: string[
   };
 }
 
-/** Card showing the evaluator's definition with copy/edit actions and a variable footer. */
-export function DefinitionPanel({ evaluator: e, onEdit }: Props) {
+/** Card showing the evaluator's definition with a copy action and a variable footer. */
+export function DefinitionPanel({ evaluator: e }: Props) {
   const cat = KIND_CATEGORY[e.kind];
   const { body, vars } = definitionBody(e);
   const systemMessage = e.systemMessage;
@@ -71,14 +70,11 @@ export function DefinitionPanel({ evaluator: e, onEdit }: Props) {
         {e.endpointName && (
           <span className="text-[10.5px] text-muted font-mono">· {e.endpointName}</span>
         )}
-        <div className="ml-auto flex gap-1">
-          {systemMessage && (
-            <Button variant="ghost" size="sm" leftIcon={<CopyIcon size={11} />} onClick={() => navigator.clipboard.writeText(systemMessage)}>
-              Copy
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" data-write className={cn(categoryText[cat], categoryTint18[cat])} onClick={onEdit}>Edit</Button>
-        </div>
+        {systemMessage && (
+          <Button variant="ghost" size="sm" className="ml-auto" leftIcon={<CopyIcon size={11} />} onClick={() => navigator.clipboard.writeText(systemMessage)}>
+            Copy
+          </Button>
+        )}
       </header>
       <div className="px-[18px] py-3.5 max-h-[460px] overflow-auto flex-1">{body}</div>
       {vars.length > 0 && (
