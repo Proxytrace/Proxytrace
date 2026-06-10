@@ -45,6 +45,12 @@ export const evaluatorTestBenchApi = {
       `/api/evaluators/${encodeURIComponent(evaluatorId)}/test-bench/recent?count=${count}`,
     );
   },
+  search(evaluatorId: string, query: string, count: number): Promise<EvaluatorTestBenchRecentItemDto[]> {
+    const params = new URLSearchParams({ q: query, count: String(count) });
+    return api.get<EvaluatorTestBenchRecentItemDto[]>(
+      `/api/evaluators/${encodeURIComponent(evaluatorId)}/test-bench/search?${params.toString()}`,
+    );
+  },
   run(evaluatorId: string, body: RunEvaluatorOnBenchRequest): Promise<EvaluationResultDto> {
     return api.post<EvaluationResultDto>(
       `/api/evaluators/${encodeURIComponent(evaluatorId)}/test-bench/run`,

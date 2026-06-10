@@ -47,7 +47,39 @@ public sealed class TestResultRepositoryTests : BaseTest<Module>
         all.Should().HaveCount(2);
     }
 
-    private async Task PersistResult(IServiceProvider services, IEvaluator evaluator, EvaluationScore score)
+    [TestMethod]
+    public async Task SearchByEvaluator_MatchesReasoning_ReturnsOnlyMatchingCase()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestResultRepository>();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IEvaluator>>().GetOrCreateAsync(CancellationToken);
+
+        var matched = await PersistResult(services, evaluator, EvaluationScore.Good, "alpha unique reasoning");
+        await PersistResult(services, evaluator, EvaluationScore.Bad, "beta different reasoning");
+
+        var hits = await repo.SearchByEvaluatorAsync(evaluator.Id, "alpha", 20, CancellationToken);
+
+        hits.Should().ContainSingle();
+        hits.Single().TestCase.Id.Should().Be(matched.Id);
+    }
+
+    [TestMethod]
+    public async Task SearchByEvaluator_EmptyQuery_ReturnsAllMatchesForEvaluator()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestResultRepository>();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IEvaluator>>().GetOrCreateAsync(CancellationToken);
+
+        await PersistResult(services, evaluator, EvaluationScore.Good, "anything");
+        await PersistResult(services, evaluator, EvaluationScore.Bad, "anything else");
+
+        var hits = await repo.SearchByEvaluatorAsync(evaluator.Id, "", 20, CancellationToken);
+
+        hits.Should().HaveCount(2);
+    }
+
+    private async Task<ITestCase> PersistResult(
+        IServiceProvider services, IEvaluator evaluator, EvaluationScore score, string? reasoning = null)
     {
         var testCaseGen = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
         var completionGen = services.GetRequiredService<IDomainObjectGenerator<ICompletion>>();
@@ -58,8 +90,9 @@ public sealed class TestResultRepositoryTests : BaseTest<Module>
         // Each result needs its own test case — GetRecentByEvaluatorAsync dedupes by test case.
         var testCase = await testCaseGen.CreateAsync(CancellationToken);
         var completion = await completionGen.CreateAsync(CancellationToken);
-        var evaluation = evalFactory(evaluator, score, TimeSpan.FromMilliseconds(10), null, null, null);
+        var evaluation = evalFactory(evaluator, score, TimeSpan.FromMilliseconds(10), null, null, reasoning);
         var result = resultFactory(testCase, completion, [evaluation]);
         await repo.AddAsync(result, CancellationToken);
+        return testCase;
     }
 }

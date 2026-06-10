@@ -57,8 +57,11 @@ evaluator against a past test result and watch its score react to edits — with
 full run. It's a three-pane workspace:
 
 1. **Selection rail (left).** Pick an evaluator, then one of its **past evaluations**. The
-   list shows the evaluator's most recent scored cases; the search box reaches any other test
-   case in the project, so you can pull up cases beyond the recent set.
+   list shows the evaluator's most recent scored cases; the search box reaches the rest of
+   *this evaluator's* past evaluations (matching the case text or the judge's reasoning), with a
+   preview that shows the logged verdict above the test case. On first open the first evaluator
+   and its most recent past evaluation are selected for you, and your last selection is
+   remembered so you land back on it when you return to the page.
 2. **Bench (centre).** The picked case loads its input conversation (collapsed by default),
    the **expected / reference** answer, and the **candidate response** the agent produced. The
    candidate is editable — change it to ask "what would the judge say if the agent had answered

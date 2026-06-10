@@ -72,6 +72,8 @@ export const QUERY_KEYS = {
     ['evaluator-test-bench-default', evaluatorId] as const,
   evaluatorTestBenchRecent: (evaluatorId: string, count: number) =>
     ['evaluator-test-bench-recent', evaluatorId, count] as const,
+  evaluatorTestBenchSearch: (evaluatorId: string, query: string, count: number) =>
+    ['evaluator-test-bench-search', evaluatorId, query, count] as const,
 
   traceySession: (projectId?: string) => ['tracey-session', projectId ?? null] as const,
 

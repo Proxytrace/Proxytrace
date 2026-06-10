@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Domain;
@@ -61,12 +62,39 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         result.Value![0].Score.Should().Be(EvaluationScore.Bad);
     }
 
+    [TestMethod]
+    public async Task Search_WhenReasoningMatchesQuery_ReturnsOnlyTheScopedMatch()
+    {
+        IServiceProvider services = GetServices();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+        var (matched, _) = await SeedScoredResult(services, evaluator, EvaluationScore.Good, "needle phrase");
+        await SeedScoredResult(services, evaluator, EvaluationScore.Bad, "unrelated text");
+        var controller = ResolveController(services);
+
+        var result = await controller.Search(evaluator.Id, "needle", 10, CancellationToken);
+
+        result.Value.Should().ContainSingle();
+        result.Value![0].TestCaseId.Should().Be(matched.Id);
+        result.Value![0].Score.Should().Be(EvaluationScore.Good);
+    }
+
+    [TestMethod]
+    public async Task Search_WhenEvaluatorMissing_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Search(Guid.NewGuid(), "anything", 10, CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
     private async Task<(ITestCase TestCase, ITestResult Result)> SeedScoredResult(
-        IServiceProvider services, IEvaluator evaluator, EvaluationScore score)
+        IServiceProvider services, IEvaluator evaluator, EvaluationScore score, string? reasoning = null)
     {
         var testCase = await services.GetRequiredService<IDomainEntityGenerator<ITestCase>>().CreateAsync(CancellationToken);
         var completion = await services.GetRequiredService<IDomainObjectGenerator<ICompletion>>().CreateAsync(CancellationToken);
-        var evaluation = services.GetRequiredService<IEvaluation.Create>()(evaluator, score, TimeSpan.FromMilliseconds(10), null, null, null);
+        var evaluation = services.GetRequiredService<IEvaluation.Create>()(evaluator, score, TimeSpan.FromMilliseconds(10), null, null, reasoning);
         var result = services.GetRequiredService<ITestResult.CreateNew>()(testCase, completion, [evaluation]);
         await services.GetRequiredService<ITestResultRepository>().AddAsync(result, CancellationToken);
         return (testCase, result);

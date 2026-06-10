@@ -27,4 +27,15 @@ public interface ITestResultRepository : IRepository<ITestResult>
         int count,
         EvaluationScore? score = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns test results scored by the given evaluator whose test-case summary or this evaluator's
+    /// reasoning matches <paramref name="query"/> (case-insensitive substring), newest first and
+    /// deduplicated by test case (latest result per case). An empty query returns the most recent matches.
+    /// </summary>
+    Task<IReadOnlyList<ITestResult>> SearchByEvaluatorAsync(
+        Guid evaluatorId,
+        string query,
+        int count,
+        CancellationToken cancellationToken = default);
 }

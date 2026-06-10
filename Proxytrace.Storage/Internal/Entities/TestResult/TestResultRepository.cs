@@ -80,4 +80,52 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
         }
         return mapped;
     }
+
+    public async Task<IReadOnlyList<ITestResult>> SearchByEvaluatorAsync(
+        Guid evaluatorId,
+        string query,
+        int count,
+        CancellationToken cancellationToken = default)
+    {
+        if (count <= 0) return [];
+
+        // Mirror GetRecentByEvaluatorAsync: load a recent window and filter in memory so the
+        // in-memory test provider behaves identically to PostgreSQL (no relational-only operators).
+        var context = contextFactory();
+        var recent = await context
+            .Set<TestResultEntity>()
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(1000)
+            .ToListAsync(cancellationToken);
+
+        var deduped = recent
+            .Where(r => r.Evaluations.Any(e => e.EvaluatorId == evaluatorId))
+            .GroupBy(r => r.TestCase)
+            .Select(g => g.First())
+            .Take(300)
+            .ToList();
+
+        // Summary is computed by the domain entity, so the text filter runs after mapping.
+        var trimmed = query.Trim();
+        var matches = new List<ITestResult>();
+        foreach (var entity in deduped)
+        {
+            var mapped = await Map(entity, cancellationToken);
+            if (mapped is null) continue;
+            if (trimmed.Length > 0 && !MatchesQuery(mapped, evaluatorId, trimmed)) continue;
+            matches.Add(mapped);
+            if (matches.Count >= count) break;
+        }
+        return matches;
+    }
+
+    private static bool MatchesQuery(ITestResult result, Guid evaluatorId, string query)
+    {
+        if (result.TestCase.GetSummary().Contains(query, StringComparison.OrdinalIgnoreCase))
+            return true;
+        var reasoning = result.Evaluations
+            .FirstOrDefault(e => e.Evaluator.Id == evaluatorId)?.Reasoning;
+        return reasoning is not null && reasoning.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
 }

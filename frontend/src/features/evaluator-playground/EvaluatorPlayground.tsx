@@ -1,9 +1,9 @@
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { useSelectedId } from '../../hooks/useSelectedId';
 import { useEvaluatorList } from './hooks/useEvaluatorList';
 import { useRecentEvaluations } from './hooks/useRecentEvaluations';
 import { usePlaygroundSession } from './hooks/usePlaygroundSession';
+import { useStickyPlaygroundSelection } from './hooks/useStickyPlaygroundSelection';
 import { SelectionRail } from './components/SelectionRail';
 import { BenchPane } from './components/BenchPane';
 import { VerdictColumn } from './components/VerdictColumn';
@@ -17,20 +17,18 @@ const GRID = 'flex-1 min-h-0 grid grid-cols-[300px_minmax(0,1fr)_360px] gap-3';
  */
 export default function EvaluatorPlayground() {
   const { evaluators, isLoading, projectId } = useEvaluatorList();
-  const [evalId, setEvalId] = useSelectedId('id');
-  const [caseId, setCaseId] = useSelectedId('case');
+  const { evalId, caseId, selectEvaluator, selectCase } = useStickyPlaygroundSelection(projectId);
 
-  // Validate the URL evaluator against loaded data; fall back to the first
+  // Validate the selected evaluator against loaded data; fall back to the first
   // (derived, not written — BEST_PRACTICES §4.2).
   const selectedEvaluator = evaluators.find(e => e.id === evalId) ?? evaluators[0] ?? null;
   const effectiveEvalId = selectedEvaluator?.id ?? '';
 
   const recent = useRecentEvaluations(effectiveEvalId);
-  const session = usePlaygroundSession(effectiveEvalId, caseId);
-
-  function selectEvaluator(id: string) {
-    setEvalId(id, ['case']);
-  }
+  // Auto-select the first past evaluation when none is picked — derived, not
+  // written, so the address bar stays clean until the user chooses.
+  const defaultCaseId = recent.items[0]?.testCaseId ?? null;
+  const session = usePlaygroundSession(effectiveEvalId, caseId ?? defaultCaseId);
 
   if (!projectId) {
     return (
@@ -68,10 +66,9 @@ export default function EvaluatorPlayground() {
           evaluators={evaluators}
           selectedEvaluatorId={selectedEvaluator.id}
           onSelectEvaluator={selectEvaluator}
-          projectId={projectId}
           recent={recent}
           selectedCaseId={session.effectiveCaseId}
-          onSelectCase={setCaseId}
+          onSelectCase={selectCase}
         />
         <BenchPane session={session} evaluator={selectedEvaluator} />
         <VerdictColumn session={session} evaluator={selectedEvaluator} />

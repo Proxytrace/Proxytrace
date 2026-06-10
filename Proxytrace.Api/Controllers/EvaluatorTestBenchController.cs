@@ -106,6 +106,26 @@ public class EvaluatorTestBenchController : ControllerBase
             .ToArray();
     }
 
+    [HttpGet("search")]
+    public async Task<ActionResult<IReadOnlyList<EvaluatorTestBenchRecentItemDto>>> Search(
+        Guid evaluatorId,
+        [FromQuery] string? q,
+        [FromQuery] int count,
+        CancellationToken cancellationToken)
+    {
+        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+            return NotFound($"Evaluator {evaluatorId} not found.");
+
+        var capped = Math.Clamp(count, 1, 50);
+        var matches = await testResults.SearchByEvaluatorAsync(evaluatorId, q ?? string.Empty, capped, cancellationToken);
+        return matches
+            .Select(r => new EvaluatorTestBenchRecentItemDto(
+                r.TestCase.Id,
+                r.TestCase.GetSummary(),
+                r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId)?.Score))
+            .ToArray();
+    }
+
     [HttpPost("run")]
     public async Task<ActionResult<EvaluationResultDto>> Run(
         Guid evaluatorId,

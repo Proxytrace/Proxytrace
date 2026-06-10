@@ -9,7 +9,6 @@ interface Props {
   evaluators: EvaluatorListItemDto[];
   selectedEvaluatorId: string;
   onSelectEvaluator: (id: string) => void;
-  projectId: string;
   recent: { items: PastEvaluation[]; isLoading: boolean };
   selectedCaseId: string | null;
   onSelectCase: (testCaseId: string) => void;
@@ -18,8 +17,9 @@ interface Props {
 /** Left rail: the spine of the playground — pick an evaluator, then a past evaluation. */
 export function SelectionRail({
   evaluators, selectedEvaluatorId, onSelectEvaluator,
-  projectId, recent, selectedCaseId, onSelectCase,
+  recent, selectedCaseId, onSelectCase,
 }: Props) {
+  const selectedName = evaluators.find(e => e.id === selectedEvaluatorId)?.name ?? '';
   return (
     <aside className="flex flex-col rounded-lg bg-card border border-border-subtle overflow-hidden min-h-0">
       <div className="px-4 py-4 border-b border-hairline flex items-center gap-2.5 shrink-0">
@@ -33,7 +33,7 @@ export function SelectionRail({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-5 min-h-0">
-        <RailSection step="1" title="Evaluator">
+        <RailSection title="Evaluator">
           <EvaluatorRailList
             evaluators={evaluators}
             selectedId={selectedEvaluatorId}
@@ -41,9 +41,10 @@ export function SelectionRail({
           />
         </RailSection>
 
-        <RailSection step="2" title="Past evaluation">
+        <RailSection title="Past evaluation">
           <PastEvaluationList
-            projectId={projectId}
+            evaluatorId={selectedEvaluatorId}
+            evaluatorName={selectedName}
             items={recent.items}
             selectedCaseId={selectedCaseId}
             onSelect={onSelectCase}
