@@ -30,4 +30,5 @@ public record RecentEvaluationItemDto(
     bool Passed,
     string? Reasoning,
     int LatencyMs,
-    DateTimeOffset EvaluatedAt);
+    DateTimeOffset EvaluatedAt,
+    Guid? RunId);

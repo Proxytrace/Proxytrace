@@ -29,7 +29,6 @@ export function EvaluatorRow({ evaluator: e, isSelected, onSelect, sparkline, av
       <span className={cn('w-[3px] self-stretch rounded-full shrink-0', isSelected ? categoryBg[cat] : 'bg-transparent')} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="pulse-dot w-[5px] h-[5px] rounded-full bg-success shrink-0" />
           <span className="text-[12.5px] font-semibold text-primary overflow-hidden text-ellipsis whitespace-nowrap">{e.name}</span>
         </div>
         <div className="flex items-center gap-1.5 mt-[3px] text-[10.5px] text-muted font-mono">

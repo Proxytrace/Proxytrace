@@ -1,4 +1,5 @@
 import { useState, useMemo, Fragment } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { TestRunGroupDto } from '../../api/models';
 import { FOCUS_RING } from '../../lib/constants';
 import { cn } from '../../lib/cn';
@@ -19,6 +20,8 @@ export function MatrixView({ group, live }: {
   live?: LiveProgress;
 }) {
   const runs = group.runs;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const caseParam = searchParams.get('case');
   const [filter, setFilter] = useState<MatrixFilter>('all');
   const [sort, setSort] = useState<MatrixSort>('order');
   const [selectedCase, setSelectedCase] = useState<{ caseId: string; summary: string; focusRunId?: string } | null>(null);
@@ -26,12 +29,28 @@ export function MatrixView({ group, live }: {
   // Freeze row order while any run is in flight so rows don't reshuffle on every partial verdict.
   const active = runs.some(r => isActive(r.status));
   const allRows = useMemo(() => buildMatrixRows(runs, live), [runs, live]);
+
+  // Deep link (?case=) opens the drawer for one case. Derived from the URL (no effect) so it
+  // appears as soon as the row loads; local selection takes precedence once the user clicks.
+  const urlCase = useMemo(() => {
+    if (!caseParam) return null;
+    const row = allRows.find(r => r.caseId === caseParam);
+    return row ? { caseId: row.caseId, summary: row.summary, focusRunId: undefined as string | undefined } : null;
+  }, [caseParam, allRows]);
+  const openCase = selectedCase ?? urlCase;
+
+  const clearCaseParam = () => setSearchParams(prev => {
+    const next = new URLSearchParams(prev);
+    next.delete('case');
+    return next;
+  }, { replace: true });
+  const closeDrawer = () => { setSelectedCase(null); if (caseParam) clearCaseParam(); };
   const counts = matrixCounts(allRows);
   const rows = useMemo(() => filterSortMatrixRows(allRows, filter, sort, active), [allRows, filter, sort, active]);
 
   const multi = runs.length > 1;
   const gridCols = `minmax(240px,2.2fr) 72px repeat(${runs.length}, minmax(150px,1fr))`;
-  const selIdx = selectedCase ? rows.findIndex(r => r.caseId === selectedCase.caseId) : -1;
+  const selIdx = openCase ? rows.findIndex(r => r.caseId === openCase.caseId) : -1;
 
   return (
     <Card padding="none" data-testid="matrix-view" className="flex flex-col flex-1 min-h-0">
@@ -84,7 +103,7 @@ export function MatrixView({ group, live }: {
               const withResult = row.cells.filter(c => c.result);
               const passes = withResult.filter(c => c.pass === true).length;
               const total = withResult.length;
-              const isSelected = selectedCase?.caseId === row.caseId;
+              const isSelected = openCase?.caseId === row.caseId;
               const stripe = row.divergent ? 'shadow-[inset_3px_0_0_var(--warn)]' : '';
               const selBg = isSelected ? 'bg-[color-mix(in_srgb,var(--accent-primary)_7%,transparent)]' : '';
               const avg = row.cells.map(c => c.result?.durationMs).filter((d): d is number => d != null);
@@ -148,15 +167,15 @@ export function MatrixView({ group, live }: {
         </div>
       )}
 
-      {selectedCase && selIdx >= 0 && (
+      {openCase && selIdx >= 0 && (
         <ComparisonDrawer
           runs={runs}
-          caseId={selectedCase.caseId}
-          caseSummary={selectedCase.summary}
+          caseId={openCase.caseId}
+          caseSummary={openCase.summary}
           caseIdx={selIdx}
           total={rows.length}
-          focusRunId={selectedCase.focusRunId}
-          onClose={() => setSelectedCase(null)}
+          focusRunId={openCase.focusRunId}
+          onClose={closeDrawer}
           onPrev={selIdx > 0 ? () => { const p = rows[selIdx - 1]; setSelectedCase({ caseId: p.caseId, summary: p.summary }); } : undefined}
           onNext={selIdx < rows.length - 1 ? () => { const n = rows[selIdx + 1]; setSelectedCase({ caseId: n.caseId, summary: n.summary }); } : undefined}
         />

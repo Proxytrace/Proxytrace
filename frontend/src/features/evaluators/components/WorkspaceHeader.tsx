@@ -19,7 +19,7 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
   const cat = KIND_CATEGORY[e.kind];
   const m = TYPE_META[cat];
   return (
-    <header className={cn('rounded-lg border border-subtle shadow-[var(--shadow-card)]', categoryHeaderWash[cat])}>
+    <header className={cn('rounded-lg shadow-[var(--shadow-card)]', categoryHeaderWash[cat])}>
       <div className="flex items-center gap-3.5 px-[18px] py-3.5">
         <TypeIconBox category={cat} size={18} />
         <div className="flex-1 min-w-0">
@@ -44,8 +44,11 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="secondary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onTestBench}>
+          <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onTestBench}>
             Test
+          </Button>
+          <Button variant="secondary" size="sm" leftIcon={<EditPencilIcon size={11} />} onClick={onEdit}>
+            Edit
           </Button>
           <Button
             variant="dangerOutline"
@@ -54,9 +57,6 @@ export function WorkspaceHeader({ evaluator: e, onEdit, onDelete, onTestBench }:
             onClick={onDelete}
           >
             Delete
-          </Button>
-          <Button variant="primary" size="sm" leftIcon={<EditPencilIcon size={11} />} onClick={onEdit}>
-            Edit
           </Button>
         </div>
       </div>

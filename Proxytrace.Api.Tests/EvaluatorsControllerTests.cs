@@ -12,6 +12,7 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Licensing;
 using Proxytrace.Licensing.Exceptions;
@@ -205,6 +206,7 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IAgenticEvaluatorPresets>(),
         services.GetRequiredService<ITestResultRepository>(),
+        services.GetRequiredService<ITestRunRepository>(),
         services.GetRequiredService<ITestSuiteRepository>(),
         services.GetRequiredService<IEvaluatorStatsReader>(),
         services.GetRequiredService<EvaluatorBuilder>(),

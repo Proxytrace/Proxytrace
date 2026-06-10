@@ -5,7 +5,7 @@ import { QUERY_KEYS } from '../../../api/query-keys';
 import { rangeFrom, bucketFor, type RangeKey } from '../../../lib/time-range';
 import { passFractionSeries, tailAvgPassFraction } from '../evaluatorMeta';
 import type { EvaluatorSuiteRefDto } from '../../../api/evaluators';
-import type { EvaluatorDetailDto } from '../../../api/models';
+import type { EvaluationScore, EvaluatorDetailDto } from '../../../api/models';
 
 export interface EvaluatorSparklines {
   sparklineById: Map<string, number[]>;
@@ -75,6 +75,20 @@ export function useEvaluatorDetail(evaluatorId: string, range: RangeKey) {
     queryKey: QUERY_KEYS.evaluatorDetail(evaluatorId, range),
     queryFn: () => evaluatorsApi.detail(evaluatorId, params),
     retry: false,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Recent evaluations for one evaluator filtered to a single score. Used when the user clicks a
+ * score-distribution bar — fetched server-side (not filtered from the last-8) so a score the
+ * distribution shows over the range still surfaces matching results.
+ */
+export function useEvaluatorRecentByScore(evaluatorId: string, score: EvaluationScore | null, count = 20) {
+  return useQuery({
+    queryKey: QUERY_KEYS.evaluatorRecent(evaluatorId, score ?? 'all', count),
+    queryFn: () => evaluatorsApi.recentEvaluations(evaluatorId, { count, score: score ?? undefined }),
+    enabled: evaluatorId !== '' && score !== null,
     placeholderData: keepPreviousData,
   });
 }

@@ -1,6 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.TestResult;
 
@@ -47,7 +48,11 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
         return await Map(match, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ITestResult>> GetRecentByEvaluatorAsync(Guid evaluatorId, int count, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<ITestResult>> GetRecentByEvaluatorAsync(
+        Guid evaluatorId,
+        int count,
+        EvaluationScore? score = null,
+        CancellationToken cancellationToken = default)
     {
         if (count <= 0) return [];
 
@@ -60,7 +65,8 @@ internal class TestResultRepository : AbstractRepository<ITestResult, TestResult
             .ToListAsync(cancellationToken);
 
         var matching = recent
-            .Where(r => r.Evaluations.Any(e => e.EvaluatorId == evaluatorId))
+            .Where(r => r.Evaluations.Any(e =>
+                e.EvaluatorId == evaluatorId && (score is null || e.Score == score)))
             .GroupBy(r => r.TestCase)
             .Select(g => g.First())
             .Take(count)

@@ -51,7 +51,7 @@ export default function Evaluators() {
   const attachedSuites = selected
     ? suites
         .filter(s => s.evaluatorIds.includes(selected.id))
-        .map(s => ({ id: s.id, name: s.name, agentName: s.agentName }))
+        .map(s => ({ id: s.id, name: s.name, agentId: s.agentId, agentName: s.agentName }))
     : [];
 
   const createEval = useCreateEvaluator();
