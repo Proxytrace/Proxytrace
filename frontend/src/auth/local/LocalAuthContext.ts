@@ -3,7 +3,7 @@ import { createContext } from "react";
 export interface LocalUser {
   id: string;
   email: string;
-  role: "Viewer" | "Member" | "Admin";
+  role: "Member" | "Admin";
 }
 
 export interface LocalAuthContextValue {
@@ -33,7 +33,7 @@ export function decode(token: string): LocalUser | null {
       role:
         json["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ??
         json.role ??
-        "Viewer",
+        "Member",
     };
   } catch {
     return null;

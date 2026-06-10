@@ -116,6 +116,33 @@ public sealed class ProjectRepositoryTests : BaseTest<Module>
         found.Should().BeNull();
     }
 
+    [TestMethod]
+    public async Task GetByMemberAsync_ReturnsOnlyProjectsTheUserBelongsTo()
+    {
+        IServiceProvider services = GetServices();
+        var (repository, projectFactory, endpoint, users) = await SetupAsync(services, memberCount: 2);
+        var projectRepository = services.GetRequiredService<IProjectRepository>();
+
+        var member = users[0];
+        var withMember = await repository.AddAsync(projectFactory("With member", endpoint, [member]), CancellationToken);
+        await repository.AddAsync(projectFactory("Without member", endpoint, [users[1]]), CancellationToken);
+
+        var result = await projectRepository.GetByMemberAsync(member.Id, CancellationToken);
+
+        result.Select(p => p.Id).Should().ContainSingle().Which.Should().Be(withMember.Id);
+    }
+
+    [TestMethod]
+    public async Task GetByMemberAsync_UserWithoutProjects_ReturnsEmpty()
+    {
+        IServiceProvider services = GetServices();
+        var projectRepository = services.GetRequiredService<IProjectRepository>();
+
+        var result = await projectRepository.GetByMemberAsync(Guid.NewGuid(), CancellationToken);
+
+        result.Should().BeEmpty();
+    }
+
     private async Task<(IRepository<IProject> repository,
         IProject.CreateNew projectFactory,
         IModelEndpoint endpoint,

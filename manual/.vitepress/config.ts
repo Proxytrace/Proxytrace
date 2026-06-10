@@ -49,6 +49,7 @@ export default defineConfig({
             { text: 'Licensing', link: '/admin/licensing' },
             { text: 'Database', link: '/admin/database' },
             { text: 'Providers & API Keys', link: '/admin/providers-and-api-keys' },
+            { text: 'User Management', link: '/admin/user-management' },
             { text: 'Error Log', link: '/admin/error-log' },
             { text: 'Deployment', link: '/admin/deployment' },
             { text: 'E2E Tests', link: '/admin/e2e-tests' },

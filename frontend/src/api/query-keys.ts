@@ -43,6 +43,8 @@ export const QUERY_KEYS = {
   projects: ['projects'] as const,
   project: (id: string) => ['project', id] as const,
   users: ['users'] as const,
+  /** Projects a single user is a member of (admin user-management editor). */
+  userProjects: (id: string) => ['users', id, 'projects'] as const,
   providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
 
   testRunGroups: (agentFilter?: string, projectId?: string, includeSystem?: boolean) =>

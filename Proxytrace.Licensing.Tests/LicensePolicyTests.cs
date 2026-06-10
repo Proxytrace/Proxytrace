@@ -14,7 +14,7 @@ public sealed class LicensePolicyTests
 
         definition.Features.Should().BeEmpty();
         definition.Limits[LicenseLimit.MaxProjects].Should().Be(1);
-        definition.Limits[LicenseLimit.MaxUsers].Should().Be(3);
+        definition.Limits[LicenseLimit.MaxUsers].Should().Be(1);
         definition.Limits[LicenseLimit.MaxAgents].Should().Be(1);
         definition.Limits[LicenseLimit.MaxTestSuites].Should().Be(1);
         definition.Limits[LicenseLimit.MaxTracesPerMonth].Should().Be(10_000);

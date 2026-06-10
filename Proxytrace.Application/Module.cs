@@ -239,6 +239,10 @@ public sealed class Module : Autofac.Module
             .As<IJitUserProvisioner>()
             .SingleInstance();
 
+        builder.RegisterType<UserAdministrationService>()
+            .As<IUserAdministrationService>()
+            .SingleInstance();
+
         builder.RegisterType<PasswordPolicy>()
             .As<IPasswordPolicy>()
             .SingleInstance();

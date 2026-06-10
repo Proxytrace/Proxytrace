@@ -587,11 +587,22 @@ export interface ProjectListItemDto {
   createdAt: string;
   updatedAt: string;
 }
+export type UserRole = 'Member' | 'Admin';
+
 export interface UserDto {
   id: string;
   email: string;
+  role: UserRole;
+  /** True for OIDC-provisioned users (no local password); false for local-auth users. */
+  isExternal: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Lightweight project reference for the user-centric project assignment editor. */
+export interface UserProjectDto {
+  id: string;
+  name: string;
 }
 export interface CreateModelEndpointRequest {
   modelName: string;

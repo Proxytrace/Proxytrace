@@ -104,8 +104,12 @@ test.describe('Auth & access control', () => {
 
     await page.goto(`/signup?token=${encodeURIComponent(invite.token)}`, { waitUntil: 'load' });
 
-    // The signup form only renders once the invite preview loads (the email field is read-only).
+    // The signup form only renders once the invite preview loads. The email is fixed by the
+    // invite — the field is locked (disabled) and shows the invited address, and the backend
+    // ignores any client-supplied email regardless.
     await expect(page.getByTestId('signup-password')).toBeVisible();
+    await expect(page.getByTestId('signup-email')).toBeDisabled();
+    await expect(page.getByTestId('signup-email')).toHaveValue(inviteEmail);
 
     // Must satisfy the password policy (8+ chars, upper, lower, special — see auth/password.ts).
     await page.getByTestId('signup-password').fill('E2ePassword1!');

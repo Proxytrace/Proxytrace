@@ -16,7 +16,7 @@ const ROUTES = [
   { path: '/proposals', label: 'proposals' },
   { path: '/providers', label: 'providers' },
   { path: '/settings', label: 'settings' },
-  { path: '/admin/invites', label: 'admin invites' },
+  { path: '/admin/users', label: 'admin users' },
   { path: '/error-log', label: 'error log' },
 ];
 

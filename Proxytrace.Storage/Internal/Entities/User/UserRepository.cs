@@ -32,4 +32,8 @@ internal class UserRepository : AbstractRepository<IUser, UserEntity>, IUserRepo
             .FirstOrDefaultAsync(cancellationToken);
         return await Map(entity, cancellationToken);
     }
+
+    public async Task<int> CountByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+        => await contextFactory().Set<UserEntity>().AsNoTracking()
+            .CountAsync(x => x.Role == role, cancellationToken);
 }

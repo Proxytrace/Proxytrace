@@ -1,5 +1,5 @@
 export interface TokenResponse { token: string; expiresAt: string; }
-export interface InvitePreview { email: string; role: 'Viewer' | 'Member' | 'Admin'; expiresAt: string; }
+export interface InvitePreview { email: string; role: 'Member' | 'Admin'; expiresAt: string; }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {

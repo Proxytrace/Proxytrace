@@ -11,7 +11,9 @@ public static class LicensePolicy
         new Dictionary<LicenseLimit, long>
         {
             [LicenseLimit.MaxProjects] = 1,
-            [LicenseLimit.MaxUsers] = 3,
+            // Single user on Free — invites are blocked once the seat is taken, effectively
+            // disabling user management until an upgrade (OIDC/SSO is Enterprise-only anyway).
+            [LicenseLimit.MaxUsers] = 1,
             [LicenseLimit.MaxAgents] = 1,
             [LicenseLimit.MaxTestSuites] = 1,
             [LicenseLimit.MaxTracesPerMonth] = 10_000,

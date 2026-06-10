@@ -32,7 +32,7 @@ internal class JitUserProvisioner : IJitUserProvisioner
             }
 
             var total = await users.CountAsync(cancellationToken);
-            var role = total == 0 ? UserRole.Admin : UserRole.Viewer;
+            var role = total == 0 ? UserRole.Admin : UserRole.Member;
             var user = createUser(email, externalSubject, passwordHash: null, role);
             return await user.AddAsync(cancellationToken);
         });

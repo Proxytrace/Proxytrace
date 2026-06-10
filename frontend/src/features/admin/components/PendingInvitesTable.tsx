@@ -1,0 +1,67 @@
+import { Button } from '../../../components/ui/Button';
+import { CopyButton } from '../../../components/ui/CopyButton';
+import { SkeletonList } from '../../../components/ui/Skeleton';
+import { useInvites, useRevokeInvite } from '../hooks/useInvites';
+import { inviteStatus } from '../invitesMeta';
+
+/** Lists invites that are still pending (not yet redeemed or expired) with a copy/revoke action. */
+export function PendingInvitesTable() {
+  const { data, isLoading } = useInvites();
+  const revoke = useRevokeInvite();
+
+  if (isLoading) {
+    return <SkeletonList rows={3} height={36} gap={6} />;
+  }
+
+  // Only outstanding invites belong here — once an invite is used (or expires) it drops off.
+  const pending = (data ?? []).filter((i) => inviteStatus(i) === 'Pending');
+
+  return (
+    <table className="w-full text-sm" data-testid="invite-list">
+      <thead className="text-muted">
+        <tr className="border-b border-border">
+          <th className="py-2 text-left">Email</th>
+          <th className="py-2 text-left">Role</th>
+          <th className="py-2 text-left">Status</th>
+          <th className="py-2 text-left">Expires</th>
+          <th />
+        </tr>
+      </thead>
+      <tbody>
+        {pending.map((i) => (
+          <tr key={i.id} data-testid={`invite-row-${i.id}`} className="border-b border-border/50">
+            <td className="py-2">{i.email}</td>
+            <td className="py-2">{i.role}</td>
+            <td className="py-2" data-testid={`invite-status-${i.id}`}>Pending</td>
+            <td className="py-2">{new Date(i.expiresAt).toLocaleString()}</td>
+            <td className="py-2">
+              <div className="flex items-center justify-end gap-2">
+                <CopyButton
+                  text={i.url}
+                  label="Copy invite link"
+                  data-testid={`invite-copy-btn-${i.id}`}
+                />
+                <Button
+                  variant="link"
+                  data-write
+                  data-testid={`invite-revoke-btn-${i.id}`}
+                  onClick={() => revoke.mutate(i.id)}
+                  className="text-danger hover:text-danger text-body-sm"
+                >
+                  Revoke
+                </Button>
+              </div>
+            </td>
+          </tr>
+        ))}
+        {pending.length === 0 && (
+          <tr>
+            <td colSpan={5} className="py-6 text-center text-muted">
+              No pending invites.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
+}

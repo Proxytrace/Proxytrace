@@ -22,7 +22,7 @@ public sealed class JitUserProvisionerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task EnsureProvisioned_SecondUser_IsCreatedAsViewer()
+    public async Task EnsureProvisioned_SecondUser_IsCreatedAsMember()
     {
         IServiceProvider services = GetServices();
         var provisioner = services.GetRequiredService<IJitUserProvisioner>();
@@ -30,7 +30,7 @@ public sealed class JitUserProvisionerTests : BaseTest<Module>
         await provisioner.EnsureProvisionedAsync("ext-001", "first@example.com", CancellationToken);
         var second = await provisioner.EnsureProvisionedAsync("ext-002", "second@example.com", CancellationToken);
 
-        second.Role.Should().Be(UserRole.Viewer);
+        second.Role.Should().Be(UserRole.Member);
     }
 
     [TestMethod]

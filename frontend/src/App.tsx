@@ -37,7 +37,7 @@ const Playground = lazy(() => import('./features/playground/Playground'));
 const EvaluatorPlayground = lazy(() => import('./features/evaluator-playground/EvaluatorPlayground'));
 const Login = lazy(() => import('./features/auth/Login'));
 const Signup = lazy(() => import('./features/auth/Signup'));
-const Invites = lazy(() => import('./features/admin/Invites'));
+const Users = lazy(() => import('./features/admin/Users'));
 const ErrorLog = lazy(() => import('./features/error-log/ErrorLog'));
 
 // A 402 license rejection is surfaced as an upgrade dialog rather than the
@@ -184,7 +184,8 @@ function AppRoutes() {
           path="proposals"
           element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
         />
-        {isAdmin && <Route path="admin/invites" element={wrap(<Invites />)} />}
+        {isAdmin && <Route path="admin/users" element={wrap(<Users />)} />}
+        {isAdmin && <Route path="admin/invites" element={<Navigate to="/admin/users" replace />} />}
         {isAdmin && <Route path="error-log" element={wrap(<ErrorLog />)} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

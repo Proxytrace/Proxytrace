@@ -82,6 +82,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Providers', icon: 'server', to: '/providers' },
       { label: 'Settings', icon: 'settings', to: '/settings' },
+      { label: 'Users', icon: 'users', to: '/admin/users', adminOnly: true },
       { label: 'Error Log', icon: 'alert', to: '/error-log', adminOnly: true },
     ],
   },

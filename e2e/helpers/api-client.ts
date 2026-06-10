@@ -730,16 +730,46 @@ export class ProxytraceApiClient {
     if (!res.ok()) throw new Error(`add member failed: ${res.status()} ${await res.text()}`);
   }
 
-  async listUsers(): Promise<{ items: Array<{ id: string; email: string }> }> {
+  async listUsers(): Promise<{ items: Array<{ id: string; email: string; role: string; isExternal: boolean }> }> {
     const res = await this.request.get('/api/users', { headers: this.headers() });
     if (!res.ok()) throw new Error(`list users failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async updateUserRole(
+    id: string,
+    role: 'Member' | 'Admin',
+  ): Promise<{ id: string; email: string; role: string }> {
+    const res = await this.request.put(`/api/users/${id}/role`, {
+      headers: this.headers(),
+      data: { role },
+    });
+    if (!res.ok()) throw new Error(`update role failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const res = await this.request.delete(`/api/users/${id}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`delete user failed: ${res.status()} ${await res.text()}`);
+  }
+
+  async getUserProjects(id: string): Promise<Array<{ id: string; name: string }>> {
+    const res = await this.request.get(`/api/users/${id}/projects`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`get user projects failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  /** Redeems an invite token by setting a password, creating the local user. Anonymous endpoint. */
+  async signup(token: string, password: string): Promise<{ token: string }> {
+    const res = await this.request.post('/api/auth/signup', { data: { token, password } });
+    if (!res.ok()) throw new Error(`signup failed: ${res.status()} ${await res.text()}`);
     return res.json();
   }
 
   // ── Invites (admin + local mode) ───────────────────────────────────────────
   async inviteUser(
     email: string,
-    role: 'Viewer' | 'Member' | 'Admin' = 'Member',
+    role: 'Member' | 'Admin' = 'Member',
   ): Promise<{ token: string; url: string; expiresAt: string }> {
     const res = await this.request.post('/api/auth/invites', {
       headers: this.headers(),
@@ -749,7 +779,7 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
-  async listInvites(): Promise<Array<{ id: string; email: string; role: string; consumedAt: string | null }>> {
+  async listInvites(): Promise<Array<{ id: string; email: string; role: string; consumedAt: string | null; url: string }>> {
     const res = await this.request.get('/api/auth/invites', { headers: this.headers() });
     if (!res.ok()) throw new Error(`list invites failed: ${res.status()} ${await res.text()}`);
     return res.json();
