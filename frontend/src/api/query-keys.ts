@@ -6,6 +6,8 @@ export const QUERY_KEYS = {
   agentVersions: (agentId: string) => ['agent', agentId, 'versions'] as const,
   agentVersion: (versionId: string) => ['agent-version', versionId] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
+  /** A single trace fetched by id (detail-panel deep-link). 'detail' segment lets list-cache invalidation exclude it. */
+  agentCall: (id?: string) => ['agent-calls', 'detail', id ?? null] as const,
   /** Prefix matching every agent-calls query — use for invalidation. */
   agentCallsRoot: ['agent-calls'] as const,
   agentCallsOverview: (from?: string, agentId?: string, projectId?: string) => ['agent-calls', 'overview', from, agentId, projectId ?? null] as const,

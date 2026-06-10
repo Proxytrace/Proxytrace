@@ -102,6 +102,10 @@ conversation as a stack of expandable blocks:
 Close the panel by pressing `Esc` or clicking outside it. Use the arrow buttons (or the
 `←`/`→` keys) to step to the previous/next trace.
 
+While a trace is open, its ID is written to the page URL (`?trace=…`), so the link is
+shareable and the same trace re-opens after a refresh — even if it isn't on the current page,
+Proxytrace fetches it by ID.
+
 ### Multi-turn conversations
 
 Calls that share a conversation are grouped into a single collapsible row. The group's

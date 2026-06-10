@@ -1,4 +1,4 @@
-import { api, qs } from './client';
+import { api, qs, type RequestOptions } from './client';
 import type { AgentCallDto, AgentCallFilter, PagedResult, TracesOverviewDto, TraceHistogramBucket } from './models';
 
 export const agentCallsApi = {
@@ -8,6 +8,6 @@ export const agentCallsApi = {
     api.get<TracesOverviewDto>(`/api/agent-calls/overview${qs(params ?? {})}`),
   histogram: (filter: AgentCallFilter & { buckets?: number }) =>
     api.get<TraceHistogramBucket[]>(`/api/agent-calls/histogram${qs(filter as Record<string, unknown>)}`),
-  get: (id: string) => api.get<AgentCallDto>(`/api/agent-calls/${id}`),
+  get: (id: string, opts?: RequestOptions) => api.get<AgentCallDto>(`/api/agent-calls/${id}`, opts),
   delete: (id: string) => api.del(`/api/agent-calls/${id}`),
 };
