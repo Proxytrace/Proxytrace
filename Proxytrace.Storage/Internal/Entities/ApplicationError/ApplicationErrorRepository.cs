@@ -67,18 +67,17 @@ internal class ApplicationErrorRepository
         return new PagedResult<IApplicationError>(items, total, page, pageSize);
     }
 
-    public Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
+    public async Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
-        var contextSet = context.Set<ApplicationErrorEntity>();
+        var query = context.Set<ApplicationErrorEntity>().Where(x => x.CreatedAt <= cutoffDate);
 
-        var toRemove = contextSet
-            .AsNoTracking()
-            .Where(x => x.CreatedAt <= cutoffDate);
+        if (context.Database.IsRelational())
+            return await query.ExecuteDeleteAsync(cancellationToken);
 
-        contextSet.RemoveRange(toRemove);
-
-        return context.SaveChangesAsync(cancellationToken);
+        var toRemove = await query.ToListAsync(cancellationToken);
+        context.Set<ApplicationErrorEntity>().RemoveRange(toRemove);
+        return await context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<int> TrimToNewestAsync(int max, CancellationToken cancellationToken = default)
@@ -100,12 +99,13 @@ internal class ApplicationErrorRepository
             return 0; // fewer than `max` rows — nothing to trim
         }
 
-        var toRemove = contextSet
-            .AsNoTracking()
-            .Where(x => x.CreatedAt <= cutoff.Value);
+        var query = contextSet.Where(x => x.CreatedAt <= cutoff.Value);
 
+        if (context.Database.IsRelational())
+            return await query.ExecuteDeleteAsync(cancellationToken);
+
+        var toRemove = await query.ToListAsync(cancellationToken);
         contextSet.RemoveRange(toRemove);
-
         return await context.SaveChangesAsync(cancellationToken);
     }
 }

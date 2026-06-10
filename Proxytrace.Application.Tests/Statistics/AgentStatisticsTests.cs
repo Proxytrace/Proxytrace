@@ -17,13 +17,13 @@ public sealed class AgentStatisticsTests : BaseTest<Module>
     private static AgentStatistics Build(
         out IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         out IAgentCallStatsReader callStats,
-        out IRepository<ITestSuite> testSuites,
-        out IRepository<IOptimizationProposal> proposals)
+        out ITestSuiteRepository testSuites,
+        out IOptimizationProposalRepository proposals)
     {
         runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
         callStats = Substitute.For<IAgentCallStatsReader>();
-        testSuites = Substitute.For<IRepository<ITestSuite>>();
-        proposals = Substitute.For<IRepository<IOptimizationProposal>>();
+        testSuites = Substitute.For<ITestSuiteRepository>();
+        proposals = Substitute.For<IOptimizationProposalRepository>();
         return new AgentStatistics(runStats, callStats, testSuites, proposals);
     }
 
@@ -56,10 +56,10 @@ public sealed class AgentStatisticsTests : BaseTest<Module>
         runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>())
             .Returns([Stat(Guid.NewGuid(), 3, 2, to)]);
 
-        testSuites.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
+        testSuites.GetByAgentAsync(agentId, Arg.Any<CancellationToken>()).Returns([]);
         testSuites.GetManyAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
             .Returns([]);
-        proposals.GetAllAsync(Arg.Any<CancellationToken>()).Returns([]);
+        proposals.GetByAgentAsync(agentId, Arg.Any<CancellationToken>()).Returns([]);
 
         var result = await svc.GetAgentOverviewAsync(agentId, from, to, StatisticsBucket.Daily, CancellationToken);
 
@@ -162,19 +162,16 @@ public sealed class AgentStatisticsTests : BaseTest<Module>
     {
         var svc = Build(out _, out _, out var testSuites, out var proposals);
         var agentId = Guid.NewGuid();
-        var otherAgentId = Guid.NewGuid();
 
+        // The repository filters by agent server-side, so it only returns this agent's rows.
         var suiteA = Substitute.For<ITestSuite>();
         suiteA.Agent.Id.Returns(agentId);
         suiteA.TestCases.Returns([Substitute.For<Domain.TestCase.ITestCase>(), Substitute.For<Domain.TestCase.ITestCase>()]);
         var suiteB = Substitute.For<ITestSuite>();
         suiteB.Agent.Id.Returns(agentId);
         suiteB.TestCases.Returns([Substitute.For<Domain.TestCase.ITestCase>()]);
-        var suiteOther = Substitute.For<ITestSuite>();
-        suiteOther.Agent.Id.Returns(otherAgentId);
-        suiteOther.TestCases.Returns([Substitute.For<Domain.TestCase.ITestCase>()]);
-        testSuites.GetAllAsync(Arg.Any<CancellationToken>())
-            .Returns([suiteA, suiteB, suiteOther]);
+        testSuites.GetByAgentAsync(agentId, Arg.Any<CancellationToken>())
+            .Returns([suiteA, suiteB]);
 
         var draftProposal = Substitute.For<IOptimizationProposal>();
         draftProposal.Agent.Id.Returns(agentId);
@@ -182,11 +179,8 @@ public sealed class AgentStatisticsTests : BaseTest<Module>
         var approvedProposal = Substitute.For<IOptimizationProposal>();
         approvedProposal.Agent.Id.Returns(agentId);
         approvedProposal.Status.Returns(ProposalStatus.Accepted);
-        var otherProposal = Substitute.For<IOptimizationProposal>();
-        otherProposal.Agent.Id.Returns(otherAgentId);
-        otherProposal.Status.Returns(ProposalStatus.Draft);
-        proposals.GetAllAsync(Arg.Any<CancellationToken>())
-            .Returns([draftProposal, approvedProposal, otherProposal]);
+        proposals.GetByAgentAsync(agentId, Arg.Any<CancellationToken>())
+            .Returns([draftProposal, approvedProposal]);
 
         var result = await svc.GetAgentEntityCountsAsync(agentId, CancellationToken);
 

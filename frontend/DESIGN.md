@@ -130,7 +130,7 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 **Controls:** `Button`, `IconButton`, `Input`, `Textarea`, `Select`, `Checkbox`, `Radio`/`RadioGroup`, `Switch`, `Label`, `FormField`, `SegmentedControl`, `RowButton` (clickable list/grid rows), `Combobox`, `Tabs`, `Menu`, `Tooltip`, `FilterChip`, `FilterDropdown`, `FilterTabs`, `Pagination`.
 
-`Tabs`, `Tooltip`, `Menu`, `Combobox`, and `Popover` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab/popover with manual `createPortal` + `getBoundingClientRect` again; reach for these.
+`Select`, `Tabs`, `Tooltip`, `Menu`, `FilterDropdown`, `Combobox`, and `Popover` are **headless Radix** (`@radix-ui/react-*`) styled with our tokens — they handle keyboard nav, focus, and portalling. Never hand-roll a dropdown/menu/tooltip/tab/popover with manual `createPortal` + `getBoundingClientRect` again, and never fall back to a native `<select>` (its option list is OS-rendered and off-theme); reach for these. `Select` keeps the `<option>`-children API but emits the chosen value via `onValueChange(value)`, not a DOM `onChange` event.
 
 **Surfaces:** `Card` (with `Card.Header`/`Body`/`Footer`), `KpiCard`, `EmptyState`, `Skeleton`, `Spinner`.
 
@@ -182,7 +182,7 @@ Use `DataTable` for any tabular dataset > 5 rows. For trace lists specifically, 
 
 ### 3.6 Form controls, toggles, and menus
 
-- **Text/number/password** → `Input` (`leftAddon`/`rightAddon` for icons/affordances); **long text** → `Textarea`; **short option list** → native `Select`; **searchable/entity list** → `Combobox`. Wrap each in `FormField` (or pair with `Label`). Inline (flex-row) fields need a width wrapper — `Input`/`Select` are `w-full`.
+- **Text/number/password** → `Input` (`leftAddon`/`rightAddon` for icons/affordances); **long text** → `Textarea`; **short option list** → `Select` (Radix-backed styled dropdown, `<option>` children + `onValueChange`); **searchable/entity list** → `Combobox`. Wrap each in `FormField` (or pair with `Label`). Inline (flex-row) fields need a width wrapper — `Input`/`Select` are `w-full`.
 - **Boolean** → `Switch` (on/off) or `Checkbox`; **one-of-N** → `Radio`/`RadioGroup`, or `SegmentedControl` for a compact toggle bar.
 - **Tabs** → `Tabs` (pass `data-testid` per item where e2e needs it). **Dropdown menu** → `Menu` + `Menu.Item`/`Menu.Separator`. **Tooltip** → `Tooltip` (the single `TooltipProvider` is already mounted in `App.tsx`).
 

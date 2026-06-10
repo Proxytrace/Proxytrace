@@ -51,7 +51,7 @@ export function AddProviderModal({ onClose, onCreated }: AddProviderModalProps) 
           </FormField>
         ))}
         <FormField label="Provider kind">
-          <Select data-testid="provider-field-kind" value={form.kind} onChange={e => setForm(p => ({ ...p, kind: e.target.value as ModelProviderKind }))}>
+          <Select data-testid="provider-field-kind" value={form.kind} onValueChange={v => setForm(p => ({ ...p, kind: v as ModelProviderKind }))}>
             {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </Select>
         </FormField>

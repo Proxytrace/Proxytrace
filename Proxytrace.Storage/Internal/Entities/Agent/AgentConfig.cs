@@ -42,6 +42,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     public override void Configure(EntityTypeBuilder<AgentEntity> builder)
     {
         builder.HasIndex(e => e.IsSystemAgent);
+        builder.HasIndex(e => new { e.Project, e.Name });
         builder.Property(e => e.Name).HasMaxLength(200);
 
         builder

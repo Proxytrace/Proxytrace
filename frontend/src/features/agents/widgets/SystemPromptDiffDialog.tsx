@@ -80,8 +80,8 @@ function VersionSelect({ label, value, onChange, options, testid }: SelectProps)
       <span className="text-caption font-medium uppercase tracking-wide text-muted">{label}</span>
       <Select
         inputSize="sm"
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
+        value={String(value)}
+        onValueChange={v => onChange(Number(v))}
         data-testid={testid}
         className="font-mono font-medium min-w-[5rem]"
       >

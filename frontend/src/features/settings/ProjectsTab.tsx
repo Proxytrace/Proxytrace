@@ -160,7 +160,7 @@ export function ProjectsTab() {
                       <Select
                         autoFocus
                         value={endpointDraft}
-                        onChange={e => setEndpointDraft(e.target.value)}
+                        onValueChange={setEndpointDraft}
                       >
                         {endpoints.map(e => (
                           <option key={e.id} value={e.id}>

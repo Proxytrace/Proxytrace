@@ -29,7 +29,8 @@ test.describe('Admin / Invites', () => {
     await expect(page.getByTestId('invite-list')).toBeVisible();
 
     await page.getByTestId('invite-email-input').fill(email);
-    await page.getByTestId('invite-role-select').selectOption('Member');
+    await page.getByTestId('invite-role-select').click();
+    await page.getByTestId('invite-role-select-option-Member').click();
     await page.getByTestId('invite-create-btn').click();
 
     // The created invite surfaces a share link and a new pending row.

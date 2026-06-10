@@ -42,6 +42,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     public override void Configure(EntityTypeBuilder<EvaluatorEntity> builder)
     {
         builder.HasIndex(e => e.Kind);
+        builder.HasIndex(e => e.Project);
     }
 
     public async Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)

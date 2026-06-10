@@ -259,17 +259,19 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
             : await mapper.Map(stored, cancellationToken);
     }
 
-    public Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
+    public async Task<int> RemoveOlderThanAsync(DateTimeOffset cutoffDate, CancellationToken cancellationToken = default)
     {
         var context = contextFactory();
-        var contextSet = context.Set<AgentCallEntity>();
+        var query = context.Set<AgentCallEntity>().Where(x => x.CreatedAt <= cutoffDate);
 
-        var toRemove = contextSet
-            .AsNoTracking()
-            .Where(x => x.CreatedAt <= cutoffDate);
+        // ExecuteDelete issues a single server-side DELETE without materializing rows — important
+        // for this high-volume table. The in-memory provider (kiosk/tests) can't translate it, so
+        // fall back to a materialize-and-remove there.
+        if (context.Database.IsRelational())
+            return await query.ExecuteDeleteAsync(cancellationToken);
 
-        contextSet.RemoveRange(toRemove);
-
-        return context.SaveChangesAsync(cancellationToken);
+        var toRemove = await query.ToListAsync(cancellationToken);
+        context.Set<AgentCallEntity>().RemoveRange(toRemove);
+        return await context.SaveChangesAsync(cancellationToken);
     }
 }

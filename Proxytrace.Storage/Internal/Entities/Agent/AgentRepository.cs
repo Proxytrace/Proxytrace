@@ -212,4 +212,15 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
 
         return id is { } agentId ? await this.GetAsync(agentId, cancellationToken) : null;
     }
+
+    public async Task<IReadOnlyList<IAgent>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<AgentEntity>()
+            .AsNoTracking()
+            .Where(e => e.Project == projectId)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
 }

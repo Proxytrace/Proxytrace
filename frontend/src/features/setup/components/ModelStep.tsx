@@ -41,7 +41,7 @@ export function ModelStep({
         ) : models && models.length > 0 ? (
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <Select value={modelName} onChange={e => onModelChange(e.target.value)} autoFocus>
+              <Select value={modelName} onValueChange={onModelChange} autoFocus>
                 {models.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}

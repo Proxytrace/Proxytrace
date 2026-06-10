@@ -25,7 +25,7 @@ export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
           </Button>
         )}
       </div>
-      <Select value={value} disabled={isLoading} onChange={e => onChange(e.target.value)}>
+      <Select value={value} disabled={isLoading} onValueChange={onChange}>
         {endpoints.map(ep => (
           <option key={ep.id} value={ep.id}>
             {ep.providerName} · {ep.modelName}

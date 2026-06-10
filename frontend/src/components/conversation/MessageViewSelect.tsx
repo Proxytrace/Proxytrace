@@ -15,7 +15,7 @@ const OPTIONS = MESSAGE_VIEWS.map(view => ({ key: view, label: MESSAGE_VIEW_LABE
  */
 export function MessageViewSelect({ value, onChange }: Props) {
   return (
-    <span data-testid="message-view-select">
+    <span data-testid="message-view-select" className="inline-flex items-center">
       <FilterDropdown
         label=""
         value={value}
@@ -23,6 +23,7 @@ export function MessageViewSelect({ value, onChange }: Props) {
         onChange={key => onChange(key as MessageView)}
         align="right"
         width={130}
+        size="sm"
       />
     </span>
   );

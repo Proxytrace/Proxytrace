@@ -53,7 +53,7 @@ export default function Invites() {
           <Select
             data-testid="invite-role-select"
             value={role}
-            onChange={(e) => setRole(e.target.value as typeof role)}
+            onValueChange={(v) => setRole(v as typeof role)}
           >
             <option>Viewer</option>
             <option>Member</option>

@@ -193,9 +193,7 @@ public class ModelProvidersController : ControllerBase
         if (providerEndpoints.Any(e => e.Model.Name == request.ModelName))
             return Conflict(new { error = $"A model endpoint for '{request.ModelName}' already exists for this provider." });
 
-        var allModels = await modelRepository.GetAllAsync(cancellationToken);
-        IModel model = allModels.FirstOrDefault(m => m.Name == request.ModelName)
-            ?? await modelRepository.GetOrCreateAsync(request.ModelName, cancellationToken);
+        IModel model = await modelRepository.GetOrCreateAsync(request.ModelName, cancellationToken);
 
         var endpoint = createEndpoint(model, provider, request.InputTokenCost, request.OutputTokenCost);
         var saved = await endpointRepository.AddAsync(endpoint, cancellationToken);
@@ -236,8 +234,8 @@ public class ModelProvidersController : ControllerBase
     [HttpGet("{providerId:guid}/keys")]
     public async Task<IReadOnlyList<ApiKeyDto>> GetKeys(Guid providerId, CancellationToken cancellationToken)
     {
-        var all = await apiKeyRepository.GetAllAsync(cancellationToken);
-        return all.Where(k => k.Provider.Id == providerId).Select(mapper.ToKeyDto).ToArray();
+        var keys = await apiKeyRepository.GetByProviderAsync(providerId, cancellationToken);
+        return keys.Select(mapper.ToKeyDto).ToArray();
     }
 
     [HttpPost("{providerId:guid}/keys")]
@@ -262,8 +260,8 @@ public class ModelProvidersController : ControllerBase
     [HttpDelete("{providerId:guid}/keys/{keyId:guid}")]
     public async Task<IActionResult> DeleteKey(Guid providerId, Guid keyId, CancellationToken cancellationToken)
     {
-        var all = await apiKeyRepository.GetAllAsync(cancellationToken);
-        if (!all.Any(k => k.Id == keyId && k.Provider.Id == providerId))
+        var key = await apiKeyRepository.FindAsync(keyId, cancellationToken);
+        if (key is null || key.Provider.Id != providerId)
             return NotFound();
         var removed = await apiKeyRepository.RemoveAsync(keyId, cancellationToken);
         return removed ? NoContent() : NotFound();

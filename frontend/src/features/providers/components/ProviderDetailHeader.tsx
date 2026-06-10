@@ -50,7 +50,7 @@ export function ProviderDetailHeader({ provider, onDeleted }: ProviderDetailHead
                   <Select
                     inputSize="sm"
                     value={editKindValue}
-                    onChange={e => setEditKindValue(e.target.value as ModelProviderKind)}
+                    onValueChange={v => setEditKindValue(v as ModelProviderKind)}
                     className="h-7 py-0"
                   >
                     {PROVIDER_KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}

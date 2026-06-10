@@ -83,7 +83,11 @@ public class AgentCallsController : ControllerBase
         var latencyFilter = new StatisticsFilter(from, null, projectId, agentId);
         var breakdownFilter = new StatisticsFilter(from, null, projectId);
 
-        Task<IReadOnlyList<IAgent>> agentsTask = agentRepository.GetAllAsync(cancellationToken);
+        // Scope the agent load to the project when filtered, instead of loading every agent and
+        // discarding the rest in memory.
+        Task<IReadOnlyList<IAgent>> agentsTask = projectId.HasValue
+            ? agentRepository.GetByProjectAsync(projectId.Value, cancellationToken)
+            : agentRepository.GetAllAsync(cancellationToken);
         Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTask = repository.GetLastCallTimesAsync(cancellationToken);
         Task<IReadOnlyList<AgentBreakdownStat>> breakdownTask = statistics.GetAgentBreakdownAsync(breakdownFilter, cancellationToken);
         Task<IReadOnlyList<LatencyStat>> latencyTask = statistics.GetLatencyAsync(latencyFilter, cancellationToken);
@@ -92,7 +96,6 @@ public class AgentCallsController : ControllerBase
 
         IReadOnlyDictionary<Guid, DateTimeOffset> lastCall = lastCallTask.Result;
         AgentDto[] agents = agentsTask.Result
-            .Where(a => !projectId.HasValue || a.Project.Id == projectId.Value)
             .OrderByDescending(a => lastCall.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
             .Select(a => agentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
