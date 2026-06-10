@@ -395,6 +395,13 @@ export interface TestRunGroupDto {
 }
 
 /* ── Evaluators ── */
+/** Lightweight evaluator projection for pickers / select lists (id, kind, name only). */
+export interface EvaluatorListItemDto {
+  id: string;
+  kind: EvaluatorKind;
+  name: string;
+}
+
 export interface EvaluatorDetailDto {
   id: string;
   kind: EvaluatorKind;

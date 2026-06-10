@@ -51,6 +51,8 @@ public class EvaluatorTestBenchController : ControllerBase
         if (latest is null)
             return NotFound($"No test result exists for test case {testCaseId}.");
 
+        var logged = latest.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId);
+
         return new EvaluatorTestBenchPayloadDto(
             SourceTestResultId: latest.Id,
             TestCaseId: testCase.Id,
@@ -59,7 +61,16 @@ public class EvaluatorTestBenchController : ControllerBase
                 .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), m.GetText()))
                 .ToArray(),
             ExpectedResponse: testCase.ExpectedOutput.GetText(),
-            ActualResponse: latest.ActualResponse.GetText());
+            ActualResponse: latest.ActualResponse.GetText(),
+            LoggedEvaluation: logged is null
+                ? null
+                : new EvaluationResultDto(
+                    logged.Evaluator.Id,
+                    logged.Evaluator.Kind,
+                    logged.Evaluator.Name,
+                    logged.Score,
+                    logged.Reasoning,
+                    logged.ErrorMessage));
     }
 
     [HttpGet("default")]
@@ -88,7 +99,10 @@ public class EvaluatorTestBenchController : ControllerBase
         var capped = Math.Clamp(count, 1, 50);
         var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken: cancellationToken);
         return recent
-            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, r.TestCase.GetSummary()))
+            .Select(r => new EvaluatorTestBenchRecentItemDto(
+                r.TestCase.Id,
+                r.TestCase.GetSummary(),
+                r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId)?.Score))
             .ToArray();
     }
 

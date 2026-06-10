@@ -76,8 +76,9 @@ test.describe('@llm evaluator test bench — agentic', () => {
     await page.goto(`/evaluator-playground?id=${evaluatorId}`, { waitUntil: 'load' });
     await expect(page.getByTestId('evaluator-playground')).toBeVisible({ timeout: 10_000 });
 
-    // The select reflects the chosen evaluator and the TestResultPicker is available.
-    await expect(page.getByTestId('evaluator-playground-select')).toHaveValue(evaluatorId, { timeout: 15_000 });
+    // The selection rail marks the chosen evaluator active and the past-evaluation search is available.
+    await expect(page.getByTestId(`evaluator-rail-row-${evaluatorId}`))
+      .toHaveAttribute('aria-pressed', 'true', { timeout: 15_000 });
     await expect(page.getByTestId('test-result-picker')).toBeVisible();
 
     // The default test result auto-loads → the expected/actual panes render.

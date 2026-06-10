@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 
   evaluators: (projectId?: string) => ['evaluators', projectId ?? null] as const,
+  evaluatorSummaries: (projectId?: string) => ['evaluators', 'summaries', projectId ?? null] as const,
   evaluatorsOverview: (projectId: string, rangeKey: string) => ['evaluators', 'overview', projectId, rangeKey] as const,
   evaluatorDetail: (evaluatorId: string, rangeKey: string) => ['evaluators', 'detail', evaluatorId, rangeKey] as const,
   evaluatorRecent: (evaluatorId: string, score: string, count: number) => ['evaluators', 'recent', evaluatorId, score, count] as const,

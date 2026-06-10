@@ -3,6 +3,7 @@ import type {
   AgenticEvaluatorPresetDto,
   CreateEvaluatorPayload,
   EvaluatorDetailDto,
+  EvaluatorListItemDto,
   EvaluatorOverviewDto,
   EvaluatorSparklineDto,
   UpdateEvaluatorPayload,
@@ -49,6 +50,9 @@ type RangeParams = { from: string; to: string; bucket: StatisticsBucket; [key: s
 export const evaluatorsApi = {
   list: (params?: { projectId?: string }) =>
     api.get<EvaluatorDetailDto[]>(`/api/evaluators${qs(params ?? {})}`),
+  /** Lightweight evaluator list for pickers — id/kind/name only. */
+  summaries: (params?: { projectId?: string }) =>
+    api.get<EvaluatorListItemDto[]>(`/api/evaluators/summaries${qs(params ?? {})}`),
   /** List page: evaluators + suite attachment refs + sparklines in one request. */
   overview: (params: { projectId?: string; from?: string; to?: string; bucket?: StatisticsBucket }) =>
     api.get<EvaluatorsOverviewDto>(`/api/evaluators/overview${qs(params)}`),

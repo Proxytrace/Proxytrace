@@ -50,6 +50,29 @@ performing:
 - **Recent evaluations** — the latest results this evaluator scored. **Click a row to open
   that result in the run matrix**, with its detail drawer expanded.
 
+## The Evaluator Playground
+
+The **Evaluator Playground** (in the sidebar under *Evaluators*) lets you probe a single
+evaluator against a past test result and watch its score react to edits — without launching a
+full run. It's a three-pane workspace:
+
+1. **Selection rail (left).** Pick an evaluator, then one of its **past evaluations**. The
+   list shows the evaluator's most recent scored cases; the search box reaches any other test
+   case in the project, so you can pull up cases beyond the recent set.
+2. **Bench (centre).** The picked case loads its input conversation (collapsed by default),
+   the **expected / reference** answer, and the **candidate response** the agent produced. The
+   candidate is editable — change it to ask "what would the judge say if the agent had answered
+   like *this*?", then hit **Re-score** to run the evaluator live.
+3. **Verdict (right).** A 1–5 gauge with the score band (Terrible → Excellent), the judge's
+   written reasoning, and a **run history**. Selecting a past evaluation seeds the history with
+   that case's **logged verdict** as the baseline, so you see its original score straight away.
+   Each live re-score then stacks above it with the delta versus the previous run, so you can
+   see exactly how an edit moved the score. Re-scoring an unedited response is a quick way to
+   gauge a judge's consistency.
+
+Rule-based evaluators (Exact Match, Numeric, JSON Schema) score here too — they return a score
+without written reasoning.
+
 ## Reading evaluations
 
 After a run, each test result carries one evaluation per evaluator. Use these to compare

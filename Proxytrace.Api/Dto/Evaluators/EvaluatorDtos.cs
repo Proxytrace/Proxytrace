@@ -3,6 +3,13 @@ using Proxytrace.Domain.Evaluator;
 
 namespace Proxytrace.Api.Dto.Evaluators;
 
+/// <summary>
+/// Lightweight evaluator projection for pickers / select lists — id, kind, name only.
+/// Avoids shipping the full <see cref="EvaluatorDetailDto"/> (system message, JSON schema, …)
+/// when a caller only needs to render and choose an evaluator.
+/// </summary>
+public record EvaluatorListItemDto(Guid Id, EvaluatorKind Kind, string Name);
+
 public record EvaluatorDetailDto(
     Guid Id,
     EvaluatorKind Kind,

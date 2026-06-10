@@ -1,4 +1,5 @@
 using Proxytrace.Api.Dto.TestRuns;
+using Proxytrace.Domain.Evaluation;
 
 namespace Proxytrace.Api.Dto.Evaluators;
 
@@ -8,7 +9,9 @@ public record EvaluatorTestBenchPayloadDto(
     string TestCaseSummary,
     IReadOnlyList<TestRunMessageDto> Conversation,
     string ExpectedResponse,
-    string ActualResponse);
+    string ActualResponse,
+    /// <summary>This evaluator's logged verdict on the source test result, when one exists — seeds the bench's baseline.</summary>
+    EvaluationResultDto? LoggedEvaluation);
 
 public record RunEvaluatorOnBenchRequest(
     Guid TestCaseId,
@@ -20,7 +23,9 @@ public record EvaluatorTestBenchDefaultDto(
 
 public record EvaluatorTestBenchRecentItemDto(
     Guid TestCaseId,
-    string Label);
+    string Label,
+    /// <summary>This evaluator's logged score on the recent result, when one exists.</summary>
+    EvaluationScore? Score);
 
 public record RecentEvaluationItemDto(
     Guid TestResultId,

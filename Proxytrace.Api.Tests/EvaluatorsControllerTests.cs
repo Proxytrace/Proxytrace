@@ -46,6 +46,33 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetSummaries_NoEvaluators_ReturnsEmpty()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.GetSummaries(cancellationToken: CancellationToken);
+
+        result.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetSummaries_ForProject_ReturnsLightItems()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var eval = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+
+        var result = await controller.GetSummaries(eval.Project.Id, CancellationToken);
+
+        result.Should().ContainSingle();
+        var item = result[0];
+        item.Id.Should().Be(eval.Id);
+        item.Kind.Should().Be(EvaluatorKind.ExactMatch);
+        item.Name.Should().Be(eval.Name);
+    }
+
+    [TestMethod]
     public async Task Get_Unknown_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

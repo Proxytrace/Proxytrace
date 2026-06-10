@@ -1,6 +1,41 @@
 import { describe, it, expect } from 'vitest';
 import { EvaluationScore } from '../../api/models';
-import { scoreColor, runLabel, tooltipPosition } from './testBenchMeta';
+import {
+  scoreColor, runLabel, tooltipPosition, scoreNumber, scoreAnchor, scoreDelta,
+} from './testBenchMeta';
+
+describe('scoreNumber', () => {
+  it('ranks each score 1–5', () => {
+    expect(scoreNumber(EvaluationScore.Terrible)).toBe(1);
+    expect(scoreNumber(EvaluationScore.Acceptable)).toBe(3);
+    expect(scoreNumber(EvaluationScore.Excellent)).toBe(5);
+  });
+  it('returns null when unscored', () => {
+    expect(scoreNumber(null)).toBeNull();
+    expect(scoreNumber(undefined)).toBeNull();
+  });
+});
+
+describe('scoreAnchor', () => {
+  it('uses the score name as its anchor label', () => {
+    expect(scoreAnchor(EvaluationScore.Good)).toBe('Good');
+  });
+  it('em-dashes an unscored result', () => {
+    expect(scoreAnchor(null)).toBe('—');
+  });
+});
+
+describe('scoreDelta', () => {
+  it('returns the signed rank delta (to − from)', () => {
+    expect(scoreDelta(EvaluationScore.Bad, EvaluationScore.Good)).toBe(2);
+    expect(scoreDelta(EvaluationScore.Excellent, EvaluationScore.Acceptable)).toBe(-2);
+    expect(scoreDelta(EvaluationScore.Good, EvaluationScore.Good)).toBe(0);
+  });
+  it('returns null when either side is unscored', () => {
+    expect(scoreDelta(null, EvaluationScore.Good)).toBeNull();
+    expect(scoreDelta(EvaluationScore.Good, null)).toBeNull();
+  });
+});
 
 describe('scoreColor', () => {
   it('maps each score to its accent color', () => {
