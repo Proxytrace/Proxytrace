@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { EvaluationScore, EvaluatorKind, TestRunStatus } from '../../api/models';
 import type {
   EvaluationResultDto,
-  PagedResult,
   TestCaseFixtureDto,
   TestResultArrivedEvent,
   TestResultDto,
@@ -22,8 +21,8 @@ import {
   isDivergent,
   buildMatrixRows,
   fixtureSummary,
-  patchGroupsWithResult,
-  patchGroupsRunStatus,
+  patchGroupWithResult,
+  patchGroupRunStatus,
   scoreLabel,
 } from './results';
 import {
@@ -402,14 +401,14 @@ describe('matrixCounts / filterSortMatrixRows', () => {
   });
 });
 
-describe('patchGroupsWithResult', () => {
-  function page(run: Partial<TestRunDto>): PagedResult<TestRunGroupDto> {
+describe('patchGroupWithResult', () => {
+  function group(run: Partial<TestRunDto>): TestRunGroupDto {
     const fullRun = {
       id: 'run1', totalCases: 2, passedCases: 0, failedCases: 0, passRate: 0,
       testCases: [{ id: 'c1', summary: 'Case one' }, { id: 'c2', summary: 'Case two' }],
       results: [], ...run,
     } as TestRunDto;
-    return { items: [{ id: 'g1', runs: [fullRun] } as TestRunGroupDto], total: 1, page: 1, pageSize: 20 };
+    return { id: 'g1', runs: [fullRun] } as TestRunGroupDto;
   }
 
   function event(over: Partial<TestResultArrivedEvent> = {}): TestResultArrivedEvent {
@@ -420,8 +419,7 @@ describe('patchGroupsWithResult', () => {
   }
 
   it('appends the result and recomputes counts with a judged-case pass rate', () => {
-    const next = patchGroupsWithResult(page({}), event({ evaluations: [PASS] }));
-    const run = next.items[0].runs[0];
+    const run = patchGroupWithResult(group({}), event({ evaluations: [PASS] })).runs[0];
     expect(run.results).toHaveLength(1);
     expect(run.results[0]).toMatchObject({ testCaseId: 'c1', testCaseSummary: 'Case one', durationMs: 120 });
     expect(run.passedCases).toBe(1);
@@ -431,30 +429,30 @@ describe('patchGroupsWithResult', () => {
   });
 
   it('counts a failing result against failedCases', () => {
-    const run = patchGroupsWithResult(page({}), event({ evaluations: [FAIL] })).items[0].runs[0];
+    const run = patchGroupWithResult(group({}), event({ evaluations: [FAIL] })).runs[0];
     expect(run.passedCases).toBe(0);
     expect(run.failedCases).toBe(1);
   });
 
   it('replaces an already-present result instead of dropping the late event', () => {
-    const existing = page({ results: [{ ...result([FAIL]), testCaseId: 'c1' } as TestResultDto], passedCases: 0, failedCases: 1, passRate: 0 });
-    const next = patchGroupsWithResult(existing, event({ evaluations: [PASS] })).items[0].runs[0];
+    const existing = group({ results: [{ ...result([FAIL]), testCaseId: 'c1' } as TestResultDto], passedCases: 0, failedCases: 1, passRate: 0 });
+    const next = patchGroupWithResult(existing, event({ evaluations: [PASS] })).runs[0];
     expect(next.results).toHaveLength(1);
     expect(next.passedCases).toBe(1);
     expect(next.failedCases).toBe(0);
   });
 
-  it('leaves the data unchanged when the group is absent', () => {
-    const input = page({});
-    expect(patchGroupsWithResult(input, event({ groupId: 'other' }))).toEqual(input);
+  it('leaves the data unchanged when the event is for another group', () => {
+    const input = group({});
+    expect(patchGroupWithResult(input, event({ groupId: 'other' }))).toEqual(input);
   });
 
   it('flips a run’s status on run-complete', () => {
-    const next = patchGroupsRunStatus(page({}), {
+    const next = patchGroupRunStatus(group({}), {
       type: 'run-complete', runId: 'run1', groupId: 'g1', status: TestRunStatus.Completed, completedAt: '2024-01-01T00:00:00Z',
     });
-    expect(next.items[0].runs[0].status).toBe(TestRunStatus.Completed);
-    expect(next.items[0].runs[0].completedAt).toBe('2024-01-01T00:00:00Z');
+    expect(next.runs[0].status).toBe(TestRunStatus.Completed);
+    expect(next.runs[0].completedAt).toBe('2024-01-01T00:00:00Z');
   });
 });
 

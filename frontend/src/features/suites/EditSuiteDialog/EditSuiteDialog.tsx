@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../../api/models';
 import { FilterTabs } from '../../../components/ui/FilterTabs';
+import { SkeletonList } from '../../../components/ui/Skeleton';
 import { agentColor } from '../../../lib/colors';
 import { TestCasesPanel } from './TestCasesPanel';
 import { TraceConversationPreview, PreviewEmpty } from './TestCasePreview';
@@ -9,6 +10,7 @@ import { EditableTestCasePreview } from './EditableTestCasePreview';
 import { EvaluatorsPanel } from './EvaluatorsPanel';
 import { EvaluatorPreview } from './EvaluatorPreview';
 import { useEditSuiteEvaluators, useEditSuiteTraces } from '../hooks/useEditSuiteQueries';
+import { useSuiteDetail } from '../hooks/useSuiteQueries';
 import { useSaveSuite } from '../hooks/useSaveSuite';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { EditSuiteHeader } from './components/EditSuiteHeader';
@@ -17,14 +19,36 @@ import { DirtyIndicator } from './components/DirtyIndicator';
 import { DiscardConfirm } from './components/DiscardConfirm';
 
 interface Props {
-  suite: TestSuiteDto;
+  suiteId: string;
   projectId?: string;
   onClose: () => void;
 }
 
 type Tab = 'cases' | 'evaluators';
 
-export function EditSuiteDialog({ suite, projectId, onClose }: Props) {
+/**
+ * Fetches the full (fat) suite — the list rows are light and carry no test cases — then renders the
+ * editor once loaded. The inner component owns all the editing state, so it must only mount with the
+ * complete suite in hand (hooks can't be gated behind an early return).
+ */
+export function EditSuiteDialog({ suiteId, projectId, onClose }: Props) {
+  const { suite } = useSuiteDetail(suiteId);
+
+  if (!suite) {
+    return createPortal(
+      <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+        <div className="modal-panel fade-up flex flex-col" style={{ width: '100%', maxWidth: 'min(1180px, 94vw)', maxHeight: '92vh' }}>
+          <SkeletonList rows={6} height={48} gap={10} />
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  return <EditSuiteDialogInner suite={suite} projectId={projectId} onClose={onClose} />;
+}
+
+function EditSuiteDialogInner({ suite, projectId, onClose }: { suite: TestSuiteDto; projectId?: string; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('cases');
   const [pendingAddTraceIds, setPendingAddTraceIds] = useState<Set<string>>(new Set());
   const [pendingRemoveCaseIds, setPendingRemoveCaseIds] = useState<Set<string>>(new Set());

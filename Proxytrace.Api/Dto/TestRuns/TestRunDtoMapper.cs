@@ -68,6 +68,28 @@ public sealed class TestRunDtoMapper
             UpdatedAt: r.UpdatedAt);
     }
 
+    /// <summary>
+    /// Lightweight projection for the run-group list cards — endpoint + judged pass/fail counts only,
+    /// skipping per-case results/evaluations. Pass counting mirrors <see cref="ToDto"/>.
+    /// </summary>
+    public TestRunSummaryDto ToSummaryDto(ITestRun r)
+    {
+        var passed = r.TestResults.Count(x => x.Evaluations.Count > 0 && x.Evaluations.All(e => e.Passed));
+        var completed = r.TestResults.Count;
+        var total = r.Group.Suite.TestCases.Count;
+        var passRate = completed > 0 ? Math.Round((double)passed / completed * 100) : 0;
+
+        return new TestRunSummaryDto(
+            Id: r.Id,
+            EndpointId: r.Endpoint.Id,
+            EndpointName: r.Endpoint.Model.Name,
+            Status: r.Status,
+            TotalCases: total,
+            PassedCases: passed,
+            FailedCases: completed - passed,
+            PassRate: passRate);
+    }
+
     public TestCaseFixtureDto ToFixtureDto(ITestRun run, ITestResult result)
         => new(
             Input: new TestCaseInputDto(MapInputMessages(result.TestCase.Input)),

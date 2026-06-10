@@ -1,7 +1,7 @@
 // Pure derive/format helpers for the traces UI. No JSX, no I/O — unit-tested
 // in tracesMeta.spec.ts.
 
-import type { AgentCallDto } from '../../api/models';
+import type { AgentCallListItemDto } from '../../api/models';
 import { ALL_TIME, type TimeRange, type TimeRangePreset } from '../../lib/timeRange';
 
 // ── Time range helpers ────────────────────────────────────────────────────────
@@ -30,12 +30,11 @@ export { buildRows } from '../../lib/trace';
 export type { ConversationGroup, FlatTrace, TraceRow } from '../../lib/trace';
 
 /**
- * Tool-request count for a trace, 0 when the call has no response. A captured call with no
- * completion (an HTTP error, an empty/dropped completion) has a null `response`, so every
- * tool-count read must go through this rather than dereferencing `response` directly.
+ * Tool-request count for a trace — the backend precomputes it into the light row
+ * ({@link AgentCallListItemDto.toolCount}; 0 when the call produced no response).
  */
-export function toolCount(trace: AgentCallDto): number {
-  return trace.response?.toolRequests.length ?? 0;
+export function toolCount(trace: AgentCallListItemDto): number {
+  return trace.toolCount;
 }
 
 // ── Column layout (shared between header row and all trace rows) ───────────────

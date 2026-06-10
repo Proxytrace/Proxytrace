@@ -1,9 +1,9 @@
 import { api, qs } from './client';
-import type { AgentDto, AgentVersionDto, PagedResult } from './models';
+import type { AgentDto, AgentListItemDto, AgentVersionDto, PagedResult } from './models';
 
 export const agentsApi = {
   list: (params?: { projectId?: string; page?: number; pageSize?: number }) =>
-    api.get<PagedResult<AgentDto>>(`/api/agents${qs(params ?? {})}`),
+    api.get<PagedResult<AgentListItemDto>>(`/api/agents${qs(params ?? {})}`),
   get: (id: string) => api.get<AgentDto>(`/api/agents/${id}`),
   delete: (id: string) => api.del(`/api/agents/${id}`),
   updateEndpoint: (id: string, endpointId: string) =>

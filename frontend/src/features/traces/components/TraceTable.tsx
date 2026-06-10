@@ -1,5 +1,5 @@
 import { SkeletonList } from '../../../components/ui/Skeleton';
-import type { AgentCallDto } from '../../../api/models';
+import type { AgentCallListItemDto } from '../../../api/models';
 import { COL_HEADERS, GRID_TEMPLATE } from '../tracesMeta';
 import type { TraceRow } from '../tracesMeta';
 import { FlatTraceRow } from './FlatTraceRow';
@@ -10,7 +10,7 @@ interface Props {
   isFetching: boolean;
   selectedId: string | null;
   expandedConvs: Set<string>;
-  onSelectTrace: (trace: AgentCallDto) => void;
+  onSelectTrace: (trace: AgentCallListItemDto) => void;
   onToggleConv: (id: string) => void;
 }
 

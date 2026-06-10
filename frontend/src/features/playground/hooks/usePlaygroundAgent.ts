@@ -23,6 +23,17 @@ export { overridesFromAgent } from '../state/usePlaygroundSession';
 // The reducer dispatch type — mirrors the Action union from usePlaygroundSession.
 type SessionDispatch = ReturnType<typeof import('../state/usePlaygroundSession').usePlaygroundSession>['dispatch'];
 
+/**
+ * Fetches the full agent by id (the agents list is light and has no system message / tools /
+ * parameters) and dispatches `pickAgent`, which seeds the session overrides from the agent's
+ * defaults. Used by every pick path: the picker dropdown and the auto-pick of the first agent.
+ */
+export function fetchAndPickAgent(agentId: string, dispatch: SessionDispatch): void {
+  void agentsApi.get(agentId)
+    .then(a => dispatch({ type: 'pickAgent', agent: a }))
+    .catch(() => { /* ignore — a stale id simply leaves the current selection */ });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // usePlaygroundAgent — single-agent query + stale-agent clear
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,7 +111,7 @@ export function usePlaygroundAgentList({
   useEffect(() => {
     if (agentId) return;
     const first = agentsList?.items?.[0];
-    if (first) dispatch({ type: 'pickAgent', agent: first });
+    if (first) fetchAndPickAgent(first.id, dispatch);
   }, [agentId, agentsList, dispatch]);
 
   return { agentsList };
@@ -144,7 +155,7 @@ export function useAutoLoadAgentCall({
     let cancelled = false;
     autoLoadedRef.current = agentId;
     agentCallsApi
-      .list({ agentId, pageSize: 1, includeSystemAgents: true })
+      .listFull({ agentId, pageSize: 1, includeSystemAgents: true })
       .then(res => {
         if (cancelled) return;
         const call = res.items[0];

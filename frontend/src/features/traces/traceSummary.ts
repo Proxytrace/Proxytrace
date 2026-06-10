@@ -1,4 +1,4 @@
-import type { AgentCallDto } from '../../api/models';
+import type { AgentCallListItemDto } from '../../api/models';
 
 export interface TraceSummaryStats {
   count: number;
@@ -16,7 +16,7 @@ export interface TraceSummaryStats {
 }
 
 /** A trace is an error when its HTTP status is outside the 2xx range. */
-function isError(trace: AgentCallDto): boolean {
+function isError(trace: AgentCallListItemDto): boolean {
   return trace.httpStatus < 200 || trace.httpStatus >= 300;
 }
 
@@ -35,7 +35,7 @@ const EMPTY: TraceSummaryStats = {
  * Aggregate the traces currently shown on the page (the current pagination slice).
  * Pure — recompute whenever the slice changes.
  */
-export function summarizeTraces(traces: AgentCallDto[]): TraceSummaryStats {
+export function summarizeTraces(traces: AgentCallListItemDto[]): TraceSummaryStats {
   const count = traces.length;
   if (count === 0) return EMPTY;
 

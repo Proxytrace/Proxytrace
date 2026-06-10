@@ -66,8 +66,8 @@ public class StatisticsController : ControllerBase
                 StatisticsBucket.Hourly => "hourly",
                 _ => "daily",
             },
-            RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToDto).ToArray(),
-            Agents: view.Agents.Select(a => agentDtoMapper.ToDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
+            RecentTraces: view.RecentTraces.Select(agentCallDtoMapper.ToListItemDto).ToArray(),
+            Agents: view.Agents.Select(a => agentDtoMapper.ToListItemDto(a, view.AgentLastCallTimes.TryGetValue(a.Id, out var t) ? t : null)).ToArray());
     }
 
     [HttpGet("agents/{agentId:guid}/overview")]

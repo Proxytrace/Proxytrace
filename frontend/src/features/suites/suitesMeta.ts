@@ -1,4 +1,4 @@
-import type { TestSuiteDto } from '../../api/models';
+import type { TestSuiteListItemDto } from '../../api/models';
 import { PASS_RATE_WARN, PASS_RATE_DANGER } from '../../lib/constants';
 
 /** Derive the CSS-variable colour string for a pass-rate value. */
@@ -16,8 +16,8 @@ export interface SuiteStats {
 }
 
 /** Aggregate KPI stats across all suites in the list. */
-export function computeSuiteStats(suites: TestSuiteDto[]): SuiteStats {
-  const totalCases = suites.reduce((n, s) => n + s.testCases.length, 0);
+export function computeSuiteStats(suites: TestSuiteListItemDto[]): SuiteStats {
+  const totalCases = suites.reduce((n, s) => n + s.testCaseCount, 0);
   const totalRuns = suites.reduce((n, s) => n + s.totalRuns, 0);
   const withRate = suites.filter(s => s.passRate !== null);
   const avgPassRate =

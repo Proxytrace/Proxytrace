@@ -5,7 +5,7 @@ import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { modelColor, statusColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
-import { firstUserMessage } from '../../../lib/trace';
+import { tracePreview } from '../../../lib/trace';
 import type { TraceRow } from '../../../lib/trace';
 
 // Shared grid template — header row and every data row align to this. Columns are
@@ -36,7 +36,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
       >
         <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
         <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-          {firstUserMessage(t) ?? <span className="text-muted">—</span>}
+          {tracePreview(t) ?? <span className="text-muted">—</span>}
         </span>
         <span className="text-muted text-center">—</span>
         <span className="justify-self-center"><Pill label={t.model} color={modelColor(t.model)} size="sm" /></span>
@@ -62,7 +62,7 @@ export function LiveStreamRow({ row, freshIds, isLast, onSelect }: Props) {
     >
       <span className="size-[7px] rounded-full" style={{ background: sc, boxShadow: isFresh ? `0 0 10px ${sc}` : undefined }} />
       <span className="font-sans text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
-        {firstUserMessage(head) ?? <span className="text-muted">—</span>}
+        {tracePreview(head) ?? <span className="text-muted">—</span>}
       </span>
       <span className="justify-self-center inline-flex items-center text-caption font-semibold px-[5px] py-[1px] rounded-full text-accent bg-accent-subtle">
         {turns.length} turns

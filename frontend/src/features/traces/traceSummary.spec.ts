@@ -1,18 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import type { AgentCallDto } from '../../api/models';
+import type { AgentCallListItemDto } from '../../api/models';
 import { summarizeTraces } from './traceSummary';
 
 // ── Minimal fixture factory (mirrors tracesMeta.spec.ts) ──────────────────────
 
-function trace(over: Partial<AgentCallDto> & Pick<AgentCallDto, 'id'>): AgentCallDto {
+function trace(over: Partial<AgentCallListItemDto> & Pick<AgentCallListItemDto, 'id'>): AgentCallListItemDto {
   return {
     agentId: null,
     agentName: null,
     model: 'gpt-4o',
     provider: 'openai',
-    request: [],
-    response: { role: 'assistant', content: '', toolRequests: [], toolCallId: null },
-    tools: [],
+    messagePreview: null,
+    toolCount: 0,
     inputTokens: 10,
     outputTokens: 5,
     durationMs: 200,
@@ -20,10 +19,6 @@ function trace(over: Partial<AgentCallDto> & Pick<AgentCallDto, 'id'>): AgentCal
     finishReason: 'stop',
     errorMessage: null,
     costEur: null,
-    modelParameters: {
-      temperature: null, topP: null, reasoningEffort: null, frequencyPenalty: null,
-      presencePenalty: null, maxTokens: null, seed: null, stop: null, n: null,
-    },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     conversationId: null,

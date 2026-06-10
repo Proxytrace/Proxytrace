@@ -1,18 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import type { AgentCallDto } from '../../api/models';
+import type { AgentCallListItemDto } from '../../api/models';
 import { buildRows, latencyBarPct, toolCount, autoTimeRange, GRID_TEMPLATE, COL_WIDTHS } from './tracesMeta';
 
 // ── Minimal fixture factory ───────────────────────────────────────────────────
 
-function trace(over: Partial<AgentCallDto> & Pick<AgentCallDto, 'id'>): AgentCallDto {
+function trace(over: Partial<AgentCallListItemDto> & Pick<AgentCallListItemDto, 'id'>): AgentCallListItemDto {
   return {
     agentId: null,
     agentName: null,
     model: 'gpt-4o',
     provider: 'openai',
-    request: [],
-    response: { role: 'assistant', content: '', toolRequests: [], toolCallId: null },
-    tools: [],
+    messagePreview: null,
+    toolCount: 0,
     inputTokens: 10,
     outputTokens: 5,
     durationMs: 200,
@@ -20,10 +19,6 @@ function trace(over: Partial<AgentCallDto> & Pick<AgentCallDto, 'id'>): AgentCal
     finishReason: 'stop',
     errorMessage: null,
     costEur: null,
-    modelParameters: {
-      temperature: null, topP: null, reasoningEffort: null, frequencyPenalty: null,
-      presencePenalty: null, maxTokens: null, seed: null, stop: null, n: null,
-    },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     conversationId: null,
@@ -110,17 +105,12 @@ describe('buildRows', () => {
 // ── toolCount ─────────────────────────────────────────────────────────────────
 
 describe('toolCount', () => {
-  it('counts the tool requests on the response', () => {
-    const tr = { id: 't', name: 'n', arguments: '{}' };
-    expect(toolCount(trace({ id: 'a', response: { role: 'assistant', content: '', toolRequests: [tr, tr], toolCallId: null } }))).toBe(2);
+  it('returns the precomputed response tool-request count', () => {
+    expect(toolCount(trace({ id: 'a', toolCount: 2 }))).toBe(2);
   });
 
-  it('returns 0 when the call has no response (error / empty completion)', () => {
-    expect(toolCount(trace({ id: 'b', response: null }))).toBe(0);
-  });
-
-  it('returns 0 when the response has no tool requests', () => {
-    expect(toolCount(trace({ id: 'c' }))).toBe(0);
+  it('returns 0 when the call produced no tool requests (error / empty completion)', () => {
+    expect(toolCount(trace({ id: 'b', toolCount: 0 }))).toBe(0);
   });
 });
 

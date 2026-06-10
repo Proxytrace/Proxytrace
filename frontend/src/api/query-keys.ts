@@ -52,6 +52,8 @@ export const QUERY_KEYS = {
   /** Prefix matching every test-run-groups query — use for invalidation. */
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
+  /** A single (fat) test suite by id — full test cases for the edit dialog. 'detail' segment lets list invalidation cover it by prefix. */
+  testSuite: (id: string) => ['test-suites', 'detail', id] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,

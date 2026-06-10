@@ -60,7 +60,7 @@ public class AgentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<AgentDto>> GetAll(
+    public async Task<PagedResult<AgentListItemDto>> GetAll(
         [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -83,9 +83,9 @@ public class AgentsController : ControllerBase
         var items = sorted
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => agentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToListItemDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
-        return new PagedResult<AgentDto>(items, sorted.Length, page, pageSize);
+        return new PagedResult<AgentListItemDto>(items, sorted.Length, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]

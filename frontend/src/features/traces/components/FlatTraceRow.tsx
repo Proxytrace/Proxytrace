@@ -3,12 +3,12 @@ import { StatusDot } from '../../../components/ui/StatusDot';
 import { modelColor } from '../../../lib/colors';
 import { fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
-import type { AgentCallDto } from '../../../api/models';
+import type { AgentCallListItemDto } from '../../../api/models';
 import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
 import { MessagePreviewCell, TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
 
 interface Props {
-  trace: AgentCallDto;
+  trace: AgentCallListItemDto;
   selected: boolean;
   onClick: () => void;
 }

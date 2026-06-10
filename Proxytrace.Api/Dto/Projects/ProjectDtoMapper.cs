@@ -17,6 +17,15 @@ internal static class ProjectDtoMapper
             p.CreatedAt,
             p.UpdatedAt);
 
+    /// <summary>Lightweight projection for the projects list — member count only, no member list.</summary>
+    public static ProjectListItemDto ToListItemDto(IProject p) =>
+        new(p.Id,
+            p.Name,
+            p.SystemEndpoint.Id,
+            p.Members.Count,
+            p.CreatedAt,
+            p.UpdatedAt);
+
     public static ProjectMemberDto ToMemberDto(IUser user) =>
         new(user.Id, user.Email);
 }

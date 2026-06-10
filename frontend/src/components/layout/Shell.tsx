@@ -247,7 +247,7 @@ export function Shell() {
         <QuotaBanner />
         {/* Topbar */}
         <header
-          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[1] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
+          className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[3] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
           <IconButton onClick={() => setCollapsed(c => !c)} aria-label="Toggle sidebar">
             <LayoutSidebarIcon size={16} />
@@ -262,7 +262,7 @@ export function Shell() {
           {currentProject?.id ? (
             <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
           ) : (
-            <div className="flex-1 max-w-[460px] mx-auto" />
+            <div className="flex-1 max-w-[720px] mx-auto" />
           )}
 
           <div

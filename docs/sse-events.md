@@ -25,6 +25,13 @@ hooks in `frontend/src/api/event-stream.ts`.
 views are **pure-SSE (no polling)**; on terminal they invalidate the relevant TanStack queries to
 heal any dropped events. Do **not** reintroduce `refetchInterval` on these views.
 
+The runs list is **light** (`TestRunGroupListItemDto`, no per-case results), so `useRunGroupStream`
+patches the selected group's **detail** query (`QUERY_KEYS.testRunGroup(id)`) — the fat group fetched
+when a run is opened — via `setQueryData`, **not** the list cache. The patch no-ops until the detail
+query resolves (an SSE event can arrive before the detail GET). On the terminal event it invalidates
+the whole `test-run-groups` namespace (`testRunGroupsRoot`), healing both the detail matrix and the
+left-rail list (whose pass rates are static mid-run by design). See `frontend/src/features/runs/`.
+
 The Playground (`/api/playground/...`) and Tracey chat also stream over `text/event-stream`, but they
 stream raw model tokens for one request rather than domain broadcaster events — not part of this catalog.
 

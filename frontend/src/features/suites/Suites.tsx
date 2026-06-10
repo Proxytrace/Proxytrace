@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { EvaluatorDetailDto, TestSuiteDto } from '../../api/models';
+import type { EvaluatorDetailDto, TestSuiteListItemDto } from '../../api/models';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { Skeleton } from '../../components/ui/Skeleton';
@@ -22,10 +22,10 @@ import { useScrollToSelectedSuite } from './hooks/useScrollToSelectedSuite';
 import { computeSuiteStats } from './suitesMeta';
 
 export default function Suites() {
-  const [runSuite, setRunSuite] = useState<TestSuiteDto | null>(null);
+  const [runSuite, setRunSuite] = useState<TestSuiteListItemDto | null>(null);
   const [runDone, setRunDone] = useState(false);
-  const [editSuite, setEditSuite] = useState<TestSuiteDto | null>(null);
-  const [deleteSuite, setDeleteSuite] = useState<TestSuiteDto | null>(null);
+  const [editSuiteId, setEditSuiteId] = useState<string | null>(null);
+  const [deleteSuite, setDeleteSuite] = useState<TestSuiteListItemDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createStep, setCreateStep] = useState(0);
   const [createAgentId, setCreateAgentId] = useState('');
@@ -220,7 +220,7 @@ export default function Suites() {
             selected={selectedSuiteId === suite.id}
             onSelect={() => setSelectedSuiteId(suite.id)}
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
-            onEdit={() => setEditSuite(suite)}
+            onEdit={() => setEditSuiteId(suite.id)}
             onDelete={() => setDeleteSuite(suite)}
           />
         ))}
@@ -243,11 +243,11 @@ export default function Suites() {
       )}
 
       {/* Edit dialog */}
-      {editSuite && (
+      {editSuiteId && (
         <EditSuiteDialog
-          suite={editSuite}
+          suiteId={editSuiteId}
           projectId={projectId}
-          onClose={() => setEditSuite(null)}
+          onClose={() => setEditSuiteId(null)}
         />
       )}
 

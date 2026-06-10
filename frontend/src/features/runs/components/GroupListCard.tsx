@@ -1,4 +1,4 @@
-import type { TestRunGroupDto } from '../../../api/models';
+import type { TestRunGroupListItemDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
 import { agentColor, modelColor, tint } from '../../../lib/colors';
@@ -10,7 +10,7 @@ import { passRateColor, passRatePercent } from '../results';
 
 /** Card in the left-hand run-group list. Identical layout for single- and multi-model groups. */
 export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
-  group: TestRunGroupDto;
+  group: TestRunGroupListItemDto;
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -60,7 +60,7 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
 }
 
 /** Per-model pass-rate stack — one row per model, used for both single- and multi-model cards. */
-function ModelStack({ runs }: { runs: TestRunGroupDto['runs'] }) {
+function ModelStack({ runs }: { runs: TestRunGroupListItemDto['runs'] }) {
   const rates = runs.map(r => passRatePercent(r.passedCases, r.passedCases + r.failedCases));
   const best = Math.max(...rates.map(r => r ?? -1));
   const showWinner = runs.length > 1;

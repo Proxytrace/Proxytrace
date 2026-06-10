@@ -11,6 +11,7 @@ import {
   usePlaygroundAgentList,
   useAutoLoadAgentCall,
   useAgentFromSearchParam,
+  fetchAndPickAgent,
 } from './hooks/usePlaygroundAgent';
 import { usePlaygroundStream } from './hooks/usePlaygroundStream';
 import { useSeedDropdown } from './hooks/useSeedDropdown';
@@ -147,7 +148,7 @@ export default function Playground() {
             projectId={currentProject.id}
             selectedAgentId={state.agentId}
             selectedAgent={agent ?? null}
-            onPick={a => dispatch({ type: 'pickAgent', agent: a })}
+            onPick={id => fetchAndPickAgent(id, dispatch)}
             compact
           />
           <IconButton
@@ -170,7 +171,7 @@ export default function Playground() {
               <SearchIcon size={13} strokeWidth={2.2} />
             </IconButton>
             {showSeed && (
-              <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[480px] max-w-[80vw]">
+              <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[720px] max-w-[80vw]">
                 <UnifiedSearch
                   projectId={currentProject.id}
                   kinds={['agentCall', 'testCase']}

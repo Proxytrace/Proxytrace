@@ -33,6 +33,23 @@ public sealed class AgentDtoMapper
         a.UpdatedAt,
         lastUsedAt);
 
+    /// <summary>
+    /// Lightweight projection for agent lists — row fields + tool count, skipping the system message,
+    /// full tool specs and model parameters. Mirrors <see cref="ToDto(IAgent, DateTimeOffset?)"/>.
+    /// </summary>
+    public AgentListItemDto ToListItemDto(IAgent a, DateTimeOffset? lastUsedAt) => new(
+        a.Id,
+        a.Project.Id,
+        a.Project.Name,
+        a.Name,
+        a.Tools.Count,
+        a.Endpoint.Id,
+        $"{a.Endpoint.Model.Name} / {a.Endpoint.Provider.Name}",
+        a.IsSystemAgent,
+        a.CreatedAt,
+        a.UpdatedAt,
+        lastUsedAt);
+
     public AgentVersionDto ToDto(IAgentVersion v, string fingerprint) => new(
         v.Id,
         v.AgentId,

@@ -64,7 +64,7 @@ public class TestSuitesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<TestSuiteDto>> GetAll(
+    public async Task<PagedResult<TestSuiteListItemDto>> GetAll(
         [FromQuery] Guid? agentId = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
@@ -82,7 +82,7 @@ public class TestSuitesController : ControllerBase
         var statsBySuite = await GetRunStatsBySuiteAsync(
             paged.Items.Select(s => s.Id).ToArray(), cancellationToken);
 
-        return paged.Map(s => mapper.ToDto(
+        return paged.Map(s => mapper.ToListItemDto(
             s,
             statsBySuite.TryGetValue(s.Id, out var rows) ? rows : []));
     }

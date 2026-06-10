@@ -20,7 +20,7 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
   const navigate = useNavigate();
 
   const name = currentProject?.name ?? 'No project';
-  const memberCount = currentProject?.members.length ?? 0;
+  const memberCount = currentProject?.memberCount ?? 0;
   const color = currentProject ? projectColor(currentProject.id) : 'var(--teal)';
 
   return (

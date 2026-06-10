@@ -83,7 +83,7 @@ export function ProjectsTab() {
                 >
                   <span className="text-[13px] font-semibold text-primary">{p.name}</span>
                   <span className="text-[11px] text-muted" data-testid={`project-row-members-${p.id}`}>
-                    {p.members.length} {p.members.length === 1 ? 'member' : 'members'}
+                    {p.memberCount} {p.memberCount === 1 ? 'member' : 'members'}
                   </span>
                 </RowButton>
               );

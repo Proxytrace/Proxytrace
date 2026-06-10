@@ -5,7 +5,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { useSelectedId } from '../../hooks/useSelectedId';
 import { AgentList } from './AgentList';
 import { AgentDetail } from './AgentDetail';
-import { useAgents, useDeleteAgent } from './hooks/useAgents';
+import { useAgents, useAgentDetail, useDeleteAgent } from './hooks/useAgents';
 
 export default function Agents() {
   // Selection lives in ?id= (survives refresh); ?tool= is a transient deep-link from a trace.
@@ -29,6 +29,8 @@ export default function Agents() {
     : agents[0]?.id ?? null;
 
   const selected = agents.find(a => a.id === effectiveSelectedId) ?? null;
+  // The list rows are light; the detail panel needs the full agent (system message, tools, params).
+  const { agent: selectedAgent } = useAgentDetail(selected?.id ?? null);
 
   const handleSelect = (id: string) => setSelectedId(id, ['tool']);
 
@@ -65,13 +67,15 @@ export default function Agents() {
           </aside>
 
           <main className="min-w-0 min-h-0 overflow-y-auto pr-1 pb-6">
-            {selected ? (
+            {selected && selectedAgent ? (
               <AgentDetail
-                key={selected.id}
-                agent={selected}
+                key={selectedAgent.id}
+                agent={selectedAgent}
                 onDelete={() => setDeleteOpen(true)}
                 highlightTool={highlightTool}
               />
+            ) : selected ? (
+              <div className="text-center py-12 text-body text-muted">Loading agent…</div>
             ) : !isLoading ? (
               <div className="text-center py-12 text-body text-muted">Select an agent to view details.</div>
             ) : null}

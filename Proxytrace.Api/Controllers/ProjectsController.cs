@@ -39,13 +39,13 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<ProjectDto>> GetAll(
+    public async Task<PagedResult<ProjectListItemDto>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
         var paged = await repository.GetPagedAsync(page, pageSize, cancellationToken);
-        return paged.Map(ToDto);
+        return paged.Map(ProjectDtoMapper.ToListItemDto);
     }
 
     [HttpGet("{id:guid}")]

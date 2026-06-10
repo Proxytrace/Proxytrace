@@ -8,6 +8,6 @@ namespace Proxytrace.Api.Dto.AgentCalls;
 /// Bundled so the page needs only this plus the paginated call list — two requests instead of four.
 /// </summary>
 public record TracesOverviewDto(
-    IReadOnlyList<AgentDto> Agents,
+    IReadOnlyList<AgentListItemDto> Agents,
     IReadOnlyList<AgentBreakdownDto> AgentBreakdown,
     IReadOnlyList<LatencyDto> Latency);

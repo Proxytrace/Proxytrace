@@ -5,14 +5,14 @@ import { Input } from '../../../components/ui/Input';
 import { agentColor } from '../../../lib/colors';
 import { cn } from '../../../lib/cn';
 import type { TimeRange } from '../../../lib/timeRange';
-import type { AgentDto } from '../../../api/models';
+import type { AgentListItemDto } from '../../../api/models';
 
 interface Props {
   search: string;
   timeRange: TimeRange;
   agentFilter: string;
   showSystem: boolean;
-  agents: AgentDto[];
+  agents: AgentListItemDto[];
   onSearchChange: (v: string) => void;
   onTimeRangeChange: (r: TimeRange) => void;
   onAgentFilterChange: (v: string) => void;

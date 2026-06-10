@@ -65,6 +65,39 @@ public record TestRunGroupDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
+/// <summary>
+/// Lightweight per-run projection for the run-group list cards — just the fields the left-rail
+/// ModelStack renders (endpoint + pass/fail counts). Omits the fat <see cref="TestRunDto"/>'s
+/// per-case results, test cases, and evaluations.
+/// </summary>
+public record TestRunSummaryDto(
+    Guid Id,
+    Guid EndpointId,
+    string EndpointName,
+    TestRunStatus Status,
+    int TotalCases,
+    int PassedCases,
+    int FailedCases,
+    double PassRate);
+
+/// <summary>
+/// Lightweight run-group projection for the runs list. Carries only what the left-rail card needs;
+/// the full <see cref="TestRunGroupDto"/> (with nested per-case results) is fetched per-selection
+/// via <c>GET /api/test-run-groups/{id}</c>.
+/// </summary>
+public record TestRunGroupListItemDto(
+    Guid Id,
+    Guid SuiteId,
+    string SuiteName,
+    Guid AgentId,
+    string AgentName,
+    TestRunStatus Status,
+    bool IsSystemRun,
+    DateTimeOffset? CompletedAt,
+    IReadOnlyList<TestRunSummaryDto> Runs,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
 public record CreateTestRunGroupRequest(
     Guid TestSuiteId,
     IReadOnlyList<Guid> ModelEndpointIds);

@@ -81,8 +81,9 @@ export default function Traces() {
 
   // Flat list of all individual traces for prev/next navigation in the drawer
   const flatTraces = rows.flatMap(r => r.type === 'flat' ? [r.trace] : r.turns);
-  // Open trace lives in the URL (?trace=) so it survives refresh / is shareable.
-  const [selectedTrace, selectTrace] = useSelectedTrace(flatTraces);
+  // Open trace lives in the URL (?trace=) so it survives refresh / is shareable. The detail panel
+  // always fetches the full trace by id (the list rows are light).
+  const [selectedTrace, selectTrace] = useSelectedTrace();
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   const handleExpandConversation = useCallback((conversationId: string) => {

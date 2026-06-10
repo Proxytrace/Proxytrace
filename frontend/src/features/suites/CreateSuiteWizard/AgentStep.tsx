@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import type { AgentDto } from '../../../api/models';
+import type { AgentListItemDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { RowButton } from '../../../components/ui/RowButton';
 import { Switch } from '../../../components/ui/Switch';
 
 interface Props {
-  agents: AgentDto[];
+  agents: AgentListItemDto[];
   value: string;
   onChange: (id: string) => void;
 }

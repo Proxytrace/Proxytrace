@@ -21,6 +21,30 @@ public record TestSuiteDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
+/// <summary>
+/// Lightweight suite projection for the suites grid. Keeps the small evaluator refs (id + kind, for
+/// the card badges) and run aggregates, but replaces the fat <see cref="TestCaseDto"/> list (full
+/// input conversations + expected outputs) with just a count. The full suite is fetched per-selection
+/// via <c>GET /api/test-suites/{id}</c>.
+/// </summary>
+public record TestSuiteListItemDto(
+    Guid Id,
+    string Name,
+    Guid AgentId,
+    string AgentName,
+    IReadOnlyList<EvaluatorDto> Evaluators,
+    int TestCaseCount,
+    string? Description,
+    IReadOnlyList<string> Tags,
+    int TotalRuns,
+    double? PassRate,
+    double? PrevPassRate,
+    IReadOnlyList<double> PassRateTrend,
+    DateTimeOffset? LastRunAt,
+    Guid? LastRunGroupId,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt);
+
 public record EvaluatorDto(Guid Id, EvaluatorKind Kind);
 
 public record TestCaseDto(

@@ -49,7 +49,7 @@ export function TestCasesPanel({
 
   const { data: tracesData, isLoading: tracesLoading } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteEdit(agentId),
-    queryFn: () => agentCallsApi.list({ agentId, pageSize: 50 }),
+    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: 50 }),
     enabled: sub === 'add',
   });
 
