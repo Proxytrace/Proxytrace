@@ -8,53 +8,53 @@
 :root,
 :root.dark {
   /* Surfaces */
-  --vp-c-bg: #1b1b1f;
-  --vp-c-bg-alt: #1e1e22;
-  --vp-c-bg-elv: #212125;
-  --vp-c-bg-soft: #27272c;
+  --vp-c-bg: #121317;
+  --vp-c-bg-alt: #15161b;
+  --vp-c-bg-elv: #17181d;
+  --vp-c-bg-soft: #1c1d24;
 
   /* Text */
-  --vp-c-text-1: #f0ede8;
-  --vp-c-text-2: #9e9a94;
-  --vp-c-text-3: #67645e;
+  --vp-c-text-1: #edeef2;
+  --vp-c-text-2: #9da1ac;
+  --vp-c-text-3: #686d7a;
 
   /* Dividers / borders — hairline */
-  --vp-c-divider: #303036;
-  --vp-c-border: #303036;
-  --vp-c-gutter: #1b1b1f;
+  --vp-c-divider: #26272f;
+  --vp-c-border: #26272f;
+  --vp-c-gutter: #121317;
 
   /* Brand ramp → warm amber. brand-1 is link/active text (lighter for contrast),
      brand-2/3 are hover/solid surfaces. */
-  --vp-c-brand-1: #deb073;
-  --vp-c-brand-2: #c9944a;
-  --vp-c-brand-3: #c9944a;
-  --vp-c-brand-soft: color-mix(in srgb, #c9944a 14%, transparent);
+  --vp-c-brand-1: #ecbf83;
+  --vp-c-brand-2: #d9a158;
+  --vp-c-brand-3: #d9a158;
+  --vp-c-brand-soft: color-mix(in srgb, #d9a158 14%, transparent);
 
   /* Solid amber buttons get dark text for contrast */
-  --vp-button-brand-bg: #c9944a;
-  --vp-button-brand-hover-bg: #deb073;
-  --vp-button-brand-active-bg: #c9944a;
-  --vp-button-brand-text: #1b1b1f;
+  --vp-button-brand-bg: #d9a158;
+  --vp-button-brand-hover-bg: #ecbf83;
+  --vp-button-brand-active-bg: #d9a158;
+  --vp-button-brand-text: #121317;
   --vp-button-brand-border: transparent;
-  --vp-button-brand-hover-text: #1b1b1f;
+  --vp-button-brand-hover-text: #121317;
 
   /* Semantic colors */
-  --vp-c-success-1: #3daa6f;
-  --vp-c-success-2: #3daa6f;
-  --vp-c-success-3: #3daa6f;
-  --vp-c-warning-1: #d4915c;
-  --vp-c-warning-2: #d4915c;
-  --vp-c-warning-3: #d4915c;
-  --vp-c-danger-1: #d95555;
-  --vp-c-danger-2: #d95555;
-  --vp-c-danger-3: #d95555;
+  --vp-c-success-1: #46b97c;
+  --vp-c-success-2: #46b97c;
+  --vp-c-success-3: #46b97c;
+  --vp-c-warning-1: #dd9a64;
+  --vp-c-warning-2: #dd9a64;
+  --vp-c-warning-3: #dd9a64;
+  --vp-c-danger-1: #e25d5d;
+  --vp-c-danger-2: #e25d5d;
+  --vp-c-danger-3: #e25d5d;
 
   /* Home hero brand tint */
-  --vp-home-hero-name-color: #deb073;
+  --vp-home-hero-name-color: #ecbf83;
 }
 
 /* Inline code uses the soft surface, amber-tinted text */
 :root {
-  --vp-code-color: #deb073;
-  --vp-code-bg: color-mix(in srgb, #c9944a 12%, transparent);
+  --vp-code-color: #ecbf83;
+  --vp-code-bg: color-mix(in srgb, #d9a158 12%, transparent);
 }

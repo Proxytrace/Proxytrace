@@ -50,6 +50,10 @@
   --text-h1: 18px;
   --text-display: 28px;
 
+  /* Font stacks (text uses the bundled @fontsource-variable faces) */
+  --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
+
   /* Shadow utilities */
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
@@ -60,54 +64,53 @@
 }
 
 :root {
-  /* Backgrounds */
-  --bg-primary: #1b1b1f;
-  --bg-secondary: #212125;
-  --bg-sidebar: #1e1e22;
-  --bg-card: #27272c;
-  --bg-card-2: #303036;
+  /* Backgrounds — deep ink (subtle blue cast) so cards lift and gold pops */
+  --bg-primary: #121317;
+  --bg-secondary: #17181d;
+  --bg-sidebar: #15161b;
+  --bg-card: #1c1d24;
+  --bg-card-2: #26272f;
 
   /* Borders */
-  --border-color: rgba(255, 255, 255, 0.07);
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --hairline: rgba(255, 255, 255, 0.055);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --hairline: rgba(255, 255, 255, 0.06);
 
   /* Text */
-  --text-primary: #f0ede8;
-  --text-secondary: #9e9a94;
-  --text-muted: #67645e;
+  --text-primary: #edeef2;
+  --text-secondary: #9da1ac;
+  --text-muted: #686d7a;
 
   /* Accent (amber/gold) */
-  --accent-primary: #c9944a;
-  --accent-hover: #deb073;
-  --accent-press: #b9843c;           /* solid-gold active/pressed */
-  --accent-ink: #241803;             /* text/icon ON gold fills (AA on accent) */
-  --accent-text: #e9c488;            /* gold text on dark — active chip / status */
-  --accent-border: rgba(201, 148, 74, 0.45); /* gold hairline — active chip / status */
-  --accent-subtle: rgba(201, 148, 74, 0.12);
-  --accent-glow: rgba(201, 148, 74, 0.22);
+  --accent-primary: #d9a158;
+  --accent-hover: #ecbf83;
+  --accent-press: #c68f46;           /* solid-gold active/pressed */
+  --accent-ink: #251a04;             /* text/icon ON gold fills (AA on accent) */
+  --accent-text: #f0cd92;            /* gold text on dark — active chip / status */
+  --accent-border: rgba(217, 161, 88, 0.45); /* gold hairline — active chip / status */
+  --accent-subtle: rgba(217, 161, 88, 0.13);
+  --accent-glow: rgba(217, 161, 88, 0.25);
 
   /* Semantic */
-  --success: #3daa6f;
-  --success-subtle: rgba(61, 170, 111, 0.10);
-  --warn: #d4915c;
-  --warn-subtle: rgba(212, 145, 92, 0.10);
-  --danger: #d95555;
-  --danger-subtle: rgba(217, 85, 85, 0.10);
-  --teal: #6b9eaa;
+  --success: #46b97c;
+  --success-subtle: rgba(70, 185, 124, 0.11);
+  --warn: #dd9a64;
+  --warn-subtle: rgba(221, 154, 100, 0.11);
+  --danger: #e25d5d;
+  --danger-subtle: rgba(226, 93, 93, 0.11);
+  --teal: #74a8b6;
 
-  /* Shadows */
-  --shadow-card: 0 1px 0 rgba(255,255,255,0.025) inset, 0 1px 2px rgba(0,0,0,0.2), 0 4px 16px -8px rgba(0,0,0,0.35);
-  --shadow-float: 0 1px 0 rgba(255,255,255,0.02) inset, 0 2px 6px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
-  --shadow-pill: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.25);
-  --shadow-sidebar: 2px 0 20px -6px rgba(0,0,0,0.4);
-  --shadow-topbar: 0 1px 0 rgba(255,255,255,0.025), 0 4px 16px -8px rgba(0,0,0,0.4);
+  /* Shadows — every elevation carries a 1px edge ring (crisp lift on the dark ink bg) */
+  --shadow-card: 0 0 0 1px rgba(255,255,255,0.045), 0 1px 0 rgba(255,255,255,0.04) inset, 0 2px 4px rgba(0,0,0,0.25), 0 8px 24px -8px rgba(0,0,0,0.5);
+  --shadow-float: 0 0 0 1px rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.05) inset, 0 4px 12px rgba(0,0,0,0.4), 0 20px 48px -12px rgba(0,0,0,0.65);
+  --shadow-pill: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sidebar: 0 0 0 1px rgba(255,255,255,0.04), 2px 0 24px -6px rgba(0,0,0,0.5);
+  --shadow-topbar: 0 0 0 1px rgba(255,255,255,0.045), 0 4px 20px -8px rgba(0,0,0,0.5);
 
-  /* Button shadows (gradient buttons + danger variant) */
-  /* No colored glow halo — just a subtle inset top highlight (bevel) on filled buttons. */
-  --shadow-btn: inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-success: inset 0 1px 0 rgba(255,255,255,0.15);
-  --shadow-btn-danger: inset 0 1px 0 rgba(255,255,255,0.10);
+  /* Button shadows — bevel highlight + a faint colored under-glow on filled buttons */
+  --shadow-btn: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px var(--accent-glow);
+  --shadow-btn-success: inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px rgba(70,185,124,0.25);
+  --shadow-btn-danger: inset 0 1px 0 rgba(255,255,255,0.12), 0 1px 2px rgba(0,0,0,0.35), 0 3px 10px -2px rgba(226,93,93,0.25);
 
   /* Radii (collapsed scale — sm/md/lg/xl) */
   --radius-sm: 6px;
@@ -142,10 +145,10 @@
   --bg-wash-hover: rgba(255,255,255,0.04);
   --bg-wash-active: rgba(255,255,255,0.07);
 
-  /* Branded gradients */
-  --grad-accent: linear-gradient(135deg, var(--accent-primary), #a57038);
-  --grad-accent-hover: linear-gradient(135deg, var(--accent-hover), #b88254);
-  --grad-success: linear-gradient(135deg, var(--success), #2c8f5a);
+  /* Branded gradients — light-from-above dimensional fills (filled buttons) */
+  --grad-accent: linear-gradient(180deg, #e2ad66, #cd9046);
+  --grad-accent-hover: linear-gradient(180deg, #f0c585, #dba055);
+  --grad-success: linear-gradient(180deg, #4fc287, #3aa266);
 
   /* Motion */
   --motion-fast: 120ms;
@@ -160,19 +163,32 @@ html, body, #root {
   height: 100%;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
+/* Atmosphere — gold aurora top, teal corner glow. Sits under the app shell
+   (the shell container is transparent so this shows through page gutters). */
 body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 148, 74, 0.025), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(107, 158, 170, 0.015), transparent 60%);
+    radial-gradient(ellipse 90% 55% at 50% -25%, rgba(217, 161, 88, 0.055), transparent 60%),
+    radial-gradient(ellipse 45% 40% at 105% 105%, rgba(116, 168, 182, 0.045), transparent 65%),
+    radial-gradient(ellipse 40% 35% at -5% 30%, rgba(217, 161, 88, 0.02), transparent 60%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Film grain — a whisper of texture over everything kills the flat "rendered" look. */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 100;
 }
 
 * { box-sizing: border-box; }
@@ -196,7 +212,7 @@ body::before {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; border: 3px solid var(--bg-primary); }
-::-webkit-scrollbar-thumb:hover { background: #47464a; }
+::-webkit-scrollbar-thumb:hover { background: #4a4c55; }
 
 /* ── Animations ── */
 @keyframes fade-up {
@@ -298,12 +314,14 @@ body::before {
   position: relative;
 }
 .nav-item:hover {
-  background-color: var(--bg-card);
+  background-color: var(--bg-wash-hover);
   color: var(--text-primary);
 }
 .nav-item.nav-active {
-  background-color: var(--accent-subtle);
-  color: var(--accent-hover);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--accent-primary) 16%, transparent),
+    color-mix(in srgb, var(--accent-primary) 6%, transparent));
+  color: var(--accent-text);
 }
 
 /* Tracey "/" menu: keep the active option highlight independent of utility-class generation. */
@@ -450,7 +468,7 @@ body::before {
 }
 
 /* ── Mono font util ── */
-.mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+.mono { font-family: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace; }
 
 /* ── Range slider (ParameterSlider) ── */
 .param-slider {
@@ -493,7 +511,7 @@ body::before {
   padding: 1px 5px;
   border-radius: 5px;
   font-size: 10px;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono Variable', 'JetBrains Mono', 'Fira Code', monospace;
   background: rgba(0,0,0,0.32);
   color: rgba(255,255,255,0.85);
   border: 1px solid rgba(255,255,255,0.15);

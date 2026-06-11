@@ -25,31 +25,33 @@ All tokens are declared in `frontend/src/index.css` and exposed to Tailwind 4 vi
 
 ### 2.1 Colors
 
-Dark-only, single warm-amber accent.
+Dark-only — a deep ink base (subtle blue cast) with a single warm-amber accent.
 
 | Role | Token | Hex | Use |
 |------|-------|-----|-----|
-| Page background | `bg-surface` | `#1b1b1f` | Body / app shell |
-| Elevated surface | `bg-surface-2` | `#212125` | Modals, drawers, top bar |
-| Sidebar | `bg-sidebar` | `#1e1e22` | Left nav |
-| Card | `bg-card` | `#27272c` | Default card |
-| Card raised | `bg-card-2` | `#303036` | Nested card / hovered list row |
-| Border | `border-border` | rgba(255,255,255,0.07) | Default border |
-| Border subtle | `border-border-subtle` | rgba(255,255,255,0.04) | Row dividers |
-| Hairline | `border-hairline` | rgba(255,255,255,0.055) | Internal card splits |
-| Text primary | `text-primary` | `#f0ede8` | Headings, key values |
-| Text secondary | `text-secondary` | `#9e9a94` | Labels, body prose |
-| Text muted | `text-muted` | `#67645e` | Captions, placeholders |
-| Accent | `text-accent`, `bg-accent` | `#c9944a` | Primary CTAs, active nav, focus ring |
-| Accent hover | `accent-hover` | `#deb073` | Hover only |
-| Accent ink | `text-accent-ink` | `#241803` | Dark text/icon **on** a gold fill (primary button) — AA on accent |
-| Accent text | `text-accent-text` | `#e9c488` | Gold text on dark (active filter chip / status pill) |
-| Accent press | `var(--accent-press)` | `#b9843c` | Pressed/active gold fill |
-| Accent border | `var(--accent-border)` | rgba(201,148,74,0.45) | Gold hairline (active chip / status) |
-| Success | `text-success`, `bg-success` | `#3daa6f` | Pass, healthy, run-green |
-| Warn | `text-warn` | `#d4915c` | Throttle, slow, 4xx |
-| Danger | `text-danger` | `#d95555` | Fail, error, destructive |
-| Teal | `text-teal` | `#6b9eaa` | Rule-based evaluators, info chips |
+| Page background | `bg-surface` | `#121317` | Body / app shell |
+| Elevated surface | `bg-surface-2` | `#17181d` | Modals, drawers, top bar |
+| Sidebar | `bg-sidebar` | `#15161b` | Left nav |
+| Card | `bg-card` | `#1c1d24` | Default card |
+| Card raised | `bg-card-2` | `#26272f` | Nested card / hovered list row |
+| Border | `border-border` | rgba(255,255,255,0.08) | Default border |
+| Border subtle | `border-border-subtle` | rgba(255,255,255,0.05) | Row dividers |
+| Hairline | `border-hairline` | rgba(255,255,255,0.06) | Internal card splits |
+| Text primary | `text-primary` | `#edeef2` | Headings, key values |
+| Text secondary | `text-secondary` | `#9da1ac` | Labels, body prose |
+| Text muted | `text-muted` | `#686d7a` | Captions, placeholders |
+| Accent | `text-accent`, `bg-accent` | `#d9a158` | Primary CTAs, active nav, focus ring |
+| Accent hover | `accent-hover` | `#ecbf83` | Hover only |
+| Accent ink | `text-accent-ink` | `#251a04` | Dark text/icon **on** a gold fill (primary button) — AA on accent |
+| Accent text | `text-accent-text` | `#f0cd92` | Gold text on dark (active filter chip / status pill) |
+| Accent press | `var(--accent-press)` | `#c68f46` | Pressed/active gold fill |
+| Accent border | `var(--accent-border)` | rgba(217,161,88,0.45) | Gold hairline (active chip / status) |
+| Success | `text-success`, `bg-success` | `#46b97c` | Pass, healthy, run-green |
+| Warn | `text-warn` | `#dd9a64` | Throttle, slow, 4xx |
+| Danger | `text-danger` | `#e25d5d` | Fail, error, destructive |
+| Teal | `text-teal` | `#74a8b6` | Rule-based evaluators, info chips |
+
+The page background carries a fixed, very-low-opacity atmosphere (gold aurora top, teal corner glow) plus a 2% film-grain overlay — both defined once in `index.css` on `body::before`/`body::after`. Don't add per-page background effects.
 
 **Subtle semantic backgrounds** (`bg-success-subtle`, `bg-warn-subtle`, `bg-danger-subtle`, `bg-accent-subtle`) — use these for status pills and tinted surfaces. Never put white text on a subtle background; pair the subtle bg with the matching solid text color.
 
@@ -61,6 +63,7 @@ Dark-only, single warm-amber accent.
 
 - **Body:** Inter, with feature-settings `cv11 ss01 ss03` (defined globally on `body`).
 - **Mono:** JetBrains Mono (fallback Fira Code) — apply via `.mono` class or Tailwind `font-mono`. Use for IDs, model names, token counts, JSON, code, kbd hints.
+- Both faces are **bundled** via `@fontsource-variable/inter` and `@fontsource-variable/jetbrains-mono` (imported in `main.tsx`; family names `'Inter Variable'` / `'JetBrains Mono Variable'`). Never add a Google Fonts `<link>` — CSP allows `font-src 'self'` only.
 - **Heading font ≠ body font** is *not* our pattern. We use Inter for everything; rhythm comes from the type scale, not face contrast.
 
 Type scale (data-dense — do not enlarge without a strong reason):
@@ -108,7 +111,9 @@ Three tiers — do not invent ad-hoc shadows.
 | `shadow-[var(--shadow-float)]` | Modal, drawer, dropdown, popover |
 | `shadow-[var(--shadow-pill)]` | Pills, chips, kbd |
 
-Buttons have their own shadows baked into the variant (`--shadow-btn`, `--shadow-btn-success`, `--shadow-btn-danger`) — they're applied by the `Button` component, not by you.
+Each elevation shadow already includes a 1px `rgba(255,255,255,…)` edge ring — that's what crisps surfaces against the ink background. Don't stack an extra `border` on a raised/floating surface that uses these tokens.
+
+Buttons have their own shadows baked into the variant (`--shadow-btn`, `--shadow-btn-success`, `--shadow-btn-danger`: bevel highlight + a faint matching under-glow) — they're applied by the `Button` component, not by you.
 
 ### 2.6 Motion
 
@@ -144,7 +149,7 @@ Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator),
 
 `<Button variant="primary|secondary|ghost|danger|dangerOutline|success|link" size="sm|md|lg">`. Defaults: `primary`, `md`. Use:
 
-- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite. **Solid gold fill with dark ink** (`bg-accent` + `text-accent-ink`) — this filled treatment is the primary action's alone; never gold-fill a label, tab, chip, or input. One per toolbar/region.
+- **primary** — the one obvious action per screen/section. Save, Run Test, Create Suite. **Gold gradient fill with dark ink** (`bg-[image:var(--grad-accent)]` + `text-accent-ink`) — this filled treatment is the primary action's alone; never gold-fill a label, tab, chip, or input. One per toolbar/region.
 - **secondary** — neutral siblings. Cancel, Close, Edit.
 - **ghost** — tertiary in toolbars and inline rows.
 - **danger** — irreversible, solid red. Always paired with `ConfirmDialog`.

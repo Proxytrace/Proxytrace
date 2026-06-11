@@ -153,7 +153,8 @@ export function Shell() {
     .slice(0, 2) || 'U';
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-surface relative z-[1]">
+    // Transparent so the body's aurora/grain atmosphere shows through the page gutters.
+    <div className="flex w-full h-screen overflow-hidden bg-transparent relative z-[1]">
       {/* Sidebar */}
       <aside
         className={`bg-sidebar flex flex-col shrink-0 relative z-[2] m-[10px_0_10px_10px] rounded-[18px] overflow-hidden shadow-[var(--shadow-sidebar)] transition-[width] duration-200 h-[calc(100vh-20px)] ${collapsed ? 'w-16' : 'w-[232px]'}`}

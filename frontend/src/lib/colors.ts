@@ -1,27 +1,27 @@
 import { EvaluatorKind } from '../api/models';
 
 const MODEL_COLORS: Record<string, string> = {
-  'gpt-4o': '#c9944a',
-  'gpt-4o-mini': '#6b9eaa',
-  'gpt-4.1': '#c9944a',
-  'gpt-3.5-turbo': '#d4915c',
-  'claude-3.5-sonnet': '#3daa6f',
-  'claude-sonnet-4-5': '#3daa6f',
-  'claude-3-opus': '#5ba394',
-  'claude-3-haiku': '#3daa6f',
+  'gpt-4o': '#d9a158',
+  'gpt-4o-mini': '#74a8b6',
+  'gpt-4.1': '#d9a158',
+  'gpt-3.5-turbo': '#dd9a64',
+  'claude-3.5-sonnet': '#46b97c',
+  'claude-sonnet-4-5': '#46b97c',
+  'claude-3-opus': '#5fb39e',
+  'claude-3-haiku': '#46b97c',
 };
 
 // Entity palettes use only on-system tokens (accent, teal, success, warn, accent-hover).
 // Do not add new brand hexes — extend by repetition with hash mixing.
-const MODEL_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#deb073', '#6b9eaa', '#3daa6f', '#c9944a'];
-const AGENT_PALETTE = ['#c9944a', '#6b9eaa', '#3daa6f', '#d4915c', '#deb073', '#3daa6f', '#6b9eaa', '#c9944a'];
+const MODEL_PALETTE = ['#d9a158', '#74a8b6', '#46b97c', '#dd9a64', '#ecbf83', '#74a8b6', '#46b97c', '#d9a158'];
+const AGENT_PALETTE = ['#d9a158', '#74a8b6', '#46b97c', '#dd9a64', '#ecbf83', '#46b97c', '#74a8b6', '#d9a158'];
 
 const PROVIDER_COLORS: Record<string, string> = {
-  Anthropic: '#3daa6f',
-  OpenAI: '#c9944a',
-  Google: '#6b9eaa',
-  Azure: '#6b9eaa',
-  Mistral: '#d4915c',
+  Anthropic: '#46b97c',
+  OpenAI: '#d9a158',
+  Google: '#74a8b6',
+  Azure: '#74a8b6',
+  Mistral: '#dd9a64',
 };
 
 function hashStr(s: string): number {
@@ -49,10 +49,10 @@ export function projectColor(id: string): string {
 }
 
 export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
-  [EvaluatorKind.Agentic]: '#c9944a',
-  [EvaluatorKind.ExactMatch]: '#6b9eaa',
-  [EvaluatorKind.NumericMatch]: '#6b9eaa',
-  [EvaluatorKind.JsonSchemaMatch]: '#6b9eaa',
+  [EvaluatorKind.Agentic]: '#d9a158',
+  [EvaluatorKind.ExactMatch]: '#74a8b6',
+  [EvaluatorKind.NumericMatch]: '#74a8b6',
+  [EvaluatorKind.JsonSchemaMatch]: '#74a8b6',
 };
 
 /**
@@ -60,7 +60,7 @@ export const EVALUATOR_KIND_COLOR: Record<EvaluatorKind, string> = {
  * Falls back to teal for any kind not in the palette so a border is never left uncolored.
  */
 export function evaluatorColor(kind: string): string {
-  return EVALUATOR_KIND_COLOR[kind as EvaluatorKind] ?? '#6b9eaa';
+  return EVALUATOR_KIND_COLOR[kind as EvaluatorKind] ?? '#74a8b6';
 }
 
 export const EVALUATOR_KIND_CATEGORY: Record<EvaluatorKind, 'llm' | 'rule'> = {
@@ -71,9 +71,9 @@ export const EVALUATOR_KIND_CATEGORY: Record<EvaluatorKind, 'llm' | 'rule'> = {
 };
 
 export function statusColor(httpStatus: number): string {
-  if (httpStatus >= 200 && httpStatus < 300) return '#3daa6f';
-  if (httpStatus >= 400 && httpStatus < 500) return '#d4915c';
-  return '#d95555';
+  if (httpStatus >= 200 && httpStatus < 300) return '#46b97c';
+  if (httpStatus >= 400 && httpStatus < 500) return '#dd9a64';
+  return '#e25d5d';
 }
 
 /**
