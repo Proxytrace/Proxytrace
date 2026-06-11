@@ -279,6 +279,29 @@ body::after {
   .pulse-dot { animation: none; }
 }
 
+/* Celebratory CTA sheen — a periodic light sweep across a gold-filled button.
+   Reserved for one-off milestone actions (setup "Get started"); never on routine UI. */
+@keyframes btn-sheen-sweep {
+  0%   { transform: translateX(-130%) skewX(-18deg); }
+  55%  { transform: translateX(230%) skewX(-18deg); }
+  100% { transform: translateX(230%) skewX(-18deg); }
+}
+.btn-sheen { position: relative; overflow: hidden; }
+.btn-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: btn-sheen-sweep 3s var(--ease-standard) infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-sheen::after { animation: none; display: none; }
+}
+
 /* Indeterminate progress sliver — an A/B validation in flight with no countable progress. */
 @keyframes indeterminate-bar {
   0%   { left: -40%; }

@@ -32,7 +32,6 @@ setup('create first admin and persist session', async ({ page, request }) => {
     providerKind,
     modelName: model,
     projectName: 'E2E Test Project',
-    apiKeyName: 'e2e-key',
   });
 
   // Use 'load' not 'networkidle' — SSE connections never reach network idle.

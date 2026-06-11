@@ -8,7 +8,4 @@ public record CompleteSetupRequest(
     string ProviderUpstreamApiKey,
     ModelProviderKind ProviderKind,
     string ModelName,
-    decimal? InputTokenCost,
-    decimal? OutputTokenCost,
-    string ProjectName,
-    string ApiKeyName);
+    string ProjectName);

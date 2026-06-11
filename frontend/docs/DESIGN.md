@@ -125,7 +125,7 @@ Buttons have their own shadows baked into the variant (`--shadow-btn`, `--shadow
 
 Easing: `var(--ease-standard)` (`cubic-bezier(0.2, 0, 0.2, 1)`). No bouncy springs. No 500ms+ transitions on UI controls.
 
-Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator), `shimmer` (skeleton), `streaming-border` (active LLM stream). Reuse these. Always honor `prefers-reduced-motion` — the streaming border already does; new animations must too.
+Animations defined globally: `fade-up` (entrance), `pulse-dot` (live indicator), `shimmer` (skeleton), `streaming-border` (active LLM stream), `btn-sheen` (periodic light sweep on a gold CTA — reserved for one-off milestone actions like the setup wizard's "Get started"; never on routine UI). Reuse these. Always honor `prefers-reduced-motion` — the streaming border already does; new animations must too.
 
 ---
 
