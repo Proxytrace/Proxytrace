@@ -17,7 +17,7 @@ public sealed class InviteServiceTests : BaseTest<Module>
     [TestMethod]
     public async Task Create_PersistsInviteWithToken()
     {
-        var s = GetServices();
+        var s = GetServices(PermissiveLicense);
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
 
@@ -32,10 +32,10 @@ public sealed class InviteServiceTests : BaseTest<Module>
     [TestMethod]
     public async Task GetByToken_ReturnsInviteWhenValid()
     {
-        var s = GetServices();
+        var s = GetServices(PermissiveLicense);
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
-        var invite = await svc.CreateAsync("a@b.com", UserRole.Viewer, inviter, CancellationToken);
+        var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
 
         var fetched = await svc.GetByTokenAsync(invite.Token, CancellationToken);
         fetched.Should().NotBeNull();
@@ -45,7 +45,7 @@ public sealed class InviteServiceTests : BaseTest<Module>
     [TestMethod]
     public async Task Consume_CreatesUserAndMarksConsumed()
     {
-        var s = GetServices();
+        var s = GetServices(PermissiveLicense);
         var inviter = await s.GetRequiredService<IDomainEntityGenerator<IUser>>().CreateAsync(CancellationToken);
         var svc = s.GetRequiredService<IInviteService>();
         var invite = await svc.CreateAsync("new@b.com", UserRole.Admin, inviter, CancellationToken);
@@ -90,5 +90,14 @@ public sealed class InviteServiceTests : BaseTest<Module>
         var invite = await svc.CreateAsync("a@b.com", UserRole.Member, inviter, CancellationToken);
 
         invite.Should().NotBeNull();
+    }
+
+    // The default (Free) tier caps MaxUsers at 1, so tests that seed a user before inviting must
+    // opt out of the limit to exercise invite behaviour itself.
+    private static void PermissiveLicense(ContainerBuilder builder)
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.GetLimit(Arg.Any<LicenseLimit>()).Returns(long.MaxValue);
+        builder.RegisterInstance(license).As<ILicenseService>();
     }
 }

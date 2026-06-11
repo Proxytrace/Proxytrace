@@ -21,13 +21,7 @@ public sealed class TestSuiteDtoMapper
     /// </summary>
     public TestSuiteDto ToDto(ITestSuite s, IReadOnlyList<TestRunStats> runRows)
     {
-        TestRunStats[] ordered = runRows.OrderBy(r => r.RunCompletedAt).ToArray();
-        double[] trend = ordered
-            .Where(r => r.PassRate.HasValue)
-            .Select(r => r.PassRate.GetValueOrDefault() * 100)
-            .ToArray();
-        TestRunStats? latest = ordered.Length > 0 ? ordered[^1] : null;
-        TestRunStats? prev = ordered.Length >= 2 ? ordered[^2] : null;
+        var agg = RunAggregates.From(runRows);
 
         return new(
             s.Id,
@@ -42,14 +36,64 @@ public sealed class TestSuiteDtoMapper
             )).ToArray(),
             Description: null,
             Tags: [],
-            TotalRuns: ordered.Length,
-            PassRate: latest?.PassRate * 100,
-            PrevPassRate: prev?.PassRate * 100,
-            PassRateTrend: trend,
-            LastRunAt: latest?.RunCompletedAt,
-            LastRunGroupId: latest?.GroupId,
+            TotalRuns: agg.TotalRuns,
+            PassRate: agg.PassRate,
+            PrevPassRate: agg.PrevPassRate,
+            PassRateTrend: agg.Trend,
+            LastRunAt: agg.LastRunAt,
+            LastRunGroupId: agg.LastRunGroupId,
             s.CreatedAt,
             s.UpdatedAt);
+    }
+
+    /// <summary>
+    /// Lightweight projection for the suites grid — keeps evaluator refs + run aggregates but ships
+    /// only the test-case count, not the full input conversations. Mirrors <see cref="ToDto"/>.
+    /// </summary>
+    public TestSuiteListItemDto ToListItemDto(ITestSuite s, IReadOnlyList<TestRunStats> runRows)
+    {
+        var agg = RunAggregates.From(runRows);
+
+        return new(
+            s.Id,
+            s.Name,
+            s.Agent.Id,
+            s.Agent.Name,
+            s.Evaluators.Select(e => new EvaluatorDto(e.Id, e.Kind)).ToArray(),
+            TestCaseCount: s.TestCases.Count,
+            Description: null,
+            Tags: [],
+            TotalRuns: agg.TotalRuns,
+            PassRate: agg.PassRate,
+            PrevPassRate: agg.PrevPassRate,
+            PassRateTrend: agg.Trend,
+            LastRunAt: agg.LastRunAt,
+            LastRunGroupId: agg.LastRunGroupId,
+            s.CreatedAt,
+            s.UpdatedAt);
+    }
+
+    /// <summary>Run-history aggregates (total runs, latest/prev pass rate, trend, last run) derived
+    /// from a suite's finalized run rows. Shared by the fat and light suite projections.</summary>
+    private readonly record struct RunAggregates(
+        int TotalRuns,
+        double? PassRate,
+        double? PrevPassRate,
+        double[] Trend,
+        DateTimeOffset? LastRunAt,
+        Guid? LastRunGroupId)
+    {
+        public static RunAggregates From(IReadOnlyList<TestRunStats> runRows)
+        {
+            TestRunStats[] ordered = runRows.OrderBy(r => r.RunCompletedAt).ToArray();
+            double[] trend = ordered
+                .Where(r => r.PassRate.HasValue)
+                .Select(r => r.PassRate.GetValueOrDefault() * 100)
+                .ToArray();
+            TestRunStats? latest = ordered.Length > 0 ? ordered[^1] : null;
+            TestRunStats? prev = ordered.Length >= 2 ? ordered[^2] : null;
+            return new(ordered.Length, latest?.PassRate * 100, prev?.PassRate * 100, trend, latest?.RunCompletedAt, latest?.GroupId);
+        }
     }
 
     public Conversation BuildConversation(IReadOnlyList<TestSuiteMessageDto> messages)

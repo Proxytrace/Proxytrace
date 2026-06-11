@@ -17,6 +17,25 @@ public record AgentDto(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastUsedAt);
 
+/// <summary>
+/// Lightweight agent projection for lists (agents grid, dashboard agents, traces filter bar). Keeps
+/// the row fields plus a tool count, but drops the fat <see cref="AgentDto"/>'s system message, full
+/// tool specs and model parameters. The full agent is fetched per-selection via
+/// <c>GET /api/agents/{id}</c>.
+/// </summary>
+public record AgentListItemDto(
+    Guid Id,
+    Guid ProjectId,
+    string ProjectName,
+    string Name,
+    int ToolCount,
+    Guid EndpointId,
+    string EndpointName,
+    bool IsSystemAgent,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    DateTimeOffset? LastUsedAt);
+
 public record UpdateAgentEndpointRequest(Guid EndpointId);
 
 public record MoveVersionRequest(Guid TargetAgentId);

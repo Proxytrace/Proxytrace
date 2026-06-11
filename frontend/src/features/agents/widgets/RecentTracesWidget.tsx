@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { statusColor } from '../../../lib/colors';
 import { fmtRelative, fmtDuration } from '../../../lib/format';
-import { firstUserMessage } from '../../../lib/trace';
+import { tracePreview } from '../../../lib/trace';
 import { RowButton } from '../../../components/ui/RowButton';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { Button } from '../../../components/ui/Button';
@@ -44,7 +44,7 @@ export function RecentTracesWidget({ agentId, className }: Props) {
       {!isLoading && traces.length > 0 && (
         <div className="flex flex-col gap-0.5" data-testid="agent-recent-traces-list">
           {traces.map(t => {
-            const preview = firstUserMessage(t);
+            const preview = tracePreview(t);
             return (
               <RowButton
                 key={t.id}

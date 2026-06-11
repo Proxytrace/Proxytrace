@@ -1,5 +1,5 @@
 import { useMessage } from '@assistant-ui/react';
-import { ClockIcon, CoinsIcon } from '../../../components/icons';
+import { AlertTriangleIcon, ClockIcon, CoinsIcon } from '../../../components/icons';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
 import { readMessageStats, readTraceConversationId } from '../message-stats';
 import { useOpenResponseTrace } from '../useOpenResponseTrace';
@@ -41,6 +41,16 @@ export function MessageStatusBar() {
             <span className="inline-flex items-center gap-1" title="Response time">
               <ClockIcon size={12} strokeWidth={2.2} />
               <span className="font-mono">{fmtLatency(stats.durationMs)}</span>
+            </span>
+          )}
+          {stats.stoppedEarly && (
+            <span
+              data-testid="tracey-step-limit"
+              className="inline-flex items-center gap-1 text-warn"
+              title="The turn hit its tool-step budget before Tracey could answer. Ask her to continue."
+            >
+              <AlertTriangleIcon size={12} strokeWidth={2.2} />
+              Step limit reached
             </span>
           )}
         </div>

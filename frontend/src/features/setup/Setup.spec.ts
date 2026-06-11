@@ -52,11 +52,11 @@ describe('setupApi', () => {
 
       const req = {
         userName: 'Alice',
-        providerName: 'Anthropic',
-        providerEndpoint: 'https://api.anthropic.com/v1',
+        providerName: 'OpenAI',
+        providerEndpoint: 'https://api.openai.com/v1',
         providerUpstreamApiKey: 'sk-x',
-        providerKind: ModelProviderKind.Anthropic,
-        modelName: 'claude-sonnet-4-5',
+        providerKind: ModelProviderKind.OpenAi,
+        modelName: 'gpt-4o',
         inputTokenCost: 3,
         outputTokenCost: 15,
         projectName: 'My App',

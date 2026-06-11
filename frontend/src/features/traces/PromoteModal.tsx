@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { AgentCallDto, TestSuiteDto } from '../../api/models';
+import type { AgentCallDto, TestSuiteListItemDto } from '../../api/models';
 import { testSuitesApi } from '../../api/test-suites';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct } from '../../lib/format';
@@ -20,7 +20,7 @@ import { RowButton } from '../../components/ui/RowButton';
 
 interface Props {
   trace: AgentCallDto;
-  suites: TestSuiteDto[];
+  suites: TestSuiteListItemDto[];
   onClose: () => void;
 }
 
@@ -162,7 +162,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
                         {s.name}
                       </span>
                       <span className="block text-[10.5px] text-muted mt-[2px]">
-                        {s.testCases.length} case{s.testCases.length !== 1 ? 's' : ''} · {s.evaluators.length} evaluator{s.evaluators.length !== 1 ? 's' : ''}
+                        {s.testCaseCount} case{s.testCaseCount !== 1 ? 's' : ''} · {s.evaluators.length} evaluator{s.evaluators.length !== 1 ? 's' : ''}
                       </span>
                     </span>
                   </RowButton>
@@ -205,14 +205,14 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   );
 }
 
-function SuiteStats({ suite }: { suite: TestSuiteDto }) {
+function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
   const passRateLabel = suite.passRate != null ? fmtPct(suite.passRate) : '—';
   const lastRunLabel = suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'never';
 
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="grid grid-cols-3 gap-2">
-        <Stat label="Cases" value={String(suite.testCases.length)} accent="var(--accent-primary)" />
+        <Stat label="Cases" value={String(suite.testCaseCount)} accent="var(--accent-primary)" />
         <Stat label="Pass rate" value={passRateLabel} accent="var(--success)" />
         <Stat label="Total runs" value={String(suite.totalRuns)} accent="var(--teal)" />
       </div>

@@ -200,7 +200,7 @@ The GUIDE's selector priority (this is the suite's convention; follow it):
 
 When a role/label/text locator genuinely can't isolate an element, add the
 `data-testid` in the React component. That's a real frontend change — follow
-`frontend/BEST_PRACTICES.md` and `frontend/DESIGN.md`. Don't reach for a test id
+`frontend/docs/BEST_PRACTICES.md` and `frontend/docs/DESIGN.md`. Don't reach for a test id
 first; it's the fallback, not the default.
 
 ## Data setup — via ProxytraceApiClient

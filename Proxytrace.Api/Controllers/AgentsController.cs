@@ -60,7 +60,7 @@ public class AgentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<AgentDto>> GetAll(
+    public async Task<PagedResult<AgentListItemDto>> GetAll(
         [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -83,9 +83,9 @@ public class AgentsController : ControllerBase
         var items = sorted
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => agentDtoMapper.ToDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToListItemDto(a, lastCallTimes.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
-        return new PagedResult<AgentDto>(items, sorted.Length, page, pageSize);
+        return new PagedResult<AgentListItemDto>(items, sorted.Length, page, pageSize);
     }
 
     [HttpGet("{id:guid}")]
@@ -180,8 +180,20 @@ public class AgentsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await repository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        var agent = await repository.FindAsync(id, cancellationToken);
+        if (agent is null)
+            return NotFound();
+
+        // System agents (Tracey, optimizers, agentic-evaluator judges) are internal plumbing, not
+        // user data — they must not be archived away.
+        if (agent.IsSystemAgent)
+            return Conflict(new { error = "System agents can't be deleted." });
+
+        // Soft-delete: archiving hides the agent and frees its license slot, but keeps the row so its
+        // captured calls, suites, versions and any agentic evaluators still resolve. See
+        // ArchivableRepository.
+        var archived = await repository.ArchiveAsync(id, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     [HttpPatch("{id:guid}/endpoint")]

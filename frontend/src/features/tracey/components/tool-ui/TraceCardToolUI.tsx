@@ -4,13 +4,12 @@ import { StatusDot } from '../../../../components/ui/StatusDot';
 import { Pill } from '../../../../components/ui/Pill';
 import { modelColor, providerColor } from '../../../../lib/colors';
 import { fmtTokens, fmtDuration, fmtCost } from '../../../../lib/format';
-import type { AgentCallDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_trace` tool result. */
 export const TraceCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data: trace } = useArtifactResult<AgentCallDto>(result, status, isError);
+  const { state, data: trace } = useArtifactResult('trace', result, status, isError);
   return (
     <EntityCardLink
       state={state}

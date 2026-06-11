@@ -12,7 +12,7 @@ import { createAwaitTools, isRunTerminal, isTheoryTerminal } from './await';
 import type { TraceyToolContext } from './shared';
 
 const ctx: TraceyToolContext = {
-  projectId: 'p1', artifactScope: 'u:p', navigate: vi.fn(), confirm: vi.fn(),
+  projectId: 'p1', artifactScope: 'u:p', navigate: vi.fn(), confirm: vi.fn(), loadedSkillIds: new Set<string>(),
 };
 const store = vi.fn();
 
@@ -57,5 +57,41 @@ describe('await_actions', () => {
     expect(result.results[1]).toMatchObject({ kind: 'theory', id: 't1', status: TheoryStatus.Validated, timedOut: false });
     expect(testRunGroupsApi.get).toHaveBeenCalledWith('g1');
     expect(theoriesApi.get).toHaveBeenCalledWith('t1');
+  });
+
+  it('captures a failed handle without losing the other results', async () => {
+    testRunGroupsApi.get.mockRejectedValue(new Error('not found'));
+    theoriesApi.get.mockResolvedValue({
+      id: 't1', agentName: 'A', status: TheoryStatus.Validated, resultingProposalId: 'pr1',
+    });
+
+    const tool = createAwaitTools(ctx, store).await_actions;
+    if (!tool.execute) throw new Error('tool has no execute');
+    const result = await tool.execute(
+      { handles: [{ kind: 'test-run', id: 'bad' }, { kind: 'theory', id: 't1' }] },
+      ctx,
+    ) as {
+      anyTimedOut: boolean;
+      results: { kind: string; id: string }[];
+      errors?: { kind: string; id: string; error: string }[];
+    };
+
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0]).toMatchObject({ kind: 'theory', id: 't1' });
+    expect(result.errors).toEqual([{ kind: 'test-run', id: 'bad', error: 'not found' }]);
+    expect(result.anyTimedOut).toBe(false);
+  });
+
+  it('rejects with AbortError when the turn is stopped, instead of a per-handle error', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    testRunGroupsApi.get.mockResolvedValue({ id: 'g1', status: TestRunStatus.Running, runs: [] });
+
+    const tool = createAwaitTools(ctx, store).await_actions;
+    if (!tool.execute) throw new Error('tool has no execute');
+
+    await expect(
+      tool.execute({ handles: [{ kind: 'test-run', id: 'g1' }] }, ctx, controller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
   });
 });

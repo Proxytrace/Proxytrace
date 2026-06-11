@@ -1,4 +1,4 @@
-import type { TestSuiteDto } from '../../../api/models';
+import type { TestSuiteListItemDto } from '../../../api/models';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { fmtRelative, fmtDate } from '../../../lib/format';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
@@ -11,7 +11,7 @@ import { FOCUS_RING } from '../../../lib/constants';
 import { cn } from '../../../lib/cn';
 
 interface Props {
-  suite: TestSuiteDto;
+  suite: TestSuiteListItemDto;
   onRun: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -150,7 +150,7 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete, onSelect, selected =
             <div className="text-caption text-muted font-semibold tracking-[0.07em] uppercase mb-1">
               Test cases
             </div>
-            <div data-testid={`suite-case-count-${suite.id}`} className="text-[22px] font-bold tracking-[-0.02em]">{suite.testCases.length}</div>
+            <div data-testid={`suite-case-count-${suite.id}`} className="text-[22px] font-bold tracking-[-0.02em]">{suite.testCaseCount}</div>
             <div className="text-[11px] text-muted mt-[2px]">
               {suite.totalRuns} run{suite.totalRuns !== 1 ? 's' : ''} total
             </div>

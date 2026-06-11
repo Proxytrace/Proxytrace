@@ -40,7 +40,11 @@ internal sealed class TestCaseDocumentMapper : IDocumentMapper
         var tc = await testCases.FindAsync(entityId, cancellationToken);
         if (tc is null) return null;
 
-        // Locate parent suite to get project
+        // Locate parent suite to get project. TestCase has no SuiteId FK — it lives inside the
+        // suite's serialized TestCases column — so the owning suite can't be found with a SQL
+        // WHERE and this scans all suites. Acceptable only because this single-entity path is a
+        // fallback; bulk reindex uses the project-scoped BuildAllForProjectAsync below. A real
+        // fix needs a TestCase→Suite FK (schema change) before this can become a filtered query.
         var allSuites = await testSuites.GetAllAsync(cancellationToken);
         var suite = allSuites.FirstOrDefault(s => s.TestCases.Any(c => c.Id == entityId));
         return suite is null 

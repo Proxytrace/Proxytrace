@@ -1,20 +1,14 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { ActivityIcon } from '../../../../components/icons';
 import { fmtCost, fmtLatency, fmtTokens } from '../../../../lib/format';
-import type { AgentEntityCountsDto, AgentTimeSummaryDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
 import { useArtifactResult } from '../../useArtifact';
 
-interface AgentStatsResult {
-  summary: AgentTimeSummaryDto;
-  counts: AgentEntityCountsDto;
-}
-
 /** Inline renderer for the `get_agent_stats` tool result (30-day window). */
 export const AgentStatsToolUI: ToolCallMessagePartComponent = ({ args, result, status, isError }) => {
-  const { state, data } = useArtifactResult<AgentStatsResult>(result, status, isError);
+  const { state, data } = useArtifactResult('agent-stats', result, status, isError);
   if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame

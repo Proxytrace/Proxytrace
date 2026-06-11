@@ -9,9 +9,9 @@ const { agentsApi, testSuitesApi, testRunsApi, testRunGroupsApi, proposalsApi, p
   testRunGroupsApi: { create: vi.fn() },
   proposalsApi: { getAll: vi.fn(), updateStatus: vi.fn() },
   providersApi: { get: vi.fn() },
-  agentCallsApi: { get: vi.fn() },
+  agentCallsApi: { get: vi.fn(), list: vi.fn() },
   statisticsApi: { dashboard: vi.fn(), agentOverview: vi.fn() },
-  theoriesApi: { submit: vi.fn(), get: vi.fn() },
+  theoriesApi: { submit: vi.fn(), get: vi.fn(), getAll: vi.fn() },
 }));
 
 vi.mock('../../api/agents', () => ({ agentsApi }));
@@ -33,6 +33,7 @@ function makeCtx(overrides: Partial<TraceyToolContext> = {}): TraceyToolContext 
     artifactScope: 'user-1:proj-1',
     navigate: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
+    loadedSkillIds: new Set<string>(),
     ...overrides,
   };
 }
@@ -47,21 +48,31 @@ describe('tracey read tools', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('list_agents stores the full list and returns a compact index envelope', async () => {
-    const items = [{ id: 'a1', name: 'Alpha' }, { id: 'a2', name: 'Beta' }];
+    const items = [
+      { id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2 },
+      { id: 'a2', name: 'Beta', endpointName: 'gpt-4o-mini', toolCount: 0 },
+    ];
     agentsApi.list.mockResolvedValue({ items });
     const ctx = makeCtx();
     const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx) as {
-      artifactRef: string; kind: string; summary: { count: number; items: { id: string; name: string }[] };
+      artifactRef: string; kind: string;
+      summary: { count: number; items: { id: string; name: string; endpointName: string; toolCount: number }[] };
     };
 
     expect(agentsApi.list).toHaveBeenCalledWith({ projectId: 'proj-1' });
     expect(result.kind).toBe('agent-list');
-    expect(result.summary).toEqual({ count: 2, items: [{ id: 'a1', name: 'Alpha' }, { id: 'a2', name: 'Beta' }] });
+    expect(result.summary).toEqual({
+      count: 2,
+      items: [
+        { id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2 },
+        { id: 'a2', name: 'Beta', endpointName: 'gpt-4o-mini', toolCount: 0 },
+      ],
+    });
     expect(await getArtifact(result.artifactRef)).toEqual(items);
   });
 
   it('falls back to the full payload inline when the artifact store is unavailable', async () => {
-    const items = [{ id: 'a1', name: 'Alpha' }];
+    const items = [{ id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 1 }];
     agentsApi.list.mockResolvedValue({ items });
     const ctx = makeCtx();
     // Force storeArtifact to throw (simulating IndexedDB disabled, e.g. private browsing).
@@ -194,6 +205,103 @@ describe('tracey entity-fetch tools', () => {
     expect(providersApi.get).toHaveBeenCalledWith('pr1');
   });
 
+  it('find_traces searches with the given filter and returns a compact index', async () => {
+    agentCallsApi.list.mockResolvedValue({
+      items: [{
+        id: 't1', agentName: 'Alpha', model: 'gpt-4o', httpStatus: 500,
+        errorMessage: 'upstream exploded', durationMs: 900, inputTokens: 10, outputTokens: 5,
+        messagePreview: 'hello there', createdAt: '2026-06-01T00:00:00Z',
+      }],
+    });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).find_traces,
+      { agentId: 'a1', httpStatus: 500, limit: 5 },
+      ctx,
+    ) as { kind: string; summary: { count: number; items: { id: string; error?: string; tokens: number }[] } };
+
+    expect(agentCallsApi.list).toHaveBeenCalledWith({
+      projectId: 'proj-1', agentId: 'a1', q: undefined, httpStatus: 500, pageSize: 5,
+    });
+    expect(result.kind).toBe('trace-list');
+    expect(result.summary.count).toBe(1);
+    expect(result.summary.items[0]).toMatchObject({ id: 't1', error: 'upstream exploded', tokens: 15 });
+  });
+
+  it('get_run_failures keeps only judged failures and digests evaluator verdicts', async () => {
+    testRunsApi.get.mockResolvedValue({
+      id: 'r1', suiteName: 'Suite', agentName: 'Alpha', passRate: 50, totalCases: 2,
+      results: [
+        {
+          id: 'res1', testCaseId: 'c1', testCaseSummary: 'failing case', actualResponse: 'wrong answer',
+          durationMs: 5,
+          evaluations: [{ evaluatorId: 'e1', evaluatorKind: 'ExactMatch', evaluatorName: 'Exact', score: 'Bad', reasoning: 'mismatch', errorMessage: null }],
+        },
+        {
+          id: 'res2', testCaseId: 'c2', testCaseSummary: 'passing case', actualResponse: 'right',
+          durationMs: 5,
+          evaluations: [{ evaluatorId: 'e1', evaluatorKind: 'ExactMatch', evaluatorName: 'Exact', score: 'Good', reasoning: null, errorMessage: null }],
+        },
+      ],
+    });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).get_run_failures, { runId: 'r1' }, ctx) as {
+      kind: string;
+      summary: { failedCases: number; failures: { case: string; evaluations: { evaluator: string; score: string }[] }[] };
+    };
+
+    expect(result.kind).toBe('run-failures');
+    expect(result.summary.failedCases).toBe(1);
+    expect(result.summary.failures[0].case).toBe('failing case');
+    expect(result.summary.failures[0].evaluations[0]).toMatchObject({ evaluator: 'Exact', score: 'Bad' });
+  });
+
+  it('compare_runs fetches both runs and digests the case movements', async () => {
+    const evalOf = (score: string) =>
+      [{ evaluatorId: 'e1', evaluatorKind: 'ExactMatch', evaluatorName: 'Exact', score, reasoning: null, errorMessage: null }];
+    testRunsApi.get
+      .mockResolvedValueOnce({
+        id: 'old', agentName: 'A', endpointName: 'gpt', suiteName: 'Suite', passRate: 50,
+        results: [
+          { id: '1', testCaseId: 'c1', testCaseSummary: 'was failing', actualResponse: '', durationMs: 1, evaluations: evalOf('Bad') },
+        ],
+      })
+      .mockResolvedValueOnce({
+        id: 'new', agentName: 'A', endpointName: 'gpt', suiteName: 'Suite', passRate: 100,
+        results: [
+          { id: '2', testCaseId: 'c1', testCaseSummary: 'was failing', actualResponse: '', durationMs: 1, evaluations: evalOf('Good') },
+        ],
+      });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).compare_runs,
+      { baselineRunId: 'old', candidateRunId: 'new' },
+      ctx,
+    ) as { kind: string; summary: { fixed: number; regressed: number; fixedCases: string[] } };
+
+    expect(result.kind).toBe('run-comparison');
+    expect(result.summary.fixed).toBe(1);
+    expect(result.summary.regressed).toBe(0);
+    expect(result.summary.fixedCases).toEqual(['was failing']);
+  });
+
+  it('list_theories returns the tried theories with their A/B outcomes', async () => {
+    theoriesApi.getAll.mockResolvedValue([{
+      id: 'th1', kind: 'SystemPrompt', status: 'Invalidated', priority: 'Medium', agentName: 'Alpha',
+      rationale: 'tone too informal', baselinePassRate: 60, projectedPassRate: 55, resultingProposalId: null,
+    }]);
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).list_theories, { agentId: 'a1' }, ctx) as {
+      kind: string; summary: { count: number; items: { id: string; status: string }[] };
+    };
+
+    expect(theoriesApi.getAll).toHaveBeenCalledWith({ projectId: 'proj-1', agentId: 'a1' });
+    expect(result.kind).toBe('theory-list');
+    expect(result.summary.items[0]).toMatchObject({ id: 'th1', status: 'Invalidated' });
+  });
+
   it('get_trace stores the full call and returns a curated summary', async () => {
     const call = { id: 't1', model: 'gpt-4o', provider: 'openai', httpStatus: 200, inputTokens: 10, outputTokens: 20, durationMs: 500, costEur: 0.1 };
     agentCallsApi.get.mockResolvedValue(call);
@@ -284,6 +392,72 @@ describe('tracey load_skill tool', () => {
 
     expect(result.notFound).toBe('nope');
     expect(result.available).toContain('optimize-agent');
+  });
+
+  it('answers a repeat load compactly instead of re-injecting the playbook', async () => {
+    const ctx = makeCtx();
+    const tool = createTraceyTools(ctx).load_skill;
+    await exec(tool, { skillId: 'optimize-agent' }, ctx);
+
+    const repeat = await exec(tool, { skillId: 'optimize-agent' }, ctx) as {
+      name: string; alreadyLoaded?: boolean; instructions?: string;
+    };
+
+    expect(repeat.alreadyLoaded).toBe(true);
+    expect(repeat.instructions).toBeUndefined();
+    expect(ctx.loadedSkillIds.has('optimize-agent')).toBe(true);
+  });
+
+  it('treats a skill restored from the conversation history as already loaded', async () => {
+    const ctx = makeCtx({ loadedSkillIds: new Set(['review-proposals']) });
+
+    const result = await exec(createTraceyTools(ctx).load_skill, { skillId: 'review-proposals' }, ctx) as {
+      alreadyLoaded?: boolean;
+    };
+
+    expect(result.alreadyLoaded).toBe(true);
+  });
+});
+
+describe('tracey get_dashboard_stats tool', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('digest carries per-agent and per-model usage breakdowns', async () => {
+    statisticsApi.dashboard.mockResolvedValue({
+      summary: { totalCalls: 5 },
+      agentBreakdown: [{ agentId: 'a1', callCount: 5 }],
+      tokenUsageByAgent: [
+        { bucketStart: 'b1', agentId: 'a1', inputTokens: 10, outputTokens: 5 },
+        { bucketStart: 'b2', agentId: 'a1', inputTokens: 20, outputTokens: 15 },
+      ],
+      modelBreakdown: [
+        { endpointId: 'e1', modelName: 'gpt-4o', callCount: 5, totalInputTokens: 30, totalOutputTokens: 20, avgDurationMs: 800 },
+      ],
+      agents: [
+        { id: 'a1', name: 'Alpha' },
+        { id: 'a2', name: 'Beta' },
+      ],
+    });
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).get_dashboard_stats, {}, ctx) as {
+      kind: string;
+      summary: {
+        summary: Record<string, unknown>;
+        byAgent: { id: string; name: string; calls: number; inputTokens: number; outputTokens: number }[];
+        byModel: { model: string; calls: number }[];
+      };
+    };
+
+    expect(result.kind).toBe('dashboard-stats');
+    expect(result.summary.summary).toEqual({ totalCalls: 5 });
+    expect(result.summary.byAgent).toEqual([
+      { id: 'a1', name: 'Alpha', calls: 5, inputTokens: 30, outputTokens: 20 },
+      { id: 'a2', name: 'Beta', calls: 0, inputTokens: 0, outputTokens: 0 },
+    ]);
+    expect(result.summary.byModel).toEqual([
+      { model: 'gpt-4o', calls: 5, inputTokens: 30, outputTokens: 20, avgDurationMs: 800 },
+    ]);
   });
 });
 

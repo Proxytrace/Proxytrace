@@ -3,8 +3,8 @@
 
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens } from '../../../lib/format';
-import { firstUserMessage } from '../../../lib/trace';
-import type { AgentCallDto } from '../../../api/models';
+import { tracePreview } from '../../../lib/trace';
+import type { AgentCallListItemDto } from '../../../api/models';
 import { latencyBarPct } from '../tracesMeta';
 
 // ── Latency bar ───────────────────────────────────────────────────────────────
@@ -21,9 +21,9 @@ export function LatencyBar({ ms }: { ms: number }) {
 
 // ── Individual cells ──────────────────────────────────────────────────────────
 
-export function MessagePreviewCell({ trace }: { trace: AgentCallDto }) {
+export function MessagePreviewCell({ trace }: { trace: AgentCallListItemDto }) {
   const c = trace.agentId ? agentColor(trace.agentId) : modelColor(trace.model);
-  const preview = firstUserMessage(trace);
+  const preview = tracePreview(trace);
   return (
     <span className="flex items-center gap-2 min-w-0">
       <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
@@ -34,7 +34,7 @@ export function MessagePreviewCell({ trace }: { trace: AgentCallDto }) {
   );
 }
 
-export function TokenCell({ trace }: { trace: AgentCallDto }) {
+export function TokenCell({ trace }: { trace: AgentCallListItemDto }) {
   return (
     <span className="mono text-body-sm">
       <span className="text-primary">{fmtTokens(trace.inputTokens + trace.outputTokens)}</span>

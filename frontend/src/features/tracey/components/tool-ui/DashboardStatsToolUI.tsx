@@ -1,7 +1,6 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { GridIcon } from '../../../../components/icons';
 import { fmtLatency, fmtPct, fmtTokens } from '../../../../lib/format';
-import type { DashboardViewDto } from '../../../../api/models';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid, StatGridSkeleton } from './StatGrid';
 import { CardOpenLink } from './CardOpenLink';
@@ -9,7 +8,7 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_dashboard_stats` tool result. */
 export const DashboardStatsToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data } = useArtifactResult<DashboardViewDto>(result, status, isError);
+  const { state, data } = useArtifactResult('dashboard-stats', result, status, isError);
   if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame

@@ -98,9 +98,7 @@ internal class SetupService : ISetupService
                 createProvider(input.ProviderName, input.ProviderEndpoint, input.ProviderUpstreamApiKey, input.ProviderKind),
                 cancellationToken);
 
-            var allModels = await models.GetAllAsync(cancellationToken);
-            IModel model = allModels.FirstOrDefault(m => m.Name == input.ModelName)
-                ?? await models.GetOrCreateAsync(input.ModelName, cancellationToken);
+            IModel model = await models.GetOrCreateAsync(input.ModelName, cancellationToken);
 
             var endpoint = await endpoints.AddAsync(
                 createEndpoint(model, provider, input.InputTokenCost, input.OutputTokenCost),

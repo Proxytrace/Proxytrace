@@ -1,11 +1,11 @@
-import type { ModelEndpointDto, TestSuiteDto } from '../../../api/models';
+import type { ModelEndpointDto, TestSuiteListItemDto } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import { PlayFilledIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
 
 interface Props {
-  suite: TestSuiteDto;
+  suite: TestSuiteListItemDto;
   modelsData: ModelEndpointDto[];
   selectedEndpoints: Set<string>;
   loading: boolean;
@@ -22,7 +22,7 @@ export function RunForm({ suite, modelsData, selectedEndpoints, loading, isMulti
     <>
       <h3 className="text-[16px] font-bold mb-1">Start new test run</h3>
       <p className="text-[12.5px] text-muted mb-5 leading-[1.55]">
-        Run <strong className="text-primary">{suite.testCases.length} test cases</strong> from{' '}
+        Run <strong className="text-primary">{suite.testCaseCount} test cases</strong> from{' '}
         <strong className="text-primary">{suite.name}</strong> and compare results.
       </p>
 

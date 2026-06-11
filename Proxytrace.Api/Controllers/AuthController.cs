@@ -147,9 +147,13 @@ public class AuthController : ControllerBase
         if (me is null) return Unauthorized();
 
         var invite = await invites.CreateAsync(req.Email, req.Role, me, ct);
+        return new CreateInviteResponse(invite.Token, BuildInviteUrl(invite.Token), invite.ExpiresAt);
+    }
+
+    private string BuildInviteUrl(string token)
+    {
         var baseUrl = config["Frontend:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
-        var url = $"{baseUrl.TrimEnd('/')}/signup?token={Uri.EscapeDataString(invite.Token)}";
-        return new CreateInviteResponse(invite.Token, url, invite.ExpiresAt);
+        return $"{baseUrl.TrimEnd('/')}/signup?token={Uri.EscapeDataString(token)}";
     }
 
     [Authorize(Roles = nameof(UserRole.Admin))]
@@ -158,7 +162,7 @@ public class AuthController : ControllerBase
     public async Task<IReadOnlyList<InviteDto>> List(CancellationToken ct)
     {
         var all = await inviteRepo.GetAllAsync(ct);
-        return all.Select(i => new InviteDto(i.Id, i.Email, i.Role, i.ExpiresAt, i.ConsumedAt)).ToArray();
+        return all.Select(i => new InviteDto(i.Id, i.Email, i.Role, i.ExpiresAt, i.ConsumedAt, BuildInviteUrl(i.Token))).ToArray();
     }
 
     [Authorize(Roles = nameof(UserRole.Admin))]

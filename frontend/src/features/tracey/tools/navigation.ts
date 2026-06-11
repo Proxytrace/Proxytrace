@@ -38,7 +38,8 @@ export const createNavigationTools: ToolFactory = (ctx) => ({
       'Load a skill — a detailed step-by-step playbook for a specific task — into the ' +
       "conversation on demand. Call this with the skill's id BEFORE acting whenever the " +
       "user's request matches one of the skills listed in your system prompt. The full " +
-      'instructions come back as this tool result; follow them.',
+      'instructions come back as this tool result; follow them. A skill stays loaded for the ' +
+      'rest of the conversation — never load the same skill twice.',
     parameters: z.object({
       skillId: z.string().describe('The id of the skill to load, e.g. "optimize-agent".'),
     }),
@@ -48,6 +49,16 @@ export const createNavigationTools: ToolFactory = (ctx) => ({
       if (!skill) {
         return { notFound: skillId, available: listSkills().map((s) => s.name) };
       }
+      // Repeat load: the playbook is already in the conversation (and its tools are unlocked),
+      // so answer compactly instead of re-injecting the full instructions.
+      if (ctx.loadedSkillIds.has(skill.name)) {
+        return {
+          name: skill.name,
+          alreadyLoaded: true,
+          note: 'This skill is already loaded in this conversation; its instructions are above and its tools are active.',
+        };
+      }
+      ctx.loadedSkillIds.add(skill.name);
       return { name: skill.name, instructions: skill.instructions };
     },
   }),

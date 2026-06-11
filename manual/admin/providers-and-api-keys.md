@@ -4,15 +4,24 @@ Proxytrace routes captured traffic to upstream LLM providers and identifies clie
 its own API keys. This page covers the operator's view; for the client-side setup, see
 [Proxy Setup](/guide/proxy-setup).
 
+**Providers live in the admin-only Settings hub.** Open **Settings** from the sidebar, then
+choose **Providers** under the *Workspace* group (direct link: `/settings/providers`). The whole
+Settings area — and every provider/model/API-key write endpoint behind it — is restricted to
+users with the **Admin** role.
+
 ## Model providers, models, and endpoints
 
-- **Model Provider** — an upstream API such as OpenAI or Anthropic.
+- **Model Provider** — an upstream OpenAI-compatible API such as OpenAI.
 - **Model** — a specific model offered by a provider.
 - **Model Endpoint** — a **model paired with a provider**, plus per-token costs
   (`InputTokenCost`, `OutputTokenCost`). Endpoints can calculate the cost of a call's token
   usage, which feeds the cost figures shown on traces and runs.
 
 Manage these from the **Providers** area of the UI.
+
+**Deleting a model endpoint** hides it from the model list but keeps its captured calls and test
+runs intact — their costs and history stay correct. (Deleting the whole **provider**, by contrast,
+still removes its endpoints and their data.)
 
 ## Adding a provider — models & prices auto-load
 
@@ -26,8 +35,8 @@ same automatically on a configurable interval (default hourly — see
 manual price entry.
 
 The upstream **endpoint** is shown in the provider header only when it differs from the
-provider kind's default (for example, the canonical `https://api.openai.com/v1` and
-`https://api.anthropic.com/v1` are hidden; a custom or self-hosted endpoint is shown). The model
+provider kind's default (for example, the canonical `https://api.openai.com/v1` is hidden; a
+custom or self-hosted endpoint is shown). The model
 list is **pulled from the provider** — there is no manual "add model" control; use reload (or wait
 for the periodic refresh) to pick up newly deployed models.
 

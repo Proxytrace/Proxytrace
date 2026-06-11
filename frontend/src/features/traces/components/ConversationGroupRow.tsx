@@ -3,8 +3,8 @@ import { StatusDot } from '../../../components/ui/StatusDot';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
-import { firstUserMessage } from '../../../lib/trace';
-import type { AgentCallDto } from '../../../api/models';
+import { tracePreview } from '../../../lib/trace';
+import type { AgentCallListItemDto } from '../../../api/models';
 import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
 import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
@@ -14,7 +14,7 @@ interface Props {
   expanded: boolean;
   onToggle: () => void;
   selectedId: string | null;
-  onSelectTrace: (trace: AgentCallDto) => void;
+  onSelectTrace: (trace: AgentCallListItemDto) => void;
 }
 
 export function ConversationGroupRow({ group, expanded, onToggle, selectedId, onSelectTrace }: Props) {
@@ -49,7 +49,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
             {turns.length} turns
           </span>
           <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
-            {firstUserMessage(turns[0]) ?? <span className="text-muted">—</span>}
+            {tracePreview(turns[0]) ?? <span className="text-muted">—</span>}
           </span>
         </span>
 
@@ -99,7 +99,7 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           <span className="flex items-center gap-2 min-w-0">
             <span className="mono text-caption text-muted shrink-0">Turn {turns.length - i}</span>
             <span className="text-body-sm text-secondary overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
-              {firstUserMessage(turn) ?? <span className="text-muted">—</span>}
+              {tracePreview(turn) ?? <span className="text-muted">—</span>}
             </span>
           </span>
           <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">

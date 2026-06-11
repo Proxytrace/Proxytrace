@@ -17,7 +17,7 @@ export function useEditSuiteEvaluators(projectId?: string) {
 export function useEditSuiteTraces(agentId: string) {
   const query = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteEdit(agentId),
-    queryFn: () => agentCallsApi.list({ agentId, pageSize: 50 }),
+    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: 50 }),
   });
   return { traces: query.data?.items ?? [] };
 }

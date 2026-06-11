@@ -11,6 +11,22 @@ public interface ITestRunRepository : IRepository<ITestRun>
 
     Task<IReadOnlyList<ITestRun>> GetByGroupAsync(Guid groupId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns all runs whose <see cref="ITestRun.Status"/> is one of <paramref name="statuses"/>.
+    /// Filters in SQL so callers don't load the whole table to keep a subset.
+    /// </summary>
+    Task<IReadOnlyList<ITestRun>> GetByStatusAsync(
+        IReadOnlyCollection<TestRunStatus> statuses,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves the owning run id for each of the given test-result ids by scanning recent runs.
+    /// Result ids that can't be matched to a recent run are omitted from the returned map.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, Guid>> GetRunIdsByResultIdsAsync(
+        IReadOnlyCollection<Guid> resultIds,
+        CancellationToken cancellationToken = default);
+
     Task<PagedResult<ITestRun>> GetByAgentPagedAsync(
         Guid agentId,
         int page,

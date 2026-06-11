@@ -4,6 +4,7 @@ using Proxytrace.Api.Dto.Users;
 using Proxytrace.Application.Auth;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Paging;
+using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Controllers;
@@ -14,13 +15,19 @@ namespace Proxytrace.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IRepository<IUser> repository;
+    private readonly IProjectRepository projects;
+    private readonly IUserAdministrationService administration;
     private readonly ICurrentUserAccessor currentUser;
 
     public UsersController(
         IRepository<IUser> repository,
+        IProjectRepository projects,
+        IUserAdministrationService administration,
         ICurrentUserAccessor currentUser)
     {
         this.repository = repository;
+        this.projects = projects;
+        this.administration = administration;
         this.currentUser = currentUser;
     }
 
@@ -50,6 +57,17 @@ public class UsersController : ControllerBase
         return ToDto(user);
     }
 
+    [HttpGet("{id:guid}/projects")]
+    public async Task<ActionResult<IReadOnlyList<UserProjectDto>>> GetProjects(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!await repository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+        var memberships = await projects.GetByMemberAsync(id, cancellationToken);
+        return memberships.Select(p => new UserProjectDto(p.Id, p.Name)).ToArray();
+    }
+
     [HttpPut("{id:guid}/role")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<UserDto>> UpdateRole(
@@ -57,21 +75,24 @@ public class UsersController : ControllerBase
         [FromBody] UpdateUserRoleRequest request,
         CancellationToken cancellationToken)
     {
-        var user = await repository.FindAsync(id, cancellationToken);
-        if (user is null)
-            return NotFound();
-        var updated = await user.ChangeRole(request.Role, cancellationToken);
-        return ToDto(updated);
+        var actingUser = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (actingUser is null)
+            return Unauthorized();
+        var updated = await administration.ChangeRoleAsync(actingUser.Id, id, request.Role, cancellationToken);
+        return updated is null ? NotFound() : ToDto(updated);
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await repository.RemoveAsync(id, cancellationToken);
+        var actingUser = await currentUser.GetCurrentUserAsync(cancellationToken);
+        if (actingUser is null)
+            return Unauthorized();
+        var removed = await administration.RemoveAsync(actingUser.Id, id, cancellationToken);
         return removed ? NoContent() : NotFound();
     }
 
     private static UserDto ToDto(IUser u) =>
-        new(u.Id, u.Email, u.Role, u.CreatedAt, u.UpdatedAt);
+        new(u.Id, u.Email, u.Role, u.ExternalSubject is not null, u.CreatedAt, u.UpdatedAt);
 }

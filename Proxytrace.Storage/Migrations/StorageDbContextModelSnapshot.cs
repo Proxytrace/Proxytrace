@@ -37,6 +37,9 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("Endpoint")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsSystemAgent")
                         .HasColumnType("boolean");
 
@@ -61,7 +64,9 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasIndex("IsSystemAgent");
 
-                    b.HasIndex("Project");
+                    b.HasIndex("Project", "IsArchived");
+
+                    b.HasIndex("Project", "Name");
 
                     b.ToTable("AgentEntity");
                 });
@@ -277,6 +282,9 @@ namespace Proxytrace.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
 
@@ -289,6 +297,8 @@ namespace Proxytrace.Storage.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Kind");
+
+                    b.HasIndex("Project", "IsArchived");
 
                     b.ToTable("EvaluatorEntity");
                 });
@@ -375,6 +385,9 @@ namespace Proxytrace.Storage.Migrations
                         .HasPrecision(18, 6)
                         .HasColumnType("numeric(18,6)");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("Model")
                         .HasColumnType("uuid");
 
@@ -390,10 +403,10 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Provider");
-
                     b.HasIndex("Model", "Provider")
                         .IsUnique();
+
+                    b.HasIndex("Provider", "IsArchived");
 
                     b.ToTable("ModelEndpointEntity");
                 });

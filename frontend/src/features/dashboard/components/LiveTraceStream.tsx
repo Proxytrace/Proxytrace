@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
-import type { AgentCallDto } from '../../../api/models';
+import type { AgentCallListItemDto } from '../../../api/models';
 import { buildRows } from '../../../lib/trace';
 import { LiveStreamRow, LIVE_STREAM_GRID } from './LiveStreamRow';
 
 interface LiveTraceStreamProps {
-  traces: AgentCallDto[];
+  traces: AgentCallListItemDto[];
   isLoading: boolean;
   freshIds: Set<string>;
 }

@@ -6,6 +6,7 @@ interface Props {
   text: string;
   label?: string;
   className?: string;
+  'data-testid'?: string;
 }
 
 /**
@@ -14,7 +15,7 @@ interface Props {
  * Stops click propagation so it can sit inside hoverable / clickable surfaces
  * (e.g. a collapsible message header) without triggering them.
  */
-export function CopyButton({ text, label = 'Copy', className }: Props) {
+export function CopyButton({ text, label = 'Copy', className, 'data-testid': testId }: Props) {
   const [copied, setCopied] = useState(false);
 
   function copy(e: React.MouseEvent) {
@@ -31,6 +32,7 @@ export function CopyButton({ text, label = 'Copy', className }: Props) {
       onClick={copy}
       aria-label={copied ? 'Copied' : label}
       title={label}
+      data-testid={testId}
       className={cn(
         'inline-flex items-center justify-center w-6 h-6 rounded-[6px] cursor-pointer',
         'bg-card border border-border transition-colors duration-150 hover:bg-card-2',

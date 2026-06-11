@@ -104,7 +104,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
               <Input data-testid="key-name-input" value={newKey.name} onChange={e => setNewKey(k => ({ ...k, name: e.target.value }))} placeholder="e.g. production-agent" />
             </FormField>
             <FormField label="Project">
-              <Select value={newKey.projectId} onChange={e => setNewKey(k => ({ ...k, projectId: e.target.value }))}>
+              <Select value={newKey.projectId} onValueChange={v => setNewKey(k => ({ ...k, projectId: v }))}>
                 {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </Select>
             </FormField>

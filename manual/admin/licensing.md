@@ -116,7 +116,7 @@ These values live in `Proxytrace.Api/appsettings.json` under the `Licensing` sec
 | | Free | Enterprise |
 |---|---|---|
 | Projects | 1 | Unlimited |
-| Users | 3 | Unlimited |
+| Users | 1 | Unlimited |
 | Agents | 1 | Unlimited |
 | Test suites | 1 | Unlimited |
 | Traces / month | 10,000 | Unlimited |

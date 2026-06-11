@@ -1,5 +1,5 @@
 import { api, qs } from './client';
-import type { PagedResult, ProjectDto, ProjectMemberDto } from './models';
+import type { PagedResult, ProjectDto, ProjectListItemDto, ProjectMemberDto } from './models';
 
 export interface CreateProjectRequest {
   name: string;
@@ -15,7 +15,7 @@ export interface UpdateProjectRequest {
 
 export const projectsApi = {
   list: (params?: { page?: number; pageSize?: number }) =>
-    api.get<PagedResult<ProjectDto>>(`/api/projects${qs(params ?? {})}`),
+    api.get<PagedResult<ProjectListItemDto>>(`/api/projects${qs(params ?? {})}`),
   get: (id: string) => api.get<ProjectDto>(`/api/projects/${id}`),
   create: (req: CreateProjectRequest) => api.post<ProjectDto>('/api/projects', req),
   update: (id: string, req: UpdateProjectRequest) => api.put<ProjectDto>(`/api/projects/${id}`, req),

@@ -10,7 +10,7 @@ using Proxytrace.Domain.ModelProvider;
 namespace Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 
 [UsedImplicitly]
-internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, ModelEndpointEntity>,
+internal class ModelEndpointRepository : ArchivableRepository<IModelEndpoint, ModelEndpointEntity>,
     IModelEndpointRepository
 {
     private readonly IModelRepository models;
@@ -62,6 +62,7 @@ internal class ModelEndpointRepository : AbstractRepository<IModelEndpoint, Mode
         var entities = await contextFactory().Set<ModelEndpointEntity>()
             .AsNoTracking()
             .Where(e => e.Provider == providerId)
+            .ExcludeArchived()
             .ToListAsync(cancellationToken);
 
         var result = new List<IModelEndpoint>(entities.Count);

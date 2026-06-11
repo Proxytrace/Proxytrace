@@ -7,13 +7,40 @@ export const createStatsTools: ToolFactory = (ctx, store) => {
   return {
     get_dashboard_stats: tool({
       description:
-        'Get aggregate dashboard statistics for the current project. Returns the headline summary ' +
-        'plus a reference; the full dashboard is rendered to the user as a card.',
+        'Get aggregate dashboard statistics for the current project. The digest includes the ' +
+        'headline summary plus per-agent and per-model usage breakdowns (calls, tokens) — use it ' +
+        'to chart or compare usage across agents instead of fetching each agent individually. ' +
+        'The full dashboard is rendered to the user as a card.',
       parameters: empty,
       confirm: false,
       execute: async () => {
         const view = await statisticsApi.dashboard({ projectId });
-        return store('dashboard-stats', view, { summary: view.summary });
+        // Per-agent tokens come from the bucketed series; fold it down to one row per agent so the
+        // digest stays compact while still letting the model chart usage without N follow-up reads.
+        const tokensByAgent = new Map<string, { inputTokens: number; outputTokens: number }>();
+        for (const bucket of view.tokenUsageByAgent) {
+          const acc = tokensByAgent.get(bucket.agentId) ?? { inputTokens: 0, outputTokens: 0 };
+          acc.inputTokens += bucket.inputTokens;
+          acc.outputTokens += bucket.outputTokens;
+          tokensByAgent.set(bucket.agentId, acc);
+        }
+        const callsByAgent = new Map(view.agentBreakdown.map((b) => [b.agentId, b.callCount]));
+        return store('dashboard-stats', view, {
+          summary: view.summary,
+          byAgent: view.agents.map((agent) => ({
+            id: agent.id,
+            name: agent.name,
+            calls: callsByAgent.get(agent.id) ?? 0,
+            ...(tokensByAgent.get(agent.id) ?? { inputTokens: 0, outputTokens: 0 }),
+          })),
+          byModel: view.modelBreakdown.map((m) => ({
+            model: m.modelName,
+            calls: m.callCount,
+            inputTokens: m.totalInputTokens,
+            outputTokens: m.totalOutputTokens,
+            avgDurationMs: m.avgDurationMs,
+          })),
+        });
       },
     }),
     get_agent_stats: tool({

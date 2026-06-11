@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 
 export interface CurrentUser {
   email: string;
-  role?: 'Viewer' | 'Member' | 'Admin';
+  role?: 'Member' | 'Admin';
   signOut: () => void;
 }
 

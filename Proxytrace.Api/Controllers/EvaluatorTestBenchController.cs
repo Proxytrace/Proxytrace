@@ -51,6 +51,8 @@ public class EvaluatorTestBenchController : ControllerBase
         if (latest is null)
             return NotFound($"No test result exists for test case {testCaseId}.");
 
+        var logged = latest.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId);
+
         return new EvaluatorTestBenchPayloadDto(
             SourceTestResultId: latest.Id,
             TestCaseId: testCase.Id,
@@ -59,7 +61,16 @@ public class EvaluatorTestBenchController : ControllerBase
                 .Select(m => new TestRunMessageDto(m.Role.ToString().ToLowerInvariant(), m.GetText()))
                 .ToArray(),
             ExpectedResponse: testCase.ExpectedOutput.GetText(),
-            ActualResponse: latest.ActualResponse.GetText());
+            ActualResponse: latest.ActualResponse.GetText(),
+            LoggedEvaluation: logged is null
+                ? null
+                : new EvaluationResultDto(
+                    logged.Evaluator.Id,
+                    logged.Evaluator.Kind,
+                    logged.Evaluator.Name,
+                    logged.Score,
+                    logged.Reasoning,
+                    logged.ErrorMessage));
     }
 
     [HttpGet("default")]
@@ -86,9 +97,32 @@ public class EvaluatorTestBenchController : ControllerBase
             return NotFound($"Evaluator {evaluatorId} not found.");
 
         var capped = Math.Clamp(count, 1, 50);
-        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken);
+        var recent = await testResults.GetRecentByEvaluatorAsync(evaluatorId, capped, cancellationToken: cancellationToken);
         return recent
-            .Select(r => new EvaluatorTestBenchRecentItemDto(r.TestCase.Id, r.TestCase.GetSummary()))
+            .Select(r => new EvaluatorTestBenchRecentItemDto(
+                r.TestCase.Id,
+                r.TestCase.GetSummary(),
+                r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId)?.Score))
+            .ToArray();
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<IReadOnlyList<EvaluatorTestBenchRecentItemDto>>> Search(
+        Guid evaluatorId,
+        [FromQuery] string? q,
+        [FromQuery] int count,
+        CancellationToken cancellationToken)
+    {
+        if (!await evaluators.ContainsAsync(evaluatorId, cancellationToken))
+            return NotFound($"Evaluator {evaluatorId} not found.");
+
+        var capped = Math.Clamp(count, 1, 50);
+        var matches = await testResults.SearchByEvaluatorAsync(evaluatorId, q ?? string.Empty, capped, cancellationToken);
+        return matches
+            .Select(r => new EvaluatorTestBenchRecentItemDto(
+                r.TestCase.Id,
+                r.TestCase.GetSummary(),
+                r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId)?.Score))
             .ToArray();
     }
 

@@ -61,12 +61,12 @@ export function EvaluatorPanel({ ev, defaultOpen }: { ev: EvaluatorFixtureResult
   );
 }
 
-/** Evaluator panels list — failing evaluators expanded by default. */
+/** Evaluator panels list — all collapsed by default; click a row to expand its details. */
 export function EvaluatorList({ evaluators }: { evaluators: EvaluatorFixtureResultDto[] }) {
   if (evaluators.length === 0) return null;
   return (
     <div data-testid="fixture-evaluator-list" className="flex flex-col gap-2">
-      {evaluators.map(ev => <EvaluatorPanel key={ev.evaluatorId} ev={ev} defaultOpen={!ev.pass} />)}
+      {evaluators.map(ev => <EvaluatorPanel key={ev.evaluatorId} ev={ev} defaultOpen={false} />)}
     </div>
   );
 }

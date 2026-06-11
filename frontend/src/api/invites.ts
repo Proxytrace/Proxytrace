@@ -3,9 +3,11 @@ import { api } from './client';
 export interface InviteRow {
   id: string;
   email: string;
-  role: 'Viewer' | 'Member' | 'Admin';
+  role: 'Member' | 'Admin';
   expiresAt: string;
   consumedAt: string | null;
+  /** Shareable signup link; present so admins can re-copy a pending invite's link. */
+  url: string;
 }
 
 export interface CreateInviteRequest {

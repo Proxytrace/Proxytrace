@@ -24,7 +24,7 @@ export function Menu({ trigger, children, align = 'end', side = 'bottom' }: Menu
           side={side}
           sideOffset={6}
           className={cn(
-            'z-[80] min-w-[180px] rounded-lg border border-hairline bg-surface-2 py-1',
+            'z-[80] min-w-[180px] overflow-hidden rounded-lg border border-hairline bg-surface-2 py-1',
             'shadow-[var(--shadow-float)]',
           )}
         >

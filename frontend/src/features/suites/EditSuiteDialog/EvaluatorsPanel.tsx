@@ -5,7 +5,8 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { SearchIcon, CheckIcon } from '../../../components/icons';
+import { SearchIcon, CheckIcon, LockIcon } from '../../../components/icons';
+import { useLicense } from '../../../api/license';
 
 interface Props {
   evaluators: EvaluatorDetailDto[];
@@ -18,6 +19,11 @@ interface Props {
 
 export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId, onSelect, onToggle }: Props) {
   const [search, setSearch] = useState('');
+  const { data: license } = useLicense();
+  // Agentic evaluators require the AgenticEvaluators license feature. Without it, an unattached
+  // agentic evaluator can't be attached (locked); an already-attached one stays removable. The
+  // backend mirrors this by skipping agentic evaluators during runs on unlicensed installs.
+  const agenticGated = !(license?.features ?? []).includes('AgenticEvaluators');
 
   const q = search.trim().toLowerCase();
   const filtered = q
@@ -56,6 +62,8 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
               const staged = stagedIds.has(e.id);
               const wasBaseline = baselineIds.has(e.id);
               const focused = selectedId === e.id;
+              // Lock only unattached agentic evaluators on free tier; a staged one stays removable.
+              const locked = agenticGated && e.kind === 'Agentic' && !staged;
               const dirtyState =
                 staged && !wasBaseline ? 'added'
                 : !staged && wasBaseline ? 'removed'
@@ -64,7 +72,7 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                 <li
                   key={e.id}
                   onClick={() => onSelect(e.id)}
-                  className="cursor-pointer transition-colors duration-100"
+                  className={`cursor-pointer transition-colors duration-100 ${locked ? 'opacity-60' : ''}`}
                   style={{
                     padding: '10px 12px',
                     borderLeft: `3px solid ${staged ? 'var(--accent-primary)' : 'transparent'}`,
@@ -73,21 +81,32 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line no-restricted-syntax -- per-kind colored checkbox toggle (data-driven color) */}
-                    <button
-                      type="button"
-                      data-testid={`edit-suite-evaluator-toggle-${e.id}`}
-                      onClick={ev => { ev.stopPropagation(); onToggle(e.id); }}
-                      className="shrink-0 inline-flex items-center justify-center cursor-pointer transition-colors"
-                      style={{
-                        width: 16, height: 16, borderRadius: 4,
-                        background: staged ? c : 'var(--bg-card-2)',
-                        border: `1px solid ${staged ? c : 'var(--border-color)'}`,
-                      }}
-                      title={staged ? 'Remove' : 'Attach'}
-                    >
-                      {staged && <CheckIcon size={11} className="text-white" strokeWidth={3} />}
-                    </button>
+                    {locked ? (
+                      <span
+                        data-testid={`edit-suite-evaluator-lock-${e.id}`}
+                        className="shrink-0 inline-flex items-center justify-center text-muted"
+                        style={{ width: 16, height: 16 }}
+                        title="Agentic evaluators require a paid plan"
+                      >
+                        <LockIcon size={12} />
+                      </span>
+                    ) : (
+                      /* eslint-disable-next-line no-restricted-syntax -- per-kind colored checkbox toggle (data-driven color) */
+                      <button
+                        type="button"
+                        data-testid={`edit-suite-evaluator-toggle-${e.id}`}
+                        onClick={ev => { ev.stopPropagation(); onToggle(e.id); }}
+                        className="shrink-0 inline-flex items-center justify-center cursor-pointer transition-colors"
+                        style={{
+                          width: 16, height: 16, borderRadius: 4,
+                          background: staged ? c : 'var(--bg-card-2)',
+                          border: `1px solid ${staged ? c : 'var(--border-color)'}`,
+                        }}
+                        title={staged ? 'Remove' : 'Attach'}
+                      >
+                        {staged && <CheckIcon size={11} className="text-white" strokeWidth={3} />}
+                      </button>
+                    )}
                     <ColoredBadge color={c} label={e.kind} />
                     <span className="text-[10.5px] font-mono text-muted uppercase tracking-[0.06em]">{cat}</span>
                     <span className="text-[13px] font-medium flex-1 min-w-0 truncate ml-1">{e.name}</span>

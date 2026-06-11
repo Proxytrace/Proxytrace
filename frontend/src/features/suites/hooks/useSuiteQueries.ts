@@ -20,6 +20,18 @@ export function useSuites() {
   return { suites: query.data?.items ?? [], isLoading: query.isLoading, projectId };
 }
 
+/** The full (fat) suite by id — complete test cases for the edit dialog. The list only carries light
+ * {@link TestSuiteListItemDto} rows, so the edit dialog fetches the full suite on open. */
+export function useSuiteDetail(suiteId: string) {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.testSuite(suiteId),
+    queryFn: () => testSuitesApi.get(suiteId),
+    enabled: !!suiteId,
+  });
+
+  return { suite: query.data, isLoading: query.isLoading };
+}
+
 /** All agents for the current project (used for filter tabs). */
 export function useSuiteAgents() {
   const { currentProjectId } = useCurrentProject();

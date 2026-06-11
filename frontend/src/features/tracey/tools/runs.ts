@@ -4,6 +4,7 @@ import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
 import { type ToolFactory, tool, empty, CANCELLED } from './shared';
+import { clip, compareRuns, failingResults } from './run-analysis';
 
 export const createRunTools: ToolFactory = (_ctx, store) => ({
   list_runs: tool({
@@ -39,6 +40,84 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
         passedCases: run.passedCases,
         failedCases: run.failedCases,
         totalCases: run.totalCases,
+      });
+    },
+  }),
+  get_run_failures: tool({
+    description:
+      "Get a run's FAILING test cases with each case's actual response and per-evaluator " +
+      'verdicts (score + reasoning). This is the primary evidence tool for tuning: read it ' +
+      'before forming a hypothesis about why an agent fails. The failing cases are rendered to ' +
+      'the user as a card.',
+    parameters: z.object({
+      runId: z.string().describe('The id of the test run to analyze.'),
+      limit: z.number().int().min(1).max(20).optional()
+        .describe('Max failing cases in the digest (default 8); the card always shows all of them.'),
+    }),
+    confirm: false,
+    execute: async ({ runId, limit }) => {
+      const run = await testRunsApi.get(runId);
+      const failures = failingResults(run);
+      return store('run-failures', {
+        runId: run.id,
+        suiteName: run.suiteName,
+        agentName: run.agentName,
+        passRate: run.passRate,
+        totalCases: run.totalCases,
+        failures,
+      }, {
+        runId: run.id,
+        suiteName: run.suiteName,
+        agentName: run.agentName,
+        passRate: run.passRate,
+        failedCases: failures.length,
+        totalCases: run.totalCases,
+        failures: failures.slice(0, limit ?? 8).map((r) => ({
+          case: clip(r.testCaseSummary, 160),
+          actual: clip(r.actualResponse, 280),
+          evaluations: r.evaluations.map((e) => ({
+            evaluator: e.evaluatorName,
+            score: e.score,
+            reasoning: e.reasoning ? clip(e.reasoning, 200) : null,
+            ...(e.errorMessage ? { error: clip(e.errorMessage, 120) } : {}),
+          })),
+        })),
+      });
+    },
+  }),
+  compare_runs: tool({
+    description:
+      'Compare two test runs of the same suite case by case: which cases a change fixed, which ' +
+      'it regressed, and which are unchanged. Use it to judge a before/after (e.g. an older run ' +
+      'vs the latest, or two agents on one suite). Pass the older/baseline run first. The ' +
+      'comparison is rendered to the user as a card.',
+    parameters: z.object({
+      baselineRunId: z.string().describe('The id of the baseline (earlier) run.'),
+      candidateRunId: z.string().describe('The id of the candidate (later) run to compare against it.'),
+    }),
+    confirm: false,
+    execute: async ({ baselineRunId, candidateRunId }) => {
+      const [baseline, candidate] = await Promise.all([
+        testRunsApi.get(baselineRunId),
+        testRunsApi.get(candidateRunId),
+      ]);
+      const comparison = compareRuns(baseline, candidate);
+      const summaries = (movement: 'fixed' | 'regressed') =>
+        comparison.cases
+          .filter((c) => c.movement === movement)
+          .slice(0, 10)
+          .map((c) => clip(c.summary, 120));
+      return store('run-comparison', comparison, {
+        suiteName: comparison.suiteName,
+        baseline: comparison.baseline,
+        candidate: comparison.candidate,
+        fixed: comparison.fixed,
+        regressed: comparison.regressed,
+        stillFailing: comparison.stillFailing,
+        stillPassing: comparison.stillPassing,
+        unmatched: comparison.unmatched,
+        fixedCases: summaries('fixed'),
+        regressedCases: summaries('regressed'),
       });
     },
   }),

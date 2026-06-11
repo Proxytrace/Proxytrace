@@ -11,6 +11,7 @@ import {
   usePlaygroundAgentList,
   useAutoLoadAgentCall,
   useAgentFromSearchParam,
+  fetchAndPickAgent,
 } from './hooks/usePlaygroundAgent';
 import { usePlaygroundStream } from './hooks/usePlaygroundStream';
 import { useSeedDropdown } from './hooks/useSeedDropdown';
@@ -141,13 +142,13 @@ export default function Playground() {
   return (
     <div data-testid="playground" className="flex-1 flex gap-[12px] overflow-hidden p-[2px]">
       {/* Center conversation */}
-      <section className="flex-1 rounded-lg flex flex-col overflow-hidden min-w-0 bg-card border border-border shadow-[var(--shadow-card)]">
+      <section className="relative flex-1 rounded-lg flex flex-col overflow-hidden min-w-0 bg-card border border-border shadow-[var(--shadow-card)]">
         <header className="flex items-center gap-[8px] px-[12px] py-[10px] flex-wrap border-b border-border">
           <AgentPicker
             projectId={currentProject.id}
             selectedAgentId={state.agentId}
             selectedAgent={agent ?? null}
-            onPick={a => dispatch({ type: 'pickAgent', agent: a })}
+            onPick={id => fetchAndPickAgent(id, dispatch)}
             compact
           />
           <IconButton
@@ -158,7 +159,7 @@ export default function Playground() {
           >
             <TrashIcon size={13} strokeWidth={2.2} />
           </IconButton>
-          <div ref={seedAnchorRef} className="relative">
+          <div ref={seedAnchorRef}>
             <IconButton
               onClick={() => setShowSeed(o => !o)}
               disabled={!state.agentId}
@@ -170,7 +171,7 @@ export default function Playground() {
               <SearchIcon size={13} strokeWidth={2.2} />
             </IconButton>
             {showSeed && (
-              <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-[480px] max-w-[80vw]">
+              <div className="absolute left-1/2 -translate-x-1/2 top-[56px] z-40 w-[calc(100%-24px)] max-w-[1100px]">
                 <UnifiedSearch
                   projectId={currentProject.id}
                   kinds={['agentCall', 'testCase']}

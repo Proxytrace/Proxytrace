@@ -10,6 +10,7 @@ import { useTraceQueries } from './hooks/useTraceQueries';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { useTraceFilters } from './hooks/useTraceFilters';
 import { useFocusTrace } from './hooks/useFocusTrace';
+import { useSelectedTrace } from './hooks/useSelectedTrace';
 import { useScrollToTrace } from './hooks/useScrollToTrace';
 import { useTraceSseStream } from './hooks/useTraceSseStream';
 import { TraceToolbar } from './components/TraceToolbar';
@@ -33,7 +34,6 @@ export default function Traces() {
     useTraceFilters(currentProjectId);
   // Previous windows pushed by each zoom-in; double-clicking the timeline pops one.
   const [zoomStack, setZoomStack] = useState<TimeRange[]>([]);
-  const [selectedTrace, setSelectedTrace] = useState<AgentCallDto | null>(null);
   const [expandedConvs, setExpandedConvs] = useState<Set<string>>(new Set());
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
 
@@ -81,6 +81,9 @@ export default function Traces() {
 
   // Flat list of all individual traces for prev/next navigation in the drawer
   const flatTraces = rows.flatMap(r => r.type === 'flat' ? [r.trace] : r.turns);
+  // Open trace lives in the URL (?trace=) so it survives refresh / is shareable. The detail panel
+  // always fetches the full trace by id (the list rows are light).
+  const [selectedTrace, selectTrace] = useSelectedTrace();
   const selectedIdx = selectedTrace ? flatTraces.findIndex(t => t.id === selectedTrace.id) : -1;
 
   const handleExpandConversation = useCallback((conversationId: string) => {
@@ -92,7 +95,7 @@ export default function Traces() {
   }, []);
 
   const handleFocusTrace = useCallback((trace: AgentCallDto) => {
-    setSelectedTrace(trace);
+    selectTrace(trace.id);
     setPendingScrollId(trace.id);
     setTimeRange(ALL_TIME);
     setZoomStack([]);
@@ -100,7 +103,7 @@ export default function Traces() {
     setSearch('');
     setShowSystem(true);
     setPage(1);
-  }, [setTimeRange, setAgentFilter, setSearch, setShowSystem]);
+  }, [selectTrace, setTimeRange, setAgentFilter, setSearch, setShowSystem]);
 
   useFocusTrace({
     onTrace: handleFocusTrace,
@@ -201,7 +204,7 @@ export default function Traces() {
         isFetching={isFetching}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
-        onSelectTrace={setSelectedTrace}
+        onSelectTrace={t => selectTrace(t.id)}
         onToggleConv={toggleConv}
       />
 
@@ -224,9 +227,9 @@ export default function Traces() {
       {selectedTrace && (
         <TraceDetail
           trace={selectedTrace}
-          onClose={() => setSelectedTrace(null)}
-          onPrev={selectedIdx > 0 ? () => setSelectedTrace(flatTraces[selectedIdx - 1]) : undefined}
-          onNext={selectedIdx < flatTraces.length - 1 ? () => setSelectedTrace(flatTraces[selectedIdx + 1]) : undefined}
+          onClose={() => selectTrace(null)}
+          onPrev={selectedIdx > 0 ? () => selectTrace(flatTraces[selectedIdx - 1].id) : undefined}
+          onNext={selectedIdx < flatTraces.length - 1 ? () => selectTrace(flatTraces[selectedIdx + 1].id) : undefined}
         />
       )}
     </div>

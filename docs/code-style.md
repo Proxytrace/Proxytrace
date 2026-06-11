@@ -36,3 +36,24 @@
 - Domain references hold the related entity (e.g. `IModelEndpoint`, `IReadOnlyCollection<IEvaluator>`); storage entities hold the `Guid` foreign key
 - Storage entities use `required` properties with `init` accessors and extend `Entity`
 - Decorate custom storage repositories with `[UsedImplicitly]` so reflection-based DI discovers them
+
+## Concurrency
+
+- **Always use `IAsyncLock` for in-process concurrency control.** Inject it via DI
+  (`IAsyncLock` from `Proxytrace.Common.Async`, registered in `Proxytrace.Common.Module`).
+  Never use `lock`/`Monitor`, `SemaphoreSlim`, `Mutex`, or other raw synchronization primitives
+  directly in feature code — they are not safe to hold across `await`, and a hand-rolled lock
+  bypasses the shared, keyed implementation.
+- `IAsyncLock` is **keyed**: `LockAsync(key, ct)` serializes only callers sharing the same `key`,
+  so use the narrowest natural key (e.g. an entity `Id`, a fingerprint) to avoid serializing
+  unrelated work. Pass the `CancellationToken` through.
+- Always `await` the acquire and scope the handle with `using` so it releases on every path:
+  ```csharp
+  private readonly IAsyncLock asyncLock; // injected via constructor
+
+  using IDisposable sync = await asyncLock.LockAsync(entity.Id, cancellationToken);
+  // critical section — safe across awaits
+  ```
+- Prefer the async `LockAsync`; only use the synchronous `Lock(key)` when no `await` is possible
+  in the critical section.
+- Reference usages: `TestRunnerService`, `AgentRepository`, `LiteLlmCatalogResolver`.

@@ -705,19 +705,6 @@ public sealed class ModelClientTests : BaseTest<Module>
     // ── Constructor / provider kind validation ────────────────────────────────
 
     [TestMethod]
-    public void Constructor_WithAnthropicProviderKind_ThrowsNotSupportedException()
-    {
-        var services = GetServices();
-        IModelEndpoint endpoint = MakeEndpoint(kind: ModelProviderKind.Anthropic);
-        var factory = services.GetRequiredService<IModelClient.Factory>();
-
-        FluentActions
-            .Invoking(() => factory(MakeAgent(endpoint)))
-            .Should()
-            .Throw<Exception>();
-    }
-
-    [TestMethod]
     public void Constructor_WithUnknownProviderKind_ThrowsNotSupportedException()
     {
         var services = GetServices();

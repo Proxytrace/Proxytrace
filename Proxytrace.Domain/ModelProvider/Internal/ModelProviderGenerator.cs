@@ -7,7 +7,6 @@ internal class ModelProviderGenerator : DomainEntityGenerator<IModelProvider>
 {
     private static readonly IReadOnlyCollection<string> ProviderNames =
     [
-        "Anthropic",
         "OpenAI",
         "Google",
         "Azure",

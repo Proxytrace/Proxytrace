@@ -1,0 +1,52 @@
+import { cn } from '../../../lib/cn';
+import { evaluatorColor, tint } from '../../../lib/colors';
+import type { EvaluatorListItemDto } from '../../../api/models';
+import { RowButton } from '../../../components/ui/RowButton';
+import { RailMonogram } from './RailMonogram';
+import { KIND_LABEL } from '../testBenchMeta';
+
+interface Props {
+  evaluators: EvaluatorListItemDto[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}
+
+/** Step-1 rail list: every evaluator as a selectable monogram row. */
+export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
+  return (
+    <div data-testid="evaluator-rail-list" className="flex flex-col gap-0.5">
+      {evaluators.map(ev => {
+        const on = ev.id === selectedId;
+        const color = evaluatorColor(ev.kind);
+        return (
+          <RowButton
+            key={ev.id}
+            data-testid={`evaluator-rail-row-${ev.id}`}
+            aria-pressed={on}
+            onClick={() => onSelect(ev.id)}
+            className={cn(
+              'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors',
+              !on && 'hover:bg-card',
+            )}
+            style={on ? { background: tint(color, 14) } : undefined}
+          >
+            {on && (
+              <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full" style={{ background: color }} />
+            )}
+            <RailMonogram name={ev.name} kind={ev.kind} size={28} />
+            <span className="flex-1 min-w-0">
+              <span className={cn('block text-[12.5px] font-semibold truncate', on ? 'text-primary' : 'text-secondary')}>
+                {ev.name}
+              </span>
+              <span className="block text-[10px] text-muted mt-0.5">{KIND_LABEL[ev.kind]}</span>
+            </span>
+            <span
+              className="w-[7px] h-[7px] rounded-full shrink-0"
+              style={on ? { background: color, boxShadow: `0 0 8px ${color}` } : undefined}
+            />
+          </RowButton>
+        );
+      })}
+    </div>
+  );
+}

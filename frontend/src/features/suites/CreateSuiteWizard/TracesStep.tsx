@@ -69,7 +69,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
   const from = useMemo(() => rangeFrom(range), [range]);
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteCreate(agentId, from),
-    queryFn: () => agentCallsApi.list({ agentId, pageSize: TRACE_PAGE_SIZE, from }),
+    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: TRACE_PAGE_SIZE, from }),
     enabled: !!agentId,
   });
 

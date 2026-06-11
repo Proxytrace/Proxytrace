@@ -18,4 +18,10 @@ public interface IProjectRepository : IRepository<IProject>
     /// proxy to attribute captured traffic to the project named in the request path.
     /// </summary>
     Task<IProject?> FindBySlugAsync(string slug, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns every project the user with the given <paramref name="userId"/> is a member of.
+    /// Backs the user-centric project assignment editor in the admin Users page.
+    /// </summary>
+    Task<IReadOnlyList<IProject>> GetByMemberAsync(Guid userId, CancellationToken cancellationToken = default);
 }

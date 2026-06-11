@@ -50,7 +50,7 @@ public sealed class EvaluatorDtoMapper
             evaluator.UpdatedAt);
     }
 
-    public RecentEvaluationItemDto ToRecentDto(ITestResult r, Guid evaluatorId)
+    public RecentEvaluationItemDto ToRecentDto(ITestResult r, Guid evaluatorId, Guid? runId)
     {
         var evaluation = r.Evaluations.FirstOrDefault(e => e.Evaluator.Id == evaluatorId);
         return new RecentEvaluationItemDto(
@@ -61,6 +61,7 @@ public sealed class EvaluatorDtoMapper
             Passed: evaluation?.Passed ?? r.Passed,
             Reasoning: evaluation?.Reasoning,
             LatencyMs: (int)r.Latency.TotalMilliseconds,
-            EvaluatedAt: r.UpdatedAt);
+            EvaluatedAt: r.UpdatedAt,
+            RunId: runId);
     }
 }

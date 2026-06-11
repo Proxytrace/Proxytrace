@@ -15,8 +15,8 @@ describe("decode", () => {
     expect(user).toEqual({ id: "u1", email: "a@b.c", role: "Admin" });
   });
 
-  it("defaults role to Viewer when absent", () => {
-    expect(decode(jwt(base))?.role).toBe("Viewer");
+  it("defaults role to Member when absent", () => {
+    expect(decode(jwt(base))?.role).toBe("Member");
   });
 
   it("rejects an expired token", () => {

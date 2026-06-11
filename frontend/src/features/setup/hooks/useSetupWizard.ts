@@ -16,10 +16,10 @@ export function useSetupWizard() {
   const [apiKeyValue, setApiKeyValue] = useState<string | null>(null);
 
   // Step 1 — Provider
-  const [providerName, setProviderName] = useState('Anthropic');
-  const [providerEndpoint, setProviderEndpoint] = useState('https://api.anthropic.com/v1');
+  const [providerName, setProviderName] = useState('OpenAI');
+  const [providerEndpoint, setProviderEndpoint] = useState('https://api.openai.com/v1');
   const [providerApiKey, setProviderApiKey] = useState('');
-  const [providerKind, setProviderKind] = useState<ModelProviderKind>(ModelProviderKind.Anthropic);
+  const [providerKind, setProviderKind] = useState<ModelProviderKind>(ModelProviderKind.OpenAi);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 

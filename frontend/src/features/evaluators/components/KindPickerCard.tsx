@@ -46,7 +46,7 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
         to="/upgrade"
         data-testid={`evaluator-kind-locked-${kind}`}
         className={cn(
-          'text-left p-3.5 rounded-lg flex gap-3 cursor-pointer transition-all bg-card-2 border border-subtle opacity-60 hover:opacity-100',
+          'text-left p-3.5 rounded-lg flex gap-3 cursor-pointer transition-all bg-card-2 border border-transparent opacity-60 hover:opacity-100',
         )}
       >
         {inner}
@@ -59,7 +59,7 @@ export function KindPickerCard({ kind, onPick, locked = false }: {
       onClick={() => onPick(kind)}
       data-testid={`evaluator-kind-${kind}`}
       className={cn(
-        'p-3.5 rounded-lg flex gap-3 transition-all bg-card-2 border border-subtle',
+        'p-3.5 rounded-lg flex gap-3 transition-all bg-card-2 border border-transparent',
         HOVER[cat],
       )}
     >

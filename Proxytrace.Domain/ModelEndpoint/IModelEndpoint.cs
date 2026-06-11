@@ -7,7 +7,7 @@ namespace Proxytrace.Domain.ModelEndpoint;
 /// <summary>
 /// A model endpoint (<see cref="IModel"/> + <see cref="IModelProvider"/>)
 /// </summary>
-public interface IModelEndpoint : IDomainEntity
+public interface IModelEndpoint : IDomainEntity, IArchivable
 {
     /// <summary>
     /// The language model
@@ -15,7 +15,7 @@ public interface IModelEndpoint : IDomainEntity
     IModel Model { get; }
     
     /// <summary>
-    /// The provider that serves the model (e.g. <c>Anthropic</c>).
+    /// The provider that serves the model (e.g. <c>OpenAI</c>).
     /// </summary>
     IModelProvider Provider { get; }
     

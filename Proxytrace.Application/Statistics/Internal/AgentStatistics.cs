@@ -10,14 +10,14 @@ internal class AgentStatistics : IAgentStatistics
 {
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly IAgentCallStatsReader callStats;
-    private readonly IRepository<ITestSuite> testSuites;
-    private readonly IRepository<IOptimizationProposal> proposals;
+    private readonly ITestSuiteRepository testSuites;
+    private readonly IOptimizationProposalRepository proposals;
 
     public AgentStatistics(
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         IAgentCallStatsReader callStats,
-        IRepository<ITestSuite> testSuites,
-        IRepository<IOptimizationProposal> proposals)
+        ITestSuiteRepository testSuites,
+        IOptimizationProposalRepository proposals)
     {
         this.runStats = runStats;
         this.callStats = callStats;
@@ -115,18 +115,13 @@ internal class AgentStatistics : IAgentStatistics
 
     internal async Task<AgentEntityCounts> GetAgentEntityCountsAsync(Guid agentId, CancellationToken cancellationToken = default)
     {
-        // Repositories don't expose filtered queries; load and filter. Suite/proposal volumes
-        // per project are typically small, but if this becomes hot, push filters into the repo layer.
-        IReadOnlyList<ITestSuite> allSuites = await testSuites.GetAllAsync(cancellationToken);
-        ITestSuite[] agentSuites = allSuites.Where(s => s.Agent.Id == agentId).ToArray();
-
-        IReadOnlyList<IOptimizationProposal> allProposals = await proposals.GetAllAsync(cancellationToken);
-        IOptimizationProposal[] agentProposals = allProposals.Where(p => p.Agent.Id == agentId).ToArray();
+        IReadOnlyList<ITestSuite> agentSuites = await testSuites.GetByAgentAsync(agentId, cancellationToken);
+        IReadOnlyList<IOptimizationProposal> agentProposals = await proposals.GetByAgentAsync(agentId, cancellationToken);
 
         return new AgentEntityCounts(
-            SuiteCount: agentSuites.Length,
+            SuiteCount: agentSuites.Count,
             TestCaseCount: agentSuites.Sum(s => s.TestCases.Count),
             OpenProposalCount: agentProposals.Count(p => p.Status == ProposalStatus.Draft),
-            TotalProposalCount: agentProposals.Length);
+            TotalProposalCount: agentProposals.Count);
     }
 }

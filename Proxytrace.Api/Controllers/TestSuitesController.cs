@@ -64,7 +64,7 @@ public class TestSuitesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<TestSuiteDto>> GetAll(
+    public async Task<PagedResult<TestSuiteListItemDto>> GetAll(
         [FromQuery] Guid? agentId = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] int page = 1,
@@ -82,7 +82,7 @@ public class TestSuitesController : ControllerBase
         var statsBySuite = await GetRunStatsBySuiteAsync(
             paged.Items.Select(s => s.Id).ToArray(), cancellationToken);
 
-        return paged.Map(s => mapper.ToDto(
+        return paged.Map(s => mapper.ToListItemDto(
             s,
             statsBySuite.TryGetValue(s.Id, out var rows) ? rows : []));
     }
@@ -188,11 +188,10 @@ public class TestSuitesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        var removed = await suiteRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
-    }
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        => this.DeleteOrConflictAsync(
+            () => suiteRepository.RemoveAsync(id, cancellationToken),
+            "This test suite is still referenced by an optimization theory. Remove the theory before deleting the suite.");
 
     /// <summary>
     /// Creates a new test suite by promoting a curated selection of traced agent calls.

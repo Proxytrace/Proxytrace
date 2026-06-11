@@ -106,10 +106,10 @@ export default defineConfig({
       dependencies: ['llm-ingestion'],
     },
     {
-      // Tracey drives a real run through her chat and awaits it; self-seeds its agent + suite, so
-      // it depends only on a completed setup.
+      // Tracey chat specs (await flow, skill persistence, inline cards); each self-seeds its
+      // agent + suite, so they depend only on a completed setup.
       name: 'llm-tracey',
-      testMatch: /tracey-await\.spec\.ts/,
+      testMatch: /tracey-(await|skills)\.spec\.ts/,
       retries: LLM_RETRIES,
       use: { ...CHROME, storageState: STORAGE_STATE },
       dependencies: ['setup'],

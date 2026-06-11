@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { providersApi } from '../../api/providers';
-import type { ModelEndpointDto, TestSuiteDto } from '../../api/models';
+import type { ModelEndpointDto, TestSuiteListItemDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
 import { QUERY_KEYS } from '../../api/query-keys';
 import { Modal } from '../../components/overlays/Modal';
@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/Button';
 import { RunForm } from './components/RunForm';
 
 interface Props {
-  suite: TestSuiteDto;
+  suite: TestSuiteListItemDto;
   onClose: () => void;
   onSubmit: (endpointIds: string[]) => void;
   loading: boolean;
@@ -70,7 +70,7 @@ export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Pro
 }
 
 interface DoneStateProps {
-  suite: TestSuiteDto;
+  suite: TestSuiteListItemDto;
   agentColor: string;
   isMulti: boolean;
   selectedEndpoints: Set<string>;
@@ -93,7 +93,7 @@ function DoneState({ suite, agentColor: c, isMulti, selectedEndpoints, modelsDat
         {isMulti ? 'Parallel evaluation started' : 'Evaluation started'}
       </h3>
       <p className="text-body text-muted leading-[1.6] mb-6">
-        Running <strong className="text-primary">{suite.testCases.length} test cases</strong>
+        Running <strong className="text-primary">{suite.testCaseCount} test cases</strong>
         {isMulti ? (
           <> across <strong style={{ color: c }}>{selectedEndpoints.size} models</strong> in parallel</>
         ) : selectedEndpoints.size === 1 ? (

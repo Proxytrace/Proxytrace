@@ -12,6 +12,7 @@ using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Licensing;
 using Proxytrace.Licensing.Exceptions;
@@ -42,6 +43,33 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         var result = await controller.GetAll(cancellationToken: CancellationToken);
 
         result.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetSummaries_NoEvaluators_ReturnsEmpty()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.GetSummaries(cancellationToken: CancellationToken);
+
+        result.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetSummaries_ForProject_ReturnsLightItems()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var eval = await services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>().CreateAsync(CancellationToken);
+
+        var result = await controller.GetSummaries(eval.Project.Id, CancellationToken);
+
+        result.Should().ContainSingle();
+        var item = result[0];
+        item.Id.Should().Be(eval.Id);
+        item.Kind.Should().Be(EvaluatorKind.ExactMatch);
+        item.Name.Should().Be(eval.Name);
     }
 
     [TestMethod]
@@ -205,6 +233,7 @@ public sealed class EvaluatorsControllerTests : BaseTest<Module>
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IAgenticEvaluatorPresets>(),
         services.GetRequiredService<ITestResultRepository>(),
+        services.GetRequiredService<ITestRunRepository>(),
         services.GetRequiredService<ITestSuiteRepository>(),
         services.GetRequiredService<IEvaluatorStatsReader>(),
         services.GetRequiredService<EvaluatorBuilder>(),

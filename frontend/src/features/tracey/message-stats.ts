@@ -8,6 +8,11 @@ export interface MessageStats {
   outputTokens: number;
   totalTokens: number;
   durationMs: number | null;
+  /**
+   * True when the turn ended because the tool-loop step budget ran out (`finishReason:
+   * 'tool-calls'`) — the model was still mid-tool-use and never answered.
+   */
+  stoppedEarly: boolean;
 }
 
 /** Narrows the assistant message metadata value (typed `unknown`) to the turn's correlation id. */
@@ -34,13 +39,17 @@ export function readMessageStats(custom: Record<string, unknown> | undefined): M
   const durationRaw = custom.durationMs;
   const durationMs = typeof durationRaw === 'number' && Number.isFinite(durationRaw) ? durationRaw : null;
 
+  const stoppedEarly = custom.finishReason === 'tool-calls';
+
   const usage = asRecord(custom.usage);
   if (!usage) {
-    return durationMs == null ? null : { inputTokens: 0, outputTokens: 0, totalTokens: 0, durationMs };
+    return durationMs == null
+      ? null
+      : { inputTokens: 0, outputTokens: 0, totalTokens: 0, durationMs, stoppedEarly };
   }
 
   const inputTokens = readNumber(usage, 'inputTokens');
   const outputTokens = readNumber(usage, 'outputTokens');
   const totalTokens = readNumber(usage, 'totalTokens') || inputTokens + outputTokens;
-  return { inputTokens, outputTokens, totalTokens, durationMs };
+  return { inputTokens, outputTokens, totalTokens, durationMs, stoppedEarly };
 }

@@ -42,7 +42,7 @@ export function ProviderStep({
   return (
     <div className="flex flex-col gap-4">
       <FormField label="Provider type">
-        <Select value={providerKind} onChange={e => onKindChange(e.target.value as ModelProviderKind)}>
+        <Select value={providerKind} onValueChange={v => onKindChange(v as ModelProviderKind)}>
           {PROVIDER_KIND_OPTIONS.map(opt => (
             <option key={opt.kind} value={opt.kind}>{opt.label}</option>
           ))}
@@ -50,7 +50,7 @@ export function ProviderStep({
       </FormField>
       <FormField label="Provider name">
         <Input
-          placeholder="e.g. Anthropic Production"
+          placeholder="e.g. OpenAI Production"
           value={providerName}
           onChange={e => onNameChange(e.target.value)}
           onKeyDown={onKeyDown}
@@ -58,7 +58,7 @@ export function ProviderStep({
       </FormField>
       <FormField label="Endpoint URL">
         <Input
-          placeholder="https://api.anthropic.com/v1"
+          placeholder="https://api.openai.com/v1"
           value={providerEndpoint}
           onChange={e => onEndpointChange(e.target.value)}
           onKeyDown={onKeyDown}

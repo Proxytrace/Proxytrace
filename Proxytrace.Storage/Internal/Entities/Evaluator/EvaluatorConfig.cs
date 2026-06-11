@@ -42,6 +42,8 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
     public override void Configure(EntityTypeBuilder<EvaluatorEntity> builder)
     {
         builder.HasIndex(e => e.Kind);
+        // Composite supports the project-scoped list query, which excludes archived rows.
+        builder.HasIndex(e => new { e.Project, e.IsArchived });
     }
 
     public async Task<IEvaluator> Map(EvaluatorEntity stored, CancellationToken cancellationToken = default)
@@ -97,6 +99,7 @@ internal class EvaluatorConfig : AbstractEntityConfiguration<EvaluatorEntity>, I
             Kind = domain.Kind,
             Data = data,
             Project = domain.Project.Id,
+            IsArchived = domain.IsArchived,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

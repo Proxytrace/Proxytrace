@@ -18,6 +18,7 @@ public record EvaluatorsOverviewDto(
 public record EvaluatorSuiteRefDto(
     Guid Id,
     string Name,
+    Guid AgentId,
     string AgentName,
     IReadOnlyList<Guid> EvaluatorIds);
 

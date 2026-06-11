@@ -100,7 +100,7 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
           label="Copy message"
           className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-[var(--motion-fast)]"
         />
-        <span className="font-mono text-[9.5px] tracking-[0.06em] shrink-0 text-muted">
+        <span className="font-mono text-[9.5px] leading-none tracking-[0.06em] shrink-0 text-muted">
           {charCount.toLocaleString()} chars
         </span>
         {open && <MessageViewSelect value={view} onChange={setView} />}

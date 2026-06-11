@@ -43,7 +43,7 @@ export function NewProjectModal({ endpoints, onCancel, onSubmit, loading }: NewP
           />
         </FormField>
         <FormField label="System endpoint">
-          <Select value={systemEndpointId} onChange={e => setSystemEndpointId(e.target.value)}>
+          <Select value={systemEndpointId} onValueChange={setSystemEndpointId}>
             {endpoints.length === 0 && <option value="">No endpoints available</option>}
             {endpoints.map(e => (
               <option key={e.id} value={e.id}>

@@ -108,7 +108,7 @@ export default function Runs() {
         {/* Right: detail */}
         <div className="min-w-0 min-h-0">
           {selectedGroup
-            ? <GroupDetail key={selectedGroup.id} group={selectedGroup} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
+            ? <GroupDetail key={selectedGroup.id} groupId={selectedGroup.id} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
             : <Card><div className="py-[60px] text-center text-muted text-body">Select a run to see details.</div></Card>
           }
         </div>

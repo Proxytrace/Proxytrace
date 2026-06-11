@@ -6,9 +6,11 @@ using Proxytrace.Api.Evaluators;
 using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Evaluation;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.TestResult;
+using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
 
 namespace Proxytrace.Api.Controllers;
@@ -22,6 +24,7 @@ public class EvaluatorsController : ControllerBase
     private readonly IProjectRepository projectRepository;
     private readonly IAgenticEvaluatorPresets agenticPresets;
     private readonly ITestResultRepository testResults;
+    private readonly ITestRunRepository testRuns;
     private readonly ITestSuiteRepository testSuites;
     private readonly IEvaluatorStatsReader evaluatorStats;
     private readonly EvaluatorBuilder evaluatorBuilder;
@@ -33,6 +36,7 @@ public class EvaluatorsController : ControllerBase
         IProjectRepository projectRepository,
         IAgenticEvaluatorPresets agenticPresets,
         ITestResultRepository testResults,
+        ITestRunRepository testRuns,
         ITestSuiteRepository testSuites,
         IEvaluatorStatsReader evaluatorStats,
         EvaluatorBuilder evaluatorBuilder,
@@ -43,6 +47,7 @@ public class EvaluatorsController : ControllerBase
         this.projectRepository = projectRepository;
         this.agenticPresets = agenticPresets;
         this.testResults = testResults;
+        this.testRuns = testRuns;
         this.testSuites = testSuites;
         this.evaluatorStats = evaluatorStats;
         this.evaluatorBuilder = evaluatorBuilder;
@@ -65,6 +70,17 @@ public class EvaluatorsController : ControllerBase
             ? await evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
             : await evaluatorRepository.GetAllAsync(cancellationToken);
         return all.Select(evaluatorMapper.ToDto).ToArray();
+    }
+
+    [HttpGet("summaries")]
+    public async Task<IReadOnlyList<EvaluatorListItemDto>> GetSummaries(
+        [FromQuery] Guid? projectId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var all = projectId.HasValue
+            ? await evaluatorRepository.GetByProjectAsync(projectId.Value, cancellationToken)
+            : await evaluatorRepository.GetAllAsync(cancellationToken);
+        return all.Select(e => new EvaluatorListItemDto(e.Id, e.Kind, e.Name)).ToArray();
     }
 
     [HttpGet("{id:guid}")]
@@ -101,6 +117,7 @@ public class EvaluatorsController : ControllerBase
             Suites: suitesTask.Result.Select(s => new EvaluatorSuiteRefDto(
                 s.Id,
                 s.Name,
+                s.Agent.Id,
                 s.Agent.Name,
                 s.Evaluators.Select(e => e.Id).ToArray())).ToArray(),
             Sparklines: sparklinesTask.Result.Select(EvaluatorStatsDtoMapper.ToDto).ToArray());
@@ -122,13 +139,18 @@ public class EvaluatorsController : ControllerBase
 
         var capped = Math.Clamp(recentCount, 1, 50);
         Task<EvaluatorOverviewStat> overviewTask = evaluatorStats.GetOverviewAsync(id, from.Value, to.Value, bucket, cancellationToken);
-        Task<IReadOnlyList<ITestResult>> recentTask = testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
+        Task<IReadOnlyList<ITestResult>> recentTask = testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken: cancellationToken);
 
         await Task.WhenAll(overviewTask, recentTask);
 
+        var recent = recentTask.Result;
+        var runIds = await testRuns.GetRunIdsByResultIdsAsync(recent.Select(r => r.Id).ToArray(), cancellationToken);
+
         return new EvaluatorDetailViewDto(
             Overview: EvaluatorStatsDtoMapper.ToDto(overviewTask.Result),
-            RecentEvaluations: recentTask.Result.Select(r => evaluatorMapper.ToRecentDto(r, id)).ToArray());
+            RecentEvaluations: recent
+                .Select(r => evaluatorMapper.ToRecentDto(r, id, runIds.TryGetValue(r.Id, out var runId) ? runId : null))
+                .ToArray());
     }
 
     [HttpPost]
@@ -165,22 +187,28 @@ public class EvaluatorsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await evaluatorRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        // Soft-delete: archiving hides the evaluator and detaches it from suites, but keeps the row
+        // so historical test results still resolve it. See ArchivableRepository.
+        var archived = await evaluatorRepository.ArchiveAsync(id, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     [HttpGet("{id:guid}/recent-evaluations")]
     public async Task<ActionResult<IReadOnlyList<RecentEvaluationItemDto>>> RecentEvaluations(
         Guid id,
         [FromQuery] int count = 8,
+        [FromQuery] EvaluationScore? score = null,
         CancellationToken cancellationToken = default)
     {
         if (!await evaluatorRepository.ContainsAsync(id, cancellationToken))
             return NotFound();
 
         var capped = Math.Clamp(count, 1, 50);
-        var recent = await testResults.GetRecentByEvaluatorAsync(id, capped, cancellationToken);
+        var recent = await testResults.GetRecentByEvaluatorAsync(id, capped, score, cancellationToken);
+        var runIds = await testRuns.GetRunIdsByResultIdsAsync(recent.Select(r => r.Id).ToArray(), cancellationToken);
 
-        return recent.Select(r => evaluatorMapper.ToRecentDto(r, id)).ToArray();
+        return recent
+            .Select(r => evaluatorMapper.ToRecentDto(r, id, runIds.TryGetValue(r.Id, out var runId) ? runId : null))
+            .ToArray();
     }
 }

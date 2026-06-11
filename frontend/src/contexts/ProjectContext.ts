@@ -1,10 +1,10 @@
 import { createContext } from "react";
-import type { ProjectDto } from "../api/models";
+import type { ProjectListItemDto } from "../api/models";
 
 export interface ProjectContextValue {
-  projects: ProjectDto[];
+  projects: ProjectListItemDto[];
   currentProjectId: string | null;
-  currentProject: ProjectDto | null;
+  currentProject: ProjectListItemDto | null;
   setCurrentProjectId: (id: string) => void;
   isLoading: boolean;
 }

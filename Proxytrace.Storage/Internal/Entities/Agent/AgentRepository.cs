@@ -17,7 +17,7 @@ using Proxytrace.Storage.Internal.Entities.AgentVersion;
 namespace Proxytrace.Storage.Internal.Entities.Agent;
 
 [UsedImplicitly]
-internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgentRepository
+internal class AgentRepository : ArchivableRepository<IAgent, AgentEntity>, IAgentRepository
 {
     private readonly IAgent.CreateNew createNew;
     private readonly Lazy<IMapper<IAgentVersion, AgentVersionEntity>> versionMapper;
@@ -197,7 +197,8 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
         => await contextFactory()
             .Set<AgentEntity>()
             .AsNoTracking()
-            .CountAsync(e => !e.IsSystemAgent, cancellationToken);
+            // Archived agents are soft-deleted — they must not consume a licensed agent slot.
+            .CountAsync(e => !e.IsSystemAgent && !e.IsArchived, cancellationToken);
 
     public async Task<IAgent?> FindByNameAsync(IProject project, string name, CancellationToken cancellationToken = default)
     {
@@ -211,5 +212,17 @@ internal class AgentRepository : AbstractRepository<IAgent, AgentEntity>, IAgent
             .FirstOrDefaultAsync(cancellationToken);
 
         return id is { } agentId ? await this.GetAsync(agentId, cancellationToken) : null;
+    }
+
+    public async Task<IReadOnlyList<IAgent>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<AgentEntity>()
+            .AsNoTracking()
+            .Where(e => e.Project == projectId)
+            .ExcludeArchived()
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
     }
 }

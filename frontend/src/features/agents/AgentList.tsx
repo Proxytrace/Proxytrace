@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AgentDto } from '../../api/models';
+import type { AgentListItemDto } from '../../api/models';
 import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
 import { cn } from '../../lib/cn';
@@ -10,7 +10,7 @@ import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
 
 interface Props {
-  agents: AgentDto[];
+  agents: AgentListItemDto[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   isLoading: boolean;
@@ -94,7 +94,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
   );
 }
 
-function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boolean; onClick: () => void }) {
+function AgentRow({ agent, selected, onClick }: { agent: AgentListItemDto; selected: boolean; onClick: () => void }) {
   const c = agentColor(agent.id);
   const initial = agent.name[0]?.toUpperCase() ?? '?';
 
@@ -139,7 +139,7 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentDto; selected: boo
       <div className="flex items-center gap-2 mt-1.5 text-caption text-muted pl-[40px]">
         <span className="truncate">{agent.projectName}</span>
         <span className="text-border">·</span>
-        <span className="shrink-0">{agent.tools.length} tool{agent.tools.length !== 1 ? 's' : ''}</span>
+        <span className="shrink-0">{agent.toolCount} tool{agent.toolCount !== 1 ? 's' : ''}</span>
         <span className="ml-auto shrink-0 font-mono">{agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}</span>
       </div>
     </RowButton>

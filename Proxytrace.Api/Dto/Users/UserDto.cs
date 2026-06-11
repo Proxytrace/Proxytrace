@@ -6,7 +6,11 @@ public record UserDto(
     Guid Id,
     string Email,
     UserRole Role,
+    bool IsExternal,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
 public record UpdateUserRoleRequest(UserRole Role);
+
+/// <summary>Lightweight project reference for the user-centric project assignment editor.</summary>
+public record UserProjectDto(Guid Id, string Name);

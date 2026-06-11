@@ -14,10 +14,17 @@ const ROUTES = [
   { path: '/playground', label: 'playground' },
   { path: '/evaluator-playground', label: 'evaluator-playground' },
   { path: '/proposals', label: 'proposals' },
-  { path: '/providers', label: 'providers' },
-  { path: '/settings', label: 'settings' },
-  { path: '/admin/invites', label: 'admin invites' },
-  { path: '/error-log', label: 'error log' },
+  // Settings is an admin-only hub; smoke runs as admin (storageState). Providers, Users, and the
+  // Error Log now live as sections under /settings. `/settings` itself redirects to general.
+  { path: '/settings', label: 'settings (→ general)' },
+  { path: '/settings/general', label: 'settings general' },
+  { path: '/settings/members', label: 'settings members' },
+  { path: '/settings/search', label: 'settings search' },
+  { path: '/settings/projects', label: 'settings projects' },
+  { path: '/settings/providers', label: 'settings providers' },
+  { path: '/settings/users', label: 'settings users' },
+  { path: '/settings/error-log', label: 'settings error log' },
+  { path: '/settings/danger', label: 'settings danger zone' },
 ];
 
 for (const { path, label } of ROUTES) {

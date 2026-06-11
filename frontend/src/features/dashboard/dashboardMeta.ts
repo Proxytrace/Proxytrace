@@ -3,7 +3,7 @@
 
 import type {
   AgentBreakdownDto,
-  AgentDto,
+  AgentListItemDto,
   LatencyStatDto,
   ModelBreakdownDto,
   AgentTokenUsageDto,
@@ -179,7 +179,7 @@ export interface TokenAgentShare {
  * Aggregate per-agent token rows into totals sorted by usage (desc), excluding
  * system agents. Powers the donut + legend on the dashboard.
  */
-export function computeTokenAgentShare(rawData: AgentTokenUsageDto[], agents: AgentDto[]): TokenAgentShare {
+export function computeTokenAgentShare(rawData: AgentTokenUsageDto[], agents: AgentListItemDto[]): TokenAgentShare {
   const systemIds = new Set(agents.filter(a => a.isSystemAgent).map(a => a.id));
   const nameById = new Map(agents.map(a => [a.id, a.name]));
 
@@ -210,7 +210,7 @@ export function computeTokenAgentShare(rawData: AgentTokenUsageDto[], agents: Ag
 // ── Agent name map ───────────────────────────────────────────────────────────
 
 /** Build a stable id→name lookup from the agent list. */
-export function buildAgentNameMap(agents: AgentDto[]): Map<string, string> {
+export function buildAgentNameMap(agents: AgentListItemDto[]): Map<string, string> {
   const m = new Map<string, string>();
   for (const a of agents) m.set(a.id, a.name);
   return m;

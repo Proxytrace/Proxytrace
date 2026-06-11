@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { localAuthApi } from '../../auth/local/localAuthApi';
 import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
 import { Button } from '../../components/ui/Button';
+import { FormField } from '../../components/ui/FormField';
 import { Input } from '../../components/ui/Input';
+import { LockIcon } from '../../components/icons';
 import useLocalAuth from '../../hooks/useLocalAuth';
 import { passwordIsValid } from '../../auth/password';
 
@@ -61,7 +63,17 @@ export default function Signup() {
         <p className="text-xs text-muted">
           Role: <span className="text-primary">{preview.role}</span>
         </p>
-        <Input value={preview.email} readOnly className="text-muted" />
+        {/* Email is fixed by the invite — the backend ignores any client value and uses the
+            invited address, so the field is locked here to match. */}
+        <FormField label="Email">
+          <Input
+            value={preview.email}
+            data-testid="signup-email"
+            disabled
+            readOnly
+            rightAddon={<LockIcon size={14} />}
+          />
+        </FormField>
         <Input
           data-testid="signup-password"
           type="password"

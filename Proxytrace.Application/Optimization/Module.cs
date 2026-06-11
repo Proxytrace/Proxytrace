@@ -40,7 +40,6 @@ internal class Module : Autofac.Module
 
         builder.RegisterType<TheoryValidationService>()
             .As<ITheoryValidationService>()
-            .AsImplementedInterfaces()
             .AsSelf()
             .SingleInstance();
 
@@ -49,7 +48,6 @@ internal class Module : Autofac.Module
 
         builder.RegisterType<OptimizerService>()
             .As<IOptimizerService>()
-            .AsImplementedInterfaces()
             .AsSelf()
             .SingleInstance();
 

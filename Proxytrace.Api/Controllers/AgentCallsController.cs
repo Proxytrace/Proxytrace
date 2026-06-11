@@ -52,7 +52,35 @@ public class AgentCallsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<PagedResult<AgentCallDto>> GetAll(
+    public async Task<PagedResult<AgentCallListItemDto>> GetAll(
+        [FromQuery] Guid? projectId = null,
+        [FromQuery] Guid? agentId = null,
+        [FromQuery] Guid? endpointId = null,
+        [FromQuery] string? model = null,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        [FromQuery] int? httpStatus = null,
+        [FromQuery] bool includeSystemAgents = true,
+        [FromQuery] string? q = null,
+        [FromQuery] Guid? conversationId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
+        var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
+        return new PagedResult<IAgentCall>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
+    }
+
+    /// <summary>
+    /// Full (fat) trace list — same filters as <see cref="GetAll"/> but each item carries the complete
+    /// request/response/tools. Used only by bulk full-data flows that need the whole payload up front
+    /// (suite-creation test-case building, playground replay), not the traces table. The table uses
+    /// the light <see cref="GetAll"/>; individual selections use <see cref="Get"/>.
+    /// </summary>
+    [HttpGet("full")]
+    public async Task<PagedResult<AgentCallDto>> GetAllFull(
         [FromQuery] Guid? projectId = null,
         [FromQuery] Guid? agentId = null,
         [FromQuery] Guid? endpointId = null,
@@ -83,7 +111,11 @@ public class AgentCallsController : ControllerBase
         var latencyFilter = new StatisticsFilter(from, null, projectId, agentId);
         var breakdownFilter = new StatisticsFilter(from, null, projectId);
 
-        Task<IReadOnlyList<IAgent>> agentsTask = agentRepository.GetAllAsync(cancellationToken);
+        // Scope the agent load to the project when filtered, instead of loading every agent and
+        // discarding the rest in memory.
+        Task<IReadOnlyList<IAgent>> agentsTask = projectId.HasValue
+            ? agentRepository.GetByProjectAsync(projectId.Value, cancellationToken)
+            : agentRepository.GetAllAsync(cancellationToken);
         Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTask = repository.GetLastCallTimesAsync(cancellationToken);
         Task<IReadOnlyList<AgentBreakdownStat>> breakdownTask = statistics.GetAgentBreakdownAsync(breakdownFilter, cancellationToken);
         Task<IReadOnlyList<LatencyStat>> latencyTask = statistics.GetLatencyAsync(latencyFilter, cancellationToken);
@@ -91,11 +123,10 @@ public class AgentCallsController : ControllerBase
         await Task.WhenAll(agentsTask, lastCallTask, breakdownTask, latencyTask);
 
         IReadOnlyDictionary<Guid, DateTimeOffset> lastCall = lastCallTask.Result;
-        AgentDto[] agents = agentsTask.Result
-            .Where(a => !projectId.HasValue || a.Project.Id == projectId.Value)
+        AgentListItemDto[] agents = agentsTask.Result
             .OrderByDescending(a => lastCall.TryGetValue(a.Id, out var t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
-            .Select(a => agentDtoMapper.ToDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
+            .Select(a => agentDtoMapper.ToListItemDto(a, lastCall.TryGetValue(a.Id, out var t) ? t : null))
             .ToArray();
 
         return new TracesOverviewDto(

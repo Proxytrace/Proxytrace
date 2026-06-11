@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Proxytrace.Api.Dto.Inference;
 using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Domain.AgentCall;
@@ -38,6 +39,41 @@ public sealed class AgentCallDtoMapper
         c.CreatedAt,
         c.UpdatedAt,
         c.ConversationId);
+
+    /// <summary>
+    /// Lightweight projection for the traces table / dashboard live stream — row fields plus the
+    /// precomputed message preview and response tool-request count, skipping the full request,
+    /// response, tool specs and model parameters.
+    /// </summary>
+    public AgentCallListItemDto ToListItemDto(IAgentCall c) => new(
+        c.Id,
+        c.Agent.Id,
+        c.Agent.Name,
+        c.Endpoint.Model.Name,
+        c.Endpoint.Provider.Name,
+        FirstUserMessage(c),
+        c.Response?.Response is AssistantMessage a ? a.ToolRequests.Count : 0,
+        c.Response?.Usage?.InputTokenCount,
+        c.Response?.Usage?.OutputTokenCount,
+        c.Response?.Latency.TotalMilliseconds,
+        (int)c.HttpStatus,
+        c.FinishReason,
+        c.ErrorMessage,
+        ComputeCost(c),
+        c.CreatedAt,
+        c.UpdatedAt,
+        c.ConversationId);
+
+    /// <summary>First user message in the request with collapsed whitespace; null when none/empty.
+    /// Mirrors the frontend's old <c>firstUserMessage</c> so the list row reads a ready-made preview.</summary>
+    private static string? FirstUserMessage(IAgentCall c)
+    {
+        var userMessage = c.Request.Messages.OfType<UserMessage>().FirstOrDefault();
+        var text = userMessage?.GetText();
+        if (string.IsNullOrWhiteSpace(text))
+            return null;
+        return Regex.Replace(text, @"\s+", " ").Trim();
+    }
 
     private static AgentCallMessageDto ToMessageDto(Message m) => m switch
     {

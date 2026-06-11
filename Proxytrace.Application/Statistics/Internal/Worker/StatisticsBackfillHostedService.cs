@@ -8,7 +8,10 @@ namespace Proxytrace.Application.Statistics.Internal.Worker;
 
 internal class StatisticsBackfillHostedService : IHostedService
 {
-    private readonly IRepository<ITestRun> testRuns;
+    private static readonly TestRunStatus[] TerminalStatuses =
+        [TestRunStatus.Completed, TestRunStatus.Failed, TestRunStatus.Cancelled];
+
+    private readonly ITestRunRepository testRuns;
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStatsReader;
     private readonly IEnumerable<IStatsProjector> projectors;
     private readonly ILogger<StatisticsBackfillHostedService> logger;
@@ -17,7 +20,7 @@ internal class StatisticsBackfillHostedService : IHostedService
     private Task? backfillTask;
 
     public StatisticsBackfillHostedService(
-        IRepository<ITestRun> testRuns,
+        ITestRunRepository testRuns,
         IStatsReader<TestRunStats, TestRunStats.Filter> runStatsReader,
         IEnumerable<IStatsProjector> projectors,
         ILogger<StatisticsBackfillHostedService> logger)
@@ -68,7 +71,7 @@ internal class StatisticsBackfillHostedService : IHostedService
 
         try
         {
-            IReadOnlyList<ITestRun> runs = await testRuns.GetAllAsync(cancellationToken);
+            IReadOnlyList<ITestRun> runs = await testRuns.GetByStatusAsync(TerminalStatuses, cancellationToken);
             int projected = 0;
 
             foreach (ITestRun run in runs)
@@ -76,11 +79,6 @@ internal class StatisticsBackfillHostedService : IHostedService
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
-                }
-
-                if (run.Status is not (TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled))
-                {
-                    continue;
                 }
 
                 // Skip runs already projected — avoids racing the live drainer when a run finalizes

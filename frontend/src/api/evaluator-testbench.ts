@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { EvaluationResultDto, TestSuiteMessageDto } from './models';
+import type { EvaluationResultDto, EvaluationScore, TestSuiteMessageDto } from './models';
 
 export interface EvaluatorTestBenchPayloadDto {
   sourceTestResultId: string;
@@ -8,6 +8,8 @@ export interface EvaluatorTestBenchPayloadDto {
   conversation: TestSuiteMessageDto[];
   expectedResponse: string;
   actualResponse: string;
+  /** This evaluator's logged verdict on the source test result, when one exists. */
+  loggedEvaluation: EvaluationResultDto | null;
 }
 
 export interface RunEvaluatorOnBenchRequest {
@@ -23,6 +25,8 @@ export interface EvaluatorTestBenchDefaultDto {
 export interface EvaluatorTestBenchRecentItemDto {
   testCaseId: string;
   label: string;
+  /** This evaluator's logged score on the recent result, when one exists. */
+  score: EvaluationScore | null;
 }
 
 export const evaluatorTestBenchApi = {
@@ -39,6 +43,12 @@ export const evaluatorTestBenchApi = {
   recent(evaluatorId: string, count: number): Promise<EvaluatorTestBenchRecentItemDto[]> {
     return api.get<EvaluatorTestBenchRecentItemDto[]>(
       `/api/evaluators/${encodeURIComponent(evaluatorId)}/test-bench/recent?count=${count}`,
+    );
+  },
+  search(evaluatorId: string, query: string, count: number): Promise<EvaluatorTestBenchRecentItemDto[]> {
+    const params = new URLSearchParams({ q: query, count: String(count) });
+    return api.get<EvaluatorTestBenchRecentItemDto[]>(
+      `/api/evaluators/${encodeURIComponent(evaluatorId)}/test-bench/search?${params.toString()}`,
     );
   },
   run(evaluatorId: string, body: RunEvaluatorOnBenchRequest): Promise<EvaluationResultDto> {

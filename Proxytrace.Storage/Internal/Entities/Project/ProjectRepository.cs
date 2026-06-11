@@ -47,6 +47,20 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
         return match is null ? null : await this.GetAsync(match.Id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<IProject>> GetByMemberAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var projectIds = await contextFactory()
+            .Set<ProjectUserEntity>()
+            .AsNoTracking()
+            .Where(j => j.UserId == userId)
+            .Select(j => j.ProjectId)
+            .ToListAsync(cancellationToken);
+
+        return projectIds.Count == 0 ? [] : await GetManyAsync(projectIds, cancellationToken);
+    }
+
     protected override async Task UpdateRelationsAsync(
         StorageDbContext context,
         ProjectEntity storedEntity,

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { evaluatorsApi } from '../../../api/evaluators';
+import { evaluatorsApi, type EvaluatorsOverviewDto } from '../../../api/evaluators';
 import {
   EvaluatorKind,
   type CreateEvaluatorPayload,
@@ -90,10 +90,22 @@ export function useDeleteEvaluator() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => evaluatorsApi.delete(id),
-    // Invalidate the whole evaluators namespace: the rail list, the overview (which feeds the
-    // selectable list), and per-evaluator detail are all keyed under ['evaluators', …] but with
-    // different second segments, so a projectId-scoped key would miss the overview.
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['evaluators'] }),
+    onSuccess: (_data, id) => {
+      // Drop the deleted evaluator from the cached overview(s) synchronously so the detail view
+      // for it stops being rendered. Without this, the broad invalidation below would refetch the
+      // now-deleted evaluator's still-mounted detail query and hit a 404.
+      qc.setQueriesData<EvaluatorsOverviewDto>(
+        { queryKey: ['evaluators', 'overview'] },
+        prev => (prev ? { ...prev, evaluators: prev.evaluators.filter(e => e.id !== id) } : prev),
+      );
+      // Reconcile every evaluators query EXCEPT per-evaluator detail — refetching the deleted
+      // evaluator's detail is exactly the 404 we're avoiding, and the surviving selection's detail
+      // refetches itself on mount.
+      qc.invalidateQueries({
+        queryKey: ['evaluators'],
+        predicate: q => q.queryKey[1] !== 'detail',
+      });
+    },
   });
 }
 

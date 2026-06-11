@@ -9,13 +9,13 @@ internal class DashboardStatistics : IDashboardStatistics
 {
     private readonly IStatsReader<TestRunStats, TestRunStats.Filter> runStats;
     private readonly IAgentCallStatsReader callStats;
-    private readonly IRepository<IAgent> agents;
+    private readonly IAgentRepository agents;
     private readonly IAgentCallRepository agentCalls;
 
     public DashboardStatistics(
         IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         IAgentCallStatsReader callStats,
-        IRepository<IAgent> agents,
+        IAgentRepository agents,
         IAgentCallRepository agentCalls)
     {
         this.runStats = runStats;
@@ -40,7 +40,11 @@ internal class DashboardStatistics : IDashboardStatistics
             page: 1,
             pageSize: recentTraceCount,
             cancellationToken);
-        Task<IReadOnlyList<IAgent>> agentsTask = agents.GetAllAsync(cancellationToken);
+        // Scope the agent load to the project when filtered, instead of loading every agent and
+        // discarding the rest in memory. The unfiltered (global) dashboard still needs all agents.
+        Task<IReadOnlyList<IAgent>> agentsTask = filter.ProjectId is { } projectId
+            ? agents.GetByProjectAsync(projectId, cancellationToken)
+            : agents.GetAllAsync(cancellationToken);
         Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTimesTask = agentCalls.GetLastCallTimesAsync(cancellationToken);
 
         await Task.WhenAll(
@@ -49,7 +53,6 @@ internal class DashboardStatistics : IDashboardStatistics
 
         IReadOnlyDictionary<Guid, DateTimeOffset> lastCallTimes = lastCallTimesTask.Result;
         IReadOnlyList<IAgent> topAgents = agentsTask.Result
-            .Where(a => filter.ProjectId is not { } pid || a.Project.Id == pid)
             .OrderByDescending(a => lastCallTimes.TryGetValue(a.Id, out DateTimeOffset t) ? t : DateTimeOffset.MinValue)
             .ThenByDescending(a => a.UpdatedAt)
             .Take(agentLimit)
@@ -143,8 +146,8 @@ internal class DashboardStatistics : IDashboardStatistics
         IReadOnlyCollection<Guid>? agentIds = null;
         if (filter.ProjectId is { } projectId)
         {
-            IReadOnlyList<IAgent> all = await agents.GetAllAsync(cancellationToken);
-            agentIds = all.Where(a => a.Project.Id == projectId).Select(a => a.Id).ToArray();
+            IReadOnlyList<IAgent> projectAgents = await agents.GetByProjectAsync(projectId, cancellationToken);
+            agentIds = projectAgents.Select(a => a.Id).ToArray();
         }
 
         return new TestRunStats.Filter(

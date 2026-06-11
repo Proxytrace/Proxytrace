@@ -6,12 +6,12 @@ import { Pill } from '../../../components/ui/Pill';
 import { RowButton } from '../../../components/ui/RowButton';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { SparklesIcon } from '../../../components/icons';
-import type { AgentDto, AgentBreakdownDto } from '../../../api/models';
+import type { AgentListItemDto, AgentBreakdownDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
 import { agentCallCount } from '../dashboardMeta';
 
 interface AgentsSectionProps {
-  agents: AgentDto[];
+  agents: AgentListItemDto[];
   agentBreakdown: AgentBreakdownDto[] | undefined;
 }
 
@@ -58,8 +58,8 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
                   <div className="absolute top-0 left-0 right-0 h-0.5 opacity-70" style={{ background: c }} />
                   <div className="flex items-start justify-between gap-1.5">
                     <span className="text-title font-semibold leading-tight truncate">{a.name}</span>
-                    {a.tools.length > 0 && (
-                      <span className="text-[9.5px] px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0">{a.tools.length}t</span>
+                    {a.toolCount > 0 && (
+                      <span className="text-[9.5px] px-1.5 py-px bg-card rounded-sm text-muted font-mono shrink-0">{a.toolCount}t</span>
                     )}
                   </div>
                   <div><Pill label={a.endpointName} color={c} size="sm" /></div>
@@ -72,7 +72,7 @@ export function AgentsSection({ agents, agentBreakdown }: AgentsSectionProps) {
                         <span className="text-[10.5px] text-muted font-semibold">traces</span>
                       </div>
                       <div className="text-[9.5px] text-muted mt-0.5 font-mono">
-                        {a.tools.length} tool{a.tools.length !== 1 ? 's' : ''}
+                        {a.toolCount} tool{a.toolCount !== 1 ? 's' : ''}
                       </div>
                     </div>
                   </div>

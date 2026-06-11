@@ -98,6 +98,38 @@ public sealed class AgentsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Delete_SystemAgent_ReturnsConflict()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var systemAgent = await services.GetRequiredService<IAgentGenerator>()
+            .CreateAsync("System judge", "Judge the response.", isSystemAgent: true);
+
+        var result = await controller.Delete(systemAgent.Id, CancellationToken);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+        (await services.GetRequiredService<IAgentRepository>().FindAsync(systemAgent.Id, CancellationToken))
+            .Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Delete_UserAgent_ArchivesButKeepsItResolvable()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var repository = services.GetRequiredService<IAgentRepository>();
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+
+        var result = await controller.Delete(agent.Id, CancellationToken);
+
+        result.Should().BeOfType<NoContentResult>();
+        (await repository.GetByProjectAsync(agent.Project.Id, CancellationToken))
+            .Should().NotContain(a => a.Id == agent.Id);
+        var retrieved = await repository.GetAsync(agent.Id, CancellationToken);
+        retrieved.IsArchived.Should().BeTrue();
+    }
+
+    [TestMethod]
     public async Task UpdateEndpoint_SwapsEndpoint()
     {
         IServiceProvider services = GetServices();

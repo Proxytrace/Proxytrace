@@ -1,21 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { passRateColor, computeSuiteStats } from './suitesMeta';
-import type { TestSuiteDto } from '../../api/models';
+import type { TestSuiteListItemDto } from '../../api/models';
 
 // Minimal stub satisfying the fields used by these helpers.
-function makeSuite(passRate: number | null, testCases: number, totalRuns: number): TestSuiteDto {
+function makeSuite(passRate: number | null, testCases: number, totalRuns: number): TestSuiteListItemDto {
   return {
     id: 'id',
     name: 'Suite',
     description: null,
     agentId: 'agent-1',
     agentName: 'Agent',
-    testCases: Array.from({ length: testCases }, (_, i) => ({
-      id: `tc-${i}`,
-      input: '',
-      expectedOutput: null,
-      createdAt: '',
-    })),
+    testCaseCount: testCases,
     evaluators: [],
     tags: [],
     passRate,
@@ -26,7 +21,7 @@ function makeSuite(passRate: number | null, testCases: number, totalRuns: number
     lastRunGroupId: null,
     createdAt: '',
     updatedAt: '',
-  } as unknown as TestSuiteDto;
+  } as unknown as TestSuiteListItemDto;
 }
 
 describe('passRateColor', () => {

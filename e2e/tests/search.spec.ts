@@ -144,21 +144,7 @@ test.describe('Search', () => {
     await api.updateSearchSettings(projectId, { ...before });
   });
 
-  test('SearchIndexingTab reflects the persisted auto-reindex setting', async ({ page }) => {
-    // The write/persist round-trip is covered by "search settings persist via the API round-trip"
-    // above. Here we verify the SearchIndexingTab binds the toggle to the persisted server value:
-    // flip it via the API on a throwaway project, then assert the UI shows it.
-    const project = await api.createProject(`Search Settings ${Date.now()}`, endpointId);
-    const start = await api.getSearchSettings(project.id);
-    const target = !start.autoReindexOnChange;
-    await api.updateSearchSettings(project.id, { ...start, autoReindexOnChange: target });
-
-    await page.goto('/settings', { waitUntil: 'load' });
-    await page.getByRole('tab', { name: 'Search indexing' }).click();
-    await expect(page.getByTestId('search-indexing-tab')).toBeVisible();
-    await page.getByTestId(`search-project-row-${project.id}`).click();
-
-    const toggle = page.getByTestId('toggle-row-autoReindex').getByRole('switch');
-    await expect(toggle).toHaveAttribute('aria-checked', String(target));
-  });
+  // The UI binding of the persisted auto-reindex setting moved to the Settings hub's Search section
+  // and is now covered by settings.spec ("search auto-reindex toggle reflects the persisted server
+  // value"). The API round-trip above stays here.
 });

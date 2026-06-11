@@ -10,7 +10,8 @@ interface Props {
   projectId: string;
   selectedAgentId: string | null;
   selectedAgent?: AgentDto | null;
-  onPick: (agent: AgentDto) => void;
+  /** Receives the picked agent's id; the caller fetches the full agent (the list is light). */
+  onPick: (agentId: string) => void;
   compact?: boolean;
 }
 
@@ -101,7 +102,7 @@ export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick,
                 key={a.id}
                 role="option"
                 aria-selected={active}
-                onClick={() => { onPick(a); setOpen(false); }}
+                onClick={() => { onPick(a.id); setOpen(false); }}
                 data-testid={`agent-picker-option-${a.id}`}
                 className="flex items-center gap-[10px] px-[10px] py-[7px] transition-colors hover:bg-card"
                 style={active ? { background: 'var(--accent-subtle)' } : undefined}

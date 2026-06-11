@@ -3,14 +3,13 @@ import { PlayIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
 import { fmtPct, fmtCost, fmtTokens } from '../../../../lib/format';
-import type { TestRunDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { RUN_STATUS_VARIANT } from './badge-variants';
 import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_run` tool result. */
 export const RunCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data: run } = useArtifactResult<TestRunDto>(result, status, isError);
+  const { state, data: run } = useArtifactResult('run', result, status, isError);
   return (
     <EntityCardLink
       state={state}

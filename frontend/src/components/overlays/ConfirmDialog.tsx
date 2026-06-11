@@ -51,6 +51,7 @@ export function ConfirmDialog({
           </p>
           <Input
             autoFocus
+            data-testid="confirm-input"
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder={entityName}

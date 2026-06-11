@@ -125,6 +125,120 @@ public sealed class EvaluatorRepositoryTests : BaseTest<Module>
 }
 
 [TestClass]
+public sealed class EvaluatorArchiveTests : BaseTest<Module>
+{
+    [TestMethod]
+    public async Task ArchiveAsync_ExcludesEvaluatorFromGetByProject()
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var evaluator = await repository.AddAsync(exactFactory(project), CancellationToken);
+
+        await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        var results = await repository.GetByProjectAsync(project.Id, CancellationToken);
+        results.Should().NotContain(e => e.Id == evaluator.Id);
+    }
+
+    [TestMethod]
+    public async Task ArchiveAsync_ExcludesEvaluatorFromGetAll()
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var evaluator = await repository.AddAsync(exactFactory(project), CancellationToken);
+
+        await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        var all = await repository.GetAllAsync(CancellationToken);
+        all.Should().NotContain(e => e.Id == evaluator.Id);
+    }
+
+    [TestMethod]
+    public async Task ArchiveAsync_KeepsEvaluatorResolvableById()
+    {
+        // The whole point of archiving: historical test results live-fetch the evaluator by id at
+        // map time, so a by-id lookup must still resolve it (flagged as archived).
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var evaluator = await repository.AddAsync(exactFactory(project), CancellationToken);
+
+        await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        var retrieved = await repository.GetAsync(evaluator.Id, CancellationToken);
+        retrieved.Id.Should().Be(evaluator.Id);
+        retrieved.IsArchived.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task ArchiveAsync_DetachesEvaluatorFromSuites()
+    {
+        IServiceProvider services = GetServices();
+        var evaluatorRepository = services.GetRequiredService<IEvaluatorRepository>();
+        var suiteRepository = services.GetRequiredService<IRepository<ITestSuite>>();
+        var testCaseGenerator = services.GetRequiredService<IDomainEntityGenerator<ITestCase>>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
+        var suiteFactory = services.GetRequiredService<ITestSuite.CreateNew>();
+
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var evaluator = await evaluatorRepository.AddAsync(exactFactory(project), CancellationToken);
+        var agent = await agentGenerator.CreateAsync(CancellationToken);
+        var testCase = await testCaseGenerator.CreateAsync(CancellationToken);
+        var suite = await suiteRepository.AddAsync(
+            suiteFactory("Archive detach suite", agent, [evaluator], [testCase]), CancellationToken);
+
+        await evaluatorRepository.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        var reloadedSuite = await suiteRepository.GetAsync(suite.Id, CancellationToken);
+        reloadedSuite.Evaluators.Should().NotContain(e => e.Id == evaluator.Id);
+        // The evaluator row itself survives so history still resolves.
+        var retrieved = await evaluatorRepository.GetAsync(evaluator.Id, CancellationToken);
+        retrieved.IsArchived.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task ArchiveAsync_MissingEvaluator_ReturnsFalse()
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+
+        var archived = await repository.ArchiveAsync(Guid.NewGuid(), CancellationToken);
+
+        archived.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task ArchiveAsync_AlreadyArchived_IsIdempotent()
+    {
+        IServiceProvider services = GetServices();
+        var repository = services.GetRequiredService<IEvaluatorRepository>();
+        var exactFactory = services.GetRequiredService<IExactMatchEvaluator.CreateNew>();
+        var projectGenerator = services.GetRequiredService<IDomainEntityGenerator<IProject>>();
+
+        var project = await projectGenerator.CreateAsync(CancellationToken);
+        var evaluator = await repository.AddAsync(exactFactory(project), CancellationToken);
+
+        await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+        var second = await repository.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        second.Should().BeTrue();
+    }
+}
+
+[TestClass]
 public sealed class TestSuiteEvaluatorRelationshipTests : BaseTest<Module>
 {
     [TestMethod]

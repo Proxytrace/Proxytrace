@@ -1,16 +1,17 @@
 // Pure helpers for deriving display bits from a captured trace, plus conversation
 // grouping shared by the Traces tab and the dashboard live stream. No JSX, no I/O.
+// Operates on the light AgentCallListItemDto — the list shape — so list rows never
+// need the fat AgentCallDto (full request/response/tools).
 
-import type { AgentCallDto } from '../api/models';
+import type { AgentCallListItemDto } from '../api/models';
 
 /**
- * Preview text for a trace row: the first user message in the request, with
- * collapsed whitespace. Returns null when the request has no user message
- * (callers render an em-dash placeholder). Truncation is left to CSS ellipsis.
+ * Preview text for a trace row: the first user message in the request, with collapsed whitespace
+ * (precomputed by the backend into {@link AgentCallListItemDto.messagePreview}). Null when the
+ * request had no user message (callers render an em-dash placeholder).
  */
-export function firstUserMessage(call: AgentCallDto): string | null {
-  const text = call.request.find(m => m.role === 'user')?.content?.replace(/\s+/g, ' ').trim();
-  return text ? text : null;
+export function tracePreview(call: AgentCallListItemDto): string | null {
+  return call.messagePreview;
 }
 
 // ── Conversation grouping ──────────────────────────────────────────────────────
@@ -18,9 +19,9 @@ export function firstUserMessage(call: AgentCallDto): string | null {
 export type ConversationGroup = {
   type: 'conversation';
   conversationId: string;
-  turns: AgentCallDto[];
+  turns: AgentCallListItemDto[];
 };
-export type FlatTrace = { type: 'flat'; trace: AgentCallDto };
+export type FlatTrace = { type: 'flat'; trace: AgentCallListItemDto };
 export type TraceRow = ConversationGroup | FlatTrace;
 
 /**
@@ -28,8 +29,8 @@ export type TraceRow = ConversationGroup | FlatTrace;
  * traces with no conversationId, or whose conversationId appears only once, become FlatTrace rows.
  * Order is preserved from the input array.
  */
-export function buildRows(traces: AgentCallDto[]): TraceRow[] {
-  const groups = new Map<string, AgentCallDto[]>();
+export function buildRows(traces: AgentCallListItemDto[]): TraceRow[] {
+  const groups = new Map<string, AgentCallListItemDto[]>();
   for (const t of traces) {
     if (t.conversationId) {
       const g = groups.get(t.conversationId) ?? [];

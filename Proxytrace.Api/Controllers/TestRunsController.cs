@@ -110,11 +110,10 @@ public class TestRunsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        var removed = await repository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
-    }
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        => this.DeleteOrConflictAsync(
+            () => repository.RemoveAsync(id, cancellationToken),
+            "This test run is still referenced by an optimization proposal. Remove the proposal before deleting the run.");
 
     private async Task WriteEventAsync(TestRunEvent evt, CancellationToken cancellationToken)
     {

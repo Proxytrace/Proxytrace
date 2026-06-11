@@ -3,7 +3,6 @@ import { PlayIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
 import { fmtPct } from '../../../../lib/format';
-import type { TestRunDto } from '../../../../api/models';
 import { ListCard, LIST_CARD_MAX } from './ListCard';
 import { ListCardRow } from './ListCardRow';
 import { RUN_STATUS_VARIANT } from './badge-variants';
@@ -11,7 +10,7 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_runs` tool result. */
 export const RunListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data } = useArtifactResult<TestRunDto[]>(result, status, isError);
+  const { state, data } = useArtifactResult('run-list', result, status, isError);
   const runs = data ?? [];
   return (
     <ListCard

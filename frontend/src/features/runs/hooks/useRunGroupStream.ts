@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { PagedResult, TestRunEvent, TestRunGroupDto } from '../../../api/models';
+import type { TestRunEvent, TestRunGroupDto } from '../../../api/models';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { useTestRunGroupStream } from '../../../api/event-stream';
-import { patchGroupsRunStatus, patchGroupsWithResult } from '../results';
+import { patchGroupRunStatus, patchGroupWithResult } from '../results';
 import { emptyLiveProgress, reduceLiveProgress, type LiveProgress } from '../live';
 
-/** Folds one already-buffered event into a cached page (finalized result or per-run status). */
-function applyToCache(page: PagedResult<TestRunGroupDto>, e: TestRunEvent): PagedResult<TestRunGroupDto> {
-  if (e.type === 'test-result-arrived') return patchGroupsWithResult(page, e);
-  if (e.type === 'run-complete') return patchGroupsRunStatus(page, e);
-  return page;
+/** Folds one already-buffered event into the cached group (finalized result or per-run status). */
+function applyToCache(group: TestRunGroupDto, e: TestRunEvent): TestRunGroupDto {
+  if (e.type === 'test-result-arrived') return patchGroupWithResult(group, e);
+  if (e.type === 'run-complete') return patchGroupRunStatus(group, e);
+  return group;
 }
 
 /**
@@ -18,10 +18,12 @@ function applyToCache(page: PagedResult<TestRunGroupDto>, e: TestRunEvent): Page
  * stream (only while `active`) and:
  *  - folds every event into an ephemeral in-flight {@link LiveProgress} map (per-evaluator
  *    progress for cases that have no finalized result yet), returned to the caller;
- *  - patches the cached group list in place — finalized results and per-run completion — so the
- *    list never refetches mid-run (BEST_PRACTICES §3.2);
- *  - on the terminal `group-run-complete`, clears the live map and invalidates once, which also
- *    heals any events the bounded SSE channel may have dropped under load.
+ *  - patches the selected group's *detail* cache in place — finalized results and per-run
+ *    completion — so the detail view never refetches mid-run (BEST_PRACTICES §3.2). The patch
+ *    no-ops until the fat group has resolved (an SSE event may arrive before the GET);
+ *  - on the terminal `group-run-complete`, clears the live map and invalidates the whole
+ *    `test-run-groups` cache once (detail + the light list, by prefix), healing both the matrix and
+ *    the left-rail pass rates and any events the bounded SSE channel may have dropped under load.
  *
  * Events are **coalesced per animation frame**: parallel runs/evaluators fire many events per
  * second, so applying each one synchronously made the grid re-render frantically. Buffering a
@@ -48,12 +50,12 @@ export function useRunGroupStream(groupId: string, active: boolean): LiveProgres
     }
 
     if (events.some(e => e.type === 'test-result-arrived' || e.type === 'run-complete')) {
-      qc.setQueriesData<PagedResult<TestRunGroupDto>>(
-        { queryKey: QUERY_KEYS.testRunGroupsRoot },
-        page => (page ? events.reduce(applyToCache, page) : page),
+      qc.setQueryData<TestRunGroupDto>(
+        QUERY_KEYS.testRunGroup(groupId),
+        group => (group ? events.reduce(applyToCache, group) : group),
       );
     }
-  }, [qc]);
+  }, [qc, groupId]);
 
   const handleEvent = useCallback((e: TestRunEvent) => {
     pendingRef.current.push(e);

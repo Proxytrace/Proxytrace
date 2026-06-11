@@ -25,7 +25,6 @@ export interface AgenticEvaluatorPresetDto {
 
 export enum ModelProviderKind {
   Unknown = 'Unknown',
-  Anthropic = 'Anthropic',
   OpenAi = 'OpenAi',
   OpenAiCompatible = 'OpenAiCompatible',
 }
@@ -95,6 +94,32 @@ export interface AgentCallDto {
   conversationId: string | null;
 }
 
+/** Lightweight agent-call projection for the traces table / dashboard live stream. Carries row
+ * fields plus a precomputed first-user-message preview and response tool-request count; the full
+ * {@link AgentCallDto} (request, response, tools, model parameters) is fetched per-selection via
+ * `GET /api/agent-calls/{id}`. */
+export interface AgentCallListItemDto {
+  id: string;
+  agentId: string | null;
+  agentName: string | null;
+  model: string;
+  provider: string;
+  /** First user message in the request, whitespace-collapsed; null when none. */
+  messagePreview: string | null;
+  /** Number of tool requests in the response. */
+  toolCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  durationMs: number;
+  httpStatus: number;
+  finishReason: string | null;
+  errorMessage: string | null;
+  costEur: number | null;
+  createdAt: string;
+  updatedAt: string;
+  conversationId: string | null;
+}
+
 /* ── Agents ── */
 export interface AgentDto {
   id: string;
@@ -106,6 +131,23 @@ export interface AgentDto {
   endpointId: string;
   endpointName: string;
   modelParameters: ModelParametersDto;
+  isSystemAgent: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastUsedAt: string | null;
+}
+
+/** Lightweight agent projection for lists (agents grid, dashboard, traces filter). Row fields + a
+ * tool count; the full {@link AgentDto} (system message, tool specs, model parameters) is fetched
+ * per-selection via `GET /api/agents/{id}`. */
+export interface AgentListItemDto {
+  id: string;
+  projectId: string;
+  projectName: string;
+  name: string;
+  toolCount: number;
+  endpointId: string;
+  endpointName: string;
   isSystemAgent: boolean;
   createdAt: string;
   updatedAt: string;
@@ -125,7 +167,7 @@ export interface AgentVersionDto {
 /* ── Statistics ── */
 /** Filter-bar metadata for the Traces page (agents, per-agent counts, latency). */
 export interface TracesOverviewDto {
-  agents: AgentDto[];
+  agents: AgentListItemDto[];
   agentBreakdown: AgentBreakdownDto[];
   latency: LatencyStatDto[];
 }
@@ -141,8 +183,8 @@ export interface DashboardViewDto {
   tokenUsageByAgent: AgentTokenUsageDto[];
   /** Bucket granularity used for the token series (backend-resolved; drives the chart's time axis). */
   tokenBucket: StatisticsBucket;
-  recentTraces: AgentCallDto[];
-  agents: AgentDto[];
+  recentTraces: AgentCallListItemDto[];
+  agents: AgentListItemDto[];
 }
 export interface SummaryDto {
   totalCalls: number;
@@ -292,6 +334,28 @@ export interface TestSuiteDto {
   updatedAt: string;
 }
 
+/** Lightweight suite projection for the suites grid. Keeps evaluator refs + run aggregates but
+ * replaces the fat `testCases` list with a `testCaseCount`; the full {@link TestSuiteDto} is fetched
+ * per-selection via `GET /api/test-suites/{id}`. */
+export interface TestSuiteListItemDto {
+  id: string;
+  name: string;
+  agentId: string;
+  agentName: string;
+  evaluators: SuiteEvaluatorDto[];
+  testCaseCount: number;
+  description: string | null;
+  tags: string[];
+  totalRuns: number;
+  passRate: number | null;
+  prevPassRate: number | null;
+  passRateTrend: number[];
+  lastRunAt: string | null;
+  lastRunGroupId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /* ── Test Runs ── */
 export interface EvaluatorSummaryDto {
   totalEvaluations: number;
@@ -394,7 +458,42 @@ export interface TestRunGroupDto {
   updatedAt: string;
 }
 
+/** Lightweight per-run projection for the run-group list cards (no per-case results/evaluations). */
+export interface TestRunSummaryDto {
+  id: string;
+  endpointId: string;
+  endpointName: string;
+  status: TestRunStatus;
+  totalCases: number;
+  passedCases: number;
+  failedCases: number;
+  passRate: number;
+}
+
+/** Lightweight run-group projection for the runs list. The full {@link TestRunGroupDto} (with nested
+ * per-case results) is fetched per-selection via `GET /api/test-run-groups/{id}`. */
+export interface TestRunGroupListItemDto {
+  id: string;
+  suiteId: string;
+  suiteName: string;
+  agentId: string;
+  agentName: string;
+  status: TestRunStatus;
+  isSystemRun: boolean;
+  completedAt: string | null;
+  runs: TestRunSummaryDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /* ── Evaluators ── */
+/** Lightweight evaluator projection for pickers / select lists (id, kind, name only). */
+export interface EvaluatorListItemDto {
+  id: string;
+  kind: EvaluatorKind;
+  name: string;
+}
+
 export interface EvaluatorDetailDto {
   id: string;
   kind: EvaluatorKind;
@@ -476,11 +575,33 @@ export interface ProjectDto {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Lightweight project projection for the projects list / app-wide selector. Member list replaced by
+ * a count; full members come from the detail fetch `GET /api/projects/{id}`. */
+export interface ProjectListItemDto {
+  id: string;
+  name: string;
+  systemEndpointId: string;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+export type UserRole = 'Member' | 'Admin';
+
 export interface UserDto {
   id: string;
   email: string;
+  role: UserRole;
+  /** True for OIDC-provisioned users (no local password); false for local-auth users. */
+  isExternal: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Lightweight project reference for the user-centric project assignment editor. */
+export interface UserProjectDto {
+  id: string;
+  name: string;
 }
 export interface CreateModelEndpointRequest {
   modelName: string;

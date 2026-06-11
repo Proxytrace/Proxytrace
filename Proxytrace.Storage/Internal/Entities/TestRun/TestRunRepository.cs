@@ -85,4 +85,49 @@ internal class TestRunRepository : AbstractRepository<ITestRun, TestRunEntity>, 
 
         return await Map(stored, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ITestRun>> GetByStatusAsync(
+        IReadOnlyCollection<TestRunStatus> statuses,
+        CancellationToken cancellationToken = default)
+    {
+        if (statuses.Count == 0) return [];
+
+        var stored = await contextFactory()
+            .Set<TestRunEntity>()
+            .AsNoTracking()
+            .Where(r => statuses.Contains(r.Status))
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, Guid>> GetRunIdsByResultIdsAsync(
+        IReadOnlyCollection<Guid> resultIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (resultIds.Count == 0) return new Dictionary<Guid, Guid>();
+
+        var wanted = resultIds.ToHashSet();
+        var context = contextFactory();
+        // A run's TestResults is a serialized JSON column, so result→run can't be resolved in SQL.
+        // Scan a bounded window of the most recent runs (recent evaluations belong to recent runs)
+        // and match in memory — the same pattern TestResultRepository uses for recent lookups.
+        var recent = await context
+            .Set<TestRunEntity>()
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(1000)
+            .ToListAsync(cancellationToken);
+
+        var map = new Dictionary<Guid, Guid>();
+        foreach (var run in recent)
+        {
+            foreach (var resultId in run.TestResults)
+            {
+                if (wanted.Contains(resultId))
+                    map.TryAdd(resultId, run.Id);
+            }
+        }
+        return map;
+    }
 }

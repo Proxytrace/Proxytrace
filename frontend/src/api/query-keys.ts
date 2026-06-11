@@ -6,6 +6,8 @@ export const QUERY_KEYS = {
   agentVersions: (agentId: string) => ['agent', agentId, 'versions'] as const,
   agentVersion: (versionId: string) => ['agent-version', versionId] as const,
   agentCalls: (filter: object) => ['agent-calls', filter] as const,
+  /** A single trace fetched by id (detail-panel deep-link). 'detail' segment lets list-cache invalidation exclude it. */
+  agentCall: (id?: string) => ['agent-calls', 'detail', id ?? null] as const,
   /** Prefix matching every agent-calls query — use for invalidation. */
   agentCallsRoot: ['agent-calls'] as const,
   agentCallsOverview: (from?: string, agentId?: string, projectId?: string) => ['agent-calls', 'overview', from, agentId, projectId ?? null] as const,
@@ -23,8 +25,10 @@ export const QUERY_KEYS = {
   agentCounts: (agentId: string) => ['agent-counts', agentId] as const,
 
   evaluators: (projectId?: string) => ['evaluators', projectId ?? null] as const,
+  evaluatorSummaries: (projectId?: string) => ['evaluators', 'summaries', projectId ?? null] as const,
   evaluatorsOverview: (projectId: string, rangeKey: string) => ['evaluators', 'overview', projectId, rangeKey] as const,
   evaluatorDetail: (evaluatorId: string, rangeKey: string) => ['evaluators', 'detail', evaluatorId, rangeKey] as const,
+  evaluatorRecent: (evaluatorId: string, score: string, count: number) => ['evaluators', 'recent', evaluatorId, score, count] as const,
   agenticEvaluatorPresets: ['evaluators', 'agentic-presets'] as const,
   modelEndpoints: ['model-endpoints'] as const,
 
@@ -39,6 +43,8 @@ export const QUERY_KEYS = {
   projects: ['projects'] as const,
   project: (id: string) => ['project', id] as const,
   users: ['users'] as const,
+  /** Projects a single user is a member of (admin user-management editor). */
+  userProjects: (id: string) => ['users', id, 'projects'] as const,
   providerAvailableModels: (providerId: string | null) => ['provider-available-models', providerId] as const,
 
   testRunGroups: (agentFilter?: string, projectId?: string, includeSystem?: boolean) =>
@@ -48,6 +54,8 @@ export const QUERY_KEYS = {
   /** Prefix matching every test-run-groups query — use for invalidation. */
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
+  /** A single (fat) test suite by id — full test cases for the edit dialog. 'detail' segment lets list invalidation cover it by prefix. */
+  testSuite: (id: string) => ['test-suites', 'detail', id] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,
@@ -66,6 +74,8 @@ export const QUERY_KEYS = {
     ['evaluator-test-bench-default', evaluatorId] as const,
   evaluatorTestBenchRecent: (evaluatorId: string, count: number) =>
     ['evaluator-test-bench-recent', evaluatorId, count] as const,
+  evaluatorTestBenchSearch: (evaluatorId: string, query: string, count: number) =>
+    ['evaluator-test-bench-search', evaluatorId, query, count] as const,
 
   traceySession: (projectId?: string) => ['tracey-session', projectId ?? null] as const,
 

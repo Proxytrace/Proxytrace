@@ -19,6 +19,12 @@ interface FilterDropdownProps {
   /** Whether the menu opens below ('down', default) or above ('up') the trigger. */
   direction?: 'down' | 'up';
   width?: number;
+  /**
+   * `md` (default) — the standalone toolbar filter chip (filled, 36px).
+   * `sm` — a compact, quiet trigger for inline/header use (transparent, 28px); avoids the
+   * oversized filled pill warping a dense header row.
+   */
+  size?: 'sm' | 'md';
   /** When set, tags the trigger `{testId}` and each option `{testId}-option-{key}` for e2e. */
   testId?: string;
 }
@@ -37,6 +43,7 @@ export function FilterDropdown({
   align = 'left',
   direction = 'down',
   width = 200,
+  size = 'md',
   testId,
 }: FilterDropdownProps) {
   const selected = options.find(o => o.key === value);
@@ -49,10 +56,15 @@ export function FilterDropdown({
           type="button"
           data-testid={testId}
           className={cn(
-            'group inline-flex items-center gap-[6px] h-9 px-[10px] rounded-[8px] text-[12px] font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
-            active
-              ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
-              : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
+            'group inline-flex items-center leading-none font-medium whitespace-nowrap cursor-pointer transition-colors duration-150',
+            size === 'sm'
+              ? 'h-7 gap-1 px-2 rounded-sm text-body-sm'
+              : 'h-9 gap-1.5 px-2.5 rounded-md text-body',
+            size === 'sm'
+              ? 'bg-transparent text-secondary hover:text-primary hover:bg-card-2'
+              : active
+                ? 'bg-card-2 text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_1px_2px_rgba(0,0,0,0.3)]'
+                : 'bg-card text-secondary hover:text-primary shadow-[var(--shadow-pill)]',
           )}
         >
           {accent && <span className="w-[7px] h-[7px] rounded-[2px] shrink-0" style={{ background: accent }} />}
@@ -61,7 +73,7 @@ export function FilterDropdown({
           <ChevronDownIcon
             size={12}
             strokeWidth={2.5}
-            className="text-muted ml-[2px] transition-transform duration-150 group-data-[state=open]:rotate-180"
+            className="text-muted ml-0.5 transition-transform duration-150 group-data-[state=open]:rotate-180"
           />
         </button>
       </DropdownMenu.Trigger>
@@ -71,7 +83,7 @@ export function FilterDropdown({
           side={direction === 'up' ? 'top' : 'bottom'}
           sideOffset={6}
           style={{ minWidth: width }}
-          className="z-[60] bg-card-2 rounded-[10px] py-1 max-h-[280px] overflow-y-auto shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
+          className="z-[60] bg-card-2 rounded-md py-1 max-h-[280px] overflow-y-auto shadow-[var(--shadow-float)] ring-1 ring-[rgba(255,255,255,0.06)]"
         >
           {options.map(opt => {
             const isSel = opt.key === value;
@@ -81,7 +93,7 @@ export function FilterDropdown({
                 data-testid={testId ? `${testId}-option-${opt.key}` : undefined}
                 onSelect={() => onChange(opt.key)}
                 className={cn(
-                  'flex items-center gap-2 px-[10px] py-[7px] text-[12.5px] text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
+                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
                   isSel ? 'text-primary' : 'text-secondary',
                 )}
               >

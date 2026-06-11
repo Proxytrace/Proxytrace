@@ -16,11 +16,11 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     private static DashboardStatistics Build(
         out IStatsReader<TestRunStats, TestRunStats.Filter> runStats,
         out IAgentCallStatsReader callStats,
-        out IRepository<IAgent> agents)
+        out IAgentRepository agents)
     {
         runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
         callStats = Substitute.For<IAgentCallStatsReader>();
-        agents = Substitute.For<IRepository<IAgent>>();
+        agents = Substitute.For<IAgentRepository>();
         var agentCalls = Substitute.For<IAgentCallRepository>();
         return new DashboardStatistics(runStats, callStats, agents, agentCalls);
     }
@@ -85,11 +85,9 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         var matchingAgent = Substitute.For<IAgent>();
         matchingAgent.Id.Returns(Guid.NewGuid());
         matchingAgent.Project.Id.Returns(projectId);
-        var otherAgent = Substitute.For<IAgent>();
-        otherAgent.Id.Returns(Guid.NewGuid());
-        otherAgent.Project.Id.Returns(Guid.NewGuid());
-        agents.GetAllAsync(Arg.Any<CancellationToken>())
-            .Returns([matchingAgent, otherAgent]);
+        // The repository scopes to the project server-side, returning only that project's agents.
+        agents.GetByProjectAsync(projectId, Arg.Any<CancellationToken>())
+            .Returns([matchingAgent]);
 
         await svc.GetSummaryAsync(new StatisticsFilter(ProjectId: projectId), CancellationToken);
 

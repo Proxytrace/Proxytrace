@@ -30,7 +30,7 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
     <div className="flex flex-col gap-3">
       {kind === EvaluatorKind.Agentic && showPresetPicker && (
         <FormField label="Preset">
-          <Select value={form.presetKey} onChange={e => applyPreset(e.target.value)}>
+          <Select value={form.presetKey} onValueChange={applyPreset}>
             <option value="">Custom (write your own)</option>
             {presets.map(p => <option key={p.key} value={p.key}>{p.name}</option>)}
           </Select>

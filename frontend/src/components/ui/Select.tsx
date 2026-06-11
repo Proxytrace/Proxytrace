@@ -1,13 +1,25 @@
 import React from 'react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { cn } from '../../lib/cn';
-import { ChevronDownIcon } from '../icons';
+import { CheckIcon, ChevronDownIcon } from '../icons';
 import { formInputCls } from './classes';
 
 type Size = 'sm' | 'md';
 
-interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+interface SelectProps {
+  value: string;
+  onValueChange: (value: string) => void;
   inputSize?: Size;
   invalid?: boolean;
+  disabled?: boolean;
+  /** Shown on the trigger when no option matches `value`. */
+  placeholder?: string;
+  autoFocus?: boolean;
+  id?: string;
+  className?: string;
+  /** `<option>` elements — kept as the call-site API; parsed into the styled menu. */
+  children: React.ReactNode;
+  'data-testid'?: string;
 }
 
 const SIZE_CLS: Record<Size, string> = {
@@ -15,29 +27,105 @@ const SIZE_CLS: Record<Size, string> = {
   md: 'px-3 py-2 text-title',
 };
 
-export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { inputSize = 'md', invalid, className, children, ...rest },
-  ref,
-) {
+interface OptionData {
+  value: string;
+  label: React.ReactNode;
+  disabled?: boolean;
+}
+
+function isOptionElement(
+  node: React.ReactNode,
+): node is React.ReactElement<React.OptionHTMLAttributes<HTMLOptionElement>> {
+  return React.isValidElement(node) && node.type === 'option';
+}
+
+/** Flatten `<option>` children into renderable option data (label stays a node). */
+function collectOptions(children: React.ReactNode): OptionData[] {
+  return React.Children.toArray(children)
+    .filter(isOptionElement)
+    .map(el => {
+      const { value, children: label, disabled } = el.props;
+      const resolvedValue =
+        value !== undefined ? String(value) : typeof label === 'string' ? label : '';
+      return { value: resolvedValue, label, disabled };
+    });
+}
+
+/**
+ * Single-select control with a styled, dark-theme option list (Radix DropdownMenu-backed:
+ * portalled, collision-aware, keyboard-navigable). Replaces the native `<select>` whose option
+ * popup the OS rendered. Keeps the `<option>`-children API; emits the chosen value via
+ * `onValueChange`.
+ */
+export function Select({
+  value,
+  onValueChange,
+  inputSize = 'md',
+  invalid,
+  disabled,
+  placeholder,
+  autoFocus,
+  id,
+  className,
+  children,
+  'data-testid': testId,
+}: SelectProps) {
+  const options = collectOptions(children);
+  const selected = options.find(o => o.value === value);
+
   return (
-    <div className="relative">
-      <select
-        ref={ref}
-        data-invalid={invalid || undefined}
-        className={cn(
-          formInputCls,
-          SIZE_CLS[inputSize],
-          'appearance-none pr-9 cursor-pointer',
-          className,
-        )}
-        {...rest}
-      >
-        {children}
-      </select>
-      <ChevronDownIcon
-        size={12}
-        className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted"
-      />
-    </div>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild disabled={disabled}>
+        <button
+          type="button"
+          id={id}
+          data-testid={testId}
+          data-invalid={invalid || undefined}
+          autoFocus={autoFocus}
+          className={cn(
+            formInputCls,
+            SIZE_CLS[inputSize],
+            'group inline-flex items-center justify-between gap-2 text-left cursor-pointer',
+            !selected && 'text-muted',
+            className,
+          )}
+        >
+          <span className="truncate">{selected ? selected.label : placeholder ?? value}</span>
+          <ChevronDownIcon
+            size={12}
+            className="shrink-0 text-muted transition-transform duration-150 group-data-[state=open]:rotate-180"
+          />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={6}
+          className="z-[60] min-w-[var(--radix-dropdown-menu-trigger-width)] max-h-[280px] overflow-y-auto bg-card-2 rounded-md py-1 shadow-[var(--shadow-float)] ring-1 ring-[rgba(255,255,255,0.06)]"
+        >
+          {options.map((opt, i) => {
+            const isSel = opt.value === value;
+            return (
+              <DropdownMenu.Item
+                key={opt.value || `opt-${i}`}
+                disabled={opt.disabled}
+                textValue={typeof opt.label === 'string' ? opt.label : opt.value}
+                data-testid={testId ? `${testId}-option-${opt.value}` : undefined}
+                onSelect={() => onValueChange(opt.value)}
+                className={cn(
+                  'flex items-center gap-2 px-2.5 py-1.5 text-body text-left cursor-pointer outline-none',
+                  'transition-colors duration-100 data-[highlighted]:bg-[rgba(255,255,255,0.05)]',
+                  'data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed',
+                  isSel ? 'text-primary' : 'text-secondary',
+                )}
+              >
+                <span className="flex-1 truncate">{opt.label}</span>
+                {isSel && <CheckIcon size={12} strokeWidth={2.5} className="text-accent shrink-0" />}
+              </DropdownMenu.Item>
+            );
+          })}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
-});
+}

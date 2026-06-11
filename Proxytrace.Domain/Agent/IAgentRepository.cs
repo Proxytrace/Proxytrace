@@ -10,7 +10,7 @@ namespace Proxytrace.Domain.Agent;
 /// <summary>
 /// Repository for <see cref="IAgent"/> entities with agent-specific lookup operations.
 /// </summary>
-public interface IAgentRepository : IRepository<IAgent>
+public interface IAgentRepository : IArchivableRepository<IAgent>
 {
     /// <summary>
     /// Returns the agent whose current version exactly matches the given system message + tools
@@ -66,4 +66,9 @@ public interface IAgentRepository : IRepository<IAgent>
     /// (system or not), or null if none exists. Used for explicit name-based call attribution.
     /// </summary>
     Task<IAgent?> FindByNameAsync(IProject project, string name, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all agents belonging to the project identified by <paramref name="projectId"/>.
+    /// </summary>
+    Task<IReadOnlyList<IAgent>> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
 }

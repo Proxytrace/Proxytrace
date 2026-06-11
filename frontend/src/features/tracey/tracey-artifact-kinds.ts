@@ -1,0 +1,67 @@
+import type {
+  AgentCallDto,
+  AgentCallListItemDto,
+  AgentDto,
+  AgentEntityCountsDto,
+  AgentListItemDto,
+  AgentTimeSummaryDto,
+  DashboardViewDto,
+  OptimizationProposalDto,
+  ProviderDto,
+  TestResultDto,
+  TestRunDto,
+  TestRunGroupDto,
+  TestSuiteDto,
+  TestSuiteListItemDto,
+  TheoryDto,
+} from '../../api/models';
+import type { ChartArtifact, TableArtifact, TextArtifact } from './tracey-artifacts';
+import type { RunComparison } from './tools/run-analysis';
+
+/** The payload `get_agent_stats` stores: the 30-day summary plus the agent's entity counts. */
+export interface AgentStatsArtifact {
+  summary: AgentTimeSummaryDto;
+  counts: AgentEntityCountsDto;
+}
+
+/** The payload `get_run_failures` stores: the run's identity plus its failing case results. */
+export interface RunFailuresArtifact {
+  runId: string;
+  suiteName: string | null;
+  agentName: string;
+  passRate: number;
+  totalCases: number;
+  failures: TestResultDto[];
+}
+
+/**
+ * The single contract between what a tool **stores** and what its card **reads back**: one entry
+ * per artifact `kind`, mapping it to the payload type. `StoreFn` (`tools/shared.ts`) only accepts
+ * a payload matching its kind, and `useArtifactResult(kind, …)` returns exactly that type (and
+ * verifies the kind at runtime) — so a tool and its card can no longer silently disagree about
+ * the payload shape (e.g. storing a list-item DTO while the card reads the full DTO).
+ */
+export interface ArtifactPayloads {
+  'agent-list': AgentListItemDto[];
+  agent: AgentDto;
+  'suite-list': TestSuiteListItemDto[];
+  suite: TestSuiteDto;
+  'run-list': TestRunDto[];
+  run: TestRunDto;
+  'run-failures': RunFailuresArtifact;
+  'run-comparison': RunComparison;
+  'test-run-group': TestRunGroupDto;
+  'trace-list': AgentCallListItemDto[];
+  'theory-list': TheoryDto[];
+  'proposal-list': OptimizationProposalDto[];
+  proposal: OptimizationProposalDto;
+  'dashboard-stats': DashboardViewDto;
+  'agent-stats': AgentStatsArtifact;
+  provider: ProviderDto;
+  trace: AgentCallDto;
+  chart: ChartArtifact;
+  table: TableArtifact;
+  text: TextArtifact;
+}
+
+export type ArtifactKind = keyof ArtifactPayloads;

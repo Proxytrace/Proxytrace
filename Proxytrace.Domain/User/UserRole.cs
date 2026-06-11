@@ -5,12 +5,13 @@ namespace Proxytrace.Domain.User;
 /// </summary>
 public enum UserRole
 {
-    /// <summary>Read-only access.</summary>
-    Viewer,
+    // Numeric values are explicit and start at 1 (the former Viewer = 0 was removed) so existing
+    // Member/Admin rows keep their stored integer value. A data migration remaps any leftover
+    // Viewer (0) rows to Member.
 
     /// <summary>Standard read/write access.</summary>
-    Member,
+    Member = 1,
 
     /// <summary>Full access including user management.</summary>
-    Admin,
+    Admin = 2,
 }

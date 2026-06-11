@@ -103,10 +103,10 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
   }
 
   const dropdownWidthCls = width === 'fixed'
-    ? 'left-1/2 -translate-x-1/2 w-[720px] max-w-[calc(100vw-40px)]'
+    ? 'left-1/2 -translate-x-1/2 w-[80vw]'
     : 'left-0 right-0';
 
-  const wrapperWidthCls = width === 'fixed' ? 'flex-1 max-w-[460px] mx-auto' : 'w-full';
+  const wrapperWidthCls = width === 'fixed' ? 'flex-1 max-w-[720px] mx-auto' : 'w-full';
   const inputBgCls = width === 'fixed' ? 'bg-white/[.03]' : 'bg-card-2';
 
   return (
@@ -152,7 +152,7 @@ export const UnifiedSearch = forwardRef<UnifiedSearchHandle, Props>(function Uni
           dropdownWidthCls,
           'rounded-[14px] bg-[rgba(24,24,28,0.96)] backdrop-blur-[20px] backdrop-saturate-[140%]',
           'shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(255,255,255,0.06)]',
-          'z-50 overflow-hidden',
+          'z-[100] overflow-hidden',
         )}>
           {!isRecentMode && !searchEnabled && (
             <div className="px-4 py-6 text-xs text-white/40">Type at least 2 characters.</div>

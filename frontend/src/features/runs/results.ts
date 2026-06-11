@@ -5,7 +5,6 @@
 import { TestRunStatus, EvaluationScore } from '../../api/models';
 import type {
   EvaluationResultDto,
-  PagedResult,
   RunCompleteEvent,
   TestCaseFixtureDto,
   TestResultArrivedEvent,
@@ -264,17 +263,18 @@ function buildMatrixCell(run: TestRunDto, caseId: string, live?: LiveProgress): 
 // ── Live cache patching (SSE) ─────────────────────────────────────────────────
 
 /**
- * Folds a `test-result-arrived` event into a cached group-list page: upserts the arriving
+ * Folds a `test-result-arrived` event into the selected (fat) group: upserts the arriving
  * (finalized) result into its run and recomputes that run's pass/fail counts. If the case is
  * already present its result is *replaced* with the authoritative one (a late event must not be
- * silently dropped). Returns the page unchanged when the group/run is absent, so SSE never
- * triggers a refetch.
+ * silently dropped). Returns the group unchanged when the event is for another group/run, so SSE
+ * never triggers a refetch.
  */
-export function patchGroupsWithResult(
-  page: PagedResult<TestRunGroupDto>,
+export function patchGroupWithResult(
+  group: TestRunGroupDto,
   e: TestResultArrivedEvent,
-): PagedResult<TestRunGroupDto> {
-  return mapRun(page, e.groupId, e.runId, run => {
+): TestRunGroupDto {
+  if (group.id !== e.groupId) return group;
+  return mapRun(group, e.runId, run => {
     const result: TestResultDto = {
       id: e.testCaseId,
       testCaseId: e.testCaseId,
@@ -288,12 +288,13 @@ export function patchGroupsWithResult(
   });
 }
 
-/** Flips a single run's status/completion in the cached page on a `run-complete` event. */
-export function patchGroupsRunStatus(
-  page: PagedResult<TestRunGroupDto>,
+/** Flips a single run's status/completion in the selected group on a `run-complete` event. */
+export function patchGroupRunStatus(
+  group: TestRunGroupDto,
   e: RunCompleteEvent,
-): PagedResult<TestRunGroupDto> {
-  return mapRun(page, e.groupId, e.runId, run => ({ ...run, status: e.status, completedAt: e.completedAt }));
+): TestRunGroupDto {
+  if (group.id !== e.groupId) return group;
+  return mapRun(group, e.runId, run => ({ ...run, status: e.status, completedAt: e.completedAt }));
 }
 
 /** Recomputes pass/fail counts and (judged-denominator) pass rate from a run's results. */
@@ -303,16 +304,11 @@ function withCounts(run: TestRunDto, results: TestResultDto[]): TestRunDto {
   return { ...run, results, passedCases, failedCases, passRate: compositePercent(passedCases, passedCases + failedCases) ?? 0 };
 }
 
-/** Applies `fn` to the one matching run inside the cached page; everything else is untouched. */
+/** Applies `fn` to the one matching run inside the group; everything else is untouched. */
 function mapRun(
-  page: PagedResult<TestRunGroupDto>,
-  groupId: string,
+  group: TestRunGroupDto,
   runId: string,
   fn: (run: TestRunDto) => TestRunDto,
-): PagedResult<TestRunGroupDto> {
-  return {
-    ...page,
-    items: page.items.map(g =>
-      g.id !== groupId ? g : { ...g, runs: g.runs.map(run => (run.id === runId ? fn(run) : run)) }),
-  };
+): TestRunGroupDto {
+  return { ...group, runs: group.runs.map(run => (run.id === runId ? fn(run) : run)) };
 }

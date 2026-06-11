@@ -17,6 +17,7 @@ using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Licensing;
 
 namespace Proxytrace.Application.TestRun.Internal;
 
@@ -31,6 +32,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly IOptimizerService optimizer;
+    private readonly ILicenseService license;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
     private readonly TestRunnerConfiguration configuration;
@@ -53,6 +55,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
         IOptimizerService optimizer,
+        ILicenseService license,
         IAsyncLock asyncLock,
         ILogger<TestRunnerService> logger,
         TestRunnerConfiguration configuration)
@@ -66,6 +69,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.testResultRepository = testResultRepository;
         this.broadcaster = broadcaster;
         this.optimizer = optimizer;
+        this.license = license;
         this.asyncLock = asyncLock;
         this.logger = logger;
         this.configuration = configuration;
@@ -255,7 +259,16 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             CancellationToken = cancellationToken
         };
         
-        await Parallel.ForEachAsync(testRun.Group.Suite.Evaluators, parallelOptions,
+        // Agentic evaluators require the AgenticEvaluators license feature. On unlicensed installs
+        // they are skipped (not run, no evaluation produced) rather than errored — the pass rate is
+        // computed over judged evaluators. The suite editor mirrors this by locking agentic
+        // evaluators in the UI; an evaluator attached while licensed simply won't run after a
+        // downgrade.
+        var agenticEnabled = license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators);
+        var evaluators = testRun.Group.Suite.Evaluators
+            .Where(e => agenticEnabled || e.Kind != EvaluatorKind.Agentic);
+
+        await Parallel.ForEachAsync(evaluators, parallelOptions,
             async (evaluator, ct) => await RunEvaluator(evaluator, testResult, run, ct));
         
         using var sync = await asyncLock.LockAsync(testRun.Id, cancellationToken);

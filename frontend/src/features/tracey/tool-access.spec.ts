@@ -1,11 +1,11 @@
-import type { StepResult, ToolSet } from 'ai';
+import type { StepResult, ToolSet, UIMessage } from 'ai';
 import { describe, expect, it } from 'vitest';
 import {
   activeToolNamesFor,
   allDisclosableToolNames,
   CORE_TOOL_NAMES,
 } from './tool-access';
-import { loadedSkillIds } from './tracey-runtime';
+import { loadedSkillIds, skillIdsFromMessages, windowMessages } from './tracey-runtime';
 import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 
 const ctx: TraceyToolContext = {
@@ -13,6 +13,7 @@ const ctx: TraceyToolContext = {
   artifactScope: 'u:p1',
   navigate: () => {},
   confirm: async () => true,
+  loadedSkillIds: new Set<string>(),
 };
 
 describe('tracey tool access', () => {
@@ -85,5 +86,74 @@ describe('loadedSkillIds', () => {
 
   it('returns an empty list when no steps have run', () => {
     expect(loadedSkillIds([])).toEqual([]);
+  });
+});
+
+describe('skillIdsFromMessages', () => {
+  function messageWith(parts: unknown[]): UIMessage {
+    return { id: 'm1', role: 'assistant', parts } as unknown as UIMessage;
+  }
+
+  it('collects skill ids from load_skill tool parts across the conversation', () => {
+    const messages = [
+      messageWith([{ type: 'text', text: 'hi' }]),
+      messageWith([
+        { type: 'tool-load_skill', input: { skillId: 'optimize-agent' }, output: { name: 'optimize-agent', instructions: '…' } },
+        { type: 'tool-list_agents', input: {}, output: {} },
+      ]),
+    ];
+    expect(skillIdsFromMessages(messages)).toEqual(['optimize-agent']);
+  });
+
+  it('skips notFound results and malformed inputs', () => {
+    const messages = [
+      messageWith([
+        { type: 'tool-load_skill', input: { skillId: 'nope' }, output: { notFound: 'nope', available: [] } },
+        { type: 'tool-load_skill', input: { notSkillId: 1 } },
+      ]),
+    ];
+    expect(skillIdsFromMessages(messages)).toEqual([]);
+  });
+
+  it('counts a streamed call whose output has not arrived yet', () => {
+    const messages = [
+      messageWith([{ type: 'tool-load_skill', input: { skillId: 'review-proposals' } }]),
+    ];
+    expect(skillIdsFromMessages(messages)).toEqual(['review-proposals']);
+  });
+});
+
+describe('windowMessages', () => {
+  function msg(id: number, role: 'user' | 'assistant'): UIMessage {
+    return { id: String(id), role, parts: [] } as unknown as UIMessage;
+  }
+  /** Alternating user/assistant thread of `n` messages, starting with a user message. */
+  function thread(n: number): UIMessage[] {
+    return Array.from({ length: n }, (_, i) => msg(i, i % 2 === 0 ? 'user' : 'assistant'));
+  }
+
+  it('passes a short conversation through untouched', () => {
+    const messages = thread(6);
+    expect(windowMessages(messages, 10)).toBe(messages);
+  });
+
+  it('trims to the window, opening on a user message', () => {
+    const messages = thread(20);
+    const windowed = windowMessages(messages, 5);
+    expect(windowed.length).toBeLessThanOrEqual(5);
+    expect(windowed[0].role).toBe('user');
+    expect(windowed[windowed.length - 1]).toBe(messages[19]);
+  });
+
+  it('extends past an assistant message at the cut point', () => {
+    // Window of 4 over 10 alternating messages would open on assistant (index 6 is user, 7 assistant…)
+    const messages = thread(10);
+    const windowed = windowMessages(messages, 3);
+    expect(windowed[0].role).toBe('user');
+  });
+
+  it('falls back to a plain slice when the tail has no user message', () => {
+    const messages = Array.from({ length: 10 }, (_, i) => msg(i, 'assistant'));
+    expect(windowMessages(messages, 4)).toHaveLength(4);
   });
 });

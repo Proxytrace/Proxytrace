@@ -3,10 +3,10 @@
 // to React's data flow, so a hook is correct per BEST_PRACTICES §4.1.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AgentCallDto } from '../../../api/models';
+import type { AgentCallListItemDto } from '../../../api/models';
 
 /** Returns the set of trace IDs that arrived since the last render cycle. */
-export function useFreshTraces(traces: AgentCallDto[]): Set<string> {
+export function useFreshTraces(traces: AgentCallListItemDto[]): Set<string> {
   const seenRef = useRef<Set<string>>(new Set());
   const initedRef = useRef(false);
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());

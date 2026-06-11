@@ -18,8 +18,8 @@ public record DashboardViewDto(
     IReadOnlyList<AgentTokenUsageDto> TokenUsageByAgent,
     /// <summary>Bucket granularity used for the token series, e.g. "fiveMinutes", "hourly", "daily".</summary>
     string TokenBucket,
-    IReadOnlyList<AgentCallDto> RecentTraces,
-    IReadOnlyList<AgentDto> Agents);
+    IReadOnlyList<AgentCallListItemDto> RecentTraces,
+    IReadOnlyList<AgentListItemDto> Agents);
 
 public record SummaryDto(
     long TotalCalls,

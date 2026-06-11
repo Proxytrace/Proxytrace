@@ -183,7 +183,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
             icon={<CoinsIcon size={15} strokeWidth={2.2} />}
             color="var(--warn)"
             sub={trace.costEur == null
-              ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/providers'); }} title="Configure pricing for this model endpoint">Set price →</Button>
+              ? <Button variant="link" className="text-caption" onClick={() => { onClose(); navigate('/settings/providers'); }} title="Configure pricing for this model endpoint">Set price →</Button>
               : undefined}
           />
         </div>

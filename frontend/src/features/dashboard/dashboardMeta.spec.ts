@@ -11,7 +11,7 @@ import {
   agentCallCount,
   splitTokenStr,
 } from './dashboardMeta';
-import type { LatencyStatDto, ModelBreakdownDto, AgentTokenUsageDto, AgentBreakdownDto, AgentDto } from '../../api/models';
+import type { LatencyStatDto, ModelBreakdownDto, AgentTokenUsageDto, AgentBreakdownDto, AgentListItemDto } from '../../api/models';
 
 // ── teleFmt ──────────────────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ describe('computeTokenAgentShare', () => {
     { id: 'a1', name: 'AgentOne', isSystemAgent: false },
     { id: 'a2', name: 'AgentTwo', isSystemAgent: false },
     { id: 'sys', name: 'Optimizer', isSystemAgent: true },
-  ] as AgentDto[];
+  ] as AgentListItemDto[];
 
   it('returns empty for no data', () => {
     const result = computeTokenAgentShare([], agents);
@@ -206,7 +206,7 @@ describe('buildAgentNameMap', () => {
     const agents = [
       { id: 'a1', name: 'Alpha' },
       { id: 'a2', name: 'Beta' },
-    ] as AgentDto[];
+    ] as AgentListItemDto[];
     const map = buildAgentNameMap(agents);
     expect(map.get('a1')).toBe('Alpha');
     expect(map.get('a2')).toBe('Beta');
