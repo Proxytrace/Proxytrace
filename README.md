@@ -253,8 +253,8 @@ See [`e2e/GUIDE.md`](e2e/GUIDE.md) for selectors, auth, polling patterns, and de
 - **User & operator manual** — a searchable HTML manual built from markdown in [`manual/`](manual/) (VitePress), served by the app at **`/docs`**. Run it locally with `cd manual && npm install && npm run docs:dev` (http://localhost:4202).
 - [docs/](docs/) — AI assistant guides: architecture, code style, domain entity pattern, validation, testing, commands
 - [docs/database.md](docs/database.md) — database providers and migrations
-- [frontend/DESIGN.md](frontend/DESIGN.md) — frontend visual system
-- [frontend/BEST_PRACTICES.md](frontend/BEST_PRACTICES.md) — frontend code architecture
+- [frontend/docs/DESIGN.md](frontend/docs/DESIGN.md) — frontend visual system
+- [frontend/docs/BEST_PRACTICES.md](frontend/docs/BEST_PRACTICES.md) — frontend code architecture
 
 ---
 

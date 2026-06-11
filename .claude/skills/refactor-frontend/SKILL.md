@@ -19,7 +19,7 @@ description: >-
 # Refactor Frontend (autonomous)
 
 Drive the Proxytrace frontend toward the target state defined in
-[`frontend/BEST_PRACTICES.md`](../../../frontend/BEST_PRACTICES.md): small,
+[`frontend/docs/BEST_PRACTICES.md`](../../../frontend/docs/BEST_PRACTICES.md): small,
 single-purpose, obvious components; TanStack Query as the only data layer; no
 inline SVG, no inline static styles, no `any`/`!`; logic extracted and tested.
 
@@ -42,12 +42,12 @@ touch the same file, and the build is verified green at the end of every wave.
 
 Read both, in full, once at the start. They override any generic advice:
 
-1. `frontend/BEST_PRACTICES.md` — code architecture: the size-limit table (§1),
+1. `frontend/docs/BEST_PRACTICES.md` — code architecture: the size-limit table (§1),
    feature-folder layout (§2), the data layer (§3), `useEffect` discipline (§4),
    container/presentational split (§5), icons (§6), styling mechanics (§7),
    performance (§8), states (§9), typing (§10), a11y (§11), testing (§12), and
    the §14 pre-merge checklist that is the definition of "done" for each item.
-2. `frontend/DESIGN.md` — the visual system. You must not change how anything
+2. `frontend/docs/DESIGN.md` — the visual system. You must not change how anything
    looks while refactoring; DESIGN.md is how you know what "looks the same" means
    (tokens, which primitive to render).
 
@@ -187,8 +187,8 @@ Work the schedule **wave by wave**. For each wave:
 Each agent is stateless and starts with empty context, so the prompt must be
 self-contained. Include:
 
-- **Mandatory reading:** instruct it to read `frontend/BEST_PRACTICES.md` and
-  `frontend/DESIGN.md` in full first, and to study the relevant good
+- **Mandatory reading:** instruct it to read `frontend/docs/BEST_PRACTICES.md` and
+  `frontend/docs/DESIGN.md` in full first, and to study the relevant good
   counter-example (`features/runs/`, `api/agents.ts`, `components/ui/classes.ts`,
   `lib/cn.ts`).
 - **The exact item:** title, file(s) in scope, the smell + cited BEST_PRACTICES

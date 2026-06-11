@@ -15,7 +15,7 @@ This document describes the **target state**. Parts of the current codebase viol
 
 Some features have their own architecture guide that this file does not duplicate. Read the relevant one **before** changing that feature:
 
-- **Tracey assistant** (`src/features/tracey/`) → [`src/features/tracey/TRACEY.md`](./src/features/tracey/TRACEY.md). The chat architecture, the two request planes (reasoning vs. tool/data), and the rule that tool + prompt definitions live **only** on the client.
+- **Tracey assistant** (`src/features/tracey/`) → [`TRACEY.md`](./TRACEY.md). The chat architecture, the two request planes (reasoning vs. tool/data), progressive tool disclosure + skills, the artifact store, and the rule that tool + prompt definitions live **only** on the client.
 
 ---
 
