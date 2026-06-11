@@ -71,7 +71,8 @@ public sealed class JwtBearerEventsFactoryTests
         await events.OnMessageReceived(ctx);
 
         ctx.Result?.Succeeded.Should().BeTrue();
-        ctx.Principal!.IsInRole(nameof(UserRole.Admin)).Should().BeTrue();
+        ctx.Principal.Should().NotBeNull();
+        ctx.Principal.IsInRole(nameof(UserRole.Admin)).Should().BeTrue();
         httpContext.Items[CurrentUserAccessor.UserIdItemKey].Should().Be(userId);
     }
 

@@ -58,8 +58,8 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         var result = await controller.Recent(evaluator.Id, 10, CancellationToken);
 
         result.Value.Should().ContainSingle();
-        result.Value![0].TestCaseId.Should().Be(testCase.Id);
-        result.Value![0].Score.Should().Be(EvaluationScore.Bad);
+        result.Value[0].TestCaseId.Should().Be(testCase.Id);
+        result.Value[0].Score.Should().Be(EvaluationScore.Bad);
     }
 
     [TestMethod]
@@ -74,8 +74,8 @@ public sealed class EvaluatorTestBenchControllerTests : BaseTest<Module>
         var result = await controller.Search(evaluator.Id, "needle", 10, CancellationToken);
 
         result.Value.Should().ContainSingle();
-        result.Value![0].TestCaseId.Should().Be(matched.Id);
-        result.Value![0].Score.Should().Be(EvaluationScore.Good);
+        result.Value[0].TestCaseId.Should().Be(matched.Id);
+        result.Value[0].Score.Should().Be(EvaluationScore.Good);
     }
 
     [TestMethod]
