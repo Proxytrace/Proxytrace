@@ -214,8 +214,11 @@ public class ModelProvidersController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> DeleteModel(Guid endpointId, CancellationToken cancellationToken)
     {
-        var removed = await endpointRepository.RemoveAsync(endpointId, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        // Soft-delete: archiving hides the endpoint from pickers but keeps the row, so agents that
+        // still reference it (and their captured calls / test runs) keep resolving. See
+        // ArchivableRepository.
+        var archived = await endpointRepository.ArchiveAsync(endpointId, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     [HttpPut("{providerId:guid}/models/{endpointId:guid}")]

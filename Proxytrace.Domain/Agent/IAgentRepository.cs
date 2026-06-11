@@ -10,7 +10,7 @@ namespace Proxytrace.Domain.Agent;
 /// <summary>
 /// Repository for <see cref="IAgent"/> entities with agent-specific lookup operations.
 /// </summary>
-public interface IAgentRepository : IRepository<IAgent>
+public interface IAgentRepository : IArchivableRepository<IAgent>
 {
     /// <summary>
     /// Returns the agent whose current version exactly matches the given system message + tools

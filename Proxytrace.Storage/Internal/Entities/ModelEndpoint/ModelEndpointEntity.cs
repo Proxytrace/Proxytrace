@@ -4,7 +4,7 @@ namespace Proxytrace.Storage.Internal.Entities.ModelEndpoint;
 
 [StoredDomainEntity(typeof(IModelEndpoint))]
 [Cacheable]
-internal record ModelEndpointEntity : Entity
+internal record ModelEndpointEntity : Entity, IArchivableEntity
 {
     /// <summary>
     /// FK to <see cref="Proxytrace.Storage.Internal.Entities.Model.ModelEntity"/>
@@ -25,5 +25,8 @@ internal record ModelEndpointEntity : Entity
     /// <see cref="Proxytrace.Domain.ModelEndpoint.IModelEndpoint.OutputTokenCost"/>
     /// </summary>
     public required decimal? OutputTokenCost { get; init; }
+
+    /// <inheritdoc />
+    public bool IsArchived { get; init; }
 }
 

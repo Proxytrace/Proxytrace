@@ -3,11 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Evaluator;
 using Proxytrace.Domain.Events;
+using Proxytrace.Storage.Internal.Entities.TestSuite;
 
 namespace Proxytrace.Storage.Internal.Entities.Evaluator;
 
 [UsedImplicitly]
-internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEntity>, IEvaluatorRepository
+internal class EvaluatorRepository : ArchivableRepository<IEvaluator, EvaluatorEntity>, IEvaluatorRepository
 {
     public EvaluatorRepository(
         IMapper<IEvaluator, EvaluatorEntity> mapper,
@@ -24,8 +25,31 @@ internal class EvaluatorRepository : AbstractRepository<IEvaluator, EvaluatorEnt
             .Set<EvaluatorEntity>()
             .AsNoTracking()
             .Where(e => e.Project == projectId)
+            .ExcludeArchived()
             .ToListAsync(cancellationToken);
 
         return await Map(stored, cancellationToken);
     }
+
+    /// <summary>
+    /// Detaches the evaluator from every test suite on archive so future suite runs stop using it.
+    /// Past test results keep resolving it by id (the row stays), so history is preserved.
+    /// </summary>
+    protected override Task ArchiveRelationsAsync(
+        StorageDbContext context,
+        Guid id,
+        CancellationToken cancellationToken)
+        => transaction.InvokeAsync(async () =>
+        {
+            var junctions = context.Set<TestSuiteEvaluatorEntity>().Where(e => e.EvaluatorId == id);
+
+            if (context.Database.IsRelational())
+            {
+                await junctions.ExecuteDeleteAsync(cancellationToken);
+                return;
+            }
+
+            // The in-memory provider does not support ExecuteDelete — materialize then remove.
+            context.Set<TestSuiteEvaluatorEntity>().RemoveRange(await junctions.ToListAsync(cancellationToken));
+        });
 }

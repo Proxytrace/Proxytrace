@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Events;
 using Proxytrace.Domain.Exceptions;
@@ -39,7 +38,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         this.cache = cache;
     }
 
-    private void Notify(Guid id, EntityChangeType change)
+    protected void Notify(Guid id, EntityChangeType change)
         => entityEvents.Notify(new EntityChangedEvent(id, typeof(TDomainEntity), change));
 
     /// <summary>
@@ -125,7 +124,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         if (CanUseCache && cache?.TryGetAll() is { } snapshot)
         {

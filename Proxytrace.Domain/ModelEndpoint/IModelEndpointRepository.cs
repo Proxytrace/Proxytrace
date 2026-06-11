@@ -5,7 +5,7 @@ namespace Proxytrace.Domain.ModelEndpoint;
 /// <summary>
 /// Repository for <see cref="IModelEndpoint"/> entities with additional lookup operations.
 /// </summary>
-public interface IModelEndpointRepository : IRepository<IModelEndpoint>
+public interface IModelEndpointRepository : IArchivableRepository<IModelEndpoint>
 {
     /// <summary>
     /// Finds a model endpoint by model name and provider name, or returns null if not found.

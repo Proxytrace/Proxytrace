@@ -7,7 +7,7 @@ namespace Proxytrace.Domain.ModelEndpoint;
 /// <summary>
 /// A model endpoint (<see cref="IModel"/> + <see cref="IModelProvider"/>)
 /// </summary>
-public interface IModelEndpoint : IDomainEntity
+public interface IModelEndpoint : IDomainEntity, IArchivable
 {
     /// <summary>
     /// The language model

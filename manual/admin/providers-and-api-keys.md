@@ -19,6 +19,10 @@ users with the **Admin** role.
 
 Manage these from the **Providers** area of the UI.
 
+**Deleting a model endpoint** hides it from the model list but keeps its captured calls and test
+runs intact — their costs and history stay correct. (Deleting the whole **provider**, by contrast,
+still removes its endpoints and their data.)
+
 ## Adding a provider — models & prices auto-load
 
 When you add a provider, Proxytrace **discovers its models and fetches their prices

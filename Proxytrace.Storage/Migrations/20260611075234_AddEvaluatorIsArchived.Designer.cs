@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Proxytrace.Storage;
@@ -11,9 +12,11 @@ using Proxytrace.Storage;
 namespace Proxytrace.Storage.Migrations
 {
     [DbContext(typeof(StorageDbContext))]
-    partial class StorageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611075234_AddEvaluatorIsArchived")]
+    partial class AddEvaluatorIsArchived
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,9 +39,6 @@ namespace Proxytrace.Storage.Migrations
 
                     b.Property<Guid>("Endpoint")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsSystemAgent")
                         .HasColumnType("boolean");
@@ -63,8 +63,6 @@ namespace Proxytrace.Storage.Migrations
                     b.HasIndex("Endpoint");
 
                     b.HasIndex("IsSystemAgent");
-
-                    b.HasIndex("Project", "IsArchived");
 
                     b.HasIndex("Project", "Name");
 
@@ -385,9 +383,6 @@ namespace Proxytrace.Storage.Migrations
                         .HasPrecision(18, 6)
                         .HasColumnType("numeric(18,6)");
 
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean");
-
                     b.Property<Guid>("Model")
                         .HasColumnType("uuid");
 
@@ -403,10 +398,10 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Provider");
+
                     b.HasIndex("Model", "Provider")
                         .IsUnique();
-
-                    b.HasIndex("Provider", "IsArchived");
 
                     b.ToTable("ModelEndpointEntity");
                 });

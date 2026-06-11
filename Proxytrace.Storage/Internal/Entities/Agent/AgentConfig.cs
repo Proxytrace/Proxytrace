@@ -43,6 +43,8 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
     {
         builder.HasIndex(e => e.IsSystemAgent);
         builder.HasIndex(e => new { e.Project, e.Name });
+        // Supports the project-scoped list query, which excludes archived rows.
+        builder.HasIndex(e => new { e.Project, e.IsArchived });
         builder.Property(e => e.Name).HasMaxLength(200);
 
         builder
@@ -92,6 +94,7 @@ internal class AgentConfig : AbstractEntityConfiguration<AgentEntity>, IMapper<I
             ModelParameters = ToData(domain.ModelParameters),
             Endpoint = domain.Endpoint.Id,
             IsSystemAgent = domain.IsSystemAgent,
+            IsArchived = domain.IsArchived,
             CurrentVersionId = domain.CurrentVersion.Id,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,

@@ -90,6 +90,11 @@ Pick an agent from the searchable list on the left to open its detail panel:
 
 The performance stats and suite pass rates update live as new traces arrive.
 
+**Deleting an agent** removes it from the agent list and frees its licensed-agent slot, but keeps
+its captured traces, versions, and test suites intact for historical reference. Built-in **system
+agents** (Tracey, optimizers, and the judges behind agentic evaluators) can't be deleted. If the
+same prompt-and-tools combination is observed in traffic again later, the agent reappears.
+
 ## What you can do with agents
 
 - **Review the current definition** — system prompt, tool specifications, and model

@@ -62,6 +62,10 @@ performing:
 - **Recent evaluations** — the latest results this evaluator scored. **Click a row to open
   that result in the run matrix**, with its detail drawer expanded.
 
+**Deleting an evaluator** removes it from the workspace and from any test suites it was attached
+to, so future runs no longer use it. Past test results keep their evaluations — the evaluator's
+name and scores stay visible in the history you've already collected.
+
 ## The Evaluator Playground
 
 The **Evaluator Playground** (in the sidebar under *Evaluators*) lets you probe a single

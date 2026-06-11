@@ -20,28 +20,33 @@ internal abstract record DomainEntity<TSelf> :
     /// <inheritdoc />
     public DateTimeOffset UpdatedAt { get; }
 
+    /// <inheritdoc />
+    public bool IsArchived { get; }
+
     /// <summary>
     /// Creates a new instance
     /// </summary>
     protected DomainEntity(IRepository<TSelf> repository)
     {
         this.repository = repository;
-        
+
         Id = Guid.NewGuid();
         CreatedAt = DateTimeOffset.UtcNow;
         UpdatedAt = DateTimeOffset.UtcNow;
+        IsArchived = false;
     }
-    
+
     /// <summary>
     /// Creates a new instance from existing data
     /// </summary>
     protected DomainEntity(IDomainEntityData existing, IRepository<TSelf> repository)
     {
         this.repository = repository;
-        
+
         Id = existing.Id;
         CreatedAt = existing.CreatedAt;
         UpdatedAt = existing.UpdatedAt;
+        IsArchived = existing.IsArchived;
     }
     
     /// <inheritdoc />

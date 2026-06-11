@@ -187,8 +187,10 @@ public class EvaluatorsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await evaluatorRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        // Soft-delete: archiving hides the evaluator and detaches it from suites, but keeps the row
+        // so historical test results still resolve it. See ArchivableRepository.
+        var archived = await evaluatorRepository.ArchiveAsync(id, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     [HttpGet("{id:guid}/recent-evaluations")]

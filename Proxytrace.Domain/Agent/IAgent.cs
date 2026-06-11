@@ -14,7 +14,7 @@ namespace Proxytrace.Domain.Agent;
 /// live on its <see cref="IAgentVersion"/> history; <see cref="CurrentVersion"/> is the version
 /// currently in effect (latest, unless pinned).
 /// </summary>
-public interface IAgent : IDomainEntity<IAgent>, ISearchable
+public interface IAgent : IDomainEntity<IAgent>, ISearchable, IArchivable
 {
     /// <summary>Short human-readable name generated from the system message at creation time.</summary>
     string Name { get; }

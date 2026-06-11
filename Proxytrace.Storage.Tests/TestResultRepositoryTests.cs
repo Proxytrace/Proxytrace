@@ -78,6 +78,25 @@ public sealed class TestResultRepositoryTests : BaseTest<Module>
         hits.Should().HaveCount(2);
     }
 
+    [TestMethod]
+    public async Task GetRecentByEvaluator_AfterEvaluatorArchived_StillResolvesHistory()
+    {
+        // Archiving (soft-delete) keeps the evaluator row, so a prior test result's evaluation —
+        // which live-fetches the evaluator by id at map time — must still load.
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestResultRepository>();
+        var evaluatorRepo = services.GetRequiredService<IEvaluatorRepository>();
+        var evaluator = await services.GetRequiredService<IDomainEntityGenerator<IEvaluator>>().GetOrCreateAsync(CancellationToken);
+
+        await PersistResult(services, evaluator, EvaluationScore.Good, "historical reasoning");
+
+        await evaluatorRepo.ArchiveAsync(evaluator.Id, CancellationToken);
+
+        var results = await repo.GetRecentByEvaluatorAsync(evaluator.Id, 20, cancellationToken: CancellationToken);
+        results.Should().ContainSingle();
+        results.Single().Evaluations.Should().Contain(e => e.Evaluator.Id == evaluator.Id);
+    }
+
     private async Task<ITestCase> PersistResult(
         IServiceProvider services, IEvaluator evaluator, EvaluationScore score, string? reasoning = null)
     {

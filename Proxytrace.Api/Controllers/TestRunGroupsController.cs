@@ -153,11 +153,10 @@ public class TestRunGroupsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        var removed = await groupRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
-    }
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        => this.DeleteOrConflictAsync(
+            () => groupRepository.RemoveAsync(id, cancellationToken),
+            "This run group still has runs referenced by an optimization proposal. Remove the proposal first.");
 
     private async Task<TestRunGroupDto> ToDtoAsync(ITestRunGroup group, CancellationToken cancellationToken)
     {

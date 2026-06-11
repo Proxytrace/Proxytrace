@@ -7,7 +7,7 @@ namespace Proxytrace.Domain.Evaluator;
 /// <summary>
 /// Evaluates whether an actual assistant response matches an expected output.
 /// </summary>
-public interface IEvaluator : IDomainEntity<IEvaluator>, ISearchable
+public interface IEvaluator : IDomainEntity<IEvaluator>, ISearchable, IArchivable
 {
     string Name { get; }
     

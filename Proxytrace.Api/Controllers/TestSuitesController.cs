@@ -188,11 +188,10 @@ public class TestSuitesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
-    {
-        var removed = await suiteRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
-    }
+    public Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+        => this.DeleteOrConflictAsync(
+            () => suiteRepository.RemoveAsync(id, cancellationToken),
+            "This test suite is still referenced by an optimization theory. Remove the theory before deleting the suite.");
 
     /// <summary>
     /// Creates a new test suite by promoting a curated selection of traced agent calls.

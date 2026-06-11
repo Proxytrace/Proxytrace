@@ -44,6 +44,8 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(e => new { e.Model, e.Provider }).IsUnique();
+        // Supports the provider-scoped list query, which excludes archived rows.
+        builder.HasIndex(e => new { e.Provider, e.IsArchived });
     }
 
     public async Task<IModelEndpoint> Map(ModelEndpointEntity stored, CancellationToken cancellationToken = default)
@@ -61,6 +63,7 @@ internal class ModelEndpointConfig : AbstractEntityConfiguration<ModelEndpointEn
             Provider = domain.Provider.Id,
             InputTokenCost = domain.InputTokenCost,
             OutputTokenCost = domain.OutputTokenCost,
+            IsArchived = domain.IsArchived,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
