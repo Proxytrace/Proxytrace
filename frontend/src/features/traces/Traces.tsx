@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Pagination } from '../../components/ui/Pagination';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { TraceDetail } from './TraceDetail';
@@ -74,6 +74,14 @@ export default function Traces() {
   );
   const visibleAgents = showSystem ? allAgents : allAgents.filter(a => !a.isSystemAgent);
   const agents = visibleAgents.filter(a => (callCounts.get(a.id) ?? 0) > 0);
+
+  // Heal a restored filter that points at a system agent while system traces are hidden (the
+  // combo could persist before the toggle cleared it) — the dropdown would show the raw id.
+  useEffect(() => {
+    if (!showSystem && agentFilter && allAgents.some(a => a.id === agentFilter && a.isSystemAgent)) {
+      setAgentFilter('');
+    }
+  }, [showSystem, agentFilter, allAgents, setAgentFilter]);
 
   const rows = useMemo(() => buildRows(traces), [traces]);
   // At-a-glance aggregate of the current page slice (recomputes as page/filter/range changes).
@@ -161,6 +169,11 @@ export default function Traces() {
   }
 
   function handleShowSystemChange(v: boolean) {
+    // Hiding system traces removes system agents from the filter options — drop a now-orphaned
+    // selection so the dropdown doesn't fall back to rendering the raw agent id.
+    if (!v && agentFilter && allAgents.some(a => a.id === agentFilter && a.isSystemAgent)) {
+      setAgentFilter('');
+    }
     setShowSystem(v);
     setPage(1);
   }
