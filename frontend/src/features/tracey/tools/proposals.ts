@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
 import { Priority, ProposalStatus, TheorySource } from '../../../api/models';
-import { type ToolFactory, tool, empty, CANCELLED } from './shared';
+import { type ToolFactory, tool, empty, CANCELLED, listDigest } from './shared';
 import { clip } from './run-analysis';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
@@ -38,12 +38,9 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       confirm: false,
       execute: async () => {
         const items = await proposalsApi.getAll({ projectId });
-        return store('proposal-list', items, {
-          count: items.length,
-          items: items.map((p) => ({
-            id: p.id, kind: p.kind, status: p.status, priority: p.priority, agentName: p.agentName,
-          })),
-        });
+        return store('proposal-list', items, listDigest(items, 25, (p) => ({
+          id: p.id, kind: p.kind, status: p.status, priority: p.priority, agentName: p.agentName,
+        })));
       },
     }),
     get_proposal: tool({
@@ -79,20 +76,17 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       confirm: false,
       execute: async ({ agentId }) => {
         const items = await theoriesApi.getAll({ projectId, agentId });
-        return store('theory-list', items, {
-          count: items.length,
-          items: items.slice(0, 20).map((t) => ({
-            id: t.id,
-            kind: t.kind,
-            status: t.status,
-            priority: t.priority,
-            agentName: t.agentName,
-            rationale: clip(t.rationale, 140),
-            baselinePassRate: t.baselinePassRate,
-            projectedPassRate: t.projectedPassRate,
-            resultingProposalId: t.resultingProposalId,
-          })),
-        });
+        return store('theory-list', items, listDigest(items, 20, (t) => ({
+          id: t.id,
+          kind: t.kind,
+          status: t.status,
+          priority: t.priority,
+          agentName: t.agentName,
+          rationale: clip(t.rationale, 140),
+          baselinePassRate: t.baselinePassRate,
+          projectedPassRate: t.projectedPassRate,
+          resultingProposalId: t.resultingProposalId,
+        })));
       },
     }),
     set_proposal_status: tool({
@@ -106,7 +100,9 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       execute: async ({ proposalId, status }, c) => {
         const ok = await c.confirm(`Set proposal ${proposalId} to ${status}?`);
         if (!ok) return CANCELLED;
-        return proposalsApi.updateStatus(proposalId, status);
+        // The full updated proposal (incl. the proposed change body) is of no use to the model.
+        const updated = await proposalsApi.updateStatus(proposalId, status);
+        return { id: updated.id, status: updated.status };
       },
     }),
     submit_optimization_theory: tool({
@@ -133,7 +129,16 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         if (!ok) return CANCELLED;
         try {
           const theory = await theoriesApi.submit({ agentId, suiteId, priority, rationale, source: TheorySource.TraceyAi, details });
-          return { ...theory, awaitable: { kind: 'theory', id: theory.id } };
+          // The theory echoes back the full proposed change the model just authored; store it for
+          // the live card and hand the model only the identity + the awaitable handle.
+          return store('theory', theory, {
+            id: theory.id,
+            kind: theory.kind,
+            status: theory.status,
+            agentName: theory.agentName,
+            priority: theory.priority,
+            awaitable: { kind: 'theory', id: theory.id },
+          });
         } catch (error) {
           const status = (error as { status?: number }).status;
           if (status === 409) return { outcome: 'duplicate', message: 'An identical theory or proposal already exists for this agent.' };

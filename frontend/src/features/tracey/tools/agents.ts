@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
-import { type ToolFactory, tool, empty } from './shared';
+import { type ToolFactory, tool, empty, listDigest } from './shared';
 
 export const createAgentTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -15,15 +15,12 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
       confirm: false,
       execute: async () => {
         const items = (await agentsApi.list({ projectId })).items;
-        return store('agent-list', items, {
-          count: items.length,
-          items: items.map((a) => ({
-            id: a.id,
-            name: a.name,
-            endpointName: a.endpointName,
-            toolCount: a.toolCount,
-          })),
-        });
+        return store('agent-list', items, listDigest(items, 25, (a) => ({
+          id: a.id,
+          name: a.name,
+          endpointName: a.endpointName,
+          toolCount: a.toolCount,
+        })));
       },
     }),
     get_agent: tool({

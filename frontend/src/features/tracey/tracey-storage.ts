@@ -35,3 +35,22 @@ export function clearThread(userKey: string, projectKey: string): void {
     // ignore
   }
 }
+
+const AUTO_APPROVE_KEY = 'proxytrace.tracey.autoApprove';
+
+/** The persisted auto-approve preference; defaults to true when unset or storage is unavailable. */
+export function loadAutoApprove(): boolean {
+  try {
+    return localStorage.getItem(AUTO_APPROVE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+
+export function saveAutoApprove(value: boolean): void {
+  try {
+    localStorage.setItem(AUTO_APPROVE_KEY, String(value));
+  } catch {
+    // Quota failure: losing the preference is non-fatal.
+  }
+}

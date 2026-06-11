@@ -78,7 +78,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration/`stoppedEarly` (step budget hit) + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
-| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, typing dots, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
+| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
 | `api/tracey.ts` | `getSession()` → `{ model, agentId }` for `GET /api/tracey/session`. |
 
@@ -139,7 +139,7 @@ column is which bundle activates the tool (`core` = always available).
 |------|------|---------|-------|-----------|
 | `navigate` | client action | no | core | `ToolCallCard` |
 | `search_docs` | knowledge read | no | core | `ToolCallCard` |
-| `load_skill` | meta | no | core | `ToolCallCard` |
+| `load_skill` | meta | no | core | hidden (renders nothing) |
 | `list_agents` / `get_agent` | read | no | core | `AgentListToolUI` / `AgentCardToolUI` |
 | `show_chart` / `show_table` / `show_text` | render | no | core | `ChartToolUI` / `TableToolUI` / `TextToolUI` |
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
@@ -169,13 +169,19 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   the artifact store, and return only a compact digest + reference. `confirm: false`. The
   single-entity gets (`get_agent`, `get_run`, `get_proposal`, `get_provider`, `get_trace`,
   `get_suite`) each have a dedicated card in `tool-ui/`. Digests deliberately carry enough to
-  answer follow-ups without more cards: list digests include the key row fields, and
+  answer follow-ups without more cards: list digests include the key row fields **but are capped**
+  (`listDigest` in `tools/shared.ts` — first 20–25 rows + total count + a truncation note; the
+  card always shows everything), and
   `get_dashboard_stats` includes `byAgent`/`byModel` usage breakdowns so a cross-agent usage chart
   needs one read, not `get_agent_stats` per agent (the prompt's "card economy" rules lean on
   this).
 - **Write tools** (`start_test_run`, `set_proposal_status`, `submit_optimization_theory`) set
   `confirm: true`. They call `ctx.confirm(summary)` **before** mutating; on decline they return the
-  `CANCELLED` sentinel and never touch the mutating API.
+  `CANCELLED` sentinel and never touch the mutating API. Their results are digests too:
+  `start_test_run` and `submit_optimization_theory` store the created entity as an artifact and
+  return only identity fields + the `awaitable` handle (the theory in particular would otherwise
+  echo the full proposed change the model just authored straight back into its context);
+  `set_proposal_status` returns just `{ id, status }`.
 - **Render tools** (`show_chart`, `show_table`, `show_text`) take the data as args and return only
   a stored render spec; the matching `tool-ui/` component draws it via a `components/artifacts/`
   renderer.
@@ -188,8 +194,9 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   The result also drives the read-only summary, so it survives reload.
 
 A tool gets inline UI by adding its component to `tool-ui/registry.ts` (keyed by tool name);
-unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`, `load_skill`,
-`set_proposal_status`). The runtime's tool adapter omits `execute` for interactive tools so the
+unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`,
+`set_proposal_status`). `load_skill` is mapped to a hidden component (`HiddenToolUI`, renders
+nothing) — it's plumbing, not something the user should see in the thread. The runtime's tool adapter omits `execute` for interactive tools so the
 SDK treats them as frontend tools, and passes the SDK abort signal into `execute` so long-running
 tools stop when the user stops the turn.
 
@@ -197,11 +204,13 @@ tools stop when the user stops the turn.
 
 All write tools funnel through `useTraceyChat`'s `confirm(summary)`:
 
-- **Auto-approve OFF (default):** `confirm` returns a promise and sets `pendingConfirmation`. The
+- **Auto-approve ON (default):** `confirm` resolves `true` immediately — no prompt. The toggle is
+  in the chat panel; the preference is persisted in `localStorage` (`tracey-storage.ts`,
+  `loadAutoApprove`/`saveAutoApprove`) and `autoApproveRef` keeps the latest value visible to the
+  async tool closure.
+- **Auto-approve OFF:** `confirm` returns a promise and sets `pendingConfirmation`. The
   page renders an inline Confirm/Cancel card; `resolveConfirmation(true|false)` settles the promise.
   The tool proceeds only on `true`, else returns `CANCELLED`.
-- **Auto-approve ON:** `confirm` resolves `true` immediately — no prompt. The toggle is in the
-  chat panel; `autoApproveRef` keeps the latest value visible to the async tool closure.
 
 Confirmation is gated in the **tool layer** (not the model), so the model can't bypass it.
 

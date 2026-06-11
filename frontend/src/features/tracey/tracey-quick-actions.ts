@@ -23,10 +23,10 @@ export const QUICK_ACTIONS: QuickAction[] = [
     prompt: 'Plot a bar chart of token usage per agent for this project.',
   },
   {
-    id: 'summarize-failures',
-    label: 'Summarize failing runs',
-    hint: 'Find and explain failing test runs',
-    prompt: 'Summarize the most recent failing test runs and what went wrong.',
+    id: 'improve-failing-runs',
+    label: 'Improve failing runs',
+    hint: 'Find failing test runs and suggest improvements',
+    prompt: 'Find the most recent failing test runs and suggest concrete improvements.',
   },
   {
     id: 'run-a-suite',

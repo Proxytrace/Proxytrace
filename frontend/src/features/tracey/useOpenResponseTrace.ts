@@ -26,6 +26,10 @@ export function useOpenResponseTrace() {
         const result = await queryClient.fetchQuery({
           queryKey: QUERY_KEYS.agentCalls(filter),
           queryFn: () => agentCallsApi.list(filter),
+          // Ingestion is async: a click right after the turn can legitimately find nothing yet.
+          // The global staleTime (30 s) would cache that empty page and make every retry within
+          // the window return it — always refetch instead so "try again" actually retries.
+          staleTime: 0,
         });
         const trace = result.items[0];
         if (trace) {

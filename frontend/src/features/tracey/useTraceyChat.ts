@@ -17,7 +17,7 @@ import { useKiosk } from '../../contexts/KioskContext';
 import { TRACEY_SYSTEM_PROMPT } from './tracey-prompt';
 import { TraceyTransport } from './tracey-runtime';
 import type { TraceyToolContext } from './tracey-tools';
-import { clearThread, loadThread, saveThread } from './tracey-storage';
+import { clearThread, loadAutoApprove, loadThread, saveAutoApprove, saveThread } from './tracey-storage';
 import { clearArtifacts, collectArtifactRefs, pruneArtifacts } from './tracey-artifact-store';
 
 export interface PendingConfirmation {
@@ -88,7 +88,12 @@ export function useTraceyChat(): TraceyChat {
   // this user+project's artifacts (see tracey-artifact-store).
   const artifactScope = `${userKey}:${projectKey}`;
 
-  const [autoApprove, setAutoApprove] = useState(false);
+  // Persisted in localStorage so the preference survives reloads; defaults to on.
+  const [autoApprove, setAutoApproveState] = useState(loadAutoApprove);
+  const setAutoApprove = useCallback((value: boolean) => {
+    saveAutoApprove(value);
+    setAutoApproveState(value);
+  }, []);
   const autoApproveRef = useRef(autoApprove);
   useEffect(() => {
     autoApproveRef.current = autoApprove;

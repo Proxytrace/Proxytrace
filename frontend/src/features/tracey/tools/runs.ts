@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
-import { type ToolFactory, tool, empty, CANCELLED } from './shared';
+import { type ToolFactory, tool, empty, CANCELLED, listDigest } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
 
 export const createRunTools: ToolFactory = (_ctx, store) => ({
@@ -15,12 +15,9 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     confirm: false,
     execute: async () => {
       const items = (await testRunsApi.list({})).items;
-      return store('run-list', items, {
-        count: items.length,
-        items: items.map((r) => ({
-          id: r.id, suiteName: r.suiteName, agentName: r.agentName, status: r.status, passRate: r.passRate,
-        })),
-      });
+      return store('run-list', items, listDigest(items, 20, (r) => ({
+        id: r.id, suiteName: r.suiteName, agentName: r.agentName, status: r.status, passRate: r.passRate,
+      })));
     },
   }),
   get_run: tool({

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { loadThread, saveThread, clearThread } from './tracey-storage';
+import { loadThread, saveThread, clearThread, loadAutoApprove, saveAutoApprove } from './tracey-storage';
 
 function inMemoryStorage(): Storage {
   const map = new Map<string, string>();
@@ -46,5 +46,17 @@ describe('tracey-storage', () => {
     localStorage.setItem('proxytrace.tracey.thread:user-1:proj-1', '{not json');
 
     expect(loadThread('user-1', 'proj-1')).toBeNull();
+  });
+
+  it('defaults auto-approve to true when unset', () => {
+    expect(loadAutoApprove()).toBe(true);
+  });
+
+  it('round-trips the auto-approve preference', () => {
+    saveAutoApprove(false);
+    expect(loadAutoApprove()).toBe(false);
+
+    saveAutoApprove(true);
+    expect(loadAutoApprove()).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
@@ -129,7 +129,6 @@ export function Shell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // The drawer always shows full labels — icon-only collapse is a desktop space trade-off.
   const navCollapsed = isMobile ? false : collapsed;
-  const navigate = useNavigate();
   const { data: online } = useHealth();
   const { data: license } = useLicense();
   const licenseFeatures = license?.features ?? [];
@@ -309,18 +308,6 @@ export function Shell() {
           </div>
 
           <span className="hidden sm:contents"><LicenseBadge /></span>
-
-          {interactive && (
-            <IconButton
-              data-testid="tracey-toggle"
-              onClick={() => navigate('/tracey-ai')}
-              title="Tracey — AI assistant"
-              aria-label="Tracey — AI assistant"
-              className={cn(location.pathname.startsWith('/tracey-ai') && 'text-accent')}
-            >
-              <MessageSparkleIcon size={16} />
-            </IconButton>
-          )}
 
           <Menu
             trigger={

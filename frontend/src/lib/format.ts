@@ -63,6 +63,11 @@ export function fmtPct(v: number): string {
   return `${Math.round(v * 100)}%`;
 }
 
+/** Formats a value that is already a percentage (0–100, e.g. run/suite `passRate` DTOs). */
+export function fmtPct100(v: number): string {
+  return `${Math.round(v)}%`;
+}
+
 export function fmtCost(usd: number | null | undefined): string {
   if (usd == null) return '—';
   if (usd < 0.001) return '<$0.001';

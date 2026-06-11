@@ -71,6 +71,24 @@ describe('tracey read tools', () => {
     expect(await getArtifact(result.artifactRef)).toEqual(items);
   });
 
+  it('caps a large list digest and notes the truncation', async () => {
+    const items = Array.from({ length: 30 }, (_, i) => ({
+      id: `a${i}`, name: `Agent ${i}`, endpointName: 'gpt-4o', toolCount: 0,
+    }));
+    agentsApi.list.mockResolvedValue({ items });
+    const ctx = makeCtx();
+    const result = await exec(createTraceyTools(ctx).list_agents, {}, ctx) as {
+      artifactRef: string;
+      summary: { count: number; items: unknown[]; note?: string };
+    };
+
+    expect(result.summary.count).toBe(30);
+    expect(result.summary.items).toHaveLength(25);
+    expect(result.summary.note).toContain('first 25 of 30');
+    // The card still gets everything.
+    expect(await getArtifact(result.artifactRef)).toHaveLength(30);
+  });
+
   it('falls back to the full payload inline when the artifact store is unavailable', async () => {
     const items = [{ id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 1 }];
     agentsApi.list.mockResolvedValue({ items });
@@ -169,16 +187,20 @@ describe('tracey write tools confirmation gating', () => {
     expect(result).toBe(CANCELLED);
   });
 
-  it('set_proposal_status updates when confirmed', async () => {
-    proposalsApi.updateStatus.mockResolvedValue({ id: 'p1', status: ProposalStatus.Accepted });
+  it('set_proposal_status updates when confirmed and returns only the id + status', async () => {
+    proposalsApi.updateStatus.mockResolvedValue({
+      id: 'p1', status: ProposalStatus.Accepted, kind: 'SystemPrompt', agentName: 'A',
+      rationale: 'why', details: { proposedSystemMessage: 'a very long prompt body' },
+    });
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
-    await exec(createTraceyTools(ctx).set_proposal_status, 
+    const result = await exec(createTraceyTools(ctx).set_proposal_status,
       { proposalId: 'p1', status: ProposalStatus.Accepted },
       ctx,
     );
 
     expect(proposalsApi.updateStatus).toHaveBeenCalledWith('p1', ProposalStatus.Accepted);
+    expect(result).toEqual({ id: 'p1', status: ProposalStatus.Accepted });
   });
 
   it('set_proposal_status is a no-op when declined', async () => {
@@ -466,22 +488,32 @@ describe('tracey submit_optimization_theory tool', () => {
 
   const details = { kind: 'SystemPrompt', currentSystemMessage: 'old', proposedSystemMessage: 'new' } as const;
 
-  it('submits as Tracey AI when confirmed', async () => {
+  it('submits as Tracey AI when confirmed, storing the full theory and returning a digest', async () => {
     agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
-    theoriesApi.submit.mockResolvedValue({ id: 'th1', status: 'Proposed' });
+    const theory = {
+      id: 'th1', kind: 'SystemPrompt', status: 'Proposed', agentName: 'A', priority: Priority.High,
+      rationale: 'why', details,
+    };
+    theoriesApi.submit.mockResolvedValue(theory);
     const ctx = makeCtx({ confirm: vi.fn().mockResolvedValue(true) });
 
     const result = await exec(createTraceyTools(ctx).submit_optimization_theory,
       { agentId: 'a1', suiteId: 's1', priority: Priority.High, rationale: 'why', details },
       ctx,
-    );
+    ) as { artifactRef: string; kind: string; summary: Record<string, unknown> };
 
     expect(ctx.confirm).toHaveBeenCalledOnce();
     expect(theoriesApi.submit).toHaveBeenCalledWith({
       agentId: 'a1', suiteId: 's1', priority: Priority.High, rationale: 'why',
       source: TheorySource.TraceyAi, details,
     });
-    expect(result).toEqual({ id: 'th1', status: 'Proposed', awaitable: { kind: 'theory', id: 'th1' } });
+    expect(result.kind).toBe('theory');
+    // The digest must not echo the proposed change body back into the model context.
+    expect(result.summary).toEqual({
+      id: 'th1', kind: 'SystemPrompt', status: 'Proposed', agentName: 'A', priority: Priority.High,
+      awaitable: { kind: 'theory', id: 'th1' },
+    });
+    expect(await getArtifact(result.artifactRef)).toEqual(theory);
   });
 
   it('cancels without submitting when declined', async () => {
