@@ -33,6 +33,7 @@ export const QUERY_KEYS = {
   modelEndpoints: ['model-endpoints'] as const,
 
   license: ['license'] as const,
+  updates: ['updates'] as const,
   health: ['health'] as const,
   authMode: ['auth-mode'] as const,
   appConfig: ['app-config'] as const,

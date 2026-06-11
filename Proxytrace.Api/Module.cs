@@ -26,6 +26,7 @@ using Proxytrace.Api.Dto.TestSuites;
 using Proxytrace.Api.Dto.Tools;
 using Proxytrace.Api.Evaluators;
 using Proxytrace.Application.TestRun;
+using Proxytrace.Application.Updates;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Storage;
 
@@ -94,6 +95,12 @@ internal sealed class Module : Autofac.Module
             .Get<PriceRefreshConfiguration>() ?? new PriceRefreshConfiguration();
         builder
             .RegisterInstance(priceRefreshConfiguration)
+            .SingleInstance();
+
+        var updatesConfiguration = configuration.GetSection("Updates")
+            .Get<UpdatesConfiguration>() ?? new UpdatesConfiguration();
+        builder
+            .RegisterInstance(updatesConfiguration)
             .SingleInstance();
 
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")

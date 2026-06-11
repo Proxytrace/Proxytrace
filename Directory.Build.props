@@ -1,5 +1,11 @@
 <Project>
   <PropertyGroup>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Release version single source of truth is the git tag: CI passes -p:Version=X.Y.Z
+         (see .github/workflows/release.yml). Local/dev builds identify as 0.0.0-dev. -->
+    <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
+    <!-- Keep InformationalVersion exactly the semver (no +<commit-sha> suffix) — it is
+         displayed verbatim in the UI and sent to the license server. -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 </Project>

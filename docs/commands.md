@@ -35,6 +35,21 @@ npm test            # Vitest unit tests
 
 The `./dev.sh` flow does not auto-seed; use the `/setup` page (or `SetupController`) to populate demo data.
 
+## Release
+```bash
+# Cut a release (after moving CHANGELOG [Unreleased] under the new version heading):
+git tag -a v1.2.3 -m "Proxytrace 1.2.3" && git push origin v1.2.3
+
+# Build a release-shaped image locally with the version injected:
+docker build -f Proxytrace.Api/Dockerfile --build-arg APP_VERSION=1.2.3 -t proxytrace-api:1.2.3 .
+
+# Run the customer deployment artifact locally (needs a .env, see deploy/.env.example):
+cd deploy && cp .env.example .env && docker compose up -d
+```
+
+See [`releasing.md`](releasing.md) for the full release pipeline (version SSOT, GHCR images,
+deploy artifact, changelog discipline).
+
 ## End-to-end tests (Playwright, inside `e2e/`)
 The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`).
 **Do not run the e2e tests if Docker is not installed** — they require a working Docker daemon and

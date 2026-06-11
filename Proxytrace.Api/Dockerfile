@@ -11,6 +11,8 @@ EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 as build
 ARG BUILD_CONFIGURATION=Release
+# Release version injected by the release workflow (-p:Version); see Directory.Build.props.
+ARG APP_VERSION=0.0.0-dev
 WORKDIR /src
 COPY ["Proxytrace.Api/Proxytrace.Api.csproj", "Proxytrace.Api/"]
 COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
@@ -25,11 +27,15 @@ COPY . .
 WORKDIR "/src/Proxytrace.Api"
 # SkipManualBuild: the SDK image has no npm, and in the Docker setup the VitePress manual
 # is served by the nginx frontend, not the API's wwwroot. So skip the manual build here.
-RUN dotnet build "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:SkipManualBuild=true
+RUN dotnet build "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build /p:SkipManualBuild=true -p:Version=$APP_VERSION
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:SkipManualBuild=true
+ARG APP_VERSION=0.0.0-dev
+# DebugType=none: ship no PDBs — they carry line-accurate symbols and a SourceLink map
+# pointing at the private repo + commit SHA. Trade-off: production stack traces lose
+# file/line info (exception messages and frames remain).
+RUN dotnet publish "./Proxytrace.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false /p:SkipManualBuild=true -p:Version=$APP_VERSION -p:DebugType=none
 
 FROM base AS final
 WORKDIR /app

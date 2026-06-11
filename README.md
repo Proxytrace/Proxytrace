@@ -86,6 +86,21 @@ instrumentation, regression testing, iterative optimization — to agent develop
 
 ## Getting Started
 
+### Install a release (Docker)
+
+Versioned images are published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`);
+each [GitHub release](https://github.com/Proxytrace/Proxytrace/releases) attaches a
+`proxytrace-<version>.zip` with a pinned Docker Compose file and `.env` template:
+
+```bash
+unzip proxytrace-<version>.zip && cd proxytrace-<version>
+cp .env.example .env    # set POSTGRES_PASSWORD + PROXYTRACE_SIGNING_KEY (hints inside)
+docker compose up -d    # UI on :5101, ingestion proxy on :5102, manual at :5101/docs
+```
+
+See the bundled operator manual (`/docs` → Operations → Installation) for details and
+upgrades. Everything below is for running **from source**.
+
 ### Prerequisites
 
 - .NET 10 SDK

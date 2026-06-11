@@ -3,6 +3,7 @@ using Proxytrace.Common.Async;
 using Proxytrace.Common.Conversion;
 using Proxytrace.Common.Conversion.Internal;
 using Proxytrace.Common.Hosting;
+using Proxytrace.Common.Hosting.Internal;
 using Proxytrace.Common.Lifecycle;
 using Proxytrace.Common.Lifecycle.Internal;
 using Proxytrace.Common.Random;
@@ -40,6 +41,8 @@ public class Module : Autofac.Module
         builder.RegisterType<AsyncLock>().As<IAsyncLock>().SingleInstance();
 
         builder.RegisterType<SystemClock>().As<IClock>().SingleInstance();
+
+        builder.RegisterType<AppVersion>().As<IAppVersion>().SingleInstance();
 
         builder.RegisterType<NullHostedService>().AsSelf();
         

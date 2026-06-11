@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Common.Hosting;
 using Proxytrace.Common.Time;
 
 namespace Proxytrace.Licensing.Internal;
@@ -17,6 +18,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
     private readonly ILicenseCacheStore cacheStore;
     private readonly LicensingConfiguration configuration;
     private readonly IClock clock;
+    private readonly IAppVersion appVersion;
     private readonly ILogger<LicenseCheckService> logger;
 
     private readonly SemaphoreSlim checkLock = new(1, 1);
@@ -29,6 +31,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         ILicenseCacheStore cacheStore,
         LicensingConfiguration configuration,
         IClock clock,
+        IAppVersion appVersion,
         ILogger<LicenseCheckService> logger)
     {
         this.licenseService = licenseService;
@@ -36,6 +39,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         this.cacheStore = cacheStore;
         this.configuration = configuration;
         this.clock = clock;
+        this.appVersion = appVersion;
         this.logger = logger;
 
         // Stable anchor for deployments that have never reached the license server: the offline
@@ -101,7 +105,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         await checkLock.WaitAsync(cancellationToken);
         try
         {
-            var result = await serverClient.CheckAsync(snapshot.Jti, GetVersion(), cancellationToken);
+            var result = await serverClient.CheckAsync(snapshot.Jti, appVersion.Version, cancellationToken);
             var next = Transition(licenseService.Current, result);
             licenseService.ApplySnapshot(next);
 
@@ -225,7 +229,4 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         var snapshot = LicenseSnapshot.Free();
         return snapshot with { Status = LicenseStatus.Expired };
     }
-
-    private static string GetVersion()
-        => typeof(LicenseCheckService).Assembly.GetName().Version?.ToString() ?? "0.0.0";
 }

@@ -28,6 +28,8 @@ using Proxytrace.Application.Streaming.Internal;
 using Proxytrace.Application.TestRun.Internal;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Application.Tracey.Internal;
+using Proxytrace.Application.Updates;
+using Proxytrace.Application.Updates.Internal;
 using Proxytrace.Common.DependencyInjection;
 using Proxytrace.Common.Hosting;
 using Proxytrace.Domain.Agent;
@@ -70,6 +72,25 @@ public sealed class Module : Autofac.Module
             .SingleInstance();
         builder.RegisterServiceCollection(services =>
             services.AddHostedService(sc => sc.GetRequiredService<PriceRefreshService>()));
+
+        // Update check. The composition root (the API) binds the "Updates" config section;
+        // this default keeps the type resolvable in tests and the in-process kiosk.
+        builder.RegisterInstance(new UpdatesConfiguration())
+            .IfNotRegistered(typeof(UpdatesConfiguration));
+        builder.RegisterType<UpdateCheckService>()
+            .As<IUpdateService>()
+            .AsSelf()
+            .SingleInstance();
+        builder.RegisterServiceCollection(services =>
+        {
+            services.AddHttpClient(UpdateCheckService.HttpClientName, client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+                // GitHub's API rejects requests without a User-Agent.
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("proxytrace-update-check");
+            });
+            services.AddHostedService(sc => sc.GetRequiredService<UpdateCheckService>());
+        });
 
         builder.RegisterType<TraceBroadcaster>()
             .As<ITraceBroadcaster>()

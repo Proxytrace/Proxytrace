@@ -1,0 +1,151 @@
+---
+name: release
+description: >-
+  Cut and publish a Proxytrace release end-to-end: roll the CHANGELOG, push the
+  release tag, monitor the GitHub release workflow, and verify the published
+  images and artifact. Use this whenever the user wants to release, publish,
+  ship, or tag a new version (e.g. "release 1.2.0", "cut a patch release",
+  "ship what's on master", "publish an rc"), wants to know whether master is
+  releasable, or needs to recover from a failed/broken release. Also use it for
+  prereleases (rc tags) and for verifying that a just-published release is
+  healthy.
+---
+
+# Cutting a Proxytrace Release
+
+The release pipeline is fully automated behind one trigger: **pushing an annotated tag
+`vX.Y.Z`**. The tag is the version's single source of truth — there is no version file or
+package.json to bump (see `docs/releasing.md` for the architecture). Your job is to prepare
+the changelog, push the tag, watch the pipeline, and verify the result.
+
+Releases are **public and consumed by customers**: images land on GHCR, a GitHub release
+with install artifact is created, and running installations show an update notice. Get
+explicit user confirmation before pushing the tag; everything before that point is local
+and reversible.
+
+## 1. Pre-flight
+
+All of these must hold before touching anything:
+
+- **On `master`, clean tree, up to date** — `git status`, `git pull origin master`.
+  Releases are cut from master only; the tag must point at a master commit.
+- **CI green on the tip commit** — `gh run list --branch master --limit 5`. The release
+  workflow re-runs ci + e2e as gates, but finding out via a failed release wastes a cycle.
+- **`CHANGELOG.md` has content under `[Unreleased]`** — that section becomes the release
+  notes verbatim. If it's empty, the work wasn't logged; reconstruct it from
+  `git log <last-tag>..HEAD` before proceeding (only user-facing changes, Keep a Changelog
+  categories: Added/Changed/Fixed/Removed/Security).
+
+## 2. Choose the version
+
+SemVer against the previous tag (`git describe --tags --abbrev=0`):
+
+- **major** — breaking config/API/upgrade-path change for operators or API consumers.
+- **minor** — new user-facing features (the common case).
+- **patch** — fixes only.
+- **prerelease** (`X.Y.Z-rc.N`) — when the user wants a dry run or staged rollout. Publishes
+  only the exact image tag (no `latest`/`X.Y` rolling tags) and a GitHub *prerelease* —
+  customer installs on pinned versions and the update banner are unaffected.
+
+Propose the bump with one sentence of reasoning from the changelog content; let the user
+override.
+
+## 3. Roll the changelog
+
+In `CHANGELOG.md`, insert a new heading under `## [Unreleased]` so the unreleased section
+stays (now empty) and the content moves beneath `## [X.Y.Z] - YYYY-MM-DD` (today's date).
+Then prove the workflow's guard will pass:
+
+```bash
+./scripts/release/extract-changelog.sh X.Y.Z
+```
+
+It must print the section and exit 0 — this exact script gates the release workflow.
+
+Commit (this is the release commit) and push:
+
+```bash
+git add CHANGELOG.md
+git commit -m "Release X.Y.Z"
+git push origin master
+```
+
+## 4. Tag and push — point of no return
+
+**Confirm with the user first**: version, one-line summary of the notes, and that pushing
+publishes images + a public release. Then:
+
+```bash
+git tag -a vX.Y.Z -m "Proxytrace X.Y.Z"
+git push origin vX.Y.Z
+```
+
+## 5. Monitor the pipeline
+
+```bash
+gh run list --workflow=release.yml --limit 1   # grab the run id
+gh run watch <run-id> --exit-status
+```
+
+Job order in `.github/workflows/release.yml`: `meta` (tag/changelog guard) → `ci` + `e2e`
+(reused gate workflows) → `publish-images` (matrix: api, proxy, frontend → GHCR) →
+`release` (zips the pinned compose artifact, creates the GitHub release).
+
+The e2e gate takes the longest (Docker stack + Playwright, ~15 min). LLM specs are skipped
+when the `OPENAI_API_KEY` secret is absent — that is normal, not a failure.
+
+### If a job fails
+
+`gh run view <run-id> --log-failed` and triage by job:
+
+- **meta** — bad tag format or missing changelog section. Fix on master, then delete and
+  re-push the tag (safe: nothing was published yet):
+  `git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z` → fix → re-tag.
+- **ci / e2e** — a real regression or a flaky e2e spec (consult the `run-e2e-tests` skill
+  to triage). Fix forward on master, delete the tag, re-tag the fixed commit.
+- **publish-images** — usually GHCR permissions (org must allow `GITHUB_TOKEN` package
+  creation; packages must exist/be linked — see `docs/releasing.md` one-time setup).
+  Re-run the failed job after fixing: `gh run rerun <run-id> --failed`.
+- **release** — images are already pushed at this point; prefer `gh run rerun --failed`
+  over re-tagging.
+
+## 6. Verify the published release
+
+A release isn't done because the workflow is green — check what customers actually get:
+
+```bash
+gh release view vX.Y.Z                                        # notes + zip asset attached
+docker manifest inspect ghcr.io/proxytrace/proxytrace-api:X.Y.Z       # image exists
+docker manifest inspect ghcr.io/proxytrace/proxytrace-api:latest       # rolling tag moved (not for rc)
+```
+
+Strongest check — run the customer artifact exactly as a customer would (use a throwaway
+compose project name so nothing touches a local dev stack):
+
+```bash
+mkdir -p /tmp/proxytrace-release-verify && cd /tmp/proxytrace-release-verify
+gh release download vX.Y.Z --pattern '*.zip' && unzip -o proxytrace-*.zip && cd proxytrace-*/
+cp .env.example .env   # fill POSTGRES_PASSWORD + PROXYTRACE_SIGNING_KEY with throwaway values
+docker compose -p proxytrace-release-verify up -d --wait
+curl -s http://localhost:5101/api/config    # must report "version":"X.Y.Z"
+curl -s -o /dev/null -w '%{http_code}' http://localhost:5101/docs/   # 200
+docker compose -p proxytrace-release-verify down -v && cd / && rm -rf /tmp/proxytrace-release-verify
+```
+
+Report to the user: version, release URL, image digests pulled OK, smoke result.
+
+## 7. If a published release is broken
+
+Releases are immutable in customers' eyes — installations may already have pulled the
+images and the update banner already points at the release. **Fix forward with a patch
+release** (back to step 1) rather than deleting. Deleting (`gh release delete` + tag
+removal + GHCR cleanup) is a last resort reserved for a release that is dangerous to run,
+within minutes of publishing, with explicit user sign-off.
+
+## First release on a fresh setup
+
+One-time prerequisites live in `docs/releasing.md` ("One-time setup notes"): org-level
+`GITHUB_TOKEN` package-creation permission, and flipping the three GHCR packages to
+**public** + linking them to the repo *after* the first push (images are private until
+then — customer pulls fail). Verify public visibility with an unauthenticated
+`docker manifest inspect`.

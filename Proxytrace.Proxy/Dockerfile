@@ -8,6 +8,8 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 as build
 ARG BUILD_CONFIGURATION=Release
+# Release version injected by the release workflow (-p:Version); see Directory.Build.props.
+ARG APP_VERSION=0.0.0-dev
 WORKDIR /src
 COPY ["Proxytrace.Proxy/Proxytrace.Proxy.csproj", "Proxytrace.Proxy/"]
 COPY ["Proxytrace.Application/Proxytrace.Application.csproj", "Proxytrace.Application/"]
@@ -19,11 +21,15 @@ COPY ["Proxytrace.Storage/Proxytrace.Storage.csproj", "Proxytrace.Storage/"]
 RUN dotnet restore "Proxytrace.Proxy/Proxytrace.Proxy.csproj"
 COPY . .
 WORKDIR "/src/Proxytrace.Proxy"
-RUN dotnet build "./Proxytrace.Proxy.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Proxytrace.Proxy.csproj" -c $BUILD_CONFIGURATION -o /app/build -p:Version=$APP_VERSION
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Proxytrace.Proxy.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ARG APP_VERSION=0.0.0-dev
+# DebugType=none: ship no PDBs — they carry line-accurate symbols and a SourceLink map
+# pointing at the private repo + commit SHA. Trade-off: production stack traces lose
+# file/line info (exception messages and frames remain).
+RUN dotnet publish "./Proxytrace.Proxy.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false -p:Version=$APP_VERSION -p:DebugType=none
 
 FROM base AS final
 WORKDIR /app

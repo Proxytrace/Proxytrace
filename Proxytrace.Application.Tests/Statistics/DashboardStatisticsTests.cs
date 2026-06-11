@@ -3,6 +3,7 @@ using NSubstitute;
 using Proxytrace.Application.Statistics;
 using Proxytrace.Application.Statistics.Internal;
 using Proxytrace.Application.Statistics.TestRun;
+using Proxytrace.Common.Hosting;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
@@ -22,7 +23,9 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
         callStats = Substitute.For<IAgentCallStatsReader>();
         agents = Substitute.For<IAgentRepository>();
         var agentCalls = Substitute.For<IAgentCallRepository>();
-        return new DashboardStatistics(runStats, callStats, agents, agentCalls);
+        var appVersion = Substitute.For<IAppVersion>();
+        appVersion.Version.Returns("0.0.0-dev");
+        return new DashboardStatistics(runStats, callStats, agents, agentCalls, appVersion);
     }
 
     private static TestRunStats Stat(Guid suiteId, int cases, int passed, DateTimeOffset completed) =>

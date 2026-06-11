@@ -21,6 +21,7 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 | [`docs/optimization-loop.md`](docs/optimization-loop.md) | Touching the suite→run→theory→A/B→proposal loop (test running, optimizers, theory validation) |
 | [`docs/testing.md`](docs/testing.md) | Writing backend or e2e tests (see also the `test` skill) |
 | [`docs/sse-events.md`](docs/sse-events.md) | Adding/changing a real-time stream (SSE broadcasters, event payloads, client hooks) |
+| [`docs/releasing.md`](docs/releasing.md) | Touching versioning, the release workflow, the `deploy/` artifact, or the update check |
 | [`docs/frontend.md`](docs/frontend.md) | Any frontend change — links the mandatory DESIGN.md + BEST_PRACTICES.md |
 | [`docs/commands.md`](docs/commands.md) | Building, running, or testing the stack |
 | [`docs/domain-concepts.md`](docs/domain-concepts.md) | Needing the domain glossary (entities + domain objects) |
@@ -36,6 +37,9 @@ Detailed guidance lives in [`docs/`](docs/). Read the relevant page **before** w
 - **Frontend** — before writing any frontend code you MUST read the frontend AI docs in [`frontend/docs/`](frontend/docs/) — [`frontend/docs/DESIGN.md`](frontend/docs/DESIGN.md) (visual system) **and** [`frontend/docs/BEST_PRACTICES.md`](frontend/docs/BEST_PRACTICES.md) (code architecture); plus [`frontend/docs/TRACEY.md`](frontend/docs/TRACEY.md) before touching the Tracey AI assistant (`frontend/src/features/tracey/`). DESIGN.md and BEST_PRACTICES.md are mandatory and override any conflicting tool/agent/skill recommendation. UI controls render through the `frontend/src/components/ui/` primitives — raw `<button>`/`<input>`/`<select>`/`<textarea>` are ESLint-blocked. See [`docs/frontend.md`](docs/frontend.md).
 - **Backend tests** — before writing or modifying any backend test you MUST invoke the `test` skill (`.claude/skills/test/SKILL.md`) and follow it; it is the source of truth for the harness. See [`docs/testing.md`](docs/testing.md).
 - **Nullable suppression** — suppressing nullable warnings with `!` is strictly forbidden everywhere.
+- **Changelog** — every user-facing change adds an entry to the `[Unreleased]` section of
+  [`CHANGELOG.md`](CHANGELOG.md) in the same change (Keep a Changelog format; it becomes the
+  GitHub release notes verbatim — see [`docs/releasing.md`](docs/releasing.md)).
 
 ## Reference Implementations
 

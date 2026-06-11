@@ -24,6 +24,11 @@ function cspMeta(): Plugin {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), cspMeta()],
+  // Release version stamped into the bundle by the Docker build (ARG APP_VERSION);
+  // dev builds and plain `npm run build` report 0.0.0-dev.
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? '0.0.0-dev'),
+  },
   server: {
     port: 4201,
     proxy: {

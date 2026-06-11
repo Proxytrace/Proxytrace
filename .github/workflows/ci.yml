@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - master
+  # Reused as a release gate by release.yml.
+  workflow_call:
 
 jobs:
   frontend:

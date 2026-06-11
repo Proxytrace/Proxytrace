@@ -38,6 +38,13 @@ Outside development, an unexpected server error returns only a generic message t
 still captured here, so the Error Log is the place to diagnose what actually happened.
 :::
 
+::: info No file/line numbers in released containers
+The official container images ship without debug symbols, so stacktraces show the full call
+chain (namespaces, classes, methods) but no source file or line numbers. When reporting an
+issue, include the Proxytrace version alongside the stacktrace — together they pinpoint the
+location.
+:::
+
 ::: tip Client-side error reports are separate
 The in-app "report this error" action (`POST /api/errors`) logs a **warning**, not an error,
 so client-reported issues do not appear in the Error Log.

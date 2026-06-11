@@ -67,6 +67,32 @@ source feeds are configurable under `Pricing`:
 All prices are stored as EUR per 1M tokens. A background service refreshes them on the configured
 interval, and the **Reload models & prices** button triggers a refresh on demand.
 
+### Update notifications
+
+Proxytrace checks once a day whether a newer release is available and, if so, shows admins a
+dismissible notice linking the release notes. The check polls the public GitHub releases feed
+(`GET /api/updates` exposes the result to admins) and never sends any data beyond the request
+itself; the only thing the feed's host observes is your server's IP address. Failures are
+silent and never affect the application.
+
+```json
+{
+  "Updates": {
+    "Enabled": true,
+    "ManifestUrl": "https://api.github.com/repos/Proxytrace/Proxytrace/releases/latest",
+    "CheckIntervalHours": 24
+  }
+}
+```
+
+- `Enabled` — set `false` to disable the check entirely (no outbound requests, e.g. for
+  air-gapped installs).
+- `ManifestUrl` — endpoint returning the latest release in the GitHub `releases/latest` shape.
+- `CheckIntervalHours` — poll interval (default `24`, minimum 1).
+
+The check is automatically disabled in kiosk mode and for development builds. The running
+version is also reported by `GET /api/config` (unauthenticated) and shown on the dashboard.
+
 ## Kiosk mode
 
 Kiosk mode (`Kiosk:Enabled=true`) runs Proxytrace in-memory and auto-seeds a rich demo

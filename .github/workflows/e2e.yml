@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - master
+  # Reused as a release gate by release.yml (which passes secrets via `secrets: inherit`).
+  workflow_call:
 
 jobs:
   e2e:

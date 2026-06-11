@@ -1,0 +1,109 @@
+# Proxytrace production deployment.
+#
+# Quickstart (see README.md next to this file):
+#   cp .env.example .env   # then fill in the two required secrets
+#   docker compose up -d
+#   open http://localhost:5101
+#
+# The release artifact attached to each GitHub release ships this file with
+# PROXYTRACE_VERSION pinned to that release. The in-repo copy tracks `latest`.
+name: proxytrace
+
+services:
+  # Owns the schema (the api runs migrations on startup); the proxy connects read-only.
+  # Not published to the host — uncomment the ports mapping for debugging only.
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=proxytrace
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      - POSTGRES_DB=proxytrace
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U proxytrace -d proxytrace"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  # Ingestion transport between the proxy (producer) and the api (consumer). Internal only.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Main application: REST API, SSE, test runner, optimizer, search, ingestion consumer.
+  # Not published to the host: the frontend's nginx proxies /api to it. Run a single
+  # replica — it applies database migrations on startup.
+  api:
+    image: ghcr.io/proxytrace/proxytrace-api:${PROXYTRACE_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD}
+      - Kiosk__Enabled=false
+      - Messaging__Provider=Redis
+      - Redis__ConnectionString=redis:6379
+      - Self__BaseUrl=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
+      - Frontend__AllowedOrigin=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
+      - Authentication__Mode=Local
+      - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:?set PROXYTRACE_SIGNING_KEY in .env}
+      - PROXYTRACE_LICENSE=${PROXYTRACE_LICENSE:-}
+    volumes:
+      - searchindex:/app/searchindex
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  # Ingestion proxy: point your agents' OpenAI base URL here. Starts after the api so the
+  # database schema exists before its read-only API-key lookups.
+  proxy:
+    image: ghcr.io/proxytrace/proxytrace-proxy:${PROXYTRACE_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${PROXY_PORT:-5102}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD}
+      - Redis__ConnectionString=redis:6379
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q 200 <&3'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  # Web UI (nginx): serves the SPA at / and the manual at /docs, proxies /api to the api.
+  frontend:
+    image: ghcr.io/proxytrace/proxytrace-frontend:${PROXYTRACE_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5101}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  searchindex:

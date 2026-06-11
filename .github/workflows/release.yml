@@ -1,0 +1,135 @@
+name: Release
+
+# Cutting a release = push an annotated tag vX.Y.Z (see docs/releasing.md).
+# This builds the container images with the version injected, pushes them to GHCR,
+# and creates a GitHub release with notes from CHANGELOG.md and the pinned
+# Docker Compose deployment artifact attached.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # Validates the tag and fails fast when CHANGELOG.md has no section for it.
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME is not a valid semver release tag (vX.Y.Z[-prerelease])"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Require changelog section
+        run: scripts/release/extract-changelog.sh "${{ steps.version.outputs.version }}" > /dev/null
+
+  # Release gates: the same checks that run on PRs/master.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+    secrets: inherit
+
+  publish-images:
+    needs: [meta, ci, e2e]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            dockerfile: Proxytrace.Api/Dockerfile
+          - name: proxy
+            dockerfile: Proxytrace.Proxy/Dockerfile
+          - name: frontend
+            dockerfile: frontend/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tags X.Y.Z, X.Y, X and latest; prerelease tags (e.g. 1.2.0-rc.1) get only
+      # their exact version — metadata-action suppresses the rolling tags for them.
+      - name: Compute image tags
+        id: docker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/proxytrace/proxytrace-${{ matrix.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            APP_VERSION=${{ needs.meta.outputs.version }}
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha,scope=release-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=release-${{ matrix.name }}
+
+  release:
+    needs: [meta, publish-images]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract release notes
+        run: scripts/release/extract-changelog.sh "${{ needs.meta.outputs.version }}" > release-notes.md
+
+      # The shipped compose file is fully pinned to this release; the in-repo copy
+      # tracks `latest` for tip-of-tree testing.
+      - name: Package deployment artifact
+        run: |
+          VERSION="${{ needs.meta.outputs.version }}"
+          mkdir -p "dist/proxytrace-$VERSION"
+          sed "s/\${PROXYTRACE_VERSION:-latest}/$VERSION/" deploy/docker-compose.yml \
+            > "dist/proxytrace-$VERSION/docker-compose.yml"
+          cp deploy/.env.example deploy/README.md "dist/proxytrace-$VERSION/"
+          cd dist && zip -r "proxytrace-$VERSION.zip" "proxytrace-$VERSION"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.meta.outputs.version }}"
+          PRERELEASE=""
+          [[ "$VERSION" == *-* ]] && PRERELEASE="--prerelease"
+          gh release create "v$VERSION" $PRERELEASE \
+            --title "Proxytrace $VERSION" \
+            --notes-file release-notes.md \
+            "dist/proxytrace-$VERSION.zip"

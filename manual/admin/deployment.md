@@ -2,6 +2,11 @@
 
 Proxytrace is self-hosted via Docker Compose. There are two deployment shapes.
 
+For production installs, use the **released images** (`ghcr.io/proxytrace/proxytrace-*`) with
+the pinned compose file shipped on every [GitHub release](https://github.com/Proxytrace/Proxytrace/releases)
+— see [Installation](/admin/installation). The commands below build the same shapes from a
+source checkout.
+
 ## Standard (split) deployment
 
 The default `docker-compose.yml` runs the app split into services:
