@@ -32,6 +32,12 @@ Errors are persisted to the database, so they survive restarts and are shared ac
 Entries from Entity Framework Core and the error-log pipeline itself are deliberately excluded
 to avoid feedback loops.
 
+::: tip API responses are sanitized — the Error Log is not
+Outside development, an unexpected server error returns only a generic message to the client
+(database conflicts surface as a friendly 409). The full exception message and stacktrace are
+still captured here, so the Error Log is the place to diagnose what actually happened.
+:::
+
 ::: tip Client-side error reports are separate
 The in-app "report this error" action (`POST /api/errors`) logs a **warning**, not an error,
 so client-reported issues do not appear in the Error Log.

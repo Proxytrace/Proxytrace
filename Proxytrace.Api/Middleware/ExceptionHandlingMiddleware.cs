@@ -44,7 +44,7 @@ internal sealed class ExceptionHandlingMiddleware
 
             var error = new Dictionary<string, object?>
             {
-                ["message"] = ex.Message,
+                ["message"] = mapping.Message ?? ex.Message,
                 ["type"] = mapping.TypeName,
                 ["stacktrace"] = isDevelopment ? ex.ToString() : null,
             };
@@ -71,10 +71,14 @@ internal sealed class ExceptionHandlingMiddleware
                 return mapper.Map(exception);
         }
 
+        // Unmapped exceptions are internal faults — outside development their message must not
+        // reach the client (it may carry SQL, schema names, paths). Full detail is preserved in
+        // the log capture (application error log) above.
         return new ExceptionMapping
         {
             StatusCode = StatusCodes.Status500InternalServerError,
             TypeName = exception.GetType().Name,
+            Message = isDevelopment ? null : "An unexpected error occurred.",
         };
     }
 }

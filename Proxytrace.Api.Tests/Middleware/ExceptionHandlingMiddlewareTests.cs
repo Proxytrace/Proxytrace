@@ -1,7 +1,9 @@
+using System.Data.Common;
 using System.Text.Json;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Proxytrace.Api.Middleware;
@@ -27,6 +29,7 @@ public sealed class ExceptionHandlingMiddlewareTests
             new NotImplementedExceptionMapper(),
             new FeatureNotLicensedExceptionMapper(),
             new LicenseLimitExceededExceptionMapper(),
+            new DbUpdateExceptionMapper(),
         ];
 
         return new ExceptionHandlingMiddleware(
@@ -103,10 +106,55 @@ public sealed class ExceptionHandlingMiddlewareTests
     {
         var middleware = Create(_ => throw new InvalidOperationException("boom"));
 
-        var (status, body) = await InvokeAsync(middleware);
+        var (status, _) = await InvokeAsync(middleware);
 
         status.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_UnknownExceptionInProduction_HidesExceptionMessage()
+    {
+        var middleware = Create(_ => throw new InvalidOperationException("boom"));
+
+        var (_, body) = await InvokeAsync(middleware);
+
+        Error(body).GetProperty("message").GetString().Should().Be("An unexpected error occurred.");
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_UnknownExceptionInDevelopment_KeepsExceptionMessage()
+    {
+        var middleware = Create(_ => throw new InvalidOperationException("boom"), isDevelopment: true);
+
+        var (_, body) = await InvokeAsync(middleware);
+
         Error(body).GetProperty("message").GetString().Should().Be("boom");
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_DbUpdateForeignKeyViolation_Returns409_WithFriendlyMessage()
+    {
+        var inner = new FakeDbException("violates foreign key constraint \"FK_Agents_Projects\"", "23503");
+        var middleware = Create(_ => throw new DbUpdateException("update failed", inner));
+
+        var (status, body) = await InvokeAsync(middleware);
+
+        status.Should().Be(StatusCodes.Status409Conflict);
+        var error = Error(body);
+        error.GetProperty("type").GetString().Should().Be(nameof(DbUpdateException));
+        var message = error.GetProperty("message").GetString();
+        message.Should().Be("This record cannot be deleted or changed because other records still reference it.");
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_DbUpdateWithoutForeignKeyViolation_Returns409_WithGenericConflictMessage()
+    {
+        var middleware = Create(_ => throw new DbUpdateException("update failed"));
+
+        var (status, body) = await InvokeAsync(middleware);
+
+        status.Should().Be(StatusCodes.Status409Conflict);
+        Error(body).GetProperty("message").GetString().Should().Be("The change conflicts with existing data.");
     }
 
     [TestMethod]
@@ -137,5 +185,18 @@ public sealed class ExceptionHandlingMiddlewareTests
         await FluentActions
             .Invoking(() => InvokeAsync(middleware))
             .Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    private sealed class FakeDbException : DbException
+    {
+        private readonly string sqlState;
+
+        public FakeDbException(string message, string sqlState)
+            : base(message)
+        {
+            this.sqlState = sqlState;
+        }
+
+        public override string SqlState => sqlState;
     }
 }
