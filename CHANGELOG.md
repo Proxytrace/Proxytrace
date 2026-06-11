@@ -16,6 +16,9 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   zero agent code changes.
 - **Projects, agents & API keys** — organize captured traffic per project and agent,
   authenticated with per-agent proxy API keys.
+- **First-run setup wizard** — guided onboarding (provider → model → project) ending in
+  per-language quick-start examples (Python, TypeScript, C#, curl); clients keep their
+  upstream provider API key and swap only the base URL.
 - **Dashboard & statistics** — live telemetry, token/cost breakdowns, latency and
   pass-rate trends per agent, model, and project.
 - **Test suites & evaluators** — curate captured traces into benchmark suites and

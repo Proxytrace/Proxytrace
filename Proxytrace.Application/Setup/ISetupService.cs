@@ -27,15 +27,11 @@ public record SetupInput(
     string ProviderUpstreamApiKey,
     ModelProviderKind ProviderKind,
     string ModelName,
-    decimal? InputTokenCost,
-    decimal? OutputTokenCost,
-    string ProjectName,
-    string ApiKeyName);
+    string ProjectName);
 
 public record SetupResult(
     Guid ProviderId,
     Guid EndpointId,
-    Guid ProjectId,
-    string ApiKeyValue);
+    Guid ProjectId);
 
 public record FirstAdminResult(Guid UserId, string Token, DateTimeOffset ExpiresAt);

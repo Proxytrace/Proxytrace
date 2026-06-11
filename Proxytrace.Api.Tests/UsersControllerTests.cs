@@ -11,6 +11,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
 using Proxytrace.Testing;
+// ReSharper disable NullableWarningSuppressionIsUsed
 
 namespace Proxytrace.Api.Tests;
 

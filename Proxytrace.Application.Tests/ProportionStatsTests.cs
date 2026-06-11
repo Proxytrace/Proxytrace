@@ -1,5 +1,7 @@
 using AwesomeAssertions;
 using Proxytrace.Application.Optimization.Internal.Validation;
+// ReSharper disable NullableWarningSuppressionIsUsed
+// ReSharper disable RedundantSuppressNullableWarningExpression
 
 namespace Proxytrace.Application.Tests;
 

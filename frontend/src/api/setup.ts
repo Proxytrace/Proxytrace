@@ -11,17 +11,13 @@ export interface CompleteSetupRequest {
   providerUpstreamApiKey: string;
   providerKind: ModelProviderKind;
   modelName: string;
-  inputTokenCost: number | null;
-  outputTokenCost: number | null;
   projectName: string;
-  apiKeyName: string;
 }
 
 export interface CompleteSetupResponse {
   providerId: string;
   endpointId: string;
   projectId: string;
-  apiKeyValue: string;
 }
 
 export interface ProviderConnectionRequest {

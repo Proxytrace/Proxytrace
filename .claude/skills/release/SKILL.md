@@ -18,10 +18,19 @@ The release pipeline is fully automated behind one trigger: **pushing an annotat
 package.json to bump (see `docs/releasing.md` for the architecture). Your job is to prepare
 the changelog, push the tag, watch the pipeline, and verify the result.
 
-Releases are **public and consumed by customers**: images land on GHCR, a GitHub release
-with install artifact is created, and running installations show an update notice. Get
-explicit user confirmation before pushing the tag; everything before that point is local
-and reversible.
+Releases are consumed by customers: images land on GHCR, a GitHub release with install
+artifact is created, and running installations show an update notice. Get explicit user
+confirmation before pushing the tag; everything before that point is local and reversible.
+
+**The GitHub release is created as a draft — it does NOT go live on its own.** The workflow
+pushes images to GHCR and creates the release *unpublished*; a human publishes it from the
+GitHub UI when ready. While drafted it is hidden from the public Releases API, so the update
+banner on running installations stays silent until you publish. Pushing the tag is therefore
+*not* the customer-facing point of no return — the manual **Publish release** click is.
+
+(Caveat: rolling image tags `latest`/`X.Y`/`X` still move on GHCR when images publish, before
+you click publish. Customers pin versions and the banner is API-driven, so this is harmless,
+but be aware `latest` advances at image-publish time, not at release-publish time.)
 
 ## 1. Pre-flight
 
@@ -70,10 +79,11 @@ git commit -m "Release X.Y.Z"
 git push origin master
 ```
 
-## 4. Tag and push — point of no return
+## 4. Tag and push
 
 **Confirm with the user first**: version, one-line summary of the notes, and that pushing
-publishes images + a public release. Then:
+publishes images to GHCR and creates a **draft** release (no customer-facing update yet —
+that waits for the manual publish in step 7). Then:
 
 ```bash
 git tag -a vX.Y.Z -m "Proxytrace X.Y.Z"
@@ -89,7 +99,7 @@ gh run watch <run-id> --exit-status
 
 Job order in `.github/workflows/release.yml`: `meta` (tag/changelog guard) → `ci` + `e2e`
 (reused gate workflows) → `publish-images` (matrix: api, proxy, frontend → GHCR) →
-`release` (zips the pinned compose artifact, creates the GitHub release).
+`release` (zips the pinned compose artifact, creates the GitHub release **as a draft**).
 
 The e2e gate takes the longest (Docker stack + Playwright, ~15 min). LLM specs are skipped
 when the `OPENAI_API_KEY` secret is absent — that is normal, not a failure.
@@ -109,12 +119,14 @@ when the `OPENAI_API_KEY` secret is absent — that is normal, not a failure.
 - **release** — images are already pushed at this point; prefer `gh run rerun --failed`
   over re-tagging.
 
-## 6. Verify the published release
+## 6. Verify the draft release
 
-A release isn't done because the workflow is green — check what customers actually get:
+A release isn't done because the workflow is green — check what customers *will* get before
+you publish. The release is a draft, so `gh release view` shows `Draft: true` and the public
+API won't list it yet:
 
 ```bash
-gh release view vX.Y.Z                                        # notes + zip asset attached
+gh release view vX.Y.Z                                        # Draft: true, notes + zip asset attached
 docker manifest inspect ghcr.io/proxytrace/proxytrace-api:X.Y.Z       # image exists
 docker manifest inspect ghcr.io/proxytrace/proxytrace-api:latest       # rolling tag moved (not for rc)
 ```
@@ -132,11 +144,34 @@ curl -s -o /dev/null -w '%{http_code}' http://localhost:5101/docs/   # 200
 docker compose -p proxytrace-release-verify down -v && cd / && rm -rf /tmp/proxytrace-release-verify
 ```
 
-Report to the user: version, release URL, image digests pulled OK, smoke result.
+Report to the user: version, draft release URL, image digests pulled OK, smoke result.
 
-## 7. If a published release is broken
+## 7. Publish the release (manual, customer-facing go-live)
 
-Releases are immutable in customers' eyes — installations may already have pulled the
+This is the real point of no return. **The user does this**, or explicitly tells you to.
+Publishing flips the draft live: it appears in the public Releases API and running
+installations start showing the update banner.
+
+- **UI (default):** open the draft release page, review notes + attached zip, click
+  **Publish release**.
+- **CLI equivalent**, if the user asks you to do it:
+
+  ```bash
+  gh release edit vX.Y.Z --draft=false   # add --latest for the newest stable
+  ```
+
+For a prerelease (rc), publishing keeps it flagged as a prerelease — the banner and
+`latest`-pinned installs are unaffected.
+
+## 8. If a release is broken
+
+**Still a draft (not yet published in step 7)?** Cheap to recover — nothing is customer-facing
+yet. Just `gh release delete vX.Y.Z` the draft, then delete + re-push the tag on the fixed
+commit (`git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z` → fix → re-tag). The only
+caveat is the rolling `latest`/`X.Y` image tags already moved; re-running the release with the
+fixed commit moves them again.
+
+**Already published?** Releases are immutable in customers' eyes — installations may already have pulled the
 images and the update banner already points at the release. **Fix forward with a patch
 release** (back to step 1) rather than deleting. Deleting (`gh release delete` + tag
 removal + GHCR cleanup) is a last resort reserved for a release that is dangerous to run,

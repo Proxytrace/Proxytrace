@@ -76,6 +76,7 @@ public sealed class UserAdministrationServiceTests : BaseTest<Module>
 
         var updated = await service.ChangeRoleAsync(acting.Id, admin1.Id, UserRole.Member, CancellationToken);
 
+        // ReSharper disable once NullableWarningSuppressionIsUsed
         updated!.Role.Should().Be(UserRole.Member);
     }
 

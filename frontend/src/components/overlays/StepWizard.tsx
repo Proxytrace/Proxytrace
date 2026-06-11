@@ -16,9 +16,11 @@ interface StepWizardProps {
   canAdvance?: boolean;
   submitLabel?: string;
   loading?: boolean;
+  /** Hide the footer submit button on the last step — the step renders its own CTA. */
+  hideSubmit?: boolean;
 }
 
-export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAdvance = true, submitLabel = 'Create', loading }: StepWizardProps) {
+export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAdvance = true, submitLabel = 'Create', loading, hideSubmit }: StepWizardProps) {
   const isLast = currentStep === steps.length - 1;
 
   return (
@@ -48,7 +50,7 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
                 </div>
                 <span
                   className={`text-xs whitespace-nowrap transition-colors ${
-                    isActive ? 'text-primary font-semibold' : isDone ? 'text-secondary font-medium' : 'text-muted font-normal'
+                    isActive ? 'text-primary font-semibold' : isDone ? 'text-secondary font-medium max-sm:hidden' : 'text-muted font-normal max-sm:hidden'
                   }`}
                 >
                   {s.label}
@@ -69,8 +71,8 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
         })}
       </div>
 
-      {/* Step content */}
-      <div>{steps[currentStep].content}</div>
+      {/* Step content — keyed so each step animates in */}
+      <div key={currentStep} className="fade-up">{steps[currentStep].content}</div>
 
       {/* Navigation */}
       <div className="flex justify-between items-center pt-1">
@@ -82,9 +84,11 @@ export function StepWizard({ steps, currentStep, onNext, onBack, onSubmit, canAd
             Step {currentStep + 1} of {steps.length}
           </span>
           {isLast ? (
-            <Button variant="primary" onClick={onSubmit} disabled={!canAdvance} loading={loading}>
-              {submitLabel}
-            </Button>
+            !hideSubmit && (
+              <Button variant="primary" onClick={onSubmit} disabled={!canAdvance} loading={loading}>
+                {submitLabel}
+              </Button>
+            )
           ) : (
             <Button variant="primary" onClick={onNext} disabled={!canAdvance}>
               Next →

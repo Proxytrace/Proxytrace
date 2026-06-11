@@ -129,7 +129,10 @@ jobs:
           VERSION="${{ needs.meta.outputs.version }}"
           PRERELEASE=""
           [[ "$VERSION" == *-* ]] && PRERELEASE="--prerelease"
-          gh release create "v$VERSION" $PRERELEASE \
+          # Created as a draft: hidden from the public Releases API (so running
+          # installations' update banner won't see it) until a human publishes it
+          # in the GitHub UI. Images are already on GHCR at this point.
+          gh release create "v$VERSION" $PRERELEASE --draft \
             --title "Proxytrace $VERSION" \
             --notes-file release-notes.md \
             "dist/proxytrace-$VERSION.zip"

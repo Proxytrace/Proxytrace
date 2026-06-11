@@ -55,17 +55,13 @@ public class SetupController : ControllerBase
             request.ProviderUpstreamApiKey,
             request.ProviderKind,
             request.ModelName,
-            request.InputTokenCost,
-            request.OutputTokenCost,
-            request.ProjectName,
-            request.ApiKeyName);
+            request.ProjectName);
 
         var result = await setup.CompleteAsync(input, cancellationToken);
         return new CompleteSetupResponse(
             result.ProviderId,
             result.EndpointId,
-            result.ProjectId,
-            result.ApiKeyValue);
+            result.ProjectId);
     }
 
     [HttpPost("test-connection")]

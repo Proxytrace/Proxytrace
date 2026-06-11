@@ -15,6 +15,11 @@ Only two things in your client:
 
 No SDK swap, no code changes beyond configuration.
 
+::: tip
+The first-run setup wizard ends with ready-made quick-start snippets (Python, TypeScript,
+C#, curl) for your project's endpoint — copy one and you're capturing traces.
+:::
+
 ### Which key to use
 
 - **Proxytrace-issued key (recommended)** — carries its own project, so attribution is

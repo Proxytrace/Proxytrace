@@ -15,7 +15,6 @@ export interface SetupCompleteResponse {
   providerId: string;
   endpointId: string;
   projectId: string;
-  apiKeyValue: string;
 }
 
 export interface TheoryDto {
@@ -76,15 +75,10 @@ export class ProxytraceApiClient {
     providerKind: string;
     modelName: string;
     projectName: string;
-    apiKeyName: string;
   }): Promise<SetupCompleteResponse> {
     const res = await this.request.post('/api/setup/complete', {
       headers: this.headers(),
-      data: {
-        ...opts,
-        inputTokenCost: null,
-        outputTokenCost: null,
-      },
+      data: opts,
     });
     if (!res.ok()) throw new Error(`setup/complete failed: ${res.status()} ${await res.text()}`);
     return res.json();

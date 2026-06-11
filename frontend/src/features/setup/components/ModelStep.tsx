@@ -1,102 +1,89 @@
 import type { KeyboardEvent } from 'react';
 import { FormField } from '../../../components/ui/FormField';
-import { Button } from '../../../components/ui/Button';
+import { Button, IconButton } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
+import { Spinner } from '../../../components/ui/Spinner';
+import { ResetIcon } from '../../../components/icons';
 
 interface ModelStepProps {
   modelName: string;
-  inputCost: string;
-  outputCost: string;
   models: string[] | null;
   modelsLoading: boolean;
   modelsError: string | null;
   error: string | null;
   onModelChange: (v: string) => void;
-  onInputCostChange: (v: string) => void;
-  onOutputCostChange: (v: string) => void;
-  onLoadModels: () => void;
+  onReloadModels: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function ModelStep({
   modelName,
-  inputCost,
-  outputCost,
   models,
   modelsLoading,
   modelsError,
   error,
   onModelChange,
-  onInputCostChange,
-  onOutputCostChange,
-  onLoadModels,
+  onReloadModels,
   onKeyDown,
 }: ModelStepProps) {
   return (
     <div className="flex flex-col gap-4">
-      <FormField label="Model" error={error ?? undefined}>
+      <FormField label="Default model" error={error ?? undefined}>
         {modelsLoading ? (
-          <Input value="Loading models…" disabled readOnly />
+          <div className="flex items-center gap-2.5 rounded-md border border-border bg-card-2 px-3 py-2">
+            <Spinner size={12} />
+            <span className="text-title text-secondary">Discovering models from your provider…</span>
+          </div>
         ) : models && models.length > 0 ? (
           <div className="flex items-center gap-2">
             <div className="flex-1">
-              <Select value={modelName} onValueChange={onModelChange} autoFocus>
+              <Select value={modelName} onValueChange={onModelChange} autoFocus data-testid="setup-model-select">
                 {models.map(m => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </Select>
             </div>
-            <Button variant="secondary" size="sm" onClick={onLoadModels}>Refresh</Button>
+            <IconButton aria-label="Reload models" onClick={onReloadModels} data-testid="setup-model-reload-btn">
+              <ResetIcon size={14} />
+            </IconButton>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
+            {modelsError ? (
+              <span className="text-body-sm text-danger leading-relaxed">
+                Could not list models from the provider: {modelsError}. Enter the model name manually.
+              </span>
+            ) : models !== null ? (
+              <span className="text-body-sm text-muted leading-relaxed">
+                No models were discovered — check the endpoint and API key, or enter the model name manually.
+              </span>
+            ) : null}
             <Input
-              placeholder="e.g. claude-sonnet-4-5"
+              placeholder="e.g. gpt-4o"
               value={modelName}
               onChange={e => onModelChange(e.target.value)}
               onKeyDown={onKeyDown}
               autoFocus
+              className="font-mono"
+              data-testid="setup-model-input"
             />
-            {modelsError && (
-              <span className="text-[11px] text-danger">
-                Could not list models from provider: {modelsError}. Enter the model name manually.
-              </span>
-            )}
-            <Button variant="secondary" size="sm" className="self-start" onClick={onLoadModels}>
-              Retry loading models
+            <Button variant="secondary" size="sm" className="self-start" onClick={onReloadModels}>
+              Retry discovery
             </Button>
           </div>
         )}
       </FormField>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Input cost / 1M tokens">
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="3.00"
-            leftAddon="$"
-            value={inputCost}
-            onChange={e => onInputCostChange(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-        </FormField>
-        <FormField label="Output cost / 1M tokens">
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="15.00"
-            leftAddon="$"
-            value={outputCost}
-            onChange={e => onOutputCostChange(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-        </FormField>
-      </div>
-      <p className="text-[11px] text-muted leading-relaxed">
-        Costs are optional but enable per-call spend tracking and ROI proposals.
+
+      {models && models.length > 0 && (
+        <p className="text-body-sm text-muted -mt-2">
+          {models.length} {models.length === 1 ? 'model' : 'models'} discovered.
+        </p>
+      )}
+
+      <p className="text-body-sm text-muted leading-relaxed">
+        This becomes your project's default model. All discovered models are added with
+        prices loaded automatically from the catalogue — nothing to type in.
       </p>
     </div>
   );
