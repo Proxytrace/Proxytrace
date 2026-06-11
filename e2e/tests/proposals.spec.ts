@@ -8,8 +8,9 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 // no real LLM.
 //
 // Stable data-testids: `theory-board`, `theory-column-<status>`, `theory-column-count-<status>`,
-// `theory-card-<id>`, `theory-handle-<id>`, `theory-promote-btn-<id>`, `theory-detail`,
-// and (in the drawer, for a validated theory) `proposal-detail` / `prompt-diff`.
+// `theory-card-<id>`, `theory-handle-<id>`, `theory-promote-btn-<id>`, `decision-flow` (drawer,
+// unproven theory), and — for a validated theory's drawer — `validated-proposal`, `gain-hero`,
+// `prompt-diff`, `proposal-promote-btn` / `proposal-dismiss-btn` / `proposal-reset-btn`.
 test.describe('Optimization Theories board', () => {
   let token: string;
   let agentId: string;
@@ -66,7 +67,7 @@ test.describe('Optimization Theories board', () => {
     await expect(flow.getByTestId('flow-step-outcome')).toBeVisible();
   });
 
-  test('a validated theory shows the change diff and completed flow in the drawer', async ({ page, request }) => {
+  test('a validated theory leads with the proven gain and change diff in the drawer', async ({ page, request }) => {
     const api = new ProxytraceApiClient(request, token);
     // A validated theory references a reviewable proposal; seed the proposal first and link it.
     const currentMessage = `You are a helpful assistant. [${Date.now()}]`;
@@ -96,12 +97,13 @@ test.describe('Optimization Theories board', () => {
     await expect(page.getByTestId('theory-column-Validated').getByTestId(`theory-card-${theoryId}`)).toBeVisible();
     await card.click();
 
-    const flow = page.getByTestId('decision-flow');
-    await expect(flow).toBeVisible();
-    // The Theory stage renders the proposed system-prompt change as a diff.
-    await expect(flow.getByTestId('prompt-diff')).toBeVisible();
-    // A validated theory pending review exposes the Promote action in the Outcome stage.
-    await expect(flow.getByTestId('flow-promote-btn')).toBeVisible();
+    // A validated theory swaps the decision flow for the proposal-first view: the effective
+    // gain leads, the concrete change is front and center, and Promote is immediately at hand.
+    const view = page.getByTestId('validated-proposal');
+    await expect(view).toBeVisible();
+    await expect(view.getByTestId('gain-hero')).toContainText('+12pt');
+    await expect(view.getByTestId('prompt-diff')).toBeVisible();
+    await expect(view.getByTestId('proposal-promote-btn')).toBeVisible();
   });
 
   test('dismissing from the drawer flips the linked proposal to Rejected', async ({ page, request }) => {
@@ -123,7 +125,7 @@ test.describe('Optimization Theories board', () => {
 
     await page.goto('/proposals', { waitUntil: 'load' });
     await page.getByTestId(`theory-card-${theoryId}`).click();
-    await page.getByTestId('decision-flow').getByTestId('flow-dismiss-btn').click();
+    await page.getByTestId('validated-proposal').getByTestId('proposal-dismiss-btn').click();
 
     await expect
       .poll(
