@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useCurrentUser } from '../../auth/useCurrentUser';
 import { NavItem } from './NavItem';
 import { LockedNavItem } from './LockedNavItem';
 import { isNavEntryLocked } from './navGating';
-import { useLicense, type LicenseFeature } from '../../api/license';
+import { useLicense } from '../../api/license';
 import { LicenseBadge } from '../license/LicenseBadge';
 import { GracePeriodBanner } from '../license/GracePeriodBanner';
 import { QuotaBanner } from '../license/QuotaBanner';
@@ -17,108 +17,18 @@ import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useKiosk } from '../../contexts/KioskContext';
-import { AssistantRuntimeProvider } from '@assistant-ui/react';
-import { useTraceyChat } from '../../features/tracey/useTraceyChat';
-import { TraceyChatProvider } from '../../features/tracey/tracey-chat-context';
-import { TraceyActionsProvider } from '../../features/tracey/tracey-actions';
 import { useHealth } from '../../hooks/useHealth';
 import { cn } from '../../lib/cn';
 import { UnifiedSearch, type UnifiedSearchHandle } from '../search/UnifiedSearch';
 import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
+import { LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon } from '../icons';
 import {
-  GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
-  SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon,
-  LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon,
-} from '../icons';
+  navGroups, navItems, NAV_ICONS, HEALTH_PILL, HEALTH_DOT, HEALTH_LABEL,
+} from './shellNav';
 
-type NavIconName =
-  | 'grid' | 'activity' | 'users' | 'checkbox' | 'scale' | 'play'
-  | 'beaker' | 'target' | 'sparkles' | 'server' | 'settings' | 'tracey' | 'alert';
-
-interface NavEntry {
-  label: string;
-  icon: NavIconName;
-  to: string;
-  requiresFeature?: LicenseFeature;
-  /** Only rendered for admin users (backend still enforces authorization). */
-  adminOnly?: boolean;
-}
-
-interface NavGroup {
-  label: string | null;
-  items: NavEntry[];
-}
-
-const navGroups: NavGroup[] = [
-  {
-    label: 'Overview',
-    items: [
-      { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
-      { label: 'Traces', icon: 'activity', to: '/traces' },
-      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai' },
-    ],
-  },
-  {
-    label: 'Agents',
-    items: [
-      { label: 'Agents', icon: 'users', to: '/agents' },
-      { label: 'Agent Playground', icon: 'beaker', to: '/playground' },
-      { label: 'Proposals', icon: 'sparkles', to: '/proposals', requiresFeature: 'OptimizationProposals' },
-    ],
-  },
-  {
-    label: 'Evaluators',
-    items: [
-      { label: 'Evaluators', icon: 'scale', to: '/evaluators' },
-      { label: 'Evaluator Playground', icon: 'target', to: '/evaluator-playground' },
-    ],
-  },
-  {
-    label: 'Benchmarks',
-    items: [
-      { label: 'Test Suites', icon: 'checkbox', to: '/suites' },
-      { label: 'Test Runs', icon: 'play', to: '/runs' },
-    ],
-  },
-];
-
-const navItems: NavEntry[] = navGroups.flatMap(g => g.items);
-
-const NAV_ICONS: Record<NavIconName, React.ReactNode> = {
-  grid: <GridIcon size={16} />,
-  activity: <ActivityIcon size={16} />,
-  users: <UsersIcon size={16} />,
-  checkbox: <CheckboxIcon size={16} />,
-  scale: <ScaleIcon size={16} />,
-  play: <PlayIcon size={16} />,
-  beaker: <BeakerIcon size={16} />,
-  target: <TargetIcon size={16} />,
-  sparkles: <SparklesIcon size={16} />,
-  server: <ServerIcon size={16} />,
-  settings: <SettingsIcon size={16} />,
-  tracey: <MessageSparkleIcon size={16} />,
-  alert: <AlertTriangleIcon size={16} />,
-};
-
-type HealthStatus = 'online' | 'offline' | 'connecting';
-
-const HEALTH_PILL: Record<HealthStatus, string> = {
-  online: 'bg-success-subtle border-[color-mix(in_srgb,var(--success)_25%,transparent)] text-success',
-  offline: 'bg-danger-subtle border-[color-mix(in_srgb,var(--danger)_25%,transparent)] text-danger',
-  connecting: 'bg-warn-subtle border-[color-mix(in_srgb,var(--warn)_25%,transparent)] text-warn',
-};
-
-const HEALTH_DOT: Record<HealthStatus, string> = {
-  online: 'bg-success',
-  offline: 'bg-danger',
-  connecting: 'bg-warn',
-};
-
-const HEALTH_LABEL: Record<HealthStatus, string> = {
-  online: 'Online',
-  offline: 'Offline',
-  connecting: 'Connecting…',
-};
+// The Tracey chat stack (assistant-ui + ai SDK + tools + docs index) is heavy; loading it
+// lazily keeps it out of the main chunk so first paint of every page is faster.
+const TraceyHost = lazy(() => import('../../features/tracey/TraceyHost'));
 
 export function Shell() {
   // Start collapsed on narrow viewports (laptops below 1280px) so page content gets the width;
@@ -140,10 +50,6 @@ export function Shell() {
   const searchRef = useRef<UnifiedSearchHandle>(null);
   const focusSearch = useCallback(() => searchRef.current?.focus(), []);
   useGlobalShortcut('k', focusSearch);
-  // The Tracey chat is created here — above the router `Outlet` — so its runtime and
-  // conversation persist while the user navigates between routes (the `/tracey-ai` page just
-  // renders this shared runtime). When Tracey is unavailable, no session is created.
-  const traceyChat = useTraceyChat();
 
   const healthStatus = online === true ? 'online' : online === false ? 'offline' : 'connecting';
   const pageLabel = [...navItems]
@@ -192,7 +98,7 @@ export function Shell() {
               <div className="font-bold text-sm tracking-[-0.02em] leading-none">
                 <span className="text-primary">proxy</span><span className="text-accent">trace</span>
               </div>
-              <div className="font-mono text-[10.5px] text-muted mt-0.5">v0.1 · alpha</div>
+              <div className="font-mono text-[10.5px] text-muted mt-0.5">{`v${__APP_VERSION__}`}</div>
             </div>
           )}
         </div>
@@ -339,17 +245,21 @@ export function Shell() {
             content. With the container flush + `pr-[10px]`, the overlay thumb floats in the
             padding strip and never overlaps cards, while staying glued to the screen edge. */}
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-[10px_0_10px_10px] pr-[10px] bg-transparent relative z-0 flex flex-col">
-          {/* The runtime provider mounts here — above the router `Outlet` — not on the Tracey
-              page. assistant-ui keeps the conversation's message state inside the component
-              subtree the provider renders, so mounting it per-route would destroy the thread on
-              every navigation. Hoisting it here is what actually makes the chat survive nav. */}
-          <TraceyChatProvider value={traceyChat}>
-            <TraceyActionsProvider value={{ navigate: traceyChat.navigate }}>
-              <AssistantRuntimeProvider runtime={traceyChat.runtime}>
-                <Outlet />
-              </AssistantRuntimeProvider>
-            </TraceyActionsProvider>
-          </TraceyChatProvider>
+          {/* TraceyHost mounts the chat runtime here — above the router `Outlet`, not on the
+              Tracey page — so the conversation survives navigation. It is lazy: while its chunk
+              loads (in parallel with the route chunk) the page area shows the same loader the
+              route Suspense would. */}
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center flex-1 text-muted text-[13px]">
+                Loading…
+              </div>
+            }
+          >
+            <TraceyHost>
+              <Outlet />
+            </TraceyHost>
+          </Suspense>
         </main>
       </div>
 

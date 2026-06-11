@@ -19,7 +19,7 @@ export function GenericBody({ hit }: GenericBodyProps) {
           dangerouslySetInnerHTML={{ __html: safeSnippet }}
         />
       )}
-      {entries.length > 0 && <MetaGrid entries={entries as [string, string][]} />}
+      {entries.length > 0 && <MetaGrid entries={entries} />}
     </>
   );
 }
