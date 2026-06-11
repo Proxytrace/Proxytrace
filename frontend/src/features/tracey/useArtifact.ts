@@ -45,6 +45,9 @@ export function useArtifactResult<K extends ArtifactKind>(
 
   if (isError || status.type === 'incomplete') return { state: 'error', data: undefined };
   if (result == null) return { state: 'pending', data: undefined };
+  // A by-id tool answers a 404 with the compact `{ notFound: id }` — there is no payload to
+  // render, so every card uniformly shows its error state.
+  if (typeof result === 'object' && 'notFound' in result) return { state: 'error', data: undefined };
   // Inline (non-reference) result: nothing to fetch. (The last-resort store-unavailable path —
   // the payload itself — also lands here; it carries no envelope kind to verify.)
   if (!envelope) return { state: 'ready', data: result as ArtifactPayloads[K] };

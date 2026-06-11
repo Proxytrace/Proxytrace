@@ -117,7 +117,7 @@ describe('tracey read tools', () => {
       artifactRef: string; kind: string; summary: Record<string, unknown>;
     };
 
-    expect(agentsApi.get).toHaveBeenCalledWith('a1');
+    expect(agentsApi.get).toHaveBeenCalledWith('a1', { silentStatuses: [404] });
     expect(result.kind).toBe('agent');
     expect(result.summary).toMatchObject({ id: 'a1', name: 'Alpha', endpointName: 'gpt-4o', toolCount: 2 });
     expect(await getArtifact(result.artifactRef)).toEqual(agent);
@@ -137,6 +137,7 @@ describe('tracey read tools', () => {
     expect(statisticsApi.agentOverview).toHaveBeenCalledWith(
       'a1',
       expect.objectContaining({ bucket: 'daily' }),
+      { silentStatuses: [404] },
     );
     expect(result.kind).toBe('agent-stats');
     expect(result.summary).toEqual({ summary: { totalTraces: 3 } });
@@ -174,6 +175,18 @@ describe('tracey write tools confirmation gating', () => {
       awaitable: { kind: 'test-run', id: 'g1' },
     });
     expect(await getArtifact(result.artifactRef)).toEqual(group);
+  });
+
+  it('start_test_run answers notFound without confirming when the suite is gone', async () => {
+    agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A', endpointId: 'e1', endpointName: 'gpt' });
+    testSuitesApi.get.mockRejectedValue(Object.assign(new Error('404 Not Found'), { status: 404 }));
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).start_test_run, { suiteId: 'gone', agentId: 'a1' }, ctx);
+
+    expect(ctx.confirm).not.toHaveBeenCalled();
+    expect(testRunGroupsApi.create).not.toHaveBeenCalled();
+    expect(result).toEqual({ notFound: 'gone' });
   });
 
   it('start_test_run cancels without calling the API when declined', async () => {
@@ -216,15 +229,49 @@ describe('tracey write tools confirmation gating', () => {
   });
 });
 
+/** The shape `api/client` rejects with: an Error carrying the HTTP status. */
+const err404 = () => Object.assign(new Error('404 Not Found'), { status: 404 });
+
 describe('tracey entity-fetch tools', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('get_run answers a 404 with a compact notFound instead of throwing', async () => {
+    testRunsApi.get.mockRejectedValue(err404());
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).get_run, { runId: 'gone' }, ctx);
+
+    expect(testRunsApi.get).toHaveBeenCalledWith('gone', { silentStatuses: [404] });
+    expect(result).toEqual({ notFound: 'gone' });
+  });
+
+  it('get_run still throws non-404 errors', async () => {
+    testRunsApi.get.mockRejectedValue(Object.assign(new Error('boom'), { status: 500 }));
+    const ctx = makeCtx();
+
+    await expect(exec(createTraceyTools(ctx).get_run, { runId: 'r1' }, ctx)).rejects.toThrow('boom');
+  });
+
+  it('compare_runs reports which run ids were not found', async () => {
+    testRunsApi.get
+      .mockResolvedValueOnce({ id: 'old', agentName: 'A', endpointName: 'gpt', suiteName: 'S', passRate: 50, results: [] })
+      .mockRejectedValueOnce(err404());
+    const ctx = makeCtx();
+
+    const result = await exec(createTraceyTools(ctx).compare_runs,
+      { baselineRunId: 'old', candidateRunId: 'gone' },
+      ctx,
+    );
+
+    expect(result).toEqual({ notFound: ['gone'] });
+  });
 
   it('get_provider fetches by id', async () => {
     providersApi.get.mockResolvedValue({ id: 'pr1', name: 'OpenAI' });
     const ctx = makeCtx();
     await exec(createTraceyTools(ctx).get_provider, { providerId: 'pr1' }, ctx);
 
-    expect(providersApi.get).toHaveBeenCalledWith('pr1');
+    expect(providersApi.get).toHaveBeenCalledWith('pr1', { silentStatuses: [404] });
   });
 
   it('find_traces searches with the given filter and returns a compact index', async () => {
@@ -332,7 +379,7 @@ describe('tracey entity-fetch tools', () => {
       artifactRef: string; kind: string; summary: Record<string, unknown>;
     };
 
-    expect(agentCallsApi.get).toHaveBeenCalledWith('t1');
+    expect(agentCallsApi.get).toHaveBeenCalledWith('t1', { silentStatuses: [404] });
     expect(result.kind).toBe('trace');
     expect(result.summary).toMatchObject({ id: 't1', model: 'gpt-4o', httpStatus: 200 });
     expect(await getArtifact(result.artifactRef)).toEqual(call);

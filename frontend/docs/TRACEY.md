@@ -182,6 +182,13 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   return only identity fields + the `awaitable` handle (the theory in particular would otherwise
   echo the full proposed change the model just authored straight back into its context);
   `set_proposal_status` returns just `{ id, status }`.
+- **Missing entities (404).** Every by-id lookup (reads and the write tools' pre-mutation
+  lookups) passes `silentStatuses: [404]` and maps a 404 to a compact `{ notFound: id }` result
+  (`ignore404`, `tools/shared.ts`) instead of throwing — no red error toast for a
+  model-recoverable miss (stale id, deleted entity, run-vs-group id mix-up), and the model can
+  re-list or ask instead of parsing an opaque error. `useArtifactResult` renders any inline
+  `{ notFound }` as the card's error state, so cards need no per-card guard. `await_actions`
+  polls with the same silence; a bad handle still lands in its per-handle `errors`.
 - **Render tools** (`show_chart`, `show_table`, `show_text`) take the data as args and return only
   a stored render spec; the matching `tool-ui/` component draws it via a `components/artifacts/`
   renderer.

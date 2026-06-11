@@ -55,8 +55,8 @@ describe('await_actions', () => {
     expect(result.results).toHaveLength(2);
     expect(result.results[0]).toMatchObject({ kind: 'test-run', id: 'g1', status: TestRunStatus.Completed, timedOut: false });
     expect(result.results[1]).toMatchObject({ kind: 'theory', id: 't1', status: TheoryStatus.Validated, timedOut: false });
-    expect(testRunGroupsApi.get).toHaveBeenCalledWith('g1');
-    expect(theoriesApi.get).toHaveBeenCalledWith('t1');
+    expect(testRunGroupsApi.get).toHaveBeenCalledWith('g1', { silentStatuses: [404] });
+    expect(theoriesApi.get).toHaveBeenCalledWith('t1', { silentStatuses: [404] });
   });
 
   it('captures a failed handle without losing the other results', async () => {

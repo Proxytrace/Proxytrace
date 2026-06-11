@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
 import { Priority, ProposalStatus, TheorySource } from '../../../api/models';
-import { type ToolFactory, tool, empty, CANCELLED, listDigest } from './shared';
+import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
 import { clip } from './run-analysis';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
@@ -121,7 +121,8 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       }),
       confirm: true,
       execute: async ({ agentId, suiteId, priority, rationale, details }, c) => {
-        const agent = await agentsApi.get(agentId);
+        const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));
+        if (!agent) return { notFound: agentId };
         const ok = await c.confirm(
           `Submit a ${details.kind === 'ModelSwitchSeed' ? 'model-switch' : details.kind === 'ToolUpdateSeed' ? 'tool-update' : 'system-prompt'} ` +
           `optimization theory for "${agent.name}" and run an A/B test?`,

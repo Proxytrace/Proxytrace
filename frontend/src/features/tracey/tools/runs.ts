@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
-import { type ToolFactory, tool, empty, CANCELLED, listDigest } from './shared';
+import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
 
 export const createRunTools: ToolFactory = (_ctx, store) => ({
@@ -27,7 +27,8 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     parameters: z.object({ runId: z.string().describe('The id of the test run to fetch.') }),
     confirm: false,
     execute: async ({ runId }) => {
-      const run = await testRunsApi.get(runId);
+      const run = await ignore404(() => testRunsApi.get(runId, { silentStatuses: [404] }));
+      if (!run) return { notFound: runId };
       return store('run', run, {
         id: run.id,
         suiteName: run.suiteName,
@@ -53,7 +54,8 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     }),
     confirm: false,
     execute: async ({ runId, limit }) => {
-      const run = await testRunsApi.get(runId);
+      const run = await ignore404(() => testRunsApi.get(runId, { silentStatuses: [404] }));
+      if (!run) return { notFound: runId };
       const failures = failingResults(run);
       return store('run-failures', {
         runId: run.id,
@@ -95,9 +97,14 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     confirm: false,
     execute: async ({ baselineRunId, candidateRunId }) => {
       const [baseline, candidate] = await Promise.all([
-        testRunsApi.get(baselineRunId),
-        testRunsApi.get(candidateRunId),
+        ignore404(() => testRunsApi.get(baselineRunId, { silentStatuses: [404] })),
+        ignore404(() => testRunsApi.get(candidateRunId, { silentStatuses: [404] })),
       ]);
+      const missing = [
+        ...(baseline ? [] : [baselineRunId]),
+        ...(candidate ? [] : [candidateRunId]),
+      ];
+      if (!baseline || !candidate) return { notFound: missing };
       const comparison = compareRuns(baseline, candidate);
       const summaries = (movement: 'fixed' | 'regressed') =>
         comparison.cases
@@ -129,8 +136,10 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     }),
     confirm: true,
     execute: async ({ suiteId, agentId }, c) => {
-      const agent = await agentsApi.get(agentId);
-      const suite = await testSuitesApi.get(suiteId);
+      const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));
+      if (!agent) return { notFound: agentId };
+      const suite = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));
+      if (!suite) return { notFound: suiteId };
       const ok = await c.confirm(`Run suite "${suite.name}" against agent "${agent.name}" (${agent.endpointName})?`);
       if (!ok) return CANCELLED;
       const group = await testRunGroupsApi.create(suiteId, [agent.endpointId]);

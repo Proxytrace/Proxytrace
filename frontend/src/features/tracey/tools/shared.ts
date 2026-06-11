@@ -75,6 +75,21 @@ export type ToolFactory = (ctx: TraceyToolContext, store: StoreFn) => Record<str
 export const tool = <TArgs>(t: TraceyTool<TArgs>): TraceyTool => t as unknown as TraceyTool;
 
 /**
+ * Run a by-id read, resolving `undefined` when the API answers 404 (deleted entity, stale or
+ * mistyped id). Pair with `silentStatuses: [404]` on the API call so no error toast fires; the
+ * tool then answers the model with a compact `{ notFound: id }` it can recover from (re-list,
+ * ask the user) instead of an opaque thrown error.
+ */
+export async function ignore404<T>(read: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await read();
+  } catch (error) {
+    if ((error as { status?: number }).status === 404) return undefined;
+    throw error;
+  }
+}
+
+/**
  * Build a capped list digest for the model: the total count, the first `max` mapped rows, and —
  * only when rows were dropped — a note telling the model the user's card still shows everything.
  * Every `list_*` digest goes through this so a large project can't flood the context.

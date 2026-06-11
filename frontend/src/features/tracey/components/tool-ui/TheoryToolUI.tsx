@@ -1,7 +1,7 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { type TheoryDto } from '../../../../api/models';
+import { useArtifactResult } from '../../useArtifact';
 import { ToolUIFrame } from './ToolUIFrame';
-import { toolUiState } from './tool-ui-state';
 import { LiveTheoryCard } from './LiveTheoryCard';
 
 function isTheory(value: unknown): value is TheoryDto {
@@ -18,15 +18,13 @@ function isCancelled(value: unknown): value is { cancelled: true } {
 }
 
 /**
- * Inline renderer for the `submit_optimization_theory` tool result. A successful submit hands off
- * to {@link LiveTheoryCard} (which streams the A/B status); a cancel or a duplicate/quota outcome
- * renders a quiet one-line note instead.
+ * Inline renderer for the `submit_optimization_theory` tool result. A successful submit stores the
+ * full theory as an artifact (the model only sees a compact digest); this card resolves it and
+ * hands off to {@link LiveTheoryCard} (which streams the A/B status). A cancel or a
+ * duplicate/quota outcome renders a quiet one-line note instead.
  */
 export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const state = toolUiState(status, isError, result != null);
-  if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel="Submitting theory…" testId="tracey-theory-card" />;
-  }
+  const { state, data } = useArtifactResult('theory', result, status, isError);
 
   if (isCancelled(result)) {
     return (
@@ -44,9 +42,13 @@ export const TheoryToolUI: ToolCallMessagePartComponent = ({ result, status, isE
     );
   }
 
-  if (!isTheory(result)) {
+  if (state !== 'ready') {
+    return <ToolUIFrame state={state} pendingLabel="Submitting theory…" testId="tracey-theory-card" />;
+  }
+
+  if (!isTheory(data)) {
     return <ToolUIFrame state="error" errorLabel="Couldn’t submit the theory." testId="tracey-theory-card" />;
   }
 
-  return <LiveTheoryCard initial={result} />;
+  return <LiveTheoryCard initial={data} />;
 };

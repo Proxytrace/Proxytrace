@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
-import { type ToolFactory, tool, empty, listDigest } from './shared';
+import { type ToolFactory, tool, empty, ignore404, listDigest } from './shared';
 
 export const createAgentTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -30,7 +30,8 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
       parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch.') }),
       confirm: false,
       execute: async ({ agentId }) => {
-        const agent = await agentsApi.get(agentId);
+        const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));
+        if (!agent) return { notFound: agentId };
         return store('agent', agent, {
           id: agent.id,
           name: agent.name,

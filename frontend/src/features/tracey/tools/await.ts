@@ -90,14 +90,16 @@ function summarizeTheory(theory: TheoryDto, timedOut: boolean): TheoryAwaitResul
 async function awaitOne(handle: { kind: AwaitKind; id: string }, opts: PollOptions): Promise<AwaitResult> {
   if (handle.kind === 'test-run') {
     const { snapshot, timedOut } = await pollUntilTerminal(
-      () => testRunGroupsApi.get(handle.id),
+      // A 404 (bad handle) still rejects into the per-handle `errors` — silent so the
+      // model-recoverable failure doesn't raise a red error toast.
+      () => testRunGroupsApi.get(handle.id, { silentStatuses: [404] }),
       (g) => isRunTerminal(g.status),
       opts,
     );
     return summarizeRun(snapshot, timedOut);
   }
   const { snapshot, timedOut } = await pollUntilTerminal(
-    () => theoriesApi.get(handle.id),
+    () => theoriesApi.get(handle.id, { silentStatuses: [404] }),
     (t) => isTheoryTerminal(t.status),
     opts,
   );
