@@ -129,7 +129,9 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     description:
       'Start a test run of a suite against an agent. Requires user confirmation. On start the ' +
       'user sees a live progress card that streams completion + pass/fail as cases finish; you ' +
-      'get back only a compact summary (group id, status, case count) — do not poll for progress.',
+      'get back only a compact summary (group id, status, case count) — do not poll for progress. ' +
+      'Returns an `awaitable` handle, and your next step MUST pass it to await_actions (the app ' +
+      'enforces this) — so to run several actions, start them all in this same step.',
     parameters: z.object({
       suiteId: z.string().describe('The id of the test suite to run.'),
       agentId: z.string().describe('The id of the agent to run the suite against.'),

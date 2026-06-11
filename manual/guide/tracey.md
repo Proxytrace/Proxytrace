@@ -112,9 +112,9 @@ fills as cases complete, a running case count, and a pass-rate badge — all str
 (*queued → running → completed*). When the run finishes the card settles on the final pass/fail
 tally; a **View run** link opens the full run page at any point.
 
-After starting a run (or submitting an optimization theory), Tracey can **wait for the result and
-react in the same reply** — she'll come back with an analysis once the run completes, rather than
-leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
+After starting a run (or submitting an optimization theory), Tracey **always waits for the result
+and reacts in the same reply** — she comes back with an analysis once the run completes, rather
+than leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
 summarizes together. Very long runs are capped: if one hasn't finished in time she'll tell you it's
 still going so you can check back.
 

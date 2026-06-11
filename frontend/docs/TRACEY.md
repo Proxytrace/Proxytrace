@@ -250,8 +250,17 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - The producing write tools return an `awaitable: { kind, id }` handle in their digest
   (`start_test_run` → `{ kind: 'test-run', id }`, `submit_optimization_theory` →
   `{ kind: 'theory', id }`).
-- The model is instructed to start ALL the actions first, then call `await_actions` **once** with
-  every handle (never per-action, never poll itself).
+- The same-turn wait is **enforced, not just instructed**: `prepareStep` (`tracey-runtime.ts`)
+  scans the turn's steps for `awaitable` handles no `await_actions` call has covered yet
+  (`pendingAwaitables`) and, while any are pending, forces the next step with
+  `toolChoice: { type: 'tool', toolName: 'await_actions' }`. The model can't end the turn with
+  "the run has started" and leave the user to re-prompt for the outcome; it still authors the
+  args, so it batches every pending handle into the one call. Cancelled / not-found writes return
+  no handle and never force a wait; a wrong or missed id just re-forces on the next step, capped
+  by the step budget.
+- Because the wait is forced right after any producing step, the prompts tell the model to start
+  ALL the actions it intends to run in the **same step** (parallel tool calls), then call
+  `await_actions` **once** with every handle (never per-action, never poll itself).
 - `await.ts` polls each handle to a terminal state via `poll-until-terminal.ts` — runs:
   `Completed`/`Failed`/`Cancelled`; theories: `Validated`/`Invalidated` — at a 3 s interval with a
   **10-minute per-handle cap**. A capped handle returns `timedOut: true` rather than hanging.

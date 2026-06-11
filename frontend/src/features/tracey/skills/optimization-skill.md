@@ -75,9 +75,9 @@ link to the new **proposal** (it won) or **rejected** (no improvement). Add at m
 of context — the card shows the rest. If the submission comes back as a duplicate or quota error,
 explain it plainly instead of retrying.
 
-`submit_optimization_theory` returns an `awaitable` handle (`{ kind: "theory", id }`). To report
-the outcome in the same turn, call `await_actions([handle])` after submitting; it resolves when
-the A/B validation finishes (Validated or Invalidated). Then tell the user the result — on a win,
+`submit_optimization_theory` returns an `awaitable` handle (`{ kind: "theory", id }`), and the
+app forces your next step to be `await_actions([handle])` — you cannot end the turn before the
+A/B validation finishes (Validated or Invalidated). Then tell the user the result — on a win,
 mention the proposal it created (`resultingProposalId`). If it reports `timedOut`, say validation
 is still running and to check back.
 

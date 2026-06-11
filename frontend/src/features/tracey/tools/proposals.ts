@@ -110,7 +110,9 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         'Submit an optimization theory for an agent — a concrete proposed change (system prompt, ' +
         'model switch, or tool update) that the backend A/B-tests against the agent\'s suite. ' +
         'Spawns a reviewable proposal if it improves the pass rate, otherwise it is rejected. ' +
-        'Use the `optimize-agent` skill to drive this. Requires user confirmation.',
+        'Use the `optimize-agent` skill to drive this. Requires user confirmation. Returns an ' +
+        '`awaitable` handle, and your next step MUST pass it to await_actions (the app enforces ' +
+        'this) — so to run several actions, start them all in this same step.',
       parameters: z.object({
         agentId: z.string().describe('The id of the agent to optimize.'),
         suiteId: z.string().describe('The id of the test suite to validate the change against.'),
