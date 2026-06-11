@@ -29,3 +29,12 @@ public interface ILicenseService
   an unverified tier value; always go through the service.
 - When adding a new gated capability, add a `LicenseFeature`/`LicenseLimit` member and assign it to
   the right `TierDefinition` rather than checking the tier enum directly at the call site.
+
+## Notes on specific gates
+
+- **`AgenticEvaluators`** is enforced at *use* time, not creation time. Default agentic evaluators
+  are provisioned for every project regardless of tier (`IDefaultEvaluatorProvisioner`); the gate
+  applies in two places: (1) `TestRunnerService` skips agentic evaluators during a run when the
+  feature is disabled — they are silently not run, never errored, so the pass rate is computed over
+  judged evaluators; (2) the suite editor (`EvaluatorsPanel`) locks unattached agentic evaluators on
+  the frontend. An agentic evaluator attached while licensed simply stops running after a downgrade.

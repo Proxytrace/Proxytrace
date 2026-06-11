@@ -332,6 +332,26 @@ public sealed class Module : Autofac.Module
                     sp.GetRequiredService<TraceyAgentSeederHostedService>()));
         }
 
+        // Per-scope: resolves IAgentRepository/IEvaluatorRepository, both bound to the request's
+        // ambient DbContext. A singleton would capture one repository/context and leak it.
+        builder.RegisterType<DefaultEvaluatorProvisioner>()
+            .As<IDefaultEvaluatorProvisioner>()
+            .InstancePerLifetimeScope();
+
+        builder.RegisterType<DefaultEvaluatorSeederHostedService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(DefaultEvaluatorSeederHostedService));
+
+        const string defaultEvaluatorSeederHostedServiceKey = "Proxytrace.Application.DefaultEvaluatorSeederHostedService.Registered";
+        if (!builder.Properties.ContainsKey(defaultEvaluatorSeederHostedServiceKey))
+        {
+            builder.Properties[defaultEvaluatorSeederHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services =>
+                services.AddSingleton<IHostedService>(sp =>
+                    sp.GetRequiredService<DefaultEvaluatorSeederHostedService>()));
+        }
+
         builder.RegisterType<DemoSeederHostedService>()
             .AsSelf()
             .SingleInstance()

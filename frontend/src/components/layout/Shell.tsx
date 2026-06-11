@@ -10,6 +10,7 @@ import { GracePeriodBanner } from '../license/GracePeriodBanner';
 import { QuotaBanner } from '../license/QuotaBanner';
 import { Avatar } from '../ui/Avatar';
 import { IconButton } from '../ui/Button';
+import { Menu } from '../ui/Menu';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
@@ -25,7 +26,7 @@ import { useGlobalShortcut } from '../../hooks/useGlobalShortcut';
 import {
   GridIcon, ActivityIcon, UsersIcon, CheckboxIcon, ScaleIcon, PlayIcon, SparklesIcon, ServerIcon,
   SettingsIcon, BeakerIcon, TargetIcon, MessageSparkleIcon, AlertTriangleIcon,
-  LayoutSidebarIcon, ExternalLinkIcon,
+  LayoutSidebarIcon, ExternalLinkIcon, LogOutIcon,
 } from '../icons';
 
 type NavIconName =
@@ -287,14 +288,25 @@ export function Shell() {
             </IconButton>
           )}
 
-          <IconButton
-            data-testid="logout-btn"
-            onClick={() => currentUser?.signOut()}
-            title={`Sign out (${userName})`}
-            aria-label={`Sign out (${userName})`}
+          <Menu
+            trigger={
+              <IconButton
+                data-testid="user-menu-trigger"
+                title={userName}
+                aria-label={`User menu (${userName})`}
+              >
+                <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
+              </IconButton>
+            }
           >
-            <Avatar initials={userInitials} color="var(--accent-primary)" className="w-[30px] h-[30px] rounded-full text-[11px] font-semibold" />
-          </IconButton>
+            <Menu.Item
+              data-testid="logout-btn"
+              icon={<LogOutIcon size={15} />}
+              onSelect={() => currentUser?.signOut()}
+            >
+              Logout
+            </Menu.Item>
+          </Menu>
         </header>
 
         {/* Page content — single vertical scroll container for the app */}

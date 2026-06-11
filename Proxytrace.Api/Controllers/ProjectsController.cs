@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Api.Dto.Projects;
+using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
@@ -24,6 +25,7 @@ public class ProjectsController : ControllerBase
     private readonly IProject.CreateNew createNew;
     private readonly IProject.CreateExisting createExisting;
     private readonly ITraceyAgentProvisioner traceyProvisioner;
+    private readonly IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner;
 
     public ProjectsController(
         IProjectRepository repository,
@@ -32,7 +34,8 @@ public class ProjectsController : ControllerBase
         IAgentRepository agentRepository,
         IProject.CreateNew createNew,
         IProject.CreateExisting createExisting,
-        ITraceyAgentProvisioner traceyProvisioner)
+        ITraceyAgentProvisioner traceyProvisioner,
+        IDefaultEvaluatorProvisioner defaultEvaluatorProvisioner)
     {
         this.repository = repository;
         this.endpointRepository = endpointRepository;
@@ -41,6 +44,7 @@ public class ProjectsController : ControllerBase
         this.createNew = createNew;
         this.createExisting = createExisting;
         this.traceyProvisioner = traceyProvisioner;
+        this.defaultEvaluatorProvisioner = defaultEvaluatorProvisioner;
     }
 
     [HttpGet]
@@ -79,6 +83,7 @@ public class ProjectsController : ControllerBase
         var project = createNew(request.Name, endpoint, members);
         var saved = await repository.AddAsync(project, cancellationToken);
         await traceyProvisioner.EnsureTraceyAgentAsync(saved, cancellationToken);
+        await defaultEvaluatorProvisioner.EnsureDefaultEvaluatorsAsync(saved, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = saved.Id }, ToDto(saved));
     }
 

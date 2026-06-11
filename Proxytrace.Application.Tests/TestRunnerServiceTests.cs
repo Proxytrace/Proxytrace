@@ -15,6 +15,7 @@ using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Licensing;
 using Proxytrace.Testing;
 
 namespace Proxytrace.Application.Tests;
@@ -50,6 +51,45 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var suite = createTestSuite("Test Suite", agent, [evaluator], [testCase]);
         await testSuiteRepo.AddAsync(suite, ct);
         return suite;
+    }
+
+    /// Builds a suite carrying one Exact Match evaluator and one agentic evaluator, so a run's
+    /// evaluation count reveals whether the agentic one was skipped by the license gate.
+    private static async Task<ITestSuite> BuildSuiteWithAgenticAsync(
+        IServiceProvider services,
+        AssistantMessage expectedOutput,
+        CancellationToken ct)
+    {
+        var agentGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
+        var exactGenerator = services.GetRequiredService<IDomainEntityGenerator<IExactMatchEvaluator>>();
+        var agenticGenerator = services.GetRequiredService<IDomainEntityGenerator<IAgenticEvaluator>>();
+        var createTestCase = services.GetRequiredService<ITestCase.CreateNew>();
+        var testCaseRepo = services.GetRequiredService<IRepository<ITestCase>>();
+        var createTestSuite = services.GetRequiredService<ITestSuite.CreateNew>();
+        var testSuiteRepo = services.GetRequiredService<IRepository<ITestSuite>>();
+
+        var agent = await agentGenerator.GetOrCreateAsync(ct);
+        var exactMatch = await exactGenerator.CreateAsync(ct);
+        var agentic = await agenticGenerator.CreateAsync(ct);
+
+        var input = Conversation.Create();
+        input.Add(new UserMessage([Content.FromText("What is the capital of France?")]));
+
+        var testCase = createTestCase(input, expectedOutput);
+        await testCaseRepo.AddAsync(testCase, ct);
+
+        var evaluators = new IEvaluator[] { exactMatch, agentic };
+        var suite = createTestSuite("Agentic Suite", agent, evaluators, [testCase]);
+        await testSuiteRepo.AddAsync(suite, ct);
+        return suite;
+    }
+
+    private static void RegisterLicense(ContainerBuilder builder, bool agenticEnabled)
+    {
+        var license = Substitute.For<ILicenseService>();
+        license.IsFeatureEnabled(Arg.Any<LicenseFeature>()).Returns(true);
+        license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators).Returns(agenticEnabled);
+        builder.RegisterInstance(license).As<ILicenseService>();
     }
 
     // ── tests ─────────────────────────────────────────────────────────────────
@@ -257,5 +297,54 @@ public sealed class TestRunnerServiceTests : BaseTest<Module>
         var storedRun = await runRepo.GetAsync(testRun.Id, CancellationToken);
         storedRun.Should().NotBeNull();
         storedRun.TestResults.Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_WhenAgenticEvaluatorsDisabled_SkipsAgenticEvaluator()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config =>
+        {
+            RegisterFakeModelClient(config, expectedOutput);
+            RegisterLicense(config, agenticEnabled: false);
+        });
+
+        var suite = await BuildSuiteWithAgenticAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], cancellationToken: CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        var testRun = (await testRunRepository.GetByGroupAsync(group.Id, CancellationToken)).First();
+
+        // Only the Exact Match evaluator runs; the agentic one is skipped (not errored).
+        testRun.TestResults[0].Evaluations.Should().ContainSingle()
+            .Which.Evaluator.Kind.Should().Be(EvaluatorKind.ExactMatch);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_WhenAgenticEvaluatorsEnabled_RunsAgenticEvaluator()
+    {
+        var expectedOutput = new AssistantMessage([Content.FromText(MatchingText)], []);
+        var services = GetServices(config =>
+        {
+            RegisterFakeModelClient(config, expectedOutput);
+            RegisterLicense(config, agenticEnabled: true);
+        });
+
+        var suite = await BuildSuiteWithAgenticAsync(services, expectedOutput, CancellationToken);
+        var runner = services.GetRequiredService<ITestRunnerService>();
+        var endpoint = await services.GetRequiredService<IDomainEntityGenerator<IModelEndpoint>>().GetOrCreateAsync();
+
+        var group = await runner.RunInForegroundAsync(suite, [endpoint], cancellationToken: CancellationToken);
+
+        var testRunRepository = services.GetRequiredService<ITestRunRepository>();
+        var testRun = (await testRunRepository.GetByGroupAsync(group.Id, CancellationToken)).First();
+
+        // Both evaluators run: Exact Match and the agentic one.
+        testRun.TestResults[0].Evaluations.Should().HaveCount(2);
+        testRun.TestResults[0].Evaluations.Select(e => e.Evaluator.Kind)
+            .Should().Contain(EvaluatorKind.Agentic);
     }
 }

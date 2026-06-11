@@ -81,7 +81,8 @@ test.describe('Auth & access control', () => {
     await page.getByTestId('login-submit').click();
     await expect(page).toHaveURL(/\/dashboard$/);
 
-    // Click the logout control in the app shell (the user avatar button).
+    // Open the user menu in the app shell (the avatar button), then click Logout.
+    await page.getByTestId('user-menu-trigger').click();
     await page.getByTestId('logout-btn').click();
 
     await expect(page).toHaveURL(/\/login/);
