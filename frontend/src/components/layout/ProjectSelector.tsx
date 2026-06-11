@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 import { Menu } from '../ui/Menu';
 import { RowButton } from '../ui/RowButton';
-import { CheckIcon, ChevronUpIcon } from '../icons';
+import { CheckIcon, ChevronUpIcon, SettingsIcon } from '../icons';
 import useCurrentProject from '../../hooks/useCurrentProject';
+import { useCurrentUser } from '../../auth/useCurrentUser';
 import type { ProjectDto } from '../../api/models';
 import { projectColor } from '../../lib/colors';
 
@@ -18,6 +19,7 @@ function projectInitials(name: string) {
 export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
   const { projects, currentProject, setCurrentProjectId } = useCurrentProject();
   const navigate = useNavigate();
+  const isAdmin = useCurrentUser()?.role === 'Admin';
 
   const name = currentProject?.name ?? 'No project';
   const memberCount = currentProject?.memberCount ?? 0;
@@ -75,8 +77,12 @@ export function ProjectSelector({ collapsed }: { collapsed: boolean }) {
           </Menu.Item>
         );
       })}
-      <Menu.Separator />
-      <Menu.Item onSelect={() => navigate('/settings')}>Manage projects…</Menu.Item>
+      {isAdmin && (
+        <>
+          <Menu.Separator />
+          <Menu.Item icon={<SettingsIcon size={14} />} onSelect={() => navigate('/settings')}>Settings</Menu.Item>
+        </>
+      )}
     </Menu>
   );
 }

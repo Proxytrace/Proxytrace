@@ -4,6 +4,11 @@ Proxytrace routes captured traffic to upstream LLM providers and identifies clie
 its own API keys. This page covers the operator's view; for the client-side setup, see
 [Proxy Setup](/guide/proxy-setup).
 
+**Providers live in the admin-only Settings hub.** Open **Settings** from the sidebar, then
+choose **Providers** under the *Workspace* group (direct link: `/settings/providers`). The whole
+Settings area — and every provider/model/API-key write endpoint behind it — is restricted to
+users with the **Admin** role.
+
 ## Model providers, models, and endpoints
 
 - **Model Provider** — an upstream OpenAI-compatible API such as OpenAI.

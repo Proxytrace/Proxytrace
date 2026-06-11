@@ -873,7 +873,7 @@ export class ProxytraceApiClient {
   // ── Paged / filtered list helpers ──────────────────────────────────────────
   async listAgentsPaged(
     params: { page?: number; pageSize?: number; projectId?: string } = {},
-  ): Promise<{ total: number; items: Array<{ id: string; name: string }> }> {
+  ): Promise<{ total: number; items: Array<{ id: string; name: string; isSystemAgent: boolean }> }> {
     return this.getList('/api/agents', params);
   }
 

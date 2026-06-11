@@ -1,8 +1,9 @@
 # User Management
 
-The **Users** page is an admin-only screen for managing who can access Proxytrace, what they can
-do, and which projects they belong to. It is reached from the sidebar under **Configure → Users**
-and is only visible to users with the **Admin** role. The underlying `/api/users` endpoints
+The **Users** screen manages who can access Proxytrace, what they can do, and which projects they
+belong to. It lives in the admin-only **Settings** hub — open **Settings** from the sidebar, then
+choose **Users** under the *Workspace* group (direct link: `/settings/users`). The whole Settings
+area is visible only to users with the **Admin** role, and the underlying `/api/users` endpoints
 enforce the same restriction — client-side gating is convenience only.
 
 ## Roles

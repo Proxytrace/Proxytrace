@@ -21,6 +21,12 @@ import { KioskContext } from './contexts/KioskContext';
 import useLocalAuth from './hooks/useLocalAuth';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
+// Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
+import { GeneralSection } from './features/settings/sections/GeneralSection';
+import { MembersSection } from './features/settings/sections/MembersSection';
+import { SearchIndexingSection } from './features/settings/sections/SearchIndexingSection';
+import { ProjectsSection } from './features/settings/sections/ProjectsSection';
+import { DangerZoneSection } from './features/settings/sections/DangerZoneSection';
 
 const Setup = lazy(() => import('./features/setup/Setup'));
 const Dashboard = lazy(() => import('./features/dashboard/Dashboard'));
@@ -32,7 +38,7 @@ const Evaluators = lazy(() => import('./features/evaluators/Evaluators'));
 const Runs = lazy(() => import('./features/runs/Runs'));
 const Providers = lazy(() => import('./features/providers/Providers'));
 const Proposals = lazy(() => import('./features/proposals/Proposals'));
-const Settings = lazy(() => import('./features/settings/Settings'));
+const SettingsLayout = lazy(() => import('./features/settings/SettingsLayout'));
 const Playground = lazy(() => import('./features/playground/Playground'));
 const EvaluatorPlayground = lazy(() => import('./features/evaluator-playground/EvaluatorPlayground'));
 const Login = lazy(() => import('./features/auth/Login'));
@@ -177,16 +183,32 @@ function AppRoutes() {
         <Route path="runs" element={wrap(<Runs />)} />
         <Route path="playground" element={wrap(<Playground />)} />
         <Route path="evaluator-playground" element={wrap(<EvaluatorPlayground />)} />
-        <Route path="providers" element={wrap(<Providers />)} />
-        <Route path="settings" element={wrap(<Settings />)} />
         <Route path="upgrade" element={wrap(<UpgradePlaceholder />)} />
         <Route
           path="proposals"
           element={wrap(<RequiresFeature feature="OptimizationProposals"><Proposals /></RequiresFeature>)}
         />
-        {isAdmin && <Route path="admin/users" element={wrap(<Users />)} />}
-        {isAdmin && <Route path="admin/invites" element={<Navigate to="/admin/users" replace />} />}
-        {isAdmin && <Route path="error-log" element={wrap(<ErrorLog />)} />}
+        {/* The entire settings hub is admin-only (the backend independently enforces this on every
+            settings-mutating endpoint). Providers, Users, and the Error Log now live here as
+            sections rather than as top-level routes. */}
+        {isAdmin && (
+          <Route path="settings" element={wrap(<SettingsLayout />)}>
+            <Route index element={<Navigate to="/settings/general" replace />} />
+            <Route path="general" element={<GeneralSection />} />
+            <Route path="members" element={<MembersSection />} />
+            <Route path="search" element={<SearchIndexingSection />} />
+            <Route path="projects" element={<ProjectsSection />} />
+            <Route path="providers" element={wrap(<Providers />)} />
+            <Route path="users" element={wrap(<Users />)} />
+            <Route path="error-log" element={wrap(<ErrorLog />)} />
+            <Route path="danger" element={<DangerZoneSection />} />
+          </Route>
+        )}
+        {/* Legacy paths → settings sections, so bookmarks, Tracey, and docs links keep working. */}
+        {isAdmin && <Route path="providers" element={<Navigate to="/settings/providers" replace />} />}
+        {isAdmin && <Route path="error-log" element={<Navigate to="/settings/error-log" replace />} />}
+        {isAdmin && <Route path="admin/users" element={<Navigate to="/settings/users" replace />} />}
+        {isAdmin && <Route path="admin/invites" element={<Navigate to="/settings/users" replace />} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

@@ -104,11 +104,11 @@ test.describe('Pagination & filtering', () => {
     });
 
     const filtered = await api.listAgentsPaged({ projectId: isolatedProjectId, pageSize: 100 });
-    expect(filtered.items.some((a) => a.id === agentId)).toBeTruthy();
-    // The default project's agents (created in beforeAll/other tests) must NOT leak in. Total
-    // equals exactly the agents we put in this project.
-    expect(filtered.total).toBe(1);
-    expect(filtered.items).toHaveLength(1);
+    // Every project carries a built-in Tracey system agent (auto-provisioned at create), so the
+    // list isn't empty — compare against the user agents only. The default project's agents must
+    // NOT leak in: the sole non-system agent here is exactly the one we seeded.
+    const userAgents = filtered.items.filter((a) => !a.isSystemAgent);
+    expect(userAgents.map((a) => a.id)).toEqual([agentId]);
   });
 
   test('suites filter by agentId returns only that agent\'s suites', async () => {

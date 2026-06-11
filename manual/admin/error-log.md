@@ -4,9 +4,11 @@ The **Error Log** is an admin-only page that shows the latest application errors
 across the backend — exception message, type, source, and full stacktrace — so operators can
 diagnose failures without shelling into a container or wiring an external log stack.
 
-It is reached from the sidebar under **Configure → Error Log**, and is only visible to users
-with the **Admin** role. The underlying API (`/api/error-log`) is likewise restricted to
-admins, because stacktraces can contain sensitive runtime detail.
+It lives in the admin-only **Settings** hub — open **Settings** from the sidebar, then choose
+**Error log** under the *Workspace* group (direct link: `/settings/error-log`). The whole
+Settings area is visible only to users with the **Admin** role, and the underlying API
+(`/api/error-log`) is likewise restricted to admins, because stacktraces can contain sensitive
+runtime detail.
 
 ## What gets captured
 

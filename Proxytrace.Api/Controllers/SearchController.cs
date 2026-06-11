@@ -4,6 +4,7 @@ using Proxytrace.Api.Configuration;
 using Proxytrace.Api.Dto.Search;
 using Proxytrace.Domain.ProjectSearchSettings;
 using Proxytrace.Domain.Search;
+using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -110,6 +111,7 @@ public class SearchController : ControllerBase
     }
 
     [HttpPost("reindex")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<object>> Reindex(Guid projectId, CancellationToken cancellationToken)
     {
         await indexer.ReindexProjectAsync(projectId, cancellationToken);
@@ -117,6 +119,7 @@ public class SearchController : ControllerBase
     }
 
     [HttpGet("settings")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<SearchIndexingSettingsDto>> GetSettings(Guid projectId, CancellationToken cancellationToken)
     {
         var settings = await settingsResolver.GetOrDefaultsAsync(projectId, cancellationToken);
@@ -124,6 +127,7 @@ public class SearchController : ControllerBase
     }
 
     [HttpPut("settings")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<SearchIndexingSettingsDto>> UpdateSettings(
         Guid projectId,
         [FromBody] SearchIndexingSettingsDto settings,
@@ -161,6 +165,7 @@ public class SearchController : ControllerBase
     }
 
     [HttpGet("status")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<SearchIndexStatusDto>> GetStatus(Guid projectId, CancellationToken cancellationToken)
     {
         var count = await indexStatistics.CountAsync(projectId, cancellationToken);

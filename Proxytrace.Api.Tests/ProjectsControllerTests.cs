@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Projects;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
@@ -112,11 +113,56 @@ public sealed class ProjectsControllerTests : BaseTest<Module>
         (result.Value ?? throw new InvalidOperationException("Expected non-null Value.")).Members.Should().ContainSingle(m => m.Id == userB.Id);
     }
 
+    [TestMethod]
+    public async Task Delete_RemovesBuiltInTraceyAgent_ThenDeletesProject()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var project = await services.GetRequiredService<IDomainEntityGenerator<IProject>>().CreateAsync(CancellationToken);
+        // Give the project its built-in Tracey system agent, exactly as project creation does.
+        await services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>()
+            .EnsureTraceyAgentAsync(project, CancellationToken);
+
+        var result = await controller.Delete(project.Id, CancellationToken);
+
+        result.Should().BeOfType<NoContentResult>();
+        (await services.GetRequiredService<IProjectRepository>().FindAsync(project.Id, CancellationToken))
+            .Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Delete_ProjectWithUserAgent_ReturnsConflict()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        // A generated agent is a normal (non-system) agent; deleting its project must be refused.
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        agent.IsSystemAgent.Should().BeFalse();
+
+        var result = await controller.Delete(agent.Project.Id, CancellationToken);
+
+        result.Should().BeOfType<ConflictObjectResult>();
+        (await services.GetRequiredService<IProjectRepository>().FindAsync(agent.Project.Id, CancellationToken))
+            .Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task Delete_UnknownProject_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Delete(Guid.NewGuid(), CancellationToken);
+
+        result.Should().BeOfType<NotFoundResult>();
+    }
+
     private static ProjectsController ResolveController(IServiceProvider services) =>
         new(
             services.GetRequiredService<IProjectRepository>(),
             services.GetRequiredService<IRepository<IModelEndpoint>>(),
             services.GetRequiredService<IRepository<IUser>>(),
+            services.GetRequiredService<IAgentRepository>(),
             services.GetRequiredService<IProject.CreateNew>(),
             services.GetRequiredService<IProject.CreateExisting>(),
             services.GetRequiredService<Proxytrace.Application.Tracey.ITraceyAgentProvisioner>());

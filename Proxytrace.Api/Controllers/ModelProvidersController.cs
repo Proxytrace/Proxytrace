@@ -11,6 +11,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Paging;
 using Proxytrace.Domain.Project;
+using Proxytrace.Domain.User;
 
 namespace Proxytrace.Api.Controllers;
 
@@ -61,6 +62,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<PagedResult<ModelProviderDto>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
@@ -80,6 +82,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpGet("overview")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ProvidersOverviewDto> GetOverview(CancellationToken cancellationToken = default)
     {
         Task<IReadOnlyList<IModelProvider>> providersTask = providerRepository.GetAllAsync(cancellationToken);
@@ -105,6 +108,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<ModelProviderDto>> Create(
         [FromBody] CreateModelProviderRequest request,
         CancellationToken cancellationToken)
@@ -116,6 +120,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<ModelProviderDto>> Update(
         Guid id,
         [FromBody] UpdateModelProviderRequest request,
@@ -130,6 +135,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var removed = await providerRepository.RemoveAsync(id, cancellationToken);
@@ -148,6 +154,7 @@ public class ModelProvidersController : ControllerBase
     // ── Models ────────────────────────────────────────────────────────────────
 
     [HttpPost("{providerId:guid}/reload")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<IReadOnlyList<ModelEndpointDto>>> Reload(
         Guid providerId,
         CancellationToken cancellationToken = default)
@@ -163,6 +170,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpGet("{providerId:guid}/available-models")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<IReadOnlyList<string>>> GetAvailableModels(Guid providerId, CancellationToken cancellationToken)
     {
         var provider = await providerRepository.GetAsync(providerId, cancellationToken);
@@ -171,6 +179,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpGet("{providerId:guid}/models")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<IReadOnlyList<ModelEndpointDto>>> GetModels(Guid providerId, CancellationToken cancellationToken)
     {
         if (!await providerRepository.ContainsAsync(providerId, cancellationToken))
@@ -180,6 +189,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpPost("{providerId:guid}/models")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<ModelEndpointDto>> CreateModel(
         Guid providerId,
         [FromBody] CreateModelEndpointRequest request,
@@ -201,6 +211,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpDelete("endpoints/{endpointId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> DeleteModel(Guid endpointId, CancellationToken cancellationToken)
     {
         var removed = await endpointRepository.RemoveAsync(endpointId, cancellationToken);
@@ -208,6 +219,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpPut("{providerId:guid}/models/{endpointId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<ModelEndpointDto>> UpdateModelPricing(
         Guid providerId,
         Guid endpointId,
@@ -232,6 +244,7 @@ public class ModelProvidersController : ControllerBase
     // ── API Keys ──────────────────────────────────────────────────────────────
 
     [HttpGet("{providerId:guid}/keys")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IReadOnlyList<ApiKeyDto>> GetKeys(Guid providerId, CancellationToken cancellationToken)
     {
         var keys = await apiKeyRepository.GetByProviderAsync(providerId, cancellationToken);
@@ -239,6 +252,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpPost("{providerId:guid}/keys")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ActionResult<ApiKeyDto>> CreateKey(
         Guid providerId,
         [FromBody] CreateApiKeyRequest request,
@@ -258,6 +272,7 @@ public class ModelProvidersController : ControllerBase
     }
 
     [HttpDelete("{providerId:guid}/keys/{keyId:guid}")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> DeleteKey(Guid providerId, Guid keyId, CancellationToken cancellationToken)
     {
         var key = await apiKeyRepository.FindAsync(keyId, cancellationToken);

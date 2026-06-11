@@ -122,6 +122,36 @@ test.describe('Auth & access control', () => {
     expect(token).toBeTruthy();
   });
 
+  test('a Member sees no Settings nav and is redirected away from /settings', async ({ page, request }) => {
+    // The whole settings hub (incl. Providers, Users, Error Log) is admin-only. A non-admin must
+    // not see the Settings nav entry, and the settings routes aren't registered for them — so the
+    // client router falls through to the dashboard. (The backend independently 403s the APIs.)
+    const api = new ProxytraceApiClient(request);
+    const { token: adminToken } = await api.login(ADMIN_EMAIL, ADMIN_PASSWORD);
+    api.setToken(adminToken);
+
+    const memberEmail = `member+${Date.now()}@e2e.test`;
+    const invite = await api.inviteUser(memberEmail, 'Member');
+
+    // Redeem the invite via the UI, which signs the new Member in.
+    await page.goto(`/signup?token=${encodeURIComponent(invite.token)}`, { waitUntil: 'load' });
+    await page.getByTestId('signup-password').fill('E2ePassword1!');
+    await page.getByTestId('signup-submit').click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+
+    // No Settings entry for a Member: the project-switcher menu's admin-only "Settings" item is
+    // absent.
+    await page.getByTestId('project-switcher').click();
+    await expect(page.getByRole('menuitem', { name: 'Settings' })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+
+    // Direct navigation to settings routes is not available to a Member → redirected to dashboard.
+    await page.goto('/settings', { waitUntil: 'load' });
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await page.goto('/settings/providers', { waitUntil: 'load' });
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
   // NOTE: the Free-tier 402 gate on the optimization-proposals route is covered in
   // licensing.spec.ts ('the optimization-proposals API is gated with HTTP 402'); not duplicated here.
 });

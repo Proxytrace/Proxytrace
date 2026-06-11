@@ -39,7 +39,7 @@ test.describe('Providers page', () => {
   test('creates a provider via the add modal and shows it in the list', async ({ page }) => {
     const name = `E2E UI Provider ${Date.now()}`;
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await expect(page.getByTestId('provider-list')).toBeVisible();
 
     await page.getByTestId('provider-create-btn').click();
@@ -75,7 +75,7 @@ test.describe('Providers page', () => {
     });
     const model = await api.addModelToProvider(id, 'gpt-4o-mini');
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
 
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('Providers page', () => {
     const modelName = `e2e-model-${Date.now()}`;
     const model = await api.addModelToProvider(id, modelName);
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
@@ -116,7 +116,7 @@ test.describe('Providers page', () => {
     });
     const keyName = `e2e-key-${Date.now()}`;
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
@@ -148,7 +148,7 @@ test.describe('Providers page', () => {
     await api.createProviderApiKey(id, keyName, projectId);
     const keyId = await findKeyId(api, id, keyName);
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
@@ -172,7 +172,7 @@ test.describe('Providers page', () => {
       kind: 'OpenAi',
     });
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-name')).toHaveText(name);
 
@@ -199,7 +199,7 @@ test.describe('Providers page', () => {
       kind: 'OpenAi',
     });
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await page.getByTestId(`provider-row-${id}`).click();
     await expect(page.getByTestId('provider-detail-header')).toBeVisible();
 
@@ -207,8 +207,9 @@ test.describe('Providers page', () => {
     await expect(page.getByTestId('models-tab')).toHaveCount(0);
     await expect(page.getByTestId('keys-tab')).toHaveCount(0);
 
-    // Both sections' primary controls are reachable without any tab interaction.
-    await expect(page.getByTestId('model-add-btn')).toBeVisible();
+    // Both sections' primary controls are reachable without any tab interaction. Models are
+    // discovered/reloaded (no manual add), so the Models section's control is "Reload".
+    await expect(page.getByTestId('model-reload-btn')).toBeVisible();
     await expect(page.getByTestId('key-create-btn')).toBeVisible();
   });
 
@@ -231,7 +232,7 @@ test.describe('Providers page', () => {
       kind: 'OpenAiCompatible',
     });
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
 
     // Canonical OpenAI endpoint: hidden in the header.
     await page.getByTestId(`provider-row-${defaultId}`).click();
@@ -252,7 +253,7 @@ test.describe('Providers page', () => {
     const overview = await api.getProvidersOverview();
     test.skip(overview.providers.length > 0, 'tenant has providers; empty state not reachable');
 
-    await page.goto('/providers', { waitUntil: 'load' });
+    await page.goto('/settings/providers', { waitUntil: 'load' });
     await expect(page.getByTestId('provider-empty-state')).toBeVisible();
     await expect(page.getByText('No providers yet')).toBeVisible();
   });

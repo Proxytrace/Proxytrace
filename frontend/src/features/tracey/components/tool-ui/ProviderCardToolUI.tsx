@@ -12,7 +12,7 @@ export const ProviderCardToolUI: ToolCallMessagePartComponent = ({ result, statu
   return (
     <EntityCardLink
       state={state}
-      to="/providers"
+      to="/settings/providers"
       title={provider?.name ?? ''}
       icon={<ServerIcon size={14} />}
       color={providerColor(provider?.name ?? '')}
