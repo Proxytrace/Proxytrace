@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.0.0-rc.1] - 2026-06-11
+
 ### Added
 
 - **Brand mark** — new "Scope" logo and app icons: a gold trace pulse over an
