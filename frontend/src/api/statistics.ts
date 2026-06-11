@@ -1,4 +1,4 @@
-import { api, qs } from './client';
+import { api, qs, type RequestOptions } from './client';
 import type {
   AgentOverviewDto,
   AgentPassRatePointDto,
@@ -24,8 +24,8 @@ export const statisticsApi = {
   costEstimate: (params?: { from?: string; to?: string; agentId?: string; projectId?: string; endpointId?: string }) =>
     api.get<CostEstimateDto[]>(`/api/statistics/cost-estimate${qs(params ?? {})}`),
 
-  agentOverview: (agentId: string, params: AgentRangeParams) =>
-    api.get<AgentOverviewDto>(`/api/statistics/agents/${agentId}/overview${qs(params)}`),
+  agentOverview: (agentId: string, params: AgentRangeParams, opts?: RequestOptions) =>
+    api.get<AgentOverviewDto>(`/api/statistics/agents/${agentId}/overview${qs(params)}`, opts),
   agentTimeSeries: (agentId: string, params: AgentRangeParams) =>
     api.get<AgentTimeSeriesPointDto[]>(`/api/statistics/agents/${agentId}/time-series${qs(params)}`),
   agentPassRateTrend: (agentId: string, params: AgentRangeParams) =>

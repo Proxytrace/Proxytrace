@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AgentCallDto, TestSuiteListItemDto } from '../../api/models';
 import { testSuitesApi } from '../../api/test-suites';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
-import { fmtRelative, fmtPct } from '../../lib/format';
+import { fmtRelative, fmtPct100 } from '../../lib/format';
 import { cn } from '../../lib/cn';
 import { PlusIcon, XIcon, CheckIcon } from '../../components/icons';
 import { ColoredBadge } from '../../components/ui/ColoredBadge';
@@ -206,7 +206,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 }
 
 function SuiteStats({ suite }: { suite: TestSuiteListItemDto }) {
-  const passRateLabel = suite.passRate != null ? fmtPct(suite.passRate) : '—';
+  const passRateLabel = suite.passRate != null ? fmtPct100(suite.passRate) : '—';
   const lastRunLabel = suite.lastRunAt ? fmtRelative(suite.lastRunAt) : 'never';
 
   return (

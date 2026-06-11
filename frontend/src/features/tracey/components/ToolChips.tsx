@@ -23,9 +23,6 @@ export function ToolChips() {
           <Badge label={action.label} variant="accent" shape="pill" size="sm" />
         </button>
       ))}
-      <span className="ml-1 text-[11px] text-muted">
-        or type <span className="font-mono text-secondary">/</span> for tools
-      </span>
     </div>
   );
 }

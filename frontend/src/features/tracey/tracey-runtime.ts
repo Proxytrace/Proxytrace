@@ -92,9 +92,24 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       // but only CORE plus the bundles of skills loaded so far this conversation are offered to
       // the model on a given step. Loading a skill via `load_skill` unlocks its tools — a
       // dispatcher feel without a second model. (See `tool-access.ts`.)
-      prepareStep: ({ steps }) => ({
-        activeTools: activeToolNamesFor([...conversationSkills, ...loadedSkillIds(steps)]),
-      }),
+      prepareStep: ({ steps }) => {
+        const activeTools = activeToolNamesFor([...conversationSkills, ...loadedSkillIds(steps)]);
+        // Proactive wait, enforced: once a step has produced an `awaitable` handle the model has
+        // not yet passed to `await_actions`, the next step *must* call it — prompt instructions
+        // alone proved unreliable, and a turn that ends right after `start_test_run` strands the
+        // user re-prompting "is it done yet?". Forcing the tool (not 'required') means the model
+        // can't detour; it still authors the args, so it batches every pending handle into the
+        // one call. A wrong/missed id re-forces on the next step, capped by `stopWhen`.
+        if (pendingAwaitables(steps).length > 0) {
+          return {
+            // The producing writes are only unlocked by bundles that include `await_actions`, but
+            // a forced tool must be active, so guarantee it rather than rely on that invariant.
+            activeTools: activeTools.includes('await_actions') ? activeTools : [...activeTools, 'await_actions'],
+            toolChoice: { type: 'tool' as const, toolName: 'await_actions' },
+          };
+        }
+        return { activeTools };
+      },
       // Without a stop condition the AI SDK ends the run after the first step, so a turn that
       // starts with a tool call produces no assistant text. Keep looping (tool → result → model)
       // until the model answers or the budget is spent. 12 covers the longest scripted flow
@@ -177,6 +192,52 @@ export function skillIdsFromMessages(messages: ReadonlyArray<UIMessage>): string
     }
   }
   return ids;
+}
+
+/** A long-running-action handle as produced by `start_test_run` / `submit_optimization_theory`. */
+export interface AwaitableHandle {
+  kind: string;
+  id: string;
+}
+
+/** Reads the `awaitable` handle off a tool result, whether stored (under `summary`) or inline. */
+function awaitableOf(output: unknown): AwaitableHandle | undefined {
+  if (!output || typeof output !== 'object') return undefined;
+  const summary = (output as { summary?: unknown }).summary;
+  const handle =
+    (output as { awaitable?: unknown }).awaitable ??
+    (summary && typeof summary === 'object' ? (summary as { awaitable?: unknown }).awaitable : undefined);
+  if (!handle || typeof handle !== 'object') return undefined;
+  const { kind, id } = handle as { kind?: unknown; id?: unknown };
+  return typeof kind === 'string' && typeof id === 'string' ? { kind, id } : undefined;
+}
+
+/**
+ * The `awaitable` handles produced by this turn's steps that no `await_actions` call has waited
+ * on yet. While any are pending, `prepareStep` forces the next step to be an `await_actions` call
+ * so a long-running action is always followed up in the same turn — the model can't end the turn
+ * with "the run has started" and leave the user to re-prompt for the outcome. Cancelled or
+ * not-found writes return no handle, so they never force a wait. Exported for unit testing.
+ */
+export function pendingAwaitables(steps: ReadonlyArray<StepResult<ToolSet>>): AwaitableHandle[] {
+  const produced: AwaitableHandle[] = [];
+  const awaited = new Set<string>();
+  for (const step of steps) {
+    for (const result of step.toolResults) {
+      const handle = awaitableOf(result.output);
+      if (handle) produced.push(handle);
+    }
+    for (const call of step.toolCalls) {
+      if (call.toolName !== 'await_actions') continue;
+      const handles = (call.input as { handles?: unknown }).handles;
+      if (!Array.isArray(handles)) continue;
+      for (const h of handles) {
+        const id = (h as { id?: unknown } | null)?.id;
+        if (typeof id === 'string') awaited.add(id);
+      }
+    }
+  }
+  return produced.filter((h) => !awaited.has(h.id));
 }
 
 /**

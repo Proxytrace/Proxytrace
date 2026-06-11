@@ -53,6 +53,7 @@ export interface ArtifactPayloads {
   'test-run-group': TestRunGroupDto;
   'trace-list': AgentCallListItemDto[];
   'theory-list': TheoryDto[];
+  theory: TheoryDto;
   'proposal-list': OptimizationProposalDto[];
   proposal: OptimizationProposalDto;
   'dashboard-stats': DashboardViewDto;

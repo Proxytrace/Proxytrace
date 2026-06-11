@@ -41,9 +41,9 @@ test.describe('@llm Tracey await_actions', () => {
 
     await page.goto('/tracey-ai', { waitUntil: 'load' });
 
-    // Enable auto-approve so the confirm-gated start_test_run resolves without a confirmation card.
+    // Auto-approve defaults to on (persisted preference) so the confirm-gated start_test_run
+    // resolves without a confirmation card — assert it rather than toggling.
     const autoApprove = page.getByRole('switch', { name: 'Auto-approve actions' });
-    await autoApprove.click();
     await expect(autoApprove).toHaveAttribute('aria-checked', 'true');
 
     // Ask her to run the seeded suite and wait for the result. Referencing the suite + agent by

@@ -11,8 +11,7 @@ captured as a trace — she is the platform's first dogfood agent.
 
 ## Opening Tracey AI
 
-Open **Tracey AI** from the sidebar (under *Overview*), or click the **Tracey** button in
-the top bar (near the health indicator and your avatar). The page is a single chat column;
+Open **Tracey AI** from the sidebar (under *Overview*). The page is a single chat column;
 plots, tables, entity cards, and question widgets render **inline in the conversation** as
 Tracey produces them. Your conversation is remembered per project on this device until you
 clear it.
@@ -52,7 +51,7 @@ glides back up. This is purely presentational — your history still persists pe
 ## Quick actions, chips, and the "/" menu
 
 In the opening view, **chips** surface common quick actions (e.g. *List agents*, *Plot token
-usage*, *Summarize failing runs*). Click one to prefill the message box; edit it if you like,
+usage*, *Improve failing runs*). Click one to prefill the message box; edit it if you like,
 then send. The chips show only while the conversation is empty.
 
 Type **`/`** at the start of a message to open a picker: curated quick actions on top and the
@@ -104,25 +103,26 @@ These actions change state and are therefore **confirmation-gated**:
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
 | **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
-By default Tracey shows a **Confirm / Cancel** card summarizing the action before anything
-happens. Nothing is executed until you confirm.
+With **Auto-approve** off (see below), Tracey shows a **Confirm / Cancel** card summarizing the
+action before anything happens, and nothing is executed until you confirm. With Auto-approve on
+(the default), the action runs immediately.
 
-Once you confirm a **test run**, the chat shows a **live run-progress card**: a progress bar that
+Once a **test run** starts, the chat shows a **live run-progress card**: a progress bar that
 fills as cases complete, a running case count, and a pass-rate badge — all streaming in real time
 (*queued → running → completed*). When the run finishes the card settles on the final pass/fail
 tally; a **View run** link opens the full run page at any point.
 
-After starting a run (or submitting an optimization theory), Tracey can **wait for the result and
-react in the same reply** — she'll come back with an analysis once the run completes, rather than
-leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
+After starting a run (or submitting an optimization theory), Tracey **always waits for the result
+and reacts in the same reply** — she comes back with an analysis once the run completes, rather
+than leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
 summarizes together. Very long runs are capped: if one hasn't finished in time she'll tell you it's
 still going so you can check back.
 
 ### Auto-approve
 
-Below the message box sits an **Auto-approve** toggle (default **off**). When you turn it on,
-Tracey performs write actions immediately without showing the confirmation card. Turn it off
-again to return to the confirm-first behavior.
+Below the message box sits an **Auto-approve** toggle (default **on**). While it is on, Tracey
+performs write actions immediately without showing the confirmation card. Turn it off to get a
+**Confirm / Cancel** card before every write action. Your choice is remembered in the browser.
 
 ## Skills
 

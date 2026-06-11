@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, type RequestOptions } from './client';
 import type {
   ApiKeyDto, CreateApiKeyRequest, CreateProviderRequest,
   ModelEndpointDto, ModelProviderKind,
@@ -8,7 +8,7 @@ import type {
 export const providersApi = {
   /** Page payload: every provider with embedded models + keys, plus projects, in one request. */
   overview: () => api.get<ProvidersOverviewDto>('/api/providers/overview'),
-  get: (id: string) => api.get<ProviderDto>(`/api/providers/${id}`),
+  get: (id: string, opts?: RequestOptions) => api.get<ProviderDto>(`/api/providers/${id}`, opts),
   create: (req: CreateProviderRequest) => api.post<ProviderDto>('/api/providers', req),
   update: (id: string, req: { name: string; endpoint: string; upstreamApiKey: string; kind: ModelProviderKind }) =>
     api.put<ProviderDto>(`/api/providers/${id}`, req),

@@ -1,7 +1,8 @@
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
-import { COL_HEADERS, GRID_TEMPLATE } from '../tracesMeta';
+import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS } from '../tracesMeta';
 import type { TraceRow } from '../tracesMeta';
+import { cn } from '../../../lib/cn';
 import { FlatTraceRow } from './FlatTraceRow';
 import { ConversationGroupRow } from './ConversationGroupRow';
 
@@ -16,17 +17,24 @@ interface Props {
 
 export function TraceTable({ rows, isFetching, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
   return (
-    <div data-testid="trace-table" className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)] [animation-delay:120ms]">
+    <div
+      data-testid="trace-table"
+      className="fade-up bg-card rounded-[14px] overflow-hidden flex-1 min-h-0 flex flex-col shadow-[var(--shadow-card)] [animation-delay:120ms] @container"
+      style={{ '--trace-grid': GRID_TEMPLATE, '--trace-grid-narrow': GRID_TEMPLATE_NARROW } as React.CSSProperties}
+    >
       <div className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         {/* Sticky column header */}
         <div
-          className="grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] sticky top-0 z-10 bg-card"
-          style={{ gridTemplateColumns: GRID_TEMPLATE }}
+          className={cn('grid px-4 py-[8px] border-b border-b-[rgba(255,255,255,0.06)] sticky top-0 z-10 bg-card', TRACE_GRID_CLS)}
         >
           {COL_HEADERS.map((label, i) => (
             <span
               key={label}
-              className={`text-body-sm font-semibold text-muted uppercase tracking-[0.06em] ${i === 7 ? 'text-right' : ''}`}
+              className={cn(
+                'text-body-sm font-semibold text-muted uppercase tracking-[0.06em]',
+                i === 7 && 'text-right',
+                COL_VIS_CLS[i],
+              )}
             >
               {label}
             </span>

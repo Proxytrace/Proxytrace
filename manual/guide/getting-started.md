@@ -39,6 +39,14 @@ operate the platform, see the [Operations](/admin/installation) section.
 | **Model Endpoint** | A model paired with a provider, with per-token cost tracking. |
 | **Project** | The tenancy unit grouping agents, suites, runs, and keys. |
 
+## Supported screens
+
+Proxytrace is a desktop-first tool, but the monitoring views — dashboard, traces, agents,
+and test runs — also work on phones and small screens: navigation moves into a slide-out
+menu (the icon top-left), trace lists show the essential columns, and lists open their
+detail as a separate screen with a back button. Authoring flows (suite creation wizards,
+the playgrounds, evaluator editing) are best used on a desktop browser.
+
 ## Next step
 
 Start by [setting up the proxy](/guide/proxy-setup) so your agent traffic begins flowing

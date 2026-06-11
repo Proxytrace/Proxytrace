@@ -30,10 +30,6 @@ export function TraceyChatPanel({ chat }: TraceyChatPanelProps) {
             <div className="text-body-sm text-muted">Your in-app assistant</div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-body-sm text-secondary">
-          <span className="pulse-dot size-1.5 rounded-full bg-success" />
-          Online
-        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col pb-3 pt-1">

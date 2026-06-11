@@ -16,6 +16,17 @@ export function TraceyConversation() {
       >
         <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-5">
           <ThreadPrimitive.Messages components={{ UserMessage, AssistantMessage }} />
+          {/* Busy signal at the end of the flow while Tracey is mid-turn (streaming or running
+              tools); replaces the per-message typing dots so it shows through tool steps too. */}
+          <ThreadPrimitive.If running>
+            <div
+              className="flex items-center gap-1.5 text-body-sm text-secondary"
+              data-testid="tracey-busy-indicator"
+            >
+              <span className="pulse-dot size-1.5 rounded-full bg-accent" />
+              Thinking…
+            </div>
+          </ThreadPrimitive.If>
         </div>
       </ThreadPrimitive.Viewport>
 

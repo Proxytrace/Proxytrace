@@ -78,7 +78,7 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
 | `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration/`stoppedEarly` (step budget hit) + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
-| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, typing dots, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
+| `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, an end-of-thread "Thinking…" busy indicator while a turn runs, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
 | `api/tracey.ts` | `getSession()` → `{ model, agentId }` for `GET /api/tracey/session`. |
 
@@ -139,7 +139,7 @@ column is which bundle activates the tool (`core` = always available).
 |------|------|---------|-------|-----------|
 | `navigate` | client action | no | core | `ToolCallCard` |
 | `search_docs` | knowledge read | no | core | `ToolCallCard` |
-| `load_skill` | meta | no | core | `ToolCallCard` |
+| `load_skill` | meta | no | core | hidden (renders nothing) |
 | `list_agents` / `get_agent` | read | no | core | `AgentListToolUI` / `AgentCardToolUI` |
 | `show_chart` / `show_table` / `show_text` | render | no | core | `ChartToolUI` / `TableToolUI` / `TextToolUI` |
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
@@ -169,13 +169,26 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   the artifact store, and return only a compact digest + reference. `confirm: false`. The
   single-entity gets (`get_agent`, `get_run`, `get_proposal`, `get_provider`, `get_trace`,
   `get_suite`) each have a dedicated card in `tool-ui/`. Digests deliberately carry enough to
-  answer follow-ups without more cards: list digests include the key row fields, and
+  answer follow-ups without more cards: list digests include the key row fields **but are capped**
+  (`listDigest` in `tools/shared.ts` — first 20–25 rows + total count + a truncation note; the
+  card always shows everything), and
   `get_dashboard_stats` includes `byAgent`/`byModel` usage breakdowns so a cross-agent usage chart
   needs one read, not `get_agent_stats` per agent (the prompt's "card economy" rules lean on
   this).
 - **Write tools** (`start_test_run`, `set_proposal_status`, `submit_optimization_theory`) set
   `confirm: true`. They call `ctx.confirm(summary)` **before** mutating; on decline they return the
-  `CANCELLED` sentinel and never touch the mutating API.
+  `CANCELLED` sentinel and never touch the mutating API. Their results are digests too:
+  `start_test_run` and `submit_optimization_theory` store the created entity as an artifact and
+  return only identity fields + the `awaitable` handle (the theory in particular would otherwise
+  echo the full proposed change the model just authored straight back into its context);
+  `set_proposal_status` returns just `{ id, status }`.
+- **Missing entities (404).** Every by-id lookup (reads and the write tools' pre-mutation
+  lookups) passes `silentStatuses: [404]` and maps a 404 to a compact `{ notFound: id }` result
+  (`ignore404`, `tools/shared.ts`) instead of throwing — no red error toast for a
+  model-recoverable miss (stale id, deleted entity, run-vs-group id mix-up), and the model can
+  re-list or ask instead of parsing an opaque error. `useArtifactResult` renders any inline
+  `{ notFound }` as the card's error state, so cards need no per-card guard. `await_actions`
+  polls with the same silence; a bad handle still lands in its per-handle `errors`.
 - **Render tools** (`show_chart`, `show_table`, `show_text`) take the data as args and return only
   a stored render spec; the matching `tool-ui/` component draws it via a `components/artifacts/`
   renderer.
@@ -188,8 +201,9 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   The result also drives the read-only summary, so it survives reload.
 
 A tool gets inline UI by adding its component to `tool-ui/registry.ts` (keyed by tool name);
-unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`, `load_skill`,
-`set_proposal_status`). The runtime's tool adapter omits `execute` for interactive tools so the
+unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`,
+`set_proposal_status`). `load_skill` is mapped to a hidden component (`HiddenToolUI`, renders
+nothing) — it's plumbing, not something the user should see in the thread. The runtime's tool adapter omits `execute` for interactive tools so the
 SDK treats them as frontend tools, and passes the SDK abort signal into `execute` so long-running
 tools stop when the user stops the turn.
 
@@ -197,11 +211,13 @@ tools stop when the user stops the turn.
 
 All write tools funnel through `useTraceyChat`'s `confirm(summary)`:
 
-- **Auto-approve OFF (default):** `confirm` returns a promise and sets `pendingConfirmation`. The
+- **Auto-approve ON (default):** `confirm` resolves `true` immediately — no prompt. The toggle is
+  in the chat panel; the preference is persisted in `localStorage` (`tracey-storage.ts`,
+  `loadAutoApprove`/`saveAutoApprove`) and `autoApproveRef` keeps the latest value visible to the
+  async tool closure.
+- **Auto-approve OFF:** `confirm` returns a promise and sets `pendingConfirmation`. The
   page renders an inline Confirm/Cancel card; `resolveConfirmation(true|false)` settles the promise.
   The tool proceeds only on `true`, else returns `CANCELLED`.
-- **Auto-approve ON:** `confirm` resolves `true` immediately — no prompt. The toggle is in the
-  chat panel; `autoApproveRef` keeps the latest value visible to the async tool closure.
 
 Confirmation is gated in the **tool layer** (not the model), so the model can't bypass it.
 
@@ -234,8 +250,17 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - The producing write tools return an `awaitable: { kind, id }` handle in their digest
   (`start_test_run` → `{ kind: 'test-run', id }`, `submit_optimization_theory` →
   `{ kind: 'theory', id }`).
-- The model is instructed to start ALL the actions first, then call `await_actions` **once** with
-  every handle (never per-action, never poll itself).
+- The same-turn wait is **enforced, not just instructed**: `prepareStep` (`tracey-runtime.ts`)
+  scans the turn's steps for `awaitable` handles no `await_actions` call has covered yet
+  (`pendingAwaitables`) and, while any are pending, forces the next step with
+  `toolChoice: { type: 'tool', toolName: 'await_actions' }`. The model can't end the turn with
+  "the run has started" and leave the user to re-prompt for the outcome; it still authors the
+  args, so it batches every pending handle into the one call. Cancelled / not-found writes return
+  no handle and never force a wait; a wrong or missed id just re-forces on the next step, capped
+  by the step budget.
+- Because the wait is forced right after any producing step, the prompts tell the model to start
+  ALL the actions it intends to run in the **same step** (parallel tool calls), then call
+  `await_actions` **once** with every handle (never per-action, never poll itself).
 - `await.ts` polls each handle to a terminal state via `poll-until-terminal.ts` — runs:
   `Completed`/`Failed`/`Cancelled`; theories: `Validated`/`Invalidated` — at a 3 s interval with a
   **10-minute per-handle cap**. A capped handle returns `timedOut: true` rather than hanging.

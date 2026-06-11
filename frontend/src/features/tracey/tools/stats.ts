@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { statisticsApi } from '../../../api/statistics';
-import { type ToolFactory, tool, empty } from './shared';
+import { type ToolFactory, tool, empty, ignore404 } from './shared';
 
 export const createStatsTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -52,11 +52,12 @@ export const createStatsTools: ToolFactory = (ctx, store) => {
       execute: async ({ agentId }) => {
         const to = new Date();
         const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const overview = await statisticsApi.agentOverview(agentId, {
+        const overview = await ignore404(() => statisticsApi.agentOverview(agentId, {
           from: from.toISOString(),
           to: to.toISOString(),
           bucket: 'daily',
-        });
+        }, { silentStatuses: [404] }));
+        if (!overview) return { notFound: agentId };
         const full = { summary: overview.summary, counts: overview.counts };
         return store('agent-stats', full, { summary: overview.summary });
       },

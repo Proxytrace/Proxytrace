@@ -28,7 +28,7 @@ function KpiCell({ kpi }: { kpi: Kpi }) {
   const hasSpark = kpi.spark.length >= 2 && kpi.spark.some(v => v > 0);
   const deltaColor = kpi.delta == null ? '' : kpi.delta >= 0 ? 'text-success' : 'text-danger';
   return (
-    <div className="flex-1 min-w-[140px] px-4 py-3 flex flex-col gap-1.5">
+    <div className="flex-1 min-w-[210px] border-l border-t border-hairline px-4 py-3 flex flex-col gap-1.5">
       <span className="text-caption text-muted font-semibold uppercase tracking-[0.07em]">{kpi.label}</span>
       <div className="flex items-end justify-between gap-2">
         <span
@@ -119,10 +119,12 @@ export function PerformanceCard({ overview, isLoading, range, onRangeChange, cla
       </div>
       {isLoading && !overview ? (
         <div className="flex flex-wrap p-2 gap-2">
-          {kpis.map(k => <Skeleton key={k.label} height={72} className="flex-1 min-w-[140px] rounded-md" />)}
+          {kpis.map(k => <Skeleton key={k.label} height={72} className="flex-1 min-w-[210px] rounded-md" />)}
         </div>
       ) : (
-        <div className="flex flex-wrap [&>*:not(:first-child)]:border-l [&>*:not(:first-child)]:border-hairline">
+        // Every cell carries a left+top hairline; the -1px offsets push the outer edges under the
+        // section's overflow-hidden, so only internal dividers show — correct for any wrap count.
+        <div className="flex flex-wrap -ml-px -mt-px">
           {kpis.map(k => <KpiCell key={k.label} kpi={k} />)}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmtLatency, fmtTokens, fmtDuration, fmtPct, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort } from './format'
+import { fmtLatency, fmtTokens, fmtDuration, fmtPct, fmtPct100, fmtCost, fmtCostEur, fmtDate, fmtDateTime, fmtDateTimeShort } from './format'
 
 describe('fmtLatency', () => {
   it('formats sub-second as ms', () => expect(fmtLatency(250)).toBe('250ms'))
@@ -21,6 +21,11 @@ describe('fmtDuration', () => {
 
 describe('fmtPct', () => {
   it('converts fraction to percent', () => expect(fmtPct(0.75)).toBe('75%'))
+})
+
+describe('fmtPct100', () => {
+  it('formats an already-percent value', () => expect(fmtPct100(25)).toBe('25%'))
+  it('rounds to whole percent', () => expect(fmtPct100(66.6)).toBe('67%'))
 })
 
 describe('fmtCost', () => {

@@ -39,10 +39,27 @@ export function toolCount(trace: AgentCallListItemDto): number {
 
 // ── Column layout (shared between header row and all trace rows) ───────────────
 
-export const COL_WIDTHS = ['minmax(240px,2fr)', 'minmax(120px,1fr)', '140px', '72px', '70px', '130px', '120px', '80px'] as const;
+// Minimums are sized so the row still fits a ~900px list (1024px viewport with collapsed
+// sidebar); fixed-ish columns get a minmax upper bound so wide screens keep today's layout.
+export const COL_WIDTHS = ['minmax(170px,2fr)', 'minmax(96px,1fr)', 'minmax(104px,140px)', '64px', '56px', 'minmax(96px,130px)', 'minmax(88px,120px)', '72px'] as const;
 export const GRID_TEMPLATE = COL_WIDTHS.join(' ');
 
 export const COL_HEADERS = ['Message', 'Agent', 'Model', 'Status', 'Tools', 'Tokens', 'Latency', 'Time'] as const;
+
+// ── Narrow-list (mobile) column collapse ───────────────────────────────────────
+// On a list narrower than the @2xl container breakpoint (phones), only Message /
+// Status / Time survive — the rest are drill-in detail. The list container
+// (TraceTable) declares `@container` and exposes both templates as CSS vars; every
+// row applies TRACE_GRID_CLS so header and rows stay column-aligned in both modes.
+export const COL_MOBILE_VISIBLE = [true, false, false, true, false, false, false, true] as const;
+export const GRID_TEMPLATE_NARROW = COL_WIDTHS.filter((_, i) => COL_MOBILE_VISIBLE[i]).join(' ');
+
+/** Grid-template classes shared by the header row and every trace/turn row. */
+export const TRACE_GRID_CLS =
+  '[grid-template-columns:var(--trace-grid)] @max-2xl:[grid-template-columns:var(--trace-grid-narrow)]';
+
+/** Per-column visibility class, index-aligned with COL_WIDTHS/COL_HEADERS. */
+export const COL_VIS_CLS = COL_MOBILE_VISIBLE.map(v => (v ? '' : '@max-2xl:hidden'));
 
 // ── Latency bar math ──────────────────────────────────────────────────────────
 

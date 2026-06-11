@@ -1,7 +1,7 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { GitCompareIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
-import { fmtPct } from '../../../../lib/format';
+import { fmtPct100 } from '../../../../lib/format';
 import type { CaseMovement } from '../../tools/run-analysis';
 import { ToolUIFrame } from './ToolUIFrame';
 import { StatGrid } from './StatGrid';
@@ -28,9 +28,9 @@ export const RunComparisonToolUI: ToolCallMessagePartComponent = ({ result, stat
       {data && (
         <div className="flex flex-col gap-3">
           <div className="text-body-sm text-secondary">
-            <span className="font-mono tabular-nums">{fmtPct(data.baseline.passRate)}</span>
+            <span className="font-mono tabular-nums">{fmtPct100(data.baseline.passRate)}</span>
             {' → '}
-            <span className="font-mono tabular-nums text-primary">{fmtPct(data.candidate.passRate)}</span>
+            <span className="font-mono tabular-nums text-primary">{fmtPct100(data.candidate.passRate)}</span>
             <span className="text-muted">
               {' '}· {data.baseline.endpointName === data.candidate.endpointName
                 ? data.candidate.endpointName

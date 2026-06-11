@@ -58,7 +58,7 @@ export default function Proposals() {
     : null;
 
   return (
-    <div className="flex flex-col gap-3.5 w-full lg:flex-1 lg:min-h-0">
+    <div className="flex flex-col gap-3.5 w-full xl:flex-1 xl:min-h-0">
       {/* Header */}
       <div className="fade-up flex items-start justify-between gap-4 shrink-0">
         <div>
@@ -101,7 +101,7 @@ export default function Proposals() {
         />
       ) : (
         <div
-          className="fade-up grid gap-3.5 [animation-delay:40ms] grid-cols-1 md:grid-cols-2 lg:grid-cols-4 lg:flex-1 lg:min-h-0"
+          className="fade-up grid gap-3.5 [animation-delay:40ms] grid-cols-1 md:grid-cols-2 xl:grid-cols-4 xl:flex-1 xl:min-h-0"
           data-testid="theory-board"
         >
           {BOARD_COLUMNS.map(column => {

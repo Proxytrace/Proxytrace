@@ -5,7 +5,7 @@ import {
   allDisclosableToolNames,
   CORE_TOOL_NAMES,
 } from './tool-access';
-import { loadedSkillIds, skillIdsFromMessages, windowMessages } from './tracey-runtime';
+import { loadedSkillIds, pendingAwaitables, skillIdsFromMessages, windowMessages } from './tracey-runtime';
 import { createTraceyTools, type TraceyToolContext } from './tracey-tools';
 
 const ctx: TraceyToolContext = {
@@ -86,6 +86,60 @@ describe('loadedSkillIds', () => {
 
   it('returns an empty list when no steps have run', () => {
     expect(loadedSkillIds([])).toEqual([]);
+  });
+});
+
+describe('pendingAwaitables', () => {
+  function step(parts: { toolCalls?: unknown[]; toolResults?: unknown[] }): StepResult<ToolSet> {
+    return { toolCalls: parts.toolCalls ?? [], toolResults: parts.toolResults ?? [] } as unknown as StepResult<ToolSet>;
+  }
+  const storedRunResult = (id: string) => ({
+    toolName: 'start_test_run',
+    output: { artifactRef: 'ref', kind: 'test-run-group', summary: { id, awaitable: { kind: 'test-run', id } } },
+  });
+
+  it('reports a started run whose handle has not been awaited', () => {
+    const steps = [step({ toolResults: [storedRunResult('g1')] })];
+    expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'g1' }]);
+  });
+
+  it('reads an inline (store-unavailable) awaitable too', () => {
+    const steps = [step({ toolResults: [{ toolName: 'submit_optimization_theory', output: { id: 't1', awaitable: { kind: 'theory', id: 't1' } } }] })];
+    expect(pendingAwaitables(steps)).toEqual([{ kind: 'theory', id: 't1' }]);
+  });
+
+  it('clears a handle once an await_actions call covers it', () => {
+    const steps = [
+      step({ toolResults: [storedRunResult('g1')] }),
+      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'test-run', id: 'g1' }] } }] }),
+    ];
+    expect(pendingAwaitables(steps)).toEqual([]);
+  });
+
+  it('keeps a second handle pending when only the first was awaited', () => {
+    const steps = [
+      step({ toolResults: [storedRunResult('g1'), storedRunResult('g2')] }),
+      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'test-run', id: 'g1' }] } }] }),
+    ];
+    expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'g2' }]);
+  });
+
+  it('ignores results without a handle (cancelled, notFound, reads) and malformed await input', () => {
+    const steps = [
+      step({
+        toolResults: [
+          { toolName: 'start_test_run', output: { cancelled: true } },
+          { toolName: 'start_test_run', output: { notFound: 's1' } },
+          { toolName: 'get_run', output: { artifactRef: 'r', kind: 'run', summary: { id: 'r1' } } },
+        ],
+        toolCalls: [{ toolName: 'await_actions', input: { handles: 'oops' } }],
+      }),
+    ];
+    expect(pendingAwaitables(steps)).toEqual([]);
+  });
+
+  it('returns nothing before any step has run', () => {
+    expect(pendingAwaitables([])).toEqual([]);
   });
 });
 

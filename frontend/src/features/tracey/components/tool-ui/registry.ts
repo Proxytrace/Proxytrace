@@ -23,12 +23,16 @@ import { RunComparisonToolUI } from './RunComparisonToolUI';
 import { TraceListToolUI } from './TraceListToolUI';
 import { TheoryListToolUI } from './TheoryListToolUI';
 
+/** Renders nothing — for plumbing tools (e.g. `load_skill`) whose calls are noise in the thread. */
+const HiddenToolUI: ToolCallMessagePartComponent = () => null;
+
 /**
  * Maps a Tracey tool name to the React component that renders its result inline in the chat
  * thread (assistant-ui `MessagePrimitive.Parts` `tools.by_name`). Tools absent here fall back
  * to the diagnostic {@link ToolCallCard} (e.g. `navigate`).
  */
 export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
+  load_skill: HiddenToolUI,
   show_chart: ChartToolUI,
   show_table: TableToolUI,
   show_text: TextToolUI,

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { type ToolFactory, tool } from './shared';
+import { type ToolFactory, tool, ignore404 } from './shared';
 import { clip } from './run-analysis';
 
 export const createTraceTools: ToolFactory = (ctx, store) => ({
@@ -49,7 +49,8 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
     parameters: z.object({ traceId: z.string().describe('The id of the trace / agent call to fetch.') }),
     confirm: false,
     execute: async ({ traceId }) => {
-      const call = await agentCallsApi.get(traceId);
+      const call = await ignore404(() => agentCallsApi.get(traceId, { silentStatuses: [404] }));
+      if (!call) return { notFound: traceId };
       return store('trace', call, {
         id: call.id,
         model: call.model,

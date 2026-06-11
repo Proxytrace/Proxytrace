@@ -74,6 +74,36 @@ export type ToolFactory = (ctx: TraceyToolContext, store: StoreFn) => Record<str
 /** Identity-cast helper so a typed `TraceyTool<TArgs>` can sit in a `Record<string, TraceyTool>`. */
 export const tool = <TArgs>(t: TraceyTool<TArgs>): TraceyTool => t as unknown as TraceyTool;
 
+/**
+ * Run a by-id read, resolving `undefined` when the API answers 404 (deleted entity, stale or
+ * mistyped id). Pair with `silentStatuses: [404]` on the API call so no error toast fires; the
+ * tool then answers the model with a compact `{ notFound: id }` it can recover from (re-list,
+ * ask the user) instead of an opaque thrown error.
+ */
+export async function ignore404<T>(read: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await read();
+  } catch (error) {
+    if ((error as { status?: number }).status === 404) return undefined;
+    throw error;
+  }
+}
+
+/**
+ * Build a capped list digest for the model: the total count, the first `max` mapped rows, and —
+ * only when rows were dropped — a note telling the model the user's card still shows everything.
+ * Every `list_*` digest goes through this so a large project can't flood the context.
+ */
+export function listDigest<T, R>(items: T[], max: number, map: (item: T) => R) {
+  return {
+    count: items.length,
+    items: items.slice(0, max).map(map),
+    ...(items.length > max
+      ? { note: `Digest shows the first ${max} of ${items.length}; the user sees the full list.` }
+      : {}),
+  };
+}
+
 /** Build the artifact-store helper bound to a context, swallowing storage errors back to inline. */
 export function makeStore(ctx: TraceyToolContext): StoreFn {
   return async (kind, full, summary) => {

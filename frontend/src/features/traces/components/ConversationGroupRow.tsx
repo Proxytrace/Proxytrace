@@ -5,7 +5,7 @@ import { fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
 import { tracePreview } from '../../../lib/trace';
 import type { AgentCallListItemDto } from '../../../api/models';
-import { GRID_TEMPLATE, toolCount } from '../tracesMeta';
+import { TRACE_GRID_CLS, toolCount } from '../tracesMeta';
 import type { ConversationGroup } from '../tracesMeta';
 import { TokenCell, ToolsCell, LatencyCell } from './TraceTableCells';
 
@@ -37,8 +37,10 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
         role="row"
         data-testid={`conversation-group-row-${conversationId}`}
         onClick={onToggle}
-        className="grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]"
-        style={{ gridTemplateColumns: GRID_TEMPLATE }}
+        className={cn(
+          'grid items-center px-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms] border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)] bg-[rgba(255,255,255,0.015)]',
+          TRACE_GRID_CLS,
+        )}
       >
         <span className="flex items-center gap-2 min-w-0">
           <span className="w-[3px] h-[18px] rounded-[2px] shrink-0" style={{ background: c }} />
@@ -53,11 +55,11 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
           </span>
         </span>
 
-        <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
+        <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2 @max-2xl:hidden">
           {agentName ?? <span className="text-muted">—</span>}
         </span>
 
-        <span className="overflow-hidden">
+        <span className="overflow-hidden @max-2xl:hidden">
           <Pill label={model} color={modelColor(model)} size="sm" />
         </span>
 
@@ -69,14 +71,14 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
               : <><StatusDot httpStatus={500} showLabel={false} /><span className="mono text-body-sm text-warn">mixed</span></>}
         </span>
 
-        <ToolsCell count={totalTools} />
+        <span className="@max-2xl:hidden"><ToolsCell count={totalTools} /></span>
 
-        <span className="mono text-body-sm">
+        <span className="mono text-body-sm @max-2xl:hidden">
           <span className="text-primary">{fmtTokens(totalTokens)}</span>
           <span className="text-muted ml-[5px] text-caption">total</span>
         </span>
 
-        <LatencyCell ms={totalMs} />
+        <span className="@max-2xl:hidden"><LatencyCell ms={totalMs} /></span>
 
         <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turns[0].createdAt)}</span>
       </div>
@@ -93,8 +95,9 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
             'grid items-center pl-8 pr-4 py-[10px] min-h-[44px] cursor-pointer transition-colors duration-[100ms]',
             'border-b border-b-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.025)]',
             turn.id === selectedId && 'bg-[rgba(255,255,255,0.04)]',
+            TRACE_GRID_CLS,
           )}
-          style={{ gridTemplateColumns: GRID_TEMPLATE, borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
+          style={{ borderLeft: `2px solid color-mix(in srgb, ${c} 38%, transparent)` }}
         >
           <span className="flex items-center gap-2 min-w-0">
             <span className="mono text-caption text-muted shrink-0">Turn {turns.length - i}</span>
@@ -102,16 +105,16 @@ export function ConversationGroupRow({ group, expanded, onToggle, selectedId, on
               {tracePreview(turn) ?? <span className="text-muted">—</span>}
             </span>
           </span>
-          <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2">
+          <span className="text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap pr-2 @max-2xl:hidden">
             {turn.agentName ?? <span className="text-muted">—</span>}
           </span>
-          <span className="overflow-hidden">
+          <span className="overflow-hidden @max-2xl:hidden">
             <Pill label={turn.model} color={modelColor(turn.model)} size="sm" />
           </span>
           <StatusDot httpStatus={turn.httpStatus} />
-          <ToolsCell count={toolCount(turn)} />
-          <TokenCell trace={turn} />
-          <LatencyCell ms={turn.durationMs} />
+          <span className="@max-2xl:hidden"><ToolsCell count={toolCount(turn)} /></span>
+          <span className="@max-2xl:hidden"><TokenCell trace={turn} /></span>
+          <span className="@max-2xl:hidden"><LatencyCell ms={turn.durationMs} /></span>
           <span className="text-muted text-body-sm whitespace-nowrap text-right">{fmtRelative(turn.createdAt)}</span>
         </div>
       ))}

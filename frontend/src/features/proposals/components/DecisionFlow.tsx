@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
-import type { ProposalDetailsDto, OptimizationProposalDto, TheoryDto } from '../../../api/models';
+import type { OptimizationProposalDto, TheoryDto } from '../../../api/models';
 import { ProposalStatus, TheoryStatus } from '../../../api/models';
 import { cn } from '../../../lib/cn';
 import { KIND_META, TONE_SUBTLE_BG, TONE_TEXT } from '../shared';
@@ -10,10 +10,8 @@ import { buildDecisionFlow, type FlowStageKey } from '../decisionFlow';
 import { formatPValue, isInsideNoise, passRateTransition, theoryShortId } from '../theoryBoard';
 import { FlowStep } from './FlowStep';
 import { AbTestHero } from '../AbTestHero';
+import { ChangeSections } from './ChangeSections';
 import { EvidenceList } from './EvidenceList';
-import { SystemPromptSection } from './PromptDiff';
-import { ModelSwitchSection } from './ModelSwitchSection';
-import { ToolUpdateSection } from './ToolUpdateSection';
 
 interface Props {
   theory: TheoryDto;
@@ -100,12 +98,6 @@ function StageBody({
         />
       );
   }
-}
-
-function ChangeSections({ details }: { details: ProposalDetailsDto }) {
-  if (details.kind === 'SystemPrompt') return <SystemPromptSection details={details} />;
-  if (details.kind === 'ModelSwitch') return <ModelSwitchSection details={details} />;
-  return <ToolUpdateSection details={details} />;
 }
 
 function AbTestBody({ theory, proposal }: { theory: TheoryDto; proposal: OptimizationProposalDto | null }) {

@@ -32,13 +32,15 @@ export function AgentDetail({ agent, onDelete, highlightTool }: Props) {
   const displayTools = isLatest ? agent.tools : versionDto?.tools ?? agent.tools;
 
   return (
-    <div className="fade-up flex flex-col gap-3.5 min-w-0 [animation-delay:40ms]">
+    <div className="fade-up flex flex-col gap-3.5 min-w-0 [animation-delay:40ms] @container">
       <AgentHeader agent={agent} overview={overview} onDelete={onDelete} />
 
       <PerformanceCard overview={overview} isLoading={isLoading} range={range} onRangeChange={setRange} />
 
-      {/* Definition (left) + version history & metadata rail (right) */}
-      <div className="grid gap-3.5 items-start grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
+      {/* Definition (left) + version history & metadata rail (right). Split is driven by the
+          detail pane's own width (container query), not the viewport — the pane sits beside the
+          agent list and the sidebar, so viewport breakpoints would lie about the space we have. */}
+      <div className="grid gap-3.5 items-start grid-cols-1 @3xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex flex-col gap-3.5 min-w-0">
           <SystemPromptWidget
             agentId={agent.id}

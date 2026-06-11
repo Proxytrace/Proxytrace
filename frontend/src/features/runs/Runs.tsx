@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { agentColor } from '../../lib/colors';
+import { cn } from '../../lib/cn';
 import { useSelectedId } from '../../hooks/useSelectedId';
+import { useIsMobile } from '../../hooks/useMediaQuery';
+import { Button } from '../../components/ui/Button';
+import { ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { Card } from '../../components/ui/Card';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
@@ -34,11 +38,14 @@ export default function Runs() {
   const linkedGroupId = runParam
     ? groups.find(g => g.runs.some(r => r.id === runParam))?.id
     : undefined;
-  const selectedGroup =
+  // On mobile the list and detail are separate screens: only an explicit selection opens the
+  // detail, so the list is the landing view. Desktop keeps the select-first default.
+  const isMobile = useIsMobile();
+  const explicitGroup =
     groups.find(g => g.id === selectedGroupId)
     ?? groups.find(g => g.id === linkedGroupId)
-    ?? groups[0]
     ?? null;
+  const selectedGroup = explicitGroup ?? (isMobile ? null : groups[0] ?? null);
   const agentOptions = [
     { key: '', label: 'All agents' },
     ...agents.map(a => ({ key: a.id, label: a.name, accent: agentColor(a.id) })),
@@ -59,8 +66,15 @@ export default function Runs() {
 
   return (
     <div className="w-full min-w-0 flex flex-col gap-3.5 px-1 pt-1 flex-1 min-h-0">
-      <div className="fade-up grid gap-4 grid-cols-[280px_1fr] [animation-delay:40ms] flex-1 min-h-0">
-        {/* Left: group list — scrolls independently of the detail panel */}
+      <div
+        className={cn(
+          'fade-up [animation-delay:40ms] flex-1 min-h-0',
+          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,280px)_minmax(0,1fr)]',
+        )}
+      >
+        {/* Left: group list — scrolls independently of the detail panel.
+            On mobile it is the landing screen and hides once a group is opened. */}
+        {(!isMobile || !selectedGroup) && (
         <div className="flex flex-col gap-2 min-w-0 min-h-0 overflow-y-auto pr-1 -mr-1">
           <div className="flex items-center gap-2">
             <FilterDropdown
@@ -104,14 +118,29 @@ export default function Runs() {
             <EmptyState title="No test runs yet" description="Run a suite to get started." />
           )}
         </div>
+        )}
 
-        {/* Right: detail */}
-        <div className="min-w-0 min-h-0">
+        {/* Right: detail — on mobile a full-screen view with a back affordance */}
+        {(!isMobile || selectedGroup) && (
+        <div className={cn('min-w-0 min-h-0', isMobile && 'flex-1 overflow-y-auto flex flex-col gap-2')}>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="self-start shrink-0"
+              data-testid="runs-back-to-list"
+              onClick={() => setSelectedGroupId(null, ['run'])}
+              leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
+            >
+              All runs
+            </Button>
+          )}
           {selectedGroup
             ? <GroupDetail key={selectedGroup.id} groupId={selectedGroup.id} onDelete={() => setDeleteGroupId(selectedGroup.id)} />
             : <Card><div className="py-[60px] text-center text-muted text-body">Select a run to see details.</div></Card>
           }
         </div>
+        )}
       </div>
 
       {deleteGroupId && deleteTarget && (

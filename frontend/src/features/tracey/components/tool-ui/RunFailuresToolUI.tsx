@@ -3,7 +3,7 @@ import { AlertTriangleIcon } from '../../../../components/icons';
 import { Badge, type BadgeVariant } from '../../../../components/ui/Badge';
 import { EvaluationScore } from '../../../../api/models';
 import type { EvaluationResultDto } from '../../../../api/models';
-import { fmtPct } from '../../../../lib/format';
+import { fmtPct100 } from '../../../../lib/format';
 import { ToolUIFrame } from './ToolUIFrame';
 import { CardOpenLink } from './CardOpenLink';
 import { useArtifactResult } from '../../useArtifact';
@@ -49,7 +49,7 @@ export const RunFailuresToolUI: ToolCallMessagePartComponent = ({ result, status
         <div className="flex flex-col gap-3">
           <div className="text-body-sm text-muted">
             {data.failures.length} of {data.totalCases} cases failing ·{' '}
-            <span className="font-mono tabular-nums">{fmtPct(data.passRate)}</span> pass rate
+            <span className="font-mono tabular-nums">{fmtPct100(data.passRate)}</span> pass rate
           </div>
           {data.failures.length === 0 ? (
             <div className="text-body-sm text-success">All cases passed.</div>

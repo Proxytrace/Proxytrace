@@ -31,11 +31,12 @@ If either is ambiguous, disambiguate with `ask_questions` before starting.
 Once confirmed, the user sees a **live progress card** that streams completion and pass/fail as
 cases finish. `start_test_run` returns an `awaitable` handle (`{ kind: "test-run", id }`).
 
-To react to results in the same turn, **wait for the run**: collect the `awaitable` handle(s) and
-call `await_actions` **once** with all of them, then analyze what comes back. Starting several
-runs? Fire every `start_test_run` first, then a single `await_actions([…all handles…])` — never
-one wait per run, and never poll `get_run` in a loop yourself. If a wait reports `timedOut`, tell
-the user the run is still going and to check back.
+**Waiting is not optional**: right after a step that started an action, the app forces your next
+step to be `await_actions` — you cannot end the turn or call another tool first. So starting
+several runs? Fire every `start_test_run` in the **same step** (parallel tool calls), then one
+`await_actions([…all handles…])` — never one wait per run, and never poll `get_run` in a loop
+yourself. When the wait returns, analyze the results and summarize the outcome. If it reports
+`timedOut`, tell the user the run is still going and to check back.
 
 To go beyond a single run and actually *improve* an agent from its results, load the
 `optimize-agent` skill instead.

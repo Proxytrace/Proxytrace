@@ -2,7 +2,7 @@ import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { FlaskIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
-import { fmtPct, fmtRelative } from '../../../../lib/format';
+import { fmtPct100, fmtRelative } from '../../../../lib/format';
 import { EntityCardLink } from './EntityCardLink';
 import { useArtifactResult } from '../../useArtifact';
 
@@ -25,7 +25,7 @@ export const SuiteCardToolUI: ToolCallMessagePartComponent = ({ result, status, 
             <Badge label={`${suite.testCases.length} cases`} variant="neutral" size="sm" />
             <Badge label={`${suite.evaluators.length} evaluators`} variant="neutral" size="sm" />
             {suite.passRate != null && (
-              <Badge label={`${fmtPct(suite.passRate)} pass`} variant="neutral" size="sm" />
+              <Badge label={`${fmtPct100(suite.passRate)} pass`} variant="neutral" size="sm" />
             )}
           </div>
           <div className="text-body-sm text-muted">

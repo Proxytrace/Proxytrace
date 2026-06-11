@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { testSuitesApi } from '../../../api/test-suites';
-import { type ToolFactory, tool, empty } from './shared';
+import { type ToolFactory, tool, empty, ignore404, listDigest } from './shared';
 
 export const createSuiteTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -13,10 +13,7 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
       confirm: false,
       execute: async () => {
         const items = (await testSuitesApi.list({ projectId })).items;
-        return store('suite-list', items, {
-          count: items.length,
-          items: items.map((s) => ({ id: s.id, name: s.name })),
-        });
+        return store('suite-list', items, listDigest(items, 25, (s) => ({ id: s.id, name: s.name })));
       },
     }),
     get_suite: tool({
@@ -26,7 +23,8 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
       parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
       execute: async ({ suiteId }) => {
-        const suite = await testSuitesApi.get(suiteId);
+        const suite = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));
+        if (!suite) return { notFound: suiteId };
         return store('suite', suite, {
           id: suite.id,
           name: suite.name,

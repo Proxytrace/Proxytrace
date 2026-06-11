@@ -1,8 +1,10 @@
 import { Drawer } from '../../components/overlays/Drawer';
 import type { OptimizationProposalDto, ProposalStatus, TheoryDto } from '../../api/models';
+import { TheoryStatus } from '../../api/models';
 import { KIND_META } from './shared';
 import { theoryShortId } from './theoryBoard';
 import { DecisionFlow } from './components/DecisionFlow';
+import { ValidatedProposalView } from './components/ValidatedProposalView';
 
 interface Props {
   theory: TheoryDto;
@@ -16,25 +18,19 @@ interface Props {
 }
 
 /**
- * Right-side detail for a board card: the theory's full lifecycle as a decision flow —
- * evidence → theory → A/B validation → proposal → outcome.
+ * Right-side detail for a board card. While a theory is unproven the body is its full lifecycle
+ * as a decision flow (evidence → theory → A/B validation → proposal → outcome); once the A/B
+ * test validates it, the body leads with the concrete change and its effective gain instead.
  */
 export function TheoryDrawer({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending, onClose }: Props) {
+  const body = { theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending };
   return (
     <Drawer
       title={`${theoryShortId(theory.id)} · ${KIND_META[theory.kind].label}`}
       subtitle={theory.agentName}
       onClose={onClose}
     >
-      <DecisionFlow
-        theory={theory}
-        proposal={proposal}
-        suiteName={suiteName}
-        onSetStatus={onSetStatus}
-        onReset={onReset}
-        actionPending={actionPending}
-        resetPending={resetPending}
-      />
+      {theory.status === TheoryStatus.Validated ? <ValidatedProposalView {...body} /> : <DecisionFlow {...body} />}
     </Drawer>
   );
 }
