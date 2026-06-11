@@ -51,6 +51,24 @@ public sealed class AgentsControllerTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetAll_ExcludesArchivedAgents()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var agentGen = services.GetRequiredService<IDomainEntityGenerator<IAgent>>();
+
+        var kept = await agentGen.CreateAsync(CancellationToken);
+        var archived = await agentGen.CreateAsync(CancellationToken);
+        // Soft-delete the second agent; it must stay resolvable by id but drop out of the listing.
+        await controller.Delete(archived.Id, CancellationToken);
+
+        var result = await controller.GetAll(cancellationToken: CancellationToken);
+
+        result.Items.Should().ContainSingle(a => a.Id == kept.Id);
+        result.Items.Should().NotContain(a => a.Id == archived.Id);
+    }
+
+    [TestMethod]
     public async Task Get_UnknownId_ReturnsNotFound()
     {
         IServiceProvider services = GetServices();

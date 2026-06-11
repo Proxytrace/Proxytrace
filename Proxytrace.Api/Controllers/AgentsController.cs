@@ -66,7 +66,10 @@ public class AgentsController : ControllerBase
         [FromQuery] int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
-        var all = repository.EnumerateAsync(cancellationToken);
+        // Archived (soft-deleted) agents are hidden from the listing — they keep resolving by id for
+        // history, but must not appear here (mirrors EvaluatorsController, which lists via the
+        // archive-filtered GetAllAsync/GetByProjectAsync). EnumerateAsync streams the full set.
+        var all = repository.EnumerateAsync(cancellationToken).Where(a => !a.IsArchived);
         var filtered = projectId.HasValue
             ? all.Where(a => a.Project.Id == projectId.Value)
             : all;

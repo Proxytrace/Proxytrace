@@ -82,34 +82,24 @@ test.describe('Delete cascade', () => {
     const suitesBefore = await api.listSuites({ agentId });
     expect(suitesBefore.items.some((s) => s.id === suiteId)).toBeTruthy();
 
-    // Attempt the delete and capture the OUTCOME rather than presuming a policy: RemoveAsync may
-    // succeed (cascade) or be blocked by the AgentVersion→AgentCall Restrict FK (surfaces as a
-    // non-2xx via the exception middleware). We branch on what actually happened.
-    let deleteSucceeded = true;
-    try {
-      await api.deleteAgent(agentId);
-    } catch {
-      deleteSucceeded = false;
-    }
+    // Deleting an agent is a soft-delete (archive): captured traces pin the agent's versions, so
+    // instead of a hard cascade the agent row is flagged archived. The call succeeds (2xx) and the
+    // agent disappears from the listing, while its related rows — captured calls, versions and
+    // curated suites — are intentionally KEPT so history keeps resolving. See ArchivableRepository
+    // / AgentsController.Delete.
+    await api.deleteAgent(agentId);
 
     const agentsAfter = await api.listAgents();
-    const agentStillPresent = agentsAfter.items.some((a) => a.id === agentId);
+    expect(
+      agentsAfter.items.some((a) => a.id === agentId),
+      'an archived agent is hidden from the listing',
+    ).toBeFalsy();
 
-    if (deleteSucceeded) {
-      // OBSERVED: delete succeeded (2xx). The agent must be gone from the listing, and its suite
-      // (Agent→TestSuite is Cascade) must have been removed along with it — assert no orphan suite.
-      expect(agentStillPresent).toBeFalsy();
-      const suitesAfter = await api.listSuites({ agentId });
-      expect(
-        suitesAfter.items.some((s) => s.id === suiteId),
-        'suite should cascade-delete with its agent',
-      ).toBeFalsy();
-    } else {
-      // OBSERVED: delete was blocked because captured traces pin the agent's versions (Restrict).
-      // The agent and its suite must still be present — the operation left the world intact.
-      expect(agentStillPresent, 'a blocked delete must leave the agent in place').toBeTruthy();
-      const suitesAfter = await api.listSuites({ agentId });
-      expect(suitesAfter.items.some((s) => s.id === suiteId)).toBeTruthy();
-    }
+    // The suite survives the archive (not cascade-deleted) and still resolves.
+    const suitesAfter = await api.listSuites({ agentId });
+    expect(
+      suitesAfter.items.some((s) => s.id === suiteId),
+      'the curated suite is kept when its agent is archived',
+    ).toBeTruthy();
   });
 });

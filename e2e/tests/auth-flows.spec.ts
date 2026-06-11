@@ -143,7 +143,9 @@ test.describe('Auth & access control', () => {
     // No Settings entry for a Member: the project-switcher menu's admin-only "Settings" item is
     // absent.
     await page.getByTestId('project-switcher').click();
-    await expect(page.getByRole('menuitem', { name: 'Settings' })).toHaveCount(0);
+    // Match the admin "Settings" item exactly — a non-exact name match also catches project
+    // menuitems that merely contain the word (e.g. a project named "Settings List …").
+    await expect(page.getByRole('menuitem', { name: 'Settings', exact: true })).toHaveCount(0);
     await page.keyboard.press('Escape');
 
     // Direct navigation to settings routes is not available to a Member → redirected to dashboard.
