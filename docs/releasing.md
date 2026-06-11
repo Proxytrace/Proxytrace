@@ -59,7 +59,14 @@ Propagation:
 4. **release** — pins the version into `deploy/docker-compose.yml` (replacing the
    `${PROXYTRACE_VERSION:-latest}` placeholder), zips it with `deploy/.env.example` +
    `deploy/README.md`, extracts the changelog section as release notes, and creates the
-   GitHub release with the zip attached.
+   GitHub release with the zip attached **as a draft** (`gh release create --draft`).
+
+A drafted release is hidden from the public Releases API, so the update banner (below) does
+not fire until a human publishes it. **The customer-facing go-live is the manual "Publish
+release" click** in the GitHub UI (or `gh release edit vX.Y.Z --draft=false`), not the tag
+push. Note the rolling image tags (`latest`/`X.Y`/`X`) still move at the publish-images step,
+before the release is published — customers pin versions and the banner is API-driven, so
+this is harmless, but `latest` advances ahead of the release going live.
 
 ## Source protection in shipped images
 
