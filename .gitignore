@@ -40,3 +40,6 @@ e2e/.env
 .superpowers/
 
 docs/superpowers/
+
+# Claude Code agent worktrees (live checkouts, never commit)
+.claude/worktrees/

@@ -5,26 +5,25 @@
       <stop offset="0" stop-color="#1c1d24"/>
       <stop offset="1" stop-color="#121317"/>
     </linearGradient>
-    <radialGradient id="glow" cx="256" cy="256" r="100" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#74a8b6" stop-opacity=".4"/>
-      <stop offset="1" stop-color="#74a8b6" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="topGlow" cx="256" cy="0" r="320" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#d9a158" stop-opacity=".18"/>
-      <stop offset="1" stop-color="#d9a158" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="stroke" x1="64" y1="0" x2="448" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c68f46"/>
+      <stop offset=".55" stop-color="#d9a158"/>
+      <stop offset="1" stop-color="#ecbf83"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="#d9a158" flood-opacity=".5"/>
+    </filter>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect width="512" height="512" rx="112" fill="url(#topGlow)"/>
   <rect x="1" y="1" width="510" height="510" rx="111" stroke="#ffffff" stroke-opacity=".05" stroke-width="2"/>
-
-  <circle cx="256" cy="256" r="100" fill="url(#glow)"/>
-  <!-- outer ring -->
-  <circle cx="256" cy="256" r="179" stroke="#d9a158" stroke-width="12" opacity="0.28"/>
-  <!-- middle ring -->
-  <circle cx="256" cy="256" r="128" stroke="#d9a158" stroke-width="13.6" opacity="0.55"/>
-  <!-- dashed trace ring -->
-  <circle cx="256" cy="256" r="85.3" stroke="#74a8b6" stroke-width="18.8" stroke-dasharray="27 31"/>
-  <!-- core -->
-  <circle cx="256" cy="256" r="44.4" fill="#d9a158"/>
+  <!-- scope graticule -->
+  <path d="M64 160 H448 M64 352 H448" stroke="#ffffff" stroke-opacity=".06" stroke-width="5"/>
+  <path d="M64 256 H448" stroke="#74a8b6" stroke-opacity=".22" stroke-width="7"/>
+  <!-- pulse -->
+  <path d="M64 256 H150 L206 148 L294 364 L348 256 H408"
+        stroke="url(#stroke)" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- live cursor with ping rings -->
+  <circle cx="430" cy="256" r="56" stroke="#74a8b6" stroke-opacity=".18" stroke-width="6"/>
+  <circle cx="430" cy="256" r="40" stroke="#74a8b6" stroke-opacity=".4" stroke-width="7"/>
+  <circle cx="430" cy="256" r="24" fill="#74a8b6"/>
 </svg>

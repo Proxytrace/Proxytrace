@@ -11,6 +11,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Brand mark** — new "Scope" logo and app icons: a gold trace pulse over an
+  oscilloscope graticule with a teal live cursor.
 - **Trace capture** — OpenAI-compatible ingestion proxy that records every LLM
   interaction (requests, responses, tool calls, token usage, cost, latency) with
   zero agent code changes.
