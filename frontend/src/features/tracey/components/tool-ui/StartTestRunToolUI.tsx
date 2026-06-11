@@ -1,5 +1,4 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
-import type { TestRunGroupDto } from '../../../../api/models';
 import { useArtifactResult } from '../../useArtifact';
 import { ToolUIFrame } from './ToolUIFrame';
 import { LiveRunCard } from './LiveRunCard';
@@ -13,7 +12,7 @@ function isCancelled(value: unknown): value is { cancelled: true } {
  * {@link LiveRunCard} (which streams progress); a declined confirmation renders a quiet note.
  */
 export const StartTestRunToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data: group } = useArtifactResult<TestRunGroupDto>(result, status, isError);
+  const { state, data: group } = useArtifactResult('test-run-group', result, status, isError);
 
   if (isCancelled(result)) {
     return (

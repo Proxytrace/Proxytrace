@@ -3,13 +3,12 @@ import { FlaskIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
 import { fmtPct, fmtRelative } from '../../../../lib/format';
-import type { TestSuiteDto } from '../../../../api/models';
 import { EntityCardLink } from './EntityCardLink';
 import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_suite` tool result. */
 export const SuiteCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data: suite } = useArtifactResult<TestSuiteDto>(result, status, isError);
+  const { state, data: suite } = useArtifactResult('suite', result, status, isError);
   return (
     <EntityCardLink
       state={state}

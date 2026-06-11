@@ -2,7 +2,6 @@ import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { SparklesIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
-import type { OptimizationProposalDto } from '../../../../api/models';
 import { ListCard, LIST_CARD_MAX } from './ListCard';
 import { ListCardRow } from './ListCardRow';
 import { PRIORITY_VARIANT } from './badge-variants';
@@ -10,7 +9,7 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_proposals` tool result. */
 export const ProposalListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data } = useArtifactResult<OptimizationProposalDto[]>(result, status, isError);
+  const { state, data } = useArtifactResult('proposal-list', result, status, isError);
   const proposals = data ?? [];
   return (
     <ListCard

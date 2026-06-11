@@ -14,7 +14,7 @@ function isProposal(value: unknown): value is OptimizationProposalDto {
 
 /** Inline renderer for the `get_proposal` tool result. */
 export const ProposalCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data } = useArtifactResult<OptimizationProposalDto>(result, status, isError);
+  const { state, data } = useArtifactResult('proposal', result, status, isError);
   if (state !== 'ready') {
     return <ToolUIFrame state={state} pendingLabel="Loading proposal…" testId="tracey-proposal-card" />;
   }

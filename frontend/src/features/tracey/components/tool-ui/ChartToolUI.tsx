@@ -1,7 +1,6 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
 import { ActivityIcon } from '../../../../components/icons';
 import { Skeleton } from '../../../../components/ui/Skeleton';
-import type { ChartArtifact as ChartArtifactData } from '../../tracey-artifacts';
 import { ChartArtifact } from '../artifacts/ChartArtifact';
 import { ToolUIFrame } from './ToolUIFrame';
 import { useArtifactResult } from '../../useArtifact';
@@ -22,7 +21,7 @@ function ChartSkeleton() {
 
 /** Inline renderer for the `show_chart` tool. */
 export const ChartToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
-  const { state, data } = useArtifactResult<ChartArtifactData>(result, status, isError);
+  const { state, data } = useArtifactResult('chart', result, status, isError);
   if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame
