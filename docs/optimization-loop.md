@@ -74,7 +74,9 @@ API callers) submit the same way through `Proxytrace.Api/Controllers/TheoriesCon
 
 `TheoryValidationService` (hosted background service) deduplicates, enforces the per-project
 concurrent-validation quota (`TheorySubmissionOutcome`: `Accepted` / `Duplicate` /
-`QuotaExceeded`), then routes the theory to the matching `ITheoryValidator`:
+`QuotaExceeded`), then routes the theory to the matching `ITheoryValidator`. The queue itself
+is in-memory; on startup the service re-queues every theory still `Proposed`/`Validating`
+(`IOptimizationTheoryRepository.GetActiveAsync`) so a restart cannot strand the backlog:
 
 | Validator | File |
 |---|---|
@@ -97,8 +99,10 @@ user's run list.
 
 The outcome (`TheoryValidationOutcome`) records baseline pass rate, projected pass rate, p-value,
 and candidate run id **regardless of result**:
-- **Won** — improvement is real (beyond sampling noise) → spawns a **Draft `OptimizationProposal`**
-  carrying the A/B comparison as evidence.
+- **Won** — improvement is real (beyond sampling noise: the two-proportion p-value must be
+  ≤ `AbTestTheoryValidator.SignificanceLevel` = 0.05) → spawns a **Draft `OptimizationProposal`**
+  carrying the A/B comparison as evidence. Model-switch theories instead require *no* pass-rate
+  regression plus a genuine cost or latency win — equal-quality-but-pricier is not a win.
 - **Rejected / Inconclusive** — theory marked Invalidated; metrics still kept so the same idea
   isn't retried (dedup).
 

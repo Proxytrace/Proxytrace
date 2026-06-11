@@ -41,6 +41,10 @@ internal class TestResultConfig : AbstractEntityConfiguration<TestResultEntity>,
 
     public override void Configure(EntityTypeBuilder<TestResultEntity> builder)
     {
+        // The evaluator-history queries scan the most recent N results ordered by CreatedAt;
+        // without this index every scan sorts the whole table.
+        builder.HasIndex(e => e.CreatedAt);
+
         builder
             .HasOne<TestCaseEntity>()
             .WithMany()

@@ -78,7 +78,9 @@ public class ModelProvidersController : ControllerBase
         var provider = await providerRepository.FindAsync(id, cancellationToken);
         if (provider is null)
             return NotFound();
-        return mapper.ToDto(provider);
+        // Readable by every authenticated member (Tracey tools), so the upstream key is redacted;
+        // admin views read the key from the admin-gated overview/list endpoints instead.
+        return mapper.ToRedactedDto(provider);
     }
 
     [HttpGet("overview")]

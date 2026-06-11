@@ -51,7 +51,7 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         // pass rate is the regression gate for every comparison; drop runs that lack it
         groupStats = groupStats.Where(x => x.PassRate.HasValue).ToList();
 
-        // need at least a winner and a runner-up to compare against
+        // need the current run's stats plus at least one alternative to compare against
         if (groupStats.Count < 2)
         {
             return [];
@@ -68,7 +68,6 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
             .Select(metric => Evaluate(metric, groupStats, currentRun.Id, currentStats))
             .Where(c => c is not null)
             .Cast<Candidate>()
-            .Select(c => c)
             .OrderByDescending(c => c.RelativeSaving)
             .FirstOrDefault();
 
@@ -88,9 +87,7 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         };
 
         var metricLabel = chosen.Metric == Metric.Cost ? "cost" : "latency";
-        var savingPct = chosen.RelativeSaving > double.MinValue
-            ? (chosen.RelativeSaving * 100).ToString("F1")
-            : "?";
+        var savingPct = (chosen.RelativeSaving * 100).ToString("F1");
         var currentName = currentRun.Endpoint.Model.Name;
         var bestName = bestRun.Endpoint.Model.Name;
         var rationale =
@@ -111,9 +108,11 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
     }
 
     /// <summary>
-    /// Ranks all runs by <paramref name="metric"/> (lower is better, current included) and returns a
-    /// qualifying candidate when the best alternative beats the runner-up by <see cref="MinMargin"/>,
-    /// does not regress the other metric, and does not regress pass rate — all measured against the runner-up.
+    /// Ranks the alternative runs by <paramref name="metric"/> (lower is better) and returns a
+    /// qualifying candidate when the best alternative beats the <em>current</em> model by
+    /// <see cref="MinMargin"/>, does not regress the other metric, and does not regress pass
+    /// rate — all measured against the current model, which is what the proposal's rationale
+    /// claims and what the agent would actually switch away from.
     /// </summary>
     private static Candidate? Evaluate(
         Metric metric,
@@ -121,53 +120,45 @@ internal sealed class SwitchModelOptimizer : IOptimizerImplementation
         Guid currentRunId,
         TestRunStats currentStats)
     {
-        var ranked = stats
-            .Where(s => GetMetric(s, metric).HasValue)
-            .OrderBy(s => GetMetric(s, metric) ?? 0d)
-            .ToList();
-
-        if (ranked.Count < 2)
+        double? currentValue = GetMetric(currentStats, metric);
+        if (currentValue is not > 0)
         {
             return null;
         }
 
-        TestRunStats winner = ranked[0];
-        TestRunStats runnerUp = ranked[1];
+        TestRunStats? winner = stats
+            .Where(s => s.TestRunId != currentRunId && GetMetric(s, metric).HasValue)
+            .OrderBy(s => GetMetric(s, metric) ?? 0d)
+            .FirstOrDefault();
 
-        // current model is already best on this metric: nothing to switch to
-        if (winner.TestRunId == currentRunId)
+        if (winner is null)
         {
             return null;
         }
 
         double winnerValue = GetMetric(winner, metric) ?? 0d;
-        double runnerValue = GetMetric(runnerUp, metric) ?? 0d;
 
-        // winning metric: at least MinMargin better than the runner-up
-        if (runnerValue <= 0 || (runnerValue - winnerValue) / runnerValue < MinMargin)
+        // winning metric: at least MinMargin better than the current model
+        double relativeSaving = (currentValue.Value - winnerValue) / currentValue.Value;
+        if (relativeSaving < MinMargin)
         {
             return null;
         }
 
-        // other metric: not worse than the runner-up (both values required)
+        // other metric: not worse than the current model (both values required)
         Metric other = metric == Metric.Cost ? Metric.Latency : Metric.Cost;
         double? winnerOther = GetMetric(winner, other);
-        double? runnerOther = GetMetric(runnerUp, other);
-        if (!winnerOther.HasValue || !runnerOther.HasValue || winnerOther.Value > runnerOther.Value)
+        double? currentOther = GetMetric(currentStats, other);
+        if (!winnerOther.HasValue || !currentOther.HasValue || winnerOther.Value > currentOther.Value)
         {
             return null;
         }
 
-        // pass rate: not worse than the runner-up
-        if (!winner.PassRate.HasValue || !runnerUp.PassRate.HasValue || winner.PassRate.Value < runnerUp.PassRate.Value)
+        // pass rate: not worse than the current model
+        if (!winner.PassRate.HasValue || !currentStats.PassRate.HasValue || winner.PassRate.Value < currentStats.PassRate.Value)
         {
             return null;
         }
-
-        double? currentValue = GetMetric(currentStats, metric);
-        double relativeSaving = currentValue is > 0
-            ? (currentValue.Value - winnerValue) / currentValue.Value
-            : double.MinValue;
 
         return new Candidate(winner, metric, relativeSaving);
     }
