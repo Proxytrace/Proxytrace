@@ -52,4 +52,32 @@ describe('pollUntilTerminal', () => {
     expect(poll).toHaveBeenCalledTimes(4);
     expect(clock.sleep).toHaveBeenCalledTimes(3);
   });
+
+  it('throws AbortError without polling when the signal is already aborted', async () => {
+    const clock = fakeClock();
+    const poll = vi.fn().mockResolvedValue({ done: false });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      pollUntilTerminal(poll, (s: { done: boolean }) => s.done, {
+        intervalMs: 3000, timeoutMs: 60000, ...clock, signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(poll).not.toHaveBeenCalled();
+  });
+
+  it('stops polling when aborted between sleeps', async () => {
+    const clock = fakeClock();
+    const controller = new AbortController();
+    const poll = vi.fn().mockImplementation(() => {
+      controller.abort();
+      return Promise.resolve({ done: false });
+    });
+    await expect(
+      pollUntilTerminal(poll, (s: { done: boolean }) => s.done, {
+        intervalMs: 3000, timeoutMs: 60000, ...clock, signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(poll).toHaveBeenCalledTimes(1);
+  });
 });

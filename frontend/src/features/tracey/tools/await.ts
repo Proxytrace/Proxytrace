@@ -3,7 +3,7 @@ import { testRunGroupsApi } from '../../../api/test-run-groups';
 import { theoriesApi } from '../../../api/theories';
 import { TestRunStatus, TheoryStatus, type TestRunGroupDto, type TheoryDto } from '../../../api/models';
 import { type ToolFactory, tool } from './shared';
-import { pollUntilTerminal, type PollOptions } from './poll-until-terminal';
+import { abortError, pollUntilTerminal, type PollOptions } from './poll-until-terminal';
 
 /** How often a pending action is polled while waiting. */
 const POLL_INTERVAL_MS = 3_000;
@@ -32,6 +32,13 @@ export interface AwaitResult {
   id: string;
   status: TestRunStatus | TheoryStatus;
   timedOut: boolean;
+}
+
+/** Model-facing result for a handle whose polling failed (bad id, network, …). */
+export interface AwaitError {
+  kind: AwaitKind;
+  id: string;
+  error: string;
 }
 
 interface RunAwaitResult extends AwaitResult {
@@ -110,25 +117,63 @@ export const createAwaitTools: ToolFactory = () => ({
   await_actions: tool({
     description:
       'Wait for one or more long-running actions to finish, then return their results so you can ' +
-      'react in the same turn. Pass the `awaitable` handle returned by start_test_run or ' +
-      'submit_optimization_theory. Start ALL the actions first, then call this ONCE with every ' +
-      'handle — do not call it per action and do not poll yourself.',
+      'react in the same turn. Pass the exact `awaitable` handle(s) ({ kind, id }) returned by ' +
+      'start_test_run or submit_optimization_theory — never a suite, agent, or other id. Start ' +
+      'ALL the actions first, then call this ONCE with every handle as the LAST tool call of the ' +
+      'turn — never per action, never before the remaining actions have started, and never poll ' +
+      'get_run / get_proposal yourself. A cancelled action has no handle; do not wait for it.',
     parameters: z.object({
       handles: z.array(handleSchema).min(1).describe('The actions to wait for.'),
     }),
     confirm: false,
-    execute: async ({ handles }) => {
+    execute: async ({ handles }, _ctx, signal) => {
       const opts: PollOptions = {
         intervalMs: POLL_INTERVAL_MS,
         timeoutMs: AWAIT_ACTIONS_TIMEOUT_MS,
-        sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+        // Abort-aware sleep: when the user stops the turn, the wait ends now, not at the next
+        // poll tick — otherwise a stopped turn would keep polling for up to 10 minutes.
+        sleep: (ms) =>
+          new Promise((resolve, reject) => {
+            if (signal?.aborted) {
+              reject(abortError());
+              return;
+            }
+            const timer = setTimeout(() => {
+              signal?.removeEventListener('abort', onAbort);
+              resolve();
+            }, ms);
+            const onAbort = () => {
+              clearTimeout(timer);
+              reject(abortError());
+            };
+            signal?.addEventListener('abort', onAbort, { once: true });
+          }),
         now: () => Date.now(),
+        signal,
       };
-      const results = await Promise.all(handles.map((handle) => awaitOne(handle, opts)));
+      // One bad handle (deleted entity, mistyped id, network failure) must not lose the other
+      // results, so failures are captured per handle instead of rejecting the whole wait. An
+      // abort is not a per-handle failure — it cancels the whole call, so it propagates.
+      const settled = await Promise.all(
+        handles.map(async (handle): Promise<AwaitResult | AwaitError> => {
+          try {
+            return await awaitOne(handle, opts);
+          } catch (e) {
+            if (e instanceof Error && e.name === 'AbortError') throw e;
+            return { kind: handle.kind, id: handle.id, error: e instanceof Error ? e.message : String(e) };
+          }
+        }),
+      );
+      const results = settled.filter((r): r is AwaitResult => !('error' in r));
+      const errors = settled.filter((r): r is AwaitError => 'error' in r);
       // Returned inline (not via the artifact `store`): the aggregate is already compact and there
       // is no `await_actions` card to resolve a reference — it falls back to ToolCallCard. Storing
       // it would only add a blob nothing reads. The per-item live cards already visualize progress.
-      return { results, anyTimedOut: results.some((r) => r.timedOut) };
+      return {
+        results,
+        ...(errors.length > 0 ? { errors } : {}),
+        anyTimedOut: results.some((r) => r.timedOut),
+      };
     },
   }),
 });

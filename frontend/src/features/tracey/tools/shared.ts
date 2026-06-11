@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { storeArtifact } from '../tracey-artifact-store';
+import type { ArtifactKind, ArtifactPayloads } from '../tracey-artifact-kinds';
 
 /**
  * Runtime context the Tracey tools execute against. Read tools call the typed `src/api`
@@ -16,6 +17,13 @@ export interface TraceyToolContext {
   navigate: (path: string) => void;
   /** Resolves `true` to proceed with a write, `false` to cancel. */
   confirm: (summary: string) => Promise<boolean>;
+  /**
+   * Skill ids loaded in this conversation. The transport re-derives it from the message history
+   * at the start of every turn (so it survives reload and resets with the thread); `load_skill`
+   * adds to it mid-turn and uses it to answer repeat loads with a compact "already loaded"
+   * instead of the full playbook.
+   */
+  loadedSkillIds: Set<string>;
 }
 
 /**
@@ -32,9 +40,10 @@ export interface TraceyTool<TArgs = Record<string, unknown>> {
   /**
    * Runs the tool client-side. Omitted for human-in-the-loop tools (e.g. `ask_questions`)
    * whose UI supplies the result via assistant-ui's `addResult`, pausing the turn until the
-   * user responds instead of resolving immediately.
+   * user responds instead of resolving immediately. `signal` aborts when the user stops the
+   * turn — long-running tools (`await_actions`) must honor it.
    */
-  execute?: (args: TArgs, ctx: TraceyToolContext) => Promise<unknown>;
+  execute?: (args: TArgs, ctx: TraceyToolContext, signal?: AbortSignal) => Promise<unknown>;
 }
 
 /** Parameter schema for tools that take no arguments. */
@@ -49,8 +58,15 @@ export const CANCELLED = { cancelled: true } as const;
  * the rich result reaches the user without ever entering the model context. The store itself
  * falls back from IndexedDB to localStorage; only if both are unavailable do we return the full
  * payload inline — the card renders it either way, and only that last-resort mode costs context.
+ *
+ * The payload type is bound to the artifact `kind` via {@link ArtifactPayloads}, so a tool can
+ * only store the shape its card reads back via `useArtifactResult(kind, …)`.
  */
-export type StoreFn = <S>(kind: string, full: unknown, summary: S) => Promise<unknown>;
+export type StoreFn = <K extends ArtifactKind, S>(
+  kind: K,
+  full: ArtifactPayloads[K],
+  summary: S,
+) => Promise<unknown>;
 
 /** Per-domain tool factory: builds the tools for one domain against a shared store + context. */
 export type ToolFactory = (ctx: TraceyToolContext, store: StoreFn) => Record<string, TraceyTool>;

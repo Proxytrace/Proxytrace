@@ -12,6 +12,13 @@ export interface PollOptions {
   sleep: (ms: number) => Promise<void>;
   /** Current time in ms (injected for the same reason). */
   now: () => number;
+  /** Aborts the loop (user hit Stop). Checked around each sleep; throws an AbortError. */
+  signal?: AbortSignal;
+}
+
+/** The error thrown when a poll loop is aborted; `name` matches the platform AbortError. */
+export function abortError(): Error {
+  return new DOMException('The wait was aborted.', 'AbortError');
 }
 
 export async function pollUntilTerminal<S>(
@@ -20,10 +27,12 @@ export async function pollUntilTerminal<S>(
   opts: PollOptions,
 ): Promise<{ snapshot: S; timedOut: boolean }> {
   const start = opts.now();
+  if (opts.signal?.aborted) throw abortError();
   let snapshot = await poll();
   while (!isTerminal(snapshot)) {
     if (opts.now() - start >= opts.timeoutMs) return { snapshot, timedOut: true };
     await opts.sleep(opts.intervalMs);
+    if (opts.signal?.aborted) throw abortError();
     snapshot = await poll();
   }
   return { snapshot, timedOut: false };

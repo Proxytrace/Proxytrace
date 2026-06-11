@@ -1,7 +1,7 @@
 ---
 name: optimize-agent
 description: Theorize a concrete improvement to an agent and A/B-test it. Use when the user asks to optimize, improve, or tune an agent.
-tools: submit_optimization_theory, get_agent_stats, list_suites, list_runs, get_run, get_trace, await_actions
+tools: submit_optimization_theory, get_agent_stats, list_suites, list_runs, get_run, get_run_failures, compare_runs, find_traces, get_trace, list_theories, await_actions
 ---
 
 # Skill: Optimize an agent
@@ -22,15 +22,29 @@ that tool renders shows the live result.
      measure against, point them to create one, and stop. Do not submit a theory without a suite.
    - If there are several, ask the user which suite to validate against with `ask_questions`.
 
+## Check what was already tried
+
+Call `list_theories` for the agent FIRST. An idea that was already **Invalidated** must not be
+re-submitted; a **Validated** one tells you what kind of change works for this agent. Mention
+relevant prior attempts in your rationale.
+
 ## Ground the theory in evidence
 
 Don't guess. Look at how the agent is actually doing before proposing a change:
 
-- `get_agent_stats` — token usage, cost, latency trends (last 30 days).
-- `list_runs` / `get_run` — recent test runs against the suite; find failing cases.
-- `get_trace` — inspect a specific failing call when you need the prompt/response detail.
+- `list_runs` → pick the latest completed run, then `get_run_failures` — the failing cases with
+  each evaluator's verdict and reasoning. This is your primary evidence: read the actual
+  responses and the reasoning, and name the failure pattern (wrong format? ignored constraint?
+  missing knowledge? tone?).
+- `compare_runs` — when there are two runs of the suite (e.g. before/after an earlier change),
+  see exactly which cases moved. A regression cluster is evidence too.
+- `find_traces` — search the agent's real captured calls (by text or HTTP status) when the suite
+  alone doesn't explain the failure; `get_trace` one for full prompt/response detail.
+- `get_agent_stats` — token usage, cost, latency trends (last 30 days), for cost/latency-motivated
+  changes (model switch).
 
-Use what you find to choose ONE kind of change and to write a specific, honest rationale.
+Use what you find to choose ONE kind of change and to write a specific, honest rationale that
+cites the evidence (e.g. "3 of 4 failing cases return prose where the evaluator expects JSON").
 
 ## Pick exactly one change kind
 

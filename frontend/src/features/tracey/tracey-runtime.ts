@@ -22,6 +22,13 @@ import { activeToolNamesFor } from './tool-access';
  * per request), so there is no CORS and no short-lived key. Tools execute in the browser via
  * {@link createTraceyTools}.
  */
+/**
+ * Per-turn tool-loop step budget. Must comfortably cover the longest scripted flow (the
+ * optimize-agent playbook runs ~8 steps) — when it is hit anyway, the turn ends with
+ * `finishReason: 'tool-calls'` and the UI shows a step-limit notice.
+ */
+export const MAX_TURN_STEPS = 12;
+
 export class TraceyTransport implements ChatTransport<UIMessage> {
   private readonly tools: ToolSet;
   private readonly model;
@@ -36,7 +43,7 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
   constructor(
     projectId: string,
     model: string,
-    toolContext: TraceyToolContext,
+    private readonly toolContext: TraceyToolContext,
     private readonly systemPrompt: string,
   ) {
     const openai = createOpenAI({
@@ -65,20 +72,35 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
     const turnId = crypto.randomUUID();
     this.currentTurnId = turnId;
     const startedAt = performance.now();
+    // The UI keeps the full thread, but the model only gets a window of recent messages — without
+    // a cap, per-turn token cost grows linearly with conversation age forever.
+    const windowed = windowMessages(options.messages);
+    // A skill stays loaded for the whole conversation: re-derive the loaded set from the message
+    // history (load_skill results persist there, surviving reloads and thread resets) so earlier
+    // turns' bundles stay unlocked and `load_skill` can answer repeat loads compactly. Derived
+    // from the *windowed* messages on purpose: if a playbook has been trimmed out of the model's
+    // context, the skill must count as unloaded so a reload returns the full instructions again.
+    const conversationSkills = this.toolContext.loadedSkillIds;
+    conversationSkills.clear();
+    for (const id of skillIdsFromMessages(windowed)) conversationSkills.add(id);
     const result = streamText({
       model: this.model,
       system: this.systemPrompt,
-      messages: await convertToModelMessages(options.messages),
+      messages: await convertToModelMessages(windowed),
       tools: this.tools,
       // Progressive tool disclosure: every tool is defined (so the wire capture stays complete),
-      // but only CORE plus the bundles of skills loaded so far this turn are offered to the model
-      // on a given step. Loading a skill via `load_skill` unlocks its tools for the rest of the
-      // turn — a dispatcher feel without a second model. (See `tool-access.ts`.)
-      prepareStep: ({ steps }) => ({ activeTools: activeToolNamesFor(loadedSkillIds(steps)) }),
+      // but only CORE plus the bundles of skills loaded so far this conversation are offered to
+      // the model on a given step. Loading a skill via `load_skill` unlocks its tools — a
+      // dispatcher feel without a second model. (See `tool-access.ts`.)
+      prepareStep: ({ steps }) => ({
+        activeTools: activeToolNamesFor([...conversationSkills, ...loadedSkillIds(steps)]),
+      }),
       // Without a stop condition the AI SDK ends the run after the first step, so a turn that
       // starts with a tool call produces no assistant text. Keep looping (tool → result → model)
-      // until the model answers or the budget is spent.
-      stopWhen: stepCountIs(8),
+      // until the model answers or the budget is spent. 12 covers the longest scripted flow
+      // (optimize-agent: load_skill → reads → submit → await = 8 steps) with slack for a
+      // disambiguation or an extra read; exhaustion is surfaced via `finishReason` below.
+      stopWhen: stepCountIs(MAX_TURN_STEPS),
       abortSignal: options.abortSignal,
     });
     // On finish, attach the turn's correlation id, token usage, and wall-clock duration to the
@@ -99,6 +121,9 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
                   totalTokens: part.totalUsage.totalTokens ?? 0,
                 },
                 durationMs: Math.round(performance.now() - startedAt),
+                // 'tool-calls' here means the step budget cut the loop mid-tool-use — the model
+                // never got to answer. MessageStatusBar surfaces it as a step-limit notice.
+                finishReason: part.finishReason,
               },
             }
           : undefined,
@@ -108,6 +133,50 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
   reconnectToStream(): Promise<ReadableStream<UIMessageChunk> | null> {
     return Promise.resolve(null);
   }
+}
+
+/**
+ * How many recent UIMessages the model sees per turn (≈ half that many user↔assistant exchanges).
+ * The UI thread is never trimmed — only what goes to the model.
+ */
+export const MODEL_HISTORY_WINDOW = 30;
+
+/**
+ * The slice of the conversation sent to the model: the last {@link MODEL_HISTORY_WINDOW} messages,
+ * extended forward to the next **user** message so the window never opens mid-exchange (an
+ * assistant tool loop must not appear without the prompt it answered). Under the cap, the full
+ * history passes through untouched. Exported for unit testing.
+ */
+export function windowMessages(messages: UIMessage[], max: number = MODEL_HISTORY_WINDOW): UIMessage[] {
+  if (messages.length <= max) return messages;
+  let start = messages.length - max;
+  while (start < messages.length && messages[start].role !== 'user') start++;
+  // Degenerate thread with no user message in the tail: fall back to the plain slice rather than
+  // sending nothing.
+  if (start >= messages.length) return messages.slice(messages.length - max);
+  return messages.slice(start);
+}
+
+/**
+ * Skill ids loaded in earlier turns, read from the conversation's `load_skill` tool parts (calls
+ * that found their skill; `notFound` results don't count). Keeps a skill's tool bundle unlocked
+ * for the rest of the conversation — including after a page reload, since the restored thread
+ * still carries the parts. Exported for unit testing.
+ */
+export function skillIdsFromMessages(messages: ReadonlyArray<UIMessage>): string[] {
+  const ids: string[] = [];
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.type !== 'tool-load_skill') continue;
+      const { input, output } = part as { input?: unknown; output?: unknown };
+      if (!input || typeof input !== 'object') continue;
+      const skillId = (input as { skillId?: unknown }).skillId;
+      if (typeof skillId !== 'string') continue;
+      if (output && typeof output === 'object' && 'notFound' in output) continue;
+      ids.push(skillId);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -137,7 +206,9 @@ function buildAiTools(ctx: TraceyToolContext): ToolSet {
       ? tool({
           description: def.description,
           inputSchema: zodSchema(def.parameters),
-          execute: (args: unknown) => exec(args as Record<string, unknown>, ctx),
+          // The SDK's abort signal (user hit Stop) rides along so long-running tools can cancel.
+          execute: (args: unknown, options) =>
+            exec(args as Record<string, unknown>, ctx, options.abortSignal),
         })
       : tool({
           description: def.description,

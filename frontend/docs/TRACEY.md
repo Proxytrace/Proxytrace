@@ -63,19 +63,20 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 | `TraceyAI.tsx` | Page root. Consumes the shared chat via `useTraceyChatContext`, calls `activate()` on mount, renders status gates (no-project / loading / error / ready), wraps content in `AssistantRuntimeProvider` + `TraceyActionsProvider`, lays out the single full-width chat panel. The one lazy-loaded route component. |
 | `useTraceyChat.ts` | **The only stateful hook.** Owns auto-approve, confirmation gating, thread persistence, artifact lifecycle, the lazy session query, and builds the runtime. Called **once** from `Shell` (above the router `Outlet`), not from the page — see "Conversation persistence". |
 | `tracey-chat-context.ts` | Shares the single `TraceyChat` (runtime + state) app-wide. `TraceyChatProvider` mounts in `Shell` around the `Outlet`; `useTraceyChatContext()` reads it from the page. |
-| `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT + turn-correlation header per request, runs `streamText` with `prepareStep` (progressive tool disclosure) + `stopWhen: stepCountIs(8)`, adapts our tools into the SDK `ToolSet`, and writes per-turn metadata on finish. |
+| `tracey-runtime.ts` | `TraceyTransport` — the AI SDK `ChatTransport`. Wires `createOpenAI` at the same-origin base URL, injects the JWT + turn-correlation header per request, windows the history sent to the model (`windowMessages`, UI thread untouched), runs `streamText` with `prepareStep` (progressive tool disclosure) + `stopWhen: stepCountIs(MAX_TURN_STEPS)` (12), adapts our tools into the SDK `ToolSet` (threading the abort signal), and writes per-turn metadata on finish. |
 | `tracey-tools.ts` | **Composition root** for tools: `createTraceyTools(ctx)` wires every `tools/*` domain factory against a shared artifact store. `TRACEY_TOOLS_META` is the static name+description list for the slash menu (must list every tool). |
-| `tools/` | Per-domain tool factories: `navigation.ts` (navigate, search_docs, load_skill), `agents.ts`, `suites.ts`, `runs.ts`, `proposals.ts`, `stats.ts`, `providers.ts`, `traces.ts`, `display.ts` (show_*, ask_questions), `await.ts` (await_actions). `shared.ts` holds `TraceyToolContext`, the `tool()`/`empty`/`CANCELLED` helpers, and `makeStore`. `poll-until-terminal.ts` backs `await`. |
-| `tool-access.ts` | **Progressive tool disclosure.** `CORE_TOOL_NAMES` (always active) + `activeToolNamesFor(loadedSkillIds)` (core ∪ the tool bundles of skills loaded this turn). |
+| `tools/` | Per-domain tool factories: `navigation.ts` (navigate, search_docs, load_skill), `agents.ts`, `suites.ts`, `runs.ts`, `proposals.ts`, `stats.ts`, `providers.ts`, `traces.ts`, `display.ts` (show_*, ask_questions), `await.ts` (await_actions). `shared.ts` holds `TraceyToolContext`, the `tool()`/`empty`/`CANCELLED` helpers, and `makeStore`. `poll-until-terminal.ts` backs `await`; `run-analysis.ts` holds the pure failure/comparison derivations behind `get_run_failures`/`compare_runs` (verdicts reuse `features/runs/results.ts`). |
+| `tool-access.ts` | **Progressive tool disclosure.** `CORE_TOOL_NAMES` (always active) + `activeToolNamesFor(loadedSkillIds)` (core ∪ the tool bundles of skills loaded this conversation). |
 | `tracey-prompt.ts` | `TRACEY_SYSTEM_PROMPT` — her system prompt (wire source of truth), with the skill catalog appended. |
 | `skills/` | On-demand **skills** — markdown playbooks loaded at runtime via `load_skill`. `registry.ts` parses front-matter (`name`, `description`, optional `tools:` bundle) from every `*.md` via `import.meta.glob`; `types.ts`; one file per skill. |
 | `knowledge/` | Product-manual search for `search_docs`. `docs-index.generated.ts` is the build-time index of the VitePress manual; `search-docs.ts` does token-overlap ranking; `types.ts`. |
 | `tracey-artifact-store.ts` | The browser **artifact store** (IndexedDB → localStorage fallback). Holds large tool payloads so only a compact reference + digest enters the model context; cards resolve the reference to render the full data. |
+| `tracey-artifact-kinds.ts` | The **typed artifact contract**: `ArtifactPayloads` maps every artifact `kind` to its payload type. `StoreFn` only accepts the matching shape and `useArtifactResult(kind, …)` returns it (verifying the kind at runtime), so a tool and its card can't silently disagree (e.g. list-item DTO vs full DTO). |
 | `tracey-artifacts.ts` | Frontend-only render shapes the `show_chart`/`show_table`/`show_text` tools return. |
 | `tracey-storage.ts` | `localStorage` thread persistence keyed by `user + project`. |
 | `tracey-actions.tsx` | React context (`navigate`) for assistant-ui message-part components that can't take props. |
 | `tracey-quick-actions.ts` | Curated prompt presets shown as composer chips + top of the slash menu. |
-| `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration + the trace id (unit-tested). |
+| `message-stats.ts` | `readMessageStats` + `readTraceConversationId` — narrows `metadata.custom` to tokens/duration/`stoppedEarly` (step budget hit) + the trace id (unit-tested). |
 | `useArtifact.ts` / `useOpenResponseTrace.ts` | Hook to resolve a stored artifact for a card; hook behind `OpenTraceButton`. |
 | `TraceyConversation.tsx` | assistant-ui `Thread`/`Message` primitives styled to DESIGN.md: user/assistant bubbles, typing dots, per-tool inline UI (`tools.by_name`) with `ToolCallCard` fallback, empty state. |
 | `components/` | `TraceyChatPanel`, `TraceyComposer` (Enter-to-send, `/` slash menu), `SlashMenu`, `ToolChips`, `ToolCallCard`, `AssistantMessage`/`UserMessage`, `MarkdownText`, `MessageStatusBar`, `CopyMessageButton`, `OpenTraceButton`, `artifacts/` renderers, and `tool-ui/` (one inline component per tool + `registry.ts`). |
@@ -92,9 +93,11 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
    and the full tool set — but `prepareStep` restricts the **active** tools per step (see
    "Progressive tool disclosure").
 4. If the model emits a tool call, the SDK runs that tool's `execute` **in the browser**;
-   `stopWhen: stepCountIs(8)` keeps the loop going (tool → result → model) until Tracey answers or
-   the 8-step budget is spent. **Without `stopWhen` the run ends after the first step and a
-   tool-first turn produces no text** — don't remove it.
+   `stopWhen: stepCountIs(MAX_TURN_STEPS)` (12) keeps the loop going (tool → result → model)
+   until Tracey answers or the step budget is spent. **Without `stopWhen` the run ends after the
+   first step and a tool-first turn produces no text** — don't remove it. A budget-truncated turn
+   finishes with `finishReason: 'tool-calls'`, which `MessageStatusBar` surfaces as a "Step limit
+   reached" notice.
 5. Results stream back; `TraceyConversation` renders assistant Markdown, per-tool inline UIs
    (`tools.by_name` → `tool-ui/registry.ts`), and the `ToolCallCard` fallback for the rest.
 6. On the stream's **finish** part, `toUIMessageStream({ messageMetadata })` writes
@@ -104,15 +107,22 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 
 The full tool set is large, so Tracey only ever *offers* a lean subset to the model on a given
 step. Every tool is always **defined** (so the wire capture and her versioned agent stay complete),
-but `tracey-runtime.ts`'s `prepareStep` sets `activeTools` to the result of
-`activeToolNamesFor(loadedSkillIds(steps))` (`tool-access.ts`):
+but `tracey-runtime.ts`'s `prepareStep` sets `activeTools` to the core set plus the bundles of
+every skill loaded **so far this conversation** (`tool-access.ts`):
 
 - **`CORE_TOOL_NAMES`** are active on every step: `navigate`, `search_docs`, `load_skill`,
   `ask_questions`, the three `show_*` renderers, and the two universal agent reads (`list_agents`,
   `get_agent`).
 - **Everything else is gated behind a skill.** A skill's front-matter `tools:` list is its
-  *bundle*; loading the skill with `load_skill` unlocks that bundle for the rest of the turn.
-  `loadedSkillIds` reads prior steps' `load_skill` calls to know which bundles are live.
+  *bundle*; loading the skill with `load_skill` unlocks that bundle for the **rest of the
+  conversation**, not just the turn. At the start of each turn the transport re-derives the loaded
+  set from the message history (`skillIdsFromMessages` — `load_skill` parts whose result wasn't
+  `notFound`), unions it with the current turn's `load_skill` calls (`loadedSkillIds(steps)`), and
+  mirrors it into `ctx.loadedSkillIds`. Because it comes from the messages, it survives a page
+  reload and resets with the thread.
+- **Repeat loads are no-ops.** `load_skill` checks `ctx.loadedSkillIds` and answers an
+  already-loaded skill with a compact `{ alreadyLoaded: true }` instead of re-injecting the full
+  playbook; the prompt tells the model a skill stays loaded and never to load it twice.
 
 This gives a dispatcher feel without a second model: the lean core handles routing + simple
 agent/doc questions; a request that needs suites, runs, proposals, stats, providers, traces, or any
@@ -135,15 +145,19 @@ column is which bundle activates the tool (`core` = always available).
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
 | `list_suites` / `get_suite` | read | no | `test-suites-and-runs` | `SuiteListToolUI` / `SuiteCardToolUI` |
 | `list_runs` / `get_run` | read | no | `test-suites-and-runs` | `RunListToolUI` / `RunCardToolUI` |
+| `get_run_failures` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunFailuresToolUI` |
+| `compare_runs` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunComparisonToolUI` |
 | `start_test_run` | write | **yes** | `test-suites-and-runs` | `StartTestRunToolUI` (live) |
 | `list_proposals` / `get_proposal` | read | no | `review-proposals` | `ProposalListToolUI` / `ProposalCardToolUI` |
 | `set_proposal_status` | write | **yes** | `review-proposals` | `ToolCallCard` |
+| `list_theories` | read | no | `optimize-agent` | `TheoryListToolUI` |
 | `get_dashboard_stats` | read | no | `project-insights` | `DashboardStatsToolUI` |
 | `get_provider` | read | no | `project-insights` | `ProviderCardToolUI` |
-| `get_trace` | read | no | `project-insights` | `TraceCardToolUI` |
+| `find_traces` | read (search) | no | `project-insights`, `optimize-agent` | `TraceListToolUI` |
+| `get_trace` | read | no | `project-insights`, `optimize-agent` | `TraceCardToolUI` |
 | `get_agent_stats` | read | no | `optimize-agent` | `AgentStatsToolUI` |
 | `submit_optimization_theory` | write | **yes** | `optimize-agent` | `TheoryToolUI` (live) |
-| `await_actions` | wait | no | `test-suites-and-runs`, `optimize-agent` | `ToolCallCard` |
+| `await_actions` | wait | no | `test-suites-and-runs`, `optimize-agent` | `AwaitActionsToolUI` |
 
 ## Tools: read, write, render, wait, interactive
 
@@ -154,7 +168,11 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
 - **Read tools** (`list_*`, `get_*`, `get_*_stats`) call `src/api/*.ts`, push the full payload to
   the artifact store, and return only a compact digest + reference. `confirm: false`. The
   single-entity gets (`get_agent`, `get_run`, `get_proposal`, `get_provider`, `get_trace`,
-  `get_suite`) each have a dedicated card in `tool-ui/`.
+  `get_suite`) each have a dedicated card in `tool-ui/`. Digests deliberately carry enough to
+  answer follow-ups without more cards: list digests include the key row fields, and
+  `get_dashboard_stats` includes `byAgent`/`byModel` usage breakdowns so a cross-agent usage chart
+  needs one read, not `get_agent_stats` per agent (the prompt's "card economy" rules lean on
+  this).
 - **Write tools** (`start_test_run`, `set_proposal_status`, `submit_optimization_theory`) set
   `confirm: true`. They call `ctx.confirm(summary)` **before** mutating; on decline they return the
   `CANCELLED` sentinel and never touch the mutating API.
@@ -171,8 +189,9 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
 
 A tool gets inline UI by adding its component to `tool-ui/registry.ts` (keyed by tool name);
 unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`, `load_skill`,
-`set_proposal_status`, `await_actions`). The runtime's tool adapter omits `execute` for interactive
-tools so the SDK treats them as frontend tools.
+`set_proposal_status`). The runtime's tool adapter omits `execute` for interactive tools so the
+SDK treats them as frontend tools, and passes the SDK abort signal into `execute` so long-running
+tools stop when the user stops the turn.
 
 ## Confirmation gate & auto-approve
 
@@ -220,10 +239,16 @@ making the user re-prompt, Tracey can **wait inside the same turn** and react wh
 - `await.ts` polls each handle to a terminal state via `poll-until-terminal.ts` — runs:
   `Completed`/`Failed`/`Cancelled`; theories: `Validated`/`Invalidated` — at a 3 s interval with a
   **10-minute per-handle cap**. A capped handle returns `timedOut: true` rather than hanging.
-- It returns one compact aggregate (`{ results, anyTimedOut }`) with per-run pass/fail counts and
-  per-theory resulting proposal id, so Tracey can summarize and act in the same turn.
-- `confirm: false`, and it has **no inline card** — the per-item **live** cards (`StartTestRunToolUI`,
-  `TheoryToolUI`) already visualize progress, so `await_actions` falls back to `ToolCallCard`.
+- It returns one compact aggregate (`{ results, errors?, anyTimedOut }`) with per-run pass/fail
+  counts and per-theory resulting proposal id, so Tracey can summarize and act in the same turn.
+  Failures are captured **per handle** (a bad id or network error lands in `errors`), so one bad
+  handle can't lose the other results.
+- The wait honors the turn's **abort signal**: hitting Stop cancels the polling immediately
+  instead of letting it run to the cap in the background.
+- `confirm: false`. Its inline card (`AwaitActionsToolUI`) lists the awaited handles with a
+  spinner while waiting and one status row per action when done (timed-out → warn, failed handle →
+  danger); the per-item **live** cards (`StartTestRunToolUI`, `TheoryToolUI`) still stream the
+  detailed progress.
 
 ## Live cards (streaming write results)
 
@@ -245,8 +270,10 @@ own trace, all sharing the turn's ConversationId. The SDK's `part.totalUsage` is
 aggregated **across all steps** (the whole turn), so it matches the sum of the turn's ingested
 traces. We read tokens straight from the SDK at the client: instant, no polling.
 
-- `TraceyTransport` writes `metadata.custom = { traceConversationId, usage, durationMs }` on the
-  **finish** part only (so the row stays hidden while streaming). The same turn id rides every
+- `TraceyTransport` writes `metadata.custom = { traceConversationId, usage, durationMs,
+  finishReason }` on the **finish** part only (so the row stays hidden while streaming). A
+  `finishReason` of `'tool-calls'` means the step budget truncated the turn; the row then shows a
+  warn-colored "Step limit reached" notice. The same turn id rides every
   upstream request as `x-proxytrace-session-id`, so the turn's calls share it.
 - The backend (`TraceyChatController`) reads that header into `IngestMessage.SessionId`, stored as
   each call's **`ConversationId`** (a GUID is stored verbatim; a non-GUID would be SHA-1 hashed).
@@ -268,6 +295,12 @@ the AI SDK runtime is in-memory only:
    `Outlet` child swaps on navigation, so the runtime (and its messages) is never torn down when
    you leave and return to `/tracey-ai`. **Do not move the `useTraceyChat()` call back into
    `TraceyAI`** — the page unmounts on navigation, which is the exact bug this avoids.
+The **model**, however, never sees the whole thread: `TraceyTransport` sends only the last
+`MODEL_HISTORY_WINDOW` (30) messages per turn, cut at a user-message boundary (`windowMessages`),
+so per-turn token cost stops growing with conversation age. The UI thread and the persisted
+snapshot stay complete. The loaded-skill set is derived from the same window, so a playbook that
+slid out of context counts as unloaded and a reload returns the full instructions again.
+
 2. **Across reload (localStorage).** `useTraceyChat` mirrors the thread to `localStorage`
    (`tracey-storage.ts`, keyed by `user + project`) on every change and re-imports it on mount, so
    a hard reload restores the conversation. Artifacts the restored thread still references are kept;
@@ -294,18 +327,19 @@ Current skills (`skills/*.md`):
 
 | Skill (`name`) | Unlocks (`tools:`) |
 |----------------|--------------------|
-| `test-suites-and-runs` | `list_suites`, `get_suite`, `list_runs`, `get_run`, `start_test_run`, `await_actions` |
+| `test-suites-and-runs` | `list_suites`, `get_suite`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `start_test_run`, `await_actions` |
 | `review-proposals` | `list_proposals`, `get_proposal`, `set_proposal_status` |
-| `project-insights` | `get_dashboard_stats`, `get_provider`, `get_trace` |
-| `optimize-agent` | `submit_optimization_theory`, `get_agent_stats`, `list_suites`, `list_runs`, `get_run`, `get_trace`, `await_actions` |
+| `project-insights` | `get_dashboard_stats`, `get_provider`, `find_traces`, `get_trace` |
+| `optimize-agent` | `submit_optimization_theory`, `get_agent_stats`, `list_suites`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `find_traces`, `get_trace`, `list_theories`, `await_actions` |
 
 - **Add a skill:** drop a `skills/<name>.md` with YAML front-matter (`name`, `description`, optional
   `tools:` — a comma/space-separated bundle) and the playbook as the body. `registry.ts`
   `import.meta.glob`s every `*.md` and parses the front-matter — no registration code, no prompt
   edit, no backend change. It's auto-listed in the catalog and loadable, and its `tools:` are
   auto-gated.
-- **`load_skill`** (core tool, no confirm) returns `{ name, instructions }`, or
-  `{ notFound, available }` for an unknown id.
+- **`load_skill`** (core tool, no confirm) returns `{ name, instructions }`,
+  `{ name, alreadyLoaded, note }` for a skill already loaded this conversation (the playbook is
+  not re-injected), or `{ notFound, available }` for an unknown id.
 - The **`optimize-agent`** skill drives `submit_optimization_theory`: verify the agent + its suite,
   ground a hypothesis in real run/trace evidence, author one change, submit it. The submit tool
   posts to `POST /api/theories` (`source: TraceyAi`); the backend A/B-validates it and either spawns

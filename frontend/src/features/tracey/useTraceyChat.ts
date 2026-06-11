@@ -134,7 +134,7 @@ export function useTraceyChat(): TraceyChat {
   });
 
   const toolContext = useMemo<TraceyToolContext>(
-    () => ({ projectId, artifactScope, navigate, confirm }),
+    () => ({ projectId, artifactScope, navigate, confirm, loadedSkillIds: new Set<string>() }),
     [projectId, artifactScope, navigate, confirm],
   );
 

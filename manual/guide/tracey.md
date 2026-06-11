@@ -136,16 +136,17 @@ A skill also **unlocks the specialist tools** that task needs. To keep her every
 focused — and her tool selection sharp — Tracey carries only a lean core by default (navigation,
 manual search, the inline renderers, the question widget, and reading your agents). The tools for a
 particular area come in *with* its skill, so the first time a request touches that area she loads
-the matching skill, which brings both the playbook and its tools. This is automatic and changes
+the matching skill, which brings both the playbook and its tools. A loaded skill stays loaded for
+the rest of the conversation, so she only loads each one once. This is automatic and changes
 nothing about how you talk to her; you may just notice a brief "loading skill" step.
 
 Her skills cover:
 
 | Skill | Loads when you ask about… |
 |-------|---------------------------|
-| **Test suites & runs** | your suites, test runs, results/pass rates, or starting a run |
+| **Test suites & runs** | your suites, test runs, results/pass rates, why a run failed, comparing two runs, or starting a run |
 | **Review proposals** | listing or reviewing proposals, or approving/rejecting one |
-| **Project insights** | overall stats/usage/cost, a provider, or a specific trace |
+| **Project insights** | overall stats/usage/cost, a provider, or finding/inspecting captured traces |
 | **Optimize an agent** | optimizing, improving, or tuning an agent (below) |
 
 ## Optimizing an agent
@@ -159,9 +160,14 @@ suite first.
 
 The flow:
 
-1. **Theory.** Tracey inspects the agent and its recent results, then theorizes **one** concrete
-   change — a rewritten **system prompt**, a **model switch**, or a **tool update** — with a short
-   rationale. After you confirm, she submits it as an **optimization theory**.
+1. **Theory.** Tracey grounds a hypothesis in real evidence before proposing anything: she checks
+   which theories were **already tried** (so an invalidated idea isn't re-submitted), digs into
+   the latest run's **failing cases** — each test's actual response and every evaluator's verdict
+   and reasoning — **compares runs** to see which cases a previous change fixed or regressed, and
+   can **search the agent's captured traces** for errors or suspicious calls. From that she
+   theorizes **one** concrete change — a rewritten **system prompt**, a **model switch**, or a
+   **tool update** — with a rationale that cites what she found. After you confirm, she submits
+   it as an **optimization theory**.
 2. **A/B test.** The theory is validated in the background: Proxytrace runs the suite against the
    current agent (baseline) and against the proposed change (candidate), back to back. Tracey
    shows a **theory card** in the chat that streams the status — *Running A/B test…* while it
@@ -203,6 +209,15 @@ figure the Traces page shows for that turn's conversation group — plus two act
 The row appears once the reply has finished streaming, with the totals shown immediately. If
 you click the trace icon before the capture has finished saving (ingestion is asynchronous),
 you'll see a brief "still being captured" note — try again in a second.
+
+If a turn needed more tool steps than Tracey's per-turn budget allows, the row shows a
+**"Step limit reached"** notice — she ran out of steps before she could answer. Just ask her
+to continue.
+
+Very long conversations stay fully visible in the chat, but Tracey only *considers* the most
+recent stretch of the thread when answering (this keeps long sessions fast and affordable). If
+she seems to have forgotten something from much earlier, restate it or start a fresh
+conversation.
 
 ## Privacy & security
 

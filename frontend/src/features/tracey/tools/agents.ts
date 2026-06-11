@@ -7,16 +7,22 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
   return {
     list_agents: tool({
       description:
-        'List the agents in the current project. Returns a compact index (each agent\'s id + name) ' +
-        'plus a reference; the full list is rendered to the user as a card. To inspect one agent, ' +
-        'call get_agent with its id.',
+        'List the agents in the current project. Returns a compact index (each agent\'s id, name, ' +
+        'model endpoint, tool count) plus a reference; the full list is rendered to the user as a ' +
+        'card. Use this index directly — only call get_agent when the user asks about one ' +
+        'specific agent in detail.',
       parameters: empty,
       confirm: false,
       execute: async () => {
         const items = (await agentsApi.list({ projectId })).items;
         return store('agent-list', items, {
           count: items.length,
-          items: items.map((a) => ({ id: a.id, name: a.name })),
+          items: items.map((a) => ({
+            id: a.id,
+            name: a.name,
+            endpointName: a.endpointName,
+            toolCount: a.toolCount,
+          })),
         });
       },
     }),

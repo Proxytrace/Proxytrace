@@ -4,6 +4,7 @@ import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
 import { Priority, ProposalStatus, TheorySource } from '../../../api/models';
 import { type ToolFactory, tool, empty, CANCELLED } from './shared';
+import { clip } from './run-analysis';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
 const theoryDetailsSchema = z.discriminatedUnion('kind', [
@@ -63,6 +64,34 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
           priority: proposal.priority,
           agentName: proposal.agentName,
           expectedPassRateDelta: proposal.expectedPassRateDelta,
+        });
+      },
+    }),
+    list_theories: tool({
+      description:
+        'List the optimization theories already tried for this project (optionally one agent): ' +
+        'their change kind, A/B outcome (Validated → proposal, Invalidated → no improvement), and ' +
+        'rationale. Check this BEFORE forming a new hypothesis — do not re-submit an idea that ' +
+        'was already invalidated, and build on what won. Rendered to the user as a card.',
+      parameters: z.object({
+        agentId: z.string().optional().describe('Only theories for this agent.'),
+      }),
+      confirm: false,
+      execute: async ({ agentId }) => {
+        const items = await theoriesApi.getAll({ projectId, agentId });
+        return store('theory-list', items, {
+          count: items.length,
+          items: items.slice(0, 20).map((t) => ({
+            id: t.id,
+            kind: t.kind,
+            status: t.status,
+            priority: t.priority,
+            agentName: t.agentName,
+            rationale: clip(t.rationale, 140),
+            baselinePassRate: t.baselinePassRate,
+            projectedPassRate: t.projectedPassRate,
+            resultingProposalId: t.resultingProposalId,
+          })),
         });
       },
     }),

@@ -82,7 +82,7 @@ export const ToolCallCard: ToolCallMessagePartComponent = ({ toolName, args, arg
   const resultText = resultIsString ? (result as string) : JSON.stringify(result, null, 2);
 
   return (
-    <div className="my-1 rounded-md border border-hairline bg-card text-xs">
+    <div data-testid={`tracey-tool-call-${toolName}`} className="my-1 rounded-md border border-hairline bg-card text-xs">
       <RowButton
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}

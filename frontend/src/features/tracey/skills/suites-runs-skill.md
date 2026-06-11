@@ -1,7 +1,7 @@
 ---
 name: test-suites-and-runs
 description: Inspect test suites and runs, and start a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
-tools: list_suites, get_suite, list_runs, get_run, start_test_run, await_actions
+tools: list_suites, get_suite, list_runs, get_run, get_run_failures, compare_runs, start_test_run, await_actions
 ---
 
 # Skill: Test suites & runs
@@ -12,6 +12,10 @@ Work with the project's benchmark suites and their executions.
 
 - `list_suites` — the suites in the project; `get_suite` for one suite's cases and evaluators.
 - `list_runs` — recent runs; `get_run` for a single run's per-case results and pass rate.
+- `get_run_failures` — a run's FAILING cases with each evaluator's verdict + reasoning. Reach for
+  this whenever the user asks *why* a run failed — don't stop at the pass rate.
+- `compare_runs` — case-by-case movement between two runs (fixed / regressed / unchanged). Use it
+  for any before/after question ("did the change help?").
 
 Render results, don't narrate them: a single suite or run → its entity card (`get_suite` /
 `get_run` render clickable cards); a comparison of runs or pass rates over time → `show_chart` /
