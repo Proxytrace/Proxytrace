@@ -151,16 +151,13 @@ test.describe('Evaluators', () => {
 
     // The deleted evaluator is gone from the rail.
     await expect(page.getByTestId(`evaluator-rail-item-${evaluator.id}`)).toHaveCount(0);
-    // Deletion redirects to /evaluators; with no selection the empty detail renders (unless
-    // another evaluator is auto-selected — assert the deleted one is no longer the detail).
+    // Delete is a soft-delete (archive): the evaluator stays resolvable by id so historical runs
+    // keep rendering, but it must be excluded from listings. Assert it's gone from the list rather
+    // than expecting a by-id 404.
     await expect.poll(async () => {
-      try {
-        await api.getEvaluator(evaluator.id);
-        return 'exists';
-      } catch {
-        return 'gone';
-      }
-    }).toBe('gone');
+      const evaluators = await api.listEvaluators(projectId);
+      return evaluators.some((e) => e.id === evaluator.id);
+    }).toBe(false);
   });
 
   test('deep-links straight to an evaluator detail via /evaluators/:id', async ({ page }) => {

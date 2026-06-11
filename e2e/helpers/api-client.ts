@@ -617,6 +617,15 @@ export class ProxytraceApiClient {
     return res.json();
   }
 
+  // Lists evaluators (optionally scoped to a project). Archived (soft-deleted) evaluators are
+  // excluded server-side — unlike getEvaluator(id), which still resolves an archived row by id.
+  async listEvaluators(projectId?: string): Promise<Array<{ id: string; kind: string; name: string }>> {
+    const url = projectId ? `/api/evaluators?projectId=${encodeURIComponent(projectId)}` : '/api/evaluators';
+    const res = await this.request.get(url, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`list evaluators failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
   async getEvaluator(id: string): Promise<{
     id: string;
     kind: string;
