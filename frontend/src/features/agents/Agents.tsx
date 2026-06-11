@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Button } from '../../components/ui/Button';
+import { ChevronRightIcon } from '../../components/icons';
+import { cn } from '../../lib/cn';
 import { useSelectedId } from '../../hooks/useSelectedId';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import { AgentList } from './AgentList';
 import { AgentDetail } from './AgentDetail';
 import { useAgents, useAgentDetail, useDeleteAgent } from './hooks/useAgents';
@@ -24,9 +28,11 @@ export default function Agents() {
 
   const agents = (showSystem || selectedIsSystem) ? allAgents : allAgents.filter(a => !a.isSystemAgent);
 
-  const effectiveSelectedId = (selectedId && agents.some(a => a.id === selectedId))
-    ? selectedId
-    : agents[0]?.id ?? null;
+  // On mobile the list and detail are separate screens — only an explicit selection opens the
+  // detail. Desktop keeps the select-first default.
+  const isMobile = useIsMobile();
+  const explicitSelectedId = (selectedId && agents.some(a => a.id === selectedId)) ? selectedId : null;
+  const effectiveSelectedId = explicitSelectedId ?? (isMobile ? null : agents[0]?.id ?? null);
 
   const selected = agents.find(a => a.id === effectiveSelectedId) ?? null;
   // The list rows are light; the detail panel needs the full agent (system message, tools, params).
@@ -53,8 +59,12 @@ export default function Agents() {
 
       {(isLoading || allAgents.length > 0) && (
         <div
-          className="fade-up flex-1 min-h-0 grid gap-4 grid-cols-[minmax(260px,300px)_minmax(0,1fr)] [animation-delay:20ms]"
+          className={cn(
+            'fade-up flex-1 min-h-0 [animation-delay:20ms]',
+            isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,300px)_minmax(0,1fr)]',
+          )}
         >
+          {(!isMobile || !selected) && (
           <aside className="min-h-0 flex flex-col">
             <AgentList
               agents={agents}
@@ -65,8 +75,22 @@ export default function Agents() {
               onToggleSystem={hasSystemAgents ? () => setShowSystem(v => !v) : undefined}
             />
           </aside>
+          )}
 
+          {(!isMobile || selected) && (
           <main className="min-w-0 min-h-0 overflow-y-auto pr-1 pb-6">
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mb-2"
+                data-testid="agents-back-to-list"
+                onClick={() => setSelectedId(null, ['tool'])}
+                leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
+              >
+                All agents
+              </Button>
+            )}
             {selected && selectedAgent ? (
               <AgentDetail
                 key={selectedAgent.id}
@@ -80,6 +104,7 @@ export default function Agents() {
               <div className="text-center py-12 text-body text-muted">Select an agent to view details.</div>
             ) : null}
           </main>
+          )}
         </div>
       )}
 

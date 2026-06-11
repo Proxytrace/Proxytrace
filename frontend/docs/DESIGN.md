@@ -200,6 +200,12 @@ Use `DataTable` for any tabular dataset > 5 rows. For trace lists specifically, 
 - **Section header:** `text-title` label uppercase-tracking-wide is *not* our style — use sentence case `text-h2 font-semibold`.
 - **KPI rows:** `KpiCard` grid, 3–5 cards, `text-display` for the value, `text-body-sm text-muted` for the label, optional delta with semantic color.
 - **Detail views:** Drawer (right-side) for entity detail when the list still matters (traces, runs, proposals). Modal for focused tasks (create wizard, confirm). Full-page route only when the detail has its own sub-navigation.
+- **Responsiveness:** the app must stay usable down to 1024px wide. The sidebar starts collapsed below 1280px (`Shell` checks `matchMedia` once at mount; the user's toggle is never overridden). Inside a master/detail pane, **don't use viewport breakpoints (`lg:`/`xl:`) to split columns — they lie about the pane's actual width** (sidebar + list eat into it). Use Tailwind 4 container queries instead: `@container` on the pane root, `@3xl:grid-cols-[…]` on the split (see `AgentDetail.tsx`). Multi-column stat/KPI strips wrap (`flex-wrap` with a content-true `min-w`, or `grid-cols-[repeat(auto-fit,minmax(…,1fr))]`) rather than overflow. Shared row grids (e.g. `COL_WIDTHS` in `tracesMeta.ts`) use `minmax(min,max)` columns so they compress before clipping.
+- **Mobile (< `md`, 768px) — monitoring tier:** phones get a read/monitor experience; authoring stays desktop-first. The patterns:
+  - **Shell:** the sidebar becomes an off-canvas drawer (backdrop + slide-in, closes on nav click); the topbar drops the search box and license badge below `sm` and the health pill collapses to its dot below `lg`. Behavior branches use `useIsMobile()` (`hooks/useMediaQuery.ts`); styling branches use `max-md:`/`md:` classes.
+  - **Master/detail pages** (agents, runs): list and detail become separate screens. Only an *explicit* `?id=` selection opens the detail (the desktop select-first default is suppressed on mobile) and a ghost "All …" back button clears it — see `Runs.tsx` / `Agents.tsx`.
+  - **Wide row grids** (trace list): low-priority columns collapse via container query — the list declares `@container` + exposes full/narrow templates as CSS vars, rows share `TRACE_GRID_CLS`, hidden cells carry `@max-2xl:hidden` (`tracesMeta.ts`).
+  - **Full-height internal-scroll layouts** become natural page scroll below `md` (`md:h-full md:min-h-0` on the page root — see `Traces.tsx`); horizontal stat strips that can't wrap get `overflow-x-auto`.
 
 ---
 
@@ -285,7 +291,7 @@ Before opening a frontend PR, verify:
 - [ ] Untrusted content (prompts, model output, tool args) rendered as text — no `dangerouslySetInnerHTML`. Data-derived URLs scheme-checked; external links have `rel="noopener noreferrer"`. (Full rules: BEST_PRACTICES.md §12.)
 - [ ] Streaming/live state uses `streaming-border` / `pulse-dot` where applicable.
 - [ ] List/table layout matches `trace-row` / `DataTable` conventions.
-- [ ] Visually scanned at 1280px and 1440px widths; nothing horizontally scrolls.
+- [ ] Visually scanned at 1024px, 1280px and 1440px widths; nothing horizontally scrolls. Master/detail panes use container queries (`@container` + `@3xl:` etc.), not viewport breakpoints (§4).
 
 ---
 

@@ -158,7 +158,7 @@ export default function Suites() {
   return (
     <div className="w-full min-w-0 flex flex-col gap-4">
       {/* KPI row */}
-      <div className="fade-up grid gap-3 [animation-delay:30ms] grid-cols-4">
+      <div className="fade-up grid gap-3 [animation-delay:30ms] grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
         {kpiItems.map(k => (
           <div key={k.label} className="bg-card rounded-[14px] px-[18px] py-4 flex items-center gap-[14px] shadow-[var(--shadow-card)]">
             <div

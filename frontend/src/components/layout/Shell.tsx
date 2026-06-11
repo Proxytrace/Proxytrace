@@ -14,6 +14,7 @@ import { Menu } from '../ui/Menu';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
 import useCurrentProject from '../../hooks/useCurrentProject';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useKiosk } from '../../contexts/KioskContext';
 import { AssistantRuntimeProvider } from '@assistant-ui/react';
 import { useTraceyChat } from '../../features/tracey/useTraceyChat';
@@ -119,7 +120,15 @@ const HEALTH_LABEL: Record<HealthStatus, string> = {
 };
 
 export function Shell() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Start collapsed on narrow viewports (laptops below 1280px) so page content gets the width;
+  // the user can still expand manually. Initial-render check only — no resize listener, so a
+  // deliberate toggle is never fought.
+  const [collapsed, setCollapsed] = useState(() => window.matchMedia('(max-width: 1279px)').matches);
+  // Below md the sidebar is an off-canvas drawer instead of an inline rail.
+  const isMobile = useIsMobile();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // The drawer always shows full labels — icon-only collapse is a desktop space trade-off.
+  const navCollapsed = isMobile ? false : collapsed;
   const navigate = useNavigate();
   const { data: online } = useHealth();
   const { data: license } = useLicense();
@@ -155,16 +164,30 @@ export function Shell() {
   return (
     // Transparent so the body's aurora/grain atmosphere shows through the page gutters.
     <div className="flex w-full h-screen overflow-hidden bg-transparent relative z-[1]">
-      {/* Sidebar */}
+      {/* Mobile nav backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-[59] bg-[rgba(0,0,0,0.5)] md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — inline rail on md+, off-canvas drawer below */}
       <aside
-        className={`bg-sidebar flex flex-col shrink-0 relative z-[2] m-[10px_0_10px_10px] rounded-[18px] overflow-hidden shadow-[var(--shadow-sidebar)] transition-[width] duration-200 h-[calc(100vh-20px)] ${collapsed ? 'w-16' : 'w-[232px]'}`}
+        className={cn(
+          'bg-sidebar flex flex-col shrink-0 overflow-hidden shadow-[var(--shadow-sidebar)]',
+          'md:relative md:z-[2] md:m-[10px_0_10px_10px] md:rounded-[18px] md:transition-[width] md:duration-200 md:h-[calc(100vh-20px)]',
+          collapsed ? 'md:w-16' : 'md:w-[232px]',
+          'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-[60] max-md:w-[264px] max-md:rounded-r-[18px] max-md:transition-transform max-md:duration-200',
+          mobileNavOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full',
+        )}
       >
         {/* Brand */}
         <div
-          className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${collapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
+          className={`h-[60px] flex items-center border-b border-hairline shrink-0 ${navCollapsed ? 'justify-center' : 'justify-start px-[18px]'}`}
         >
           <BrandMark size={30} />
-          {!collapsed && (
+          {!navCollapsed && (
             <div className="ml-[10px]">
               <div className="font-bold text-sm tracking-[-0.02em] leading-none">
                 <span className="text-primary">proxy</span><span className="text-accent">trace</span>
@@ -174,16 +197,17 @@ export function Shell() {
           )}
         </div>
 
-        {/* Nav */}
+        {/* Nav — any link click closes the mobile drawer (clicks bubble up from NavItem). */}
         <nav
-          className={`flex-1 flex flex-col overflow-y-auto ${collapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
+          onClick={() => setMobileNavOpen(false)}
+          className={`flex-1 flex flex-col overflow-y-auto ${navCollapsed ? 'px-2 py-3' : 'px-3 py-2'}`}
         >
           {navGroups.map((group, gIdx) => (
             <div key={group.label ?? `__g${gIdx}`} className="flex flex-col gap-[2px]">
               {gIdx > 0 && (
-                <div className={`my-1.5 border-t border-hairline ${collapsed ? 'mx-1' : 'mx-2'}`} />
+                <div className={`my-1.5 border-t border-hairline ${navCollapsed ? 'mx-1' : 'mx-2'}`} />
               )}
-              {!collapsed && group.label && (
+              {!navCollapsed && group.label && (
                 <div className="px-[6px] pt-1 pb-[4px] text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
                   {group.label}
                 </div>
@@ -199,7 +223,7 @@ export function Shell() {
                     key={item.to}
                     label={item.label}
                     icon={NAV_ICONS[item.icon]}
-                    collapsed={collapsed}
+                    collapsed={navCollapsed}
                   />
                 ) : (
                   <NavItem
@@ -207,7 +231,7 @@ export function Shell() {
                     label={item.label}
                     icon={NAV_ICONS[item.icon]}
                     to={item.to}
-                    collapsed={collapsed}
+                    collapsed={navCollapsed}
                   />
                 ),
               )}
@@ -216,22 +240,22 @@ export function Shell() {
         </nav>
 
         {/* Docs link — opens the bundled manual served at /docs */}
-        <div className={`${collapsed ? 'px-2' : 'px-3'}`}>
+        <div className={`${navCollapsed ? 'px-2' : 'px-3'}`}>
           <a
             href="/docs/"
             target="_blank"
             rel="noopener noreferrer"
-            title={collapsed ? 'Documentation' : undefined}
-            className={`nav-item${collapsed ? ' justify-center' : ''}`}
+            title={navCollapsed ? 'Documentation' : undefined}
+            className={`nav-item${navCollapsed ? ' justify-center' : ''}`}
           >
             <span className="flex shrink-0"><ExternalLinkIcon size={16} /></span>
-            {!collapsed && <span className="flex-1 text-left">Documentation</span>}
+            {!navCollapsed && <span className="flex-1 text-left">Documentation</span>}
           </a>
         </div>
 
         {/* Project footer */}
-        <div className={`border-t border-hairline ${collapsed ? 'p-2' : 'p-3'}`}>
-          <ProjectSelector collapsed={collapsed} />
+        <div className={`border-t border-hairline ${navCollapsed ? 'p-2' : 'p-3'}`}>
+          <ProjectSelector collapsed={navCollapsed} />
         </div>
       </aside>
 
@@ -243,23 +267,31 @@ export function Shell() {
         <header
           className="h-[56px] shrink-0 flex items-center px-4 gap-3 relative z-[3] m-[10px_10px_0_10px] rounded-[14px] bg-[color-mix(in_srgb,var(--bg-sidebar)_75%,transparent)] backdrop-blur-[20px] backdrop-saturate-[140%] shadow-[var(--shadow-topbar)]"
         >
-          <IconButton onClick={() => setCollapsed(c => !c)} aria-label="Toggle sidebar">
+          <IconButton
+            onClick={() => (isMobile ? setMobileNavOpen(v => !v) : setCollapsed(c => !c))}
+            aria-label="Toggle sidebar"
+          >
             <LayoutSidebarIcon size={16} />
           </IconButton>
 
-          <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-muted">{currentProject?.name ?? '—'}</span>
-            <span className="text-muted">/</span>
-            <span className="font-semibold">{pageLabel}</span>
+          <div className="flex items-center gap-2 text-[13px] min-w-0 shrink whitespace-nowrap">
+            <span className="text-muted truncate max-w-[180px] hidden md:inline">{currentProject?.name ?? '—'}</span>
+            <span className="text-muted hidden md:inline">/</span>
+            <span className="font-semibold truncate">{pageLabel}</span>
           </div>
 
-          {currentProject?.id ? (
-            <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
-          ) : (
-            <div className="flex-1 max-w-[720px] mx-auto" />
-          )}
+          {/* Search needs real width to be usable — below sm it yields to the page title. */}
+          <div className="flex-1 min-w-0 hidden sm:block">
+            {currentProject?.id ? (
+              <UnifiedSearch ref={searchRef} projectId={currentProject.id} width="fixed" />
+            ) : (
+              <div className="flex-1 max-w-[720px] mx-auto" />
+            )}
+          </div>
+          <div className="flex-1 sm:hidden" />
 
           <div
+            title={HEALTH_LABEL[healthStatus]}
             className={cn(
               'flex items-center gap-1.5 px-[10px] py-[6px] rounded-full border text-xs font-semibold whitespace-nowrap shrink-0',
               HEALTH_PILL[healthStatus],
@@ -272,10 +304,11 @@ export function Shell() {
                 healthStatus === 'online' && 'pulse-dot',
               )}
             />
-            {HEALTH_LABEL[healthStatus]}
+            {/* Dot-only below lg — the label is redundant with the color + title on tight topbars. */}
+            <span className="hidden lg:inline">{HEALTH_LABEL[healthStatus]}</span>
           </div>
 
-          <LicenseBadge />
+          <span className="hidden sm:contents"><LicenseBadge /></span>
 
           {interactive && (
             <IconButton

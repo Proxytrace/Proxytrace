@@ -171,7 +171,9 @@ export default function Traces() {
   }
 
   return (
-    <div className="w-full min-w-0 h-full min-h-0 flex flex-col gap-[14px]">
+    // md+: fixed-height column, the table scrolls internally. Below md the toolbar/KPIs leave the
+    // table only a sliver, so the page scrolls naturally instead and the table takes its content height.
+    <div className="w-full min-w-0 md:h-full md:min-h-0 flex flex-col gap-[14px]">
       <TraceToolbar
         search={search}
         timeRange={timeRange}

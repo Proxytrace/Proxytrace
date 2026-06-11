@@ -30,7 +30,7 @@ const TONE_TOP_BORDER: Record<DisplayTone, string> = {
 
 export function TheoryColumn({ column, count, children }: Props) {
   return (
-    <section className="flex flex-col lg:min-h-0" data-testid={`theory-column-${column.status}`}>
+    <section className="flex flex-col xl:min-h-0" data-testid={`theory-column-${column.status}`}>
       {/* Header */}
       <div className={cn('rounded-lg border border-border border-t-2 bg-card-2 px-3.5 py-3 shrink-0', TONE_TOP_BORDER[column.tone])}>
         <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export function TheoryColumn({ column, count, children }: Props) {
       </div>
 
       {/* Cards */}
-      <div className="flex flex-col gap-2.5 mt-2.5 pr-1 pb-4 lg:flex-1 lg:min-h-0 lg:overflow-y-auto" data-testid={`theory-column-list-${column.status}`}>
+      <div className="flex flex-col gap-2.5 mt-2.5 pr-1 pb-4 xl:flex-1 xl:min-h-0 xl:overflow-y-auto" data-testid={`theory-column-list-${column.status}`}>
         {children}
       </div>
     </section>
