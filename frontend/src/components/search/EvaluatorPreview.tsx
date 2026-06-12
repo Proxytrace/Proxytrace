@@ -16,12 +16,13 @@ export function EvaluatorPreview({ id, hit }: Props) {
   if (q.isError || !q.data) return <GenericBody hit={hit} />;
 
   const e = q.data;
+  const entries: [string, string][] = [
+    ['Kind',     e.kind],
+    ['Endpoint', e.endpointName ?? '—'],
+  ];
   return (
     <>
-      <MetaGrid entries={([
-        ['Kind',     e.kind],
-        ['Endpoint', e.endpointName ?? '—'],
-      ] as [string, string][]).filter(([, v]) => v != null)} />
+      <MetaGrid entries={entries} />
       {e.systemMessage && (
         <PreviewSection title="System prompt">
           <pre className="text-[11.5px] text-white/75 leading-relaxed whitespace-pre-wrap break-words m-0 font-sans">

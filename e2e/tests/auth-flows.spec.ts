@@ -9,16 +9,15 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 // if the project config changes.
 //
 // App behaviour notes (verified against frontend/src/App.tsx + features/auth/*):
-//   • There is no dedicated `/login` route. When unauthenticated, `LocalAuthGate` renders the
-//     <Login/> form in place for ANY path (except /signup, /setup) WITHOUT rewriting the URL.
-//     So hitting a protected route while logged-out shows the login form but keeps the URL.
-//   • Logout calls `signoutRedirect()` which clears the token then `navigate('/login')`, so the
-//     URL becomes /login and the login form renders.
-//   • The JWT lives in localStorage key `proxytrace.token` (see auth.setup.spec.ts).
-//   • There is NO server logout endpoint — logout is purely client-side (token removal).
+//   • When unauthenticated, `LocalAuthGate` renders the <Login/> form in place for ANY path
+//     (except /signup, /setup, /login) WITHOUT rewriting the URL; /login is also a real route.
+//   • Logout calls `signoutRedirect()` which POSTs /api/auth/logout (clears the cookie) and
+//     navigates to /login.
+//   • The session is an httpOnly cookie `proxytrace_session` set by the backend on login;
+//     the JWT is never persisted to localStorage (see auth.setup.spec.ts).
 const ADMIN_EMAIL = 'admin@e2e.test';
 const ADMIN_PASSWORD = 'E2ePassword1!';
-const TOKEN_KEY = 'proxytrace.token';
+const SESSION_COOKIE = 'proxytrace_session';
 
 test.describe('Auth & access control', () => {
   // Start every test from a clean, signed-out browser session.
@@ -36,9 +35,11 @@ test.describe('Auth & access control', () => {
     await expect(page).not.toHaveURL(/\/login/);
     // The app chrome (sidebar nav) only mounts once authenticated.
     await expect(page.getByRole('navigation')).toBeVisible();
-    // The token was persisted to localStorage.
-    const token = await page.evaluate((k) => localStorage.getItem(k), TOKEN_KEY);
-    expect(token).toBeTruthy();
+    // The session was persisted as the httpOnly cookie (not in localStorage).
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === SESSION_COOKIE)?.value).toBeTruthy();
+    const stray = await page.evaluate(() => localStorage.getItem('proxytrace.token'));
+    expect(stray).toBeNull();
   });
 
   test('an invalid password shows an error, stays on /login, and issues no token', async ({ page }) => {
@@ -51,8 +52,8 @@ test.describe('Auth & access control', () => {
     await expect(page.getByTestId('login-error')).toBeVisible();
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByRole('navigation')).toHaveCount(0);
-    const token = await page.evaluate((k) => localStorage.getItem(k), TOKEN_KEY);
-    expect(token).toBeNull();
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === SESSION_COOKIE)).toBeUndefined();
   });
 
   test('the raw login endpoint rejects bad credentials with 401', async ({ request }) => {
@@ -87,8 +88,9 @@ test.describe('Auth & access control', () => {
 
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByTestId('login-submit')).toBeVisible();
-    const token = await page.evaluate((k) => localStorage.getItem(k), TOKEN_KEY);
-    expect(token).toBeNull();
+    // The server cleared the session cookie on logout.
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === SESSION_COOKIE)).toBeUndefined();
   });
 
   test('signup via an invite creates a user and logs them in', async ({ page, request }) => {
@@ -119,8 +121,8 @@ test.describe('Auth & access control', () => {
     // A successful signup sets the token and navigates to '/', which lands on /dashboard.
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByRole('navigation')).toBeVisible();
-    const token = await page.evaluate((k) => localStorage.getItem(k), TOKEN_KEY);
-    expect(token).toBeTruthy();
+    const cookies = await page.context().cookies();
+    expect(cookies.find((c) => c.name === SESSION_COOKIE)?.value).toBeTruthy();
   });
 
   test('a Member sees no Settings nav and is redirected away from /settings', async ({ page, request }) => {

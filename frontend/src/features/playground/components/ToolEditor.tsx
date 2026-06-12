@@ -11,47 +11,22 @@ interface Props {
   onChange: (next: PlaygroundToolOverride[]) => void;
 }
 
-const TYPE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  string: {
-    bg: 'color-mix(in srgb, var(--teal) 12%, transparent)',
-    color: 'var(--teal)',
-    border: 'color-mix(in srgb, var(--teal) 28%, transparent)',
-  },
-  number: {
-    bg: 'var(--warn-subtle)',
-    color: 'var(--warn)',
-    border: 'color-mix(in srgb, var(--warn) 28%, transparent)',
-  },
-  integer: {
-    bg: 'var(--warn-subtle)',
-    color: 'var(--warn)',
-    border: 'color-mix(in srgb, var(--warn) 28%, transparent)',
-  },
-  boolean: {
-    bg: 'var(--accent-subtle)',
-    color: 'var(--accent-hover)',
-    border: 'color-mix(in srgb, var(--accent-primary) 28%, transparent)',
-  },
-  array: {
-    bg: 'var(--success-subtle)',
-    color: 'var(--success)',
-    border: 'color-mix(in srgb, var(--success) 28%, transparent)',
-  },
-  object: {
-    bg: 'var(--border-subtle)',
-    color: 'var(--text-secondary)',
-    border: 'var(--border-color)',
-  },
+// JSON-schema type → tinted pill classes (semantic tokens; see BEST_PRACTICES §5.1).
+const TYPE_CLASSES: Record<string, string> = {
+  string: 'bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] text-teal border-[color-mix(in_srgb,var(--teal)_28%,transparent)]',
+  number: 'bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]',
+  integer: 'bg-warn-subtle text-warn border-[color-mix(in_srgb,var(--warn)_28%,transparent)]',
+  boolean: 'bg-accent-subtle text-accent-hover border-[color-mix(in_srgb,var(--accent-primary)_28%,transparent)]',
+  array: 'bg-success-subtle text-success border-[color-mix(in_srgb,var(--success)_28%,transparent)]',
+  object: 'bg-[var(--border-subtle)] text-secondary border-border',
 };
 
-function typeColor(type: string) {
-  const t = type.toLowerCase();
-  return TYPE_COLORS[t] ?? TYPE_COLORS.object;
+function typeClass(type: string): string {
+  return TYPE_CLASSES[type.toLowerCase()] ?? TYPE_CLASSES.object;
 }
 
 interface ToolCardProps {
   tool: PlaygroundToolOverride;
-  index: number;
   onUpdate: (patch: Partial<PlaygroundToolOverride>) => void;
   onRemove: () => void;
 }
@@ -114,7 +89,6 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
             <div className="flex flex-col gap-[6px]">
               <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted">Arguments</div>
               {tool.arguments.map((arg, ai) => {
-                const tc = typeColor(arg.type);
                 return (
                   <div
                     key={ai}
@@ -125,10 +99,7 @@ function ToolCard({ tool, onUpdate, onRemove }: ToolCardProps) {
                       {arg.isRequired && (
                         <span className="text-danger text-[12px]" title="Required" aria-label="required">*</span>
                       )}
-                      <span
-                        className="mono text-[10px] px-[6px] py-[1px] rounded-full"
-                        style={{ background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}
-                      >
+                      <span className={`mono text-[10px] px-[6px] py-[1px] rounded-full border ${typeClass(arg.type)}`}>
                         {arg.type}
                       </span>
                     </div>
@@ -177,9 +148,8 @@ export function ToolEditor({ tools, onChange }: Props) {
     <div className="flex flex-col gap-[8px]">
       {tools.map((tool, i) => (
         <ToolCard
-          key={i}
+          key={tool.localId}
           tool={tool}
-          index={i}
           onUpdate={patch => updateTool(i, patch)}
           onRemove={() => removeTool(i)}
         />

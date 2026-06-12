@@ -97,6 +97,35 @@ public sealed class JwtBearerEventsFactoryTests
     }
 
     [TestMethod]
+    public async Task OnMessageReceived_WithSessionCookie_SetsToken()
+    {
+        var events = JwtBearerEventsFactory.Create();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Cookie = $"{SessionCookie.Name}=cookie-jwt";
+        var ctx = new MessageReceivedContext(httpContext, Scheme(), new JwtBearerOptions());
+
+        await events.OnMessageReceived(ctx);
+
+        ctx.Token.Should().Be("cookie-jwt");
+    }
+
+    [TestMethod]
+    public async Task OnMessageReceived_WithAuthorizationHeaderAndCookie_LeavesTokenForHeader()
+    {
+        // The handler parses the Authorization header after this event when Token is null —
+        // the cookie must not pre-empt an explicit bearer credential.
+        var events = JwtBearerEventsFactory.Create();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Headers.Authorization = "Bearer header-jwt";
+        httpContext.Request.Headers.Cookie = $"{SessionCookie.Name}=cookie-jwt";
+        var ctx = new MessageReceivedContext(httpContext, Scheme(), new JwtBearerOptions());
+
+        await events.OnMessageReceived(ctx);
+
+        ctx.Token.Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task OnMessageReceived_WithoutQuery_LeavesTokenNull()
     {
         var events = JwtBearerEventsFactory.Create();

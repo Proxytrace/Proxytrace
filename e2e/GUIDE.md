@@ -175,7 +175,7 @@ Keep IDs **stable across code changes**. The ID is a public API contract between
 
 ## Authentication
 
-The `setup` project runs first and saves a browser session (localStorage `proxytrace.token`) to `.auth/storageState.json`. All `core`, `smoke`, and `llm` tests load this state automatically via `playwright.config.ts`.
+The `setup` project runs first and saves a browser session (the httpOnly `proxytrace_session` cookie) to `.auth/storageState.json`. All `core`, `smoke`, and `llm` tests load this state automatically via `playwright.config.ts`.
 
 You do **not** need to navigate to `/login` or call the auth API in individual tests — the `page` fixture already has a valid session.
 

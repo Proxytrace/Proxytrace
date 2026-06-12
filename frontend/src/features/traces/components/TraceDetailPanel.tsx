@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, MessageDto } from '../../../api/models';
-import { testSuitesApi } from '../../../api/test-suites';
-import { QUERY_KEYS } from '../../../api/query-keys';
+import { useAgentSuites } from '../hooks/usePromoteTrace';
 import { agentColor, modelColor } from '../../../lib/colors';
 import { fmtLatency, fmtTokens, fmtRelative } from '../../../lib/format';
 import { cn } from '../../../lib/cn';
@@ -44,11 +42,7 @@ export function TraceDetailPanel({ trace, onClose, onPrev, onNext }: Props) {
     setPromoting(false);
   }
 
-  const suitesQuery = useQuery({
-    queryKey: QUERY_KEYS.testSuites(trace.agentId ?? undefined),
-    queryFn: () => testSuitesApi.list({ agentId: trace.agentId ?? undefined, pageSize: 200 }),
-    enabled: !!trace.agentId,
-  });
+  const suitesQuery = useAgentSuites(trace.agentId);
   const suites = suitesQuery.data?.items ?? [];
   const hasResponse = !!trace.response;
   const promoteDisabled = !trace.agentId || !hasResponse || suitesQuery.isLoading || suites.length === 0;

@@ -30,10 +30,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - Faster evaluator-history queries on large test-result tables (new index).
 - **Faster initial load** — the Tracey AI chat stack now loads in its own lazy chunk,
   halving the main JavaScript bundle (gzip 477 kB → 251 kB) and speeding up first paint
-  on every page.
+  on every page. Tracey's bundled manual-search index is also fetched on demand instead
+  of shipping with her tools.
+
+### Security
+
+- **Local-mode sessions now use an httpOnly cookie.** The session token is no longer
+  persisted in browser `localStorage` (where any injected script could read it); the
+  backend issues it as an `HttpOnly`/`SameSite=Strict` cookie and clears it on the new
+  logout endpoint. API clients keep using the `Authorization` header unchanged.
 
 - The sidebar showed a hardcoded "v0.1 · alpha" label; it now shows the actual
   installed release version.
+- **Settings → Danger zone:** "Delete all non-model data" left the dashboard and other
+  views showing stale pre-wipe numbers until a manual refresh.
+- Signing out now lands on a real `/login` URL instead of an undefined route.
 
 ## [1.0.0-rc.1] - 2026-06-11
 

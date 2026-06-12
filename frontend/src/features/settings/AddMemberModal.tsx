@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Modal } from '../../components/overlays/Modal';
 import { Avatar } from '../../components/ui/Avatar';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Input } from '../../components/ui/Input';
 import { RowButton } from '../../components/ui/RowButton';
 import { SkeletonList } from '../../components/ui/Skeleton';
-import { QUERY_KEYS } from '../../api/query-keys';
-import { usersApi } from '../../api/users';
-import { LIST_PAGE_SIZE } from '../../lib/constants';
+import { useUsers } from './hooks/useUsers';
 
 interface AddMemberModalProps {
   excludeIds: string[];
@@ -34,10 +31,7 @@ function colorFor(id: string): string {
 export function AddMemberModal({ excludeIds, onPick, onCancel, loading }: AddMemberModalProps) {
   const [query, setQuery] = useState('');
 
-  const { data: usersData, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.users,
-    queryFn: () => usersApi.list({ pageSize: LIST_PAGE_SIZE }),
-  });
+  const { data: usersData, isLoading } = useUsers();
 
   const all = usersData?.items ?? [];
   const withoutExcluded = all.filter(u => !excludeIds.includes(u.id));

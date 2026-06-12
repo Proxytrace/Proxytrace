@@ -8,6 +8,8 @@ export interface LocalUser {
 
 export interface LocalAuthContextValue {
   isAuthenticated: boolean;
+  /** True while the cookie session is being checked on first load. */
+  isRestoring: boolean;
   user: LocalUser | null;
   setToken: (token: string | null) => void;
   signinRedirect: () => void;

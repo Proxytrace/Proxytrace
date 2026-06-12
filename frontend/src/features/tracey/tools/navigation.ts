@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { searchDocs } from '../knowledge/search-docs';
-import { DOCS_INDEX } from '../knowledge/docs-index.generated';
 import { getSkill, listSkills } from '../skills/registry';
 import { type ToolFactory, tool } from './shared';
 
@@ -30,7 +29,12 @@ export const createNavigationTools: ToolFactory = (ctx) => ({
         .describe('Max sections to return (default 4).'),
     }),
     confirm: false,
-    execute: async ({ query, limit }) => ({ results: searchDocs(query, DOCS_INDEX, limit ?? 4) }),
+    execute: async ({ query, limit }) => {
+      // The generated index is ~400 kB of manual text — dynamic-import it so the chunk is
+      // only fetched the first time Tracey actually searches the docs.
+      const { DOCS_INDEX } = await import('../knowledge/docs-index.generated');
+      return { results: searchDocs(query, DOCS_INDEX, limit ?? 4) };
+    },
   }),
 
   load_skill: tool({

@@ -36,8 +36,15 @@ setup('create first admin and persist session', async ({ page, request }) => {
 
   // Use 'load' not 'networkidle' — SSE connections never reach network idle.
   await page.goto('/', { waitUntil: 'load' });
-  await page.evaluate((t) => localStorage.setItem('proxytrace.token', t), token);
-  // Reload so the app reads the token from localStorage and routes away from login.
+  // The session is an httpOnly cookie (the SPA never persists the JWT itself) — inject it
+  // at the browser-context level, then reload so the app restores the session via /me.
+  await page.context().addCookies([{
+    name: 'proxytrace_session',
+    value: token,
+    url: new URL(page.url()).origin,
+    httpOnly: true,
+    sameSite: 'Strict',
+  }]);
   await page.reload({ waitUntil: 'load' });
   await expect(page).not.toHaveURL(/\/login/);
 

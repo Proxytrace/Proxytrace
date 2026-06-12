@@ -27,6 +27,8 @@ export interface PlaygroundToolArgumentOverride {
 }
 
 export interface PlaygroundToolOverride {
+  /** Stable client-side identity for list keys — names are editable and can collide. */
+  localId: string;
   name: string;
   description: string;
   arguments: PlaygroundToolArgumentOverride[];

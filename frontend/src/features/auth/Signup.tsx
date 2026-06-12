@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { localAuthApi } from '../../auth/local/localAuthApi';
+import { useInvitePreview } from './hooks/useInvitePreview';
 import { PasswordRequirements } from '../../components/auth/PasswordRequirements';
 import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/ui/FormField';
@@ -20,11 +20,7 @@ export default function Signup() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const { data: preview, isError: expired } = useQuery({
-    queryKey: ['invite', token],
-    queryFn: () => localAuthApi.fetchInvite(token),
-    enabled: !!token,
-  });
+  const { data: preview, isError: expired } = useInvitePreview(token);
 
   if (expired) {
     return (

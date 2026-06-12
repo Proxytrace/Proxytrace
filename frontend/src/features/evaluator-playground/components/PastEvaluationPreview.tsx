@@ -1,6 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
-import { evaluatorTestBenchApi } from '../../../api/evaluator-testbench';
-import { QUERY_KEYS } from '../../../api/query-keys';
+import { usePastEvaluation } from '../hooks/usePastEvaluation';
 import { scoreAnchor } from '../testBenchMeta';
 import { ScoreSquare } from './ScoreSquare';
 
@@ -15,13 +13,7 @@ interface Props {
  * it was scored against. Scoped to the one evaluator (BEST_PRACTICES — derive at the leaf).
  */
 export function PastEvaluationPreview({ evaluatorId, evaluatorName, caseId }: Props) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: QUERY_KEYS.evaluatorTestBench(evaluatorId, caseId ?? ''),
-    queryFn: () => evaluatorTestBenchApi.load(evaluatorId, caseId ?? ''),
-    enabled: evaluatorId.length > 0 && caseId != null,
-    staleTime: 60_000,
-    retry: false,
-  });
+  const { data, isLoading, isError } = usePastEvaluation(evaluatorId, caseId);
 
   if (caseId == null) return <Note>Hover or pick a past evaluation to preview it.</Note>;
   if (isLoading) return <Note>Loading…</Note>;

@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { agentsApi, agentVersionsApi } from '../../../api/agents';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import type { AgentDto, AgentVersionDto } from '../../../api/models';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
 import { Input } from '../../../components/ui/Input';
-
-const CANDIDATE_FETCH_LIMIT = 500;
+import {
+  MOVE_CANDIDATE_FETCH_LIMIT, useMoveVersion, useMoveVersionCandidates,
+} from '../hooks/useMoveVersion';
 
 interface Props {
   version: AgentVersionDto;
@@ -17,19 +15,8 @@ interface Props {
 export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
   const [targetAgentId, setTargetAgentId] = useState('');
   const [search, setSearch] = useState('');
-  const qc = useQueryClient();
-  const { data: agents } = useQuery({
-    queryKey: QUERY_KEYS.agents(sourceAgent.projectId),
-    queryFn: () => agentsApi.list({ projectId: sourceAgent.projectId, pageSize: CANDIDATE_FETCH_LIMIT }),
-  });
-  const mutation = useMutation({
-    mutationFn: () => agentVersionsApi.move(version.id, targetAgentId),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: QUERY_KEYS.agents(sourceAgent.projectId) });
-      await qc.invalidateQueries({ queryKey: QUERY_KEYS.agentVersions(sourceAgent.id) });
-      onClose();
-    },
-  });
+  const { data: agents } = useMoveVersionCandidates(sourceAgent.projectId);
+  const mutation = useMoveVersion(version.id, sourceAgent.id, sourceAgent.projectId, onClose);
 
   const filtered = useMemo(() => {
     const all = (agents?.items ?? []).filter((a) => a.id !== sourceAgent.id);
@@ -38,7 +25,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
   }, [agents?.items, search, sourceAgent.id]);
 
   const totalCandidates = (agents?.items?.length ?? 0) - 1;
-  const truncated = totalCandidates >= CANDIDATE_FETCH_LIMIT - 1;
+  const truncated = totalCandidates >= MOVE_CANDIDATE_FETCH_LIMIT - 1;
 
   return (
     <Modal
@@ -48,7 +35,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
       footer={
         <ModalFooter
           onCancel={onClose}
-          onSubmit={() => mutation.mutate()}
+          onSubmit={() => mutation.mutate(targetAgentId)}
           submitLabel={mutation.isPending ? 'Moving…' : 'Move'}
           loading={mutation.isPending}
           disabled={!targetAgentId}
@@ -88,7 +75,7 @@ export function MoveVersionDialog({ version, sourceAgent, onClose }: Props) {
       </label>
       {truncated && (
         <p className="text-[11px] text-muted mt-2">
-          Showing first {CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.
+          Showing first {MOVE_CANDIDATE_FETCH_LIMIT} agents. Refine with search to find more.
         </p>
       )}
     </Modal>

@@ -1,5 +1,6 @@
 export interface TokenResponse { token: string; expiresAt: string; }
 export interface InvitePreview { email: string; role: 'Member' | 'Admin'; expiresAt: string; }
+export interface MeResponse { id: string; email: string; role: 'Member' | 'Admin'; }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -24,6 +25,20 @@ export const localAuthApi = {
     post<TokenResponse>('/api/auth/setup', { email, password }),
   signup: (token: string, password: string) =>
     post<TokenResponse>('/api/auth/signup', { token, password }),
+  /** Who the httpOnly session cookie says we are; rejects (status 401) when signed out. */
+  me: async (): Promise<MeResponse> => {
+    const res = await fetch('/api/auth/me');
+    if (!res.ok) {
+      const error: Error & { status?: number } = new Error(`/api/auth/me ${res.status}`);
+      error.status = res.status;
+      throw error;
+    }
+    return res.json();
+  },
+  /** Clears the httpOnly session cookie server-side (the SPA can't touch it itself). */
+  logout: async (): Promise<void> => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+  },
   fetchInvite: async (token: string): Promise<InvitePreview> => {
     const res = await fetch(`/api/auth/invites/by-token/${encodeURIComponent(token)}`);
     if (res.status === 410) throw new Error('invite-expired');

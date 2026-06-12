@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '../../../api/projects';
-import { providersApi } from '../../../api/providers';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import { LIST_PAGE_SIZE } from '../../../lib/constants';
 
@@ -12,11 +11,6 @@ export function useProjects() {
     queryKey: QUERY_KEYS.projects,
     queryFn: () => projectsApi.list({ pageSize: LIST_PAGE_SIZE }),
   });
-}
-
-/** Every configured model endpoint (for the system-endpoint picker). */
-export function useModelEndpoints() {
-  return useQuery({ queryKey: QUERY_KEYS.modelEndpoints, queryFn: providersApi.getAllModels });
 }
 
 /** Full detail (incl. members) for one project. */

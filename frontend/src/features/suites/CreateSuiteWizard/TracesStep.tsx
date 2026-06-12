@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto } from '../../../api/models';
-import { agentCallsApi } from '../../../api/agent-calls';
-import { QUERY_KEYS } from '../../../api/query-keys';
+import { useSuiteCreateTraces, WIZARD_TRACE_PAGE_SIZE } from '../hooks/useSuiteQueries';
 import { WrenchIcon } from '../../../components/icons';
 import { fmtLatency, fmtRelative, fmtTokens } from '../../../lib/format';
 import { modelColor } from '../../../lib/colors';
@@ -23,8 +21,6 @@ const RANGE_OPTIONS = [
   { key: '30d', label: 'Last 30 days', hours: 24 * 30 },
   { key: 'all', label: 'All time',   hours: null as number | null },
 ];
-
-const TRACE_PAGE_SIZE = 200;
 
 function rangeFrom(rangeKey: string): string | undefined {
   const opt = RANGE_OPTIONS.find(r => r.key === rangeKey);
@@ -67,11 +63,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
   // Memoize so `from` is stable across renders; recomputing `Date.now()` each
   // render would churn the queryKey and cause an infinite refetch loop.
   const from = useMemo(() => rangeFrom(range), [range]);
-  const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteCreate(agentId, from),
-    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: TRACE_PAGE_SIZE, from }),
-    enabled: !!agentId,
-  });
+  const { data, isLoading } = useSuiteCreateTraces(agentId, from);
 
   const allTraces = useMemo(() => data?.items ?? [], [data]);
 
@@ -89,7 +81,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
   const setFocusedId = (id: string | null) => setFocusedIdState(id);
 
   const focused = traces.find(t => t.id === focusedId) ?? null;
-  const truncated = data && data.total > TRACE_PAGE_SIZE;
+  const truncated = data && data.total > WIZARD_TRACE_PAGE_SIZE;
 
   const allVisibleSelected = traces.length > 0 && traces.every(t => selected.has(t.id));
 
@@ -207,7 +199,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
 
           {truncated && (
             <div className="px-3 py-2 text-[11px] text-muted border-t border-hairline bg-card-2 shrink-0">
-              Showing first {TRACE_PAGE_SIZE} traces — narrow your filter to see older calls.
+              Showing first {WIZARD_TRACE_PAGE_SIZE} traces — narrow your filter to see older calls.
             </div>
           )}
         </div>

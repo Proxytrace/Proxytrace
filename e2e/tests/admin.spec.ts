@@ -173,9 +173,15 @@ test.describe('Admin / Users', () => {
     const baseURL = test.info().project.use.baseURL;
     const context = await browser.newContext({ baseURL });
     try {
+      // The session rides in the httpOnly cookie — inject it at the context level.
+      await context.addCookies([{
+        name: 'proxytrace_session',
+        value: memberToken,
+        url: baseURL ?? 'http://localhost:5101',
+        httpOnly: true,
+        sameSite: 'Strict',
+      }]);
       const memberPage = await context.newPage();
-      await memberPage.goto('/', { waitUntil: 'load' });
-      await memberPage.evaluate((t) => localStorage.setItem('proxytrace.token', t), memberToken);
       await memberPage.goto('/admin/users', { waitUntil: 'load' });
 
       await expect(memberPage).toHaveURL(/\/dashboard$/);

@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
-import { providersApi } from '../../../api/providers';
+import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { Button } from '../../../components/ui/Button';
 import { Select } from '../../../components/ui/Select';
 
@@ -10,10 +9,7 @@ interface Props {
 }
 
 export function EndpointPicker({ value, onChange, defaultEndpointId }: Props) {
-  const { data: endpoints = [], isLoading } = useQuery({
-    queryKey: ['model-endpoints'],
-    queryFn: () => providersApi.getAllModels(),
-  });
+  const { data: endpoints = [], isLoading } = useModelEndpoints();
 
   return (
     <div className="flex flex-col gap-[5px]">

@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AgentCallDto, TestSuiteListItemDto } from '../../api/models';
-import { testSuitesApi } from '../../api/test-suites';
+import { usePromoteTrace } from './hooks/usePromoteTrace';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../lib/colors';
 import { fmtRelative, fmtPct100 } from '../../lib/format';
 import { cn } from '../../lib/cn';
@@ -31,7 +30,6 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
   const [suiteId, setSuiteId] = useState<string>(suites[0]?.id ?? '');
   const [expected, setExpected] = useState(() => expectedFromResponse(trace.response ?? null));
   const { show: toast } = useToast();
-  const qc = useQueryClient();
 
   const inputMessages = trace.request.filter(m => m.role !== 'system');
   const hasSystem = trace.request.some(m => m.role === 'system');
@@ -39,16 +37,9 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
 
   const selectedSuite = suites.find(s => s.id === suiteId) ?? null;
 
-  const addCase = useMutation({
-    mutationFn: () => testSuitesApi.addTestCase(suiteId, trace.id, toMessage(expected)),
-    onSuccess: (updated) => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      toast(`Added to ${updated.name}`, 'success');
-      onClose();
-    },
-    onError: (err) => {
-      console.error(err);
-    },
+  const addCase = usePromoteTrace((suiteName) => {
+    toast(`Added to ${suiteName}`, 'success');
+    onClose();
   });
 
   const errorMsg = addCase.isError
@@ -191,7 +182,7 @@ export function PromoteModal({ trace, suites, onClose }: Props) {
             <Button
               variant="primary"
               data-testid="promote-submit-btn"
-              onClick={() => addCase.mutate()}
+              onClick={() => addCase.mutate({ suiteId, traceId: trace.id, expected: toMessage(expected) })}
               disabled={submitDisabled}
               loading={addCase.isPending}
               leftIcon={!addCase.isPending && <PlusIcon strokeWidth={2.5} size={13} />}

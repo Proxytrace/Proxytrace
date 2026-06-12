@@ -69,6 +69,7 @@ public class AuthController : ControllerBase
 
         var result = await legacyClaim.ClaimAsync(req.Email, req.Password, ct);
         if (result is null) return Conflict("No eligible legacy account.");
+        SessionCookie.Append(Response, result.Token, result.ExpiresAt);
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
@@ -83,6 +84,7 @@ public class AuthController : ControllerBase
         if (!v.IsValid) return BadRequest(v.Errors);
 
         var result = await setup.CreateFirstAdminAsync(req.Email, req.Password, ct);
+        SessionCookie.Append(Response, result.Token, result.ExpiresAt);
         return new TokenResponse(result.Token, result.ExpiresAt);
     }
 
@@ -108,7 +110,30 @@ public class AuthController : ControllerBase
     {
         var result = await login.LoginAsync(req.Email, req.Password, ct);
         if (result is null) return Unauthorized();
+        SessionCookie.Append(Response, result.Token, result.ExpiresAt);
         return new TokenResponse(result.Token, result.ExpiresAt);
+    }
+
+    // The session rides in an httpOnly cookie (see SessionCookie), so the SPA cannot read
+    // or clear it itself — logout clears it server-side. Anonymous and idempotent.
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    [RequireLocalMode]
+    public IActionResult Logout()
+    {
+        SessionCookie.Delete(Response);
+        return NoContent();
+    }
+
+    // Session restore for the SPA: identifies the caller from the httpOnly session cookie
+    // (or bearer token), since the client cannot decode the cookie itself.
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<MeDto>> Me(CancellationToken ct)
+    {
+        var me = await currentUser.GetCurrentUserAsync(ct);
+        if (me is null) return Unauthorized();
+        return new MeDto(me.Id, me.Email, me.Role);
     }
 
     [HttpPost("signup")]
@@ -123,9 +148,9 @@ public class AuthController : ControllerBase
         if (user is null) return StatusCode(410, "Invite invalid, expired, or already used.");
 
         LoginResult? session = await login.LoginAsync(user.Email, req.Password, ct);
-        return session != null
-            ? new TokenResponse(session.Token, session.ExpiresAt)
-            : NotFound();
+        if (session is null) return NotFound();
+        SessionCookie.Append(Response, session.Token, session.ExpiresAt);
+        return new TokenResponse(session.Token, session.ExpiresAt);
     }
 
     [HttpGet("invites/by-token/{token}")]
