@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-06-12
+
 ### Added
 
 - "How to wire the proxy?" documentation link on the Traces page empty state.
