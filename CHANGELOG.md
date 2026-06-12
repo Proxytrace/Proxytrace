@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-06-12
+
 ### Added
 
 - **License management in the UI** — a license key can now be activated without a restart:
