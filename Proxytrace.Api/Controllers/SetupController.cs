@@ -65,6 +65,7 @@ public class SetupController : ControllerBase
     }
 
     [HttpPost("test-connection")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<TestConnectionResponse> TestConnection(
         [FromBody] TestConnectionRequest request,
         CancellationToken cancellationToken)
@@ -86,6 +87,7 @@ public class SetupController : ControllerBase
     }
 
     [HttpPost("list-models")]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<ListModelsResponse> ListModels(
         [FromBody] ListModelsRequest request,
         CancellationToken cancellationToken)

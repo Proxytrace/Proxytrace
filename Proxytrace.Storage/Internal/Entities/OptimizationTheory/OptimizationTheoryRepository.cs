@@ -87,6 +87,19 @@ internal class OptimizationTheoryRepository :
             .CountAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<IOptimizationTheory>> GetActiveAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<OptimizationTheoryEntity>()
+            .AsNoTracking()
+            .Where(e => e.Status == TheoryStatus.Proposed || e.Status == TheoryStatus.Validating)
+            .OrderBy(e => e.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
     public Task<int> CountActiveByProjectAsync(
         Guid projectId,
         CancellationToken cancellationToken = default)
