@@ -28,6 +28,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   provider endpoint (used by Tracey's tools) now redacts the upstream key; the setup
   connection-test and model-listing endpoints now require the Admin role.
 - Faster evaluator-history queries on large test-result tables (new index).
+- **Faster initial load** — the Tracey AI chat stack now loads in its own lazy chunk,
+  halving the main JavaScript bundle (gzip 477 kB → 251 kB) and speeding up first paint
+  on every page.
+
+- The sidebar showed a hardcoded "v0.1 · alpha" label; it now shows the actual
+  installed release version.
 
 ## [1.0.0-rc.1] - 2026-06-11
 
