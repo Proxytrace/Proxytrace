@@ -8,8 +8,10 @@ This section is for operators self-hosting Proxytrace. For using the product, se
 Proxytrace ships as versioned container images on GHCR
 (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`) together with a ready-to-run
 Docker Compose deployment. Each [GitHub release](https://github.com/Proxytrace/Proxytrace/releases)
-attaches a `proxytrace-<version>.zip` containing a compose file pinned to that release,
-an `.env` template, and a quickstart README.
+attaches a `proxytrace.zip` (extracting to `proxytrace-<version>/`) containing a compose
+file pinned to that release, an `.env` template, and a quickstart README. The latest
+release is always at
+`https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip`.
 
 ### Prerequisites
 
@@ -19,7 +21,8 @@ an `.env` template, and a quickstart README.
 
 ```bash
 # 1. Download and unpack the deployment artifact from the latest release
-unzip proxytrace-<version>.zip && cd proxytrace-<version>
+curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip
+unzip proxytrace.zip && cd proxytrace-<version>
 
 # 2. Start the stack — no configuration required
 docker compose up -d

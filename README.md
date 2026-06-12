@@ -38,11 +38,13 @@ a closed loop between **deployment** and **optimization**.
 ## Quick Start
 
 Each [GitHub release](https://github.com/Proxytrace/Proxytrace/releases) ships a
-`proxytrace-<version>.zip` with a pinned Docker Compose file and `.env` template; images are
-published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`).
+`proxytrace.zip` (extracting to `proxytrace-<version>/`) with a pinned Docker Compose file
+and `.env` template; images are published to GHCR
+(`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`).
 
 ```bash
-unzip proxytrace-<version>.zip && cd proxytrace-<version>
+curl -fLO https://github.com/Proxytrace/Proxytrace/releases/latest/download/proxytrace.zip
+unzip proxytrace.zip && cd proxytrace-<version>
 docker compose up -d    # no .env required — see .env.example for optional overrides
 ```
 
