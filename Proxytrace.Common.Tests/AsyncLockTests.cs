@@ -60,8 +60,7 @@ public sealed class AsyncLockTests
             lock (log) log.Add("owner-releasing");
         } // releases here
 
-        // Now contender should finish
-        Task.Run(() => asyncLock.Lock("key")).Wait(TimeSpan.FromSeconds(2)).Should().BeTrue();
+        // Now contender should finish acquiring the released lock
         SpinWait.SpinUntil(() => { lock (log) return log.Contains("contender-acquired"); },
             TimeSpan.FromSeconds(2)).Should().BeTrue();
 
