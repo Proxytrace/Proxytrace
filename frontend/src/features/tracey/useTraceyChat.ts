@@ -10,6 +10,7 @@ import type {
   UIMessageChunk,
 } from 'ai';
 import { traceyApi, type TraceySessionDto } from '../../api/tracey';
+import { useFeature } from '../../api/license';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useCurrentUser } from '../../auth/useCurrentUser';
@@ -77,6 +78,8 @@ export function useTraceyChat(): TraceyChat {
   // Since the runtime mounts app-wide (above the router), gate the session here so it's only
   // provisioned when Tracey is actually available.
   const { interactive } = useKiosk();
+  // Tracey is an Enterprise feature; on a Free install the session endpoint 402s, so never fire it.
+  const traceyLicensed = useFeature('Tracey');
   // The runtime mounts app-wide, but the session (and its backend agent provisioning) is only
   // created once the user opens Tracey. Latched on, so it stays alive across navigation.
   const [activated, setActivated] = useState(false);
@@ -119,7 +122,7 @@ export function useTraceyChat(): TraceyChat {
   const { data: session, status: queryStatus } = useQuery<TraceySessionDto>({
     queryKey: QUERY_KEYS.traceySession(projectId),
     queryFn: () => traceyApi.getSession(projectId),
-    enabled: !!projectId && interactive && activated,
+    enabled: !!projectId && interactive && traceyLicensed && activated,
     // Refresh comfortably before the 1-hour key expiry.
     staleTime: 50 * 60 * 1000,
     refetchInterval: 50 * 60 * 1000,

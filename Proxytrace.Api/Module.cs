@@ -117,6 +117,12 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(updatesConfiguration)
             .SingleInstance();
 
+        var ingestionProxy = configuration.GetSection("Proxy")
+            .Get<IngestionProxyOptions>() ?? new IngestionProxyOptions();
+        builder
+            .RegisterInstance(ingestionProxy)
+            .SingleInstance();
+
         var selfBaseUrl = configuration.GetSection("Self").GetValue<string>("BaseUrl")
                           ?? "http://localhost:5000";
 

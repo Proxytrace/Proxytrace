@@ -64,6 +64,10 @@ services:
       - Redis__ConnectionString=redis:6379
       - Self__BaseUrl=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
       - Frontend__AllowedOrigin=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
+      # Ingestion endpoint the UI advertises to clients (setup wizard, API-keys page). Must
+      # match how the proxy service is reachable from the outside — if you change PROXY_PORT
+      # or front the proxy with your own hostname, set PROXYTRACE_PROXY_PUBLIC_URL too.
+      - Proxy__PublicBaseUrl=${PROXYTRACE_PROXY_PUBLIC_URL:-http://localhost:5102}
       - Authentication__Mode=Local
       # Optional: when unset, a signing key is generated on first start and persisted in
       # the appdata volume, so sessions survive restarts and upgrades.

@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS } from '../tracesMeta';
@@ -45,7 +46,19 @@ export function TraceTable({ rows, isFetching, selectedId, expandedConvs, onSele
           isFetching ? (
             <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>
           ) : (
-            <div className="py-12 text-center text-muted text-body">No traces found.</div>
+            <div data-testid="traces-empty-state" className="py-12 flex flex-col items-center gap-2 text-center">
+              <span className="text-muted text-body">No traces found.</span>
+              <Button variant="link" asChild>
+                <a
+                  data-testid="traces-proxy-docs-link"
+                  href="/docs/guide/proxy-setup.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  How to wire the proxy? →
+                </a>
+              </Button>
+            </div>
           )
         ) : (
           rows.map(row =>

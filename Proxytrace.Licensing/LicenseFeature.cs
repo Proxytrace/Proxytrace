@@ -10,4 +10,5 @@ public enum LicenseFeature
     CustomEvaluators,
     SsoOidc,
     AuditLog,
+    Tracey,
 }

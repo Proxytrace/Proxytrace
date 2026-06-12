@@ -10,6 +10,7 @@ import { Select } from '../../../components/ui/Select';
 import { CopyIcon, PlusIcon, TrashIcon, XIcon } from '../../../components/icons';
 import { fmtDate } from '../../../lib/format';
 import { ingestionUrl } from '../../../lib/ingestion';
+import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import useToast from '../../../hooks/useToast';
 import { maskKey } from '../providerMeta';
 import { useCreateKey, useDeleteKey } from '../hooks/useProviderMutations';
@@ -23,6 +24,7 @@ interface KeysSectionProps {
 
 export function KeysSection({ providerId, keys, projects, defaultProjectId }: KeysSectionProps) {
   const { show: toast } = useToast();
+  const proxyBase = useIngestionBase();
   const [showNew, setShowNew] = useState(false);
   const [newKey, setNewKey] = useState({ name: '', projectId: '' });
   const [toDelete, setToDelete] = useState<ApiKeyDto | null>(null);
@@ -48,7 +50,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
     {
       key: 'ingestionUrl', label: 'Ingestion URL', width: '2.2fr',
       render: k => {
-        const url = ingestionUrl(k.projectName);
+        const url = ingestionUrl(k.projectName, proxyBase);
         return (
           <div className="flex items-center gap-1.5 min-w-0">
             <code className="font-mono text-body text-secondary overflow-hidden text-ellipsis whitespace-nowrap flex-1">{url}</code>
@@ -88,7 +90,7 @@ export function KeysSection({ providerId, keys, projects, defaultProjectId }: Ke
             <code data-testid="key-value-reveal" className="font-mono text-body text-primary break-all">{created.keyValue}</code>
             <div className="flex items-baseline gap-1.5 mt-2 min-w-0">
               <span className="text-body-sm text-muted whitespace-nowrap">Ingestion URL</span>
-              <code className="font-mono text-body-sm text-secondary break-all">{ingestionUrl(created.projectName)}</code>
+              <code className="font-mono text-body-sm text-secondary break-all">{ingestionUrl(created.projectName, proxyBase)}</code>
             </div>
           </div>
           <Button variant="success" size="sm" leftIcon={<CopyIcon size={12} />} onClick={() => { navigator.clipboard.writeText(created.keyValue); toast('API key copied', 'success'); }}>Copy</Button>

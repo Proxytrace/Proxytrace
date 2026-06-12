@@ -27,11 +27,20 @@ test.describe('Free-tier feature gates', () => {
     const license = await api.getLicense();
     expect(license.tier).toBe('free');
     expect(license.features).not.toContain('OptimizationProposals');
+    expect(license.features).not.toContain('Tracey');
   });
 
   test('the optimization-proposals API is gated with HTTP 402', async ({ request }) => {
     const api = new ProxytraceApiClient(request, token);
     const res = await api.proposalsResponse();
+    expect(res.status(), 'a Free-tier install must be refused the gated endpoint').toBe(402);
+    const body = await res.json();
+    expect(body.error?.type).toBe('FeatureNotLicensed');
+  });
+
+  test('the Tracey session API is gated with HTTP 402', async ({ request }) => {
+    const api = new ProxytraceApiClient(request, token);
+    const res = await api.traceySessionResponse();
     expect(res.status(), 'a Free-tier install must be refused the gated endpoint').toBe(402);
     const body = await res.json();
     expect(body.error?.type).toBe('FeatureNotLicensed');
@@ -54,6 +63,15 @@ test.describe('Free-tier feature gates', () => {
 
     // RequiresFeature gates the route client-side from the license snapshot, so the Proposals
     // feature never mounts; the upgrade placeholder takes its place.
+    await expect(page.getByTestId('upgrade-placeholder')).toBeVisible();
+    await expect(page.getByTestId('upgrade-cta')).toBeVisible();
+  });
+
+  test('the Tracey AI route renders the upgrade placeholder, not the feature', async ({ page }) => {
+    await page.goto('/tracey-ai', { waitUntil: 'load' });
+
+    // RequiresFeature gates the route client-side from the license snapshot, so Tracey never
+    // mounts; the upgrade placeholder takes its place.
     await expect(page.getByTestId('upgrade-placeholder')).toBeVisible();
     await expect(page.getByTestId('upgrade-cta')).toBeVisible();
   });

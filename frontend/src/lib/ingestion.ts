@@ -26,14 +26,21 @@ export function projectSlug(name: string): string {
   return out.join('');
 }
 
-/** The proxy host clients point at. Configurable for split deployments; defaults to this origin. */
-export function proxyBaseUrl(): string {
-  const configured = (import.meta.env.VITE_PROXY_BASE_URL as string | undefined)?.trim();
-  const base = configured && configured.length > 0 ? configured : window.location.origin;
-  return base.replace(/\/+$/, '');
+/**
+ * The proxy host clients point at. The ingestion proxy is a separate service with its own
+ * port/hostname, so the page origin can never be assumed correct — precedence is the
+ * backend-advertised URL (`/api/config` → `Proxy:PublicBaseUrl`), then the build-time
+ * override, then the page origin as a last resort.
+ */
+export function resolveProxyBase(advertised?: string | null): string {
+  const fromConfig = advertised?.trim();
+  if (fromConfig) return fromConfig.replace(/\/+$/, '');
+  const fromEnv = (import.meta.env.VITE_PROXY_BASE_URL as string | undefined)?.trim();
+  if (fromEnv) return fromEnv.replace(/\/+$/, '');
+  return window.location.origin;
 }
 
 /** Full OpenAI base_url a client should target for the given project. */
-export function ingestionUrl(projectName: string, base: string = proxyBaseUrl()): string {
+export function ingestionUrl(projectName: string, base: string): string {
   return `${base.replace(/\/+$/, '')}/${projectSlug(projectName)}/openai/v1`;
 }

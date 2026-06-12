@@ -6,11 +6,13 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Application.Auth;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.User;
+using Proxytrace.Licensing;
 using Proxytrace.Messaging;
 
 namespace Proxytrace.Api.Controllers;
@@ -24,6 +26,7 @@ namespace Proxytrace.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequiresFeature(LicenseFeature.Tracey)]
 public class TraceyChatController : ControllerBase
 {
     // Per-turn correlation id the browser sends so a Tracey response can deep-link to its captured

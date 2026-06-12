@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { LockIcon } from '../icons';
 import { upgradeCopy } from './licenseUtils';
 
-const PRICING_URL = 'https://proxytrace.dev/pricing';
+const PRICING_URL = 'https://proxytrace.dev/#pricing';
 
 interface UpgradePrompt {
   errorType: UpgradeErrorType;

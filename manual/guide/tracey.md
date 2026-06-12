@@ -1,5 +1,10 @@
 # Tracey — the In-App AI Assistant
 
+::: tip Enterprise feature
+Tracey is part of the **Enterprise** tier. On the Free tier the **Tracey AI** sidebar entry
+is locked and the page shows an upgrade prompt. See [Licensing](/admin/licensing).
+:::
+
 Tracey is a conversational assistant with her own full-page **Tracey AI** view. She
 understands plain-language requests, reads your project's live state (agents, test suites,
 runs, proposals, dashboard stats), navigates you around the UI, and can run a small set of

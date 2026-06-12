@@ -17,7 +17,16 @@ No SDK swap, no code changes beyond configuration.
 
 ::: tip
 The first-run setup wizard ends with ready-made quick-start snippets (Python, TypeScript,
-C#, curl) for your project's endpoint — copy one and you're capturing traces.
+C#, curl) for your project's endpoint — copy one and you're capturing traces. The same
+per-project endpoint is shown on the **Providers → API keys** table, and the Traces page
+links back to this guide while it's still empty.
+:::
+
+::: warning Mind the port
+The ingestion proxy is **not** the web UI. In the standard Docker deployment the UI runs on
+port `5101` and the proxy on port `5102` — sending OpenAI calls to the UI port returns
+`405 Not Allowed`. Use the endpoint the UI advertises (it reflects the operator's
+[configured proxy URL](/admin/configuration)).
 :::
 
 ### Which key to use

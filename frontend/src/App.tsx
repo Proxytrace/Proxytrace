@@ -19,6 +19,7 @@ import { LocalAuthProvider } from './auth/local/LocalAuthProvider';
 import { CurrentUserContext, useCurrentUser, type CurrentUser } from './auth/useCurrentUser';
 import { KioskContext } from './contexts/KioskContext';
 import useLocalAuth from './hooks/useLocalAuth';
+import { useAppConfig } from './hooks/useAppConfig';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 // Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
@@ -192,7 +193,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={wrap(<Dashboard />)} />
         <Route path="traces" element={wrap(<Traces />)} />
-        <Route path="tracey-ai" element={wrap(<TraceyAI />)} />
+        <Route path="tracey-ai" element={wrap(<RequiresFeature feature="Tracey"><TraceyAI /></RequiresFeature>)} />
         <Route path="agents" element={wrap(<Agents />)} />
         <Route path="suites" element={wrap(<Suites />)} />
         <Route path="evaluators" element={wrap(<Evaluators />)} />
@@ -254,11 +255,7 @@ function KioskShell({ interactive }: { interactive: boolean }) {
 }
 
 function ModeShell() {
-  const { data: appConfig } = useQuery({
-    queryKey: QUERY_KEYS.appConfig,
-    queryFn: configApi.get,
-    staleTime: Infinity,
-  });
+  const { data: appConfig } = useAppConfig();
   const { data, isLoading, error } = useAuthMode();
   if (appConfig?.kiosk) return <KioskShell interactive={!!appConfig.interactive} />;
   if (isLoading) return <PageLoader />;

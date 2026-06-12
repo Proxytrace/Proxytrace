@@ -22,7 +22,7 @@ export function UpgradePlaceholder({ title, description }: { title?: string; des
             'This feature is part of the Proxytrace Enterprise tier. Upgrade your license to unlock optimization proposals, LLM-judge evaluators, and more.'}
         </p>
       </div>
-      <a href="https://proxytrace.dev/pricing" target="_blank" rel="noopener noreferrer">
+      <a href="https://proxytrace.dev/#pricing" target="_blank" rel="noopener noreferrer">
         <Button variant="primary" data-testid="upgrade-cta">
           View Enterprise plans
         </Button>

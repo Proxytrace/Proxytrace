@@ -131,6 +131,7 @@ These values live in `Proxytrace.Api/appsettings.json` under the `Licensing` sec
 | Custom Evaluators | — | Yes |
 | SSO (OIDC) | — | Yes |
 | Audit Log | — | Yes |
+| Tracey AI assistant | — | Yes |
 
 ::: tip Keep this table in sync
 The authoritative limits and feature sets live in
@@ -191,7 +192,7 @@ offline licensing arrangements.
 Enterprise licenses are available from the Proxytrace website. To purchase or to discuss
 offline / air-gapped licensing, see the pricing page or contact sales:
 
-- **Pricing:** <https://proxytrace.dev/pricing>
+- **Pricing:** <https://proxytrace.dev/#pricing>
 
 ## Key-rotation FAQ
 
