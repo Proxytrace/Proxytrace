@@ -9,6 +9,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Fixed
+
+- **ARM64 container images** — release images are now published for both `linux/amd64`
+  and `linux/arm64`, so `docker compose up` works on Apple Silicon (and other arm64
+  hosts) without the `no matching manifest for linux/arm64/v8` error.
+
 ## [1.0.0] - 2026-06-12
 
 First stable release. Consolidates everything from the `1.0.0-rc.1` and
