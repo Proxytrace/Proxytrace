@@ -21,6 +21,22 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   the proxy's public URL (`Proxy:PublicBaseUrl`; in Docker `PROXYTRACE_PROXY_PUBLIC_URL`,
   default `http://localhost:5102`) and the UI displays that.
 
+## [1.0.2] - 2026-06-12
+
+### Changed
+
+- **Faster multi-architecture release builds** — the release pipeline now builds the
+  `linux/amd64` and `linux/arm64` container images more efficiently, shortening release
+  times. No change to the published images or runtime behavior.
+
+## [1.0.1] - 2026-06-12
+
+### Fixed
+
+- **ARM64 container images** — release images are now published for both `linux/amd64`
+  and `linux/arm64`, so `docker compose up` works on Apple Silicon (and other arm64
+  hosts) without the `no matching manifest for linux/arm64/v8` error.
+
 ## [1.0.0] - 2026-06-12
 
 First stable release. Consolidates everything from the `1.0.0-rc.1` and
