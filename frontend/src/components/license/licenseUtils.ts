@@ -8,6 +8,7 @@ export const FEATURE_LABELS: Record<LicenseFeature, string> = {
   CustomEvaluators: 'Custom evaluators',
   SsoOidc: 'SSO / OIDC sign-in',
   AuditLog: 'Audit log',
+  Tracey: 'Tracey AI assistant',
 };
 
 /**
