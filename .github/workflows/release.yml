@@ -66,6 +66,9 @@ jobs:
         uses: actions/checkout@v4
 
       # QEMU lets the amd64 runner emulate arm64 for the multi-arch build below.
+      # The heavy compile steps cross-compile natively (Dockerfiles pin their build
+      # stages to --platform=$BUILDPLATFORM); emulation only runs the trivial RUN
+      # commands in the arm64 runtime stages (mkdir/chown).
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 

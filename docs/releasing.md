@@ -54,7 +54,9 @@ Propagation:
 2. **ci / e2e** — reuses the existing `ci.yml` and `e2e.yml` workflows as release gates
    (both expose `workflow_call`).
 3. **publish-images** — builds and pushes `ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`
-   (multi-arch: linux/amd64 + linux/arm64, the latter built under QEMU emulation) with
+   (multi-arch: linux/amd64 + linux/arm64; build stages cross-compile natively via
+   `--platform=$BUILDPLATFORM` + `dotnet -a $TARGETARCH`, QEMU only runs the trivial
+   runtime-stage RUN commands) with
    `APP_VERSION` injected, tagged `X.Y.Z`, `X.Y`, `X`, and `latest`
    (rolling tags suppressed for prereleases).
 4. **release** — pins the version into `deploy/docker-compose.yml` (replacing the
