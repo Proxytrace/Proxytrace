@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Auth.Licensing;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
@@ -21,11 +22,8 @@ namespace Proxytrace.Api.Controllers;
 public class ProposalsController : ControllerBase
 {
     private readonly IOptimizationProposalRepository repository;
-    private readonly IModelSwitchProposal.CreateExisting createModelSwitch;
     private readonly IModelSwitchProposal.CreateNew createModelSwitchNew;
-    private readonly ISystemPromptProposal.CreateExisting createSystemPrompt;
     private readonly ISystemPromptProposal.CreateNew createSystemPromptNew;
-    private readonly IToolUpdateProposal.CreateExisting createToolUpdate;
     private readonly IToolUpdateProposal.CreateNew createToolUpdateNew;
     private readonly IAgentRepository agents;
     private readonly IRepository<IModelEndpoint> endpoints;
@@ -36,14 +34,12 @@ public class ProposalsController : ControllerBase
     private readonly ITestRunGroup.CreateNew createGroup;
     private readonly ITestRun.CreateNew createRun;
     private readonly OptimizationProposalDtoMapper mapper;
+    private readonly IProposalBroadcaster proposalBroadcaster;
 
     public ProposalsController(
         IOptimizationProposalRepository repository,
-        IModelSwitchProposal.CreateExisting createModelSwitch,
         IModelSwitchProposal.CreateNew createModelSwitchNew,
-        ISystemPromptProposal.CreateExisting createSystemPrompt,
         ISystemPromptProposal.CreateNew createSystemPromptNew,
-        IToolUpdateProposal.CreateExisting createToolUpdate,
         IToolUpdateProposal.CreateNew createToolUpdateNew,
         IAgentRepository agents,
         IRepository<IModelEndpoint> endpoints,
@@ -53,14 +49,12 @@ public class ProposalsController : ControllerBase
         ITestSuite.CreateNew createSuite,
         ITestRunGroup.CreateNew createGroup,
         ITestRun.CreateNew createRun,
-        OptimizationProposalDtoMapper mapper)
+        OptimizationProposalDtoMapper mapper,
+        IProposalBroadcaster proposalBroadcaster)
     {
         this.repository = repository;
-        this.createModelSwitch = createModelSwitch;
         this.createModelSwitchNew = createModelSwitchNew;
-        this.createSystemPrompt = createSystemPrompt;
         this.createSystemPromptNew = createSystemPromptNew;
-        this.createToolUpdate = createToolUpdate;
         this.createToolUpdateNew = createToolUpdateNew;
         this.agents = agents;
         this.endpoints = endpoints;
@@ -71,6 +65,7 @@ public class ProposalsController : ControllerBase
         this.createGroup = createGroup;
         this.createRun = createRun;
         this.mapper = mapper;
+        this.proposalBroadcaster = proposalBroadcaster;
     }
 
     [HttpGet]
@@ -123,16 +118,6 @@ public class ProposalsController : ControllerBase
                         abTestRun: abTestRun),
                     cancellationToken);
 
-                // CreateNew always starts in Draft; transition to the requested status if different.
-                if (request.Status != ProposalStatus.Draft && saved is ISystemPromptProposal sp)
-                {
-                    saved = createSystemPrompt(
-                        sp.Agent, request.Status, sp.Priority, sp.Rationale,
-                        sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
-                        sp.EvidenceTestRunIds, sp.ABTestRun, sp.ContentHash, sp);
-                    await repository.UpdateAsync(saved, cancellationToken);
-                }
-
                 break;
             }
 
@@ -156,17 +141,6 @@ public class ProposalsController : ControllerBase
                         evidenceTestRunIds: [],
                         abTestRun: abTestRun),
                     cancellationToken);
-
-                // CreateNew always starts in Draft; transition to the requested status if different.
-                if (request.Status != ProposalStatus.Draft && saved is IModelSwitchProposal ms)
-                {
-                    saved = createModelSwitch(
-                        ms.Agent, request.Status, ms.Priority, ms.Rationale,
-                        ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate,
-                        ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                        ms.EvidenceTestRunIds, ms.ABTestRun, ms.ContentHash, ms);
-                    await repository.UpdateAsync(saved, cancellationToken);
-                }
 
                 break;
             }
@@ -195,22 +169,22 @@ public class ProposalsController : ControllerBase
                         abTestRun: abTestRun),
                     cancellationToken);
 
-                // CreateNew always starts in Draft; transition to the requested status if different.
-                if (request.Status != ProposalStatus.Draft && saved is IToolUpdateProposal tu)
-                {
-                    saved = createToolUpdate(
-                        tu.Agent, request.Status, tu.Priority, tu.Rationale,
-                        tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
-                        tu.EvidenceTestRunIds, tu.ABTestRun, tu.ContentHash, tu);
-                    await repository.UpdateAsync(saved, cancellationToken);
-                }
-
                 break;
             }
 
             default:
                 return BadRequest("Unsupported proposal details kind.");
         }
+
+        // CreateNew always starts in Draft; walk the domain transitions to the requested status.
+        saved = request.Status switch
+        {
+            ProposalStatus.Accepted => await saved.Accept(cancellationToken),
+            ProposalStatus.Rejected => await saved.Reject(cancellationToken),
+            ProposalStatus.Adopted => await (await saved.Accept(cancellationToken))
+                .MarkAdopted(null, manual: true, cancellationToken),
+            _ => saved,
+        };
 
         return Ok(mapper.ToDto(saved));
     }
@@ -238,23 +212,41 @@ public class ProposalsController : ControllerBase
         if (existing is null)
             return NotFound();
 
-        IOptimizationProposal updated = existing switch
+        IOptimizationProposal updated;
+        switch (request.Status)
         {
-            IModelSwitchProposal ms => createModelSwitch(
-                ms.Agent, request.Status, ms.Priority, ms.Rationale,
-                ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                ms.EvidenceTestRunIds, ms.ABTestRun, ms.ContentHash, ms),
-            ISystemPromptProposal sp => createSystemPrompt(
-                sp.Agent, request.Status, sp.Priority, sp.Rationale,
-                sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
-                sp.EvidenceTestRunIds, sp.ABTestRun, sp.ContentHash, sp),
-            IToolUpdateProposal tu => createToolUpdate(
-                tu.Agent, request.Status, tu.Priority, tu.Rationale,
-                tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
-                tu.EvidenceTestRunIds, tu.ABTestRun, tu.ContentHash, tu),
-            _ => throw new ArgumentOutOfRangeException(nameof(existing))
-        };
-        await repository.UpdateAsync(updated, cancellationToken);
+            case ProposalStatus.Accepted when existing.Status == ProposalStatus.Draft:
+                updated = await existing.Accept(cancellationToken);
+                break;
+            case ProposalStatus.Rejected when existing.Status == ProposalStatus.Draft:
+                updated = await existing.Reject(cancellationToken);
+                break;
+            case ProposalStatus.Adopted when existing.Status == ProposalStatus.Accepted:
+                // Manual "mark adopted" — the user confirmed the change is live; no observed version.
+                updated = await existing.MarkAdopted(null, manual: true, cancellationToken);
+                break;
+            default:
+                return Conflict(new
+                {
+                    error = $"Cannot change proposal status from {existing.Status} to {request.Status}.",
+                });
+        }
+
+        proposalBroadcaster.Publish(ProposalStatusChangedEvent.Create(updated));
         return Ok(mapper.ToDto(updated));
+    }
+
+    /// <summary>
+    /// Machine-readable handoff package for applying the proposed change to the agent's actual
+    /// implementation (Proxytrace only observes traffic; it cannot apply the change itself).
+    /// </summary>
+    [HttpGet("{id:guid}/artifact")]
+    public async Task<ActionResult<ProposalArtifactDto>> GetArtifact(Guid id, CancellationToken cancellationToken)
+    {
+        var proposal = await repository.FindAsync(id, cancellationToken);
+        if (proposal is null)
+            return NotFound();
+
+        return Ok(mapper.ToArtifactDto(proposal));
     }
 }

@@ -43,8 +43,7 @@ published to GHCR (`ghcr.io/proxytrace/proxytrace-{api,proxy,frontend}`).
 
 ```bash
 unzip proxytrace-<version>.zip && cd proxytrace-<version>
-cp .env.example .env    # set POSTGRES_PASSWORD + PROXYTRACE_SIGNING_KEY (hints inside)
-docker compose up -d
+docker compose up -d    # no .env required — see .env.example for optional overrides
 ```
 
 Then:

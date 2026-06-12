@@ -152,8 +152,14 @@ public class AgentsController : ControllerBase
         var reader = proposalBroadcaster.Subscribe(id, cancellationToken);
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
-            await Response.WriteAsync($"event: proposal-created\ndata: {data}\n\n", cancellationToken);
+            string eventName = evt switch
+            {
+                ProposalCreatedEvent => "proposal-created",
+                ProposalStatusChangedEvent => "proposal-status-changed",
+                _ => "unknown",
+            };
+            var data = JsonSerializer.Serialize(evt, evt.GetType(), ApiJsonOptions.Sse);
+            await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
     }

@@ -347,6 +347,27 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("InviteEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Licensing.StoredLicenseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Jwt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoredLicenseEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Model.ModelEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -460,6 +481,18 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<Guid>("ABTestRun")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AdoptedAgentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AdoptedAgentVersionNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("AdoptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("AdoptedManually")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("Agent")
                         .HasColumnType("uuid");
 
@@ -504,6 +537,8 @@ namespace Proxytrace.Storage.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ABTestRun");
+
+                    b.HasIndex("AdoptedAgentVersionId");
 
                     b.HasIndex("Agent");
 
@@ -1051,6 +1086,11 @@ namespace Proxytrace.Storage.Migrations
                         .HasForeignKey("ABTestRun")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.AgentVersion.AgentVersionEntity", null)
+                        .WithMany()
+                        .HasForeignKey("AdoptedAgentVersionId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Proxytrace.Storage.Internal.Entities.Agent.AgentEntity", null)
                         .WithMany()

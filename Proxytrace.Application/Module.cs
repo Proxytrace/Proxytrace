@@ -17,6 +17,8 @@ using Proxytrace.Application.Evaluator;
 using Proxytrace.Application.Evaluator.Internal;
 using Proxytrace.Application.Ingestion;
 using Proxytrace.Application.Ingestion.Internal;
+using Proxytrace.Application.Licensing;
+using Proxytrace.Application.Licensing.Internal;
 using Proxytrace.Application.Playground;
 using Proxytrace.Application.Pricing;
 using Proxytrace.Application.Pricing.Internal;
@@ -46,10 +48,10 @@ public sealed class Module : Autofac.Module
         // Licensing. A composition root (e.g. the API) registers the Licensing module itself with
         // an environment-derived configuration before this module loads (setting the key below);
         // otherwise fall back to the Free-tier default used by tests and the in-process kiosk.
-        if (!builder.Properties.ContainsKey(Licensing.Module.RegisteredKey))
+        if (!builder.Properties.ContainsKey(Proxytrace.Licensing.Module.RegisteredKey))
         {
-            builder.Properties[Licensing.Module.RegisteredKey] = true;
-            builder.RegisterModule(new Licensing.Module(new LicensingConfiguration
+            builder.Properties[Proxytrace.Licensing.Module.RegisteredKey] = true;
+            builder.RegisterModule(new Proxytrace.Licensing.Module(new LicensingConfiguration
             {
                 ServerUrl = "https://license.proxytrace.dev",
                 PublicKeys = LicensePublicKeys.GetActiveKeys(),
@@ -57,6 +59,16 @@ public sealed class Module : Autofac.Module
                 CacheFilePath = Path.Combine(Path.GetTempPath(), "proxytrace-license-cache.json"),
             }));
         }
+
+        builder.RegisterType<LicenseKeyManager>()
+            .As<ILicenseKeyManager>()
+            .InstancePerDependency();
+
+        // Applies the database-stored license after the database initializer has run (this
+        // module loads after the storage module registers its initializer, so hosted-service
+        // start order is preserved).
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService<StoredLicenseStartupService>());
 
         builder.RegisterType<AgentCallCleanupService>()
             .AsSelf()

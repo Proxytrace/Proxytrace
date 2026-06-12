@@ -62,6 +62,61 @@ public sealed class SigningKeyProviderTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public void EnsureSigningKey_NoConfig_ReusesPreviouslyPersistedKey()
+    {
+        // Sessions must survive restarts: a second resolution without configuration loads the
+        // persisted key instead of generating a fresh one.
+        var services = GetServices();
+        var host = services.GetRequiredService<IHostEnvironment>();
+        var dir = host.ContentRootPath;
+        try
+        {
+            var provider = services.GetRequiredService<ISigningKeyProvider>();
+            var first = provider.EnsureSigningKey(configured: null);
+            var second = provider.EnsureSigningKey(configured: null);
+
+            second.Should().Be(first);
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
+
+    [TestMethod]
+    public void DataDirectoryStore_PersistAndLoad_RoundTrips()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"proxytrace-test-{Guid.NewGuid():N}");
+        try
+        {
+            var store = new DataDirectorySigningKeyStore(dir);
+            store.Load().Should().BeNull();
+
+            store.Persist("the-signing-key");
+
+            new DataDirectorySigningKeyStore(dir).Load().Should().Be("the-signing-key");
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
+
+    [TestMethod]
     public void EnsureSigningKey_NoConfig_ExistingFileWithComments_DoesNotThrow()
     {
         var services = GetServices();

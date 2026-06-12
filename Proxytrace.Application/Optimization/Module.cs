@@ -1,6 +1,7 @@
 using Autofac;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Application.Optimization.Internal;
+using Proxytrace.Application.Optimization.Internal.Adoption;
 using Proxytrace.Application.Optimization.Internal.Evidence;
 using Proxytrace.Application.Optimization.Internal.Validation;
 using Proxytrace.Common.DependencyInjection;
@@ -53,5 +54,16 @@ internal class Module : Autofac.Module
 
         builder.RegisterServiceCollection(services =>
             services.AddHostedService(sc => sc.GetRequiredService<OptimizerService>()));
+
+        builder.RegisterType<ProposalAdoptionMatcher>()
+            .AsSelf()
+            .SingleInstance();
+
+        builder.RegisterType<ProposalAdoptionService>()
+            .AsSelf()
+            .SingleInstance();
+
+        builder.RegisterServiceCollection(services =>
+            services.AddHostedService(sc => sc.GetRequiredService<ProposalAdoptionService>()));
     }
 }

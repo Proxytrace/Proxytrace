@@ -6,16 +6,28 @@ Images are published to GHCR (`ghcr.io/proxytrace/...`); nothing is built locall
 ## Quickstart
 
 ```bash
-cp .env.example .env
-# edit .env: set POSTGRES_PASSWORD and PROXYTRACE_SIGNING_KEY (generation hints inside)
 docker compose up -d
 ```
 
-Open http://localhost:5101 and follow the first-run setup. The user & operator manual
-is served at http://localhost:5101/docs.
+That's it — no `.env` required. Open http://localhost:5101 and follow the first-run
+setup. The user & operator manual is served at http://localhost:5101/docs.
 
 Point your agents' OpenAI base URL at the ingestion proxy to start capturing traces:
 `http://localhost:5102/openai/v1`
+
+## Configuration (optional)
+
+Every setting has a working default. To override (ports, public URL, your own
+database password — recommended for production):
+
+```bash
+cp .env.example .env
+# edit .env, then:
+docker compose up -d
+```
+
+The session signing key is generated on first start and persisted in the `appdata`
+volume; logins survive restarts and upgrades without any configuration.
 
 ## Upgrading
 
@@ -30,5 +42,10 @@ Database migrations apply automatically on startup. See the manual's
 
 ## License
 
-Without `PROXYTRACE_LICENSE` set, Proxytrace runs the Free tier. Enter your license
-key in `.env` and run `docker compose up -d` to apply it.
+Without a license, Proxytrace runs the Free tier. To activate a license key, either:
+
+- enter it during the first-run setup wizard or under **Settings → License** (stored
+  in the database, applies immediately — no restart), or
+- set `PROXYTRACE_LICENSE` in `.env` and run `docker compose up -d`.
+
+A key activated in the UI takes precedence over the environment variable.

@@ -4,13 +4,18 @@ using Proxytrace.Domain.Proposal;
 
 namespace Proxytrace.Application.Streaming;
 
+/// <summary>
+/// Base type for events on the per-agent proposal stream.
+/// </summary>
+public abstract record ProposalEvent(Guid Id, Guid AgentId);
+
 public record ProposalCreatedEvent(
     Guid Id,
     Guid AgentId,
     ProposalKind Kind,
     Priority Priority,
     string Rationale,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt) : ProposalEvent(Id, AgentId)
 {
     public static ProposalCreatedEvent Create(IOptimizationProposal proposal)
         => new(
@@ -22,13 +27,41 @@ public record ProposalCreatedEvent(
             proposal.CreatedAt);
 }
 
+/// <summary>
+/// Emitted whenever a proposal's review/adoption status changes — promote, dismiss,
+/// manual mark-adopted, and auto-detected adoption from ingested traffic.
+/// </summary>
+public record ProposalStatusChangedEvent(
+    Guid Id,
+    Guid AgentId,
+    ProposalKind Kind,
+    ProposalStatus Status,
+    DateTimeOffset? AdoptedAt,
+    Guid? AdoptedAgentVersionId,
+    int? AdoptedAgentVersionNumber,
+    bool? AdoptedManually,
+    DateTimeOffset UpdatedAt) : ProposalEvent(Id, AgentId)
+{
+    public static ProposalStatusChangedEvent Create(IOptimizationProposal proposal)
+        => new(
+            proposal.Id,
+            proposal.Agent.Id,
+            proposal.Kind,
+            proposal.Status,
+            proposal.AdoptedAt,
+            proposal.AdoptedAgentVersionId,
+            proposal.AdoptedAgentVersionNumber,
+            proposal.AdoptedManually,
+            proposal.UpdatedAt);
+}
+
 public interface IProposalBroadcaster
 {
     /// <summary>
-    /// Subscribes to new proposals for a specific agent.
+    /// Subscribes to proposal events for a specific agent.
     /// The returned reader is closed when <paramref name="cancellationToken"/> is cancelled.
     /// </summary>
-    ChannelReader<ProposalCreatedEvent> Subscribe(Guid agentId, CancellationToken cancellationToken);
+    ChannelReader<ProposalEvent> Subscribe(Guid agentId, CancellationToken cancellationToken);
 
-    void Publish(ProposalCreatedEvent evt);
+    void Publish(ProposalEvent evt);
 }

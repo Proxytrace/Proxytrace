@@ -21,16 +21,23 @@ an `.env` template, and a quickstart README.
 # 1. Download and unpack the deployment artifact from the latest release
 unzip proxytrace-<version>.zip && cd proxytrace-<version>
 
-# 2. Create your configuration (the template documents every value)
-cp .env.example .env
-# edit .env: set POSTGRES_PASSWORD and PROXYTRACE_SIGNING_KEY (generation hints inside)
-
-# 3. Start the stack
+# 2. Start the stack — no configuration required
 docker compose up -d
 ```
 
 Open `http://localhost:5101` and follow the first-run setup to create the admin account.
 This manual is served by your installation at `http://localhost:5101/docs`.
+
+Every setting has a working default: the bundled Postgres is internal-only with a default
+password, the session signing key is generated on first start and persisted in the
+`appdata` volume, and without a license Proxytrace runs the Free tier. To override
+anything (ports, public URL, your own database password — recommended for production):
+
+```bash
+cp .env.example .env   # the template documents every value
+# edit .env, then:
+docker compose up -d
+```
 
 Point your agents' OpenAI base URL at the ingestion proxy to start capturing traces:
 `http://localhost:5102/openai/v1` — see [Capturing Traces](/guide/capturing-traces).
@@ -50,9 +57,11 @@ first install and on upgrades. See [Upgrading](/admin/upgrading).
 
 ### License
 
-Without `PROXYTRACE_LICENSE` set, Proxytrace runs the Free tier. Enter your license key in
-`.env` and run `docker compose up -d` to apply it. A *malformed* license token stops the app
-from starting — see [Licensing](/admin/licensing).
+Without a license, Proxytrace runs the Free tier. To activate a license key, enter it
+during the first-run setup wizard or later under **Settings → License** (applies
+immediately, no restart), or set `PROXYTRACE_LICENSE` in `.env` and run
+`docker compose up -d`. A key activated in the UI takes precedence over the environment
+variable — see [Licensing](/admin/licensing).
 
 ## Run from source (development)
 

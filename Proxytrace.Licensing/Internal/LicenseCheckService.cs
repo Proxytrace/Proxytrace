@@ -25,6 +25,9 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
 
     private readonly DateTimeOffset serviceStartedUtc;
 
+    private volatile TaskCompletionSource licenseChanged =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     public LicenseCheckService(
         LicenseService licenseService,
         ILicenseServerClient serverClient,
@@ -50,10 +53,6 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        // Free deployments (no JWT) have no jti to check and never contact the server.
-        if (licenseService.Current.Jti is null)
-            return;
-
         // Server checks disabled (e.g. local dev builds): keep the startup snapshot, no network.
         if (!configuration.ServerCheckEnabled)
         {
@@ -63,23 +62,39 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
 
         var period = TimeSpan.FromHours(Math.Max(1, configuration.CheckIntervalHours));
 
-        // Run once at startup, then on the interval.
-        await SafeRunCheckAsync(cancellationToken);
-
-        while (!cancellationToken.IsCancellationRequested)
+        // A license can appear (or disappear) at runtime — the stored license is applied after
+        // migrations, and an admin can set/remove one from the UI. React to snapshot changes
+        // instead of latching onto the startup state: check immediately whenever a license with
+        // a jti is active, otherwise idle until the next change or interval tick.
+        licenseService.Changed += OnLicenseChanged;
+        try
         {
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(period, cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
+                if (licenseService.Current.Jti is not null)
+                    await SafeRunCheckAsync(cancellationToken);
 
-            await SafeRunCheckAsync(cancellationToken);
+                var changed = licenseChanged;
+                try
+                {
+                    await Task.WhenAny(Task.Delay(period, cancellationToken), changed.Task);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                if (changed.Task.IsCompleted)
+                    licenseChanged = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+        }
+        finally
+        {
+            licenseService.Changed -= OnLicenseChanged;
         }
     }
+
+    private void OnLicenseChanged() => licenseChanged.TrySetResult();
 
     public Task RunCheckNowAsync(CancellationToken cancellationToken) => RunCheckAsync(cancellationToken);
 
@@ -157,7 +172,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
             case LicenseCheckResult.Revoked:
             {
                 logger.LogWarning("License {Jti} was revoked by the server; downgrading to Free", snapshot.Jti);
-                return Expired();
+                return Expired(snapshot.Source);
             }
 
             default:
@@ -189,7 +204,7 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
                 "License server unreachable for {Days:F1} days (grace {Grace} days x2); downgrading to Free",
                 elapsed.TotalDays,
                 configuration.OfflineGracePeriodDays);
-            return Free();
+            return Free(snapshot.Source);
         }
 
         if (elapsed >= stage)
@@ -216,17 +231,18 @@ internal sealed class LicenseCheckService : BackgroundService, ILicenseRefreshTr
         };
     }
 
-    private static LicenseSnapshot Free()
+    private static LicenseSnapshot Free(LicenseSource source)
     {
         var snapshot = LicenseSnapshot.Free();
-        return snapshot with { Status = LicenseStatus.Free };
+        return snapshot with { Status = LicenseStatus.Free, Source = source };
     }
 
-    private static LicenseSnapshot Expired()
+    private static LicenseSnapshot Expired(LicenseSource source)
     {
         // Revocation collapses entitlements to Free, but the status records that the license was
-        // explicitly invalidated (vs. never having had one).
+        // explicitly invalidated (vs. never having had one). The source is kept so the UI can
+        // still tell where the now-revoked license came from.
         var snapshot = LicenseSnapshot.Free();
-        return snapshot with { Status = LicenseStatus.Expired };
+        return snapshot with { Status = LicenseStatus.Expired, Source = source };
     }
 }

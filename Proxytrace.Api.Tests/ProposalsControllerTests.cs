@@ -1,8 +1,11 @@
+using Autofac;
 using AwesomeAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Proxytrace.Api.Controllers;
 using Proxytrace.Api.Dto.Proposals;
+using Proxytrace.Application.Streaming;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.ModelEndpoint;
@@ -183,13 +186,121 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         reloaded.ProposedPassRate.Should().Be(0.8);
     }
 
+    [TestMethod]
+    public async Task UpdateStatus_AcceptedToAdopted_MarksManualAdoption()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var repo = services.GetRequiredService<IOptimizationProposalRepository>();
+        var proposal = await SeedSystemPromptProposalAsync(services);
+        await proposal.Accept(CancellationToken);
+
+        var result = await controller.UpdateStatus(
+            proposal.Id, new UpdateProposalStatusRequest(ProposalStatus.Adopted), CancellationToken);
+
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var reloaded = await repo.GetAsync(proposal.Id, CancellationToken);
+        reloaded.Status.Should().Be(ProposalStatus.Adopted);
+        reloaded.AdoptedManually.Should().BeTrue();
+        reloaded.AdoptedAgentVersionId.Should().BeNull();
+        reloaded.AdoptedAt.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_DraftToAdopted_ReturnsConflict()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var proposal = await SeedSystemPromptProposalAsync(services);
+
+        var result = await controller.UpdateStatus(
+            proposal.Id, new UpdateProposalStatusRequest(ProposalStatus.Adopted), CancellationToken);
+
+        result.Result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_AcceptedToRejected_ReturnsConflict()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var repo = services.GetRequiredService<IOptimizationProposalRepository>();
+        var proposal = await SeedSystemPromptProposalAsync(services);
+        await proposal.Accept(CancellationToken);
+
+        var result = await controller.UpdateStatus(
+            proposal.Id, new UpdateProposalStatusRequest(ProposalStatus.Rejected), CancellationToken);
+
+        result.Result.Should().BeOfType<ConflictObjectResult>();
+        var reloaded = await repo.GetAsync(proposal.Id, CancellationToken);
+        reloaded.Status.Should().Be(ProposalStatus.Accepted);
+    }
+
+    [TestMethod]
+    public async Task UpdateStatus_PromotesProposal_PublishesStatusChangedEvent()
+    {
+        var broadcaster = Substitute.For<IProposalBroadcaster>();
+        IServiceProvider services = GetServices(builder =>
+            builder.RegisterInstance(broadcaster).As<IProposalBroadcaster>());
+        var controller = ResolveController(services);
+        var proposal = await SeedSystemPromptProposalAsync(services);
+
+        await controller.UpdateStatus(
+            proposal.Id, new UpdateProposalStatusRequest(ProposalStatus.Accepted), CancellationToken);
+
+        broadcaster.Received(1).Publish(
+            Arg.Is<ProposalEvent>(e => e.Id == proposal.Id && e is ProposalStatusChangedEvent));
+    }
+
+    [TestMethod]
+    public async Task GetArtifact_Unknown_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.GetArtifact(Guid.NewGuid(), CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetArtifact_ReturnsHandoffPackageWithProposedChangeAndEvidence()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var proposal = await SeedSystemPromptProposalAsync(services, proposedPrompt: "The proposed prompt.");
+        await proposal.Accept(CancellationToken);
+
+        var result = await controller.GetArtifact(proposal.Id, CancellationToken);
+
+        var artifact = result.Result.Should().BeOfType<OkObjectResult>()
+            .Subject.Value.Should().BeOfType<ProposalArtifactDto>().Subject;
+        artifact.SchemaVersion.Should().Be(1);
+        artifact.ProposalId.Should().Be(proposal.Id);
+        artifact.Kind.Should().Be(ProposalKind.SystemPrompt);
+        artifact.Status.Should().Be(ProposalStatus.Accepted);
+        artifact.Agent.Id.Should().Be(proposal.Agent.Id);
+        artifact.Change.Should().BeOfType<SystemPromptDetailsDto>()
+            .Which.ProposedSystemMessage.Should().Be("The proposed prompt.");
+        artifact.Adoption.AdoptedAt.Should().BeNull();
+    }
+
+    private async Task<IOptimizationProposal> SeedSystemPromptProposalAsync(
+        IServiceProvider services, string proposedPrompt = "proposed")
+    {
+        var agent = await services.GetRequiredService<IDomainEntityGenerator<IAgent>>().CreateAsync(CancellationToken);
+        var abRun = await services.GetRequiredService<IDomainEntityGenerator<Domain.TestRun.ITestRun>>().CreateAsync(CancellationToken);
+        var factory = services.GetRequiredService<ISystemPromptProposal.CreateNew>();
+        var repo = services.GetRequiredService<IOptimizationProposalRepository>();
+        return await repo.AddAsync(
+            factory(agent, Priority.Medium, "r", proposedPrompt, null, null, [], abRun),
+            CancellationToken);
+    }
+
     private static ProposalsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<IOptimizationProposalRepository>(),
-        services.GetRequiredService<IModelSwitchProposal.CreateExisting>(),
         services.GetRequiredService<IModelSwitchProposal.CreateNew>(),
-        services.GetRequiredService<ISystemPromptProposal.CreateExisting>(),
         services.GetRequiredService<ISystemPromptProposal.CreateNew>(),
-        services.GetRequiredService<IToolUpdateProposal.CreateExisting>(),
         services.GetRequiredService<IToolUpdateProposal.CreateNew>(),
         services.GetRequiredService<IAgentRepository>(),
         services.GetRequiredService<IRepository<Proxytrace.Domain.ModelEndpoint.IModelEndpoint>>(),
@@ -199,5 +310,6 @@ public sealed class ProposalsControllerTests : BaseTest<Module>
         services.GetRequiredService<Proxytrace.Domain.TestSuite.ITestSuite.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.TestRunGroup.ITestRunGroup.CreateNew>(),
         services.GetRequiredService<Proxytrace.Domain.TestRun.ITestRun.CreateNew>(),
-        services.GetRequiredService<OptimizationProposalDtoMapper>());
+        services.GetRequiredService<OptimizationProposalDtoMapper>(),
+        services.GetRequiredService<IProposalBroadcaster>());
 }

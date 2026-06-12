@@ -1,5 +1,6 @@
 import { ModelProviderKind } from '../../api/models';
 import type { LicenseDto, LicenseFeature } from '../../api/license';
+import { FEATURE_LABELS } from '../../components/license/licenseUtils';
 import { fmtTokens } from '../../lib/format';
 
 /* ── Provider presets ─────────────────────────────────────────────────── */
@@ -105,14 +106,6 @@ export const STEP_HEADINGS: ({ title: string; subtitle: string } | null)[] = [
 ];
 
 /* ── Welcome-step tier summary ─────────────────────────────────────────── */
-
-const FEATURE_LABELS: Record<LicenseFeature, string> = {
-  OptimizationProposals: 'Optimization proposals',
-  AgenticEvaluators: 'Agentic evaluators',
-  CustomEvaluators: 'Custom evaluators',
-  SsoOidc: 'SSO / OIDC sign-in',
-  AuditLog: 'Audit log',
-};
 
 const ALL_FEATURES = Object.keys(FEATURE_LABELS) as LicenseFeature[];
 

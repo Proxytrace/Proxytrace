@@ -172,7 +172,7 @@ This is the single most duplicated thing in the codebase and must be fixed going
 **Current state (broken three ways):**
 1. DESIGN.md §5 mandates **Lucide** (`lucide-react`) — but `lucide-react` is **not installed** and imported **0 times**.
 2. A hand-rolled central set exists at `components/icons/index.tsx`.
-3. Features *still* re-declare their own inline `<svg>` icon functions — `Evaluators.tsx`, `RightRail.tsx`, `EvaluatorTestBench.tsx`, `TracesStep.tsx`, `EditableMessageBubble.tsx`, `TestResultPicker.tsx`, even `Button.tsx`. The same `BeakerIcon`/`SearchIcon`/`PlusIcon` shapes are copy-pasted across files.
+3. Features *still* re-declare their own inline `<svg>` icon functions — `Evaluators.tsx`, `RightRail.tsx`, `EvaluatorTestBench.tsx`, `TracesStep.tsx`, `TestResultPicker.tsx`, even `Button.tsx`. The same `BeakerIcon`/`SearchIcon`/`PlusIcon` shapes are copy-pasted across files.
 
 **The rule going forward:**
 

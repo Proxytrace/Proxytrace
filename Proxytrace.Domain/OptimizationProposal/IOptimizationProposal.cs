@@ -1,4 +1,5 @@
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
 
@@ -55,4 +56,39 @@ public interface IOptimizationProposal : IDomainEntity
     /// Used to suppress re-creation of an identical proposal that was already Accepted or Rejected.
     /// </summary>
     string ContentHash { get; }
+
+    /// <summary>When the proposed change was observed live (or confirmed manually); null until Adopted.</summary>
+    DateTimeOffset? AdoptedAt { get; }
+
+    /// <summary>
+    /// The <see cref="IAgentVersion"/> in which the change was auto-detected;
+    /// null for model switches and manual adoptions.
+    /// </summary>
+    Guid? AdoptedAgentVersionId { get; }
+
+    /// <summary>
+    /// Version number of <see cref="AdoptedAgentVersionId"/> captured at adoption time
+    /// (denormalized for display; the id stays authoritative if the version is renumbered).
+    /// </summary>
+    int? AdoptedAgentVersionNumber { get; }
+
+    /// <summary>Whether adoption was confirmed by a human rather than auto-detected; null until Adopted.</summary>
+    bool? AdoptedManually { get; }
+
+    /// <summary>
+    /// Promotes the proposal for implementation. Only valid from <see cref="ProposalStatus.Draft"/>.
+    /// </summary>
+    Task<IOptimizationProposal> Accept(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Dismisses the proposal. Only valid from <see cref="ProposalStatus.Draft"/>.
+    /// </summary>
+    Task<IOptimizationProposal> Reject(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Records that the promoted change is live in the agent — either auto-detected in ingested
+    /// traffic (pass the version it was seen in) or confirmed manually. Only valid from
+    /// <see cref="ProposalStatus.Accepted"/>.
+    /// </summary>
+    Task<IOptimizationProposal> MarkAdopted(IAgentVersion? adoptedVersion, bool manual, CancellationToken cancellationToken = default);
 }

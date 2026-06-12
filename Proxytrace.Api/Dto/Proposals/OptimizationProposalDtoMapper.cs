@@ -32,8 +32,37 @@ public sealed class OptimizationProposalDtoMapper
             p.CurrentPassRate,
             p.ProposedPassRate,
             p.ExpectedPassRateDelta,
+            p.AdoptedAt,
+            p.AdoptedAgentVersionId,
+            p.AdoptedAgentVersionNumber,
+            p.AdoptedManually,
             p.CreatedAt,
             p.UpdatedAt);
+
+    private const int ArtifactSchemaVersion = 1;
+
+    public ProposalArtifactDto ToArtifactDto(IOptimizationProposal p)
+        => new(
+            ArtifactSchemaVersion,
+            p.Id,
+            p.Kind,
+            p.Status,
+            DateTimeOffset.UtcNow,
+            new ProposalArtifactAgentDto(p.Agent.Id, p.Agent.Name),
+            p.Priority,
+            p.Rationale,
+            ToDetailsDto(p),
+            new ProposalArtifactEvidenceDto(
+                p.CurrentPassRate,
+                p.ProposedPassRate,
+                p.ExpectedPassRateDelta,
+                [.. p.EvidenceTestRunIds],
+                p.ABTestRun is not null ? ToAbTestRunSummaryDto(p.ABTestRun) : null),
+            new ProposalArtifactAdoptionDto(
+                p.AdoptedAt,
+                p.AdoptedAgentVersionId,
+                p.AdoptedAgentVersionNumber,
+                p.AdoptedManually));
 
     private static AbTestRunSummaryDto ToAbTestRunSummaryDto(ITestRun r)
     {

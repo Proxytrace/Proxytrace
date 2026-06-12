@@ -9,6 +9,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Storage.Internal.Entities.Agent;
+using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.TestRun;
 
 namespace Proxytrace.Storage.Internal.Entities.OptimizationProposal;
@@ -57,6 +58,14 @@ internal class OptimizationProposalConfig :
             .HasForeignKey(e => e.ABTestRun)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // SetNull (not Restrict): versions cascade-delete with their agent, and the proposal
+        // cascades from the same agent — a Restrict here would make agent deletion order-dependent.
+        builder
+            .HasOne<AgentVersionEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.AdoptedAgentVersionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Property(e => e.ContentHash).HasMaxLength(64);
 
         builder.HasIndex(e => e.Agent);
@@ -104,6 +113,10 @@ internal class OptimizationProposalConfig :
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
             contentHash: stored.ContentHash,
+            adoptedAt: stored.AdoptedAt,
+            adoptedAgentVersionId: stored.AdoptedAgentVersionId,
+            adoptedAgentVersionNumber: stored.AdoptedAgentVersionNumber,
+            adoptedManually: stored.AdoptedManually,
             existing: stored);
     }
 
@@ -126,6 +139,10 @@ internal class OptimizationProposalConfig :
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
             contentHash: stored.ContentHash,
+            adoptedAt: stored.AdoptedAt,
+            adoptedAgentVersionId: stored.AdoptedAgentVersionId,
+            adoptedAgentVersionNumber: stored.AdoptedAgentVersionNumber,
+            adoptedManually: stored.AdoptedManually,
             existing: stored);
     }
 
@@ -148,6 +165,10 @@ internal class OptimizationProposalConfig :
             evidenceTestRunIds: evidenceTestRunIds,
             abTestRun: abTestRun,
             contentHash: stored.ContentHash,
+            adoptedAt: stored.AdoptedAt,
+            adoptedAgentVersionId: stored.AdoptedAgentVersionId,
+            adoptedAgentVersionNumber: stored.AdoptedAgentVersionNumber,
+            adoptedManually: stored.AdoptedManually,
             existing: stored);
     }
 
@@ -178,6 +199,10 @@ internal class OptimizationProposalConfig :
             CurrentPassRate = domain.CurrentPassRate,
             ProposedPassRate = domain.ProposedPassRate,
             ContentHash = domain.ContentHash,
+            AdoptedAt = domain.AdoptedAt,
+            AdoptedAgentVersionId = domain.AdoptedAgentVersionId,
+            AdoptedAgentVersionNumber = domain.AdoptedAgentVersionNumber,
+            AdoptedManually = domain.AdoptedManually,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

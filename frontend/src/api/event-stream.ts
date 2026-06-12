@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
-import type { GroupRunCompleteEvent, ProposalCreatedEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
+import type { GroupRunCompleteEvent, ProposalEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
 
 // EventSource can't set Authorization headers, so the credential must ride in the query
 // string. Prefer a short-lived, single-use stream ticket (passed as `stream_ticket`, which
@@ -86,10 +86,10 @@ export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {
   );
 }
 
-export function useProposalStream(agentId: string | null, onProposal: (e: ProposalCreatedEvent) => void) {
-  useEventStream<ProposalCreatedEvent>(
+export function useProposalStream(agentId: string | null, onProposal: (e: ProposalEvent) => void) {
+  useEventStream<ProposalEvent>(
     agentId ? `/api/agents/${agentId}/proposals/stream` : null,
-    ['proposal-created'],
+    ['proposal-created', 'proposal-status-changed'],
     onProposal,
   );
 }

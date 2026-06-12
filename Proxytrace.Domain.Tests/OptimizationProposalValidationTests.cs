@@ -174,6 +174,10 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
             evidenceTestRunIds: existing.EvidenceTestRunIds,
             abTestRun: existing.ABTestRun,
             contentHash: existing.ContentHash,
+            adoptedAt: existing.AdoptedAt,
+            adoptedAgentVersionId: existing.AdoptedAgentVersionId,
+            adoptedAgentVersionNumber: existing.AdoptedAgentVersionNumber,
+            adoptedManually: existing.AdoptedManually,
             existing: existing);
 
         reconstituted.Id.Should().Be(existing.Id);
@@ -195,9 +199,11 @@ public sealed class OptimizationProposalValidationTests : BaseTest<Module>
         var source = await generator.CreateAsync(CancellationToken);
 
         var accepted = createExisting(source.Agent, ProposalStatus.Accepted, source.Priority, source.Rationale,
-            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source.ContentHash, source);
+            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source.ContentHash,
+            null, null, null, null, source);
         var rejected = createExisting(source.Agent, ProposalStatus.Rejected, source.Priority, source.Rationale,
-            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source.ContentHash, source);
+            source.ProposedSystemMessage, source.CurrentPassRate, source.ProposedPassRate, source.EvidenceTestRunIds, source.ABTestRun, source.ContentHash,
+            null, null, null, null, source);
 
         accepted.Status.Should().Be(ProposalStatus.Accepted);
         rejected.Status.Should().Be(ProposalStatus.Rejected);

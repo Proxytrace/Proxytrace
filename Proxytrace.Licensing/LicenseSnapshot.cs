@@ -2,7 +2,7 @@ namespace Proxytrace.Licensing;
 
 /// <summary>
 /// An immutable point-in-time view of the resolved license: tier, status, validity window,
-/// and the effective features and limits in force.
+/// the effective features and limits in force, and where the license came from.
 /// </summary>
 public sealed record LicenseSnapshot(
     LicenseTier Tier,
@@ -12,7 +12,9 @@ public sealed record LicenseSnapshot(
     string? CustomerEmail,
     string? Jti,
     IReadOnlySet<LicenseFeature> Features,
-    IReadOnlyDictionary<LicenseLimit, long> Limits)
+    IReadOnlyDictionary<LicenseLimit, long> Limits,
+    LicenseSource Source = LicenseSource.None,
+    string? InvalidReason = null)
 {
     /// <summary>
     /// Builds the default Free-tier snapshot used when no license JWT is configured.
@@ -32,6 +34,19 @@ public sealed record LicenseSnapshot(
     }
 
     /// <summary>
+    /// Builds the snapshot used when a configured license fails validation: Free-tier
+    /// entitlements with <see cref="LicenseStatus.Invalid"/> and the rejection reason, so the
+    /// deployment keeps running while the UI can surface the problem.
+    /// </summary>
+    public static LicenseSnapshot Invalid(LicenseSource source, string reason)
+        => Free() with
+        {
+            Status = LicenseStatus.Invalid,
+            Source = source,
+            InvalidReason = reason,
+        };
+
+    /// <summary>
     /// Builds an active, perpetual Enterprise-tier snapshot with no JWT identity. Because
     /// <see cref="Jti"/> is null, the background check service never re-verifies or degrades it.
     /// Used by kiosk/demo deployments to showcase the full feature set without a signed license.
@@ -47,6 +62,7 @@ public sealed record LicenseSnapshot(
             CustomerEmail: customerEmail,
             Jti: null,
             definition.Features,
-            definition.Limits);
+            definition.Limits,
+            LicenseSource.Override);
     }
 }

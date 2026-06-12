@@ -6,6 +6,8 @@ namespace Proxytrace.Api.Dto.License;
 public sealed record LicenseDto(
     string Tier,
     string Status,
+    string Source,
+    string? InvalidReason,
     DateTimeOffset? ExpiresAt,
     DateTimeOffset? GracePeriodEndsAt,
     string? CustomerEmail,

@@ -156,7 +156,6 @@ export function ConversationView({
           {dropIndex === i && draggingId && draggingId !== m.localId && dropIndicator}
           <EditableMessageBubble
             message={m}
-            turnIndex={i + 1}
             isStreaming={isStreaming && m.localId === streamingId}
             isDragging={draggingId === m.localId}
             onEdit={content => onEdit(m.localId, content)}

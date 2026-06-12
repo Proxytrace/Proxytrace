@@ -10,6 +10,7 @@ import {
   ExternalLinkIcon,
 } from '../../../components/icons';
 import { buildTierSummary, UPGRADE_URL } from '../setupMeta';
+import { WelcomeLicenseEntry } from './WelcomeLicenseEntry';
 
 const PILLARS = [
   {
@@ -61,7 +62,10 @@ export function WelcomeStep() {
       {license === undefined ? (
         <Skeleton height={120} />
       ) : (
-        <TierPanel tier={tier} />
+        <>
+          <TierPanel tier={tier} />
+          <WelcomeLicenseEntry />
+        </>
       )}
     </div>
   );

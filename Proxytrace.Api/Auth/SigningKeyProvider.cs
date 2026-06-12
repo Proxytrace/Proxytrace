@@ -27,6 +27,13 @@ internal sealed class SigningKeyProvider : ISigningKeyProvider
             return configured;
         }
 
+        // Reuse a previously generated key so sessions survive restarts; the appsettings-based
+        // store also resurfaces it through configuration, but the data-directory store (used in
+        // containers) is only reachable this way.
+        var stored = store.Load();
+        if (!string.IsNullOrWhiteSpace(stored) && stored.Length >= MinKeyLength)
+            return stored;
+
         var generated = GenerateKey();
         store.Persist(generated);
         return generated;

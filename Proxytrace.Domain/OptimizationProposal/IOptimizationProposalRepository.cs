@@ -25,4 +25,21 @@ public interface IOptimizationProposalRepository : IRepository<IOptimizationProp
         Guid agentId,
         string contentHash,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all proposals for the agent in the given status, ordered by creation date descending.
+    /// Used by adoption detection to find promoted proposals awaiting adoption.
+    /// </summary>
+    Task<IReadOnlyList<IOptimizationProposal>> GetByAgentAndStatusAsync(
+        Guid agentId,
+        ProposalStatus status,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all proposals in the given status across all agents.
+    /// Used by the adoption-detection startup sweep.
+    /// </summary>
+    Task<IReadOnlyList<IOptimizationProposal>> GetByStatusAsync(
+        ProposalStatus status,
+        CancellationToken cancellationToken = default);
 }

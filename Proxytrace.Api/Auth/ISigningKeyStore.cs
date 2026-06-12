@@ -5,5 +5,10 @@ namespace Proxytrace.Api.Auth;
 /// </summary>
 internal interface ISigningKeyStore
 {
+    /// <summary>
+    /// Returns the previously persisted signing key, or null when none exists.
+    /// </summary>
+    string? Load();
+
     void Persist(string signingKey);
 }

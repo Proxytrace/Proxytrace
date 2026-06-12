@@ -5,6 +5,7 @@ import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
 import { Pill } from '../../components/ui/Pill';
 import { CodeBlock } from '../../components/ui/CodeBlock';
+import { SchemaFromExample } from './components/SchemaFromExample';
 import type { EvaluatorFormState } from './evaluatorMeta';
 
 export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker = true }: {
@@ -52,6 +53,7 @@ export function EvaluatorForm({ form, setForm, kind, presets, showPresetPicker =
       {kind === EvaluatorKind.JsonSchemaMatch && (
         <FormField label="JSON Schema">
           <Textarea data-testid="evaluator-form-jsonschema" value={form.jsonSchema} onChange={e => setForm({ ...form, jsonSchema: e.target.value })} placeholder='{"type":"object"…}' rows={5} />
+          <SchemaFromExample onGenerate={schema => setForm({ ...form, jsonSchema: schema })} />
         </FormField>
       )}
       {kind === EvaluatorKind.NumericMatch && (

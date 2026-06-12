@@ -169,6 +169,24 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Reset_Validated_AdoptedProposal_Blocked()
+    {
+        Fixture f = Build();
+        var proposalId = Guid.NewGuid();
+        var theory = StubResettableTheory(TheoryStatus.Validated, proposalId);
+        f.Theories.FindAsync(theory.Id, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationTheory?>(theory));
+        var proposal = Substitute.For<IOptimizationProposal>();
+        proposal.Status.Returns(ProposalStatus.Adopted);
+        f.Proposals.FindAsync(proposalId, Arg.Any<CancellationToken>()).Returns(Task.FromResult<IOptimizationProposal?>(proposal));
+
+        var result = await f.Service.ResetToProposedAsync(theory.Id, CancellationToken);
+
+        result.Outcome.Should().Be(TheoryResetOutcome.BlockedByAcceptedProposal);
+        await theory.DidNotReceive().ResetToProposed(Arg.Any<CancellationToken>());
+        await f.Proposals.DidNotReceive().RemoveAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+
+    [TestMethod]
     public async Task Reset_ProposedTheory_NotResettable()
     {
         Fixture f = Build();

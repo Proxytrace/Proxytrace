@@ -14,4 +14,10 @@ public enum ProposalStatus
 
     /// <summary>Reviewed and dismissed.</summary>
     Rejected,
+
+    /// <summary>
+    /// Accepted and subsequently observed live in the agent's ingested traffic (auto-detected)
+    /// or confirmed as applied by a human (manual).
+    /// </summary>
+    Adopted,
 }

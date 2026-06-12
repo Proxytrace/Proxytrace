@@ -18,6 +18,13 @@ families.
 | **JSON Schema Match** | The response conforms to an expected JSON schema. |
 | **Tool Usage** | The agent called (or avoided) the expected tool(s). |
 
+::: tip Generate the schema from an example
+When creating a **JSON Schema Match** evaluator you don't have to write the schema by hand:
+expand **Generate from an example JSON object** in the form, paste a sample of the JSON your
+agent should return, and click **Generate schema**. Every key observed in the example becomes
+a required property — loosen the generated schema by hand if some fields are optional.
+:::
+
 ### LLM-based (agentic)
 
 These use a model to judge qualities that rules can't capture:

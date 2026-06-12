@@ -30,6 +30,7 @@ const SECTIONS: NavSection[] = [
       { label: 'Projects', to: '/settings/projects', testId: 'settings-nav-projects' },
       { label: 'Providers', to: '/settings/providers', testId: 'settings-nav-providers' },
       { label: 'Users', to: '/settings/users', testId: 'settings-nav-users' },
+      { label: 'License', to: '/settings/license', testId: 'settings-nav-license' },
       { label: 'Error log', to: '/settings/error-log', testId: 'settings-nav-error-log' },
       { label: 'Danger zone', to: '/settings/danger', testId: 'settings-nav-danger' },
     ],

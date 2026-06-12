@@ -44,5 +44,9 @@ public interface IModelSwitchProposal : IOptimizationProposal
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         string contentHash,
+        DateTimeOffset? adoptedAt,
+        Guid? adoptedAgentVersionId,
+        int? adoptedAgentVersionNumber,
+        bool? adoptedManually,
         IDomainEntityData existing);
 }

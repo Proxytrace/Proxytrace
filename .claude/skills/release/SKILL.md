@@ -137,8 +137,7 @@ compose project name so nothing touches a local dev stack):
 ```bash
 mkdir -p /tmp/proxytrace-release-verify && cd /tmp/proxytrace-release-verify
 gh release download vX.Y.Z --pattern '*.zip' && unzip -o proxytrace-*.zip && cd proxytrace-*/
-cp .env.example .env   # fill POSTGRES_PASSWORD + PROXYTRACE_SIGNING_KEY with throwaway values
-docker compose -p proxytrace-release-verify up -d --wait
+docker compose -p proxytrace-release-verify up -d --wait   # no .env needed — all settings default
 curl -s http://localhost:5101/api/config    # must report "version":"X.Y.Z"
 curl -s -o /dev/null -w '%{http_code}' http://localhost:5101/docs/   # 200
 docker compose -p proxytrace-release-verify down -v && cd / && rm -rf /tmp/proxytrace-release-verify
