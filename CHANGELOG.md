@@ -9,6 +9,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-06-12
+
+### Changed
+
+- **Faster multi-architecture release builds** — the release pipeline now builds the
+  `linux/amd64` and `linux/arm64` container images more efficiently, shortening release
+  times. No change to the published images or runtime behavior.
+
 ## [1.0.1] - 2026-06-12
 
 ### Fixed
