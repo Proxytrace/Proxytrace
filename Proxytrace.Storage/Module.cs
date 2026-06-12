@@ -105,6 +105,10 @@ public sealed class Module : Autofac.Module
             .AsImplementedInterfaces()
             .InstancePerDependency();
 
+        builder.RegisterType<Internal.Entities.Licensing.StoredLicenseStore>()
+            .AsImplementedInterfaces()
+            .InstancePerDependency();
+
         builder.RegisterType<AgentCallStatsQueries>()
             .As<IAgentCallStatsReader>()
             .InstancePerDependency();

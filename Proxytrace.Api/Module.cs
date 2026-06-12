@@ -51,10 +51,24 @@ internal sealed class Module : Autofac.Module
             .RegisterInstance(configuration)
             .As<IConfiguration>();
 
-        builder
-            .RegisterType<AppSettingsLocalSigningKeyStore>()
-            .As<ISigningKeyStore>()
-            .SingleInstance();
+        // Container deployments set PROXYTRACE_DATA_DIR (a mounted volume); the generated
+        // signing key is persisted there so it survives container recreation. Outside
+        // containers the key goes to appsettings.local.json as before.
+        var dataDirectory = Environment.GetEnvironmentVariable("PROXYTRACE_DATA_DIR");
+        if (string.IsNullOrWhiteSpace(dataDirectory))
+        {
+            builder
+                .RegisterType<AppSettingsLocalSigningKeyStore>()
+                .As<ISigningKeyStore>()
+                .SingleInstance();
+        }
+        else
+        {
+            builder
+                .RegisterInstance(new DataDirectorySigningKeyStore(dataDirectory))
+                .As<ISigningKeyStore>()
+                .SingleInstance();
+        }
 
         builder
             .RegisterType<SigningKeyProvider>()
@@ -317,8 +331,15 @@ internal sealed class Module : Autofac.Module
         var cachePath = Environment.GetEnvironmentVariable("PROXYTRACE_LICENSE_CACHE_PATH");
         if (string.IsNullOrWhiteSpace(cachePath))
         {
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            cachePath = Path.Combine(localAppData, "proxytrace", "license-cache.json");
+            // Prefer the mounted data directory in containers — the offline-grace cache must
+            // survive container recreation to anchor the grace window correctly.
+            var dataDirectory = Environment.GetEnvironmentVariable("PROXYTRACE_DATA_DIR");
+            cachePath = string.IsNullOrWhiteSpace(dataDirectory)
+                ? Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "proxytrace",
+                    "license-cache.json")
+                : Path.Combine(dataDirectory, "license-cache.json");
         }
 
         IReadOnlyList<string> keys = string.IsNullOrWhiteSpace(keyOverride)

@@ -23,6 +23,7 @@ const ROUTES = [
   { path: '/settings/projects', label: 'settings projects' },
   { path: '/settings/providers', label: 'settings providers' },
   { path: '/settings/users', label: 'settings users' },
+  { path: '/settings/license', label: 'settings license' },
   { path: '/settings/error-log', label: 'settings error log' },
   { path: '/settings/danger', label: 'settings danger zone' },
 ];

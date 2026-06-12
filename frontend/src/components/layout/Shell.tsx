@@ -7,6 +7,7 @@ import { isNavEntryLocked } from './navGating';
 import { useLicense } from '../../api/license';
 import { LicenseBadge } from '../license/LicenseBadge';
 import { GracePeriodBanner } from '../license/GracePeriodBanner';
+import { InvalidLicenseBanner } from '../license/InvalidLicenseBanner';
 import { QuotaBanner } from '../license/QuotaBanner';
 import { UpdateBanner } from '../updates/UpdateBanner';
 import { Avatar } from '../ui/Avatar';
@@ -167,6 +168,7 @@ export function Shell() {
 
       {/* Main area */}
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <InvalidLicenseBanner />
         <GracePeriodBanner />
         <QuotaBanner />
         <UpdateBanner />

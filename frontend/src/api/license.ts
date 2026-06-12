@@ -6,7 +6,10 @@ import { QUERY_KEYS } from './query-keys';
 export type LicenseTier = 'free' | 'enterprise';
 
 /** Lifecycle state of the active license. Mirrors backend `LicenseStatus`. */
-export type LicenseStatus = 'free' | 'active' | 'grace' | 'expired';
+export type LicenseStatus = 'free' | 'active' | 'grace' | 'expired' | 'invalid';
+
+/** Where the active license came from. Mirrors backend `LicenseSource`. */
+export type LicenseSource = 'none' | 'environment' | 'stored' | 'override';
 
 /** Feature flags a license may grant. Mirrors backend `LicenseFeature`. */
 export type LicenseFeature =
@@ -29,6 +32,9 @@ export type LicenseLimit =
 export interface LicenseDto {
   tier: LicenseTier;
   status: LicenseStatus;
+  source: LicenseSource;
+  /** Why the configured license was rejected; only set while `status` is `invalid`. */
+  invalidReason: string | null;
   expiresAt: string | null;
   gracePeriodEndsAt: string | null;
   customerEmail: string | null;
@@ -38,9 +44,22 @@ export interface LicenseDto {
   quotaExceeded?: boolean;
 }
 
+/** Outcome of a dry-run key validation (`POST /api/license/validate`). */
+export interface ValidateLicenseResultDto {
+  valid: boolean;
+  reason: string | null;
+  tier: LicenseTier | null;
+  expiresAt: string | null;
+  customerEmail: string | null;
+}
+
 export const licenseApi = {
   get: () => api.get<LicenseDto>('/api/license'),
   refresh: () => api.post<LicenseDto>('/api/license/refresh'),
+  validate: (license: string) =>
+    api.post<ValidateLicenseResultDto>('/api/license/validate', { license }),
+  set: (license: string) => api.put<LicenseDto>('/api/license', { license }),
+  remove: () => api.del<LicenseDto>('/api/license'),
 };
 
 /**
@@ -70,6 +89,37 @@ export function useRefreshLicense() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: licenseApi.refresh,
+    onSuccess: (dto) => {
+      queryClient.setQueryData(QUERY_KEYS.license, dto);
+    },
+  });
+}
+
+/** Dry-run validation of a license key — nothing is stored or applied. */
+export function useValidateLicense() {
+  return useMutation({ mutationFn: licenseApi.validate });
+}
+
+/**
+ * Sets the installation's license key (stores + activates it without a restart).
+ * Allowed for admins, and anonymously while setup is incomplete (the wizard's
+ * Welcome step runs before the first admin exists).
+ */
+export function useSetLicense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: licenseApi.set,
+    onSuccess: (dto) => {
+      queryClient.setQueryData(QUERY_KEYS.license, dto);
+    },
+  });
+}
+
+/** Admin-only: removes the stored key; falls back to the environment license or Free. */
+export function useRemoveLicense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: licenseApi.remove,
     onSuccess: (dto) => {
       queryClient.setQueryData(QUERY_KEYS.license, dto);
     },

@@ -1,9 +1,13 @@
 # Proxytrace production deployment.
 #
 # Quickstart (see README.md next to this file):
-#   cp .env.example .env   # then fill in the two required secrets
 #   docker compose up -d
 #   open http://localhost:5101
+#
+# No .env is required: the database password defaults (postgres is never exposed),
+# the session signing key is generated and persisted on first start, and without a
+# license key Proxytrace runs the Free tier. Copy .env.example to .env to override
+# any of these — recommended for production: set your own POSTGRES_PASSWORD.
 #
 # The release artifact attached to each GitHub release ships this file with
 # PROXYTRACE_VERSION pinned to that release. The in-repo copy tracks `latest`.
@@ -17,7 +21,8 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_USER=proxytrace
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Internal-only (no host port is published). Override in .env for production.
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-proxytrace}
       - POSTGRES_DB=proxytrace
     # ports:
     #   - "5432:5432"
@@ -53,17 +58,24 @@ services:
         condition: service_started
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
       - Kiosk__Enabled=false
       - Messaging__Provider=Redis
       - Redis__ConnectionString=redis:6379
       - Self__BaseUrl=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
       - Frontend__AllowedOrigin=${PROXYTRACE_PUBLIC_URL:-http://localhost:5101}
       - Authentication__Mode=Local
-      - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:?set PROXYTRACE_SIGNING_KEY in .env}
+      # Optional: when unset, a signing key is generated on first start and persisted in
+      # the appdata volume, so sessions survive restarts and upgrades.
+      - Authentication__Local__SigningKey=${PROXYTRACE_SIGNING_KEY:-}
+      # Optional license key (JWT). Leave empty for the Free tier; a license can also be
+      # set later in the setup wizard or under Settings → License.
       - PROXYTRACE_LICENSE=${PROXYTRACE_LICENSE:-}
+      # Generated secrets + the license offline-grace cache live here (appdata volume).
+      - PROXYTRACE_DATA_DIR=/app/data
     volumes:
       - searchindex:/app/searchindex
+      - appdata:/app/data
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /api/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q status <&3'"]
       interval: 5s
@@ -85,7 +97,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=proxytrace;Username=proxytrace;Password=${POSTGRES_PASSWORD:-proxytrace}
       - Redis__ConnectionString=redis:6379
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n\" >&3 && grep -q 200 <&3'"]
@@ -107,3 +119,4 @@ services:
 volumes:
   pgdata:
   searchindex:
+  appdata:

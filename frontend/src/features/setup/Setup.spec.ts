@@ -126,6 +126,8 @@ describe('buildTierSummary', () => {
   const freeLicense: LicenseDto = {
     tier: 'free',
     status: 'free',
+    source: 'none',
+    invalidReason: null,
     expiresAt: null,
     gracePeriodEndsAt: null,
     customerEmail: null,

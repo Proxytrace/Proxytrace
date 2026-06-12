@@ -26,6 +26,23 @@ internal sealed class AppSettingsLocalSigningKeyStore : ISigningKeyStore
         AllowTrailingCommas = true,
     };
 
+    public string? Load()
+    {
+        var path = Path.Combine(environment.ContentRootPath, FileName);
+        if (!File.Exists(path))
+            return null;
+
+        try
+        {
+            var root = JsonNode.Parse(File.ReadAllText(path), documentOptions: ParseOptions) as JsonObject;
+            return root?["Authentication"]?["Local"]?["SigningKey"]?.GetValue<string>();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
     public void Persist(string signingKey)
     {
         var path = Path.Combine(environment.ContentRootPath, FileName);

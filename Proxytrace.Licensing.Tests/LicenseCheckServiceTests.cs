@@ -135,6 +135,54 @@ public sealed class LicenseCheckServiceTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task ExecuteAsync_LicenseActivatedAtRuntime_TriggersServerCheck()
+    {
+        // Boot without any license: the loop must idle (no jti to check) but react to a
+        // license activated later at runtime (stored license after migrations, or set via UI).
+        var clock = new MutableClock(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        var server = Substitute.For<ILicenseServerClient>();
+        var cache = Substitute.For<ILicenseCacheStore>();
+        cache.Load().Returns((LicenseCacheEntry?)null);
+
+        var services = GetServices(builder =>
+        {
+            builder.RegisterInstance(Module.Factory.Configuration()).SingleInstance();
+            builder.RegisterInstance(clock).As<IClock>().SingleInstance();
+            builder.RegisterInstance(server).As<ILicenseServerClient>().SingleInstance();
+            builder.RegisterInstance(cache).As<ILicenseCacheStore>().SingleInstance();
+        });
+
+        var license = services.GetRequiredService<LicenseService>();
+        var checkService = services.GetRequiredService<LicenseCheckService>();
+        var activator = services.GetRequiredService<ILicenseActivator>();
+
+        var checkPerformed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        server.CheckAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                checkPerformed.TrySetResult();
+                return Valid(clock);
+            });
+
+        await checkService.StartAsync(CancellationToken);
+        try
+        {
+            server.ReceivedCalls().Should().BeEmpty("no license is active yet");
+
+            activator.Activate(Module.Factory.CreateJwt(tier: "Enterprise"), LicenseSource.Stored);
+
+            await checkPerformed.Task.WaitAsync(TimeSpan.FromSeconds(10), CancellationToken);
+        }
+        finally
+        {
+            await checkService.StopAsync(CancellationToken);
+        }
+
+        license.Current.Status.Should().Be(LicenseStatus.Active);
+        license.Current.Tier.Should().Be(LicenseTier.Enterprise);
+    }
+
+    [TestMethod]
     public async Task ForceRefresh_TriggersImmediateCheck()
     {
         var (_, license, server, _, clock) = Build();

@@ -6,8 +6,8 @@ enforces tier limits. **You do not need a license to run Proxytrace** — it run
 
 ## Free by default
 
-If the `PROXYTRACE_LICENSE` environment variable is unset, Proxytrace starts on the **Free**
-tier with no further configuration. The Free tier allows:
+With no license configured, Proxytrace starts on the **Free** tier with no further
+configuration. The Free tier allows:
 
 - **1** project
 - **3** users
@@ -23,43 +23,48 @@ info: Proxytrace.Licensing.LicenseService[0]
       No license configured — running in Free tier.
 ```
 
-To unlock higher limits and premium features, set `PROXYTRACE_LICENSE` to an Enterprise
-license token (see [Where to buy](#where-to-buy)).
+To unlock higher limits and premium features, activate an Enterprise license key (see
+[Where to buy](#where-to-buy)).
 
-## An invalid license stops startup
+## Activating a license key
 
-::: danger A malformed or invalid license is fatal
-If `PROXYTRACE_LICENSE` is **set** but the token is invalid — malformed, signed with an
-unknown key, issued for the wrong audience, or already expired — Proxytrace **refuses to
-start**. The host process logs the failure and exits with a **non-zero exit code**. This is
-deliberate: a broken license must never silently downgrade a paying deployment to Free.
-:::
+There are three ways to supply a license key; all accept the same token (a JWT):
 
-The error looks like this in the logs:
+1. **First-run setup wizard** — the Welcome step shows the active tier and offers a
+   *"Have a license key?"* field. Paste the key, validate, and activate it before
+   creating the first admin account.
+2. **Settings → License** (admins) — paste a key, **Validate** it (a dry run that shows
+   the tier, customer, and expiry it would activate), then **Activate**. The key is
+   verified offline, stored in the database, and applied **immediately — no restart**.
+   The same page shows the current tier, status, where the active license came from, and
+   offers **Re-check now** (force a license-server check) and **Remove stored license**.
+3. **`PROXYTRACE_LICENSE` environment variable** — set it in the deployment `.env` and
+   restart. Useful for infrastructure-as-code setups.
+
+### Precedence
+
+A key activated in the UI is stored in the database and **takes precedence** over the
+`PROXYTRACE_LICENSE` environment variable. Removing the stored key (Settings → License →
+*Remove stored license*) falls back to the environment-supplied license, or the Free tier
+when none is set.
+
+## An invalid license never blocks startup
+
+If a configured license fails validation — malformed, signed with an unknown key, issued
+for the wrong audience, or already expired — Proxytrace **still starts**, running with
+Free-tier entitlements and the license status **Invalid**. A red banner appears above the
+top bar (and on the setup wizard's Welcome step) with the rejection reason and a link to
+**Settings → License**, where an admin can paste a corrected key — no container restart
+needed.
+
+The log shows the reason:
 
 ```
-fail: Proxytrace.Licensing.LicenseService[0]
-      Invalid PROXYTRACE_LICENSE (reason: BadSignature) — refusing to start.
-Unhandled exception. Proxytrace.Licensing.Exceptions.InvalidLicenseException: The configured license is invalid (BadSignature).
+warn: The configured license is invalid (Expired); running with Free-tier entitlements until it is corrected
 ```
 
-The `reason` is one of `Malformed`, `BadSignature`, `WrongIssuer`, `WrongAudience`,
+The reason is one of `Malformed`, `BadSignature`, `WrongIssuer`, `WrongAudience`,
 `Expired`, or `MissingClaim`.
-
-### Recovery
-
-1. Inspect the logs to read the failure reason:
-
-   ```bash
-   docker logs proxytrace
-   ```
-
-2. Then either:
-   - **Fix the license** — correct the `PROXYTRACE_LICENSE` value (re-copy the token,
-     remove stray whitespace or line breaks, or obtain a current token if it expired) and
-     restart the container; or
-   - **Run Free** — unset `PROXYTRACE_LICENSE` entirely and restart. With no license
-     configured, Proxytrace boots on the Free tier and serves normally.
 
 ::: tip
 The token is trimmed before validation, so surrounding whitespace is tolerated, but
@@ -71,10 +76,10 @@ a single unbroken line.
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `PROXYTRACE_LICENSE` | The license token (a JWT). Trimmed before use. Takes precedence over the `Licensing:License` appsettings value. Unset (and no config value) → Free tier. | _unset_ |
+| `PROXYTRACE_LICENSE` | The license token (a JWT). Trimmed before use. Takes precedence over the `Licensing:License` appsettings value, but a key activated in the UI (stored in the database) overrides both. Unset (and no config value) → Free tier. | _unset_ |
 | `PROXYTRACE_LICENSE_SERVER_URL` | Override the license server base URL. **Debug builds only** — Release builds ignore this and always use the default. | `https://license.proxytrace.dev` |
 | `PROXYTRACE_LICENSE_PUBLIC_KEY` | Override the signature-verification public keys (comma-separated, base64). **Debug builds only** — Release builds use the keys baked into the binary. | _embedded keys_ |
-| `PROXYTRACE_LICENSE_CACHE_PATH` | Path to the offline license-status cache file. | `<LocalApplicationData>/proxytrace/license-cache.json` |
+| `PROXYTRACE_LICENSE_CACHE_PATH` | Path to the offline license-status cache file. | `$PROXYTRACE_DATA_DIR/license-cache.json` when `PROXYTRACE_DATA_DIR` is set (the Docker deployment's `appdata` volume), else `<LocalApplicationData>/proxytrace/license-cache.json` |
 
 ::: warning Release builds ignore the Debug-only overrides
 `PROXYTRACE_LICENSE_SERVER_URL` and `PROXYTRACE_LICENSE_PUBLIC_KEY` exist only to support

@@ -11,6 +11,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **License management in the UI** — a license key can now be activated without a restart:
+  the setup wizard's Welcome step offers a *"Have a license key?"* field, and a new
+  **Settings → License** page lets admins validate a key (dry run showing tier, customer,
+  and expiry), activate it, force a license-server re-check, or remove it. A key activated
+  in the UI is stored in the database and takes precedence over the `PROXYTRACE_LICENSE`
+  environment variable.
+- **Zero-configuration Docker install** — `docker compose up -d` now works without any
+  `.env` file: the internal-only Postgres password defaults, the session signing key is
+  generated on first start and persisted in a new `appdata` volume (sessions survive
+  container recreation), and without a license Proxytrace runs the Free tier. All `.env`
+  settings remain available as overrides.
 - **Adoption tracking for promoted proposals** — a promoted proposal now waits in
   *"Promoted — awaiting adoption"* and flips to **Adopted** automatically when the exact
   change shows up in the agent's live traffic (new prompt/tool version, or calls arriving on
@@ -26,6 +37,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **An invalid license no longer prevents startup** — a malformed/expired/rejected
+  `PROXYTRACE_LICENSE` previously crashed the container; Proxytrace now boots with
+  Free-tier entitlements, shows a red "license invalid" banner with the rejection reason,
+  and the key can be fixed under Settings → License without a restart.
+- **The license offline-grace cache is now persisted across container recreations**
+  (in the new `appdata` volume), so the offline grace window is anchored correctly.
 - **Promote is honest now** — Proxytrace is an observing proxy and cannot change your
   agent's code; the UI no longer claims a promoted change "has been applied to the agent".
   Proposal status changes are validated server-side (illegal transitions return 409).

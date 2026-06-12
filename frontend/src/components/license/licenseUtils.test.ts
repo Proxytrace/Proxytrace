@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { daysLeft, tierBadge, upgradeCopy } from './licenseUtils';
+import { daysLeft, licenseSourceNote, tierBadge, upgradeCopy } from './licenseUtils';
 
 const NOW = Date.parse('2026-05-29T00:00:00Z');
 
@@ -58,5 +58,27 @@ describe('upgradeCopy', () => {
   it('provides a fallback body for each error type', () => {
     expect(upgradeCopy('LicenseLimitExceeded').fallback).toBeTruthy();
     expect(upgradeCopy('FeatureNotLicensed').fallback).toBeTruthy();
+  });
+});
+
+describe('invalid license', () => {
+  it('shows the Free upgrade chip while the configured license is invalid', () => {
+    expect(tierBadge('invalid', 'free')).toEqual({
+      label: 'Free',
+      tone: 'free',
+      linkToUpgrade: true,
+    });
+  });
+});
+
+describe('licenseSourceNote', () => {
+  it('explains environment, stored, and override sources', () => {
+    expect(licenseSourceNote('environment')).toContain('PROXYTRACE_LICENSE');
+    expect(licenseSourceNote('stored')).toContain('stored in the database');
+    expect(licenseSourceNote('override')).toContain('cannot be changed');
+  });
+
+  it('returns null when no license is configured', () => {
+    expect(licenseSourceNote('none')).toBeNull();
   });
 });

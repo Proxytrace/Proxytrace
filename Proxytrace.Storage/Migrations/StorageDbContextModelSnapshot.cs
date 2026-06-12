@@ -347,6 +347,27 @@ namespace Proxytrace.Storage.Migrations
                     b.ToTable("InviteEntity");
                 });
 
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Licensing.StoredLicenseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Jwt")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoredLicenseEntity");
+                });
+
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Model.ModelEntity", b =>
                 {
                     b.Property<Guid>("Id")

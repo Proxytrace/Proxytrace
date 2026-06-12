@@ -1,5 +1,14 @@
 import type { UpgradeErrorType } from '../../api/client';
-import type { LicenseStatus, LicenseTier } from '../../api/license';
+import type { LicenseFeature, LicenseSource, LicenseStatus, LicenseTier } from '../../api/license';
+
+/** Human-readable label per license feature flag. */
+export const FEATURE_LABELS: Record<LicenseFeature, string> = {
+  OptimizationProposals: 'Optimization proposals',
+  AgenticEvaluators: 'Agentic evaluators',
+  CustomEvaluators: 'Custom evaluators',
+  SsoOidc: 'SSO / OIDC sign-in',
+  AuditLog: 'Audit log',
+};
 
 /**
  * Whole days remaining until `endsAt`, never negative. Returns 0 when the date
@@ -16,6 +25,32 @@ export function daysLeft(endsAt: string | null | undefined, now: number = Date.n
 
 /** Human-readable label per tier. */
 const TIER_LABEL: Record<LicenseTier, string> = { free: 'Free', enterprise: 'Enterprise' };
+
+/** Human-readable label per license status. */
+export const STATUS_LABELS: Record<LicenseStatus, string> = {
+  free: 'Free tier',
+  active: 'Active',
+  grace: 'Grace period',
+  expired: 'Expired / revoked',
+  invalid: 'Invalid',
+};
+
+/**
+ * Explains where the active license came from, for the settings License page.
+ * Returns null when there is nothing worth explaining (no license at all).
+ */
+export function licenseSourceNote(source: LicenseSource): string | null {
+  switch (source) {
+    case 'environment':
+      return 'This license was supplied via the PROXYTRACE_LICENSE environment variable. A key activated here is stored in the database and takes precedence over it.';
+    case 'stored':
+      return 'This license was activated from the UI and is stored in the database. It survives restarts and takes precedence over an environment-supplied license.';
+    case 'override':
+      return 'The license is fixed by this deployment (demo mode) and cannot be changed here.';
+    case 'none':
+      return null;
+  }
+}
 
 /**
  * Visual treatment of the tier chip. Deliberately distinct from the health
@@ -40,7 +75,9 @@ export interface TierBadge {
  * active, or "pending" (amber) while grace/expired re-validation is in flight.
  */
 export function tierBadge(status: LicenseStatus, tier: LicenseTier): TierBadge {
-  if (status === 'free') {
+  // An invalid configured license runs with Free entitlements — the chip mirrors that;
+  // the dedicated invalid-license banner carries the warning.
+  if (status === 'free' || status === 'invalid') {
     return { label: TIER_LABEL.free, tone: 'free', linkToUpgrade: true };
   }
   return {

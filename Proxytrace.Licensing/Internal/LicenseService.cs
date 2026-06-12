@@ -1,19 +1,19 @@
 using Microsoft.Extensions.Logging;
 using Proxytrace.Common.Async;
-using Proxytrace.Licensing.Exceptions;
 
 namespace Proxytrace.Licensing.Internal;
 
 /// <summary>
-/// The authoritative <see cref="ILicenseService"/>. Performs the synchronous startup gate in its
-/// constructor: with no JWT it runs Free; with a valid JWT it activates; with an invalid JWT it
-/// throws <see cref="InvalidLicenseException"/>, which (via AutoActivate) fails container build
-/// and crashes the host non-zero.
+/// The authoritative <see cref="ILicenseService"/>. The constructor resolves the configured
+/// license synchronously (override snapshot, environment JWT, or Free); an invalid configured
+/// JWT degrades to Free-tier entitlements with <see cref="LicenseStatus.Invalid"/> instead of
+/// failing the host. A license stored in the database is applied later, after migrations, via
+/// <see cref="ILicenseActivator"/> and takes precedence.
 /// </summary>
 internal sealed class LicenseService : ILicenseService
 {
     private static readonly Guid LockKey = Guid.NewGuid();
-    
+
     private readonly IAsyncLock gate;
     private readonly Func<ILicenseRefreshTrigger> refreshTrigger;
     private readonly ILogger<LicenseService> logger;
@@ -21,43 +21,17 @@ internal sealed class LicenseService : ILicenseService
     private volatile LicenseSnapshot current;
 
     public LicenseService(
-        LicensingConfiguration configuration,
-        IJwtLicenseValidator validator,
+        ConfiguredLicenseResolver resolver,
         IAsyncLock gate,
         Func<ILicenseRefreshTrigger> refreshTrigger,
         ILogger<LicenseService> logger)
     {
-        ArgumentNullException.ThrowIfNull(configuration);
-        ArgumentNullException.ThrowIfNull(validator);
+        ArgumentNullException.ThrowIfNull(resolver);
         this.gate = gate;
         this.refreshTrigger = refreshTrigger;
         this.logger = logger;
 
-        if (configuration.OverrideSnapshot is { } overrideSnapshot)
-        {
-            current = overrideSnapshot;
-            logger.LogInformation(
-                "License override active: tier {Tier} (no online verification)",
-                current.Tier);
-            return;
-        }
-
-        var jwt = configuration.LicenseJwt?.Trim();
-        if (string.IsNullOrEmpty(jwt))
-        {
-            logger.LogInformation("No license configured; running in Free tier");
-            current = LicenseSnapshot.Free();
-        }
-        else
-        {
-            // Throws InvalidLicenseException on a bad JWT — intentionally propagates out of
-            // container build so an operator misconfiguration fails fast.
-            current = validator.Validate(jwt);
-            logger.LogInformation(
-                "License validated: tier {Tier}, customer {Customer}",
-                current.Tier,
-                current.CustomerEmail);
-        }
+        current = resolver.Resolve();
     }
 
     public LicenseSnapshot Current => current;
@@ -107,7 +81,9 @@ internal sealed class LicenseService : ILicenseService
             || a.ExpiresAt != b.ExpiresAt
             || a.GracePeriodEndsAt != b.GracePeriodEndsAt
             || a.CustomerEmail != b.CustomerEmail
-            || a.Jti != b.Jti)
+            || a.Jti != b.Jti
+            || a.Source != b.Source
+            || a.InvalidReason != b.InvalidReason)
         {
             return false;
         }

@@ -40,9 +40,18 @@ public sealed class Module : Autofac.Module
             .As<ILicenseCacheStore>()
             .SingleInstance();
 
-        // AutoActivate forces the constructor (and thus the synchronous startup gate) to run at
-        // container build time. A bad JWT throws InvalidLicenseException, failing the build and
-        // crashing the host non-zero — mirroring the connection-string guard.
+        builder.RegisterType<ConfiguredLicenseResolver>()
+            .AsSelf()
+            .SingleInstance();
+
+        builder.RegisterType<LicenseActivator>()
+            .As<ILicenseActivator>()
+            .SingleInstance();
+
+        // AutoActivate forces the constructor (and thus the synchronous startup resolution) to
+        // run at container build time, so the resolved tier is logged and in force before any
+        // request is served. An invalid configured JWT no longer crashes the host — it degrades
+        // to Free entitlements with LicenseStatus.Invalid and is surfaced in the UI.
         builder.RegisterType<LicenseService>()
             .As<ILicenseService>()
             .AsSelf()
