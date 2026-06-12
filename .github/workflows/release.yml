@@ -113,6 +113,9 @@ jobs:
 
       # The shipped compose file is fully pinned to this release; the in-repo copy
       # tracks `latest` for tip-of-tree testing.
+      # The zip name is constant (no version) so the stable download URL
+      # `releases/latest/download/proxytrace.zip` always resolves; the folder
+      # inside and the release tag in per-version URLs carry the version.
       - name: Package deployment artifact
         run: |
           VERSION="${{ needs.meta.outputs.version }}"
@@ -120,7 +123,7 @@ jobs:
           sed "s/\${PROXYTRACE_VERSION:-latest}/$VERSION/" deploy/docker-compose.yml \
             > "dist/proxytrace-$VERSION/docker-compose.yml"
           cp deploy/.env.example deploy/README.md "dist/proxytrace-$VERSION/"
-          cd dist && zip -r "proxytrace-$VERSION.zip" "proxytrace-$VERSION"
+          cd dist && zip -r "proxytrace.zip" "proxytrace-$VERSION"
 
       - name: Create GitHub release
         env:
@@ -135,4 +138,4 @@ jobs:
           gh release create "v$VERSION" $PRERELEASE --draft \
             --title "Proxytrace $VERSION" \
             --notes-file release-notes.md \
-            "dist/proxytrace-$VERSION.zip"
+            "dist/proxytrace.zip"
