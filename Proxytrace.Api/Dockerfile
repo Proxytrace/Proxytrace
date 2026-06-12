@@ -1,9 +1,11 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER root
-# Pre-create the writable runtime data dirs (Lucene search index + SQLite DB live here)
-# and hand /app to the non-root app user. A named volume mounted at /app/searchindex
-# inherits this ownership; bind mounts must be made writable by $APP_UID on the host.
-RUN mkdir -p /app/searchindex && chown -R $APP_UID:$APP_UID /app
+# Pre-create the writable runtime data dirs (Lucene search index, plus the appdata dir
+# that holds generated secrets / the session signing key / the license offline-grace cache)
+# and hand /app to the non-root app user. A named volume mounted at /app/searchindex or
+# /app/data inherits this ownership on first use (an empty named volume copies the image
+# dir's owner); bind mounts must be made writable by $APP_UID on the host.
+RUN mkdir -p /app/searchindex /app/data && chown -R $APP_UID:$APP_UID /app
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
