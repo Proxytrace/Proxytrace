@@ -3,6 +3,7 @@ import { Button } from '../../../components/ui/Button';
 import { CodeBlock } from '../../../components/ui/CodeBlock';
 import { Tabs } from '../../../components/ui/Tabs';
 import { ZapIcon } from '../../../components/icons';
+import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import { ingestionUrl } from '../../../lib/ingestion';
 import { buildQuickStartSnippets, type SnippetLanguage } from '../snippets';
 
@@ -17,7 +18,8 @@ interface GetStartedStepProps {
 export function GetStartedStep({ projectName, modelName, error, loading, onGetStarted }: GetStartedStepProps) {
   const [lang, setLang] = useState<SnippetLanguage>('python');
 
-  const baseUrl = ingestionUrl(projectName);
+  const proxyBase = useIngestionBase();
+  const baseUrl = ingestionUrl(projectName, proxyBase);
   const snippets = buildQuickStartSnippets(baseUrl, modelName);
   const active = snippets.find(s => s.id === lang) ?? snippets[0];
 

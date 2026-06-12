@@ -40,6 +40,7 @@ services:
       - Kiosk__Enabled=false
       - Self__BaseUrl=http://localhost:5100
       - Frontend__AllowedOrigin=http://localhost:5101
+      - Proxy__PublicBaseUrl=http://localhost:5102
       - Redis__ConnectionString=redis:6379
       - Messaging__Provider=Redis
 

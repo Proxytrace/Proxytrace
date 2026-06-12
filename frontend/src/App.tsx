@@ -19,6 +19,7 @@ import { LocalAuthProvider } from './auth/local/LocalAuthProvider';
 import { CurrentUserContext, useCurrentUser, type CurrentUser } from './auth/useCurrentUser';
 import { KioskContext } from './contexts/KioskContext';
 import useLocalAuth from './hooks/useLocalAuth';
+import { useAppConfig } from './hooks/useAppConfig';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
 // Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
@@ -254,11 +255,7 @@ function KioskShell({ interactive }: { interactive: boolean }) {
 }
 
 function ModeShell() {
-  const { data: appConfig } = useQuery({
-    queryKey: QUERY_KEYS.appConfig,
-    queryFn: configApi.get,
-    staleTime: Infinity,
-  });
+  const { data: appConfig } = useAppConfig();
   const { data, isLoading, error } = useAuthMode();
   if (appConfig?.kiosk) return <KioskShell interactive={!!appConfig.interactive} />;
   if (isLoading) return <PageLoader />;

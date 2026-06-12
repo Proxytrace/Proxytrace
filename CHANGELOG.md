@@ -9,6 +9,18 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- "How to wire the proxy?" documentation link on the Traces page empty state.
+
+### Fixed
+
+- The ingestion endpoint shown in the setup wizard and on the API-keys page pointed at the
+  web UI port instead of the ingestion proxy (e.g. `:5101` instead of `:5102` in the Docker
+  deployment), where OpenAI calls fail with `405 Not Allowed`. The backend now advertises
+  the proxy's public URL (`Proxy:PublicBaseUrl`; in Docker `PROXYTRACE_PROXY_PUBLIC_URL`,
+  default `http://localhost:5102`) and the UI displays that.
+
 ## [1.0.0] - 2026-06-12
 
 First stable release. Consolidates everything from the `1.0.0-rc.1` and

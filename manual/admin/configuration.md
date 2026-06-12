@@ -44,6 +44,28 @@ override with `Frontend:AllowedOrigin`:
 }
 ```
 
+### Advertised ingestion proxy URL
+
+The ingestion proxy runs as its own service with its own port (or hostname), so the web UI
+cannot derive its address. `Proxy:PublicBaseUrl` is the base URL the UI advertises to users
+as the OpenAI `base_url` — in the setup wizard, on the API-keys table, and behind the
+"How to wire the proxy?" link on the traces page:
+
+```json
+{
+  "Proxy": {
+    "PublicBaseUrl": "http://localhost:5102"
+  }
+}
+```
+
+Set it to wherever your agents reach the proxy (scheme + host + port, no path). In the
+Docker deployment this is the `PROXYTRACE_PROXY_PUBLIC_URL` variable in `.env`, defaulting
+to `http://localhost:5102`; update it whenever you change `PROXY_PORT` or serve the proxy
+behind a reverse proxy or its own domain. When unset, the UI falls back to its own origin —
+which is only correct if your own reverse proxy routes ingestion paths
+(`/{project}/openai/v1/…`) to the proxy service.
+
 ### Model pricing feeds
 
 Proxytrace auto-fetches model prices when a provider is added (and when its **Reload models &

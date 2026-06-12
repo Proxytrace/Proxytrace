@@ -43,7 +43,10 @@ docker compose up -d
 ```
 
 Point your agents' OpenAI base URL at the ingestion proxy to start capturing traces:
-`http://localhost:5102/openai/v1` — see [Capturing Traces](/guide/capturing-traces).
+`http://localhost:5102/openai/v1` — see [Capturing Traces](/guide/capturing-traces). The UI
+(setup wizard, API-keys page) advertises this endpoint; if you change `PROXY_PORT` or serve
+the proxy behind your own hostname, set `PROXYTRACE_PROXY_PUBLIC_URL` in `.env` so it
+advertises the right address — see [Configuration](/admin/configuration).
 
 ### What the stack runs
 

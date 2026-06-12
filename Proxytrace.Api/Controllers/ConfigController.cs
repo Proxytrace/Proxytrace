@@ -12,12 +12,18 @@ public class ConfigController : ControllerBase
     private readonly KioskOptions kioskOptions;
     private readonly KioskEndpointOptions kioskEndpoint;
     private readonly IAppVersion appVersion;
+    private readonly IngestionProxyOptions ingestionProxy;
 
-    public ConfigController(KioskOptions kioskOptions, KioskEndpointOptions kioskEndpoint, IAppVersion appVersion)
+    public ConfigController(
+        KioskOptions kioskOptions,
+        KioskEndpointOptions kioskEndpoint,
+        IAppVersion appVersion,
+        IngestionProxyOptions ingestionProxy)
     {
         this.kioskOptions = kioskOptions;
         this.kioskEndpoint = kioskEndpoint;
         this.appVersion = appVersion;
+        this.ingestionProxy = ingestionProxy;
     }
 
     [HttpGet]
@@ -33,5 +39,9 @@ public class ConfigController : ControllerBase
         // Anonymous version exposure is a conscious choice for a self-hosted product
         // (documented in the operator manual); the SPA shows it in the about/footer area.
         version = appVersion.Version,
+
+        // The ingestion proxy runs as its own service (own host port / hostname), so the SPA
+        // cannot derive its address from the page origin. Null when the operator didn't set it.
+        proxyBaseUrl = ingestionProxy.PublicBaseUrl,
     };
 }

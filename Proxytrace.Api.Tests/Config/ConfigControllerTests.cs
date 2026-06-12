@@ -23,11 +23,21 @@ public sealed class ConfigControllerTests
         return appVersion;
     }
 
+    private static ConfigController Controller(
+        KioskOptions? kiosk = null,
+        KioskEndpointOptions? endpoint = null,
+        IAppVersion? version = null,
+        IngestionProxyOptions? proxy = null)
+        => new(
+            kiosk ?? new KioskOptions { Enabled = false },
+            endpoint ?? new KioskEndpointOptions(),
+            version ?? AppVersion(),
+            proxy ?? new IngestionProxyOptions());
+
     [TestMethod]
     public void Get_NonKiosk_InteractiveTrue()
     {
-        var controller = new ConfigController(
-            new KioskOptions { Enabled = false }, new KioskEndpointOptions(), AppVersion());
+        var controller = Controller(new KioskOptions { Enabled = false });
 
         dynamic result = controller.Get();
 
@@ -38,8 +48,7 @@ public sealed class ConfigControllerTests
     [TestMethod]
     public void Get_KioskWithEndpoint_InteractiveTrue()
     {
-        var controller = new ConfigController(
-            new KioskOptions { Enabled = true }, ConfiguredEndpoint(), AppVersion());
+        var controller = Controller(new KioskOptions { Enabled = true }, ConfiguredEndpoint());
 
         dynamic result = controller.Get();
 
@@ -50,8 +59,7 @@ public sealed class ConfigControllerTests
     [TestMethod]
     public void Get_KioskWithoutEndpoint_InteractiveFalse()
     {
-        var controller = new ConfigController(
-            new KioskOptions { Enabled = true }, new KioskEndpointOptions(), AppVersion());
+        var controller = Controller(new KioskOptions { Enabled = true });
 
         dynamic result = controller.Get();
 
@@ -62,11 +70,31 @@ public sealed class ConfigControllerTests
     [TestMethod]
     public void Get_ReturnsAppVersion()
     {
-        var controller = new ConfigController(
-            new KioskOptions { Enabled = false }, new KioskEndpointOptions(), AppVersion("4.5.6"));
+        var controller = Controller(version: AppVersion("4.5.6"));
 
         dynamic result = controller.Get();
 
         ((string)result.version).Should().Be("4.5.6");
+    }
+
+    [TestMethod]
+    public void Get_WithProxyPublicBaseUrl_ReturnsIt()
+    {
+        var controller = Controller(
+            proxy: new IngestionProxyOptions { PublicBaseUrl = "http://localhost:5102" });
+
+        dynamic result = controller.Get();
+
+        ((string)result.proxyBaseUrl).Should().Be("http://localhost:5102");
+    }
+
+    [TestMethod]
+    public void Get_WithoutProxyPublicBaseUrl_ReturnsNull()
+    {
+        var controller = Controller();
+
+        dynamic result = controller.Get();
+
+        ((string?)result.proxyBaseUrl).Should().BeNull();
     }
 }

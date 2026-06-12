@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { ingestionUrl, projectSlug } from './ingestion';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ingestionUrl, projectSlug, resolveProxyBase } from './ingestion';
 
 describe('projectSlug', () => {
   it.each([
@@ -26,4 +26,25 @@ describe('ingestionUrl', () => {
       'https://host/showcase-project/openai/v1',
     );
   });
+});
+
+describe('resolveProxyBase', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('prefers the backend-advertised URL', () => {
+    expect(resolveProxyBase('http://localhost:5102')).toBe('http://localhost:5102');
+  });
+
+  it('trims a trailing slash on the advertised URL', () => {
+    expect(resolveProxyBase('http://localhost:5102/')).toBe('http://localhost:5102');
+  });
+
+  it.each([null, undefined, '', '   '])(
+    'falls back to the page origin when the advertised URL is %j',
+    advertised => {
+      // The vitest environment is node — no real window, so stub the origin.
+      vi.stubGlobal('window', { location: { origin: 'http://page-origin:5101' } });
+      expect(resolveProxyBase(advertised)).toBe('http://page-origin:5101');
+    },
+  );
 });
