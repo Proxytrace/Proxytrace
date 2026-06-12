@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { testSuitesApi } from '../../../api/test-suites';
 import { agentsApi } from '../../../api/agents';
+import { agentCallsApi } from '../../../api/agent-calls';
 import { evaluatorsApi } from '../../../api/evaluators';
 import { QUERY_KEYS } from '../../../api/query-keys';
 import useCurrentProject from '../../../hooks/useCurrentProject';
@@ -43,6 +44,17 @@ export function useSuiteAgents() {
   });
 
   return { agents: query.data?.items ?? [] };
+}
+
+export const WIZARD_TRACE_PAGE_SIZE = 200;
+
+/** Full candidate traces for the create-suite wizard's trace-curation step. */
+export function useSuiteCreateTraces(agentId: string, from: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.agentCallsForSuiteCreate(agentId, from),
+    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: WIZARD_TRACE_PAGE_SIZE, from }),
+    enabled: !!agentId,
+  });
 }
 
 /** All evaluators for the current project (used in create wizard). */

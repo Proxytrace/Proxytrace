@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import type { AgentCallDto, TestCaseDto } from '../../../api/models';
-import { agentCallsApi } from '../../../api/agent-calls';
-import { QUERY_KEYS } from '../../../api/query-keys';
+import { useEditSuiteTraces } from '../hooks/useEditSuiteQueries';
 import { FilterTabs } from '../../../components/ui/FilterTabs';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -47,13 +45,7 @@ export function TestCasesPanel({
   const [sub, setSub] = useState<'current' | 'add'>('current');
   const [search, setSearch] = useState('');
 
-  const { data: tracesData, isLoading: tracesLoading } = useQuery({
-    queryKey: QUERY_KEYS.agentCallsForSuiteEdit(agentId),
-    queryFn: () => agentCallsApi.listFull({ agentId, pageSize: 50 }),
-    enabled: sub === 'add',
-  });
-
-  const availableTraces = tracesData?.items ?? [];
+  const { traces: availableTraces, isLoading: tracesLoading } = useEditSuiteTraces(agentId, sub === 'add');
 
   const q = search.trim().toLowerCase();
   const filteredCases = q

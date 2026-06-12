@@ -10,7 +10,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { PlusIcon, TrashIcon } from '../../../components/icons';
 import { initials, colorFor } from '../projectsMeta';
-import { useModelEndpoints, useCreateProject, useDeleteProject } from '../hooks/useProjects';
+import { useCreateProject, useDeleteProject } from '../hooks/useProjects';
+import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { NewProjectModal } from '../NewProjectModal';
 import { SectionHeader } from '../components/SectionHeader';
 

@@ -1,32 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { agentsApi } from '../../api/agents';
-import { providersApi } from '../../api/providers';
 import type { AgentDto } from '../../api/models';
 import { Combobox } from '../../components/ui/Combobox';
+import useModelEndpoints from '../../hooks/useModelEndpoints';
 import useToast from '../../hooks/useToast';
+import { useUpdateAgentEndpoint } from './hooks/useAgents';
 
 export function EndpointSelector({ agent }: { agent: AgentDto }) {
-  const qc = useQueryClient();
   const { show: toast } = useToast();
-
-  const { data: endpoints = [] } = useQuery({
-    queryKey: ['all-endpoints'],
-    queryFn: () => providersApi.getAllModels(),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (endpointId: string) => agentsApi.updateEndpoint(agent.id, endpointId),
-    onSuccess: () => {
-      qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'agents' });
-      toast('Endpoint updated', 'success');
-    },
-  });
+  const { data: endpoints = [] } = useModelEndpoints();
+  const mutation = useUpdateAgentEndpoint(agent.id);
 
   return (
     <div data-write className="min-w-[200px]">
       <Combobox
         value={agent.endpointId}
-        onChange={id => { if (id !== agent.endpointId) mutation.mutate(id); }}
+        onChange={id => {
+          if (id !== agent.endpointId) {
+            mutation.mutate(id, { onSuccess: () => toast('Endpoint updated', 'success') });
+          }
+        }}
         items={endpoints}
         itemKey={ep => ep.id}
         itemLabel={ep => ep.modelName}

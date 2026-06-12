@@ -27,6 +27,17 @@ export function useAgentDetail(agentId: string | null) {
   return { agent: query.data, isLoading: query.isLoading };
 }
 
+/** Switches an agent's model endpoint; invalidates every agents-prefixed query. */
+export function useUpdateAgentEndpoint(agentId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (endpointId: string) => agentsApi.updateEndpoint(agentId, endpointId),
+    onSuccess: () => {
+      qc.invalidateQueries({ predicate: q => q.queryKey[0] === 'agents' });
+    },
+  });
+}
+
 /** Deletes an agent, invalidates the agents list, then runs `onSuccess(id)`. */
 export function useDeleteAgent(onSuccess: (deletedId: string) => void) {
   const qc = useQueryClient();

@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { providersApi } from '../../api/providers';
 import type { ModelEndpointDto, TestSuiteListItemDto } from '../../api/models';
 import { agentColor } from '../../lib/colors';
-import { QUERY_KEYS } from '../../api/query-keys';
+import useModelEndpoints from '../../hooks/useModelEndpoints';
 import { Modal } from '../../components/overlays/Modal';
 import { Button } from '../../components/ui/Button';
 import { RunForm } from './components/RunForm';
@@ -19,10 +17,7 @@ interface Props {
 
 export function RunConfirmModal({ suite, onClose, onSubmit, loading, done }: Props) {
   const navigate = useNavigate();
-  const { data: modelsData = [] } = useQuery({
-    queryKey: QUERY_KEYS.modelEndpoints,
-    queryFn: providersApi.getAllModels,
-  });
+  const { data: modelsData = [] } = useModelEndpoints();
   const [selectedEndpoints, setSelectedEndpoints] = useState<Set<string>>(new Set());
   const c = agentColor(suite.agentId);
   const isMulti = selectedEndpoints.size > 1;

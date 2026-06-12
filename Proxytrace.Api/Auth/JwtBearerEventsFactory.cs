@@ -32,6 +32,20 @@ internal static class JwtBearerEventsFactory
                     context.Token = queryToken;
                 }
             }
+
+            // Browser sessions carry the JWT in the httpOnly session cookie (local mode).
+            // An explicit Authorization header must win, but the handler only parses it
+            // *after* this event when Token is still null — so the cookie fallback has to
+            // step aside whenever a header is present, not just when Token is set.
+            if (string.IsNullOrEmpty(context.Token) &&
+                string.IsNullOrEmpty(context.Request.Headers.Authorization))
+            {
+                var cookieToken = context.Request.Cookies[SessionCookie.Name];
+                if (!string.IsNullOrEmpty(cookieToken))
+                {
+                    context.Token = cookieToken;
+                }
+            }
         },
         OnTokenValidated = async context =>
         {

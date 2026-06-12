@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { CheckIcon, ZapIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
-import { providersApi } from '../../../api/providers';
+import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { cn } from '../../../lib/cn';
 
 interface Props {
@@ -33,11 +32,7 @@ export function ComposeBox({
   const taRef = useRef<HTMLTextAreaElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  const { data: endpoints = [] } = useQuery({
-    queryKey: ['model-endpoints'],
-    queryFn: () => providersApi.getAllModels(),
-    enabled: !!onEndpointChange,
-  });
+  const { data: endpoints = [] } = useModelEndpoints(!!onEndpointChange);
 
   useEffect(() => {
     const ta = taRef.current;

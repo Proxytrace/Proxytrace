@@ -39,6 +39,8 @@ export const QUERY_KEYS = {
   appConfig: ['app-config'] as const,
   setupStatus: ['setup-status'] as const,
   invites: ['invites'] as const,
+  /** Public invite preview on the signup page, keyed by the invite token. */
+  invitePreview: (token: string) => ['invite', token] as const,
   providers: ['providers'] as const,
   providersOverview: ['providers', 'overview'] as const,
   projects: ['projects'] as const,
@@ -55,6 +57,8 @@ export const QUERY_KEYS = {
   /** Prefix matching every test-run-groups query — use for invalidation. */
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
+  /** Prefix matching every test-suites query — use for invalidation. */
+  testSuitesRoot: ['test-suites'] as const,
   /** A single (fat) test suite by id — full test cases for the edit dialog. 'detail' segment lets list invalidation cover it by prefix. */
   testSuite: (id: string) => ['test-suites', 'detail', id] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,

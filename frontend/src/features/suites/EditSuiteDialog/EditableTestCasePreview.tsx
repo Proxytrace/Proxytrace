@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TestCaseDto, ToolSpecDto } from '../../../api/models';
-import { testCasesApi } from '../../../api/test-cases';
+import { useUpdateTestCaseExpected } from '../hooks/useSuiteMutations';
 import { Button } from '../../../components/ui/Button';
 import { EditPencilIcon } from '../../../components/icons';
 import useToast from '../../../hooks/useToast';
@@ -17,16 +16,11 @@ interface Props {
 export function EditableTestCasePreview({ testCase, tools }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => expectedFromDto(testCase.expectedOutput));
-  const qc = useQueryClient();
   const { show: toast } = useToast();
 
-  const save = useMutation({
-    mutationFn: () => testCasesApi.update(testCase.id, toMessage(draft)),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['test-suites'] });
-      toast('Expected output updated', 'success');
-      setEditing(false);
-    },
+  const save = useUpdateTestCaseExpected(testCase.id, () => {
+    toast('Expected output updated', 'success');
+    setEditing(false);
   });
 
   if (!editing) {
@@ -65,7 +59,7 @@ export function EditableTestCasePreview({ testCase, tools }: Props) {
         <Button
           variant="primary"
           size="sm"
-          onClick={() => save.mutate()}
+          onClick={() => save.mutate(toMessage(draft))}
           disabled={!validateExpected(draft) || save.isPending}
           loading={save.isPending}
         >

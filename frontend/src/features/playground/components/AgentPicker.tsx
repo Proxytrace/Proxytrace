@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { agentsApi } from '../../../api/agents';
 import type { AgentDto } from '../../../api/models';
+import { usePlaygroundAgents } from '../hooks/usePlaygroundAgents';
 import { ChevronDownIcon, CheckIcon } from '../../../components/icons';
 import { RowButton } from '../../../components/ui/RowButton';
 import { AgentAvatar } from './AgentAvatar';
@@ -16,10 +15,7 @@ interface Props {
 }
 
 export function AgentPicker({ projectId, selectedAgentId, selectedAgent, onPick, compact = false }: Props) {
-  const { data, isLoading } = useQuery({
-    queryKey: ['agents', projectId],
-    queryFn: () => agentsApi.list({ projectId, pageSize: 200 }),
-  });
+  const { data, isLoading } = usePlaygroundAgents(projectId);
 
   const agents = data?.items ?? [];
   const [open, setOpen] = useState(false);

@@ -11,7 +11,8 @@ import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { TrashIcon, EditIcon, CheckIcon, XIcon } from '../../../components/icons';
 import { fmtDate } from '../../../lib/format';
 import { endpointLabel } from '../projectsMeta';
-import { useModelEndpoints, useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
+import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
+import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { SectionHeader } from '../components/SectionHeader';
 
 /** General settings for the active project: rename, system endpoint, delete. */

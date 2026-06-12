@@ -14,10 +14,11 @@ export function useEditSuiteEvaluators(projectId?: string) {
 }
 
 /** Agent calls available to add as new test cases in the edit-suite dialog. */
-export function useEditSuiteTraces(agentId: string) {
+export function useEditSuiteTraces(agentId: string, enabled = true) {
   const query = useQuery({
     queryKey: QUERY_KEYS.agentCallsForSuiteEdit(agentId),
     queryFn: () => agentCallsApi.listFull({ agentId, pageSize: 50 }),
+    enabled,
   });
-  return { traces: query.data?.items ?? [] };
+  return { traces: query.data?.items ?? [], isLoading: query.isLoading };
 }

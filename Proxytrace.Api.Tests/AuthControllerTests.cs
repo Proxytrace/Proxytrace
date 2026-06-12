@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -121,6 +122,70 @@ public sealed class AuthControllerTests : BaseTest<Module>
         status.StatusCode.Should().Be(410);
     }
 
+    [TestMethod]
+    public async Task Setup_ValidRequest_SetsHttpOnlySessionCookie()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Setup(new SetupAdminRequest("admin@example.com", "StrongPass1!Foo"), CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        var setCookie = controller.Response.Headers.SetCookie.ToString();
+        setCookie.Should().Contain("proxytrace_session=");
+        setCookie.ToLowerInvariant().Should().Contain("httponly").And.Contain("samesite=strict");
+    }
+
+    [TestMethod]
+    public async Task Login_ValidCreds_SetsSessionCookieWithToken()
+    {
+        IServiceProvider services = GetServices();
+        var setupController = ResolveController(services);
+        await setupController.Setup(new SetupAdminRequest("admin@example.com", "StrongPass1!Foo"), CancellationToken);
+
+        var controller = ResolveController(services);
+        var result = await controller.Login(new LoginRequest("admin@example.com", "StrongPass1!Foo"), CancellationToken);
+
+        result.Value.Should().NotBeNull();
+        var setCookie = controller.Response.Headers.SetCookie.ToString();
+        setCookie.Should().Contain($"proxytrace_session={result.Value!.Token}");
+    }
+
+    [TestMethod]
+    public async Task Login_BadCreds_SetsNoCookie()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        await controller.Login(new LoginRequest("nobody@example.com", "wrongpassword"), CancellationToken);
+
+        controller.Response.Headers.SetCookie.ToString().Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void Logout_ClearsSessionCookie()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = controller.Logout();
+
+        result.Should().BeOfType<NoContentResult>();
+        var setCookie = controller.Response.Headers.SetCookie.ToString();
+        setCookie.Should().Contain("proxytrace_session=;");
+    }
+
+    [TestMethod]
+    public async Task Me_WithoutAuthenticatedUser_ReturnsUnauthorized()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.Me(CancellationToken);
+
+        result.Result.Should().BeOfType<UnauthorizedResult>();
+    }
+
     private static AuthController ResolveController(IServiceProvider services) => new(
         new AuthOptions(),
         services.GetRequiredService<ISetupService>(),
@@ -131,5 +196,8 @@ public sealed class AuthControllerTests : BaseTest<Module>
         services.GetRequiredService<IPasswordPolicy>(),
         services.GetRequiredService<ICurrentUserAccessor>(),
         services.GetRequiredService<IStreamTicketService>(),
-        new ConfigurationBuilder().Build());
+        new ConfigurationBuilder().Build())
+    {
+        ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
+    };
 }

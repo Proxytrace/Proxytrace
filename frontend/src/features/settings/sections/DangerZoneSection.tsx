@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { setupApi } from '../../../api/setup';
-import { QUERY_KEYS } from '../../../api/query-keys';
 import useToast from '../../../hooks/useToast';
+import { useCleanupNonModelData } from '../hooks/useDangerZone';
 import { ConfirmDialog } from '../../../components/overlays/ConfirmDialog';
 import { Button } from '../../../components/ui/Button';
 import { TrashIcon } from '../../../components/icons';
@@ -28,27 +26,12 @@ const CONFIRM_PHRASE = 'delete all non-model data';
 
 /** Destructive workspace-wide maintenance: wipe runtime/trace data while keeping configuration. */
 export function DangerZoneSection() {
-  const qc = useQueryClient();
   const { show: toast } = useToast();
   const [confirm, setConfirm] = useState(false);
 
-  const cleanup = useMutation({
-    mutationFn: () => setupApi.cleanupNonModelData(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['agent-calls'] });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
-      qc.invalidateQueries({ queryKey: ['proposals'] });
-      qc.invalidateQueries({ queryKey: ['statistics-summary'] });
-      qc.invalidateQueries({ queryKey: ['statistics-latency'] });
-      qc.invalidateQueries({ queryKey: ['statistics-model-breakdown'] });
-      qc.invalidateQueries({ queryKey: ['statistics-agent-breakdown'] });
-      qc.invalidateQueries({ queryKey: ['agent-stats-overview'] });
-      qc.invalidateQueries({ queryKey: ['agent-suite-pass-rates'] });
-      qc.invalidateQueries({ queryKey: ['agent-counts'] });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.testSuites() });
-      setConfirm(false);
-      toast('Non-model data deleted', 'success');
-    },
+  const cleanup = useCleanupNonModelData(() => {
+    setConfirm(false);
+    toast('Non-model data deleted', 'success');
   });
 
   return (

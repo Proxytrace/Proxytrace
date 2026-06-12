@@ -115,9 +115,26 @@ function LocalAuthGate({ children }: { children: React.ReactNode }) {
   const local = useLocalAuth();
   const { pathname } = useLocation();
 
+  // The session lives in an httpOnly cookie; wait for the one-time /me restore so an
+  // authenticated reload doesn't flash the login form.
+  if (local.isRestoring) return <PageLoader />;
+
   const currentUser: CurrentUser | null = local.user
     ? { email: local.user.email, role: local.user.role, signOut: () => local.signoutRedirect() }
     : null;
+
+  // Honest /login URL: signout lands here, and an authenticated visit bounces home.
+  // Unauthenticated users on any *other* path still get the login form rendered in
+  // place (below), so deep links survive the login round-trip.
+  if (pathname === '/login') {
+    return local.isAuthenticated ? (
+      <Navigate to="/dashboard" replace />
+    ) : (
+      <Suspense fallback={<PageLoader />}>
+        <Login />
+      </Suspense>
+    );
+  }
 
   if (pathname === '/signup' || pathname === '/setup') {
     return <CurrentUserContext.Provider value={currentUser}>{children}</CurrentUserContext.Provider>;

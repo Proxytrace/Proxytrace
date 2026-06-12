@@ -56,6 +56,7 @@ export function overridesFromAgent(agent: AgentDto): PlaygroundOverrides {
     systemPrompt: agent.systemMessage ?? '',
     parameters: agent.modelParameters ?? EMPTY_PARAMETERS,
     tools: (agent.tools ?? []).map<PlaygroundToolOverride>(t => ({
+      localId: newId(),
       name: t.name,
       description: t.description,
       arguments: (t.arguments ?? []).map(a => ({
