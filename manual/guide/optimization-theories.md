@@ -44,9 +44,10 @@ Proposed → Validating → Validated   → becomes an Optimization Proposal
    are hidden from the [test run](/guide/running-tests) list by default so they don't clutter
    your own results — they live with the theory and its resulting proposal instead, and can be
    revealed with the **A/B runs** toggle.
-3. **Validated** — the change measurably improved the agent. A Draft **proposal** is
-   created automatically, carrying the comparison as evidence.
-4. **Invalidated** — the change did not improve the agent. The theory is kept so the same
+3. **Validated** — the change improved the agent beyond sampling noise (p-value ≤ 0.05).
+   A Draft **proposal** is created automatically, carrying the comparison as evidence.
+4. **Invalidated** — the change did not improve the agent, or the improvement was within
+   the noise. The theory is kept so the same
    idea is not tried again needlessly.
 
 You never lose work: every hypothesis — including the ones that did not pan out — is

@@ -25,16 +25,32 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
     [TestMethod]
     public async Task Validate_CandidateImproves_ProducesProposal()
     {
-        var f = Build(baselinePassed: [true, false], candidatePassed: [true, true]);
+        // A large improvement over a decent sample (10/50 → 45/50) — far beyond sampling noise.
+        var f = Build(baselinePassed: Passes(10, 50), candidatePassed: Passes(45, 50));
 
         var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
 
         outcome.Proposal.Should().NotBeNull();
+        outcome.BaselinePassRate.Should().Be(0.2);
+        outcome.ProjectedPassRate.Should().Be(0.9);
+        outcome.PValue.Should().BeLessThan(AbTestTheoryValidator<ISystemPromptTheory>.SignificanceLevel);
+        f.Captured.CurrentPassRate.Should().Be(0.2);
+        f.Captured.ProposedPassRate.Should().Be(0.9);
+    }
+
+    [TestMethod]
+    public async Task Validate_ImprovementWithinNoise_ReturnsNoProposalButRecordsMetrics()
+    {
+        // 1/2 → 2/2 looks like an improvement but is statistically indistinguishable from a
+        // single flaky case — it must not spawn a proposal.
+        var f = Build(baselinePassed: [true, false], candidatePassed: [true, true]);
+
+        var outcome = await f.Validator.ValidateAsync(f.Theory, CancellationToken);
+
+        outcome.Proposal.Should().BeNull();
         outcome.BaselinePassRate.Should().Be(0.5);
         outcome.ProjectedPassRate.Should().Be(1.0);
-        outcome.PValue.Should().NotBeNull();
-        f.Captured.CurrentPassRate.Should().Be(0.5);
-        f.Captured.ProposedPassRate.Should().Be(1.0);
+        outcome.PValue.Should().BeGreaterThan(AbTestTheoryValidator<ISystemPromptTheory>.SignificanceLevel);
     }
 
     [TestMethod]
@@ -72,6 +88,9 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
 
         outcome.Proposal.Should().BeNull();
     }
+
+    private static bool[] Passes(int passed, int total)
+        => Enumerable.Range(0, total).Select(i => i < passed).ToArray();
 
     private Fixture Build(bool[] baselinePassed, bool[] candidatePassed)
     {

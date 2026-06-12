@@ -44,4 +44,14 @@ public interface IOptimizationTheoryRepository : IRepository<IOptimizationTheory
     Task<int> CountActiveByProjectAsync(
         Guid projectId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns all in-flight theories (<see cref="TheoryStatus.Proposed"/> or
+    /// <see cref="TheoryStatus.Validating"/>) across every project, oldest first. Used to
+    /// re-queue the validation backlog after a restart — the queue itself is in-memory, so
+    /// without recovery these theories would stay in-flight forever and permanently consume
+    /// their project's submission quota.
+    /// </summary>
+    Task<IReadOnlyList<IOptimizationTheory>> GetActiveAsync(
+        CancellationToken cancellationToken = default);
 }

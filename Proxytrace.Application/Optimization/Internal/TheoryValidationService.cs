@@ -156,6 +156,8 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
     {
         try
         {
+            await RecoverInFlightTheoriesAsync(cancellationToken);
+
             await foreach (var theoryId in channel.Reader.ReadAllAsync(cancellationToken))
             {
                 await ValidateAsync(theoryId, cancellationToken);
@@ -164,6 +166,34 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         catch (OperationCanceledException)
         {
             // graceful shutdown
+        }
+    }
+
+    /// <summary>
+    /// Re-queues theories that were Proposed or Validating when the process last stopped.
+    /// The validation queue is in-memory, so without this the backlog would be stranded —
+    /// never validated, yet permanently counted against the per-project submission quota.
+    /// </summary>
+    private async Task RecoverInFlightTheoriesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var active = await theories.GetActiveAsync(cancellationToken);
+            foreach (var theory in active)
+            {
+                await channel.Writer.WriteAsync(theory.Id, cancellationToken);
+            }
+
+            if (active.Count > 0)
+                logger.LogInformation("Re-queued {Count} in-flight theory/theories after restart", active.Count);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to recover in-flight theories after restart");
         }
     }
 
@@ -176,10 +206,21 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
             return;
         }
 
+        if (theory.Status is TheoryStatus.Validated or TheoryStatus.Invalidated)
+        {
+            // Already settled — e.g. a theory submitted while restart recovery was re-queuing
+            // the backlog can be enqueued twice.
+            return;
+        }
+
         try
         {
-            theory = await theory.SetValidating(cancellationToken);
-            theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+            // A recovered theory may already be Validating from before the restart.
+            if (theory.Status == TheoryStatus.Proposed)
+            {
+                theory = await theory.SetValidating(cancellationToken);
+                theoryBroadcaster.Publish(TheoryStatusChangedEvent.Create(theory));
+            }
 
             // Link the candidate A/B run to the theory the moment it is created — while still
             // Validating — so reviewers can watch the in-flight run, not just the finished one.

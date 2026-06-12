@@ -85,10 +85,10 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
     }
 
     /// <summary>
-    /// Scenario: Three alternatives all beat the current on cost, but the winner
-    /// also needs to beat the runner-up on the other metric (latency).
-    /// Alt-A: cheapest but slowest latency => fails the "other metric not worse than runner-up" check.
-    /// Alt-B: second cheapest, good latency => qualifies.
+    /// Scenario: Three alternatives all beat the current on cost, but the cost winner
+    /// must also not regress latency vs the current model.
+    /// budget-model: cheapest but far slower than current => disqualified on the cost path.
+    /// balanced-model: fastest, cheaper than current => qualifies on the latency path.
     /// </summary>
     [TestMethod]
     public async Task CheapestModelTooSlow_SecondCheapestQualifies()
@@ -102,13 +102,31 @@ public sealed class SwitchModelOptimizerScenarioTests : BaseTest<Module>
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
 
-        // budget-model wins on cost but its latency (50s) is worse than runner-up balanced-model (6s)
-        // On latency metric: balanced-model (6s) wins, runner-up is premium-model (8s).
-        // balanced-model cost (5) vs runner-up cost on latency (premium at 15) => not worse. 
-        // Margin: (8-6)/8 = 25% > 10% ✓. Pass rate equal ✓. Other metric (cost) not worse ✓.
+        // Cost path: budget-model (2) is cheapest, but its latency (50s) regresses current (10s) => disqualified.
+        // Latency path: balanced-model (6s) beats current (10s) by 40% ✓, its cost (5) doesn't
+        // regress current (20) ✓, pass rate equal ✓ => balanced-model is proposed.
         theories.Should().ContainSingle();
         Captured c = fixture.Captured;
         c.Endpoint.Should().BeSameAs(fixture.RunsByName["balanced-model"].Endpoint);
+    }
+
+    /// <summary>
+    /// Scenario: The cheapest alternative beats every other alternative, but its pass rate
+    /// regresses the current model's. All gates compare against the current model — the model
+    /// the agent would actually switch away from — so no switch may be proposed.
+    /// </summary>
+    [TestMethod]
+    public async Task CheaperModelRegressesCurrentPassRate_NoRecommendation()
+    {
+        Fixture fixture = Build(
+            Spec("current", cost: 5.0m, latency: Sec(5), isCurrent: true, passed: 9),
+            Spec("cheap-a", cost: 2.0m, latency: Sec(5), passed: 8),
+            Spec("cheap-b", cost: 2.4m, latency: Sec(5), passed: 8));
+
+        var theories = await fixture.Optimizer.DiscoverTheories(
+            fixture.Group, fixture.Runs, CancellationToken);
+
+        theories.Should().BeEmpty();
     }
 
     /// <summary>

@@ -16,6 +16,12 @@ namespace Proxytrace.Application.Optimization.Internal.Validation;
 internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
     where TTheory : class, IOptimizationTheory
 {
+    /// <summary>
+    /// Maximum two-sided p-value at which an observed pass-rate improvement counts as real
+    /// rather than sampling noise. Improvements above this threshold are rejected.
+    /// </summary>
+    internal const double SignificanceLevel = 0.05;
+
     protected AbTestTheoryValidator(Lazy<ITestRunnerService> testRunnerService, ITestRunRepository testRuns)
         : base(testRunnerService, testRuns)
     {
@@ -52,6 +58,14 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
         double? pValue = ProportionStats.TwoSidedPValue(basePasses, baseTotal, candPasses, candTotal);
 
         if (candidatePassRate <= basePassRate)
+        {
+            return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue, candidateRun.Id);
+        }
+
+        // An improvement only wins when it is distinguishable from sampling noise — on a small
+        // suite a couple of flaky cases can flip the raw pass rate either way. Without this gate
+        // every lucky run would spawn a proposal.
+        if (pValue is not { } p || p > SignificanceLevel)
         {
             return TheoryValidationOutcome.Rejected(basePassRate, candidatePassRate, pValue, candidateRun.Id);
         }

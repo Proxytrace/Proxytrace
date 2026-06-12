@@ -14,6 +14,14 @@ public sealed class ModelProviderDtoMapper
     public ModelProviderDto ToDto(IModelProvider p) =>
         new(p.Id, p.Name, p.Endpoint.ToString(), p.ApiKey, p.Kind, p.CreatedAt, p.UpdatedAt);
 
+    /// <summary>
+    /// Maps a provider without its upstream API key, for endpoints readable by non-admin
+    /// members (e.g. the by-id lookup used by Tracey tools). The secret must only ever be
+    /// returned from admin-gated endpoints.
+    /// </summary>
+    public ModelProviderDto ToRedactedDto(IModelProvider p) =>
+        new(p.Id, p.Name, p.Endpoint.ToString(), string.Empty, p.Kind, p.CreatedAt, p.UpdatedAt);
+
     public ApiKeyDto ToKeyDto(IApiKey k) =>
         new(k.Id, k.Name, k.ApiKey, k.Project.Id, k.Project.Name, k.Provider.Id, k.Provider.Name, k.CreatedAt);
 

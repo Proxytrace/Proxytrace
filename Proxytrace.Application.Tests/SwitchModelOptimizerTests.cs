@@ -65,11 +65,11 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
     [TestMethod]
     public async Task DiscoverTheories_WinningMarginBelowThreshold_ReturnsEmpty()
     {
-        // cheapest beats runner-up by <10%; latency identical everywhere
+        // cheapest beats the current model by <10%; latency identical everywhere
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(5), isCurrent: true),
-            Spec("altA", cost: 9.0m, latency: Sec(5)),
-            Spec("altB", cost: 9.5m, latency: Sec(5)));
+            Spec("altA", cost: 9.5m, latency: Sec(5)),
+            Spec("altB", cost: 9.8m, latency: Sec(5)));
 
         var theories = await fixture.Optimizer.DiscoverTheories(
             fixture.Group, fixture.Runs, CancellationToken);
@@ -79,9 +79,9 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
     }
 
     [TestMethod]
-    public async Task DiscoverTheories_OtherStatWorseThanRunnerUp_ReturnsEmpty()
+    public async Task DiscoverTheories_OtherStatWorseThanCurrent_ReturnsEmpty()
     {
-        // altA wins cost with margin, but its latency is worse than the cost runner-up (altB)
+        // altA wins cost with margin, but its latency regresses the current model's
         Fixture fixture = Build(
             Spec("current", cost: 10m, latency: Sec(5), isCurrent: true),
             Spec("altA", cost: 5m, latency: Sec(20)),
@@ -156,7 +156,7 @@ public sealed class SwitchModelOptimizerTests : BaseTest<Module>
         Fixture fixture = Build(
             Spec("current", cost: 12m, latency: Sec(100), isCurrent: true),
             Spec("C", cost: 10m, latency: Sec(50)),
-            Spec("L", cost: 50m, latency: Sec(10)),
+            Spec("L", cost: 11m, latency: Sec(10)),
             Spec("F1", cost: 20m, latency: Sec(60)),
             Spec("F2", cost: 60m, latency: Sec(20)));
 
