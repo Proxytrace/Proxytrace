@@ -9,8 +9,26 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Adoption tracking for promoted proposals** — a promoted proposal now waits in
+  *"Promoted — awaiting adoption"* and flips to **Adopted** automatically when the exact
+  change shows up in the agent's live traffic (new prompt/tool version, or calls arriving on
+  the proposed model endpoint); auto-adoptions link the detected agent version ("Adopted in
+  v{N}"). A **Mark adopted** button covers tweaked or undetectable adoptions.
+- **Handoff package on promote** — copy buttons for the proposed prompt / tools JSON / model
+  name, a downloadable markdown "apply this change" doc with the A/B evidence, and a
+  machine-readable artifact endpoint (`GET /api/proposals/{id}/artifact`) for scripted
+  workflows.
+- **Generate JSON schema from an example** — the JSON Schema Match evaluator form can now
+  infer a draft 2020-12 schema from a pasted example JSON value (every observed key becomes
+  required; loosen by hand where needed).
+
 ### Changed
 
+- **Promote is honest now** — Proxytrace is an observing proxy and cannot change your
+  agent's code; the UI no longer claims a promoted change "has been applied to the agent".
+  Proposal status changes are validated server-side (illegal transitions return 409).
 - **Theory validation is now statistically gated** — an A/B pass-rate improvement only
   produces an optimization proposal when it is significant (two-proportion p-value ≤ 0.05);
   lucky runs on small suites no longer spawn proposals.
@@ -18,6 +36,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   the no-regression check on the other metric, and the pass-rate gate are all measured
   against the model the agent would actually switch away from (previously parts were
   measured against the runner-up, which could propose switches that regressed the agent).
+- **Playground conversation uses the shared message bubbles** — turns in the agent
+  playground now render with the same collapsible bubbles as the trace detail drawer
+  (role accents, copy button, character count, raw/JSON/markdown views) while keeping
+  edit-in-place, delete, and drag-to-reorder.
 
 ### Fixed
 

@@ -78,7 +78,8 @@ function outcomeState(status: TheoryStatus, proposal: OptimizationProposalDto | 
   }
   if (status === TheoryStatus.Validated) {
     switch (proposal?.status) {
-      case ProposalStatus.Accepted: return { state: 'complete', statusLabel: 'Promoted' };
+      case ProposalStatus.Accepted: return { state: 'current', statusLabel: 'Awaiting adoption' };
+      case ProposalStatus.Adopted: return { state: 'complete', statusLabel: 'Adopted' };
       case ProposalStatus.Rejected: return { state: 'rejected', statusLabel: 'Dismissed' };
       default: return { state: 'current', statusLabel: 'Pending review' };
     }

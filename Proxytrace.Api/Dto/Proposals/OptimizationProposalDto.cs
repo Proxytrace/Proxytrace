@@ -17,6 +17,10 @@ public record OptimizationProposalDto(
     double? CurrentPassRate,
     double? ProposedPassRate,
     double? ExpectedPassRateDelta,
+    DateTimeOffset? AdoptedAt,
+    Guid? AdoptedAgentVersionId,
+    int? AdoptedAgentVersionNumber,
+    bool? AdoptedManually,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt
 );

@@ -713,7 +713,7 @@ export interface AgentCallFilter {
 
 /* ── Optimization ── */
 export enum ProposalKind { SystemPrompt = 'SystemPrompt', Tool = 'Tool', ModelSwitch = 'ModelSwitch' }
-export enum ProposalStatus { Draft = 'Draft', Accepted = 'Accepted', Rejected = 'Rejected' }
+export enum ProposalStatus { Draft = 'Draft', Accepted = 'Accepted', Rejected = 'Rejected', Adopted = 'Adopted' }
 export enum Priority { Low = 'Low', Medium = 'Medium', High = 'High', Critical = 'Critical' }
 
 export interface ModelSwitchDetailsDto {
@@ -767,6 +767,10 @@ export interface OptimizationProposalDto {
   currentPassRate: number | null;
   proposedPassRate: number | null;
   expectedPassRateDelta: number | null;
+  adoptedAt: string | null;
+  adoptedAgentVersionId: string | null;
+  adoptedAgentVersionNumber: number | null;
+  adoptedManually: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -779,6 +783,47 @@ export interface ProposalCreatedEvent {
   priority: Priority;
   rationale: string;
   createdAt: string;
+}
+
+export interface ProposalStatusChangedEvent {
+  type: 'proposal-status-changed';
+  id: string;
+  agentId: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  adoptedAt: string | null;
+  adoptedAgentVersionId: string | null;
+  adoptedAgentVersionNumber: number | null;
+  adoptedManually: boolean | null;
+  updatedAt: string;
+}
+
+export type ProposalEvent = ProposalCreatedEvent | ProposalStatusChangedEvent;
+
+/** Machine-readable handoff package from GET /api/proposals/{id}/artifact. */
+export interface ProposalArtifactDto {
+  schemaVersion: number;
+  proposalId: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  generatedAt: string;
+  agent: { id: string; name: string };
+  priority: Priority;
+  rationale: string;
+  change: ProposalDetailsDto;
+  evidence: {
+    currentPassRate: number | null;
+    proposedPassRate: number | null;
+    expectedPassRateDelta: number | null;
+    evidenceTestRunIds: string[];
+    abTestRun: AbTestRunSummaryDto | null;
+  };
+  adoption: {
+    adoptedAt: string | null;
+    adoptedAgentVersionId: string | null;
+    adoptedAgentVersionNumber: number | null;
+    adoptedManually: boolean | null;
+  };
 }
 
 export enum TheoryStatus { Proposed = 'Proposed', Validating = 'Validating', Validated = 'Validated', Invalidated = 'Invalidated' }

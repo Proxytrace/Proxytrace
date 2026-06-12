@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ChevronRightIcon } from '../icons';
 import { CopyButton } from './CopyButton';
 import { cn } from '../../lib/cn';
@@ -6,7 +6,7 @@ import { MessageContent } from '../conversation/MessageContent';
 import { MessageViewSelect } from '../conversation/MessageViewSelect';
 import { detectView, type MessageView } from '../conversation/messageView';
 
-type RoleKey = 'user' | 'assistant' | 'system';
+type RoleKey = 'user' | 'assistant' | 'system' | 'tool';
 
 interface RoleStyle {
   accentText: string;
@@ -42,10 +42,18 @@ const ROLES: Record<RoleKey, RoleStyle> = {
     hover: 'hover:bg-[var(--bg-wash-hover)]',
     label: 'SYSTEM',
   },
+  tool: {
+    accentText: 'text-success',
+    accentBg: 'bg-success',
+    bodyBg: 'bg-success-subtle',
+    border: 'border-[color-mix(in_srgb,var(--success)_25%,transparent)]',
+    hover: 'hover:bg-success-subtle',
+    label: 'TOOL',
+  },
 };
 
 function roleKey(role: string): RoleKey {
-  return role === 'user' || role === 'system' ? role : 'assistant';
+  return role === 'user' || role === 'system' || role === 'tool' ? role : 'assistant';
 }
 
 interface Props {
@@ -53,15 +61,20 @@ interface Props {
   defaultOpen?: boolean;
   /** Overrides the role-derived header label (e.g. "Expected"). */
   label?: string;
+  /** Extra header controls (revealed on hover, like the copy button). */
+  actions?: ReactNode;
+  /** Mid-stream: forces the bubble open, renders raw text with a cursor, animates the border. */
+  streaming?: boolean;
 }
 
-export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
+export function MessageBubble({ msg, defaultOpen = true, label, actions, streaming }: Props) {
   const role = ROLES[roleKey(msg.role)];
   const [open, setOpen] = useState(defaultOpen);
 
   const content = msg.content?.trim() ?? '';
   const [view, setView] = useState<MessageView>(() => detectView(content));
-  if (!content) return null;
+  if (!content && !streaming) return null;
+  const isOpen = open || streaming;
 
   const oneLine = content.replace(/\s+/g, ' ');
   const preview = oneLine.length > 90 ? oneLine.slice(0, 90) + '…' : oneLine;
@@ -70,18 +83,18 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
 
   return (
     <div
-      className={cn('relative group rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border)}
+      className={cn('relative group rounded-[12px] overflow-hidden bg-card-2 border shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]', role.border, streaming && 'streaming-border')}
     >
       <div className="flex items-center gap-2 px-3 py-[10px]">
         <button
           type="button"
-          aria-expanded={open}
+          aria-expanded={isOpen}
           onClick={() => setOpen(o => !o)}
           className={cn('flex flex-1 min-w-0 items-center gap-2 text-left bg-transparent border-0 cursor-pointer transition-colors duration-100 rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]', role.hover)}
         >
           <span
             aria-hidden
-            className={cn('inline-flex shrink-0 transition-transform duration-150', role.accentText, open && 'rotate-90')}
+            className={cn('inline-flex shrink-0 transition-transform duration-150', role.accentText, isOpen && 'rotate-90')}
           >
             <ChevronRightIcon size={11} strokeWidth={2.5} />
           </span>
@@ -89,7 +102,7 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
           <span className={cn('font-mono text-[10.5px] font-bold tracking-[0.08em] shrink-0', role.accentText)}>
             {label ?? role.label}
           </span>
-          {!open && (
+          {!isOpen && (
             <span className="text-[12px] truncate min-w-0 text-secondary">
               {preview}
             </span>
@@ -100,16 +113,31 @@ export function MessageBubble({ msg, defaultOpen = true, label }: Props) {
           label="Copy message"
           className="shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-[var(--motion-fast)]"
         />
+        {actions}
         <span className="font-mono text-[9.5px] leading-none tracking-[0.06em] shrink-0 text-muted">
           {charCount.toLocaleString()} chars
         </span>
-        {open && <MessageViewSelect value={view} onChange={setView} />}
+        {isOpen && !streaming && <MessageViewSelect value={view} onChange={setView} />}
       </div>
 
-      {open && (
+      {isOpen && (
         <div className="border-t border-t-[rgba(255,255,255,0.05)]">
           <div className={cn('px-[14px] py-[12px]', role.bodyBg)}>
-            <MessageContent content={content} view={view} isSystem={isSystem} />
+            {streaming ? (
+              <div className="text-[13px] leading-[1.65] whitespace-pre-wrap text-primary">
+                {msg.content}
+                <span
+                  aria-hidden
+                  className={cn(
+                    'inline-block w-[8px] h-[15px] align-text-bottom ml-[1px] rounded-[1px]',
+                    'animate-[pulse-dot_0.9s_ease-in-out_infinite] motion-reduce:animate-none',
+                    role.accentBg,
+                  )}
+                />
+              </div>
+            ) : (
+              <MessageContent content={content} view={view} isSystem={isSystem} />
+            )}
           </div>
         </div>
       )}

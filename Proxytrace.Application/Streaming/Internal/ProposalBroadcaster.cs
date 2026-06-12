@@ -1,6 +1,6 @@
 namespace Proxytrace.Application.Streaming.Internal;
 
-internal sealed class ProposalBroadcaster : AgentScopedBroadcaster<ProposalCreatedEvent>, IProposalBroadcaster
+internal sealed class ProposalBroadcaster : AgentScopedBroadcaster<ProposalEvent>, IProposalBroadcaster
 {
-    protected override Guid KeyOf(ProposalCreatedEvent evt) => evt.AgentId;
+    protected override Guid KeyOf(ProposalEvent evt) => evt.AgentId;
 }

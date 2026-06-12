@@ -17,7 +17,8 @@ Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 - **Details** — the concrete, typed change (e.g. the new model, or the proposed prompt
   text).
 - **Evidence** — the specific test runs that justify the proposal.
-- **Status** — `Review`, `Approved`, or `Rejected`.
+- **Status** — `Draft` (awaiting review), `Accepted` (promoted, awaiting adoption),
+  `Adopted` (the change is live in the agent), or `Rejected` (dismissed).
 
 ## Reviewing proposals
 
@@ -29,11 +30,46 @@ proposal belongs to a **Validated** theory, shown in the board's *Validated* col
    full review drawer.
 2. In the drawer, read the rationale, inspect the A/B results and linked evidence runs, and
    compare the proposed change against the current agent definition.
-3. **Approve** to accept it, or **Dismiss** to reject it.
+3. **Promote** to accept it, or **Dismiss** to reject it.
+
+## Promoting = handoff, not auto-apply
+
+Proxytrace sits between your agent and the model provider as an observing proxy — your
+agent's actual system prompt, tool definitions, and model live **in your code**, and
+Proxytrace cannot change them. Promoting a proposal therefore does not modify your agent.
+It marks the change as approved and gives you everything needed to apply it yourself:
+
+- **Copy buttons** — the proposed system prompt verbatim, the proposed tool definitions as
+  JSON, or the target model name, depending on the proposal kind.
+- **Handoff doc** — a generated markdown document (copy or download) with the before/after
+  change, the rationale, and the A/B evidence; ready to paste into a ticket or PR
+  description.
+- **Artifact API** — `GET /api/proposals/{id}/artifact` returns the same package as
+  machine-readable JSON, for scripted workflows (e.g. a CI job that regenerates your agent
+  config).
+
+## Adoption tracking
+
+After you promote a proposal, Proxytrace watches the agent's live traffic for the change:
+
+- A **prompt or tool** proposal flips to **Adopted** when a request arrives whose system
+  prompt / tool set matches the proposed change **exactly** (a new agent version is detected
+  and linked — the board shows *"Adopted in v{N}"*).
+- A **model switch** proposal flips to **Adopted** when the agent's calls start arriving on
+  the proposed model endpoint.
+
+Detection is exact on purpose — if you applied a tweaked variant of the change (or
+Proxytrace cannot see it, e.g. traffic got attributed to a different agent), use the
+**Mark adopted** button on the promoted proposal instead.
+
+::: tip
+Send the `X-Proxytrace-Agent` header with your agent's calls so traffic is attributed to the
+right agent and adoption is detected reliably.
+:::
 
 ## Deduplication
 
-If you **Reject** or **Approve** a proposal, the optimizer remembers the exact change it
+If you **Dismiss** or **Promote** a proposal, the optimizer remembers the exact change it
 suggested. The next time it would surface an identical proposal (same agent + same
 proposed change), it suppresses it instead of asking you again. The proposal is only
 re-surfaced after **3 more completed test-run groups** have run against that agent — the
@@ -45,6 +81,6 @@ identical re-suggestions are suppressed.
 
 ## Closing the loop
 
-Approving a proposal is the final step of the Proxytrace loop: traffic was captured,
-curated into benchmarks, evaluated, and the results turned into a concrete improvement you
-can act on with confidence.
+Adoption is the final step of the Proxytrace loop: traffic was captured, curated into
+benchmarks, evaluated, the results turned into a validated improvement, and Proxytrace
+confirmed the improvement is now live in your agent.

@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using Proxytrace.Common.Serialization;
 using Proxytrace.Common.Validation;
 using Proxytrace.Domain.Agent;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Internal;
 using Proxytrace.Domain.Proposal;
 using Proxytrace.Domain.TestRun;
@@ -14,7 +15,7 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
 {
     public IAgent Agent { get; }
     public ProposalKind Kind => ProposalKind.SystemPrompt;
-    public ProposalStatus Status { get; }
+    public ProposalStatus Status { get; private init; }
     public Priority Priority { get; }
     public string Rationale { get; }
     public ITestRun ABTestRun { get; }
@@ -23,6 +24,10 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
     public double? ProposedPassRate { get; }
     public IReadOnlyCollection<Guid> EvidenceTestRunIds { get; }
     public string ContentHash { get; }
+    public DateTimeOffset? AdoptedAt { get; private init; }
+    public Guid? AdoptedAgentVersionId { get; private init; }
+    public int? AdoptedAgentVersionNumber { get; private init; }
+    public bool? AdoptedManually { get; private init; }
 
     public SystemPromptProposal(
         IAgent agent,
@@ -59,6 +64,10 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         IReadOnlyCollection<Guid> evidenceTestRunIds,
         ITestRun abTestRun,
         string contentHash,
+        DateTimeOffset? adoptedAt,
+        Guid? adoptedAgentVersionId,
+        int? adoptedAgentVersionNumber,
+        bool? adoptedManually,
         IDomainEntityData existing,
         IRepository<IOptimizationProposal> repository) : base(existing, repository)
     {
@@ -72,6 +81,46 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         EvidenceTestRunIds = evidenceTestRunIds.ToArray();
         ABTestRun = abTestRun;
         ContentHash = contentHash;
+        AdoptedAt = adoptedAt;
+        AdoptedAgentVersionId = adoptedAgentVersionId;
+        AdoptedAgentVersionNumber = adoptedAgentVersionNumber;
+        AdoptedManually = adoptedManually;
+    }
+
+    public Task<IOptimizationProposal> Accept(CancellationToken cancellationToken = default)
+    {
+        if (Status != ProposalStatus.Draft)
+            throw new InvalidOperationException($"Cannot accept proposal {Id} from status {Status}.");
+
+        return ApplyAsync(this with { Status = ProposalStatus.Accepted }, cancellationToken);
+    }
+
+    public Task<IOptimizationProposal> Reject(CancellationToken cancellationToken = default)
+    {
+        if (Status != ProposalStatus.Draft)
+            throw new InvalidOperationException($"Cannot reject proposal {Id} from status {Status}.");
+
+        return ApplyAsync(this with { Status = ProposalStatus.Rejected }, cancellationToken);
+    }
+
+    public Task<IOptimizationProposal> MarkAdopted(
+        IAgentVersion? adoptedVersion,
+        bool manual,
+        CancellationToken cancellationToken = default)
+    {
+        if (Status != ProposalStatus.Accepted)
+            throw new InvalidOperationException($"Cannot mark proposal {Id} adopted from status {Status}.");
+
+        return ApplyAsync(
+            this with
+            {
+                Status = ProposalStatus.Adopted,
+                AdoptedAt = DateTimeOffset.UtcNow,
+                AdoptedAgentVersionId = adoptedVersion?.Id,
+                AdoptedAgentVersionNumber = adoptedVersion?.VersionNumber,
+                AdoptedManually = manual,
+            },
+            cancellationToken);
     }
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -87,5 +136,24 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
 
         if (string.IsNullOrWhiteSpace(ProposedSystemMessage))
             yield return Validation.NotNullOrWhiteSpace(ProposedSystemMessage);
+
+        if (Status == ProposalStatus.Adopted)
+        {
+            yield return Validation.NotNull(AdoptedAt);
+            yield return Validation.NotNull(AdoptedManually);
+
+            if (AdoptedAt is { } adoptedAt)
+            {
+                yield return Validation.InPast(adoptedAt, nameof(AdoptedAt));
+                yield return Validation.NotBefore(adoptedAt, CreatedAt, nameof(AdoptedAt));
+            }
+        }
+        else
+        {
+            yield return Validation.Null(AdoptedAt);
+            yield return Validation.Null(AdoptedAgentVersionId);
+            yield return Validation.Null(AdoptedAgentVersionNumber);
+            yield return Validation.Null(AdoptedManually);
+        }
     }
 }

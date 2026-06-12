@@ -47,12 +47,17 @@ export const REVIEW_META: Record<ProposalStatus, ReviewMeta> = {
   [ProposalStatus.Draft]: {
     label: 'Pending review',
     tone: 'teal',
-    description: 'The change beat the baseline. Promote it to apply, or dismiss it.',
+    description: 'The change beat the baseline. Promote it to get the handoff package, or dismiss it.',
   },
   [ProposalStatus.Accepted]: {
     label: 'Promoted',
+    tone: 'accent',
+    description: 'Promoted — awaiting adoption in your agent.',
+  },
+  [ProposalStatus.Adopted]: {
+    label: 'Adopted',
     tone: 'success',
-    description: 'The change has been applied to the agent.',
+    description: 'The change is live in the agent.',
   },
   [ProposalStatus.Rejected]: {
     label: 'Dismissed',
@@ -60,3 +65,13 @@ export const REVIEW_META: Record<ProposalStatus, ReviewMeta> = {
     description: 'A reviewer chose not to apply this change.',
   },
 };
+
+/**
+ * Human label for how (and where) an adopted proposal went live: the detected agent version
+ * when auto-detected, "Marked adopted" when a human confirmed it manually.
+ */
+export function adoptionLabel(proposal: OptimizationProposalDto): string {
+  if (proposal.adoptedAgentVersionNumber != null) return `Adopted in v${proposal.adoptedAgentVersionNumber}`;
+  if (proposal.adoptedManually) return 'Marked adopted';
+  return 'Adopted';
+}

@@ -12,6 +12,7 @@ import { AbTestHero } from '../AbTestHero';
 import { ChangeSections } from './ChangeSections';
 import { EvidenceList } from './EvidenceList';
 import { GainHero } from './GainHero';
+import { HandoffPanel } from './HandoffPanel';
 
 interface Props {
   theory: TheoryDto;
@@ -31,9 +32,9 @@ interface Props {
 export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus, onReset, actionPending, resetPending }: Props) {
   const review = REVIEW_META[proposal?.status ?? ProposalStatus.Draft];
   const reviewable = proposal?.status === ProposalStatus.Draft;
-  // A reset re-runs validation from scratch; refused server-side once a proposal is promoted, so
-  // hide it there — the applied change cannot be un-applied by resetting.
-  const canReset = proposal?.status !== ProposalStatus.Accepted;
+  // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
+  // adopted, so hide it there.
+  const canReset = proposal?.status !== ProposalStatus.Accepted && proposal?.status !== ProposalStatus.Adopted;
   const gain = buildGainSummary(theory, proposal);
 
   return (
@@ -74,6 +75,8 @@ export function ValidatedProposalView({ theory, proposal, suiteName, onSetStatus
           </Button>
         )}
       </div>
+
+      {proposal && <HandoffPanel proposal={proposal} />}
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center gap-2">

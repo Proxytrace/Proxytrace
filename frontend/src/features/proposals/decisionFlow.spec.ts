@@ -19,6 +19,7 @@ function proposal(status: ProposalStatus): OptimizationProposalDto {
     id: 'p1', kind: ProposalKind.SystemPrompt, status, agentId: 'a1', agentName: 'Agent', priority: Priority.Medium,
     rationale: 'r', details: { kind: 'SystemPrompt', currentSystemMessage: 'a', proposedSystemMessage: 'b' },
     evidenceTestRunIds: [], abTestRun: null, currentPassRate: 0.7, proposedPassRate: 0.9, expectedPassRateDelta: 0.2,
+    adoptedAt: null, adoptedAgentVersionId: null, adoptedAgentVersionNumber: null, adoptedManually: null,
     createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z',
   };
 }
@@ -63,10 +64,16 @@ describe('buildDecisionFlow', () => {
     expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Pending review');
   });
 
-  it('Validated + Accepted proposal: promoted', () => {
+  it('Validated + Accepted proposal: promoted, awaiting adoption', () => {
     const f = buildDecisionFlow(theory({ status: TheoryStatus.Validated }), proposal(ProposalStatus.Accepted));
+    expect(state(f, 'outcome')).toBe('current');
+    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Awaiting adoption');
+  });
+
+  it('Validated + Adopted proposal: complete', () => {
+    const f = buildDecisionFlow(theory({ status: TheoryStatus.Validated }), proposal(ProposalStatus.Adopted));
     expect(state(f, 'outcome')).toBe('complete');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Promoted');
+    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Adopted');
   });
 
   it('Validated + Rejected proposal: dismissed by user', () => {

@@ -8,10 +8,12 @@ import { KIND_META, TONE_SUBTLE_BG, TONE_TEXT } from '../shared';
 import { THEORY_SOURCE_LABEL } from '../theoryMeta';
 import { buildDecisionFlow, type FlowStageKey } from '../decisionFlow';
 import { formatPValue, isInsideNoise, passRateTransition, theoryShortId } from '../theoryBoard';
+import { adoptionLabel } from '../validatedView';
 import { FlowStep } from './FlowStep';
 import { AbTestHero } from '../AbTestHero';
 import { ChangeSections } from './ChangeSections';
 import { EvidenceList } from './EvidenceList';
+import { HandoffPanel } from './HandoffPanel';
 
 interface Props {
   theory: TheoryDto;
@@ -187,14 +189,17 @@ function OutcomeBody({
 }) {
   const context = outcomeContext(theory, proposal);
   const reviewable = theory.status === TheoryStatus.Validated && proposal?.status === ProposalStatus.Draft;
-  // A reset re-runs validation from scratch; refused server-side once a proposal is promoted, so
-  // hide it there — the applied change cannot be un-applied by resetting.
+  // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
+  // adopted, so hide it there.
   const terminal = theory.status === TheoryStatus.Validated || theory.status === TheoryStatus.Invalidated;
-  const canReset = terminal && proposal?.status !== ProposalStatus.Accepted;
+  const canReset = terminal
+    && proposal?.status !== ProposalStatus.Accepted
+    && proposal?.status !== ProposalStatus.Adopted;
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-body-sm text-secondary m-0">{context}</p>
+      {proposal && <HandoffPanel proposal={proposal} />}
       {reviewable && (
         <div className="flex gap-2">
           <Button
@@ -235,9 +240,10 @@ function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | n
     return 'The A/B test found no improvement, so the theory was rejected automatically — no review needed.';
   }
   if (theory.status === TheoryStatus.Validated) {
-    if (proposal?.status === ProposalStatus.Accepted) return 'Promoted — the change has been applied to the agent.';
+    if (proposal?.status === ProposalStatus.Accepted) return 'Promoted — awaiting adoption in your agent.';
+    if (proposal?.status === ProposalStatus.Adopted) return `${adoptionLabel(proposal)} — the change is live in the agent.`;
     if (proposal?.status === ProposalStatus.Rejected) return 'Dismissed — a reviewer chose not to apply this change.';
-    return 'The change beat the baseline. Promote it to apply, or dismiss it.';
+    return 'The change beat the baseline. Promote it to get the handoff package, or dismiss it.';
   }
   return 'No decision yet — validation must finish first.';
 }

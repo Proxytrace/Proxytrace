@@ -100,7 +100,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         if (proposalId is { } id)
         {
             var proposal = await proposals.FindAsync(id, cancellationToken);
-            if (proposal is { Status: ProposalStatus.Accepted })
+            if (proposal is { Status: ProposalStatus.Accepted or ProposalStatus.Adopted })
                 return new TheoryResetResult(TheoryResetOutcome.BlockedByAcceptedProposal, null);
         }
 

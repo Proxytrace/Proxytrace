@@ -13,9 +13,6 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
     private readonly IModelSwitchProposal.CreateNew createModelSwitch;
     private readonly ISystemPromptProposal.CreateNew createSystemPrompt;
     private readonly IToolUpdateProposal.CreateNew createToolUpdate;
-    private readonly IModelSwitchProposal.CreateExisting modelSwitchExisting;
-    private readonly ISystemPromptProposal.CreateExisting systemPromptExisting;
-    private readonly IToolUpdateProposal.CreateExisting toolUpdateExisting;
     private readonly IRepository<IOptimizationProposal> repo;
 
     public OptimizationProposalSeedScenario(
@@ -23,18 +20,12 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
         IModelSwitchProposal.CreateNew createModelSwitch,
         ISystemPromptProposal.CreateNew createSystemPrompt,
         IToolUpdateProposal.CreateNew createToolUpdate,
-        IModelSwitchProposal.CreateExisting modelSwitchExisting,
-        ISystemPromptProposal.CreateExisting systemPromptExisting,
-        IToolUpdateProposal.CreateExisting toolUpdateExisting,
         IRepository<IOptimizationProposal> repo)
     {
         this.ctx = ctx;
         this.createModelSwitch = createModelSwitch;
         this.createSystemPrompt = createSystemPrompt;
         this.createToolUpdate = createToolUpdate;
-        this.modelSwitchExisting = modelSwitchExisting;
-        this.systemPromptExisting = systemPromptExisting;
-        this.toolUpdateExisting = toolUpdateExisting;
         this.repo = repo;
     }
 
@@ -197,25 +188,17 @@ internal sealed class OptimizationProposalSeedScenario : IDemoScenario
             var draft = spec.BuildDraft(ctx, agent, evidence, abTestRun);
             var saved = await repo.AddAsync(draft, cancellationToken);
 
-            if (spec.Status != ProposalStatus.Draft)
+            switch (spec.Status)
             {
-                IOptimizationProposal transitioned = saved switch
-                {
-                    IModelSwitchProposal ms => modelSwitchExisting(
-                        ms.Agent, spec.Status, ms.Priority, ms.Rationale,
-                        ms.ProposedEndpoint, ms.CurrentPassRate, ms.ProposedPassRate, ms.ExpectedCostDelta, ms.ExpectedLatencyDelta,
-                        ms.EvidenceTestRunIds, ms.ABTestRun, ms.ContentHash, ms),
-                    ISystemPromptProposal sp => systemPromptExisting(
-                        sp.Agent, spec.Status, sp.Priority, sp.Rationale,
-                        sp.ProposedSystemMessage, sp.CurrentPassRate, sp.ProposedPassRate,
-                        sp.EvidenceTestRunIds, sp.ABTestRun, sp.ContentHash, sp),
-                    IToolUpdateProposal tu => toolUpdateExisting(
-                        tu.Agent, spec.Status, tu.Priority, tu.Rationale,
-                        tu.ProposedTools, tu.CurrentPassRate, tu.ProposedPassRate,
-                        tu.EvidenceTestRunIds, tu.ABTestRun, tu.ContentHash, tu),
-                    _ => throw new ArgumentOutOfRangeException(nameof(saved))
-                };
-                await repo.UpdateAsync(transitioned, cancellationToken);
+                case ProposalStatus.Accepted:
+                    await saved.Accept(cancellationToken);
+                    break;
+                case ProposalStatus.Rejected:
+                    await saved.Reject(cancellationToken);
+                    break;
+                case ProposalStatus.Adopted:
+                    await (await saved.Accept(cancellationToken)).MarkAdopted(null, manual: true, cancellationToken);
+                    break;
             }
         }
     }

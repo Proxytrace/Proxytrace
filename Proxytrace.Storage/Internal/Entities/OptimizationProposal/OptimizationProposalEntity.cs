@@ -42,4 +42,16 @@ internal record OptimizationProposalEntity : Entity
 
     /// <summary><see cref="IOptimizationProposal.ContentHash"/></summary>
     public required string ContentHash { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.AdoptedAt"/></summary>
+    public DateTimeOffset? AdoptedAt { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.AdoptedAgentVersionId"/></summary>
+    public Guid? AdoptedAgentVersionId { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.AdoptedAgentVersionNumber"/></summary>
+    public int? AdoptedAgentVersionNumber { get; init; }
+
+    /// <summary><see cref="IOptimizationProposal.AdoptedManually"/></summary>
+    public bool? AdoptedManually { get; init; }
 }

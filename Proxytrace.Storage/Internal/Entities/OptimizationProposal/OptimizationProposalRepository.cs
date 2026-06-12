@@ -69,4 +69,33 @@ internal class OptimizationProposalRepository :
 
         return await Map(stored, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<IOptimizationProposal>> GetByAgentAndStatusAsync(
+        Guid agentId,
+        ProposalStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<OptimizationProposalEntity>()
+            .AsNoTracking()
+            .Where(e => e.Agent == agentId && e.Status == status)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<IOptimizationProposal>> GetByStatusAsync(
+        ProposalStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<OptimizationProposalEntity>()
+            .AsNoTracking()
+            .Where(e => e.Status == status)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return await Map(stored, cancellationToken);
+    }
 }

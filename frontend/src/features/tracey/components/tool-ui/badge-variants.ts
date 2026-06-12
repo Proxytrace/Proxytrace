@@ -13,6 +13,7 @@ export const RUN_STATUS_VARIANT: Record<TestRunStatus, BadgeVariant> = {
 
 export const PROPOSAL_STATUS_VARIANT: Record<ProposalStatus, BadgeVariant> = {
   [ProposalStatus.Accepted]: 'success',
+  [ProposalStatus.Adopted]: 'success',
   [ProposalStatus.Rejected]: 'danger',
   [ProposalStatus.Draft]: 'neutral',
 };

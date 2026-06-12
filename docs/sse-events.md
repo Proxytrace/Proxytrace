@@ -16,7 +16,7 @@ hooks in `frontend/src/api/event-stream.ts`.
 | Endpoint (GET) | Scope | Event name(s) | Payload record | Use case |
 |---|---|---|---|---|
 | `/api/agent-calls/stream` | global (all agents) | `trace-created` | `TraceCreatedEvent` | New trace lands → live Traces list + dashboard counters |
-| `/api/agents/{id}/proposals/stream` | one agent | `proposal-created` | `ProposalCreatedEvent` | A validated theory spawned a Draft proposal → Proposals board |
+| `/api/agents/{id}/proposals/stream` | one agent | `proposal-created`, `proposal-status-changed` | `ProposalEvent` subtypes | A validated theory spawned a Draft proposal; a proposal was promoted / dismissed / adopted (incl. auto-detected adoption) → Proposals board |
 | `/api/agents/{id}/theories/stream` | one agent | `theory-changed` | `TheoryStatusChangedEvent` | Theory moves through Proposed→Validating→Validated/Invalidated → board columns |
 | `/api/test-runs/{id}/stream` | one run | `test-case-started`, `inference-done`, `evaluation-arrived`, `test-result-arrived`, `run-complete`* | `TestRunEvent` subtypes | Live single-run progress (per-case, per-evaluator) |
 | `/api/test-run-groups/{id}/stream` | one group (all its runs) | the five run events above + `group-run-complete`* | `TestRunEvent` subtypes | Live multi-endpoint comparison run |
@@ -42,7 +42,9 @@ Records live in `Proxytrace.Application/Streaming/`. Serialized with `ApiJsonOpt
 in `frontend/src/api/models.ts`.
 
 - **`TraceCreatedEvent`** — `Id, AgentId, AgentName, Model, Provider, CreatedAt, ConversationId?`
-- **`ProposalCreatedEvent`** — `Id, AgentId, Kind, Priority, Rationale, CreatedAt`
+- **Proposal events** (`ProposalEvent` carries `Id`, `AgentId`):
+  - `ProposalCreatedEvent` — `+ Kind, Priority, Rationale, CreatedAt`
+  - `ProposalStatusChangedEvent` — `+ Kind, Status, AdoptedAt?, AdoptedAgentVersionId?, AdoptedAgentVersionNumber?, AdoptedManually?, UpdatedAt` (published by `ProposalsController.UpdateStatus` and `ProposalAdoptionService`)
 - **`TheoryStatusChangedEvent`** — `Id, AgentId, Kind, Status, Source, Priority, Rationale, ResultingProposalId?, UpdatedAt`
 - **Run events** (`TestRunEvent` carries `RunId`, `GroupId`):
   - `TestCaseStartedEvent` — `+ TestCaseId`

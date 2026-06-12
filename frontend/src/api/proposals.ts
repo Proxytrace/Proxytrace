@@ -1,9 +1,11 @@
 import { api, qs } from './client';
-import type { OptimizationProposalDto, ProposalStatus } from './models';
+import type { OptimizationProposalDto, ProposalArtifactDto, ProposalStatus } from './models';
 
 export const proposalsApi = {
   getAll: (params?: { agentId?: string; projectId?: string }) =>
     api.get<OptimizationProposalDto[]>(`/api/proposals${qs(params ?? {})}`),
   updateStatus: (id: string, status: ProposalStatus) =>
     api.patch<OptimizationProposalDto>(`/api/proposals/${id}/status`, { status }),
+  getArtifact: (id: string) =>
+    api.get<ProposalArtifactDto>(`/api/proposals/${id}/artifact`),
 };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AbTestRunSummaryDto, OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { Priority, ProposalKind, ProposalStatus, TestRunStatus, TheorySource, TheoryStatus } from '../../api/models';
-import { buildGainSummary, formatDeltaPt } from './validatedView';
+import { adoptionLabel, buildGainSummary, formatDeltaPt } from './validatedView';
 
 function makeTheory(overrides: Partial<TheoryDto> = {}): TheoryDto {
   return {
@@ -59,6 +59,10 @@ function makeProposal(overrides: Partial<OptimizationProposalDto> = {}): Optimiz
     currentPassRate: null,
     proposedPassRate: null,
     expectedPassRateDelta: null,
+    adoptedAt: null,
+    adoptedAgentVersionId: null,
+    adoptedAgentVersionNumber: null,
+    adoptedManually: null,
     createdAt: '2026-06-01T00:00:00Z',
     updatedAt: '2026-06-01T00:00:00Z',
     ...overrides,
@@ -98,5 +102,31 @@ describe('formatDeltaPt', () => {
     expect(formatDeltaPt(12)).toBe('+12pt');
     expect(formatDeltaPt(-3)).toBe('−3pt');
     expect(formatDeltaPt(0)).toBe('±0pt');
+  });
+});
+
+describe('adoptionLabel', () => {
+  it('names the detected agent version when auto-adopted', () => {
+    const proposal = makeProposal({
+      status: ProposalStatus.Adopted,
+      adoptedAt: '2026-06-12T00:00:00Z',
+      adoptedAgentVersionId: 'ver-1',
+      adoptedAgentVersionNumber: 4,
+      adoptedManually: false,
+    });
+    expect(adoptionLabel(proposal)).toBe('Adopted in v4');
+  });
+
+  it('says marked adopted for manual confirmations', () => {
+    const proposal = makeProposal({
+      status: ProposalStatus.Adopted,
+      adoptedAt: '2026-06-12T00:00:00Z',
+      adoptedManually: true,
+    });
+    expect(adoptionLabel(proposal)).toBe('Marked adopted');
+  });
+
+  it('falls back to a plain label without version or manual flag', () => {
+    expect(adoptionLabel(makeProposal({ status: ProposalStatus.Adopted }))).toBe('Adopted');
   });
 });
