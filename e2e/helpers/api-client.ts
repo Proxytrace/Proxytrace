@@ -264,6 +264,13 @@ export class ProxytraceApiClient {
     return this.request.get('/api/proposals', { headers: this.headers() });
   }
 
+  // Raw GET /api/tracey/session returning the response so callers can assert on the status code.
+  // On the Free tier the controller's [RequiresFeature(Tracey)] gate replies 402 before the action
+  // runs — the backend half of the free-tier Tracey feature gate.
+  traceySessionResponse(): Promise<APIResponse> {
+    return this.request.get('/api/tracey/session', { headers: this.headers() });
+  }
+
   // ── Optimization theories ────────────────────────────────────────────────
   // POST /api/theories submits an unproven theory; the validator A/B-tests it in the
   // background. Submission itself is synchronous and needs no LLM, so the 202 response and the

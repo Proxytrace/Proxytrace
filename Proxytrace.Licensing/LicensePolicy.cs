@@ -28,6 +28,7 @@ public static class LicensePolicy
             LicenseFeature.CustomEvaluators,
             LicenseFeature.SsoOidc,
             LicenseFeature.AuditLog,
+            LicenseFeature.Tracey,
         },
         new Dictionary<LicenseLimit, long>
         {

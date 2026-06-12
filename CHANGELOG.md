@@ -13,7 +13,16 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 - "How to wire the proxy?" documentation link on the Traces page empty state.
 
+### Changed
+
+- The **Tracey AI** assistant is now an Enterprise feature. On the Free tier the sidebar
+  entry is locked and the Tracey page shows an upgrade prompt; the Tracey API endpoints
+  respond with HTTP 402.
+
 ### Fixed
+
+- Upgrade/pricing links (upgrade placeholder, upgrade dialog, docs) pointed at
+  `proxytrace.dev/pricing` instead of the correct `proxytrace.dev/#pricing` anchor.
 
 - The ingestion endpoint shown in the setup wizard and on the API-keys page pointed at the
   web UI port instead of the ingestion proxy (e.g. `:5101` instead of `:5102` in the Docker

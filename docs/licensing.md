@@ -19,7 +19,7 @@ public interface ILicenseService
 
 - **Gate every premium capability through `ILicenseService`.** Before exposing or executing a gated
   feature, check `IsFeatureEnabled(...)` / `GetLimit(...)`. Current gated features:
-  `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`.
+  `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`, `Tracey`.
 - **`Current` is never null** and defaults to the **Free** tier — write code that degrades to Free,
   never code that assumes a paid tier or null-guards the snapshot.
 - **Treat `long.MaxValue` from `GetLimit` as unlimited** — do not cap or special-case it elsewhere.

@@ -28,7 +28,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Dashboard', icon: 'grid', to: '/dashboard' },
       { label: 'Traces', icon: 'activity', to: '/traces' },
-      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai' },
+      { label: 'Tracey AI', icon: 'tracey', to: '/tracey-ai', requiresFeature: 'Tracey' },
     ],
   },
   {
