@@ -9,6 +9,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-12
+
 ### Fixed
 
 - **ARM64 container images** — release images are now published for both `linux/amd64`
