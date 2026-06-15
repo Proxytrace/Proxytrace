@@ -4,6 +4,11 @@ Which manual pages still need screenshots, and roughly which shots. **Per-page c
 individual — some pages want several shots, some want one, many want none.** These are suggestions,
 not a quota: capture what genuinely makes the prose clearer.
 
+**Status (2026-06-15):** Guide **P1 + P2 done** — 16 screenshots across 9 guide pages. **Admin shots
+not pursued** (decision): every `/settings/*` route is kiosk-gated (redirects to the dashboard), so
+they'd need a non-kiosk authenticated-admin stack — admin pages stay text-only. Remaining items are
+optional **P3** (in-progress / A·B runs, agent version close-up, a getting-started orientation shot).
+
 Capture with the `manual-screenshots` skill (`.claude/skills/manual-screenshots/SKILL.md`): boot
 `docker-compose.kiosk.yml`, shoot with `manual/screenshots/capture-lib.mjs`, embed
 `![alt](/screenshots/<page-slug>/<shot>.png)`, verify `npm run docs:build`, tear down.
@@ -75,7 +80,7 @@ Home/hero layout — no product screenshot required. (Optional: a single hero im
 
 ## Operations (`manual/admin/`)
 
-Most admin pages are configuration/CLI/ops with no product UI. **Confirmed: every settings/admin route (`/settings/*`) redirects to the dashboard in kiosk (admin-gated)** — so providers, API keys, users, license, retention, and error-log are **not capturable in kiosk**. They need a non-kiosk, authenticated-admin stack (out of scope for the current skill).
+Most admin pages are configuration/CLI/ops with no product UI. **Confirmed: every settings/admin route (`/settings/*`) redirects to the dashboard in kiosk (admin-gated)** — so providers, API keys, users, license, retention, and error-log are **not capturable in kiosk**. They need a non-kiosk, authenticated-admin stack (out of scope for the current skill). **Decision (2026-06-15): not pursued — these pages stay text-only.**
 
 ### providers-and-api-keys.md — 🚫 kiosk-gated (`/settings/providers` → dashboard)
 Wanted (non-kiosk admin stack): providers/models list, the add-provider dialog, issuing an API key.
