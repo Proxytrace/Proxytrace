@@ -3,6 +3,8 @@
 The **Dashboard** is the home screen for a project. It summarizes the health and activity
 of your agents at a glance and links out to the detailed views.
 
+![The Proxytrace project dashboard — the Mission Control header with key metrics, a token-volume chart, trace and latency cards, the live trace stream, and the evaluation pass-rate gauge.](/screenshots/dashboard/overview.png)
+
 ## What you'll find
 
 - **Key metrics** — high-level counters and rates across your captured traffic and test

@@ -56,3 +56,10 @@ The e2e suite boots the full stack via Docker Compose (`docker-compose.e2e.yml`)
 will fail without one. Check first (e.g. `docker --version` and `docker info`); if Docker is
 unavailable, skip the e2e suite and say so. See the `run-e2e-tests` skill for how to execute and
 triage them.
+
+## Manual screenshots (Playwright + kiosk stack)
+Add or refresh screenshots in the VitePress manual with the `manual-screenshots` skill
+(`.claude/skills/manual-screenshots/SKILL.md`). It boots the self-seeded, login-free kiosk stack
+(`docker-compose.kiosk.yml`, served at http://localhost:5201), captures with Playwright via
+`manual/screenshots/capture-lib.mjs`, embeds the PNGs under `manual/public/screenshots/<page>/`, and
+tears the stack down. **Docker required.**
