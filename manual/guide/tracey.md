@@ -48,12 +48,16 @@ questions about *how the product works* are answered from the manual, with citat
 
 ## The opening view
 
+![Tracey's opening view: a centered "How can I help?" prompt with starter action chips above the message box.](/screenshots/tracey/opening-view.png)
+
 When a conversation is empty, Tracey opens in a centered "initial view": the message box sits
 toward the middle of the panel with **starter chips** above it. Send your first message and the
 box glides down to the bottom and the chips disappear; start a **new conversation** and it
 glides back up. This is purely presentational — your history still persists per project.
 
 ## Quick actions, chips, and the "/" menu
+
+![The Tracey "/" menu: curated Quick Actions (List agents, Plot token usage, Run a suite, Review proposals, Optimize an agent) above the Tools list.](/screenshots/tracey/menu.png)
 
 In the opening view, **chips** surface common quick actions (e.g. *List agents*, *Plot token
 usage*, *Improve failing runs*). Click one to prefill the message box; edit it if you like,

@@ -55,6 +55,8 @@ recorded, which is also what powers deduplication.
 
 ## Reviewing the board
 
+![The Optimization Theories board: Proposed, Validating, Validated, and Rejected columns of theory cards, with a summary strip of theory count, win rate, and proven gain.](/screenshots/theories/board.png)
+
 Open **Proposals** in the sidebar. Theories are arranged on a pipeline board with one column
 per lifecycle state — **Proposed**, **Validating**, **Validated**, and **Rejected** — and a
 summary strip showing the total theory count, how many have been **tested**, the **win rate**

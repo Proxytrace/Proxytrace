@@ -114,6 +114,8 @@ Proxytrace fetches it by ID.
 
 ### Multi-turn conversations
 
+![A multi-turn conversation expanded in the traces table — a "turns" group opened into its individual Turn 1, Turn 2, and Turn 3 calls.](/screenshots/traces/conversation.png)
+
 Calls that share a conversation are grouped into a single collapsible row. The group's
 leading **turns** badge shows how many calls it contains; click the row to expand the
 individual turns. The group's status column shows the exact code (e.g. `200`) when every

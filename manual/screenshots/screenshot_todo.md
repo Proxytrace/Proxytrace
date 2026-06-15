@@ -25,7 +25,7 @@ renders in kiosk when you get to it.
 - [x] `traces/timeline.png` — timeline-strip crop → under "The timeline"
 - [x] `traces/detail.png` — trace detail drawer (conversation + metrics) → under "The trace detail panel"
 - [x] `traces/filters.png` — covered by `list.png` (the filter/paging bar is visible there); no separate crop
-- [ ] `traces/conversation.png` — a multi-turn conversation group expanded · P2 (not done)
+- [x] `traces/conversation.png` — a multi-turn conversation group expanded → under "Multi-turn conversations"
 
 ### agents.md — ✅ P1 done
 - [x] `agents/detail.png` — the agent detail view (the agent list rail is visible in the same shot) → under "The agent detail view"
@@ -49,21 +49,21 @@ renders in kiosk when you get to it.
 - [ ] `runs/progress.png` — a run in progress / live SSE view · P2 (needs an active run; not done)
 - [ ] `runs/ab.png` — an A/B validation run · P3
 
-### optimization-proposals.md — P2 (verify proposals are seeded)
-- [ ] `proposals/list.png` — `/proposals` list
-- [ ] `proposals/detail.png` — proposal detail (contents + suggested change)
+### optimization-proposals.md — ✅ P2 done
+- [x] `proposals/detail.png` — the validated-theory proposal drawer (gain + prompt diff + Promote/Dismiss) → under "What a proposal contains"
+- Note: `/proposals` renders the Theories board (see optimization-theories.md); the per-proposal UI is the review drawer above, not a separate list.
 
-### optimization-theories.md — P2 (verify theories are seeded)
-- [ ] `theories/board.png` — `/theories` board
-- [ ] `theories/detail.png` — theory detail + validation lifecycle
+### optimization-theories.md — ✅ P2 done
+- [x] `theories/board.png` — the Optimization Theories kanban (`/proposals`) → under "Reviewing the board"
+- Note: there is no `/theories` route — the board lives at `/proposals`; the validated-theory drawer is embedded on the Proposals page as `proposals/detail.png`.
 
-### proxy-setup.md — P2 (mostly client code/env; one UI moment)
-- [ ] `proxy-setup/create-api-key.png` — the API-key creation UI/dialog · verify kiosk exposes key management; else this page stays code-only
+### proxy-setup.md — 🚫 API-key UI kiosk-gated
+- 🚫 `proxy-setup/create-api-key.png` — API keys live under `/settings/providers`, which redirects to the dashboard in kiosk. Needs a non-kiosk admin stack; page stays code-only for now.
 
-### tracey.md — P2, **partial** (Enterprise; kiosk has no live LLM)
-- [ ] `tracey/opening-view.png` — Tracey panel opening view (static UI)
-- [ ] `tracey/menu.png` — quick actions / chips / the "/" menu (static UI)
-- 🚫 live answers, inline components, tool calls, skills-in-action — need an **LLM-backed** kiosk (the "interactive kiosk" with a real endpoint, see admin/configuration.md). The plain kiosk can't generate responses.
+### tracey.md — ✅ P2 (static UI) done
+- [x] `tracey/opening-view.png` — opening view: chips + compose → under "The opening view"
+- [x] `tracey/menu.png` — the "/" quick-actions + tools menu → under "Quick actions, chips, and the / menu"
+- 🚫 live answers, inline components, tool calls, skills-in-action — need an LLM-backed (interactive) kiosk; the plain kiosk renders only the static UI.
 
 ### getting-started.md — P3 (conceptual; 0 is fine)
 - [ ] `getting-started/overview.png` — one optional orientation shot (could reuse the dashboard) · P3
@@ -75,21 +75,19 @@ Home/hero layout — no product screenshot required. (Optional: a single hero im
 
 ## Operations (`manual/admin/`)
 
-Most admin pages are configuration/CLI/ops with no product UI, or describe things kiosk can't show.
+Most admin pages are configuration/CLI/ops with no product UI. **Confirmed: every settings/admin route (`/settings/*`) redirects to the dashboard in kiosk (admin-gated)** — so providers, API keys, users, license, retention, and error-log are **not capturable in kiosk**. They need a non-kiosk, authenticated-admin stack (out of scope for the current skill).
 
-### providers-and-api-keys.md — P2 (verify providers/keys UI renders in kiosk)
-- [ ] `providers/list.png` — providers / models list
-- [ ] `providers/add-provider.png` — the add-provider dialog (auto-loads models & prices)
-- [ ] `providers/issue-key.png` — issuing an API key · P2
+### providers-and-api-keys.md — 🚫 kiosk-gated (`/settings/providers` → dashboard)
+Wanted (non-kiosk admin stack): providers/models list, the add-provider dialog, issuing an API key.
 
-### data-retention.md — P3 (verify the retention page renders in kiosk)
-- [ ] `data-retention/page.png` — the Data Retention settings page
+### data-retention.md — 🚫 kiosk-gated (`/settings/retention` → dashboard)
+Wanted (non-kiosk admin stack): the Data Retention settings page.
 
-### error-log.md — P3 (admin page; kiosk likely has no seeded errors → low value)
-- [ ] `error-log/page.png` — the Error Log page · verify it renders + has rows
+### error-log.md — 🚫 kiosk-gated (`/settings/error-log` → dashboard)
+Wanted (non-kiosk admin stack): the Error Log page.
 
-### licensing.md — P3 (kiosk license is fixed Enterprise)
-- [ ] `licensing/status.png` — license status / activation UI · verify representable
+### licensing.md — 🚫 kiosk-gated (`/settings/license` → dashboard)
+Wanted (non-kiosk admin stack): the license status / activation UI.
 
 ### user-management.md — 🚫 not in kiosk
 No auth/users in kiosk. Needs a non-kiosk stack (out of scope for the current skill) — leave without screenshots for now.
