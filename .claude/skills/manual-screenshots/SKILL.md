@@ -10,6 +10,9 @@ Capture plain, dark, on-brand screenshots for one Proxytrace manual page (`manua
 build, then tear the stack down. **Per-page helper** — capture only what the page you're writing
 needs; this is not a batch "refresh the whole manual" pipeline.
 
+Outstanding pages and suggested shots are tracked in `manual/screenshots/screenshot_todo.md` — tick
+items off and keep it current as you capture.
+
 ## Prerequisites / guardrails
 
 - **Docker required.** If `docker info` fails, stop and tell the user — there is no fallback.
