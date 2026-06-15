@@ -42,6 +42,8 @@ theory's *View run* link also reveals the linked A/B run automatically and selec
 
 ### Test case matrix
 
+![A completed test run: the per-model comparison cards, the evaluator breakdown, and the test-case matrix with per-model pass/fail results.](/screenshots/runs/results.png)
+
 The matrix shows one row per case and one column per model (endpoint). Each cell contains
 one slot per evaluator — the same layout is used whether the run targets a single model or
 several. Click any cell to open the **comparison drawer**: it shows the case input, each
@@ -56,6 +58,8 @@ request is rebuilt on demand from the agent's current configuration, so it refle
 re-run would send.
 
 ### Per-model performance summary
+
+![The per-model performance summary comparing two models — pass rate, duration, cost, and tokens — with Fast / Cheap / Best winner badges.](/screenshots/runs/per-model.png)
 
 Every run — single-model and multi-model alike — includes a **per-model performance summary**
 below the matrix. It shows pass rate, average latency, and cost for each model in the run.

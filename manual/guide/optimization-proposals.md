@@ -11,6 +11,8 @@ Each proposal is grounded in evidence from [test runs](/guide/running-tests).
 
 ## What a proposal contains
 
+![A validated theory's proposal drawer: the effective pass-rate gain with its p-value, the proposed system-prompt change shown as a diff, and the Promote / Dismiss actions.](/screenshots/proposals/detail.png)
+
 - **Kind** — the type of change (e.g. switch model, update system prompt).
 - **Rationale** — why the change is suggested.
 - **Priority** — how impactful it is expected to be.
