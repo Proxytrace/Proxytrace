@@ -88,6 +88,38 @@ public sealed class OpenAiProxyControllerTests
         controller.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
     }
 
+    [TestMethod]
+    public async Task Proxy_GetWithoutBody_DoesNotForwardARequestBody()
+    {
+        var capture = new CapturingHttpMessageHandler("""{"object":"list","data":[]}""");
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: "", method: "GET");
+
+        await controller.Proxy("models", project: null, CancellationToken.None);
+
+        capture.LastMethod.Should().Be(HttpMethod.Get);
+        capture.LastHadContent.Should().BeFalse("a bodyless GET must not be forwarded with a request body");
+    }
+
+    [TestMethod]
+    public async Task Proxy_PostWithBody_ForwardsBodyUpstream()
+    {
+        var capture = new CapturingHttpMessageHandler(FakeHttpMessageHandler.BuildOpenAiResponse("ok"));
+        var controller = BuildController(
+            Substitute.For<IIngestionStream>(),
+            ResolverFor(ApiKey()),
+            new SingleHandlerClientFactory(capture));
+        controller.ControllerContext = BuildContext("Bearer valid", body: """{"model":"gpt-4o","messages":[]}""");
+
+        await controller.Proxy("chat/completions", project: null, CancellationToken.None);
+
+        capture.LastHadContent.Should().BeTrue();
+        Encoding.UTF8.GetString(capture.LastBody).Should().Be("""{"model":"gpt-4o","messages":[]}""");
+    }
+
     private static OpenAiProxyController BuildController(
         IIngestionStream stream,
         IApiKeyResolver resolver,
@@ -127,7 +159,7 @@ public sealed class OpenAiProxyControllerTests
         return new ResolvedApiKey(project, provider);
     }
 
-    private static ControllerContext BuildContext(string authHeader, string body = "{}")
+    private static ControllerContext BuildContext(string authHeader, string body = "{}", string method = "POST")
     {
         var httpContext = new DefaultHttpContext();
         if (!string.IsNullOrEmpty(authHeader))
@@ -135,9 +167,13 @@ public sealed class OpenAiProxyControllerTests
             httpContext.Request.Headers.Authorization = authHeader;
         }
 
-        httpContext.Request.ContentType = "application/json";
+        if (!string.IsNullOrEmpty(body))
+        {
+            httpContext.Request.ContentType = "application/json";
+        }
+
         httpContext.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
-        httpContext.Request.Method = "POST";
+        httpContext.Request.Method = method;
         httpContext.Response.Body = new MemoryStream();
         return new ControllerContext { HttpContext = httpContext };
     }

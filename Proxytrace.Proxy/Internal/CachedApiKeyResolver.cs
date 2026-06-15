@@ -55,7 +55,9 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
         IApiKey? apiKey = await apiKeys.FindByKeyAsync(rawKey, cancellationToken);
         if (apiKey is not null)
         {
-            return !string.IsNullOrEmpty(projectSlug) && apiKey.Project.Name.ToSlug() != projectSlug
+            // Slugify the path slug before comparing: the URL segment keeps its original casing,
+            // so match canonical slug to canonical slug rather than rejecting "/Development".
+            return !string.IsNullOrEmpty(projectSlug) && apiKey.Project.Name.ToSlug() != projectSlug.ToSlug()
                 ? null
                 : new ResolvedApiKey(apiKey.Project, apiKey.Provider);
         }

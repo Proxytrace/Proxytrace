@@ -91,6 +91,17 @@ public class OpenAiProxyController : ControllerBase
             return;
         }
 
+        // Azure has no OpenAI-style /models route that lists usable models — its deployments live at
+        // /openai/deployments?api-version=…, so a blind passthrough returns an empty list. Translate
+        // GET /models to that deployments listing and reshape it to an OpenAI model list.
+        if (HttpMethods.IsGet(Request.Method)
+            && IsModelsPath(path)
+            && ProviderEndpoints.IsAzure(resolved.Provider.Endpoint))
+        {
+            await ServeAzureModelsAsync(resolved.Provider, cancellationToken);
+            return;
+        }
+
         // Read request body up-front (we always need it for ingestion)
         using var requestBodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(requestBodyStream, cancellationToken);
@@ -150,6 +161,90 @@ public class OpenAiProxyController : ControllerBase
         else
         {
             await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
+        }
+    }
+
+    // ── Azure /models translation ───────────────────────────────────────────────
+
+    private static bool IsModelsPath(string path) =>
+        path.Trim('/').Equals("models", StringComparison.OrdinalIgnoreCase);
+
+    private async Task ServeAzureModelsAsync(IModelProvider provider, CancellationToken cancellationToken)
+    {
+        var client = httpClientFactory.CreateClient("openai");
+        using var request = new HttpRequestMessage(HttpMethod.Get, ProviderEndpoints.AzureDeploymentsUri(provider.Endpoint));
+        request.Headers.Add("api-key", provider.ApiKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
+
+        HttpResponseMessage upstreamResponse;
+        try
+        {
+            upstreamResponse = await client.SendAsync(request, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Azure deployments lookup for /models failed");
+            Response.StatusCode = StatusCodes.Status502BadGateway;
+            return;
+        }
+
+        var body = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
+        Response.StatusCode = (int)upstreamResponse.StatusCode;
+        Response.ContentType = "application/json";
+
+        if (!upstreamResponse.IsSuccessStatusCode)
+        {
+            // Surface Azure's own error verbatim.
+            await Response.WriteAsync(body, cancellationToken);
+            return;
+        }
+
+        await Response.WriteAsync(AzureDeploymentsToModelList(body), cancellationToken);
+    }
+
+    // Reshape Azure's deployments response ({ "data": [ { "id", "model" } ] }) into an OpenAI
+    // model list ({ "object": "list", "data": [ { "id", "object": "model" } ] }). Falls back to the
+    // raw upstream body if it is not the expected JSON shape.
+    private static string AzureDeploymentsToModelList(string deploymentsJson)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(deploymentsJson);
+            using var ms = new MemoryStream();
+            using var writer = new System.Text.Json.Utf8JsonWriter(ms);
+            writer.WriteStartObject();
+            writer.WriteString("object", "list");
+            writer.WritePropertyName("data");
+            writer.WriteStartArray();
+            if (doc.RootElement.TryGetProperty("data", out var data) &&
+                data.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var item in data.EnumerateArray())
+                {
+                    var id = item.TryGetProperty("id", out var idEl) &&
+                             idEl.ValueKind == System.Text.Json.JsonValueKind.String
+                        ? idEl.GetString()
+                        : null;
+                    if (string.IsNullOrWhiteSpace(id))
+                    {
+                        continue;
+                    }
+
+                    writer.WriteStartObject();
+                    writer.WriteString("id", id);
+                    writer.WriteString("object", "model");
+                    writer.WriteEndObject();
+                }
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            writer.Flush();
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+        catch
+        {
+            return deploymentsJson;
         }
     }
 
@@ -265,7 +360,9 @@ public class OpenAiProxyController : ControllerBase
         {
             Method = new HttpMethod(Request.Method),
             RequestUri = new Uri($"{baseUrl}/{path}{Request.QueryString}"),
-            Content = new ByteArrayContent(bodyBytes),
+            // Only carry a body when there is one — attaching empty content to a bodyless verb
+            // (GET /models, DELETE, …) makes strict upstreams reject the request.
+            Content = bodyBytes.Length > 0 ? new ByteArrayContent(bodyBytes) : null,
         };
 
         foreach (var header in Request.Headers)
@@ -277,8 +374,11 @@ public class OpenAiProxyController : ControllerBase
 
             if (header.Key.Equals("content-type", StringComparison.OrdinalIgnoreCase))
             {
-                upstreamRequest.Content.Headers.ContentType =
-                    MediaTypeHeaderValue.Parse(header.Value.ToString());
+                if (upstreamRequest.Content is not null)
+                {
+                    upstreamRequest.Content.Headers.ContentType =
+                        MediaTypeHeaderValue.Parse(header.Value.ToString());
+                }
             }
             else if (header.Key.Equals("authorization", StringComparison.OrdinalIgnoreCase))
             {

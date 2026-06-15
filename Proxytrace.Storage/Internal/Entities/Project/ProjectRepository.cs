@@ -43,7 +43,10 @@ internal class ProjectRepository : AbstractRepository<IProject, ProjectEntity>, 
             .Select(p => new { p.Id, p.Name })
             .ToListAsync(cancellationToken);
 
-        var match = candidates.FirstOrDefault(p => p.Name.ToSlug() == slug);
+        // Slugify the incoming value too: a request-path segment keeps its original casing
+        // (e.g. "/Development/openai/v1"), so compare canonical slug to canonical slug.
+        var normalizedSlug = slug.ToSlug();
+        var match = candidates.FirstOrDefault(p => p.Name.ToSlug() == normalizedSlug);
         return match is null ? null : await this.GetAsync(match.Id, cancellationToken);
     }
 
