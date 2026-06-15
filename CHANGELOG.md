@@ -9,6 +9,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Fixed
+
+- Listing models through the proxy against an **Azure OpenAI** upstream
+  (`GET /openai/v1/models`, e.g. `client.models.list()`) returned an empty list, because Azure
+  exposes usable models as *deployments* rather than through an OpenAI-style `/models` route.
+  The proxy now detects an Azure upstream and returns its deployments as the model list.
+
+- The proxy forwarded bodyless requests (e.g. `GET /models`, `DELETE`) with an empty body and
+  `Content-Length: 0`, which some strict OpenAI-compatible upstreams reject. It now attaches a
+  request body only when one is present.
+
+- The project segment in the proxy URL (`/{project}/openai/v1/…`) is now matched
+  case-insensitively, so a base URL like `…/Development/openai/v1` resolves the **Development**
+  project instead of returning **401 Unauthorized**.
+
 ## [1.0.3] - 2026-06-12
 
 ### Added

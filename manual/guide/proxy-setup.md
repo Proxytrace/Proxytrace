@@ -88,6 +88,17 @@ resp = client.chat.completions.create(
 The call runs exactly as before — but it is now captured. Open **Traces** to confirm it
 arrives. See [Capturing Traces](/guide/capturing-traces).
 
+## Listing models
+
+`client.models.list()` (`GET /openai/v1/models`) is forwarded to your upstream provider, so
+your client sees the provider's model list.
+
+::: tip Azure OpenAI
+Azure has no OpenAI-style `/models` route — its usable models are exposed as **deployments**.
+Proxytrace detects an Azure upstream and lists its deployments instead, so `models.list()`
+returns your deployment names (e.g. `gpt-4o-prod`) rather than an empty list.
+:::
+
 ## Next step
 
 Once traffic flows, learn how [traces are captured and explored](/guide/capturing-traces).

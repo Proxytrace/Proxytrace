@@ -61,3 +61,39 @@ internal sealed class ThrowingHttpClientFactory : IHttpClientFactory
             => throw new HttpRequestException("network down");
     }
 }
+
+/// <summary>Records the request the proxy forwarded upstream so tests can assert on it.</summary>
+internal sealed class CapturingHttpMessageHandler : HttpMessageHandler
+{
+    private readonly string responseBody;
+
+    public CapturingHttpMessageHandler(string responseBody = "{}") => this.responseBody = responseBody;
+
+    public HttpMethod? LastMethod { get; private set; }
+    public bool LastHadContent { get; private set; }
+    public byte[] LastBody { get; private set; } = [];
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        LastMethod = request.Method;
+        LastHadContent = request.Content is not null;
+        if (request.Content is not null)
+        {
+            LastBody = await request.Content.ReadAsByteArrayAsync(cancellationToken);
+        }
+
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(responseBody, Encoding.UTF8, "application/json"),
+        };
+    }
+}
+
+internal sealed class SingleHandlerClientFactory : IHttpClientFactory
+{
+    private readonly HttpMessageHandler handler;
+    public SingleHandlerClientFactory(HttpMessageHandler handler) => this.handler = handler;
+    public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+}

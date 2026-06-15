@@ -10,8 +10,6 @@ namespace Proxytrace.Infrastructure.Internal;
 
 internal sealed class ProviderClient : IProviderClient
 {
-    private const string AzureDeploymentsApiVersion = "2023-03-15-preview";
-
     private readonly IModelProvider provider;
     private readonly IModelRepository modelRepository;
     private readonly HttpClient http;
@@ -74,14 +72,7 @@ internal sealed class ProviderClient : IProviderClient
     {
         try
         {
-            string basePath = StripOpenAiSuffix(provider.Endpoint.AbsolutePath);
-            var builder = new UriBuilder(provider.Endpoint)
-            {
-                Path = $"{basePath}/openai/deployments",
-                Query = $"api-version={AzureDeploymentsApiVersion}",
-            };
-
-            using var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
+            using var request = new HttpRequestMessage(HttpMethod.Get, ProviderEndpoints.AzureDeploymentsUri(provider.Endpoint));
             request.Headers.Add("api-key", provider.ApiKey);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", provider.ApiKey);
 
@@ -125,16 +116,6 @@ internal sealed class ProviderClient : IProviderClient
         {
             return [];
         }
-    }
-
-    private static string StripOpenAiSuffix(string absolutePath)
-    {
-        string path = absolutePath.TrimEnd('/');
-        if (path.EndsWith("/openai/v1", StringComparison.OrdinalIgnoreCase))
-            path = path[..^"/openai/v1".Length];
-        else if (path.EndsWith("/openai", StringComparison.OrdinalIgnoreCase))
-            path = path[..^"/openai".Length];
-        return path;
     }
 
     private OpenAIModelClient CreateOpenAiClient()

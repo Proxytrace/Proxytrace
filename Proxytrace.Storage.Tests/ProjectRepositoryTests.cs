@@ -106,6 +106,24 @@ public sealed class ProjectRepositoryTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task FindBySlugAsync_MixedCaseSlug_MatchesCaseInsensitively()
+    {
+        IServiceProvider services = GetServices();
+        var (repository, projectFactory, endpoint, _) = await SetupAsync(services, memberCount: 0);
+        var projectRepository = services.GetRequiredService<IProjectRepository>();
+
+        var project = projectFactory("Showcase Project", endpoint, []);
+        var saved = await repository.AddAsync(project, CancellationToken);
+
+        // A request-path segment ("/Showcase-Project/openai/v1") keeps its original casing; it must
+        // still match the canonical lower-cased slug, not just the already-lower-cased form.
+        var found = await projectRepository.FindBySlugAsync("Showcase-Project", CancellationToken);
+
+        found.Should().NotBeNull();
+        found.Id.Should().Be(saved.Id);
+    }
+
+    [TestMethod]
     public async Task FindBySlugAsync_UnknownSlug_ReturnsNull()
     {
         IServiceProvider services = GetServices();

@@ -156,6 +156,25 @@ public sealed class CachedApiKeyResolverTests
         result.Project.Should().BeSameAs(apiKey.Project);
     }
 
+    [TestMethod]
+    public async Task ResolveAsync_ProxytraceKey_AcceptsMixedCaseSlug()
+    {
+        IApiKey apiKey = ProxytraceKey("Showcase Project");
+        var apiKeys = Substitute.For<IApiKeyRepository>();
+        var providers = Substitute.For<IModelProviderRepository>();
+        var projects = Substitute.For<IProjectRepository>();
+        apiKeys.FindByKeyAsync("pt", Arg.Any<CancellationToken>()).Returns(apiKey);
+
+        var resolver = NewResolver(apiKeys, providers, projects, TimeSpan.FromSeconds(30));
+
+        // The slug arrives from the URL path with its original casing ("Showcase-Project"); it must
+        // still match the key's canonical lower-cased project slug rather than 401.
+        var result = await resolver.ResolveAsync("pt", "Showcase-Project", CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Project.Should().BeSameAs(apiKey.Project);
+    }
+
 
     [TestMethod]
     public async Task ResolveAsync_ProxytraceKeyWins_OnCollisionWithProviderKey()
