@@ -20,33 +20,33 @@ renders in kiosk when you get to it.
 ### dashboard.md — ✅ done
 - [x] `dashboard/overview.png` — `/dashboard` top fold (Mission Control + metrics + charts + live stream + pass-rate gauge)
 
-### capturing-traces.md — P1 (richest page; kiosk has seeded traces)
-- [ ] `traces/list.png` — `/traces` populated list
-- [ ] `traces/timeline.png` — the timeline view
-- [ ] `traces/detail.png` — trace detail panel (open one trace)
-- [ ] `traces/conversation.png` — multi-turn conversation in the detail panel · P2
-- [ ] `traces/filters.png` — search / filter / paging bar (crop) · P2
+### capturing-traces.md — ✅ P1 done
+- [x] `traces/list.png` — `/traces` (timeline + summary cards + table) → under "Exploring traces"
+- [x] `traces/timeline.png` — timeline-strip crop → under "The timeline"
+- [x] `traces/detail.png` — trace detail drawer (conversation + metrics) → under "The trace detail panel"
+- [x] `traces/filters.png` — covered by `list.png` (the filter/paging bar is visible there); no separate crop
+- [ ] `traces/conversation.png` — a multi-turn conversation group expanded · P2 (not done)
 
-### agents.md — P1
-- [ ] `agents/list.png` — `/agents` list (seeded "Data Analytics Agent")
-- [ ] `agents/detail.png` — the agent detail view
-- [ ] `agents/versioning.png` — version history / versioning UI · P3 (if surfaced)
+### agents.md — ✅ P1 done
+- [x] `agents/detail.png` — the agent detail view (the agent list rail is visible in the same shot) → under "The agent detail view"
+- [x] `agents/list.png` — folded into `detail.png`; separate rail crop dropped as redundant
+- [ ] `agents/versioning.png` — version-history close-up · P3 (optional; not done)
 
-### evaluators.md — P1
-- [ ] `evaluators/list.png` — `/evaluators` list (seeded "Helpfulness")
-- [ ] `evaluators/workspace.png` — the evaluator workspace / detail
-- [ ] `evaluators/playground.png` — `/evaluator-playground`, a rule-based check run · P2
+### evaluators.md — ✅ P1 done
+- [x] `evaluators/workspace.png` — the evaluator workspace (rail + detail) → under "The evaluator workspace"
+- [x] `evaluators/playground.png` — the Evaluator Playground (rail + bench + verdict) → under "The Evaluator Playground"
+- [x] `evaluators/list.png` — folded into `workspace.png`; separate rail crop dropped as redundant
 
-### test-suites-and-cases.md — P1 (verify suites are seeded)
-- [ ] `suites/overview.png` — `/suites` overview
-- [ ] `suites/cases.png` — suite detail: the test-case list
-- [ ] `suites/expected-output.png` — editing a case's expected output · P2
-- [ ] `suites/attach-evaluators.png` — attaching evaluators to a suite · P3
+### test-suites-and-cases.md — ✅ P1 done
+- [x] `suites/overview.png` — `/suites` overview grid + totals → under "The suites overview"
+- [x] `suites/cases.png` — the Edit Suite dialog (cases + expected-output editor + tabs) → under "Test cases"
+- [x] `suites/expected-output.png` — covered by `cases.png` (the expected-output editor is shown)
+- [x] `suites/attach-evaluators.png` — covered by `cases.png` (the Evaluators tab is in the dialog)
 
-### running-tests.md — P1 (verify a seeded, completed run exists)
-- [ ] `runs/results-matrix.png` — completed run → test-case matrix
-- [ ] `runs/per-model.png` — per-model performance summary
-- [ ] `runs/progress.png` — a run in progress / live view · P2 (needs an active run)
+### running-tests.md — ✅ P1 done
+- [x] `runs/results.png` — completed run: model cards + evaluator breakdown + test-case matrix → under "Test case matrix"
+- [x] `runs/per-model.png` — per-model performance summary crop → under "Per-model performance summary"
+- [ ] `runs/progress.png` — a run in progress / live SSE view · P2 (needs an active run; not done)
 - [ ] `runs/ab.png` — an A/B validation run · P3
 
 ### optimization-proposals.md — P2 (verify proposals are seeded)

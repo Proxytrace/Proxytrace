@@ -18,6 +18,8 @@ matter.
 
 ## Test cases
 
+![The Edit Suite dialog: the suite's test cases on the left, and the selected case's input with its editable expected output on the right.](/screenshots/suites/cases.png)
+
 Each test case captures the input to run and the expectation to check against. What
 "expected" means depends on the [evaluators](/guide/evaluators) attached to the suite —
 an exact string, a number within tolerance, a JSON shape, a tool that should be called,
@@ -55,6 +57,8 @@ Once a suite has cases and evaluators, run it against an
 [agent](/guide/agents) version to produce a [test run](/guide/running-tests).
 
 ## The suites overview
+
+![The Test Suites overview: summary totals across the top and a grid of suite cards, each showing its latest pass rate, case count, and last-run time.](/screenshots/suites/overview.png)
 
 Each suite card surfaces its latest run data at a glance:
 

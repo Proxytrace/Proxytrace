@@ -64,6 +64,8 @@ Moving versions into or out of a **system agent** is not allowed.
 
 Pick an agent from the searchable list on the left to open its detail panel:
 
+![The agent detail view: the agent list on the left, and the selected agent's header, performance tiles, system prompt, and version history on the right.](/screenshots/agents/detail.png)
+
 - **Header card** — the agent avatar, name, current version, a *proposals ready* badge
   (when the agent has open [proposals](/guide/optimization-proposals)), and metadata
   (project, trace count, when it was last used). Controls on the right switch the model

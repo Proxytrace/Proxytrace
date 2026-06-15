@@ -59,6 +59,8 @@ the free tier.
 Selecting an evaluator opens its workspace, which summarises how that evaluator has been
 performing:
 
+![The evaluator workspace: performance tiles and a pass-rate trend, the scoring definition, the score distribution, and the suites and agents it's attached to.](/screenshots/evaluators/workspace.png)
+
 - **Performance** — pass rate (or average score for LLM judges), evaluation count, and a
   pass-rate trend over the chosen time range.
 - **Score distribution** — a bar per score (Terrible → Excellent). **Click a bar to filter
@@ -78,6 +80,8 @@ name and scores stay visible in the history you've already collected.
 The **Evaluator Playground** (in the sidebar under *Evaluators*) lets you probe a single
 evaluator against a past test result and watch its score react to edits — without launching a
 full run. It's a three-pane workspace:
+
+![The Evaluator Playground: the selection rail of past evaluations, the bench with the editable candidate response, and the 1–5 verdict gauge with the judge's reasoning.](/screenshots/evaluators/playground.png)
 
 1. **Selection rail (left).** Pick an evaluator, then one of its **past evaluations**. The
    list shows the evaluator's most recent scored cases; the search box reaches the rest of

@@ -18,6 +18,8 @@ automatically.
 Open **Traces** in the sidebar to browse captured calls. Real-time updates stream in via
 Server-Sent Events, so new traces appear as your agents run — no refresh needed.
 
+![The Traces view: the capture timeline, the page-summary stat cards, and the table of captured calls.](/screenshots/traces/list.png)
+
 Typical things you can do:
 
 - Inspect a single trace end to end: the conversation, the tools offered, and the response.
@@ -40,6 +42,8 @@ Typical things you can do:
   total trace count for the current filter is shown alongside the pager.
 
 ### The timeline
+
+![The traces timeline strip — each bar's height is the trace count for that time slice, with failed calls marked in red along the bottom.](/screenshots/traces/timeline.png)
 
 Above the table a **timeline strip** plots how many traces were captured over the selected
 range, so you can spot ingestion hotspots at a glance. Each bar's height is the trace count
@@ -76,6 +80,8 @@ project** (agents belong to a project), while the time range, search, and toggle
 across projects.
 
 ### The trace detail panel
+
+![The trace detail panel: latency, token and cost metrics above the Messages tab, which lays out the system, user, and assistant conversation.](/screenshots/traces/detail.png)
 
 Click a trace to open its detail panel. The header shows the trace ID with a **copy**
 button beside it that puts the full ID on your clipboard. The **Messages** tab lays out the
