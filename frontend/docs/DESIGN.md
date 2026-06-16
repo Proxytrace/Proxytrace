@@ -211,9 +211,9 @@ Use `DataTable` for any tabular dataset > 5 rows. For trace lists specifically, 
 
 ## 5. Icons
 
-- **Source:** Lucide (`lucide-react`). Default size 16. 14 in dense rows, 20 in headers, 24 only in empty states.
+- **Source:** the in-repo icon set at `components/icons` (import through its barrel; the `Svg` wrapper handles `size`/`currentColor`). `lucide-react` is **not** a dependency — don't add it. See BEST_PRACTICES.md §6 for the code rule. Default size 16. 14 in dense rows, 20 in headers, 24 only in empty states.
 - **No emoji as icons. Ever.** Even in placeholder copy.
-- **Stroke width:** Lucide default (2). Don't mix stroke widths within a screen.
+- **Stroke width:** default (2). Don't mix stroke widths within a screen.
 - Always pair an icon-only button with `aria-label`.
 
 ---

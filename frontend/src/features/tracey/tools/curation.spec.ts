@@ -15,10 +15,16 @@ vi.mock('../../../api/test-run-groups', () => ({ testRunGroupsApi }));
 import { createSuiteTools } from './suites';
 import { createRunTools } from './runs';
 import { CANCELLED } from './shared';
-import type { TraceyToolContext } from './shared';
+import type { TraceyTool, TraceyToolContext } from './shared';
 
-// store echoes the digest back so the returned result is assertable.
-const store = vi.fn((_kind: string, _full: unknown, summary: unknown) => summary);
+// store echoes the digest back so the returned result is assertable. Async to satisfy StoreFn.
+const store = vi.fn(async (_kind: string, _full: unknown, summary: unknown) => summary);
+
+// `execute` is optional on the tool type, but every tool under test defines it.
+function run(t: TraceyTool, args: Record<string, unknown>, ctx: TraceyToolContext) {
+  if (!t.execute) throw new Error('tool has no execute');
+  return t.execute(args, ctx);
+}
 
 function makeCtx(confirmValue = true): TraceyToolContext {
   return {
@@ -43,8 +49,8 @@ describe('create_suite', () => {
     testSuitesApi.create.mockResolvedValue(suite({ testCases: [{ id: 'c1' }] }));
 
     const tool = createSuiteTools(ctx, store).create_suite;
-    const result = await tool.execute!(
-      { name: 'My suite', agentId: 'a1', agentCallIds: ['call1'] }, ctx,
+    const result = await run(
+      tool, { name: 'My suite', agentId: 'a1', agentCallIds: ['call1'] }, ctx,
     );
 
     expect(ctx.confirm).toHaveBeenCalledOnce();
@@ -56,7 +62,7 @@ describe('create_suite', () => {
     const ctx = makeCtx();
     agentsApi.get.mockResolvedValue(null);
     const tool = createSuiteTools(ctx, store).create_suite;
-    const result = await tool.execute!({ name: 'x', agentId: 'bad', agentCallIds: ['c'] }, ctx);
+    const result = await run(tool, { name: 'x', agentId: 'bad', agentCallIds: ['c'] }, ctx);
     expect(result).toEqual({ notFound: 'bad' });
     expect(testSuitesApi.create).not.toHaveBeenCalled();
   });
@@ -65,7 +71,7 @@ describe('create_suite', () => {
     const ctx = makeCtx(false);
     agentsApi.get.mockResolvedValue({ id: 'a1', name: 'A' });
     const tool = createSuiteTools(ctx, store).create_suite;
-    const result = await tool.execute!({ name: 'x', agentId: 'a1', agentCallIds: ['c'] }, ctx);
+    const result = await run(tool, { name: 'x', agentId: 'a1', agentCallIds: ['c'] }, ctx);
     expect(result).toBe(CANCELLED);
     expect(testSuitesApi.create).not.toHaveBeenCalled();
   });
@@ -80,7 +86,7 @@ describe('add_to_suite', () => {
       .mockResolvedValueOnce(suite({ testCases: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }, { id: 'c4' }] }));
 
     const tool = createSuiteTools(ctx, store).add_to_suite;
-    const result = await tool.execute!({ suiteId: 's1', agentCallIds: ['call3', 'call4'] }, ctx);
+    const result = await run(tool, { suiteId: 's1', agentCallIds: ['call3', 'call4'] }, ctx);
 
     expect(testSuitesApi.addTestCase).toHaveBeenCalledTimes(2);
     expect(testSuitesApi.addTestCase).toHaveBeenNthCalledWith(1, 's1', 'call3');
@@ -92,7 +98,7 @@ describe('add_to_suite', () => {
     const ctx = makeCtx();
     testSuitesApi.get.mockResolvedValue(null);
     const tool = createSuiteTools(ctx, store).add_to_suite;
-    const result = await tool.execute!({ suiteId: 'bad', agentCallIds: ['c'] }, ctx);
+    const result = await run(tool, { suiteId: 'bad', agentCallIds: ['c'] }, ctx);
     expect(result).toEqual({ notFound: 'bad' });
     expect(testSuitesApi.addTestCase).not.toHaveBeenCalled();
   });
@@ -105,7 +111,7 @@ describe('add_to_suite', () => {
       .mockRejectedValueOnce(new Error('stale trace'));
 
     const tool = createSuiteTools(ctx, store).add_to_suite;
-    const result = await tool.execute!({ suiteId: 's1', agentCallIds: ['good', 'bad'] }, ctx) as {
+    const result = await run(tool, { suiteId: 's1', agentCallIds: ['good', 'bad'] }, ctx) as {
       caseCount: number; failed?: { id: string; error: string }[];
     };
 
@@ -122,7 +128,7 @@ describe('remove_test_case', () => {
     testSuitesApi.removeTestCase.mockResolvedValue(suite({ testCases: [{ id: 'c1' }] }));
 
     const tool = createSuiteTools(ctx, store).remove_test_case;
-    const result = await tool.execute!({ suiteId: 's1', caseId: 'c2' }, ctx);
+    const result = await run(tool, { suiteId: 's1', caseId: 'c2' }, ctx);
 
     expect(testSuitesApi.removeTestCase).toHaveBeenCalledWith('s1', 'c2');
     expect(result).toMatchObject({ id: 's1', caseCount: 1 });
@@ -132,7 +138,7 @@ describe('remove_test_case', () => {
     const ctx = makeCtx();
     testSuitesApi.get.mockResolvedValue(null);
     const tool = createSuiteTools(ctx, store).remove_test_case;
-    const result = await tool.execute!({ suiteId: 'bad', caseId: 'c1' }, ctx);
+    const result = await run(tool, { suiteId: 'bad', caseId: 'c1' }, ctx);
     expect(result).toEqual({ notFound: 'bad' });
     expect(testSuitesApi.removeTestCase).not.toHaveBeenCalled();
   });
@@ -141,7 +147,7 @@ describe('remove_test_case', () => {
     const ctx = makeCtx(false);
     testSuitesApi.get.mockResolvedValue(suite());
     const tool = createSuiteTools(ctx, store).remove_test_case;
-    const result = await tool.execute!({ suiteId: 's1', caseId: 'c2' }, ctx);
+    const result = await run(tool, { suiteId: 's1', caseId: 'c2' }, ctx);
     expect(result).toBe(CANCELLED);
     expect(testSuitesApi.removeTestCase).not.toHaveBeenCalled();
   });
@@ -152,7 +158,7 @@ describe('update_expected_output', () => {
     const ctx = makeCtx();
     testCasesApi.update.mockResolvedValue({ id: 'c1' });
     const tool = createSuiteTools(ctx, store).update_expected_output;
-    const result = await tool.execute!({ caseId: 'c1', content: 'the right answer' }, ctx);
+    const result = await run(tool, { caseId: 'c1', content: 'the right answer' }, ctx);
 
     expect(testCasesApi.update).toHaveBeenCalledWith(
       'c1', { role: 'assistant', content: 'the right answer' }, { silentStatuses: [404] },
@@ -165,14 +171,14 @@ describe('update_expected_output', () => {
     const err = Object.assign(new Error('404'), { status: 404 });
     testCasesApi.update.mockRejectedValue(err);
     const tool = createSuiteTools(ctx, store).update_expected_output;
-    const result = await tool.execute!({ caseId: 'gone', content: 'x' }, ctx);
+    const result = await run(tool, { caseId: 'gone', content: 'x' }, ctx);
     expect(result).toEqual({ notFound: 'gone' });
   });
 
   it('returns CANCELLED on decline and never updates', async () => {
     const ctx = makeCtx(false);
     const tool = createSuiteTools(ctx, store).update_expected_output;
-    const result = await tool.execute!({ caseId: 'c1', content: 'x' }, ctx);
+    const result = await run(tool, { caseId: 'c1', content: 'x' }, ctx);
     expect(result).toBe(CANCELLED);
     expect(testCasesApi.update).not.toHaveBeenCalled();
   });
@@ -185,7 +191,7 @@ describe('cancel_test_run', () => {
     testRunGroupsApi.cancel.mockResolvedValue({ id: 'g1', status: TestRunStatus.Cancelled });
 
     const tool = createRunTools(ctx, store).cancel_test_run;
-    const result = await tool.execute!({ groupId: 'g1' }, ctx);
+    const result = await run(tool, { groupId: 'g1' }, ctx);
 
     expect(testRunGroupsApi.cancel).toHaveBeenCalledWith('g1');
     expect(result).toEqual({ id: 'g1', status: TestRunStatus.Cancelled });
@@ -195,7 +201,7 @@ describe('cancel_test_run', () => {
     const ctx = makeCtx();
     testRunGroupsApi.get.mockResolvedValue({ id: 'g1', suiteName: 'S', agentName: 'A', status: TestRunStatus.Completed });
     const tool = createRunTools(ctx, store).cancel_test_run;
-    const result = await tool.execute!({ groupId: 'g1' }, ctx);
+    const result = await run(tool, { groupId: 'g1' }, ctx);
     expect(result).toEqual({ id: 'g1', status: TestRunStatus.Completed, alreadyTerminal: true });
     expect(ctx.confirm).not.toHaveBeenCalled();
     expect(testRunGroupsApi.cancel).not.toHaveBeenCalled();
@@ -205,7 +211,7 @@ describe('cancel_test_run', () => {
     const ctx = makeCtx();
     testRunGroupsApi.get.mockResolvedValue(null);
     const tool = createRunTools(ctx, store).cancel_test_run;
-    const result = await tool.execute!({ groupId: 'bad' }, ctx);
+    const result = await run(tool, { groupId: 'bad' }, ctx);
     expect(result).toEqual({ notFound: 'bad' });
     expect(testRunGroupsApi.cancel).not.toHaveBeenCalled();
   });
@@ -214,7 +220,7 @@ describe('cancel_test_run', () => {
     const ctx = makeCtx(false);
     testRunGroupsApi.get.mockResolvedValue({ id: 'g1', suiteName: 'S', agentName: 'A', status: TestRunStatus.Running });
     const tool = createRunTools(ctx, store).cancel_test_run;
-    const result = await tool.execute!({ groupId: 'g1' }, ctx);
+    const result = await run(tool, { groupId: 'g1' }, ctx);
     expect(result).toBe(CANCELLED);
     expect(testRunGroupsApi.cancel).not.toHaveBeenCalled();
   });

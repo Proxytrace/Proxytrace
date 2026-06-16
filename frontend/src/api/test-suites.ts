@@ -20,5 +20,5 @@ export const testSuitesApi = {
   addTestCase: (suiteId: string, fromAgentCallId: string, expectedOutput?: TestSuiteMessageDto) =>
     api.post<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases`, { fromAgentCallId, expectedOutput }),
   removeTestCase: (suiteId: string, caseId: string) =>
-    api.del(`/api/test-suites/${suiteId}/test-cases/${caseId}`),
+    api.del<TestSuiteDto>(`/api/test-suites/${suiteId}/test-cases/${caseId}`),
 };

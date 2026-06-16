@@ -28,6 +28,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Tracey's "remove test case" tool no longer renders a broken result card.** Removing a case
+  from a suite via the assistant dropped the updated suite returned by the backend (the API call
+  was typed as returning nothing), so the follow-up card showed empty. The updated suite is now
+  carried through and rendered correctly.
+
 - Listing models through the proxy against an **Azure OpenAI** upstream
   (`GET /openai/v1/models`, e.g. `client.models.list()`) returned an empty list, because Azure
   exposes usable models as *deployments* rather than through an OpenAI-style `/models` route.
@@ -40,6 +45,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 - The project segment in the proxy URL (`/{project}/openai/v1/…`) is now matched
   case-insensitively, so a base URL like `…/Development/openai/v1` resolves the **Development**
   project instead of returning **401 Unauthorized**.
+
+### Security
+
+- Updated `dompurify` (the HTML sanitizer behind the message HTML view and the search-snippet
+  preview) to 3.4.10, picking up upstream sanitization-bypass fixes, and refreshed the frontend
+  dev toolchain so `npm audit` reports no known vulnerabilities.
 
 ## [1.0.3] - 2026-06-12
 

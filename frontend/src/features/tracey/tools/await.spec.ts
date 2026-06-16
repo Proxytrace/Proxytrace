@@ -46,7 +46,8 @@ describe('await_actions', () => {
     });
 
     const tool = createAwaitTools(ctx, store).await_actions;
-    const result = await tool.execute!(
+    if (!tool.execute) throw new Error('tool has no execute');
+    const result = await tool.execute(
       { handles: [{ kind: 'test-run', id: 'g1' }, { kind: 'theory', id: 't1' }] },
       ctx,
     ) as { anyTimedOut: boolean; results: { kind: string; id: string; status: string; timedOut: boolean }[] };
