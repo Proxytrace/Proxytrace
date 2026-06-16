@@ -88,18 +88,21 @@ function summarizeTheory(theory: TheoryDto, timedOut: boolean): TheoryAwaitResul
 
 /** Waits on a single handle, dispatching to the right API + terminal predicate by kind. */
 async function awaitOne(handle: { kind: AwaitKind; id: string }, opts: PollOptions): Promise<AwaitResult> {
+  // Pass the abort signal into the API call too, so hitting Stop tears down the in-flight GET
+  // rather than only halting the loop after it returns.
+  const reqOpts = { silentStatuses: [404], signal: opts.signal };
   if (handle.kind === 'test-run') {
     const { snapshot, timedOut } = await pollUntilTerminal(
       // A 404 (bad handle) still rejects into the per-handle `errors` — silent so the
       // model-recoverable failure doesn't raise a red error toast.
-      () => testRunGroupsApi.get(handle.id, { silentStatuses: [404] }),
+      () => testRunGroupsApi.get(handle.id, reqOpts),
       (g) => isRunTerminal(g.status),
       opts,
     );
     return summarizeRun(snapshot, timedOut);
   }
   const { snapshot, timedOut } = await pollUntilTerminal(
-    () => theoriesApi.get(handle.id, { silentStatuses: [404] }),
+    () => theoriesApi.get(handle.id, reqOpts),
     (t) => isTheoryTerminal(t.status),
     opts,
   );

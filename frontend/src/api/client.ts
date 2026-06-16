@@ -35,6 +35,12 @@ export interface RequestOptions {
    * fires — used e.g. for a 404 when a run has no result for a given test case.
    */
   silentStatuses?: number[];
+  /**
+   * Aborts the request. Forwarded to `fetch`, so a cancelled caller (e.g. Tracey's `await_actions`
+   * poll when the user hits Stop) tears down the in-flight HTTP request instead of letting it run
+   * to completion. An aborted fetch rejects with a DOMException whose `name` is `'AbortError'`.
+   */
+  signal?: AbortSignal;
 }
 
 async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions): Promise<T> {
@@ -45,7 +51,7 @@ async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(url, { ...init, headers });
+  const res = await fetch(url, { ...init, headers, signal: opts?.signal ?? init?.signal });
   if (res.status === 401) {
     if (token) notifyUnauthorized();
     throw new Error('401 Unauthorized');

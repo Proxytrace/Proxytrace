@@ -220,6 +220,9 @@ function awaitableOf(output: unknown): AwaitableHandle | undefined {
  * not-found writes return no handle, so they never force a wait. Exported for unit testing.
  */
 export function pendingAwaitables(steps: ReadonlyArray<StepResult<ToolSet>>): AwaitableHandle[] {
+  // Keyed by `kind:id`, not id alone, so a handle is only considered satisfied by an
+  // `await_actions` call on a handle of the same kind — matching the keys the cards and tests use.
+  const keyOf = (h: AwaitableHandle): string => `${h.kind}:${h.id}`;
   const produced: AwaitableHandle[] = [];
   const awaited = new Set<string>();
   for (const step of steps) {
@@ -232,12 +235,12 @@ export function pendingAwaitables(steps: ReadonlyArray<StepResult<ToolSet>>): Aw
       const handles = (call.input as { handles?: unknown }).handles;
       if (!Array.isArray(handles)) continue;
       for (const h of handles) {
-        const id = (h as { id?: unknown } | null)?.id;
-        if (typeof id === 'string') awaited.add(id);
+        const { kind, id } = (h as { kind?: unknown; id?: unknown } | null) ?? {};
+        if (typeof kind === 'string' && typeof id === 'string') awaited.add(keyOf({ kind, id }));
       }
     }
   }
-  return produced.filter((h) => !awaited.has(h.id));
+  return produced.filter((h) => !awaited.has(keyOf(h)));
 }
 
 /**
