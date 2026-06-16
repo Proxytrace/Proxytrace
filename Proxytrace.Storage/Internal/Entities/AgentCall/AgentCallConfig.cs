@@ -47,9 +47,14 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         this.endpoints = endpoints;
     }
 
+    private const int RequestPreviewMaxLength = 1000;
+
     public override void Configure(EntityTypeBuilder<AgentCallEntity> builder)
     {
-        builder.HasIndex(e => e.AgentVersionId);
+        // Composite (AgentVersionId, CreatedAt): serves the agent/project-scoped trace list and
+        // time-series (which filter by version then order/range by CreatedAt) in one index, and its
+        // leading column still covers the agent-version foreign key.
+        builder.HasIndex(e => new { e.AgentVersionId, e.CreatedAt });
         builder.HasIndex(e => e.EndpointId);
 
         builder
@@ -60,6 +65,7 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
         builder.HasIndex(e => e.CreatedAt);
         builder.Property(e => e.FinishReason).HasMaxLength(64);
         builder.Property(e => e.ErrorMessage).HasMaxLength(2048);
+        builder.Property(e => e.RequestPreview).HasMaxLength(RequestPreviewMaxLength);
         builder.HasIndex(e => e.ConversationId);
 
         builder
@@ -133,7 +139,29 @@ internal class AgentCallConfig : AbstractEntityConfiguration<AgentCallEntity>, I
             ErrorMessage = domain.ErrorMessage,
             ModelParameters = AgentConfig.ToData(domain.ModelParameters),
             ConversationId = domain.ConversationId,
+            RequestPreview = BuildPreview(domain.Request),
+            ResponseToolRequestCount = domain.Response?.Response is AssistantMessage assistant
+                ? assistant.ToolRequests.Count
+                : 0,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
+
+    /// <summary>
+    /// First user message in the request, whitespace-collapsed and truncated, stored so the traces
+    /// list renders a preview without loading the full request payload. Mirrors the API list mapper.
+    /// </summary>
+    private static string? BuildPreview(Conversation request)
+    {
+        string? text = request.Messages.OfType<UserMessage>().FirstOrDefault()?.GetText();
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        string collapsed = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+        return collapsed.Length > RequestPreviewMaxLength
+            ? collapsed[..RequestPreviewMaxLength]
+            : collapsed;
+    }
 }

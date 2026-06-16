@@ -41,9 +41,32 @@ public sealed class AgentCallDtoMapper
         c.ConversationId);
 
     /// <summary>
-    /// Lightweight projection for the traces table / dashboard live stream — row fields plus the
-    /// precomputed message preview and response tool-request count, skipping the full request,
-    /// response, tool specs and model parameters.
+    /// Maps the storage-projected <see cref="AgentCallListItem"/> (traces table list path) straight
+    /// to its DTO — the preview and tool count are already precomputed, so nothing is deserialised.
+    /// </summary>
+    public AgentCallListItemDto ToListItemDto(AgentCallListItem c) => new(
+        c.Id,
+        c.AgentId,
+        c.AgentName,
+        c.ModelName,
+        c.ProviderName,
+        c.MessagePreview,
+        c.ToolCount,
+        c.InputTokens,
+        c.OutputTokens,
+        c.LatencyMs,
+        c.HttpStatus,
+        c.FinishReason,
+        c.ErrorMessage,
+        c.Cost,
+        c.CreatedAt,
+        c.UpdatedAt,
+        c.ConversationId);
+
+    /// <summary>
+    /// Lightweight projection for the dashboard recent-traces strip (a small fixed count) from a
+    /// fully-loaded domain entity — row fields plus the precomputed message preview and response
+    /// tool-request count, skipping the full request, response, tool specs and model parameters.
     /// </summary>
     public AgentCallListItemDto ToListItemDto(IAgentCall c) => new(
         c.Id,
