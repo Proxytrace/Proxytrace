@@ -23,6 +23,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
         builder.Property(e => e.Endpoint).HasMaxLength(2048).IsRequired();
         builder.Property(e => e.ApiKey).HasMaxLength(512).IsRequired();
         builder.Property(e => e.Kind).IsRequired();
+        builder.HasIndex(e => e.IsArchived);
     }
 
     public Task<IModelProvider> Map(ModelProviderEntity stored, CancellationToken cancellationToken = default)
@@ -36,6 +37,7 @@ internal class ModelProviderConfig : AbstractEntityConfiguration<ModelProviderEn
             Endpoint = domain.Endpoint.ToString(),
             ApiKey = domain.ApiKey,
             Kind = domain.Kind,
+            IsArchived = domain.IsArchived,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();

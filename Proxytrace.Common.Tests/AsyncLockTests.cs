@@ -143,6 +143,29 @@ public sealed class AsyncLockTests
     }
 
     [TestMethod]
+    public async Task LockAsync_WhenWaitCancelled_DoesNotLeakAndKeyStaysUsable()
+    {
+        var asyncLock = new AsyncLock();
+
+        // Hold the key so the next acquire must wait, then cancel that wait.
+        using (await asyncLock.LockAsync("key"))
+        {
+            using var cts = new CancellationTokenSource();
+            var pending = asyncLock.LockAsync("key", cts.Token);
+            await cts.CancelAsync();
+
+            var act = async () => await pending;
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+
+        // The cancelled acquire must have unwound its refcount: a fresh acquire on the same key
+        // succeeds immediately rather than deadlocking on a leaked permit.
+        using var reacquire = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        using var handle = await asyncLock.LockAsync("key", reacquire.Token);
+        handle.Should().NotBeNull();
+    }
+
+    [TestMethod]
     public async Task LockAsync_ConcurrentAccessOnSameKey_SerializesAccess()
     {
         var asyncLock = new AsyncLock();

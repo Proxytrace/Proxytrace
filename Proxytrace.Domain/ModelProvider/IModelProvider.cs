@@ -2,9 +2,11 @@
 namespace Proxytrace.Domain.ModelProvider;
 
 /// <summary>
-/// A model provider (e.g. OpenAI) with its API endpoint and credentials.
+/// A model provider (e.g. OpenAI) with its API endpoint and credentials. Archivable: deleting a
+/// provider soft-archives it (and its endpoints) instead of hard-deleting, so the AgentCall/TestRun
+/// history that references its endpoints by id is preserved rather than cascade-removed.
 /// </summary>
-public interface IModelProvider : IDomainEntity
+public interface IModelProvider : IDomainEntity, IArchivable
 {
     /// <summary>
     /// The name of the model provider (e.g. OpenAI)

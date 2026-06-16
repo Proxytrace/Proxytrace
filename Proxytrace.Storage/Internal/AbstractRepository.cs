@@ -152,6 +152,13 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         return mapped;
     }
 
+    /// <summary>
+    /// Hook for list queries to exclude rows that should not appear in pickers/listings (e.g.
+    /// archived entities). By-key lookups never call this, so history keeps resolving. Default: no
+    /// filtering; <see cref="ArchivableRepository{TDomainEntity,TStoredEntity}"/> overrides it.
+    /// </summary>
+    protected virtual IQueryable<TStoredEntity> FilterListQuery(IQueryable<TStoredEntity> query) => query;
+
     /// <inheritdoc />
     public async Task<PagedResult<TDomainEntity>> GetPagedAsync(
         int page,
@@ -160,7 +167,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
 
-        var query = contextFactory().Set<TStoredEntity>().AsNoTracking();
+        var query = FilterListQuery(contextFactory().Set<TStoredEntity>().AsNoTracking());
         int total = await query.CountAsync(cancellationToken);
         var stored = await query
             .OrderByDescending(e => e.CreatedAt)

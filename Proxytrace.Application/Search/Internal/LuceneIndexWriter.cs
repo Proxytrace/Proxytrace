@@ -15,6 +15,10 @@ internal sealed class LuceneIndexWriter : IDisposable
     private readonly bool ownsDirectory;
     private readonly IndexWriter writer;
     private readonly SearcherManager searcherManager;
+
+    // Deliberate exception to the "always IAsyncLock" rule (see docs/code-style.md §Concurrency):
+    // this guards purely-synchronous Lucene IndexWriter operations with no await in the critical
+    // section, so System.Threading.Lock is the correct primitive — IAsyncLock buys no safety here.
     private readonly Lock commitLock = new();
 
     public LuceneIndexWriter(ILuceneDirectoryFactory factory) : this(factory.Open(), ownsDirectory: true)

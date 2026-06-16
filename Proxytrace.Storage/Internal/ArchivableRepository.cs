@@ -94,4 +94,8 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
     /// <inheritdoc />
     public override async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         => (await base.GetAllAsync(cancellationToken)).Where(e => !e.IsArchived).ToList();
+
+    /// <summary>Excludes archived rows from paged/list queries; by-key lookups stay unfiltered.</summary>
+    protected override IQueryable<TStoredEntity> FilterListQuery(IQueryable<TStoredEntity> query)
+        => query.ExcludeArchived();
 }

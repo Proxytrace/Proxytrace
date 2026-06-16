@@ -21,7 +21,7 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/providers")]
 public class ModelProvidersController : ControllerBase
 {
-    private readonly IRepository<IModelProvider> providerRepository;
+    private readonly IModelProviderRepository providerRepository;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly IProjectRepository projectRepository;
     private readonly IModelEndpointRepository endpointRepository;
@@ -35,7 +35,7 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelPriceRefresher priceRefresher;
 
     public ModelProvidersController(
-        IRepository<IModelProvider> providerRepository,
+        IModelProviderRepository providerRepository,
         IApiKeyRepository apiKeyRepository,
         IProjectRepository projectRepository,
         IModelEndpointRepository endpointRepository,
@@ -141,8 +141,12 @@ public class ModelProvidersController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await providerRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        // Archive (soft-delete) instead of hard-deleting: a hard delete cascades through the
+        // provider's endpoints to every AgentCall/TestRun that referenced them, silently destroying
+        // history. Archiving hides the provider + its endpoints from listings while preserving that
+        // history. Contract unchanged (204/404), so the frontend needs no change.
+        var archived = await providerRepository.ArchiveAsync(id, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     // ── Model Endpoints ───────────────────────────────────────────────────────

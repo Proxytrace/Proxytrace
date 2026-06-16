@@ -4,7 +4,7 @@ namespace Proxytrace.Domain.ModelProvider;
 /// Repository for <see cref="IModelProvider"/> with upstream-key lookup used by the proxy
 /// when callers authenticate with the provider's own API key instead of a Proxytrace-issued one.
 /// </summary>
-public interface IModelProviderRepository : IRepository<IModelProvider>
+public interface IModelProviderRepository : IArchivableRepository<IModelProvider>
 {
     /// <summary>
     /// Returns the provider whose upstream <see cref="IModelProvider.ApiKey"/> matches

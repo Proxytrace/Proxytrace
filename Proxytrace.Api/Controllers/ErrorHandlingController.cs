@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Error;
 
 namespace Proxytrace.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/errors")]
 public class ErrorHandlingController : ControllerBase
 {

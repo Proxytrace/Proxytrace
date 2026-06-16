@@ -26,8 +26,36 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   case's expected output, and remove cases — closing the curate→benchmark→run loop entirely in
   chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
 
+### Security
+
+- **Test-support and `/seed` endpoints are no longer reachable on real deployments.** The e2e helper
+  endpoints (including a destructive `POST /api/test/reset` that wiped all run data, and the
+  per-controller `/seed` injectors) were exposed to any authenticated user in production. They are
+  now gated behind a `TestOnlyEndpoint` guard (Development env or `TestSupport:Enabled`), so a
+  normal user can no longer wipe or fabricate data.
+- **Proxy API keys are now generated with a cryptographic RNG** instead of a GUID, and the
+  long-lived session token is accepted in the `?access_token` URL only on SSE (`…/stream`) routes
+  rather than on every request — closing a token-in-URL leakage path. Client error reporting
+  (`POST /api/errors`) now requires authentication.
+
 ### Fixed
 
+- **Deleting a model provider no longer destroys its traces and test runs.** A provider delete used
+  to cascade through its endpoints and silently hard-delete every `AgentCall`/`TestRun` that
+  referenced them. Providers now archive (soft-delete) like endpoints do, so the history is preserved
+  while the provider disappears from the UI.
+- **Captured traces are no longer dropped on a transient database hiccup.** The ingestion worker
+  acknowledged every message even when persisting it failed; a brief DB outage or a write race could
+  lose a trace permanently. Failed writes are now retried (with an attempt cap) and only acknowledged
+  once they succeed. A normal completion whose text happens to contain `data: ` is also no longer
+  mis-parsed as a streamed response.
+- **One failing test case no longer fails the whole test run.** A single flaky/erroring case (e.g. a
+  timed-out LLM call) aborted the entire run and every sibling case; failures are now isolated so the
+  rest of the run completes. Optimization A/B validation also ignores partial runs so a proposal is
+  never spawned from incomplete evidence.
+- **Real-time (SSE) streams no longer leak server resources.** Streams for already-finished runs and
+  groups left a subscription registered forever; subscriptions are now always cleaned up, capped, and
+  kept alive with a heartbeat so dead connections are detected.
 - **Tracey's "remove test case" tool no longer renders a broken result card.** Removing a case
   from a suite via the assistant dropped the updated suite returned by the backend (the API call
   was typed as returning nothing), so the follow-up card showed empty. The updated suite is now
