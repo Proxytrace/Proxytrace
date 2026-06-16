@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
 namespace Proxytrace.Messaging.Internal;
@@ -16,14 +17,31 @@ internal sealed class InProcessIngestionStream : IIngestionStream
             SingleWriter = false,
         });
 
+    // The chosen channel does not support Reader.Count, so track the buffered depth ourselves:
+    // incremented on publish, decremented as each envelope is pulled by the consumer.
+    private long depth;
+
     public async Task PublishAsync(IngestMessage message, CancellationToken cancellationToken = default)
-        => await channel.Writer.WriteAsync(
+    {
+        await channel.Writer.WriteAsync(
             new IngestEnvelope(Guid.NewGuid().ToString("N"), message),
             cancellationToken);
+        Interlocked.Increment(ref depth);
+    }
 
-    public IAsyncEnumerable<IngestEnvelope> ConsumeAsync(CancellationToken cancellationToken = default)
-        => channel.Reader.ReadAllAsync(cancellationToken);
+    public async IAsyncEnumerable<IngestEnvelope> ConsumeAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (IngestEnvelope envelope in channel.Reader.ReadAllAsync(cancellationToken))
+        {
+            Interlocked.Decrement(ref depth);
+            yield return envelope;
+        }
+    }
 
     public Task AckAsync(string messageId, CancellationToken cancellationToken = default)
         => Task.CompletedTask;
+
+    public Task<long> GetQueueDepthAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(Math.Max(0L, Interlocked.Read(ref depth)));
 }

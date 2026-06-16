@@ -31,4 +31,24 @@ public sealed record MessagingConfiguration
     /// trimmed. Generous so a healthy consumer never loses unprocessed entries.
     /// </summary>
     public int MaxStreamLength { get; init; } = 1_000_000;
+
+    /// <summary>
+    /// How many entries the consumer reads per <c>XREADGROUP</c>/<c>XAUTOCLAIM</c> round. Larger
+    /// batches amortise the round-trip and feed the parallel processor; the worker still acks each
+    /// entry individually.
+    /// </summary>
+    public int BatchSize { get; init; } = 64;
+
+    /// <summary>
+    /// Maximum number of captured calls the ingestion worker persists concurrently. Each unit of
+    /// work runs on its own async flow (own DbContext via the AsyncLocal ambient context), so raising
+    /// this lifts write throughput past the one-trace-at-a-time ceiling.
+    /// <para>
+    /// Defaults to 1 (serial). Concurrency &gt; 1 is only safe on a transport that redelivers
+    /// unacknowledged entries (Redis Streams): a retryable race — e.g. two concurrent calls
+    /// appending a version to the same agent — is requeued and reprocessed. The in-process channel
+    /// does not redeliver, so it must stay serial; the Redis composition root raises this.
+    /// </para>
+    /// </summary>
+    public int MaxConcurrency { get; init; } = 1;
 }
