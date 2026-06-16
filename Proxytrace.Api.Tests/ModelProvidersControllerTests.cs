@@ -317,7 +317,7 @@ public sealed class ModelProvidersControllerTests : BaseTest<Module>
     }
 
     private static ModelProvidersController ResolveController(IServiceProvider services) => new(
-        services.GetRequiredService<IRepository<IModelProvider>>(),
+        services.GetRequiredService<IModelProviderRepository>(),
         services.GetRequiredService<IApiKeyRepository>(),
         services.GetRequiredService<IProjectRepository>(),
         services.GetRequiredService<IModelEndpointRepository>(),

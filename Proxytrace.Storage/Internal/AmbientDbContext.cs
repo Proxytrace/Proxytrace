@@ -32,11 +32,49 @@ internal sealed class AmbientDbContext
         => current.Value = null;
 
     /// <summary>
+    /// Registers an action to run only after the outermost transaction has committed (e.g. firing a
+    /// domain change event). If no transaction is active the action runs immediately, since there is
+    /// nothing to wait for. Deferring prevents notifying consumers about writes that a later step in
+    /// the same logical unit might still roll back.
+    /// </summary>
+    public void RegisterPostCommit(Action action)
+    {
+        State? state = current.Value;
+        if (state is null)
+        {
+            action();
+            return;
+        }
+
+        state.PostCommit.Add(action);
+    }
+
+    /// <summary>
+    /// Removes and returns the post-commit actions queued for the active flow. Called by the
+    /// outermost transaction after a successful commit so they can be fired exactly once.
+    /// </summary>
+    public IReadOnlyList<Action> TakePostCommit()
+    {
+        State? state = current.Value;
+        if (state is null || state.PostCommit.Count == 0)
+        {
+            return [];
+        }
+
+        Action[] actions = [.. state.PostCommit];
+        state.PostCommit.Clear();
+        return actions;
+    }
+
+    /// <summary>
     /// Returns the active context or throws when no logical transaction is in progress.
     /// </summary>
     public StorageDbContext RequireContext()
         => Context ?? throw new InvalidOperationException(
             "No ambient transaction context is active. Repository writes must run inside ITransaction.InvokeAsync.");
 
-    private sealed record State(StorageDbContext Context, IDbContextTransaction Transaction);
+    private sealed record State(StorageDbContext Context, IDbContextTransaction Transaction)
+    {
+        public List<Action> PostCommit { get; } = [];
+    }
 }

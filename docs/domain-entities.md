@@ -89,9 +89,14 @@ is next loaded. These entities **archive** instead — a reusable, opt-in soft-d
   409. Ingestion attribution (`GetOrCreateAsync`/`FindByNameAsync`) is a by-key lookup, so an
   archived agent that receives matching traffic again still resolves.
 - **`ModelEndpoint`** — the per-endpoint delete archives, preserving the `AgentCall`/`TestRun` rows a
-  hard delete would have `Cascade`-removed. **Known gap:** deleting a *provider* still
-  `Cascade`-hard-deletes its endpoints at the DB; closing that needs ModelProvider archiving too
-  (follow-up).
+  hard delete would have `Cascade`-removed. Reuse via `GetOrCreateAsync` (a by-key lookup)
+  **un-archives** a matched archived endpoint (`ArchivableRepository.UnarchiveAsync`) so it never
+  lingers as a live-but-hidden zombie.
+- **`ModelProvider`** — the per-provider delete archives instead of hard-deleting, closing the former
+  cascade-data-loss gap (a hard delete cascaded through the provider's endpoints to every
+  `AgentCall`/`TestRun`). `ArchiveRelationsAsync` also archives the provider's endpoints so the whole
+  provider leaves pickers together, while the history those endpoints back is preserved.
+  `FindByApiKeyAsync` (the proxy's upstream-key auth) is a by-key lookup and stays unfiltered.
 
 ## Reference Implementations
 
@@ -99,6 +104,6 @@ When implementing a new entity, the existing ones are the source of truth:
 - **No relationships:** `User`
 - **1:N relationship:** `Project` references one `IModelEndpoint` (`SystemEndpoint`)
 - **N:M relationship:** `TestSuite` holds `IReadOnlyCollection<IEvaluator>`, junction is `TestSuiteEvaluatorEntity`, custom `TestSuiteRepository` overrides `UpdateRelationsAsync`
-- **Soft-delete (archive):** `Evaluator`, `Agent`, `ModelEndpoint` (`IArchivable` + `ArchivableRepository`, list-only `.ExcludeArchived()`, by-key lookups unfiltered; `Evaluator` detaches suites in `ArchiveRelationsAsync`, `Agent` guards system agents + license count)
+- **Soft-delete (archive):** `Evaluator`, `Agent`, `ModelEndpoint`, `ModelProvider` (`IArchivable` + `ArchivableRepository`; list/paged queries exclude archived via the `FilterListQuery` hook + `.ExcludeArchived()`, by-key lookups unfiltered; `Evaluator` detaches suites and `ModelProvider` archives its endpoints in `ArchiveRelationsAsync`, `Agent` guards system agents + license count, `ModelEndpoint.GetOrCreateAsync` un-archives on reuse)
 
 See also the `create-domain` skill for a step-by-step walkthrough.

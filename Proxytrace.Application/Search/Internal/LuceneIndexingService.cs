@@ -23,6 +23,8 @@ internal sealed class LuceneIndexingService : BackgroundService, ISearchIndexer
     private readonly Channel<IndexRequest> channel = Channel.CreateUnbounded<IndexRequest>(
         new UnboundedChannelOptions { SingleReader = true });
 
+    // Deliberate exception to the "always IAsyncLock" rule (see docs/code-style.md §Concurrency):
+    // this guards a synchronous idle-signal swap with no await in the critical section.
     private readonly Lock idleLock = new();
     private TaskCompletionSource idleSignal = CreateIdleSignal();
     private int pendingCount;

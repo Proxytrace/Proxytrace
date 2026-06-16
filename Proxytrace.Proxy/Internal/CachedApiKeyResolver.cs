@@ -80,5 +80,14 @@ internal sealed class CachedApiKeyResolver : IApiKeyResolver
     }
 
     private static string CacheKey(string rawKey, string? projectSlug)
-        => $"apikey:{projectSlug}:{rawKey}";
+        => $"apikey:{projectSlug}:{Hash(rawKey)}";
+
+    // Hash the raw key for the in-memory cache key so the plaintext secret is not held as a
+    // dictionary key (memory dumps, accidental logging of cache keys).
+    private static string Hash(string rawKey)
+    {
+        Span<byte> hash = stackalloc byte[32];
+        System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(rawKey), hash);
+        return Convert.ToHexString(hash);
+    }
 }

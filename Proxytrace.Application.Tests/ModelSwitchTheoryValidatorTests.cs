@@ -7,6 +7,7 @@ using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Proposal;
+using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestSuite;
@@ -64,6 +65,9 @@ public sealed class ModelSwitchTheoryValidatorTests : BaseTest<Module>
         agent.Endpoint.Returns(currentEndpoint);
 
         var suite = Substitute.For<ITestSuite>();
+        // The validators only score a run that produced a result for every case in the suite.
+        var caseCount = Math.Max(baselinePassed.Length, candidatePassed.Length);
+        suite.TestCases.Returns(Enumerable.Range(0, caseCount).Select(_ => Substitute.For<ITestCase>()).ToList());
 
         var baselineId = Guid.NewGuid();
         var candidateId = Guid.NewGuid();

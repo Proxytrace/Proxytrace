@@ -5,6 +5,11 @@ namespace Proxytrace.Application.Streaming.Internal;
 
 internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
 {
+    // Bounds total live SSE subscriptions so an authenticated client cannot exhaust memory/sockets by
+    // opening unbounded run/group streams. New subscriptions past the cap get an immediately-completed
+    // reader, so the SSE request closes cleanly instead of accumulating.
+    private const int MaxSubscribers = 2000;
+
     private readonly ConcurrentDictionary<Guid, (Guid RunId, ChannelWriter<TestRunEvent> Writer)>
         runSubscribers = new();
 
@@ -14,6 +19,12 @@ internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
     public ChannelReader<TestRunEvent> Subscribe(Guid runId, CancellationToken cancellationToken)
     {
         var channel = CreateChannel();
+        if (AtCapacity())
+        {
+            channel.Writer.TryComplete();
+            return channel.Reader;
+        }
+
         var id = Guid.NewGuid();
         runSubscribers[id] = (runId, channel.Writer);
         cancellationToken.Register(() =>
@@ -27,6 +38,12 @@ internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
     public ChannelReader<TestRunEvent> SubscribeToGroup(Guid groupId, CancellationToken cancellationToken)
     {
         var channel = CreateChannel();
+        if (AtCapacity())
+        {
+            channel.Writer.TryComplete();
+            return channel.Reader;
+        }
+
         var id = Guid.NewGuid();
         groupSubscribers[id] = (groupId, channel.Writer);
         cancellationToken.Register(() =>
@@ -36,6 +53,8 @@ internal class TestResultBroadcaster : ITestResultBroadcaster, IDisposable
         });
         return channel.Reader;
     }
+
+    private bool AtCapacity() => runSubscribers.Count + groupSubscribers.Count >= MaxSubscribers;
 
     public void Publish(TestRunEvent evt)
     {

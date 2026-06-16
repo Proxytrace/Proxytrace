@@ -4,7 +4,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using System.Text.RegularExpressions;
 using Proxytrace.Common.Validation;
 
 namespace Proxytrace.Serialization.Internal;
@@ -51,15 +50,11 @@ internal class JsonSerializer : ISerializer
         {
             WriteIndented = writeIndented
         };
-        string json = System.Text.Json.JsonSerializer.Serialize(input, input.GetType(), options);
-        
-        // system.text.json escaped alle non-ascii characters in .netstandard2
-        string unescapedJson = Regex.Replace(
-            json,
-            @"\\u([\dA-Fa-f]{4})",
-            match => ((char)Convert.ToInt32(match.Groups[1].Value, 16)).ToString());
-        
-        return unescapedJson;
+        // UnsafeRelaxedJsonEscaping (set on the options above) already emits non-ASCII
+        // characters unescaped, so no post-processing is needed. The previous \uXXXX
+        // un-escaping pass corrupted output by turning mandatory control-character escapes
+        // (e.g. a newline escape inside a string) into raw control characters, producing invalid JSON.
+        return System.Text.Json.JsonSerializer.Serialize(input, input.GetType(), options);
     }
 
     /// <inheritdoc />

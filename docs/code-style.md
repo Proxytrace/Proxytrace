@@ -44,6 +44,11 @@
   Never use `lock`/`Monitor`, `SemaphoreSlim`, `Mutex`, or other raw synchronization primitives
   directly in feature code — they are not safe to hold across `await`, and a hand-rolled lock
   bypasses the shared, keyed implementation.
+- **Narrow exception:** a purely-synchronous critical section that contains **no `await`** and
+  guards low-level non-DI infrastructure may use `System.Threading.Lock` when an async, keyed lock
+  buys no safety. This is rare and must be justified with a comment pointing here. Current sanctioned
+  uses: the Lucene index writer/indexing service (`Proxytrace.Application/Search/Internal`), which
+  serialize synchronous Lucene operations. Everything else uses `IAsyncLock`.
 - `IAsyncLock` is **keyed**: `LockAsync(key, ct)` serializes only callers sharing the same `key`,
   so use the narrowest natural key (e.g. an entity `Id`, a fingerprint) to avoid serializing
   unrelated work. Pass the `CancellationToken` through.

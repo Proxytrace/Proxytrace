@@ -56,6 +56,31 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
     }
 
     /// <summary>
+    /// Reverses an archive: clears the flag so the entity reappears in list/picker queries. Used when
+    /// a by-key resolver (e.g. <c>GetOrCreateAsync</c>) matches an archived row that is about to be
+    /// referenced by new work — leaving it archived would create a live-but-invisible "zombie".
+    /// </summary>
+    protected async Task UnarchiveAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        bool unarchived = await transaction.InvokeAsync(async () =>
+        {
+            StorageDbContext context = ambient.RequireContext();
+            TStoredEntity? existing = await context.Set<TStoredEntity>().FindAsync([id], cancellationToken);
+            if (existing is null || !existing.IsArchived)
+                return false;
+
+            var entry = context.Entry(existing);
+            entry.CurrentValues.SetValues(existing with { IsArchived = false, UpdatedAt = DateTimeOffset.UtcNow });
+            await context.SaveChangesAsync(cancellationToken);
+            InvalidateCacheEntry(id);
+            return true;
+        }, cancellationToken);
+
+        if (unarchived)
+            Notify(id, EntityChangeType.Added);
+    }
+
+    /// <summary>
     /// Cleans up forward-looking references to the entity being archived (e.g. junction rows) so it
     /// is no longer used in new work, while leaving historical references intact. Runs inside the
     /// archive transaction, before the row is flagged. Default no-op.
@@ -69,4 +94,8 @@ internal abstract class ArchivableRepository<TDomainEntity, TStoredEntity>
     /// <inheritdoc />
     public override async Task<IReadOnlyList<TDomainEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         => (await base.GetAllAsync(cancellationToken)).Where(e => !e.IsArchived).ToList();
+
+    /// <summary>Excludes archived rows from paged/list queries; by-key lookups stay unfiltered.</summary>
+    protected override IQueryable<TStoredEntity> FilterListQuery(IQueryable<TStoredEntity> query)
+        => query.ExcludeArchived();
 }

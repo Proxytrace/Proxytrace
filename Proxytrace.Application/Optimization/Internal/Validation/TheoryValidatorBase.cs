@@ -22,6 +22,12 @@ internal readonly record struct RunMetrics(double? PassRate, decimal? Cost, Time
 /// </summary>
 internal abstract class TheoryValidatorBase : ITheoryValidator
 {
+    /// <summary>
+    /// Maximum two-sided p-value at which an observed pass-rate difference counts as real
+    /// rather than sampling noise.
+    /// </summary>
+    internal const double SignificanceLevel = 0.05;
+
     private readonly Lazy<ITestRunnerService> testRunnerService;
     private readonly ITestRunRepository testRuns;
 
@@ -134,4 +140,16 @@ internal abstract class TheoryValidatorBase : ITheoryValidator
         var results = run.TestResults;
         return (results.Count(r => r.IsPass()), results.Count);
     }
+
+    /// <summary>
+    /// Whether a run is trustworthy as A/B evidence: it must have produced a result for every case in
+    /// the suite. A run that failed or cancelled part-way (or skipped a case after an inference error)
+    /// leaves fewer results than the suite has cases, so scoring it would compare baseline and
+    /// candidate over different numbers of cases and invalidate the two-proportion test — the
+    /// validators return Inconclusive instead. (Per-run status is not used: only the group is marked
+    /// terminal, so the result count is the reliable completeness signal.)
+    /// </summary>
+    protected static bool IsRunComplete(ITestRun run, ITestSuite suite)
+        => suite.TestCases.Count > 0
+           && run.TestResults.Count == suite.TestCases.Count;
 }

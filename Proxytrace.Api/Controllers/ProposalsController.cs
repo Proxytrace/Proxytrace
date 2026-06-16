@@ -91,6 +91,7 @@ public class ProposalsController : ControllerBase
     /// created for the agent's endpoint to satisfy the proposal's mandatory evidence reference.
     /// </summary>
     [HttpPost("seed")]
+    [TestOnlyEndpoint]
     public async Task<ActionResult<OptimizationProposalDto>> Seed(
         [FromBody] SeedProposalRequest request,
         CancellationToken cancellationToken)

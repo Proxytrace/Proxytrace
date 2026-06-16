@@ -24,7 +24,11 @@ internal static class JwtBearerEventsFactory
                 return;
             }
 
-            if (string.IsNullOrEmpty(context.Token))
+            // Fallback for SSE when the stream-ticket endpoint is unreachable: the EventSource API
+            // can't set headers, so the client passes the session JWT as ?access_token. Accept it
+            // ONLY on stream (GET …/stream) routes — honoring a URL-borne session token on every
+            // request would re-introduce the token-in-URL leakage the stream ticket exists to avoid.
+            if (string.IsNullOrEmpty(context.Token) && IsStreamRequest(context.Request))
             {
                 var queryToken = context.Request.Query["access_token"].ToString();
                 if (!string.IsNullOrEmpty(queryToken))
@@ -72,6 +76,10 @@ internal static class JwtBearerEventsFactory
             }
         },
     };
+
+    private static bool IsStreamRequest(HttpRequest request)
+        => HttpMethods.IsGet(request.Method)
+           && request.Path.Value?.EndsWith("/stream", StringComparison.Ordinal) == true;
 
     private static async Task AuthenticateStreamTicket(MessageReceivedContext context, string ticket)
     {

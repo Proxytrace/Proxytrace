@@ -16,12 +16,6 @@ namespace Proxytrace.Application.Optimization.Internal.Validation;
 internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
     where TTheory : class, IOptimizationTheory
 {
-    /// <summary>
-    /// Maximum two-sided p-value at which an observed pass-rate improvement counts as real
-    /// rather than sampling noise. Improvements above this threshold are rejected.
-    /// </summary>
-    internal const double SignificanceLevel = 0.05;
-
     protected AbTestTheoryValidator(Lazy<ITestRunnerService> testRunnerService, ITestRunRepository testRuns)
         : base(testRunnerService, testRuns)
     {
@@ -44,6 +38,13 @@ internal abstract class AbTestTheoryValidator<TTheory> : TheoryValidatorBase
         ITestRun baselineRun = await RunAsync(theory.Suite, agent, agent.Endpoint, cancellationToken);
         IAgent candidateAgent = BuildCandidateAgent(agent, typedTheory);
         ITestRun candidateRun = await RunAsync(theory.Suite, candidateAgent, agent.Endpoint, cancellationToken, onCandidateRun);
+
+        // Never score a partial run: a case failure (or cancellation) leaves fewer results than the
+        // suite has cases, which would make the A/B comparison unfair and the proposal unfounded.
+        if (!IsRunComplete(baselineRun, theory.Suite) || !IsRunComplete(candidateRun, theory.Suite))
+        {
+            return TheoryValidationOutcome.Inconclusive;
+        }
 
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);

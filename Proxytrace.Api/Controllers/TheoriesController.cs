@@ -179,6 +179,7 @@ public class TheoriesController : ControllerBase
     /// validation pipeline so board states are deterministic in tests.
     /// </summary>
     [HttpPost("seed")]
+    [TestOnlyEndpoint]
     public async Task<ActionResult<TheoryDto>> Seed(
         [FromBody] SeedTheoryRequest request,
         CancellationToken cancellationToken)

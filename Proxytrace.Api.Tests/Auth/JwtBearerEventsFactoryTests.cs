@@ -34,16 +34,35 @@ public sealed class JwtBearerEventsFactoryTests
         typeof(JwtBearerHandler));
 
     [TestMethod]
-    public async Task OnMessageReceived_WithAccessTokenQuery_SetsToken()
+    public async Task OnMessageReceived_WithAccessTokenQuery_OnStreamRoute_SetsToken()
     {
         var events = JwtBearerEventsFactory.Create();
         var httpContext = new DefaultHttpContext();
+        httpContext.Request.Method = HttpMethods.Get;
+        httpContext.Request.Path = "/api/agents/123/proposals/stream";
         httpContext.Request.QueryString = new QueryString("?access_token=abc123");
         var ctx = new MessageReceivedContext(httpContext, Scheme(), new JwtBearerOptions());
 
         await events.OnMessageReceived(ctx);
 
         ctx.Token.Should().Be("abc123");
+    }
+
+    [TestMethod]
+    public async Task OnMessageReceived_WithAccessTokenQuery_OnNonStreamRoute_IsIgnored()
+    {
+        // The session JWT must not be honored from the URL on ordinary requests — only on SSE
+        // (GET …/stream) routes where the EventSource API cannot set headers.
+        var events = JwtBearerEventsFactory.Create();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Method = HttpMethods.Get;
+        httpContext.Request.Path = "/api/agents";
+        httpContext.Request.QueryString = new QueryString("?access_token=abc123");
+        var ctx = new MessageReceivedContext(httpContext, Scheme(), new JwtBearerOptions());
+
+        await events.OnMessageReceived(ctx);
+
+        ctx.Token.Should().BeNull();
     }
 
     [TestMethod]

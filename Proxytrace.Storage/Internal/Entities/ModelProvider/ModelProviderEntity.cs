@@ -4,7 +4,7 @@ namespace Proxytrace.Storage.Internal.Entities.ModelProvider;
 
 [StoredDomainEntity(typeof(IModelProvider))]
 [Cacheable]
-internal record ModelProviderEntity : Entity
+internal record ModelProviderEntity : Entity, IArchivableEntity
 {
     /// <summary>
     /// <see cref="Proxytrace.Domain.ModelProvider.IModelProvider.Name"/>
@@ -26,4 +26,6 @@ internal record ModelProviderEntity : Entity
     /// </summary>
     public required ModelProviderKind Kind { get; init; }
 
+    /// <inheritdoc />
+    public bool IsArchived { get; init; }
 }

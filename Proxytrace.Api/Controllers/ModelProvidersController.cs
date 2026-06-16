@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.ApiKeys;
@@ -20,7 +21,7 @@ namespace Proxytrace.Api.Controllers;
 [Route("api/providers")]
 public class ModelProvidersController : ControllerBase
 {
-    private readonly IRepository<IModelProvider> providerRepository;
+    private readonly IModelProviderRepository providerRepository;
     private readonly IApiKeyRepository apiKeyRepository;
     private readonly IProjectRepository projectRepository;
     private readonly IModelEndpointRepository endpointRepository;
@@ -34,7 +35,7 @@ public class ModelProvidersController : ControllerBase
     private readonly IModelPriceRefresher priceRefresher;
 
     public ModelProvidersController(
-        IRepository<IModelProvider> providerRepository,
+        IModelProviderRepository providerRepository,
         IApiKeyRepository apiKeyRepository,
         IProjectRepository projectRepository,
         IModelEndpointRepository endpointRepository,
@@ -140,8 +141,12 @@ public class ModelProvidersController : ControllerBase
     [Authorize(Roles = nameof(UserRole.Admin))]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var removed = await providerRepository.RemoveAsync(id, cancellationToken);
-        return removed ? NoContent() : NotFound();
+        // Archive (soft-delete) instead of hard-deleting: a hard delete cascades through the
+        // provider's endpoints to every AgentCall/TestRun that referenced them, silently destroying
+        // history. Archiving hides the provider + its endpoints from listings while preserving that
+        // history. Contract unchanged (204/404), so the frontend needs no change.
+        var archived = await providerRepository.ArchiveAsync(id, cancellationToken);
+        return archived ? NoContent() : NotFound();
     }
 
     // ── Model Endpoints ───────────────────────────────────────────────────────
@@ -270,7 +275,11 @@ public class ModelProvidersController : ControllerBase
         if (project is null)
             return BadRequest($"Project {request.ProjectId} not found.");
 
-        var keyValue = $"proxytrace-{Guid.NewGuid():N}";
+        // The proxy bearer credential must be unguessable, so derive it from a CSPRNG (256 bits,
+        // url-safe base64) rather than Guid.NewGuid, which carries no cryptographic-strength contract.
+        Span<byte> keyBytes = stackalloc byte[32];
+        RandomNumberGenerator.Fill(keyBytes);
+        var keyValue = $"proxytrace-{Convert.ToBase64String(keyBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')}";
         var key = createApiKey(request.Name, keyValue, project, provider);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
         return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));

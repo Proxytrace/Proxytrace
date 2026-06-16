@@ -15,27 +15,33 @@ internal sealed class Transaction : ITransaction
     }
 
     /// <inheritdoc />
-    public async Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> operation)
+    public async Task<TResult> InvokeAsync<TResult>(Func<Task<TResult>> operation, CancellationToken cancellationToken = default)
     {
         // Nested call: already inside a logical transaction — run on the shared context so the
         // whole logical unit uses a single connection (never promotes to a 2-phase transaction).
+        // Post-commit notifications accumulate on the outer flow and fire when it commits.
         if (ambient.IsActive)
         {
             return await operation();
         }
 
         StorageDbContext context = contextFactory();
-        var efTransaction = await context.Database.BeginTransactionAsync();
+        var efTransaction = await context.Database.BeginTransactionAsync(cancellationToken);
         ambient.Set(context, efTransaction);
+
+        TResult result;
+        IReadOnlyList<Action> postCommit;
         try
         {
-            TResult result = await operation();
-            await efTransaction.CommitAsync();
-            return result;
+            result = await operation();
+            await efTransaction.CommitAsync(cancellationToken);
+            // Capture deferred notifications only after the commit succeeds.
+            postCommit = ambient.TakePostCommit();
         }
         catch
         {
-            await efTransaction.RollbackAsync();
+            // Rollback discards the queued post-commit actions with the ambient state — they never fire.
+            await efTransaction.RollbackAsync(CancellationToken.None);
             throw;
         }
         finally
@@ -44,13 +50,22 @@ internal sealed class Transaction : ITransaction
             await efTransaction.DisposeAsync();
             await context.DisposeAsync();
         }
+
+        // Fire post-commit actions outside the transaction scope so a misbehaving consumer cannot
+        // roll back an already-committed unit; the data is durable regardless of these side effects.
+        foreach (Action action in postCommit)
+        {
+            action();
+        }
+
+        return result;
     }
 
     /// <inheritdoc />
-    public Task InvokeAsync(Func<Task> operation)
+    public Task InvokeAsync(Func<Task> operation, CancellationToken cancellationToken = default)
         => InvokeAsync<object?>(async () =>
         {
             await operation();
             return null;
-        });
+        }, cancellationToken);
 }

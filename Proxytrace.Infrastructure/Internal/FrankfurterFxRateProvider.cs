@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Proxytrace.Common.Async;
 using Proxytrace.Domain.ModelProvider;
 
 namespace Proxytrace.Infrastructure.Internal;
@@ -6,42 +7,39 @@ namespace Proxytrace.Infrastructure.Internal;
 /// <summary>USD→EUR via the free, no-key Frankfurter (ECB) API. Cached for the calendar day.</summary>
 internal sealed class FrankfurterFxRateProvider : IFxRateProvider
 {
+    private const string CacheGateKey = "fx-rate:usd-eur";
+
     private readonly HttpClient http;
     private readonly PricingOptions options;
-    private readonly SemaphoreSlim gate = new(1, 1);
+    private readonly IAsyncLock asyncLock;
     private decimal? cachedRate;
     private DateOnly cachedOn;
 
-    public FrankfurterFxRateProvider(HttpClient http, PricingOptions options)
+    public FrankfurterFxRateProvider(HttpClient http, PricingOptions options, IAsyncLock asyncLock)
     {
         this.http = http;
         this.options = options;
+        this.asyncLock = asyncLock;
     }
 
     public async Task<decimal?> GetUsdToEurAsync(CancellationToken cancellationToken = default)
     {
-        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+        DateOnly today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.UtcDateTime);
         if (cachedRate is not null && cachedOn == today)
             return cachedRate;
 
-        await gate.WaitAsync(cancellationToken);
-        try
-        {
-            if (cachedRate is not null && cachedOn == today)
-                return cachedRate;
+        using IDisposable sync = await asyncLock.LockAsync(CacheGateKey, cancellationToken);
 
-            decimal? rate = await FetchAsync(cancellationToken);
-            if (rate is not null)
-            {
-                cachedRate = rate;
-                cachedOn = today;
-            }
-            return rate;
-        }
-        finally
+        if (cachedRate is not null && cachedOn == today)
+            return cachedRate;
+
+        decimal? rate = await FetchAsync(cancellationToken);
+        if (rate is not null)
         {
-            gate.Release();
+            cachedRate = rate;
+            cachedOn = today;
         }
+        return rate;
     }
 
     private async Task<decimal?> FetchAsync(CancellationToken cancellationToken)

@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Exceptions;
 using Proxytrace.Domain.ModelProvider;
 using Proxytrace.Domain.Project;
 using Proxytrace.Messaging;
@@ -23,6 +24,12 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     private readonly IRepository<IProject> projectRepository;
     private readonly ITraceQuotaGuard quotaGuard;
     private readonly ILogger<AgentCallIngestionWorker> logger;
+
+    // Cap redelivery of a retryable-but-deterministically-failing message so it can't loop forever
+    // and block the pending list. The consumer is single-threaded, so this plain dictionary (keyed
+    // by transport message id) is accessed sequentially and only retains currently-failing ids.
+    private const int MaxRetryableAttempts = 5;
+    private readonly Dictionary<string, int> failedAttempts = new();
 
     public AgentCallIngestionWorker(
         IIngestionStream stream,
@@ -79,18 +86,46 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         {
             await ProcessAsync(envelope.Message, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutting down — leave the entry pending so it is reclaimed and reprocessed later.
+            throw;
+        }
+        catch (EntityNotFoundException ex)
+        {
+            // Poison: the referenced provider/project no longer exists. Unrecoverable — ack to drop
+            // it rather than redeliver forever.
+            logger.LogWarning(ex, "Dropping ingestion envelope {MessageId}: referenced entity missing", envelope.MessageId);
+            await AckAndForgetAsync(envelope.MessageId, cancellationToken);
+            return;
+        }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to process ingestion envelope {MessageId}", envelope.MessageId);
+            // The processor swallows its own poison failures and rethrows only retryable storage
+            // errors (transient DB outage, unique-index race). Leave the entry UNacked so Redis
+            // redelivers it — but cap attempts so a deterministically-failing message can't loop.
+            var attempts = failedAttempts.GetValueOrDefault(envelope.MessageId) + 1;
+            if (attempts >= MaxRetryableAttempts)
+            {
+                logger.LogError(ex, "Dropping ingestion envelope {MessageId} after {Attempts} failed attempts", envelope.MessageId, attempts);
+                await AckAndForgetAsync(envelope.MessageId, cancellationToken);
+            }
+            else
+            {
+                failedAttempts[envelope.MessageId] = attempts;
+                logger.LogWarning(ex, "Retryable failure on ingestion envelope {MessageId} (attempt {Attempts}); leaving unacked for redelivery", envelope.MessageId, attempts);
+            }
+            return;
         }
-        finally
-        {
-            // Acknowledge after a single attempt: the processor swallows its own failures, so the
-            // only throws here are unrecoverable (e.g. a referenced provider/project no longer
-            // exists). Acking avoids a poison-message redelivery loop. A consumer crash before this
-            // point leaves the entry pending for reclaim by another worker.
-            await stream.AckAsync(envelope.MessageId, cancellationToken);
-        }
+
+        // Success — acknowledge and forget any prior attempt count.
+        await AckAndForgetAsync(envelope.MessageId, cancellationToken);
+    }
+
+    private async Task AckAndForgetAsync(string messageId, CancellationToken cancellationToken)
+    {
+        failedAttempts.Remove(messageId);
+        await stream.AckAsync(messageId, cancellationToken);
     }
 
     private async Task ProcessAsync(IngestMessage message, CancellationToken cancellationToken)

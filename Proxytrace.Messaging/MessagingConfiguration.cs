@@ -24,4 +24,11 @@ public sealed record MessagingConfiguration
 
     /// <summary>Idle time after which a pending entry from a dead consumer is reclaimed.</summary>
     public int ReclaimIdleMs { get; init; } = 60_000;
+
+    /// <summary>
+    /// Approximate cap on the number of entries retained in the Redis stream (XADD MAXLEN ~). Bounds
+    /// Redis memory if the consumer falls behind or the app is down; acknowledged entries are also
+    /// trimmed. Generous so a healthy consumer never loses unprocessed entries.
+    /// </summary>
+    public int MaxStreamLength { get; init; } = 1_000_000;
 }
