@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.Agents;
@@ -159,7 +158,7 @@ public class AgentsController : ControllerBase
                 ProposalStatusChangedEvent => "proposal-status-changed",
                 _ => "unknown",
             };
-            var data = JsonSerializer.Serialize(evt, evt.GetType(), ApiJsonOptions.Sse);
+            var data = SseEventSerializer.Serialize(evt, evt.GetType());
             await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }
@@ -181,7 +180,7 @@ public class AgentsController : ControllerBase
         var reader = theoryBroadcaster.Subscribe(id, cancellationToken);
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
+            var data = SseEventSerializer.Serialize(evt);
             await Response.WriteAsync($"event: theory-changed\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -351,9 +352,7 @@ public class OpenAiProxyController : ControllerBase
                 accumulated.Append(line).Append('\n');
             }
 
-            var lineBytes = Encoding.UTF8.GetBytes(line + "\n");
-            await Response.Body.WriteAsync(lineBytes, cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await WriteSseLineAsync(line, cancellationToken);
         }
 
         sw.Stop();
@@ -362,6 +361,25 @@ public class OpenAiProxyController : ControllerBase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Forwards one streamed line plus its '\n' terminator and flushes so the token reaches the
+    // client immediately. Encodes into a pooled buffer to avoid the per-line string concat and
+    // throwaway byte[] that a token-by-token completion would otherwise allocate thousands of.
+    private async Task WriteSseLineAsync(string line, CancellationToken cancellationToken)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(line.Length) + 1);
+        try
+        {
+            var count = Encoding.UTF8.GetBytes(line, buffer);
+            buffer[count] = (byte)'\n';
+            await Response.Body.WriteAsync(buffer.AsMemory(0, count + 1), cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
 
     private async Task EnqueueSafeAsync(
         IModelProvider provider,

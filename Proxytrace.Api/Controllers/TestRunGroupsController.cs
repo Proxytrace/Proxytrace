@@ -221,7 +221,7 @@ public class TestRunGroupsController : ControllerBase
             RunCompleteEvent => "run-complete",
             _ => "unknown",
         };
-        var data = JsonSerializer.Serialize(evt, evt.GetType(), ApiJsonOptions.Sse);
+        var data = SseEventSerializer.Serialize(evt, evt.GetType());
         await Response.WriteAsync($"event: {eventName}\ndata: {data}\n\n", cancellationToken);
         await Response.Body.FlushAsync(cancellationToken);
     }
