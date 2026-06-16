@@ -9,7 +9,7 @@ It is the sibling of [`DESIGN.md`](./DESIGN.md), which owns the **visual system*
 
 When the two touch (e.g. "no inline styles"), DESIGN.md states the visual rule and this file states the code mechanics. Neither overrides the other; they cover different axes.
 
-This document describes the **target state**. Parts of the current codebase violate it — those are debt, not precedent. When you touch a file that violates a rule here, leave it at least no worse, and prefer to fix it. Do not copy an anti-pattern just because a neighbor does it.
+This document describes the **target state**. Parts of the current codebase may still violate it — those are debt, not precedent. When you touch a file that violates a rule here, leave it at least no worse, and prefer to fix it. Do not copy an anti-pattern just because a neighbor does it.
 
 ### Feature deep-dives (read before touching these features)
 
@@ -23,12 +23,9 @@ Some features have their own architecture guide that this file does not duplicat
 
 **A component should be small, single-purpose, and obvious at a glance.** Every rule below is downstream of that. If a file takes more than ~30 seconds to understand its shape, it is too big or doing too much.
 
-Concrete current violations to learn from:
+The repo used to carry several monster files — `features/evaluators/Evaluators.tsx` was once **1432 lines** with 27 nested component functions and 185 inline `style={{}}` blocks; `Dashboard.tsx`, `Providers.tsx`, `Traces.tsx`, and `Setup.tsx` were all far over budget. Those have since been decomposed and now sit under the limits (e.g. `Evaluators.tsx` is ~190 lines orchestrating a `components/` + `hooks/` + `evaluatorMeta.ts` folder). **Don't regress them** — the way they look now is the bar.
 
-- `features/evaluators/Evaluators.tsx` — **1432 lines, 27 component functions, 185 inline `style={{}}` blocks** in a single file. This is the canonical example of what *not* to do.
-- `features/dashboard/Dashboard.tsx` (591), `features/providers/Providers.tsx` (555), `features/traces/Traces.tsx` (554), `features/setup/Setup.tsx` (598) — all over budget.
-
-The well-structured counter-examples already in the repo: `api/agents.ts`, `api/query-keys.ts`, `lib/cn.ts`, `components/ui/classes.ts`, the `features/runs/` and `features/playground/` feature folders that decompose into `components/`, `state/`, `lib/`, `drawers/`. Copy *those*.
+The well-structured examples to copy: `api/agents.ts`, `api/query-keys.ts`, `lib/cn.ts`, `components/ui/classes.ts`, and feature folders like `features/evaluators/`, `features/runs/`, and `features/playground/` that decompose into `components/`, `hooks/`, `state/`, `lib/`, `drawers/`. Copy *those*.
 
 ---
 
@@ -87,7 +84,7 @@ component  →  feature query hook (useXxx)  →  api/<service>.ts  →  api/cli
 ```
 
 - **`api/<service>.ts`** — thin typed functions returning DTOs. One per resource (see `api/agents.ts`). No React, no query logic. New endpoints get a function here first.
-- **Query hooks** — wrap `useQuery`/`useMutation`. This is the layer that is **currently missing** and the biggest structural gap: `useQuery`/`useMutation` is called raw in **33 feature files**. That couples components to query keys, stale times, and invalidation. Extract them.
+- **Query hooks** — wrap `useQuery`/`useMutation`. Page/feature components must not call `useQuery`/`useMutation` raw — that couples them to query keys, stale times, and invalidation. The repo now keeps these in `use*` hooks (the raw-in-pages debt that this section once called out has been extracted); keep new ones there too.
 
 ```ts
 // features/evaluators/hooks/useEvaluators.ts
@@ -117,7 +114,7 @@ Components then read `const { data, isLoading } = useEvaluators();` and stay dec
 
 ## 4. State management & `useEffect`
 
-`useEffect` is a code smell until proven otherwise. The repo has hotspots — `features/playground/Playground.tsx` has **6**, several files have 3–4. Most are avoidable.
+`useEffect` is a code smell until proven otherwise. Keep them rare and, where one is genuinely needed (an external subscription/timer/measurement), push it into a dedicated `use*` hook rather than inlining it in a component. Most effects are avoidable — check the table below before reaching for one.
 
 ### 4.1 The `useEffect` decision rule
 
@@ -167,18 +164,15 @@ The more presentational components you have, the healthier the tree. A 1400-line
 
 ## 6. Icons — one source, zero inline SVG
 
-This is the single most duplicated thing in the codebase and must be fixed going forward.
+Icons were once the single most duplicated thing in the codebase. That has been consolidated — keep it that way.
 
-**Current state (broken three ways):**
-1. DESIGN.md §5 mandates **Lucide** (`lucide-react`) — but `lucide-react` is **not installed** and imported **0 times**.
-2. A hand-rolled central set exists at `components/icons/index.tsx`.
-3. Features *still* re-declare their own inline `<svg>` icon functions — `Evaluators.tsx`, `RightRail.tsx`, `EvaluatorTestBench.tsx`, `TracesStep.tsx`, `TestResultPicker.tsx`, even `Button.tsx`. The same `BeakerIcon`/`SearchIcon`/`PlusIcon` shapes are copy-pasted across files.
+**Canonical source:** `components/icons` is the one icon module. Its barrel (`components/icons/index.ts`) re-exports the `Svg` wrapper plus the glyph sets (`directional`, `actions`, `glyphs`). **`lucide-react` is not a dependency** of this project; the earlier DESIGN.md mandate for it was never adopted, and DESIGN.md §5 has been updated to match this reality. Do not add `lucide-react`.
 
-**The rule going forward:**
+**The rule:**
 
-- **Never declare an `<svg>` icon inside a feature file.** Zero exceptions. An inline `function XIcon()` returning `<svg>` in a feature is a bug.
-- **One icon module.** Resolve the DESIGN.md-vs-reality gap by either (a) installing `lucide-react` and using it directly, or (b) treating `components/icons/index.tsx` as the canonical set and importing only from there. Pick one in a tracked change and update DESIGN.md §5 to match. Until then, **import from `components/icons`** — do not add new inline SVGs.
-- Icons take `size`/`className`/`strokeWidth` props and inherit color via `currentColor` (the `Svg` wrapper in `icons/index.tsx` already does this). Color the icon by setting text color on the parent, never by hardcoding `stroke`/`fill`.
+- **Never declare an `<svg>` icon inside a feature file.** Zero exceptions. An inline `function XIcon()` returning `<svg>` in a feature is a bug. (A genuine data-visualization SVG — a gauge, a chart shape — is not an icon and belongs in `components/charts/` or a feature component; this rule is about *icon glyphs*.)
+- **Import every icon from `components/icons`.** If a glyph is missing, add it to the appropriate file there (`glyphs.tsx`/`actions.tsx`/`directional.tsx`) and export it through the barrel — never inline it at the call site.
+- Icons take `size`/`className`/`strokeWidth` props and inherit color via `currentColor` (the `Svg` wrapper in `components/icons/Svg.tsx` already does this). Color the icon by setting text color on the parent, never by hardcoding `stroke`/`fill`.
 
 ---
 
