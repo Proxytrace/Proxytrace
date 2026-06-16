@@ -82,6 +82,19 @@ describe('await_actions', () => {
     expect(result.anyTimedOut).toBe(false);
   });
 
+  it('forwards the turn abort signal into the polled API call', async () => {
+    const signal = new AbortController().signal;
+    testRunGroupsApi.get.mockResolvedValue({
+      id: 'g1', suiteName: 'S', agentName: 'A', status: TestRunStatus.Completed, runs: [],
+    });
+
+    const tool = createAwaitTools(ctx, store).await_actions;
+    if (!tool.execute) throw new Error('tool has no execute');
+    await tool.execute({ handles: [{ kind: 'test-run', id: 'g1' }] }, ctx, signal);
+
+    expect(testRunGroupsApi.get).toHaveBeenCalledWith('g1', { silentStatuses: [404], signal });
+  });
+
   it('rejects with AbortError when the turn is stopped, instead of a per-handle error', async () => {
     const controller = new AbortController();
     controller.abort();

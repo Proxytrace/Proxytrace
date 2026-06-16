@@ -127,6 +127,24 @@ describe('remove_test_case', () => {
     expect(testSuitesApi.removeTestCase).toHaveBeenCalledWith('s1', 'c2');
     expect(result).toMatchObject({ id: 's1', caseCount: 1 });
   });
+
+  it('returns notFound for a missing suite and never removes', async () => {
+    const ctx = makeCtx();
+    testSuitesApi.get.mockResolvedValue(null);
+    const tool = createSuiteTools(ctx, store).remove_test_case;
+    const result = await tool.execute!({ suiteId: 'bad', caseId: 'c1' }, ctx);
+    expect(result).toEqual({ notFound: 'bad' });
+    expect(testSuitesApi.removeTestCase).not.toHaveBeenCalled();
+  });
+
+  it('returns CANCELLED on decline and never removes', async () => {
+    const ctx = makeCtx(false);
+    testSuitesApi.get.mockResolvedValue(suite());
+    const tool = createSuiteTools(ctx, store).remove_test_case;
+    const result = await tool.execute!({ suiteId: 's1', caseId: 'c2' }, ctx);
+    expect(result).toBe(CANCELLED);
+    expect(testSuitesApi.removeTestCase).not.toHaveBeenCalled();
+  });
 });
 
 describe('update_expected_output', () => {
