@@ -3,7 +3,7 @@ import { setupApi } from '../../api/setup';
 import { ModelProviderKind } from '../../api/models';
 import type { LicenseDto } from '../../api/license';
 import { buildTierSummary, presetById, PROVIDER_PRESETS } from './setupMeta';
-import { buildQuickStartSnippets } from './snippets';
+import { buildQuickStartSnippets } from '../../lib/ingestionSnippets';
 import { FEATURE_LABELS } from '../../components/license/licenseUtils';
 
 /** Free tier locks every enterprise feature; derive the count so a new feature can't stale this. */

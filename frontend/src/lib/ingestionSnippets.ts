@@ -1,5 +1,6 @@
 /**
- * Quick-start code snippets shown on the setup wizard's final step.
+ * Quick-start code snippets for routing an OpenAI client through the proxy —
+ * shown on the setup wizard's final step and in the Traces empty state.
  *
  * Every snippet makes the same point: keep your existing provider API key and
  * swap only the base URL for the project-scoped Proxytrace proxy endpoint.

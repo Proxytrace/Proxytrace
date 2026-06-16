@@ -18,6 +18,10 @@ automatically.
 Open **Traces** in the sidebar to browse captured calls. Real-time updates stream in via
 Server-Sent Events, so new traces appear as your agents run — no refresh needed.
 
+Until the first call arrives, the Traces page doubles as a quick-start: it shows this project's
+OpenAI `base_url` and a copy-paste snippet (Python, TypeScript, C#, curl) so you can wire up the
+[proxy](/guide/proxy-setup) without leaving the page.
+
 ![The Traces view: the capture timeline, the page-summary stat cards, and the table of captured calls.](/screenshots/traces/list.png)
 
 Typical things you can do:
