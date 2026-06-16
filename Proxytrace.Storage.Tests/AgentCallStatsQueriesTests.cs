@@ -149,6 +149,61 @@ public sealed class AgentCallStatsQueriesTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetTokenUsage_SumsTokensAcrossCallsInSameBucket()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        var a = await gen.CreateAsync(CancellationToken);
+        var b = await gen.CreateAsync(CancellationToken);
+
+        var rows = await reader.GetTokenUsageAsync(new StatisticsFilter(), StatisticsBucket.Daily, CancellationToken);
+
+        long expectedInput =
+            (long)(a.Response?.Usage?.InputTokenCount ?? 0) + (long)(b.Response?.Usage?.InputTokenCount ?? 0);
+        rows.Sum(r => r.InputTokens ?? 0L).Should().Be(expectedInput);
+    }
+
+    [TestMethod]
+    public async Task GetCallTrends_TotalTracesAcrossBuckets_EqualsSeededCount()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken);
+
+        var from = DateTimeOffset.UtcNow.AddHours(-1);
+        var to = DateTimeOffset.UtcNow.AddHours(1);
+        var trends = await reader.GetCallTrendsAsync(new StatisticsFilter(), 10, from, to, CancellationToken);
+
+        trends.Traces.Should().HaveCount(10);
+        trends.Traces.Sum().Should().Be(3d);
+    }
+
+    [TestMethod]
+    public async Task GetAgentWindow_AggregatesOnlyThatAgentsCalls()
+    {
+        IServiceProvider services = GetServices();
+        var reader = services.GetRequiredService<IAgentCallStatsReader>();
+        var gen = services.GetRequiredService<IDomainEntityGenerator<IAgentCall>>();
+        var call = await gen.CreateAsync(CancellationToken);
+        await gen.CreateAsync(CancellationToken); // a different agent — must be excluded
+
+        var (series, summary) = await reader.GetAgentWindowAsync(
+            call.Agent.Id,
+            DateTimeOffset.UtcNow.AddHours(-1),
+            DateTimeOffset.UtcNow.AddHours(1),
+            StatisticsBucket.Hourly,
+            CancellationToken);
+
+        summary.TotalTraces.Should().Be(1);
+        summary.TotalInputTokens.Should().Be((long)(call.Response?.Usage?.InputTokenCount ?? 0));
+        series.Sum(p => p.TraceCount).Should().Be(1);
+    }
+
+    [TestMethod]
     public async Task GetAgentWindow_NoMatches_ReturnsEmptySeriesAndZeroSummary()
     {
         IServiceProvider services = GetServices();
