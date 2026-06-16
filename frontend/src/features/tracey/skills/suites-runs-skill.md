@@ -1,7 +1,7 @@
 ---
 name: test-suites-and-runs
-description: Inspect test suites and runs, and start a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
-tools: list_suites, get_suite, list_runs, get_run, get_run_failures, compare_runs, start_test_run, await_actions
+description: Inspect test suites and runs, and start or cancel a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
+tools: list_suites, get_suite, list_runs, get_run, get_run_failures, compare_runs, start_test_run, cancel_test_run, await_actions
 ---
 
 # Skill: Test suites & runs
@@ -21,6 +21,8 @@ Render results, don't narrate them: a single suite or run → its entity card (`
 `get_run` render clickable cards); a comparison of runs or pass rates over time → `show_chart` /
 `show_table`. Add at most a sentence of insight.
 
+To *build or edit* a suite (turn captured traces into test cases), load the `suite-curation` skill.
+
 ## Start a run
 
 `start_test_run` runs a suite against an agent's endpoint. It is **confirmation-gated** — the app
@@ -37,6 +39,9 @@ several runs? Fire every `start_test_run` in the **same step** (parallel tool ca
 `await_actions([…all handles…])` — never one wait per run, and never poll `get_run` in a loop
 yourself. When the wait returns, analyze the results and summarize the outcome. If it reports
 `timedOut`, tell the user the run is still going and to check back.
+
+`cancel_test_run` stops an in-progress run (pass the `awaitable` group id from `start_test_run`, or
+a run group id) — reach for it when a run was started by mistake or is no longer wanted.
 
 To go beyond a single run and actually *improve* an agent from its results, load the
 `optimize-agent` skill instead.

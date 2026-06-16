@@ -138,6 +138,23 @@ describe('pendingAwaitables', () => {
     expect(pendingAwaitables(steps)).toEqual([]);
   });
 
+  it('does not clear a handle when the await matches the id but a different kind', () => {
+    // A run and a theory could (pathologically) share an id; the await must match on kind too.
+    const steps = [
+      step({ toolResults: [storedRunResult('shared')] }),
+      step({ toolCalls: [{ toolName: 'await_actions', input: { handles: [{ kind: 'theory', id: 'shared' }] } }] }),
+    ];
+    expect(pendingAwaitables(steps)).toEqual([{ kind: 'test-run', id: 'shared' }]);
+  });
+
+  it('treats an awaitable with a non-string kind/id as absent', () => {
+    const steps = [step({ toolResults: [
+      { toolName: 'start_test_run', output: { awaitable: { kind: 'test-run', id: 123 } } },
+      { toolName: 'start_test_run', output: { awaitable: { id: 'g1' } } },
+    ] })];
+    expect(pendingAwaitables(steps)).toEqual([]);
+  });
+
   it('returns nothing before any step has run', () => {
     expect(pendingAwaitables([])).toEqual([]);
   });
