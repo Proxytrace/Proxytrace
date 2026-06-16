@@ -1,0 +1,74 @@
+import { useState } from 'react';
+import { Button } from '../../../components/ui/Button';
+import { CodeBlock } from '../../../components/ui/CodeBlock';
+import { Tabs } from '../../../components/ui/Tabs';
+import useCurrentProject from '../../../hooks/useCurrentProject';
+import { useIngestionBase } from '../../../hooks/useIngestionBase';
+import { ingestionUrl } from '../../../lib/ingestion';
+import { buildQuickStartSnippets, type SnippetLanguage } from '../../../lib/ingestionSnippets';
+
+/** Illustrative model id used in the quick-start snippet (the user picks their own). */
+const SAMPLE_MODEL = 'gpt-4o-mini';
+
+/**
+ * Onboarding panel shown when a project has no traces yet. Spells out *how* to
+ * ingest — point an OpenAI client at this project's proxy `base_url` — and shows
+ * the real endpoint (live-resolved from the operator's configured proxy URL),
+ * not just a link to the manual.
+ */
+export function TracesEmptyState() {
+  const [lang, setLang] = useState<SnippetLanguage>('python');
+  const { currentProject } = useCurrentProject();
+  const proxyBase = useIngestionBase();
+
+  const projectName = currentProject?.name ?? '';
+  const baseUrl = projectName ? ingestionUrl(projectName, proxyBase) : '';
+  const snippets = buildQuickStartSnippets(baseUrl, SAMPLE_MODEL);
+  const active = snippets.find(s => s.id === lang) ?? snippets[0];
+
+  return (
+    <div
+      data-testid="traces-empty-state"
+      className="py-10 px-4 flex flex-col items-center gap-4 text-center"
+    >
+      <div className="flex flex-col gap-1">
+        <span className="text-h2 font-semibold text-primary">No traces yet</span>
+        <span className="text-body text-secondary max-w-prose">
+          Route your agent through the proxy and every LLM call lands here automatically. Point
+          your OpenAI client at this project's <span className="font-mono text-accent-text">base_url</span> —
+          keep your existing provider API key — and nothing else changes.
+        </span>
+      </div>
+
+      {baseUrl && (
+        <div className="w-full max-w-2xl flex flex-col gap-3 text-left">
+          <CodeBlock heading="Your project's OpenAI base_url" content={baseUrl} maxLines={1} />
+
+          <div className="flex flex-col gap-2">
+            <Tabs
+              value={active.id}
+              onChange={v => setLang(v as SnippetLanguage)}
+              items={snippets.map(s => ({
+                value: s.id,
+                label: s.label,
+                'data-testid': `traces-snippet-tab-${s.id}`,
+              }))}
+            />
+            <CodeBlock content={active.code} language={active.language} maxLines={14} />
+          </div>
+        </div>
+      )}
+
+      <Button variant="link" asChild>
+        <a
+          data-testid="traces-proxy-docs-link"
+          href="/docs/guide/proxy-setup.html"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Full proxy setup guide →
+        </a>
+      </Button>
+    </div>
+  );
+}

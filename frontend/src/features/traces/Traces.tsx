@@ -217,6 +217,7 @@ export default function Traces() {
       <TraceTable
         rows={rows}
         isFetching={isFetching}
+        filtered={!!agentFilter || debouncedSearch.trim().length > 0}
         selectedId={selectedTrace?.id ?? null}
         expandedConvs={expandedConvs}
         onSelectTrace={t => selectTrace(t.id)}

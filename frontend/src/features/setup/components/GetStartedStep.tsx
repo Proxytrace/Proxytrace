@@ -5,7 +5,7 @@ import { Tabs } from '../../../components/ui/Tabs';
 import { ZapIcon } from '../../../components/icons';
 import { useIngestionBase } from '../../../hooks/useIngestionBase';
 import { ingestionUrl } from '../../../lib/ingestion';
-import { buildQuickStartSnippets, type SnippetLanguage } from '../snippets';
+import { buildQuickStartSnippets, type SnippetLanguage } from '../../../lib/ingestionSnippets';
 
 interface GetStartedStepProps {
   projectName: string;

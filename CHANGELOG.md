@@ -11,6 +11,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
+  an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start
+  snippet (Python / TypeScript / C# / curl), so you can wire up the proxy without leaving the page.
+  A filtered-but-empty view shows a distinct "no match" hint instead.
+
 - **The manual's Proxy Setup page now shows your instance's real endpoint.** When the manual is
   read from a running Proxytrace instance (served at `/docs`), the OpenAI `base_url` box fills in
   the operator's actually configured proxy host instead of a placeholder, and a clearer "what the

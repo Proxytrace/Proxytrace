@@ -1,4 +1,3 @@
-import { Button } from '../../../components/ui/Button';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import type { AgentCallListItemDto } from '../../../api/models';
 import { COL_HEADERS, COL_VIS_CLS, GRID_TEMPLATE, GRID_TEMPLATE_NARROW, TRACE_GRID_CLS } from '../tracesMeta';
@@ -6,17 +5,20 @@ import type { TraceRow } from '../tracesMeta';
 import { cn } from '../../../lib/cn';
 import { FlatTraceRow } from './FlatTraceRow';
 import { ConversationGroupRow } from './ConversationGroupRow';
+import { TracesEmptyState } from './TracesEmptyState';
 
 interface Props {
   rows: TraceRow[];
   isFetching: boolean;
+  /** A narrowing filter (agent or search) is active — empty means "no match", not "no traces yet". */
+  filtered: boolean;
   selectedId: string | null;
   expandedConvs: Set<string>;
   onSelectTrace: (trace: AgentCallListItemDto) => void;
   onToggleConv: (id: string) => void;
 }
 
-export function TraceTable({ rows, isFetching, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
+export function TraceTable({ rows, isFetching, filtered, selectedId, expandedConvs, onSelectTrace, onToggleConv }: Props) {
   return (
     <div
       data-testid="trace-table"
@@ -45,20 +47,13 @@ export function TraceTable({ rows, isFetching, selectedId, expandedConvs, onSele
         {rows.length === 0 ? (
           isFetching ? (
             <div className="p-3"><SkeletonList rows={10} height={36} gap={4} /></div>
-          ) : (
-            <div data-testid="traces-empty-state" className="py-12 flex flex-col items-center gap-2 text-center">
-              <span className="text-muted text-body">No traces found.</span>
-              <Button variant="link" asChild>
-                <a
-                  data-testid="traces-proxy-docs-link"
-                  href="/docs/guide/proxy-setup.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  How to wire the proxy? →
-                </a>
-              </Button>
+          ) : filtered ? (
+            <div data-testid="traces-empty-state" className="py-12 flex flex-col items-center gap-1 text-center">
+              <span className="text-secondary text-body">No traces match your filters.</span>
+              <span className="text-muted text-body-sm">Try widening the time range, agent, or search.</span>
             </div>
+          ) : (
+            <TracesEmptyState />
           )
         ) : (
           rows.map(row =>
