@@ -1,3 +1,4 @@
+using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 
 namespace Proxytrace.Application.Optimization.Internal.Evidence;
@@ -10,14 +11,14 @@ internal class OptimizerEvidenceBuilder : IOptimizerEvidenceBuilder
     public OptimizerEvidence Build(ITestRun run)
     {
         var failing = run.TestResults
-            .Where(r => !r.Passed)
+            .Where(r => !r.IsPass())
             .OrderBy(r => (int?)r.OverallScore ?? 0)
             .ThenBy(r => r.Id)
             .Take(MaxFailing)
             .ToList();
 
         var passingSample = run.TestResults
-            .Where(r => r.Passed)
+            .Where(r => r.IsPass())
             .OrderBy(r => r.Id)
             .Take(PassingSampleSize)
             .ToList();

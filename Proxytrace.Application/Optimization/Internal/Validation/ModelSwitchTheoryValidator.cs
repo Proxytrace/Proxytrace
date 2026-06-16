@@ -39,6 +39,12 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
         ITestRun baselineRun = await ResolveRunAsync(theory, agent, agent.Endpoint, cancellationToken);
         ITestRun candidateRun = await ResolveRunAsync(theory, agent, modelSwitchTheory.ProposedEndpoint, cancellationToken, onCandidateRun);
 
+        // Never score a partial run (a failed/cancelled case leaves fewer results than the suite).
+        if (!IsRunComplete(baselineRun, theory.Suite) || !IsRunComplete(candidateRun, theory.Suite))
+        {
+            return TheoryValidationOutcome.Inconclusive;
+        }
+
         RunMetrics baseline = Metrics(baselineRun);
         RunMetrics candidate = Metrics(candidateRun);
 
@@ -57,7 +63,9 @@ internal sealed class ModelSwitchTheoryValidator : TheoryValidatorBase
         TimeSpan latencyDelta = candidate.Latency - baseline.Latency;
 
         // Pass-rate must not regress, and the switch must actually save money or time —
-        // equal-quality-but-pricier is not a win.
+        // equal-quality-but-pricier is not a win. The conservative raw-rate comparison never
+        // recommends a model that scored worse on the evidence, even by a noisy margin; the p-value
+        // is still recorded on the outcome for transparency.
         bool cheaper = costDelta is < 0m;
         bool faster = latencyDelta < TimeSpan.Zero;
         if (candidatePassRate < basePassRate || (!cheaper && !faster))

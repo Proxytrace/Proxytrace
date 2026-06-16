@@ -172,6 +172,7 @@ public class AgentCallsController : ControllerBase
     /// reason.
     /// </summary>
     [HttpPost("seed")]
+    [TestOnlyEndpoint]
     public async Task<ActionResult<AgentCallDto>> Seed(
         [FromBody] SeedAgentCallRequest request,
         CancellationToken cancellationToken)

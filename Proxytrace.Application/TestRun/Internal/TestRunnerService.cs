@@ -239,48 +239,66 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     {
         broadcaster.Publish(new TestCaseStartedEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        IAgent agent = customAgent ?? testRun.Group.Suite.Agent;
-        IModelClient client = agent.CreateClient(
-            customEndpoint: testRun.Endpoint,
-            skipIngestion: true);
-        ICompletion completion = await client.CompleteAsync(
-            testCase.Input,
-            cancellationToken: cancellationToken);
-
-        broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
-        
-        var testResult = createTestResult(testCase, completion, []);
-        await testResultRepository.AddAsync(testResult, cancellationToken);
-
-        var run = testRun;
-        var parallelOptions = new ParallelOptions
+        try
         {
-            MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
-            CancellationToken = cancellationToken
-        };
-        
-        // Agentic evaluators require the AgenticEvaluators license feature. On unlicensed installs
-        // they are skipped (not run, no evaluation produced) rather than errored — the pass rate is
-        // computed over judged evaluators. The suite editor mirrors this by locking agentic
-        // evaluators in the UI; an evaluator attached while licensed simply won't run after a
-        // downgrade.
-        var agenticEnabled = license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators);
-        var evaluators = testRun.Group.Suite.Evaluators
-            .Where(e => agenticEnabled || e.Kind != EvaluatorKind.Agentic);
+            IAgent agent = customAgent ?? testRun.Group.Suite.Agent;
+            IModelClient client = agent.CreateClient(
+                customEndpoint: testRun.Endpoint,
+                skipIngestion: true);
+            ICompletion completion = await client.CompleteAsync(
+                testCase.Input,
+                cancellationToken: cancellationToken);
 
-        await Parallel.ForEachAsync(evaluators, parallelOptions,
-            async (evaluator, ct) => await RunEvaluator(evaluator, testResult, run, ct));
-        
-        using var sync = await asyncLock.LockAsync(testRun.Id, cancellationToken);
-        testRun = await testRun.ReloadAsync(cancellationToken);
-        testRun = await testRun.SetTestResult(testResult, cancellationToken);
+            broadcaster.Publish(new InferenceDoneEvent(testRun.Id, testRun.Group.Id, testCase.Id));
 
-        // Reload the result before broadcasting: the evaluations were added to reloaded copies
-        // inside RunEvaluator, so this local reference still holds the empty list it was created
-        // with. Without the reload the completing SSE event carries no evaluations and a finished
-        // matrix cell shows no evaluator dots until the terminal group refetch.
-        testResult = await testResult.ReloadAsync(cancellationToken);
-        broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
+            var testResult = createTestResult(testCase, completion, []);
+            await testResultRepository.AddAsync(testResult, cancellationToken);
+
+            var run = testRun;
+            var parallelOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = configuration.MaxDegreeOfParallelism,
+                CancellationToken = cancellationToken
+            };
+
+            // Agentic evaluators require the AgenticEvaluators license feature. On unlicensed installs
+            // they are skipped (not run, no evaluation produced) rather than errored — the pass rate is
+            // computed over judged evaluators. The suite editor mirrors this by locking agentic
+            // evaluators in the UI; an evaluator attached while licensed simply won't run after a
+            // downgrade.
+            var agenticEnabled = license.IsFeatureEnabled(LicenseFeature.AgenticEvaluators);
+            var evaluators = testRun.Group.Suite.Evaluators
+                .Where(e => agenticEnabled || e.Kind != EvaluatorKind.Agentic);
+
+            await Parallel.ForEachAsync(evaluators, parallelOptions,
+                async (evaluator, ct) => await RunEvaluator(evaluator, testResult, run, ct));
+
+            using var sync = await asyncLock.LockAsync(testRun.Id, cancellationToken);
+            testRun = await testRun.ReloadAsync(cancellationToken);
+            testRun = await testRun.SetTestResult(testResult, cancellationToken);
+
+            // Reload the result before broadcasting: the evaluations were added to reloaded copies
+            // inside RunEvaluator, so this local reference still holds the empty list it was created
+            // with. Without the reload the completing SSE event carries no evaluations and a finished
+            // matrix cell shows no evaluator dots until the terminal group refetch.
+            testResult = await testResult.ReloadAsync(cancellationToken);
+            broadcaster.Publish(TestResultArrivedEvent.Create(testRun, testResult));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Run was cancelled — let it unwind so the group is marked Cancelled, not Failed.
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // A single case's inference/evaluation failure (flaky LLM call, transient timeout) must
+            // not abort the whole run: log it and skip this case so the remaining cases still run and
+            // the group completes. Validation guards against scoring an incomplete run (see the A/B
+            // validators' result-count check).
+            logger.LogError(ex,
+                "Test case {TestCaseId} in run {RunId} failed; skipping it and continuing the run",
+                testCase.Id, testRun.Id);
+        }
     }
 
     private async Task RunEvaluator(

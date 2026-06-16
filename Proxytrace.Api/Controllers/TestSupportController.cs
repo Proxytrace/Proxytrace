@@ -10,6 +10,7 @@ namespace Proxytrace.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[TestOnlyEndpoint]
 [Route("api/test")]
 public class TestSupportController : ControllerBase
 {

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Proxytrace.Application.Optimization.Internal.Validation;
 using Proxytrace.Application.Streaming;
+using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
@@ -37,6 +38,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
     private readonly IProposalBroadcaster proposalBroadcaster;
     private readonly ITheoryBroadcaster theoryBroadcaster;
     private readonly ITransaction transaction;
+    private readonly IAsyncLock asyncLock;
     private readonly ILogger<TheoryValidationService> logger;
 
     private readonly Channel<Guid> channel = Channel.CreateUnbounded<Guid>(
@@ -54,6 +56,7 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         IProposalBroadcaster proposalBroadcaster,
         ITheoryBroadcaster theoryBroadcaster,
         ITransaction transaction,
+        IAsyncLock asyncLock,
         ILogger<TheoryValidationService> logger)
     {
         this.theories = theories;
@@ -63,11 +66,19 @@ internal sealed class TheoryValidationService : BackgroundService, ITheoryValida
         this.proposalBroadcaster = proposalBroadcaster;
         this.theoryBroadcaster = theoryBroadcaster;
         this.transaction = transaction;
+        this.asyncLock = asyncLock;
         this.logger = logger;
     }
 
     public async Task<TheorySubmissionResult> SubmitAsync(IOptimizationTheory theory, CancellationToken cancellationToken = default)
     {
+        // Serialize submissions per project: the quota and dedup checks below are check-then-act, and
+        // concurrent submitters (the optimizer and the open POST /api/theories endpoint) could
+        // otherwise both pass the quota/dedup gates and blow past MaxInFlightPerProject or persist
+        // duplicate theories. The lock is keyed on the project so unrelated projects don't serialize.
+        using IDisposable sync = await asyncLock.LockAsync(
+            $"theory-submit:{theory.Agent.Project.Id}", cancellationToken);
+
         var inFlight = await theories.CountActiveByProjectAsync(
             theory.Agent.Project.Id, cancellationToken);
         if (inFlight >= MaxInFlightPerProject)

@@ -362,7 +362,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
         }
 
         // SSE streaming: lines are "data: <json>" or "data: [DONE]"
-        if (responseBody.Contains("data: "))
+        if (LooksLikeSse(responseBody))
         {
             return ParseAgentMessageFromSse(responseBody);
         }
@@ -547,7 +547,7 @@ internal class OpenAiCallParser : IOpenAiCallParser
             return (null, null, null);
         }
 
-        if (responseBody.Contains("data: "))
+        if (LooksLikeSse(responseBody))
         {
             return ParseUsageFromSse(responseBody);
         }
@@ -558,6 +558,38 @@ internal class OpenAiCallParser : IOpenAiCallParser
             return ExtractUsageFromElement(doc.RootElement);
         }
         catch { return (null, null, null); }
+    }
+
+    /// <summary>
+    /// Distinguishes an SSE-streamed body from a buffered JSON completion structurally. A
+    /// streamed body is a sequence of <c>data: &lt;json&gt;</c> lines; a buffered body is a single
+    /// JSON value. We must not use a naive <c>Contains("data: ")</c> — that substring legitimately
+    /// occurs inside JSON string content (assistant text, tool arguments, error messages) and would
+    /// misroute a normal completion into the SSE parser, losing its message and token usage.
+    /// </summary>
+    private static bool LooksLikeSse(string responseBody)
+    {
+        foreach (var line in responseBody.Split('\n'))
+        {
+            var trimmed = line.TrimStart();
+            if (trimmed.Length == 0)
+            {
+                continue;
+            }
+
+            // First meaningful line decides: "data:" → SSE framing; "{"/"[" → buffered JSON value.
+            if (trimmed.StartsWith("data:", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (trimmed[0] is '{' or '[')
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static (ulong? inputTokens, ulong? outputTokens, string? finishReason) ParseUsageFromSse(string responseBody)

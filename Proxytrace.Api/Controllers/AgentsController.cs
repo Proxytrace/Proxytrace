@@ -108,6 +108,7 @@ public class AgentsController : ControllerBase
     /// with an empty tool-set and <c>IsSystemAgent = false</c>.
     /// </summary>
     [HttpPost("seed")]
+    [TestOnlyEndpoint]
     public async Task<ActionResult<AgentDto>> Seed(
         [FromBody] SeedAgentRequest request,
         CancellationToken cancellationToken)

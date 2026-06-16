@@ -10,6 +10,7 @@ using Proxytrace.Domain.OptimizationProposal;
 using Proxytrace.Domain.OptimizationTheory;
 using Proxytrace.Domain.Prompt;
 using Proxytrace.Domain.Proposal;
+using Proxytrace.Domain.TestCase;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
 using Proxytrace.Domain.TestRunGroup;
@@ -106,6 +107,10 @@ public sealed class SystemPromptTheoryValidatorTests : BaseTest<Module>
         agent.ModelParameters.Returns(Substitute.For<IModelParameters>());
 
         var suite = Substitute.For<ITestSuite>();
+        // The validators only score a run that produced a result for every case in the suite, so the
+        // suite must have as many cases as the (equal-length) baseline/candidate runs.
+        var caseCount = Math.Max(baselinePassed.Length, candidatePassed.Length);
+        suite.TestCases.Returns(Enumerable.Range(0, caseCount).Select(_ => Substitute.For<ITestCase>()).ToList());
 
         var theory = Substitute.For<ISystemPromptTheory>();
         theory.Agent.Returns(agent);

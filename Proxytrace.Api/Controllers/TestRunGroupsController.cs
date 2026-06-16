@@ -114,19 +114,36 @@ public class TestRunGroupsController : ControllerBase
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("X-Accel-Buffering", "no");
 
-        var reader = broadcaster.SubscribeToGroup(id, cancellationToken);
-        if (group.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
+        // Linked token so every exit path (already-terminal early return, completion, disconnect)
+        // cancels the subscription and the broadcaster removes it — otherwise the early return below
+        // would leak the subscriber for an already-finished group.
+        using var streamCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        try
         {
-            var completeEvt = GroupRunCompleteEvent.Create(group);
-            var completeData = JsonSerializer.Serialize(completeEvt, ApiJsonOptions.Sse);
-            await Response.WriteAsync($"event: group-run-complete\ndata: {completeData}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
-            return;
-        }
+            var reader = broadcaster.SubscribeToGroup(id, streamCts.Token);
+            if (group.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
+            {
+                var completeEvt = GroupRunCompleteEvent.Create(group);
+                var completeData = JsonSerializer.Serialize(completeEvt, ApiJsonOptions.Sse);
+                await Response.WriteAsync($"event: group-run-complete\ndata: {completeData}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+                return;
+            }
 
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+            await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, streamCts.Token))
+            {
+                if (evt is null)
+                {
+                    await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                    continue;
+                }
+
+                await WriteEventAsync(evt, cancellationToken);
+            }
+        }
+        finally
         {
-            await WriteEventAsync(evt, cancellationToken);
+            await streamCts.CancelAsync();
         }
     }
 

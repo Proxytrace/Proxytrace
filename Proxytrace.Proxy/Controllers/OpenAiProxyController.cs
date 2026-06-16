@@ -21,6 +21,12 @@ public class OpenAiProxyController : ControllerBase
 {
     private const string SessionIdHeader = "x-proxytrace-session-id";
 
+    // Hard caps so a single request can't exhaust proxy memory: reject oversized request bodies
+    // outright, and bound the in-memory transcript we accumulate for capture (the bytes are still
+    // streamed through to the client untruncated — only the captured copy is bounded).
+    private const long MaxRequestBodyBytes = 64L * 1024 * 1024;
+    private const int MaxCapturedResponseChars = 16 * 1024 * 1024;
+
     // Optional: a client may name its owning agent explicitly. When present, ingestion attributes the
     // call to that named agent directly, skipping the prompt/tool similarity matcher.
     private const string AgentNameHeader = "x-proxytrace-agent";
@@ -84,6 +90,20 @@ public class OpenAiProxyController : ControllerBase
             return;
         }
 
+        // Reject path traversal: {**path} could otherwise contain "../" and reach arbitrary paths
+        // on the upstream host, escaping the intended OpenAI API surface.
+        if (path.Contains("..", StringComparison.Ordinal))
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        if (Request.ContentLength is > MaxRequestBodyBytes)
+        {
+            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return;
+        }
+
         ResolvedApiKey? resolved = await GetResolvedKeyAsync(project, cancellationToken);
         if (resolved is null)
         {
@@ -106,6 +126,14 @@ public class OpenAiProxyController : ControllerBase
         using var requestBodyStream = new MemoryStream();
         await Request.Body.CopyToAsync(requestBodyStream, cancellationToken);
         var requestBodyBytes = requestBodyStream.ToArray();
+
+        // Re-check after buffering: a chunked request reports no ContentLength up-front.
+        if (requestBodyBytes.LongLength > MaxRequestBodyBytes)
+        {
+            Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+            return;
+        }
+
         var requestBody = Encoding.UTF8.GetString(requestBodyBytes);
 
         var sessionId = Request.Headers.TryGetValue(SessionIdHeader, out var sid)
@@ -124,7 +152,7 @@ public class OpenAiProxyController : ControllerBase
             requestBody = Encoding.UTF8.GetString(requestBodyBytes);
         }
 
-        var upstream = BuildUpstreamRequest(path, requestBodyBytes, resolved.Provider.ApiKey, resolved.Provider.Endpoint);
+        using var upstream = BuildUpstreamRequest(path, requestBodyBytes, resolved.Provider.ApiKey, resolved.Provider.Endpoint);
         var client = httpClientFactory.CreateClient("openai");
         var sw = Stopwatch.StartNew();
 
@@ -144,23 +172,28 @@ public class OpenAiProxyController : ControllerBase
             return;
         }
 
-        // Copy upstream status + safe response headers to our response
-        Response.StatusCode = (int)upstreamResponse.StatusCode;
-        foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
+        // Dispose the response (and its underlying connection, held open by ResponseHeadersRead on
+        // the streaming path) once the body has been fully copied/captured.
+        using (upstreamResponse)
         {
-            if (ForwardedResponseHeaders.Contains(header.Key.ToLowerInvariant()))
+            // Copy upstream status + safe response headers to our response
+            Response.StatusCode = (int)upstreamResponse.StatusCode;
+            foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
             {
-                Response.Headers[header.Key] = string.Join(", ", header.Value);
+                if (ForwardedResponseHeaders.Contains(header.Key.ToLowerInvariant()))
+                {
+                    Response.Headers[header.Key] = string.Join(", ", header.Value);
+                }
             }
-        }
 
-        if (isStreaming)
-        {
-            await ProxyStreamingResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
-        }
-        else
-        {
-            await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
+            if (isStreaming)
+            {
+                await ProxyStreamingResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
+            }
+            else
+            {
+                await ProxyBufferedResponseAsync(resolved.Provider, resolved.Project, requestBody, upstreamResponse, sw, sessionId, agentName, cancellationToken);
+            }
         }
     }
 
@@ -188,18 +221,21 @@ public class OpenAiProxyController : ControllerBase
             return;
         }
 
-        var body = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
-        Response.StatusCode = (int)upstreamResponse.StatusCode;
-        Response.ContentType = "application/json";
-
-        if (!upstreamResponse.IsSuccessStatusCode)
+        using (upstreamResponse)
         {
-            // Surface Azure's own error verbatim.
-            await Response.WriteAsync(body, cancellationToken);
-            return;
-        }
+            var body = await upstreamResponse.Content.ReadAsStringAsync(cancellationToken);
+            Response.StatusCode = (int)upstreamResponse.StatusCode;
+            Response.ContentType = "application/json";
 
-        await Response.WriteAsync(AzureDeploymentsToModelList(body), cancellationToken);
+            if (!upstreamResponse.IsSuccessStatusCode)
+            {
+                // Surface Azure's own error verbatim.
+                await Response.WriteAsync(body, cancellationToken);
+                return;
+            }
+
+            await Response.WriteAsync(AzureDeploymentsToModelList(body), cancellationToken);
+        }
     }
 
     // Reshape Azure's deployments response ({ "data": [ { "id", "model" } ] }) into an OpenAI
@@ -308,7 +344,12 @@ public class OpenAiProxyController : ControllerBase
                 break;
             }
 
-            accumulated.AppendLine(line);
+            // Bound the captured copy (the forwarded stream below is never truncated). Use '\n'
+            // explicitly so the capture matches what is forwarded rather than Environment.NewLine.
+            if (accumulated.Length < MaxCapturedResponseChars)
+            {
+                accumulated.Append(line).Append('\n');
+            }
 
             var lineBytes = Encoding.UTF8.GetBytes(line + "\n");
             await Response.Body.WriteAsync(lineBytes, cancellationToken);

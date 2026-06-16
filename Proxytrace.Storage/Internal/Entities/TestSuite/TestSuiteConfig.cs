@@ -69,7 +69,7 @@ internal class TestSuiteConfig : AbstractEntityConfiguration<TestSuiteEntity>, I
             name: storedEntity.Name,
             agent: await agents.GetAsync(storedEntity.Agent, cancellationToken),
             evaluators: loadedEvaluators,
-            testCases: await testCases.GetManyAsync(storedEntity.TestCases, cancellationToken),
+            testCases: await testCases.GetManyAsync(storedEntity.TestCases, cancellationToken, ignoreMissing: true),
             existing: storedEntity);
     }
 

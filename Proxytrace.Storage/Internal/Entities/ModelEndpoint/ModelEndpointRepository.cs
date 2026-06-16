@@ -48,6 +48,16 @@ internal class ModelEndpointRepository : ArchivableRepository<IModelEndpoint, Mo
 
         if (endpointEntity is not null)
         {
+            // Reuse of an archived endpoint (matching traffic arrived again): restore it so it stops
+            // being a live-but-hidden zombie that every list query and the UI filter out.
+            if (endpointEntity.IsArchived)
+            {
+                await UnarchiveAsync(endpointEntity.Id, cancellationToken);
+                endpointEntity = await contextFactory().Set<ModelEndpointEntity>()
+                    .AsNoTracking()
+                    .FirstAsync(e => e.Id == endpointEntity.Id, cancellationToken);
+            }
+
             return await mapper.Map(endpointEntity, cancellationToken);
         }
 

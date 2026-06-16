@@ -39,7 +39,15 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
     }
 
     protected void Notify(Guid id, EntityChangeType change)
-        => entityEvents.Notify(new EntityChangedEvent(id, typeof(TDomainEntity), change));
+    {
+        var changedEvent = new EntityChangedEvent(id, typeof(TDomainEntity), change);
+
+        // Defer the notification until the outermost transaction commits. When a write runs inside a
+        // larger logical unit (a nested InvokeAsync that does not commit), firing immediately would
+        // tell SSE broadcasters / cache invalidators / adoption tracking about a row that a later
+        // step could still roll back. When no transaction is active the action runs immediately.
+        ambient.RegisterPostCommit(() => entityEvents.Notify(changedEvent));
+    }
 
     /// <summary>
     /// Invalidate a single cached entity. Use after bypass writes that do not go through
@@ -164,7 +172,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
         return new PagedResult<TDomainEntity>(mapped, total, page, pageSize);
     }
 
-    public async Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default, bool ignoreMissing = false)
     {
         primaryKeys = primaryKeys.Distinct().ToArray();
 
@@ -196,7 +204,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
                 .Where(e => misses.Contains(e.Id))
                 .ToListAsync(cancellationToken);
 
-            if (missingStored.Count != misses.Count)
+            if (!ignoreMissing && missingStored.Count != misses.Count)
             {
                 throw new EntitiesNotFoundException(
                     ids: misses.Except(missingStored.Select(e => e.Id)).ToArray(),
@@ -219,7 +227,7 @@ internal abstract class AbstractRepository<TDomainEntity, TStoredEntity> : IRepo
             .Where(e => primaryKeys.Contains(e.Id))
             .ToListAsync(cancellationToken);
 
-        if (stored.Count != primaryKeys.Count)
+        if (!ignoreMissing && stored.Count != primaryKeys.Count)
         {
             throw new EntitiesNotFoundException(
                 ids: primaryKeys.Except(stored.Select(e => e.Id)).ToArray(),

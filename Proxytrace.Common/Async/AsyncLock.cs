@@ -12,7 +12,16 @@ internal sealed class AsyncLock : IAsyncLock
     public IDisposable Lock(object key)
     {
         var semaphore = Acquire(key);
-        semaphore.Wait();
+        try
+        {
+            semaphore.Wait();
+        }
+        catch
+        {
+            // The permit was never taken, so unwind only the refcount (no semaphore.Release()).
+            Unwind(key);
+            throw;
+        }
         return new Releaser(this, key, semaphore);
     }
 
@@ -20,7 +29,18 @@ internal sealed class AsyncLock : IAsyncLock
     public async Task<IDisposable> LockAsync(object key, CancellationToken cancellationToken = default)
     {
         var semaphore = Acquire(key);
-        await semaphore.WaitAsync(cancellationToken);
+        try
+        {
+            await semaphore.WaitAsync(cancellationToken);
+        }
+        catch
+        {
+            // Cancellation (or any wait failure) means the permit was never taken: unwind the
+            // refcount we incremented in Acquire so the entry/semaphore don't leak. Do not call
+            // semaphore.Release() — we never acquired the slot.
+            Unwind(key);
+            throw;
+        }
         return new Releaser(this, key, semaphore);
     }
 
@@ -39,15 +59,27 @@ internal sealed class AsyncLock : IAsyncLock
 
     private void Release(object key, SemaphoreSlim semaphore)
     {
+        // Release the slot first so a waiter can proceed, then drop our refcount.
+        semaphore.Release();
+        Unwind(key);
+    }
+
+    // Drops one refcount for the key; disposes and removes the semaphore once no callers remain.
+    private void Unwind(object key)
+    {
         lock (sync)
         {
-            var (_, count) = locks[key];
+            var (semaphore, count) = locks[key];
             if (count == 1)
+            {
                 locks.Remove(key);
+                semaphore.Dispose();
+            }
             else
+            {
                 locks[key] = (semaphore, count - 1);
+            }
         }
-        semaphore.Release();
     }
 
     private sealed class Releaser : IDisposable

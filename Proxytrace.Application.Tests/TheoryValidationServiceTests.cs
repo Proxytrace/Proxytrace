@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Proxytrace.Common.Async;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Optimization.Internal;
 using Proxytrace.Application.Optimization.Internal.Validation;
@@ -277,6 +278,7 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
             Substitute.For<IProposalBroadcaster>(),
             Substitute.For<ITheoryBroadcaster>(),
             transaction,
+            new NoOpAsyncLock(),
             NullLogger<TheoryValidationService>.Instance);
 
         return new Fixture
@@ -301,6 +303,18 @@ public sealed class TheoryValidationServiceTests : BaseTest<Module>
         reset.Status.Returns(TheoryStatus.Proposed);
         theory.ResetToProposed(Arg.Any<CancellationToken>()).Returns(Task.FromResult(reset));
         return theory;
+    }
+
+    private sealed class NoOpAsyncLock : IAsyncLock
+    {
+        public IDisposable Lock(object key) => new Handle();
+        public Task<IDisposable> LockAsync(object key, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IDisposable>(new Handle());
+
+        private sealed class Handle : IDisposable
+        {
+            public void Dispose() { }
+        }
     }
 
     private sealed class Fixture

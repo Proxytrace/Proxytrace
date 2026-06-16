@@ -32,8 +32,16 @@ internal sealed class RedisIngestionStream : IIngestionStream
 
     public async Task PublishAsync(IngestMessage message, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var payload = JsonSerializer.Serialize(message);
-        await Database.StreamAddAsync(configuration.Stream, PayloadField, payload);
+        // Approximate MAXLEN trim bounds Redis memory if the consumer lags or the app is down.
+        await Database.StreamAddAsync(
+            configuration.Stream,
+            PayloadField,
+            payload,
+            messageId: null,
+            maxLength: configuration.MaxStreamLength,
+            useApproximateMaxLength: true);
     }
 
     public async IAsyncEnumerable<IngestEnvelope> ConsumeAsync(

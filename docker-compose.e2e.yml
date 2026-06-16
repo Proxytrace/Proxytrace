@@ -34,6 +34,8 @@ services:
     environment:
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
+      # Enables the test-support/seed endpoints (gated off in real deployments via TestOnlyEndpoint).
+      - TestSupport__Enabled=true
       # Throwaway Enterprise license signed (ES256, kid 2026-05) with the test private key whose
       # public half is the embedded active key, so it validates in any build configuration with no
       # PROXYTRACE_LICENSE_PUBLIC_KEY override. Enterprise tier unlocks the paid features the suite
@@ -96,6 +98,7 @@ services:
       - Messaging__Provider=InProcess
       - Authentication__Mode=Local
       - Authentication__Local__SigningKey=e2e-test-signing-key-32-chars-min!
+      - TestSupport__Enabled=true
       # Deliberately NO PROXYTRACE_LICENSE / PROXYTRACE_LICENSE_PUBLIC_KEY → Free tier.
 
   # Free-tier SPA: same built frontend image, but its nginx proxies /api to api-free.

@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.ApiKeys;
@@ -270,7 +271,11 @@ public class ModelProvidersController : ControllerBase
         if (project is null)
             return BadRequest($"Project {request.ProjectId} not found.");
 
-        var keyValue = $"proxytrace-{Guid.NewGuid():N}";
+        // The proxy bearer credential must be unguessable, so derive it from a CSPRNG (256 bits,
+        // url-safe base64) rather than Guid.NewGuid, which carries no cryptographic-strength contract.
+        Span<byte> keyBytes = stackalloc byte[32];
+        RandomNumberGenerator.Fill(keyBytes);
+        var keyValue = $"proxytrace-{Convert.ToBase64String(keyBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')}";
         var key = createApiKey(request.Name, keyValue, project, provider);
         var saved = await apiKeyRepository.AddAsync(key, cancellationToken);
         return CreatedAtAction(nameof(GetKeys), new { providerId }, mapper.ToKeyDto(saved));

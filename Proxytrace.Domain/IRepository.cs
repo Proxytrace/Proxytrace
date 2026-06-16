@@ -48,9 +48,13 @@ public interface IRepository<TDomainEntity>
         CancellationToken cancellationToken = default);
     
     /// <summary>
-    /// Returns all entities for the given primary keys
+    /// Returns all entities for the given primary keys. By default throws
+    /// <c>EntitiesNotFoundException</c> if any key is missing. Pass <paramref name="ignoreMissing"/>
+    /// to skip absent keys instead — used when resolving FK-less id lists stored as JSON (e.g. a
+    /// suite's test cases) where a referenced child may have been hard-deleted; tolerating the gap
+    /// keeps the parent loadable rather than letting one missing child make it unmappable.
     /// </summary>
-    Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TDomainEntity>> GetManyAsync(IReadOnlyCollection<Guid> primaryKeys, CancellationToken cancellationToken = default, bool ignoreMissing = false);
     
     /// <summary>
     /// Returns the first entity of type <typeparamref name="TDomainEntity"/>, or null if none exist

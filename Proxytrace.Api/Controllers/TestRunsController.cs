@@ -93,19 +93,38 @@ public class TestRunsController : ControllerBase
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("X-Accel-Buffering", "no");
 
-        var reader = broadcaster.Subscribe(id, cancellationToken);
-        if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
+        // Subscribe through a linked token so every exit path (the already-terminal early return,
+        // normal completion, client disconnect, exceptions) cancels it and the broadcaster removes
+        // the subscription. Subscribing before the terminal check keeps it race-free: a run that
+        // completes in the gap still delivers run-complete through the channel.
+        using var streamCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        try
         {
-            var completeEvt = RunCompleteEvent.Create(run);
-            var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), ApiJsonOptions.Sse);
-            await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
-            return;
-        }
+            var reader = broadcaster.Subscribe(id, streamCts.Token);
+            if (run.Status is TestRunStatus.Completed or TestRunStatus.Failed or TestRunStatus.Cancelled)
+            {
+                var completeEvt = RunCompleteEvent.Create(run);
+                var completeData = JsonSerializer.Serialize(completeEvt, completeEvt.GetType(), ApiJsonOptions.Sse);
+                await Response.WriteAsync($"event: run-complete\ndata: {completeData}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+                return;
+            }
 
-        await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+            await foreach (var evt in SseWriter.ReadWithHeartbeatAsync(reader, streamCts.Token))
+            {
+                if (evt is null)
+                {
+                    await SseWriter.WriteHeartbeatAsync(Response, cancellationToken);
+                    continue;
+                }
+
+                await WriteEventAsync(evt, cancellationToken);
+            }
+        }
+        finally
         {
-            await WriteEventAsync(evt, cancellationToken);
+            // Triggers the broadcaster's unsubscribe even when we return early (terminal run).
+            await streamCts.CancelAsync();
         }
     }
 
