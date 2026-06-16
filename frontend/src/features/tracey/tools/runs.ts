@@ -127,11 +127,9 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
   }),
   start_test_run: tool({
     description:
-      'Start a test run of a suite against an agent. Requires user confirmation. On start the ' +
-      'user sees a live progress card that streams completion + pass/fail as cases finish; you ' +
-      'get back only a compact summary (group id, status, case count) — do not poll for progress. ' +
-      'Returns an `awaitable` handle, and your next step MUST pass it to await_actions (the app ' +
-      'enforces this) — so to run several actions, start them all in this same step.',
+      'Start a test run of a suite against an agent. Requires confirmation. Returns a compact ' +
+      'summary plus an `awaitable` handle (do not poll for progress — a live card streams it); ' +
+      'your next step must pass the handle to await_actions (the app enforces this).',
     parameters: z.object({
       suiteId: z.string().describe('The id of the test suite to run.'),
       agentId: z.string().describe('The id of the agent to run the suite against.'),
@@ -157,9 +155,8 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
   }),
   cancel_test_run: tool({
     description:
-      'Cancel an in-progress test run. Requires confirmation. Pass the test-run group id — the ' +
-      '`awaitable` id from start_test_run (or a run group id from list_runs / get_run). Use this ' +
-      'when a run was started by mistake or is no longer wanted. Returns the cancelled run’s status.',
+      'Cancel an in-progress test run. Requires confirmation. Pass the test-run group id (the ' +
+      '`awaitable` id from start_test_run, or a group id from list_runs / get_run).',
     parameters: z.object({
       groupId: z.string().describe('The id of the test-run group to cancel (the start_test_run awaitable id).'),
     }),

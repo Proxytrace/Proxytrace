@@ -121,13 +121,10 @@ const handleSchema = z.object({
 export const createAwaitTools: ToolFactory = () => ({
   await_actions: tool({
     description:
-      'Wait for one or more long-running actions to finish, then return their results so you can ' +
-      'react in the same turn. Pass the exact `awaitable` handle(s) ({ kind, id }) returned by ' +
-      'start_test_run or submit_optimization_theory — never a suite, agent, or other id. The app ' +
-      'requires this call right after any action starts, so start ALL the actions you intend to ' +
-      'run in the SAME step (parallel tool calls), then call this ONCE with every pending handle ' +
-      '— never per action, and never poll get_run / get_proposal yourself. A cancelled action ' +
-      'has no handle; do not wait for it.',
+      'Wait for long-running actions to finish, then return their results so you can react in the ' +
+      'same turn. Pass the exact `awaitable` handle(s) ({ kind, id }) from start_test_run or ' +
+      'submit_optimization_theory — never a suite/agent id. Call once with EVERY pending handle ' +
+      'batched; never per action, and never poll get_run / get_proposal yourself.',
     parameters: z.object({
       handles: z.array(handleSchema).min(1).describe('The actions to wait for.'),
     }),

@@ -17,9 +17,7 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
   return {
     list_suites: tool({
-      description:
-        'List the test suites in the current project. Returns a compact index (id + name) plus a ' +
-        'reference; the full list is rendered to the user. To inspect one suite, call get_suite.',
+      description: 'List the project\'s test suites. Returns a compact index; the full list renders to the user.',
       parameters: empty,
       confirm: false,
       execute: async () => {
@@ -29,9 +27,8 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     }),
     get_suite: tool({
       description:
-        'Get a single test suite by id. Returns a curated summary (name, case count, pass rate) ' +
-        'plus a reference; the full suite is rendered to the user as a card. Each test case carries ' +
-        'its own id — use those ids with remove_test_case / update_expected_output.',
+        'Get one test suite by id. Returns a summary (name, case count, pass rate); the full suite ' +
+        'renders as a card. Each test case carries its own id — use those with remove_test_case / update_expected_output.',
       parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
       execute: async ({ suiteId }) => {
@@ -42,11 +39,8 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     }),
     create_suite: tool({
       description:
-        'Create a new test suite for an agent, seeded from captured traces. Requires confirmation. ' +
-        'Pass the agent-call ids returned by find_traces as `agentCallIds`; each becomes a test ' +
-        "case whose expected output is that trace's recorded response. A default exact-match " +
-        'evaluator is attached, so the suite is runnable immediately (refine cases with ' +
-        'update_expected_output, or add evaluators on the Suites page). Returns the new suite as a card.',
+        'Create a benchmark suite for an agent, seeded from captured traces. Requires confirmation. ' +
+        '`agentCallIds` are trace ids from find_traces; each becomes a test case. Returns the new suite as a card.',
       parameters: z.object({
         name: z.string().min(1).describe('A short, descriptive name for the suite.'),
         agentId: z.string().describe('The id of the agent the suite benchmarks.'),
@@ -66,10 +60,8 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     }),
     add_to_suite: tool({
       description:
-        'Add captured traces to an existing suite as new test cases. Requires confirmation. Pass the ' +
-        'suite id and the agent-call ids (from find_traces). Each new case’s expected output ' +
-        "defaults to its trace's own response; refine it afterward with update_expected_output. " +
-        'Returns the updated suite as a card.',
+        'Add captured traces to an existing suite as new test cases. Requires confirmation. ' +
+        '`agentCallIds` are trace ids from find_traces. Returns the updated suite as a card.',
       parameters: z.object({
         suiteId: z.string().describe('The id of the suite to add cases to.'),
         agentCallIds: z.array(z.string()).min(1)
@@ -91,7 +83,7 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     remove_test_case: tool({
       description:
         'Remove a test case from a suite. Requires confirmation. Pass the suite id and the case id ' +
-        '(test cases carry their ids in get_suite). Returns the updated suite as a card.',
+        '(from get_suite). Returns the updated suite as a card.',
       parameters: z.object({
         suiteId: z.string().describe('The id of the suite.'),
         caseId: z.string().describe('The id of the test case to remove (from get_suite).'),
@@ -108,9 +100,8 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     }),
     update_expected_output: tool({
       description:
-        "Set a test case's expected output — the assistant response it is scored against. " +
-        'Requires confirmation. Pass the case id (from get_suite) and the expected assistant text. ' +
-        'Use this to turn a captured trace into a proper regression case after add_to_suite / create_suite.',
+        "Set a test case's expected output — what it is scored against. Requires confirmation. " +
+        'Pass the case id (from get_suite) and the expected assistant text.',
       parameters: z.object({
         caseId: z.string().describe('The id of the test case to update (from get_suite).'),
         content: z.string().min(1).describe('The expected assistant response the case is scored against.'),

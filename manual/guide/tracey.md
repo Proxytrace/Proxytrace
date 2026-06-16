@@ -175,7 +175,8 @@ Her skills cover:
 
 | Skill | Loads when you ask about… |
 |-------|---------------------------|
-| **Test suites & runs** | your suites, test runs, results/pass rates, why a run failed, comparing two runs, building or editing a suite from traces, or starting/cancelling a run |
+| **Test suites & runs** | your suites, test runs, results/pass rates, why a run failed, comparing two runs, or starting/cancelling a run |
+| **Suite curation** | building a suite from captured traces, or adding/removing/editing a suite's test cases |
 | **Review proposals** | listing or reviewing proposals, or approving/rejecting one |
 | **Project insights** | overall stats/usage/cost, a provider, or finding/inspecting captured traces |
 | **Optimize an agent** | optimizing, improving, or tuning an agent (below) |

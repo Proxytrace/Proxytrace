@@ -107,9 +107,12 @@ the wire and attributes the call to her agent by name (`X-Proxytrace-Agent` / sa
 ## Progressive tool disclosure (skills gate tools)
 
 The full tool set is large, so Tracey only ever *offers* a lean subset to the model on a given
-step. Every tool is always **defined** (so the wire capture and her versioned agent stay complete),
-but `tracey-runtime.ts`'s `prepareStep` sets `activeTools` to the core set plus the bundles of
-every skill loaded **so far this conversation** (`tool-access.ts`):
+step. Every tool is always **defined** in `createTraceyTools` (so a tool is one factory edit away
+from reachable), but `tracey-runtime.ts`'s `prepareStep` sets `activeTools` to the core set plus the
+bundles of every skill loaded **so far this conversation** (`tool-access.ts`). The AI SDK then
+**filters the wire payload to the active subset** (`prepareToolsAndToolChoice`), so an unloaded
+tool's schema never reaches the model — and a given call captures only the tools active for it
+(CORE + loaded bundles), not the entire catalog:
 
 - **`CORE_TOOL_NAMES`** are active on every step: `navigate`, `search_docs`, `load_skill`,
   `ask_questions`, the three `show_*` renderers, and the two universal agent reads (`list_agents`,
@@ -144,10 +147,10 @@ column is which bundle activates the tool (`core` = always available).
 | `list_agents` / `get_agent` | read | no | core | `AgentListToolUI` / `AgentCardToolUI` |
 | `show_chart` / `show_table` / `show_text` | render | no | core | `ChartToolUI` / `TableToolUI` / `TextToolUI` |
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
-| `list_suites` / `get_suite` | read | no | `test-suites-and-runs` | `SuiteListToolUI` / `SuiteCardToolUI` |
-| `create_suite` / `add_to_suite` | write | **yes** | `test-suites-and-runs` | `SuiteCardToolUI` |
-| `remove_test_case` | write | **yes** | `test-suites-and-runs` | `SuiteCardToolUI` |
-| `update_expected_output` | write | **yes** | `test-suites-and-runs` | `ToolCallCard` |
+| `list_suites` / `get_suite` | read | no | `test-suites-and-runs`, `suite-curation` | `SuiteListToolUI` / `SuiteCardToolUI` |
+| `create_suite` / `add_to_suite` | write | **yes** | `suite-curation` | `SuiteCardToolUI` |
+| `remove_test_case` | write | **yes** | `suite-curation` | `SuiteCardToolUI` |
+| `update_expected_output` | write | **yes** | `suite-curation` | `ToolCallCard` |
 | `list_runs` / `get_run` | read | no | `test-suites-and-runs` | `RunListToolUI` / `RunCardToolUI` |
 | `get_run_failures` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunFailuresToolUI` |
 | `compare_runs` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunComparisonToolUI` |
@@ -362,7 +365,8 @@ Current skills (`skills/*.md`):
 
 | Skill (`name`) | Unlocks (`tools:`) |
 |----------------|--------------------|
-| `test-suites-and-runs` | `list_suites`, `get_suite`, `create_suite`, `add_to_suite`, `remove_test_case`, `update_expected_output`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `start_test_run`, `cancel_test_run`, `await_actions` |
+| `test-suites-and-runs` | `list_suites`, `get_suite`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `start_test_run`, `cancel_test_run`, `await_actions` |
+| `suite-curation` | `list_suites`, `get_suite`, `find_traces`, `get_trace`, `create_suite`, `add_to_suite`, `remove_test_case`, `update_expected_output` |
 | `review-proposals` | `list_proposals`, `get_proposal`, `set_proposal_status` |
 | `project-insights` | `get_dashboard_stats`, `get_provider`, `find_traces`, `get_trace` |
 | `optimize-agent` | `submit_optimization_theory`, `get_agent_stats`, `list_suites`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `find_traces`, `get_trace`, `list_theories`, `await_actions` |
