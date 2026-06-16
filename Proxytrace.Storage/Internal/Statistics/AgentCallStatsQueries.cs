@@ -69,7 +69,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         var rows = await q
             .GroupBy(c => new
             {
-                Bucket = (long)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                Bucket = (int)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
                 c.EndpointId,
             })
             .Select(g => new
@@ -345,7 +345,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
                 (c, v) => new { c.CreatedAt, v.AgentId, c.InputTokens, c.OutputTokens })
             .GroupBy(x => new
             {
-                Bucket = (long)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                Bucket = (int)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
                 x.AgentId,
             })
             .Select(g => new
@@ -371,9 +371,11 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
+        // Live telemetry is always the [since, now] window. Build the query from a filter whose
+        // From/To are pinned to that window so the scalar rollups and the percentile path below see
+        // exactly the same rows (rather than also re-applying the caller's own From/To).
         StatisticsFilter windowFilter = filter with { From = since, To = now };
-        IQueryable<AgentCallEntity> q = Query(context, filter)
-            .Where(c => c.CreatedAt >= since && c.CreatedAt <= now);
+        IQueryable<AgentCallEntity> q = Query(context, windowFilter);
 
         // Scalar rollups (count / error count / token sum) aggregate server-side in a single row.
         var agg = await q
@@ -532,7 +534,7 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .Where(c => versionIdsForAgent.Contains(c.AgentVersionId) && c.CreatedAt >= from && c.CreatedAt <= to)
             .GroupBy(c => new
             {
-                Bucket = (long)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                Bucket = (int)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
                 c.EndpointId,
             })
             .Select(g => new
