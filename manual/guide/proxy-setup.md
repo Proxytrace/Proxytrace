@@ -4,30 +4,41 @@ Proxytrace captures traffic by acting as an **OpenAI-compatible proxy**. Your ag
 talking to what looks like the OpenAI API; Proxytrace records the interaction and forwards
 it to the real provider.
 
-## What you change
+**Ingesting** simply means routing your agent's existing OpenAI calls through Proxytrace.
+You change **two things** in your client and nothing else:
 
-Only two things in your client:
-
-1. **Base URL** — point it at the Proxytrace proxy endpoint instead of the provider's.
-2. **API key** — either a **Proxytrace-issued API key** (see below) **or your existing
-   upstream provider key**. Proxytrace accepts both and maps the call to the right project
-   and upstream provider.
+1. **Base URL** — point it at the Proxytrace proxy endpoint (below) instead of the provider's.
+2. **API key** — either a **Proxytrace-issued API key** or your **existing upstream provider
+   key**. Proxytrace accepts both and maps the call to the right project and provider.
 
 No SDK swap, no code changes beyond configuration.
 
-::: tip
-The first-run setup wizard ends with ready-made quick-start snippets (Python, TypeScript,
-C#, curl) for your project's endpoint — copy one and you're capturing traces. The same
-per-project endpoint is shown on the **Providers → API keys** table, and the Traces page
-links back to this guide while it's still empty.
+## What the proxy endpoint is
+
+The proxy endpoint is the **`base_url` your OpenAI client points at**. It has three parts —
+the proxy **host**, your **project slug**, and the fixed `/openai/v1` suffix:
+
+<ProxyEndpoint />
+
+::: tip Where to find your real endpoint
+The host above is filled in **automatically when you read this page inside a running
+Proxytrace instance** (it reflects the operator's [configured proxy URL](/admin/configuration)).
+You can also copy the exact, ready-to-use endpoint straight from the app:
+
+- the **first-run setup wizard**, which ends with copy-paste quick-start snippets (Python,
+  TypeScript, C#, curl) for your project;
+- the **Providers → API keys** table, which lists the per-project endpoint next to each key;
+- the **“How to wire the proxy?”** link on the Traces page while it's still empty.
 :::
 
-::: warning Mind the port
-The ingestion proxy is **not** the web UI. In the standard Docker deployment the UI runs on
-port `5101` and the proxy on port `5102` — sending OpenAI calls to the UI port returns
-`405 Not Allowed`. Use the endpoint the UI advertises (it reflects the operator's
-[configured proxy URL](/admin/configuration)).
+::: warning The proxy is not the web UI — mind the port
+The ingestion proxy runs as its **own service on its own port**. In the standard Docker
+deployment the UI is on port `5101` and the proxy on port `5102`; sending OpenAI calls to the
+UI port returns `405 Not Allowed`. Always use the host the app advertises, not the address in
+your browser's URL bar.
 :::
+
+## What you change
 
 ### Which key to use
 
