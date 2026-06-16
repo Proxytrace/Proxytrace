@@ -109,6 +109,10 @@ These actions change state and are therefore **confirmation-gated**:
 | Action | What it does |
 |--------|--------------|
 | **Start a test run** | Runs a suite against an agent's endpoint, then shows a **live progress card** (see below). |
+| **Cancel a test run** | Stops an in-progress run you started by mistake or no longer want. |
+| **Build a suite from traces** | Creates a new test suite for an agent, seeded from captured traces you point her at (see *Curating suites from traces*). |
+| **Add traces to a suite** | Adds more captured traces to an existing suite as new test cases. |
+| **Edit a suite's cases** | Sets a case's expected answer, or removes a case. |
 | **Approve / reject a proposal** | Sets an optimization proposal's status. |
 | **Submit an optimization theory** | Theorizes a change to an agent and kicks off an A/B test (see *Optimizing an agent*). |
 
@@ -126,6 +130,24 @@ and reacts in the same reply** — she comes back with an analysis once the run 
 than leaving you to ask. If she's waiting on several runs at once, she waits for all of them and
 summarizes together. Very long runs are capped: if one hasn't finished in time she'll tell you it's
 still going so you can check back.
+
+### Curating suites from traces
+
+Proxytrace captures every LLM interaction as a trace — and Tracey can turn those real
+interactions into a **benchmark test suite**, the same loop the product is built around. Point her
+at the traces you care about and she'll do the curation:
+
+- **"Find the failed calls for my support agent and make a suite from them."** Tracey searches the
+  captured traces, then **creates a new suite** seeded from them — each trace becomes a test case,
+  and the suite is runnable straight away.
+- **"Add these traces to the regression suite."** She **adds** them to an existing suite as new
+  cases.
+- **"Set the expected answer for that case to …"** A captured response isn't always the *ideal*
+  answer, so she can **set a case's expected output** — what the case is scored against — or
+  **remove** a case that isn't useful.
+
+Each of these is a confirmation-gated write, and the resulting suite renders as a card you can open.
+A natural flow: find notable traces → build or extend a suite → refine the key cases → start a run.
 
 ### Auto-approve
 
@@ -153,7 +175,7 @@ Her skills cover:
 
 | Skill | Loads when you ask about… |
 |-------|---------------------------|
-| **Test suites & runs** | your suites, test runs, results/pass rates, why a run failed, comparing two runs, or starting a run |
+| **Test suites & runs** | your suites, test runs, results/pass rates, why a run failed, comparing two runs, building or editing a suite from traces, or starting/cancelling a run |
 | **Review proposals** | listing or reviewing proposals, or approving/rejecting one |
 | **Project insights** | overall stats/usage/cost, a provider, or finding/inspecting captured traces |
 | **Optimize an agent** | optimizing, improving, or tuning an agent (below) |

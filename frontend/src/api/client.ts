@@ -129,13 +129,13 @@ async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions
 
 export const api = {
   get: <T>(url: string, opts?: RequestOptions) => request<T>(url, undefined, opts),
-  post: <T>(url: string, body?: unknown) =>
-    request<T>(url, { method: 'POST', body: body != null ? JSON.stringify(body) : undefined }),
-  put: <T>(url: string, body?: unknown) =>
-    request<T>(url, { method: 'PUT', body: body != null ? JSON.stringify(body) : undefined }),
-  patch: <T>(url: string, body?: unknown) =>
-    request<T>(url, { method: 'PATCH', body: body != null ? JSON.stringify(body) : undefined }),
-  del: <T = void>(url: string) => request<T>(url, { method: 'DELETE' }),
+  post: <T>(url: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(url, { method: 'POST', body: body != null ? JSON.stringify(body) : undefined }, opts),
+  put: <T>(url: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(url, { method: 'PUT', body: body != null ? JSON.stringify(body) : undefined }, opts),
+  patch: <T>(url: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(url, { method: 'PATCH', body: body != null ? JSON.stringify(body) : undefined }, opts),
+  del: <T = void>(url: string, opts?: RequestOptions) => request<T>(url, { method: 'DELETE' }, opts),
 };
 
 export function qs(params: Record<string, unknown>): string {

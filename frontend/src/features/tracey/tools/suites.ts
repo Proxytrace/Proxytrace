@@ -1,6 +1,17 @@
 import { z } from 'zod';
+import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
-import { type ToolFactory, tool, empty, ignore404, listDigest } from './shared';
+import { testCasesApi } from '../../../api/test-cases';
+import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
+
+/** The compact suite digest returned by the read + curation tools (the card shows everything). */
+const suiteDigest = (suite: { id: string; name: string; agentName: string; testCases: unknown[]; passRate: number | null }) => ({
+  id: suite.id,
+  name: suite.name,
+  agentName: suite.agentName,
+  caseCount: suite.testCases.length,
+  passRate: suite.passRate,
+});
 
 export const createSuiteTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -19,18 +30,100 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
     get_suite: tool({
       description:
         'Get a single test suite by id. Returns a curated summary (name, case count, pass rate) ' +
-        'plus a reference; the full suite is rendered to the user as a card.',
+        'plus a reference; the full suite is rendered to the user as a card. Each test case carries ' +
+        'its own id — use those ids with remove_test_case / update_expected_output.',
       parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
       execute: async ({ suiteId }) => {
         const suite = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));
         if (!suite) return { notFound: suiteId };
-        return store('suite', suite, {
-          id: suite.id,
-          name: suite.name,
-          caseCount: suite.testCases.length,
-          passRate: suite.passRate,
-        });
+        return store('suite', suite, suiteDigest(suite));
+      },
+    }),
+    create_suite: tool({
+      description:
+        'Create a new test suite for an agent, seeded from captured traces. Requires confirmation. ' +
+        'Pass the agent-call ids returned by find_traces as `agentCallIds`; each becomes a test ' +
+        "case whose expected output is that trace's recorded response. A default exact-match " +
+        'evaluator is attached, so the suite is runnable immediately (refine cases with ' +
+        'update_expected_output, or add evaluators on the Suites page). Returns the new suite as a card.',
+      parameters: z.object({
+        name: z.string().min(1).describe('A short, descriptive name for the suite.'),
+        agentId: z.string().describe('The id of the agent the suite benchmarks.'),
+        agentCallIds: z.array(z.string()).min(1)
+          .describe('Captured trace (agent-call) ids to seed as test cases — from find_traces.'),
+      }),
+      confirm: true,
+      execute: async ({ name, agentId, agentCallIds }, c) => {
+        const agent = await ignore404(() => agentsApi.get(agentId, { silentStatuses: [404] }));
+        if (!agent) return { notFound: agentId };
+        const n = agentCallIds.length;
+        const ok = await c.confirm(`Create suite "${name}" for agent "${agent.name}" from ${n} trace${n === 1 ? '' : 's'}?`);
+        if (!ok) return CANCELLED;
+        const suite = await testSuitesApi.create({ name, agentId, agentCallIds });
+        return store('suite', suite, suiteDigest(suite));
+      },
+    }),
+    add_to_suite: tool({
+      description:
+        'Add captured traces to an existing suite as new test cases. Requires confirmation. Pass the ' +
+        'suite id and the agent-call ids (from find_traces). Each new case’s expected output ' +
+        "defaults to its trace's own response; refine it afterward with update_expected_output. " +
+        'Returns the updated suite as a card.',
+      parameters: z.object({
+        suiteId: z.string().describe('The id of the suite to add cases to.'),
+        agentCallIds: z.array(z.string()).min(1)
+          .describe('Captured trace (agent-call) ids to add as test cases — from find_traces.'),
+      }),
+      confirm: true,
+      execute: async ({ suiteId, agentCallIds }, c) => {
+        const existing = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));
+        if (!existing) return { notFound: suiteId };
+        const n = agentCallIds.length;
+        const ok = await c.confirm(`Add ${n} case${n === 1 ? '' : 's'} to suite "${existing.name}"?`);
+        if (!ok) return CANCELLED;
+        // addTestCase returns the whole updated suite each time; apply sequentially and keep the last.
+        let suite = existing;
+        for (const id of agentCallIds) suite = await testSuitesApi.addTestCase(suiteId, id);
+        return store('suite', suite, suiteDigest(suite));
+      },
+    }),
+    remove_test_case: tool({
+      description:
+        'Remove a test case from a suite. Requires confirmation. Pass the suite id and the case id ' +
+        '(test cases carry their ids in get_suite). Returns the updated suite as a card.',
+      parameters: z.object({
+        suiteId: z.string().describe('The id of the suite.'),
+        caseId: z.string().describe('The id of the test case to remove (from get_suite).'),
+      }),
+      confirm: true,
+      execute: async ({ suiteId, caseId }, c) => {
+        const existing = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));
+        if (!existing) return { notFound: suiteId };
+        const ok = await c.confirm(`Remove a test case from suite "${existing.name}"?`);
+        if (!ok) return CANCELLED;
+        const suite = await testSuitesApi.removeTestCase(suiteId, caseId);
+        return store('suite', suite, suiteDigest(suite));
+      },
+    }),
+    update_expected_output: tool({
+      description:
+        "Set a test case's expected output — the assistant response it is scored against. " +
+        'Requires confirmation. Pass the case id (from get_suite) and the expected assistant text. ' +
+        'Use this to turn a captured trace into a proper regression case after add_to_suite / create_suite.',
+      parameters: z.object({
+        caseId: z.string().describe('The id of the test case to update (from get_suite).'),
+        content: z.string().min(1).describe('The expected assistant response the case is scored against.'),
+      }),
+      confirm: true,
+      execute: async ({ caseId, content }, c) => {
+        const ok = await c.confirm('Update the expected output of this test case?');
+        if (!ok) return CANCELLED;
+        const updated = await ignore404(() =>
+          testCasesApi.update(caseId, { role: 'assistant', content }, { silentStatuses: [404] }),
+        );
+        if (!updated) return { notFound: caseId };
+        return { caseId: updated.id, status: 'updated' };
       },
     }),
   };

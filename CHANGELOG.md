@@ -9,6 +9,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ## [Unreleased]
 
+### Added
+
+- **Tracey can now curate test suites from traces.** The in-app AI assistant can build a new test
+  suite for an agent from captured traces, add traces to an existing suite as test cases, set a
+  case's expected output, and remove cases — closing the curate→benchmark→run loop entirely in
+  chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
+
 ### Fixed
 
 - Listing models through the proxy against an **Azure OpenAI** upstream

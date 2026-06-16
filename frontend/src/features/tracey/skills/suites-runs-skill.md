@@ -1,7 +1,7 @@
 ---
 name: test-suites-and-runs
-description: Inspect test suites and runs, and start a test run. Load when the user asks about their suites, test runs, results/pass rates, or wants to run a suite against an agent.
-tools: list_suites, get_suite, list_runs, get_run, get_run_failures, compare_runs, start_test_run, await_actions
+description: Inspect test suites and runs, curate suites from captured traces, and start or cancel a test run. Load when the user asks about their suites, test runs, results/pass rates, wants to run a suite against an agent, or wants to build/edit a suite from traces.
+tools: list_suites, get_suite, create_suite, add_to_suite, remove_test_case, update_expected_output, list_runs, get_run, get_run_failures, compare_runs, start_test_run, cancel_test_run, await_actions
 ---
 
 # Skill: Test suites & runs
@@ -21,6 +21,24 @@ Render results, don't narrate them: a single suite or run → its entity card (`
 `get_run` render clickable cards); a comparison of runs or pass rates over time → `show_chart` /
 `show_table`. Add at most a sentence of insight.
 
+## Curate a suite from traces
+
+This is the heart of the product loop — turn real captured traces into a regression benchmark.
+The trace tools live in the `project-insights` / `optimize-agent` skills; once you have agent-call
+ids from `find_traces`, curate with these **confirmation-gated** write tools:
+
+- `create_suite` — make a NEW suite for an agent, seeded from `agentCallIds` (the ids from
+  `find_traces`). Each trace becomes a case whose expected output is its own recorded response, and
+  a default exact-match evaluator is attached so the suite runs immediately.
+- `add_to_suite` — add more captured traces to an EXISTING suite as cases (same `agentCallIds`).
+- `update_expected_output` — set what a case is *scored against*. A trace's recorded response is
+  rarely the ideal answer, so after `create_suite` / `add_to_suite` refine the important cases:
+  pass the `caseId` (from `get_suite`) and the corrected assistant `content`.
+- `remove_test_case` — drop a case by `caseId` (from `get_suite`).
+
+A typical curation flow: `find_traces` (find a notable / failing interaction) → `create_suite` or
+`add_to_suite` → optionally `update_expected_output` on the key cases → `start_test_run`.
+
 ## Start a run
 
 `start_test_run` runs a suite against an agent's endpoint. It is **confirmation-gated** — the app
@@ -37,6 +55,9 @@ several runs? Fire every `start_test_run` in the **same step** (parallel tool ca
 `await_actions([…all handles…])` — never one wait per run, and never poll `get_run` in a loop
 yourself. When the wait returns, analyze the results and summarize the outcome. If it reports
 `timedOut`, tell the user the run is still going and to check back.
+
+`cancel_test_run` stops an in-progress run (pass the `awaitable` group id from `start_test_run`, or
+a run group id) — reach for it when a run was started by mistake or is no longer wanted.
 
 To go beyond a single run and actually *improve* an agent from its results, load the
 `optimize-agent` skill instead.

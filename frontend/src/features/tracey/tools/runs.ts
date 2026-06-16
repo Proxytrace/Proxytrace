@@ -155,4 +155,22 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       });
     },
   }),
+  cancel_test_run: tool({
+    description:
+      'Cancel an in-progress test run. Requires confirmation. Pass the test-run group id — the ' +
+      '`awaitable` id from start_test_run (or a run group id from list_runs / get_run). Use this ' +
+      'when a run was started by mistake or is no longer wanted. Returns the cancelled run’s status.',
+    parameters: z.object({
+      groupId: z.string().describe('The id of the test-run group to cancel (the start_test_run awaitable id).'),
+    }),
+    confirm: true,
+    execute: async ({ groupId }, c) => {
+      const group = await ignore404(() => testRunGroupsApi.get(groupId, { silentStatuses: [404] }));
+      if (!group) return { notFound: groupId };
+      const ok = await c.confirm(`Cancel the run of suite "${group.suiteName}" against "${group.agentName}"?`);
+      if (!ok) return CANCELLED;
+      const cancelled = await testRunGroupsApi.cancel(groupId);
+      return { id: cancelled.id, status: cancelled.status };
+    },
+  }),
 });

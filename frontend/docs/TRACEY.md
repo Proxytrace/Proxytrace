@@ -145,10 +145,14 @@ column is which bundle activates the tool (`core` = always available).
 | `show_chart` / `show_table` / `show_text` | render | no | core | `ChartToolUI` / `TableToolUI` / `TextToolUI` |
 | `ask_questions` | interactive (HITL) | no | core | `AskQuestionsToolUI` |
 | `list_suites` / `get_suite` | read | no | `test-suites-and-runs` | `SuiteListToolUI` / `SuiteCardToolUI` |
+| `create_suite` / `add_to_suite` | write | **yes** | `test-suites-and-runs` | `SuiteCardToolUI` |
+| `remove_test_case` | write | **yes** | `test-suites-and-runs` | `SuiteCardToolUI` |
+| `update_expected_output` | write | **yes** | `test-suites-and-runs` | `ToolCallCard` |
 | `list_runs` / `get_run` | read | no | `test-suites-and-runs` | `RunListToolUI` / `RunCardToolUI` |
 | `get_run_failures` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunFailuresToolUI` |
 | `compare_runs` | read (analysis) | no | `test-suites-and-runs`, `optimize-agent` | `RunComparisonToolUI` |
 | `start_test_run` | write | **yes** | `test-suites-and-runs` | `StartTestRunToolUI` (live) |
+| `cancel_test_run` | write | **yes** | `test-suites-and-runs` | `ToolCallCard` |
 | `list_proposals` / `get_proposal` | read | no | `review-proposals` | `ProposalListToolUI` / `ProposalCardToolUI` |
 | `set_proposal_status` | write | **yes** | `review-proposals` | `ToolCallCard` |
 | `list_theories` | read | no | `optimize-agent` | `TheoryListToolUI` |
@@ -176,9 +180,13 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
   `get_dashboard_stats` includes `byAgent`/`byModel` usage breakdowns so a cross-agent usage chart
   needs one read, not `get_agent_stats` per agent (the prompt's "card economy" rules lean on
   this).
-- **Write tools** (`start_test_run`, `set_proposal_status`, `submit_optimization_theory`) set
-  `confirm: true`. They call `ctx.confirm(summary)` **before** mutating; on decline they return the
-  `CANCELLED` sentinel and never touch the mutating API. Their results are digests too:
+- **Write tools** (`start_test_run`, `cancel_test_run`, `set_proposal_status`,
+  `submit_optimization_theory`, and the suite-curation writes `create_suite` / `add_to_suite` /
+  `remove_test_case` / `update_expected_output`) set `confirm: true`. They call `ctx.confirm(summary)`
+  **before** mutating; on decline they return the `CANCELLED` sentinel and never touch the mutating
+  API. The curation writes that return a suite reuse `SuiteCardToolUI` (the same card as `get_suite`),
+  resolving the stored `suite` artifact — they store the full updated suite and return only a compact
+  digest, exactly like the read tools. Their results are digests too:
   `start_test_run` and `submit_optimization_theory` store the created entity as an artifact and
   return only identity fields + the `awaitable` handle (the theory in particular would otherwise
   echo the full proposed change the model just authored straight back into its context);
@@ -354,7 +362,7 @@ Current skills (`skills/*.md`):
 
 | Skill (`name`) | Unlocks (`tools:`) |
 |----------------|--------------------|
-| `test-suites-and-runs` | `list_suites`, `get_suite`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `start_test_run`, `await_actions` |
+| `test-suites-and-runs` | `list_suites`, `get_suite`, `create_suite`, `add_to_suite`, `remove_test_case`, `update_expected_output`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `start_test_run`, `cancel_test_run`, `await_actions` |
 | `review-proposals` | `list_proposals`, `get_proposal`, `set_proposal_status` |
 | `project-insights` | `get_dashboard_stats`, `get_provider`, `find_traces`, `get_trace` |
 | `optimize-agent` | `submit_optimization_theory`, `get_agent_stats`, `list_suites`, `list_runs`, `get_run`, `get_run_failures`, `compare_runs`, `find_traces`, `get_trace`, `list_theories`, `await_actions` |
