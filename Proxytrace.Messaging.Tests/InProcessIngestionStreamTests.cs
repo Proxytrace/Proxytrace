@@ -40,6 +40,18 @@ public sealed class InProcessIngestionStreamTests
         await ack.Should().NotThrowAsync();
     }
 
+    [TestMethod]
+    public async Task GetQueueDepth_ReflectsUnconsumedMessages()
+    {
+        var stream = new InProcessIngestionStream();
+        (await stream.GetQueueDepthAsync()).Should().Be(0);
+
+        await stream.PublishAsync(Message("one"));
+        await stream.PublishAsync(Message("two"));
+
+        (await stream.GetQueueDepthAsync()).Should().Be(2);
+    }
+
     private static IngestMessage Message(string marker) => new(
         ProviderId: Guid.NewGuid(),
         ProjectId: Guid.NewGuid(),

@@ -26,6 +26,17 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   case's expected output, and remove cases — closing the curate→benchmark→run loop entirely in
   chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
 
+### Changed
+
+- **The dashboard and traces views stay fast with very large trace volumes.** Trace statistics
+  (token usage, latency percentiles, call trends, per-agent rollups, live telemetry) now aggregate
+  inside the database instead of loading every matching call into memory, and the traces table
+  reads a lightweight row projection instead of the full request/response payload of each call.
+- **Trace ingestion keeps up under high proxy load.** The ingestion worker now persists captured
+  calls in parallel (tunable via `Messaging:MaxConcurrency`, Redis deployments only) and reads the
+  stream in larger batches. The dashboard's **Queue depth** now reflects the real ingestion backlog,
+  so a consumer falling behind is visible before unprocessed traces are dropped.
+
 ### Security
 
 - **Test-support and `/seed` endpoints are no longer reachable on real deployments.** The e2e helper

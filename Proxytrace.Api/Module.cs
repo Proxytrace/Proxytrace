@@ -384,6 +384,13 @@ internal sealed class Module : Autofac.Module
                 ? parsed
                 : Proxytrace.Messaging.MessagingProvider.Redis;
 
+        // Parallel persistence is only safe on Redis (it redelivers unacked entries when a race is
+        // requeued); the in-process channel must stay serial. So concurrency defaults to 1 and only
+        // the Redis path opts into a higher degree.
+        var maxConcurrency = provider == Proxytrace.Messaging.MessagingProvider.Redis
+            ? Math.Max(1, messaging.GetValue<int?>("MaxConcurrency") ?? 4)
+            : 1;
+
         return new Proxytrace.Messaging.MessagingConfiguration
         {
             Provider = provider,
@@ -392,6 +399,8 @@ internal sealed class Module : Autofac.Module
             Stream = messaging.GetValue<string>("Stream") ?? "proxytrace:ingest",
             ConsumerGroup = messaging.GetValue<string>("ConsumerGroup") ?? "proxytrace-app",
             ConsumerName = messaging.GetValue<string>("ConsumerName") ?? Environment.MachineName,
+            BatchSize = Math.Max(1, messaging.GetValue<int?>("BatchSize") ?? 64),
+            MaxConcurrency = maxConcurrency,
         };
     }
 

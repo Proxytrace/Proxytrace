@@ -19,4 +19,9 @@ internal record AgentCallEntity : Entity
     public required string? ErrorMessage { get; init; }
     public required ModelParametersData ModelParameters { get; init; }
     public required Guid? ConversationId { get; init; }
+
+    // Denormalised summaries populated at write time so the traces-list query can project scalar
+    // columns only, without reading/deserialising the Request and Response payload columns.
+    public string? RequestPreview { get; init; }
+    public int ResponseToolRequestCount { get; init; }
 }

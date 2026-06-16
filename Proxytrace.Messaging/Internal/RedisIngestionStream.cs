@@ -60,7 +60,7 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 configuration.ConsumerName,
                 configuration.ReclaimIdleMs,
                 reclaimCursor,
-                count: 10);
+                count: configuration.BatchSize);
             reclaimCursor = claimed.NextStartId;
 
             var produced = false;
@@ -75,7 +75,7 @@ internal sealed class RedisIngestionStream : IIngestionStream
                 configuration.ConsumerGroup,
                 configuration.ConsumerName,
                 StreamPosition.NewMessages,
-                count: 10);
+                count: configuration.BatchSize);
 
             foreach (IngestEnvelope envelope in ToEnvelopes(entries))
             {
@@ -92,6 +92,32 @@ internal sealed class RedisIngestionStream : IIngestionStream
 
     public async Task AckAsync(string messageId, CancellationToken cancellationToken = default)
         => await Database.StreamAcknowledgeAsync(configuration.Stream, configuration.ConsumerGroup, messageId);
+
+    public async Task<long> GetQueueDepthAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            StreamGroupInfo[] groups = await Database.StreamGroupInfoAsync(configuration.Stream);
+            foreach (StreamGroupInfo group in groups)
+            {
+                if (group.Name != configuration.ConsumerGroup)
+                {
+                    continue;
+                }
+
+                // Lag = entries added but not yet delivered to the group (the true backlog). It can
+                // be null when Redis cannot compute it (e.g. after the stream was trimmed past the
+                // group's position); fall back to the in-flight pending count.
+                return group.Lag ?? group.PendingMessageCount;
+            }
+        }
+        catch (RedisException ex)
+        {
+            // Depth is observability-only — never let a transient Redis error fail the caller.
+            logger.LogDebug(ex, "Unable to read ingestion queue depth");
+        }
+        return 0L;
+    }
 
     private IEnumerable<IngestEnvelope> ToEnvelopes(StreamEntry[] entries)
     {

@@ -62,17 +62,31 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
-        var raw = await q
-            .Select(c => new { c.CreatedAt, c.EndpointId, c.InputTokens, c.OutputTokens })
+        double widthMs = bucket.WidthMilliseconds();
+
+        // Aggregate per (bucket, endpoint) in the database: only one row per non-empty bucket
+        // crosses the wire — O(buckets × endpoints), never O(rows). See StatisticsTime.WidthMilliseconds.
+        var rows = await q
+            .GroupBy(c => new
+            {
+                Bucket = (int)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                c.EndpointId,
+            })
+            .Select(g => new
+            {
+                g.Key.Bucket,
+                g.Key.EndpointId,
+                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+            })
             .ToListAsync(cancellationToken);
 
-        return raw
-            .GroupBy(c => new { Bucket = bucket.BucketStart(c.CreatedAt), c.EndpointId })
-            .Select(g => new TokenUsageStat(
-                BucketStart: g.Key.Bucket,
-                EndpointId: g.Key.EndpointId,
-                InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
-                OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
+        return rows
+            .Select(r => new TokenUsageStat(
+                BucketStart: bucket.BucketStartFromIndex(r.Bucket),
+                EndpointId: r.EndpointId,
+                InputTokens: r.Input,
+                OutputTokens: r.Output))
             .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.EndpointId)
             .ToArray();
@@ -81,8 +95,18 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<IReadOnlyList<LatencyStat>> GetLatencyAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = Query(context, filter);
 
+        // Percentiles need the full ordered distribution. On a relational provider we compute them
+        // server-side with percentile_cont so only one row per endpoint crosses the wire; pulling
+        // every latency into memory and sorting there does not scale to millions of calls. The
+        // in-memory provider (kiosk/tests) cannot translate ordered-set aggregates, so it keeps the
+        // materialise-and-sort path — its datasets are small. Mirrors RemoveOlderThanAsync.
+        if (context.Database.IsRelational())
+        {
+            return await GetLatencyRelationalAsync(context, filter, cancellationToken);
+        }
+
+        IQueryable<AgentCallEntity> q = Query(context, filter);
         var samples = await q
             .Where(c => c.LatencyMs != null)
             .Select(c => new { c.EndpointId, Latency = c.LatencyMs ?? 0 })
@@ -104,6 +128,99 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             })
             .OrderBy(s => s.EndpointId)
             .ToArray();
+    }
+
+    private async Task<IReadOnlyList<LatencyStat>> GetLatencyRelationalAsync(
+        StorageDbContext context, StatisticsFilter filter, CancellationToken cancellationToken)
+    {
+        var (where, parameters) = BuildLatencyWhere(context, filter);
+        string sql = $"""
+            SELECT "EndpointId",
+                   count(*) AS cnt,
+                   min("LatencyMs") AS mn,
+                   max("LatencyMs") AS mx,
+                   percentile_cont(0.5)  WITHIN GROUP (ORDER BY "LatencyMs") AS p50,
+                   percentile_cont(0.95) WITHIN GROUP (ORDER BY "LatencyMs") AS p95,
+                   percentile_cont(0.99) WITHIN GROUP (ORDER BY "LatencyMs") AS p99
+            FROM "AgentCallEntity"
+            WHERE "LatencyMs" IS NOT NULL{where}
+            GROUP BY "EndpointId"
+            ORDER BY "EndpointId"
+            """;
+
+        var result = new List<LatencyStat>();
+        await using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = sql;
+        foreach (var (name, value) in parameters)
+        {
+            var p = command.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value;
+            command.Parameters.Add(p);
+        }
+
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                result.Add(new LatencyStat(
+                    EndpointId: reader.GetGuid(0),
+                    P50Ms: reader.GetDouble(4),
+                    P95Ms: reader.GetDouble(5),
+                    P99Ms: reader.GetDouble(6),
+                    MinMs: reader.GetDouble(2),
+                    MaxMs: reader.GetDouble(3),
+                    SampleCount: (int)reader.GetInt64(1)));
+            }
+        }
+        finally
+        {
+            await context.Database.CloseConnectionAsync();
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Builds the parameterised <c>WHERE</c> fragment (and its parameters) mirroring
+    /// <see cref="Query"/> for the raw-SQL percentile paths. Kept in lockstep with the table/column
+    /// names in <c>AgentCallConfig</c>/<c>AgentVersionConfig</c>.
+    /// </summary>
+    private static (string Where, IReadOnlyList<(string Name, object Value)> Parameters) BuildLatencyWhere(
+        StorageDbContext context, StatisticsFilter filter)
+    {
+        var clauses = new List<string>();
+        var parameters = new List<(string, object)>();
+
+        if (filter.AgentId is { } agentId)
+        {
+            clauses.Add("\"AgentVersionId\" IN (SELECT \"Id\" FROM \"AgentVersionEntity\" WHERE \"AgentId\" = @agentId)");
+            parameters.Add(("@agentId", agentId));
+        }
+        if (filter.ProjectId is { } projectId)
+        {
+            clauses.Add("\"AgentVersionId\" IN (SELECT \"Id\" FROM \"AgentVersionEntity\" WHERE \"Project\" = @projectId)");
+            parameters.Add(("@projectId", projectId));
+        }
+        if (filter.EndpointId is { } endpointId)
+        {
+            clauses.Add("\"EndpointId\" = @endpointId");
+            parameters.Add(("@endpointId", endpointId));
+        }
+        if (filter.From is { } from)
+        {
+            clauses.Add("\"CreatedAt\" >= @from");
+            parameters.Add(("@from", from));
+        }
+        if (filter.To is { } to)
+        {
+            clauses.Add("\"CreatedAt\" <= @to");
+            parameters.Add(("@to", to));
+        }
+
+        string where = clauses.Count == 0 ? string.Empty : " AND " + string.Join(" AND ", clauses);
+        return (where, parameters);
     }
 
     public async Task<IReadOnlyList<ErrorRateStat>> GetErrorRatesAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)
@@ -220,19 +337,32 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         StorageDbContext context = contextFactory();
         IQueryable<AgentCallEntity> q = Query(context, filter);
 
-        var raw = await q
+        double widthMs = bucket.WidthMilliseconds();
+
+        var rows = await q
             .Join(context.Set<AgentVersionEntity>().AsNoTracking(),
                 c => c.AgentVersionId, v => v.Id,
                 (c, v) => new { c.CreatedAt, v.AgentId, c.InputTokens, c.OutputTokens })
+            .GroupBy(x => new
+            {
+                Bucket = (int)Math.Floor((x.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                x.AgentId,
+            })
+            .Select(g => new
+            {
+                g.Key.Bucket,
+                g.Key.AgentId,
+                Input = g.Sum(x => (long?)x.InputTokens ?? 0L),
+                Output = g.Sum(x => (long?)x.OutputTokens ?? 0L),
+            })
             .ToListAsync(cancellationToken);
 
-        return raw
-            .GroupBy(c => new { Bucket = bucket.BucketStart(c.CreatedAt), c.AgentId })
-            .Select(g => new AgentTokenUsageStat(
-                BucketStart: g.Key.Bucket,
-                AgentId: g.Key.AgentId,
-                InputTokens: g.Sum(c => (long?)c.InputTokens ?? 0L),
-                OutputTokens: g.Sum(c => (long?)c.OutputTokens ?? 0L)))
+        return rows
+            .Select(r => new AgentTokenUsageStat(
+                BucketStart: bucket.BucketStartFromIndex(r.Bucket),
+                AgentId: r.AgentId,
+                InputTokens: r.Input,
+                OutputTokens: r.Output))
             .OrderBy(s => s.BucketStart)
             .ThenBy(s => s.AgentId)
             .ToArray();
@@ -241,27 +371,84 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
     public async Task<LiveTelemetry> GetLiveTelemetryAsync(StatisticsFilter filter, DateTimeOffset since, DateTimeOffset now, CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
-        IQueryable<AgentCallEntity> q = Query(context, filter)
-            .Where(c => c.CreatedAt >= since && c.CreatedAt <= now);
+        // Live telemetry is always the [since, now] window. Build the query from a filter whose
+        // From/To are pinned to that window so the scalar rollups and the percentile path below see
+        // exactly the same rows (rather than also re-applying the caller's own From/To).
+        StatisticsFilter windowFilter = filter with { From = since, To = now };
+        IQueryable<AgentCallEntity> q = Query(context, windowFilter);
 
-        var rows = await q
-            .Select(c => new { c.LatencyMs, c.InputTokens, c.OutputTokens, c.HttpStatus })
-            .ToListAsync(cancellationToken);
+        // Scalar rollups (count / error count / token sum) aggregate server-side in a single row.
+        var agg = await q
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Errors = g.Count(c => c.HttpStatus >= 400),
+                Tokens = g.Sum(c => ((long?)c.InputTokens ?? 0L) + ((long?)c.OutputTokens ?? 0L)),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
         double windowMinutes = Math.Max((now - since).TotalMinutes, 1d);
         double windowSeconds = Math.Max((now - since).TotalSeconds, 1d);
-        long tokens = rows.Sum(r => ((long?)r.InputTokens ?? 0L) + ((long?)r.OutputTokens ?? 0L));
-        int total = rows.Count;
-        int errors = rows.Count(r => r.HttpStatus >= 400);
-        double[] sorted = rows.Where(r => r.LatencyMs != null).Select(r => r.LatencyMs ?? 0d).OrderBy(v => v).ToArray();
+        int total = agg?.Total ?? 0;
+        int errors = agg?.Errors ?? 0;
+        long tokens = agg?.Tokens ?? 0L;
+
+        double p95;
+        if (context.Database.IsRelational())
+        {
+            p95 = await GetWindowPercentileRelationalAsync(context, windowFilter, 0.95, cancellationToken);
+        }
+        else
+        {
+            double[] sorted = await q
+                .Where(c => c.LatencyMs != null)
+                .Select(c => c.LatencyMs ?? 0d)
+                .OrderBy(v => v)
+                .ToArrayAsync(cancellationToken);
+            p95 = Percentile(sorted, 0.95);
+        }
 
         return new LiveTelemetry(
             TracesPerMinute: total / windowMinutes,
             TokensPerSecond: tokens / windowSeconds,
             QueueDepth: 0,
             ErrorRate: total == 0 ? 0d : errors / (double)total,
-            P95Ms: Percentile(sorted, 0.95),
+            P95Ms: p95,
             ProxyVersion: string.Empty);
+    }
+
+    private async Task<double> GetWindowPercentileRelationalAsync(
+        StorageDbContext context, StatisticsFilter filter, double percentile, CancellationToken cancellationToken)
+    {
+        var (where, parameters) = BuildLatencyWhere(context, filter);
+        string sql = $"""
+            SELECT percentile_cont({percentile.ToString(System.Globalization.CultureInfo.InvariantCulture)})
+                   WITHIN GROUP (ORDER BY "LatencyMs")
+            FROM "AgentCallEntity"
+            WHERE "LatencyMs" IS NOT NULL{where}
+            """;
+
+        await using var command = context.Database.GetDbConnection().CreateCommand();
+        command.CommandText = sql;
+        foreach (var (name, value) in parameters)
+        {
+            var p = command.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value;
+            command.Parameters.Add(p);
+        }
+
+        await context.Database.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            object? scalar = await command.ExecuteScalarAsync(cancellationToken);
+            return scalar is double d ? d : 0d;
+        }
+        finally
+        {
+            await context.Database.CloseConnectionAsync();
+        }
     }
 
     public async Task<CallTrends> GetCallTrendsAsync(StatisticsFilter filter, int buckets, DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default)
@@ -271,27 +458,35 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         IQueryable<AgentCallEntity> q = Query(context, filter)
             .Where(c => c.CreatedAt >= from && c.CreatedAt <= to);
 
-        var rows = await q
-            .Select(c => new { c.CreatedAt, c.LatencyMs, c.InputTokens, c.OutputTokens })
+        double bucketMs = Math.Max((to - from).TotalMilliseconds, 1d) / buckets;
+        double bucketSeconds = bucketMs / 1000d;
+
+        // Bucket-and-aggregate in the database (same integer-slot GROUP BY as the histogram), so at
+        // most one row per non-empty bucket returns instead of every matching call.
+        var grouped = await q
+            .GroupBy(c => (int)Math.Floor((c.CreatedAt - from).TotalMilliseconds / bucketMs))
+            .Select(g => new
+            {
+                Index = g.Key,
+                Count = g.Count(),
+                LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
+                LatencyCount = g.Count(c => c.LatencyMs != null),
+                TokenSum = g.Sum(c => ((long?)c.InputTokens ?? 0L) + ((long?)c.OutputTokens ?? 0L)),
+            })
             .ToListAsync(cancellationToken);
 
-        double bucketSeconds = Math.Max((to - from).TotalSeconds, 1d) / buckets;
         var traces = new double[buckets];
         var latencySum = new double[buckets];
         var latencyCount = new int[buckets];
         var tokenSum = new double[buckets];
 
-        foreach (var r in rows)
+        foreach (var g in grouped)
         {
-            int idx = (int)((r.CreatedAt - from).TotalSeconds / bucketSeconds);
-            idx = Math.Clamp(idx, 0, buckets - 1);
-            traces[idx] += 1;
-            tokenSum[idx] += ((long?)r.InputTokens ?? 0L) + ((long?)r.OutputTokens ?? 0L);
-            if (r.LatencyMs is { } latency)
-            {
-                latencySum[idx] += latency;
-                latencyCount[idx] += 1;
-            }
+            int idx = Math.Clamp(g.Index, 0, buckets - 1);
+            traces[idx] += g.Count;
+            tokenSum[idx] += g.TokenSum;
+            latencySum[idx] += g.LatencySum;
+            latencyCount[idx] += g.LatencyCount;
         }
 
         var latencyMs = new double[buckets];
@@ -324,42 +519,66 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
         CancellationToken cancellationToken = default)
     {
         StorageDbContext context = contextFactory();
+        double widthMs = bucket.WidthMilliseconds();
 
         var versionIdsForAgent = context.Set<AgentVersionEntity>()
             .AsNoTracking()
             .Where(v => v.AgentId == agentId)
             .Select(v => v.Id);
-        List<AgentCallEntity> rows = await context.Set<AgentCallEntity>()
+
+        // Aggregate per (bucket, endpoint) in the database. The endpoint split lets us cost each
+        // bucket from per-model token sums (CalculateCost is linear in tokens) without ever pulling
+        // raw rows into memory — the result set is O(buckets × endpoints), not O(calls).
+        var grouped = await context.Set<AgentCallEntity>()
             .AsNoTracking()
             .Where(c => versionIdsForAgent.Contains(c.AgentVersionId) && c.CreatedAt >= from && c.CreatedAt <= to)
+            .GroupBy(c => new
+            {
+                Bucket = (int)Math.Floor((c.CreatedAt - DateTimeOffset.UnixEpoch).TotalMilliseconds / widthMs),
+                c.EndpointId,
+            })
+            .Select(g => new
+            {
+                g.Key.Bucket,
+                g.Key.EndpointId,
+                Count = g.Count(),
+                Input = g.Sum(c => (long?)c.InputTokens ?? 0L),
+                Output = g.Sum(c => (long?)c.OutputTokens ?? 0L),
+                LatencySum = g.Sum(c => c.LatencyMs ?? 0d),
+            })
             .ToListAsync(cancellationToken);
 
         Dictionary<Guid, IModelEndpoint> endpoints = await LoadEndpointsAsync(
-            context, rows.Select(r => r.EndpointId).Distinct().ToArray(), cancellationToken);
+            context, grouped.Select(r => r.EndpointId).Distinct().ToArray(), cancellationToken);
 
-        AgentTimeSeriesPoint[] series = rows
-            .GroupBy(r => bucket.BucketStart(r.CreatedAt))
+        decimal CostOf(Guid endpointId, long input, long output)
+            => endpoints.TryGetValue(endpointId, out IModelEndpoint? e)
+                ? e.CalculateCost(new TokenUsage((ulong)Math.Max(input, 0L), (ulong)Math.Max(output, 0L))) ?? 0m
+                : 0m;
+
+        AgentTimeSeriesPoint[] series = grouped
+            .GroupBy(r => r.Bucket)
             .OrderBy(g => g.Key)
-            .Select(g => new AgentTimeSeriesPoint(
-                BucketStart: g.Key,
-                TraceCount: g.Count(),
-                InputTokens: g.Sum(r => (long?)r.InputTokens ?? 0L),
-                OutputTokens: g.Sum(r => (long?)r.OutputTokens ?? 0L),
-                CostEur: SumCost(g, endpoints),
-                AvgLatencyMs: g.Average(r => r.LatencyMs ?? 0d)))
+            .Select(g =>
+            {
+                int count = g.Sum(r => r.Count);
+                return new AgentTimeSeriesPoint(
+                    BucketStart: bucket.BucketStartFromIndex(g.Key),
+                    TraceCount: count,
+                    InputTokens: g.Sum(r => r.Input),
+                    OutputTokens: g.Sum(r => r.Output),
+                    CostEur: g.Sum(r => CostOf(r.EndpointId, r.Input, r.Output)),
+                    AvgLatencyMs: count == 0 ? 0d : g.Sum(r => r.LatencySum) / count);
+            })
             .ToArray();
 
-        long totalInput = rows.Sum(r => (long?)r.InputTokens ?? 0L);
-        long totalOutput = rows.Sum(r => (long?)r.OutputTokens ?? 0L);
-        double avgLatency = rows.Count == 0 ? 0d : rows.Average(r => r.LatencyMs ?? 0d);
-        decimal totalCost = SumCost(rows, endpoints);
-
+        int totalTraces = grouped.Sum(r => r.Count);
         AgentTimeSummary summary = new(
-            TotalTraces: rows.Count,
-            TotalInputTokens: totalInput,
-            TotalOutputTokens: totalOutput,
-            TotalCostEur: totalCost,
-            AvgLatencyMs: avgLatency);
+            TotalTraces: totalTraces,
+            TotalInputTokens: grouped.Sum(r => r.Input),
+            TotalOutputTokens: grouped.Sum(r => r.Output),
+            TotalCostEur: grouped.Sum(r => CostOf(r.EndpointId, r.Input, r.Output)),
+            AvgLatencyMs: totalTraces == 0 ? 0d : grouped.Sum(r => r.LatencySum) / totalTraces);
 
         return (series, summary);
     }
@@ -403,27 +622,6 @@ internal class AgentCallStatsQueries : IAgentCallStatsReader
             .ToListAsync(cancellationToken);
 
         return pairs.ToDictionary(p => p.EndpointId, p => p.Name);
-    }
-
-    private static decimal SumCost(IEnumerable<AgentCallEntity> calls, IReadOnlyDictionary<Guid, IModelEndpoint> endpoints)
-    {
-        decimal total = 0m;
-        foreach (AgentCallEntity call in calls)
-        {
-            if (!endpoints.TryGetValue(call.EndpointId, out IModelEndpoint? endpoint)
-                || !call.InputTokens.HasValue
-                || !call.OutputTokens.HasValue)
-            {
-                continue;
-            }
-            TokenUsage usage = new(call.InputTokens.Value, call.OutputTokens.Value);
-            decimal? cost = endpoint.CalculateCost(usage);
-            if (cost.HasValue)
-            {
-                total += cost.Value;
-            }
-        }
-        return total;
     }
 
     private static IQueryable<AgentCallEntity> Query(StorageDbContext context, StatisticsFilter filter)

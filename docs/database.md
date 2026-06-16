@@ -44,6 +44,25 @@ Set the connection string in:
 - `Proxytrace.Api/appsettings.json` (default configuration)
 - `Proxytrace.Api/appsettings.development.json` (development override)
 
+## High-volume tables (AgentCall)
+
+`AgentCallEntity` is the highest-volume table and is tuned for read-at-scale:
+
+- **Composite index `(AgentVersionId, CreatedAt)`** serves the agent/project-scoped trace list and
+  the dashboard time-series (filter by version, then order/range by `CreatedAt`) from one index; its
+  leading column still covers the agent-version foreign key. There are also single-column indexes on
+  `CreatedAt`, `EndpointId` and `ConversationId`.
+- **Statistics aggregate in the database.** `AgentCallStatsQueries` buckets time-series with an
+  integer-slot `GROUP BY` (`floor((CreatedAt - epoch) / width)`) so only one row per non-empty
+  bucket crosses the wire — never `O(rows)`. Latency percentiles use `percentile_cont` on relational
+  providers (raw SQL), with a materialise-and-sort fallback for the in-memory provider.
+- **The traces list reads a lightweight projection.** `GetFilteredListAsync` selects scalar columns
+  only and returns `AgentCallListItem`, so a page never reads or deserialises the `Request`,
+  `Response` or `ModelParameters` payload columns. Two denormalised columns populated at write time
+  back this: `RequestPreview` (first user message, collapsed + truncated) and
+  `ResponseToolRequestCount`. The full payload is loaded per-selection via `FindAsync`. (Rows written
+  before these columns existed show no preview until they age out via retention.)
+
 ## Migrations
 
 Migrations are **PostgreSQL-only**. The design-time factory

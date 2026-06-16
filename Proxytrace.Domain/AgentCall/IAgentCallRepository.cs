@@ -17,6 +17,18 @@ public interface IAgentCallRepository : IRepository<IAgentCall>
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Same filter/paging as <see cref="GetFilteredAsync"/> but returns the lightweight
+    /// <see cref="AgentCallListItem"/> projection for the traces table: the query reads only scalar
+    /// row columns (never the request/response/model-parameter payloads) so a page does not
+    /// deserialise — nor ship over the wire — potentially huge conversation JSON for every row.
+    /// </summary>
+    Task<(IReadOnlyList<AgentCallListItem> Items, int Total)> GetFilteredListAsync(
+        AgentCallFilter filter,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Buckets matching calls into <paramref name="buckets"/> equal-width time slots spanning the
     /// filter window. When <see cref="AgentCallFilter.From"/> is null the window starts at the
     /// earliest matching call; when <see cref="AgentCallFilter.To"/> is null it ends at "now".

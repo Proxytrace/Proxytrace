@@ -3,6 +3,7 @@ using Proxytrace.Common.Hosting;
 using Proxytrace.Domain;
 using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Messaging;
 
 namespace Proxytrace.Application.Statistics.Internal;
 
@@ -12,6 +13,7 @@ internal class DashboardStatistics : IDashboardStatistics
     private readonly IAgentCallStatsReader callStats;
     private readonly IAgentRepository agents;
     private readonly IAgentCallRepository agentCalls;
+    private readonly IIngestionStream ingestionStream;
     private readonly IAppVersion appVersion;
 
     public DashboardStatistics(
@@ -19,12 +21,14 @@ internal class DashboardStatistics : IDashboardStatistics
         IAgentCallStatsReader callStats,
         IAgentRepository agents,
         IAgentCallRepository agentCalls,
+        IIngestionStream ingestionStream,
         IAppVersion appVersion)
     {
         this.runStats = runStats;
         this.callStats = callStats;
         this.agents = agents;
         this.agentCalls = agentCalls;
+        this.ingestionStream = ingestionStream;
         this.appVersion = appVersion;
     }
 
@@ -122,7 +126,12 @@ internal class DashboardStatistics : IDashboardStatistics
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
         LiveTelemetry traffic = await callStats.GetLiveTelemetryAsync(filter, now.AddMinutes(-5), now, cancellationToken);
-        return traffic with { ProxyVersion = "v" + appVersion.Version };
+        long queueDepth = await ingestionStream.GetQueueDepthAsync(cancellationToken);
+        return traffic with
+        {
+            ProxyVersion = "v" + appVersion.Version,
+            QueueDepth = (int)Math.Min(queueDepth, int.MaxValue),
+        };
     }
 
     internal async Task<DashboardTrends> GetDashboardTrendsAsync(StatisticsFilter filter, CancellationToken cancellationToken = default)

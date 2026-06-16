@@ -69,8 +69,8 @@ public class AgentCallsController : ControllerBase
     {
         (page, pageSize) = Paging.Clamp(page, pageSize);
         var filter = new AgentCallFilter(agentId, projectId, endpointId, model, from, to, httpStatus, includeSystemAgents, q, conversationId);
-        var (items, total) = await repository.GetFilteredAsync(filter, page, pageSize, cancellationToken);
-        return new PagedResult<IAgentCall>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
+        var (items, total) = await repository.GetFilteredListAsync(filter, page, pageSize, cancellationToken);
+        return new PagedResult<AgentCallListItem>(items, total, page, pageSize).Map(agentCallDtoMapper.ToListItemDto);
     }
 
     /// <summary>

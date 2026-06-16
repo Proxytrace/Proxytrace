@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -23,13 +24,14 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
     private readonly IRepository<IModelProvider> providerRepository;
     private readonly IRepository<IProject> projectRepository;
     private readonly ITraceQuotaGuard quotaGuard;
+    private readonly MessagingConfiguration messaging;
     private readonly ILogger<AgentCallIngestionWorker> logger;
 
     // Cap redelivery of a retryable-but-deterministically-failing message so it can't loop forever
-    // and block the pending list. The consumer is single-threaded, so this plain dictionary (keyed
-    // by transport message id) is accessed sequentially and only retains currently-failing ids.
+    // and block the pending list. Keyed by transport message id; concurrent because envelopes are
+    // now processed in parallel. Only retains currently-failing ids.
     private const int MaxRetryableAttempts = 5;
-    private readonly Dictionary<string, int> failedAttempts = new();
+    private readonly ConcurrentDictionary<string, int> failedAttempts = new();
 
     public AgentCallIngestionWorker(
         IIngestionStream stream,
@@ -37,6 +39,7 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         IRepository<IModelProvider> providerRepository,
         IRepository<IProject> projectRepository,
         ITraceQuotaGuard quotaGuard,
+        MessagingConfiguration messaging,
         ILogger<AgentCallIngestionWorker> logger)
     {
         this.stream = stream;
@@ -44,11 +47,23 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         this.providerRepository = providerRepository;
         this.projectRepository = projectRepository;
         this.quotaGuard = quotaGuard;
+        this.messaging = messaging;
         this.logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        // Process envelopes concurrently. Each unit runs on its own async flow, so the AsyncLocal
+        // ambient DbContext keeps every persist isolated — lifting throughput past the old
+        // one-trace-at-a-time ceiling. Concurrency is bounded by configuration; the conversation /
+        // version races this introduces are the same ones the multi-instance deployment already
+        // tolerates (best-effort prior-call lookup + retryable unique-index recovery).
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = Math.Max(1, messaging.MaxConcurrency),
+            CancellationToken = cancellationToken,
+        };
+
         // Outer loop keeps the consumer alive across transport blips (e.g. a brief Redis outage):
         // ConsumeAsync may throw mid-stream, so we log, back off, and re-enter rather than letting
         // the BackgroundService fault permanently.
@@ -56,10 +71,10 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
         {
             try
             {
-                await foreach (IngestEnvelope envelope in stream.ConsumeAsync(cancellationToken))
-                {
-                    await HandleAsync(envelope, cancellationToken);
-                }
+                await Parallel.ForEachAsync(
+                    stream.ConsumeAsync(cancellationToken),
+                    options,
+                    async (envelope, ct) => await HandleAsync(envelope, ct));
             }
             catch (OperationCanceledException)
             {
@@ -124,7 +139,7 @@ internal sealed class AgentCallIngestionWorker : BackgroundService
 
     private async Task AckAndForgetAsync(string messageId, CancellationToken cancellationToken)
     {
-        failedAttempts.Remove(messageId);
+        failedAttempts.TryRemove(messageId, out _);
         await stream.AckAsync(messageId, cancellationToken);
     }
 

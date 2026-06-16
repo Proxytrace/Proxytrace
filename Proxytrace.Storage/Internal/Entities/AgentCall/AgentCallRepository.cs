@@ -1,10 +1,14 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Proxytrace.Domain;
+using Proxytrace.Domain.Agent;
 using Proxytrace.Domain.AgentCall;
+using Proxytrace.Domain.AgentVersion;
 using Proxytrace.Domain.Events;
+using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.Project;
 using Proxytrace.Domain.Search;
+using Proxytrace.Domain.Usage;
 using Proxytrace.Storage.Internal.Entities.Agent;
 using Proxytrace.Storage.Internal.Entities.AgentVersion;
 using Proxytrace.Storage.Internal.Entities.Model;
@@ -18,6 +22,9 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
     private const int MaxFulltextHits = 1000;
 
     private readonly ISearchService searchService;
+    private readonly IRepository<IAgentVersion> versions;
+    private readonly IRepository<IAgent> agents;
+    private readonly IRepository<IModelEndpoint> endpoints;
 
     public AgentCallRepository(
         IMapper<IAgentCall, AgentCallEntity> mapper,
@@ -25,9 +32,15 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         ITransaction transaction,
         IEntityEventService entityEvents,
         ISearchService searchService,
+        IRepository<IAgentVersion> versions,
+        IRepository<IAgent> agents,
+        IRepository<IModelEndpoint> endpoints,
         AmbientDbContext ambient) : base(mapper, contextFactory, transaction, entityEvents, ambient)
     {
         this.searchService = searchService;
+        this.versions = versions;
+        this.agents = agents;
+        this.endpoints = endpoints;
     }
 
     public async Task<(IReadOnlyList<IAgentCall> Items, int Total)> GetFilteredAsync(
@@ -54,6 +67,105 @@ internal class AgentCallRepository : AbstractRepository<IAgentCall, AgentCallEnt
         var items = await Map(stored, cancellationToken);
         return (items, total);
     }
+
+    public async Task<(IReadOnlyList<AgentCallListItem> Items, int Total)> GetFilteredListAsync(
+        AgentCallFilter filter,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var context = contextFactory();
+        var query = await BuildFilteredQueryAsync(context, filter, cancellationToken);
+        if (query is null)
+        {
+            return ([], 0);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        // Project scalar columns only — the Request/Response/ModelParameters payload columns are
+        // never read, so a page does not materialise (or transfer) large conversation JSON.
+        var rows = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(e => new ListRow(
+                e.Id,
+                e.AgentVersionId,
+                e.EndpointId,
+                e.InputTokens,
+                e.OutputTokens,
+                e.LatencyMs,
+                e.HttpStatus,
+                e.FinishReason,
+                e.ErrorMessage,
+                e.RequestPreview,
+                e.ResponseToolRequestCount,
+                e.CreatedAt,
+                e.UpdatedAt,
+                e.ConversationId))
+            .ToListAsync(cancellationToken);
+
+        // Resolve the agent/endpoint metadata the list shows from the cached entity repositories
+        // (batched by distinct id), rather than per-row navigation loads.
+        var versionsById = (await versions.GetManyAsync(
+                rows.Select(r => r.AgentVersionId).Distinct().ToArray(), cancellationToken, ignoreMissing: true))
+            .ToDictionary(v => v.Id);
+        var agentsById = (await agents.GetManyAsync(
+                versionsById.Values.Select(v => v.AgentId).Distinct().ToArray(), cancellationToken, ignoreMissing: true))
+            .ToDictionary(a => a.Id);
+        var endpointsById = (await endpoints.GetManyAsync(
+                rows.Select(r => r.EndpointId).Distinct().ToArray(), cancellationToken, ignoreMissing: true))
+            .ToDictionary(e => e.Id);
+
+        var items = rows.Select(r =>
+        {
+            Guid agentId = versionsById.TryGetValue(r.AgentVersionId, out var version) ? version.AgentId : Guid.Empty;
+            agentsById.TryGetValue(agentId, out var agent);
+            endpointsById.TryGetValue(r.EndpointId, out var endpoint);
+
+            decimal? cost = endpoint is not null && r.InputTokens.HasValue && r.OutputTokens.HasValue
+                ? endpoint.CalculateCost(new TokenUsage(r.InputTokens.Value, r.OutputTokens.Value))
+                : null;
+
+            return new AgentCallListItem(
+                Id: r.Id,
+                AgentId: agentId,
+                AgentName: agent?.Name ?? "(unknown)",
+                ModelName: endpoint?.Model.Name ?? "(unknown)",
+                ProviderName: endpoint?.Provider.Name ?? "(unknown)",
+                MessagePreview: r.RequestPreview,
+                ToolCount: r.ResponseToolRequestCount,
+                InputTokens: r.InputTokens,
+                OutputTokens: r.OutputTokens,
+                LatencyMs: r.LatencyMs,
+                HttpStatus: r.HttpStatus,
+                FinishReason: r.FinishReason,
+                ErrorMessage: r.ErrorMessage,
+                Cost: cost,
+                CreatedAt: r.CreatedAt,
+                UpdatedAt: r.UpdatedAt,
+                ConversationId: r.ConversationId);
+        }).ToArray();
+
+        return (items, total);
+    }
+
+    private sealed record ListRow(
+        Guid Id,
+        Guid AgentVersionId,
+        Guid EndpointId,
+        ulong? InputTokens,
+        ulong? OutputTokens,
+        double? LatencyMs,
+        int HttpStatus,
+        string? FinishReason,
+        string? ErrorMessage,
+        string? RequestPreview,
+        int ResponseToolRequestCount,
+        DateTimeOffset CreatedAt,
+        DateTimeOffset UpdatedAt,
+        Guid? ConversationId);
 
     public async Task<IReadOnlyList<AgentCallHistogramBucket>> GetHistogramAsync(
         AgentCallFilter filter,
