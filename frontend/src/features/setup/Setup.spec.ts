@@ -4,6 +4,10 @@ import { ModelProviderKind } from '../../api/models';
 import type { LicenseDto } from '../../api/license';
 import { buildTierSummary, presetById, PROVIDER_PRESETS } from './setupMeta';
 import { buildQuickStartSnippets } from './snippets';
+import { FEATURE_LABELS } from '../../components/license/licenseUtils';
+
+/** Free tier locks every enterprise feature; derive the count so a new feature can't stale this. */
+const ENTERPRISE_FEATURE_COUNT = Object.keys(FEATURE_LABELS).length;
 
 function mockFetch(body: unknown, status = 200) {
   return vi.fn().mockResolvedValue({
@@ -151,7 +155,8 @@ describe('buildTierSummary', () => {
     expect(summary.included.join(' ')).toContain('traces per month');
     expect(summary.locked).toContain('Optimization proposals');
     expect(summary.locked).toContain('SSO / OIDC sign-in');
-    expect(summary.locked).toHaveLength(5);
+    expect(summary.locked).toContain('Tracey AI assistant');
+    expect(summary.locked).toHaveLength(ENTERPRISE_FEATURE_COUNT);
   });
 
   it('enterprise tier includes granted features and locks nothing', () => {
@@ -166,6 +171,6 @@ describe('buildTierSummary', () => {
   it('treats an undefined license as Free', () => {
     const summary = buildTierSummary(undefined);
     expect(summary.isFree).toBe(true);
-    expect(summary.locked).toHaveLength(5);
+    expect(summary.locked).toHaveLength(ENTERPRISE_FEATURE_COUNT);
   });
 });
