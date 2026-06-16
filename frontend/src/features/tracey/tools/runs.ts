@@ -5,6 +5,7 @@ import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
 import { type ToolFactory, tool, empty, CANCELLED, ignore404, listDigest } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
+import { isRunTerminal } from './await';
 
 export const createRunTools: ToolFactory = (_ctx, store) => ({
   list_runs: tool({
@@ -164,6 +165,9 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     execute: async ({ groupId }, c) => {
       const group = await ignore404(() => testRunGroupsApi.get(groupId, { silentStatuses: [404] }));
       if (!group) return { notFound: groupId };
+      // A finished run can't be cancelled; short-circuit so we don't hit the backend (which would
+      // reject) and can tell the model it's already done rather than surface an error.
+      if (isRunTerminal(group.status)) return { id: group.id, status: group.status, alreadyTerminal: true };
       const ok = await c.confirm(`Cancel the run of suite "${group.suiteName}" against "${group.agentName}"?`);
       if (!ok) return CANCELLED;
       const cancelled = await testRunGroupsApi.cancel(groupId);

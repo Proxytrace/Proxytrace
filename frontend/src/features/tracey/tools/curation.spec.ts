@@ -96,6 +96,23 @@ describe('add_to_suite', () => {
     expect(result).toEqual({ notFound: 'bad' });
     expect(testSuitesApi.addTestCase).not.toHaveBeenCalled();
   });
+
+  it('captures a per-id failure without losing the cases that did add', async () => {
+    const ctx = makeCtx();
+    testSuitesApi.get.mockResolvedValue(suite());
+    testSuitesApi.addTestCase
+      .mockResolvedValueOnce(suite({ testCases: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] }))
+      .mockRejectedValueOnce(new Error('stale trace'));
+
+    const tool = createSuiteTools(ctx, store).add_to_suite;
+    const result = await tool.execute!({ suiteId: 's1', agentCallIds: ['good', 'bad'] }, ctx) as {
+      caseCount: number; failed?: { id: string; error: string }[];
+    };
+
+    expect(testSuitesApi.addTestCase).toHaveBeenCalledTimes(2);
+    expect(result.caseCount).toBe(3); // the successful add is still reflected
+    expect(result.failed).toEqual([{ id: 'bad', error: 'stale trace' }]);
+  });
 });
 
 describe('remove_test_case', () => {
@@ -154,6 +171,16 @@ describe('cancel_test_run', () => {
 
     expect(testRunGroupsApi.cancel).toHaveBeenCalledWith('g1');
     expect(result).toEqual({ id: 'g1', status: TestRunStatus.Cancelled });
+  });
+
+  it('short-circuits a finished run without calling cancel', async () => {
+    const ctx = makeCtx();
+    testRunGroupsApi.get.mockResolvedValue({ id: 'g1', suiteName: 'S', agentName: 'A', status: TestRunStatus.Completed });
+    const tool = createRunTools(ctx, store).cancel_test_run;
+    const result = await tool.execute!({ groupId: 'g1' }, ctx);
+    expect(result).toEqual({ id: 'g1', status: TestRunStatus.Completed, alreadyTerminal: true });
+    expect(ctx.confirm).not.toHaveBeenCalled();
+    expect(testRunGroupsApi.cancel).not.toHaveBeenCalled();
   });
 
   it('returns notFound for a missing group and never cancels', async () => {

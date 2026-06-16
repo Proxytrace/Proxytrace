@@ -74,10 +74,20 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
         const n = agentCallIds.length;
         const ok = await c.confirm(`Add ${n} case${n === 1 ? '' : 's'} to suite "${existing.name}"?`);
         if (!ok) return CANCELLED;
-        // addTestCase returns the whole updated suite each time; apply sequentially and keep the last.
+        // Each addTestCase commits server-side and returns the whole updated suite. Apply
+        // sequentially; capture per-id failures rather than throwing, so a mid-batch error
+        // (e.g. one stale trace id) can't both partially mutate the suite AND lose the report of
+        // what was added. Keep the latest successful suite snapshot for the digest/card.
         let suite = existing;
-        for (const id of agentCallIds) suite = await testSuitesApi.addTestCase(suiteId, id);
-        return store('suite', suite, suiteDigest(suite));
+        const failed: { id: string; error: string }[] = [];
+        for (const id of agentCallIds) {
+          try {
+            suite = await testSuitesApi.addTestCase(suiteId, id);
+          } catch (e) {
+            failed.push({ id, error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+        return store('suite', suite, { ...suiteDigest(suite), ...(failed.length > 0 ? { failed } : {}) });
       },
     }),
     remove_test_case: tool({
