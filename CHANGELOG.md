@@ -41,6 +41,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   re-serialized per open stream, the proxy and Tracey token relays no longer allocate a throwaway
   buffer per streamed line, and the evaluator test-history queries read a lightweight row projection
   instead of every full result (including its stored response payload).
+- **Test-run live updates scale with many concurrent runs.** The test-result event broadcaster now
+  routes each event directly to the subscribers of that run/group instead of scanning every live
+  subscriber on the instance, so a busy multi-run period no longer does work proportional to the
+  total number of open streams per event.
 
 ### Security
 
