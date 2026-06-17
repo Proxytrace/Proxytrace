@@ -17,7 +17,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   run-now — and each schedule card shows its cadence, next-run time, and a summary of its most
   recent runs. Scheduled runs feed the optimization loop exactly like manual ones. Creating and
   managing schedules requires an Enterprise license; existing schedules stay listable after a
-  downgrade but stop running until re-licensed.
+  downgrade but stop running until re-licensed. You can also start a schedule directly from a suite
+  card on the Suites page (a clock action opens the dialog with that suite preselected).
 
 - **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
   an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start

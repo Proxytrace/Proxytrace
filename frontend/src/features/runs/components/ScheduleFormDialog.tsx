@@ -22,6 +22,8 @@ import { RowButton } from '../../../components/ui/RowButton';
 interface Props {
   /** When set, the dialog edits this schedule; otherwise it creates a new one. */
   schedule?: TestRunScheduleDto;
+  /** When set (create-from-suite), the suite is fixed and shown read-only instead of a picker. */
+  lockedSuite?: { id: string; name: string };
   onClose: () => void;
   onSubmit: (form: ScheduleFormValues) => void;
   pending: boolean;
@@ -41,15 +43,16 @@ const UNIT_OPTIONS: { value: IntervalUnit; label: string }[] = [
   { value: 'days', label: 'days' },
 ];
 
-export function ScheduleFormDialog({ schedule, onClose, onSubmit, pending }: Props) {
+export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, pending }: Props) {
   const isEdit = schedule !== undefined;
   const { suites } = useSuites();
   const { data: endpoints = [] } = useModelEndpoints();
 
   const initialInterval = fromIntervalMinutes(schedule?.intervalMinutes ?? 1440);
   const [name, setName] = useState(schedule?.name ?? '');
-  // On edit the suite is fixed (the backend's UpdateRequest carries no suite); only create picks one.
-  const [suiteId, setSuiteId] = useState(schedule?.suiteId ?? '');
+  // On edit the suite is fixed (the backend's UpdateRequest carries no suite); create-from-suite seeds
+  // a locked suite; only the open create picker leaves it empty for the user to choose.
+  const [suiteId, setSuiteId] = useState(schedule?.suiteId ?? lockedSuite?.id ?? '');
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(schedule?.endpoints.map(e => e.id) ?? []),
   );
@@ -69,7 +72,7 @@ export function ScheduleFormDialog({ schedule, onClose, onSubmit, pending }: Pro
   const trimmedName = name.trim();
   const valid =
     trimmedName.length > 0 &&
-    (isEdit || suiteId.length > 0) &&
+    (isEdit || lockedSuite !== undefined || suiteId.length > 0) &&
     selected.size > 0 &&
     value > 0;
 
@@ -111,7 +114,18 @@ export function ScheduleFormDialog({ schedule, onClose, onSubmit, pending }: Pro
           />
         </FormField>
 
-        {!isEdit && (
+        {lockedSuite && (
+          <FormField label="Test suite">
+            <div
+              className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary truncate"
+              data-testid="schedule-suite-locked"
+            >
+              {lockedSuite.name}
+            </div>
+          </FormField>
+        )}
+
+        {!isEdit && !lockedSuite && (
           <FormField label="Test suite" htmlFor="schedule-suite">
             <Select
               id="schedule-suite"
