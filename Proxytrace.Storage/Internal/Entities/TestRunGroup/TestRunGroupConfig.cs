@@ -4,6 +4,7 @@ using Proxytrace.Common.Async;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestRunGroup;
 using Proxytrace.Domain.TestSuite;
+using Proxytrace.Storage.Internal.Entities.TestRunSchedule;
 using Proxytrace.Storage.Internal.Entities.TestSuite;
 
 namespace Proxytrace.Storage.Internal.Entities.TestRunGroup;
@@ -28,6 +29,12 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             .WithMany()
             .HasForeignKey(e => e.Suite)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasOne<TestRunScheduleEntity>()
+            .WithMany()
+            .HasForeignKey(e => e.ScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public async Task<ITestRunGroup> Map(TestRunGroupEntity stored, CancellationToken cancellationToken = default)
@@ -36,6 +43,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             status: stored.Status,
             completedAt: stored.CompletedAt,
             isSystemRun: stored.IsSystemRun,
+            scheduleId: stored.ScheduleId,
             existing: stored);
 
     public Task<TestRunGroupEntity> Map(ITestRunGroup domain, CancellationToken cancellationToken = default)
@@ -46,6 +54,7 @@ internal class TestRunGroupConfig : AbstractEntityConfiguration<TestRunGroupEnti
             Status = domain.Status,
             CompletedAt = domain.CompletedAt,
             IsSystemRun = domain.IsSystemRun,
+            ScheduleId = domain.ScheduleId,
             CreatedAt = domain.CreatedAt,
             UpdatedAt = domain.UpdatedAt,
         }.ToTaskResult();
