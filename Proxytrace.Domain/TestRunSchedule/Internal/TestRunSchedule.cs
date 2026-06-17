@@ -9,7 +9,7 @@ namespace Proxytrace.Domain.TestRunSchedule.Internal;
 internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedule
 {
     public string Name { get; private init; }
-    public ITestSuite Suite { get; }
+    public ITestSuite Suite { get; private init; }
     public IReadOnlyCollection<IModelEndpoint> Endpoints { get; private init; }
     public TimeSpan Interval { get; private init; }
     public bool IsEnabled { get; private init; }
@@ -52,15 +52,9 @@ internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedu
     public Task<ITestRunSchedule> RecordFired(DateTimeOffset now, CancellationToken cancellationToken = default)
     {
         var next = NextRunAt;
-        if (Interval > TimeSpan.Zero)
-        {
-            while (next <= now)
-                next += Interval;
-        }
-        else
-        {
-            next = now + TimeSpan.FromMinutes(1);
-        }
+        // Validation guarantees a positive (>= 1 minute) interval, so this loop always terminates.
+        while (next <= now)
+            next += Interval;
 
         return ApplyAsync(this with { LastRunAt = now, NextRunAt = next }, cancellationToken);
     }

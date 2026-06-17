@@ -109,6 +109,46 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         schedule.UpdatedAt.Should().Be(original.UpdatedAt);
     }
 
+    // ── validation failures ──────────────────────────────────────────────────
+
+    [TestMethod]
+    public async Task CreateNew_WithWhitespaceName_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
+        var action = () => factory("   ", suite, [endpoint], TimeSpan.FromHours(1), true);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task CreateNew_WithSubMinuteInterval_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
+        var action = () => factory("Nightly", suite, [endpoint], TimeSpan.FromSeconds(30), true);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [TestMethod]
+    public async Task CreateNew_WithEmptyEndpoints_ThrowsValidationException()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+
+        var action = () => factory("Nightly", suite, [], TimeSpan.FromHours(1), true);
+
+        action.Should().Throw<Exception>();
+    }
+
     // ── RecordFired ───────────────────────────────────────────────────────────
 
     [TestMethod]
