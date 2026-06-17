@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -191,12 +192,30 @@ public class TraceyChatController : ControllerBase
             }
 
             accumulated.AppendLine(line);
-            await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(line + "\n"), cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await WriteSseLineAsync(line, cancellationToken);
         }
 
         sw.Stop();
         await EnqueueSafeAsync(providerId, projectId, agentName, sessionId, requestBody, accumulated.ToString(), sw.Elapsed, upstreamResponse.StatusCode, cancellationToken);
+    }
+
+    // Forwards one streamed line plus its '\n' terminator and flushes so the token reaches the
+    // client immediately. Encodes into a pooled buffer to avoid the per-line string concat and
+    // throwaway byte[] that a token-by-token relay would otherwise allocate per chunk.
+    private async Task WriteSseLineAsync(string line, CancellationToken cancellationToken)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(line.Length) + 1);
+        try
+        {
+            var count = Encoding.UTF8.GetBytes(line, buffer);
+            buffer[count] = (byte)'\n';
+            await Response.Body.WriteAsync(buffer.AsMemory(0, count + 1), cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
     }
 
     private async Task EnqueueSafeAsync(
