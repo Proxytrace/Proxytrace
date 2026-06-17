@@ -66,7 +66,8 @@ public class TestRunGroupsController : ControllerBase
         else
             paged = await groupRepository.GetPagedAsync(page, pageSize, cancellationToken);
 
-        var items = await Task.WhenAll(paged.Items.Select(g => ToListItemDtoAsync(g, cancellationToken)));
+        var items = await Task.WhenAll(
+            paged.Items.Select(g => runMapper.ToListItemDtoAsync(g, runRepository, cancellationToken)));
         return new PagedResult<TestRunGroupListItemDto>(items, paged.Total, paged.Page, paged.PageSize);
     }
 
@@ -188,23 +189,6 @@ public class TestRunGroupsController : ControllerBase
             IsSystemRun: group.IsSystemRun,
             CompletedAt: group.CompletedAt,
             Runs: runs.Select(runMapper.ToDto).ToArray(),
-            CreatedAt: group.CreatedAt,
-            UpdatedAt: group.UpdatedAt);
-    }
-
-    private async Task<TestRunGroupListItemDto> ToListItemDtoAsync(ITestRunGroup group, CancellationToken cancellationToken)
-    {
-        var runs = await runRepository.GetByGroupAsync(group.Id, cancellationToken);
-        return new TestRunGroupListItemDto(
-            Id: group.Id,
-            SuiteId: group.Suite.Id,
-            SuiteName: group.Suite.Name,
-            AgentId: group.Suite.Agent.Id,
-            AgentName: group.Suite.Agent.Name,
-            Status: group.Status,
-            IsSystemRun: group.IsSystemRun,
-            CompletedAt: group.CompletedAt,
-            Runs: runs.Select(runMapper.ToSummaryDto).ToArray(),
             CreatedAt: group.CreatedAt,
             UpdatedAt: group.UpdatedAt);
     }

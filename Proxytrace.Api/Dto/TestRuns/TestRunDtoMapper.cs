@@ -4,6 +4,7 @@ using Proxytrace.Domain.Message;
 using Proxytrace.Domain.ModelEndpoint;
 using Proxytrace.Domain.TestResult;
 using Proxytrace.Domain.TestRun;
+using Proxytrace.Domain.TestRunGroup;
 
 namespace Proxytrace.Api.Dto.TestRuns;
 
@@ -88,6 +89,31 @@ public sealed class TestRunDtoMapper
             PassedCases: passed,
             FailedCases: completed - passed,
             PassRate: passRate);
+    }
+
+    /// <summary>
+    /// Builds the lightweight <see cref="TestRunGroupListItemDto"/> for a group, loading its runs via
+    /// <paramref name="runRepository"/> and projecting each through <see cref="ToSummaryDto"/>. Shared by
+    /// the run-groups list and the schedules list (recent-runs) so the projection lives in one place.
+    /// </summary>
+    public async Task<TestRunGroupListItemDto> ToListItemDtoAsync(
+        ITestRunGroup group,
+        ITestRunRepository runRepository,
+        CancellationToken cancellationToken)
+    {
+        var runs = await runRepository.GetByGroupAsync(group.Id, cancellationToken);
+        return new TestRunGroupListItemDto(
+            Id: group.Id,
+            SuiteId: group.Suite.Id,
+            SuiteName: group.Suite.Name,
+            AgentId: group.Suite.Agent.Id,
+            AgentName: group.Suite.Agent.Name,
+            Status: group.Status,
+            IsSystemRun: group.IsSystemRun,
+            CompletedAt: group.CompletedAt,
+            Runs: runs.Select(ToSummaryDto).ToArray(),
+            CreatedAt: group.CreatedAt,
+            UpdatedAt: group.UpdatedAt);
     }
 
     public TestCaseFixtureDto ToFixtureDto(ITestRun run, ITestResult result)
