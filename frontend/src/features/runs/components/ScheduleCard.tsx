@@ -1,6 +1,6 @@
 import type { TestRunScheduleDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
-import { fmtRelative } from '../../../lib/format';
+import { fmtUntil } from '../../../lib/format';
 import { formatInterval } from '../../../lib/interval';
 import { EditIcon, TrashIcon, ClockIcon } from '../../../components/icons';
 import { Card } from '../../../components/ui/Card';
@@ -43,7 +43,7 @@ export function ScheduleCard({ schedule, onToggle, onEdit, onDelete, onSelectRun
             </span>
             <span aria-hidden>·</span>
             <span>
-              {schedule.isEnabled ? `Next ${fmtRelative(schedule.nextRunAt)}` : 'Paused'}
+              {schedule.isEnabled ? `Next ${fmtUntil(schedule.nextRunAt)}` : 'Paused'}
             </span>
           </div>
         </div>

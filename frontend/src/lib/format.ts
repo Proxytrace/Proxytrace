@@ -49,6 +49,25 @@ export function fmtRelative(iso: string): string {
   return fmtDate(iso);
 }
 
+/**
+ * Future-facing counterpart to {@link fmtRelative}: formats how long *until* a timestamp,
+ * e.g. "in 30m" / "in 2h" / "in 3d". Returns "due" when the time is already past (or now).
+ * Mirrors `fmtRelative`'s unit thresholds; falls back to an absolute date beyond a week out.
+ */
+export function fmtUntil(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  const s = Math.floor(diff / 1000);
+  if (s <= 0) return 'due';
+  if (s < 60) return `in ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `in ${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `in ${h}h`;
+  const day = Math.floor(h / 24);
+  if (day < 7) return `in ${day}d`;
+  return fmtDate(iso);
+}
+
 export function fmtDuration(ms: number | null | undefined): string {
   if (ms == null) return '—';
   if (ms < 1000) return `${Math.round(ms)}ms`;
