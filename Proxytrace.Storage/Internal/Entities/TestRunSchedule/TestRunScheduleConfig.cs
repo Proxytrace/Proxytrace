@@ -69,6 +69,7 @@ internal class TestRunScheduleConfig : AbstractEntityConfiguration<TestRunSchedu
             Id = domainEntity.Id,
             Name = domainEntity.Name,
             Suite = domainEntity.Suite.Id,
+            // Minute granularity: the scheduler polls per-minute, so sub-minute intervals are not representable.
             IntervalMinutes = (int)Math.Round(domainEntity.Interval.TotalMinutes),
             IsEnabled = domainEntity.IsEnabled,
             NextRunAt = domainEntity.NextRunAt,
