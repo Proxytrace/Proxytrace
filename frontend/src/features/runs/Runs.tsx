@@ -11,8 +11,10 @@ import { Card } from '../../components/ui/Card';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import { Tabs } from '../../components/ui/Tabs';
 import { FOCUS_RING } from '../../lib/constants';
 import { GroupListCard } from './components/GroupListCard';
+import { SchedulesSection } from './components/SchedulesSection';
 import { GroupDetail } from './GroupDetail';
 import { useTestRunGroups } from './hooks/useTestRunGroups';
 import { useProjectAgents } from './hooks/useProjectAgents';
@@ -23,6 +25,7 @@ export default function Runs() {
   const runParam = searchParams.get('run');
 
   const [agentFilter, setAgentFilter] = useState('');
+  const [tab, setTab] = useState<'runs' | 'scheduled'>('runs');
   // Selected group lives in ?id= (survives refresh); ?run= is a one-shot deep-link
   // into a specific run that resolves to its owning group, then yields to ?id=.
   const [selectedGroupId, setSelectedGroupId] = useSelectedId();
@@ -64,8 +67,28 @@ export default function Runs() {
     });
   };
 
+  // Recent-run deep-link from a schedule card: select the group and surface the Runs tab.
+  const selectRunFromSchedule = (groupId: string) => {
+    setSelectedGroupId(groupId, ['run']);
+    setTab('runs');
+  };
+
   return (
     <div className="w-full min-w-0 flex flex-col gap-3.5 px-1 pt-1 flex-1 min-h-0">
+      <Tabs
+        value={tab}
+        onChange={v => setTab(v as 'runs' | 'scheduled')}
+        items={[
+          { value: 'runs', label: 'Runs', 'data-testid': 'runs-tab' },
+          { value: 'scheduled', label: 'Scheduled', 'data-testid': 'schedules-tab' },
+        ]}
+      />
+
+      {tab === 'scheduled' ? (
+        <div className="fade-up [animation-delay:40ms] flex-1 min-h-0 overflow-y-auto">
+          <SchedulesSection agentFilter={agentFilter} onSelectRun={selectRunFromSchedule} />
+        </div>
+      ) : (
       <div
         className={cn(
           'fade-up [animation-delay:40ms] flex-1 min-h-0',
@@ -142,6 +165,7 @@ export default function Runs() {
         </div>
         )}
       </div>
+      )}
 
       {deleteGroupId && deleteTarget && (
         <ConfirmDialog

@@ -69,6 +69,7 @@ export function useRunGroupStream(groupId: string, active: boolean): LiveProgres
     liveRef.current = emptyLiveProgress();
     setLive(liveRef.current);
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunSchedulesRoot });
   }, [qc]);
 
   useEffect(() => () => {
