@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proxytrace.Api.Dto.AgentCalls;
@@ -225,7 +224,7 @@ public class AgentCallsController : ControllerBase
 
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
-            var data = JsonSerializer.Serialize(evt, ApiJsonOptions.Sse);
+            var data = SseEventSerializer.Serialize(evt);
             await Response.WriteAsync($"event: trace-created\ndata: {data}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
         }

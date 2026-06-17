@@ -36,6 +36,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   calls in parallel (tunable via `Messaging:MaxConcurrency`, Redis deployments only) and reads the
   stream in larger batches. The dashboard's **Queue depth** now reflects the real ingestion backlog,
   so a consumer falling behind is visible before unprocessed traces are dropped.
+- **Live streams and the optimization views use less CPU and memory under load.** Real-time SSE
+  event payloads are now serialized once and shared across all connected clients instead of being
+  re-serialized per open stream, the proxy and Tracey token relays no longer allocate a throwaway
+  buffer per streamed line, and the evaluator test-history queries read a lightweight row projection
+  instead of every full result (including its stored response payload).
 - **Test-run live updates scale with many concurrent runs.** The test-result event broadcaster now
   routes each event directly to the subscribers of that run/group instead of scanning every live
   subscriber on the instance, so a busy multi-run period no longer does work proportional to the
@@ -61,7 +66,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   the dashboard (the landing page) take ~0.5s warm / ~2s cold while every other page stayed
   instant. The queries now run concurrently again, cutting the dashboard load to roughly a single
   query's time.
-
+- **The proxy no longer leaks database connections while resolving API keys.** The cached API-key
+  resolver was a singleton holding repositories bound to the root scope, so the short-lived database
+  context created on each cache-miss lookup was never disposed until shutdown. The resolver is now
+  per-request (the cache it shares stays process-wide), so those contexts are released promptly.
 - **Deleting a model provider no longer destroys its traces and test runs.** A provider delete used
   to cascade through its endpoints and silently hard-delete every `AgentCall`/`TestRun` that
   referenced them. Providers now archive (soft-delete) like endpoints do, so the history is preserved
