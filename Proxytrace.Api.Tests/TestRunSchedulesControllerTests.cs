@@ -197,7 +197,7 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
         var result = await controller.RunNow(schedule.Id, CancellationToken);
 
         result.Value.Should().NotBeNull();
-        result.Value!.Id.Should().Be(schedule.Id);
+        result.Value.Should().Match<TestRunScheduleDto>(v => v.Id == schedule.Id);
 
         var scheduledGroups = await groups.GetByScheduleAsync(schedule.Id, 5, CancellationToken);
         scheduledGroups.Should().NotBeEmpty();
@@ -206,12 +206,11 @@ public sealed class TestRunSchedulesControllerTests : BaseTest<Module>
     [TestMethod]
     public void Create_Endpoint_RequiresScheduledTestRunsFeature()
     {
-        var attribute = typeof(TestRunSchedulesController)
-            .GetMethod(nameof(TestRunSchedulesController.Create))!
-            .GetCustomAttribute<RequiresFeatureAttribute>();
-
+        var method = typeof(TestRunSchedulesController).GetMethod(nameof(TestRunSchedulesController.Create))
+            ?? throw new InvalidOperationException("Create method not found");
+        var attribute = method.GetCustomAttribute<RequiresFeatureAttribute>();
         attribute.Should().NotBeNull();
-        attribute!.Feature.Should().Be(LicenseFeature.ScheduledTestRuns);
+        attribute.Should().Match<RequiresFeatureAttribute>(a => a.Feature == LicenseFeature.ScheduledTestRuns);
     }
 
     [TestMethod]
