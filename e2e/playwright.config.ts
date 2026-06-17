@@ -52,6 +52,7 @@ export default defineConfig({
         '**/error-log.spec.ts',
         '**/proposals.spec.ts',
         '**/proposals-kinds.spec.ts',
+        '**/schedules.spec.ts',
         '**/theories.spec.ts',
         '**/cancel.spec.ts',
         '**/cost.spec.ts',
