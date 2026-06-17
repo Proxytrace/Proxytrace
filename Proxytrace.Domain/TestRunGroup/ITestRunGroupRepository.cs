@@ -30,4 +30,7 @@ public interface ITestRunGroupRepository : IRepository<ITestRunGroup>
         Guid agentId,
         DateTimeOffset since,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Most recent groups (newest first) created by the given schedule.</summary>
+    Task<IReadOnlyList<ITestRunGroup>> GetByScheduleAsync(Guid scheduleId, int take, CancellationToken cancellationToken = default);
 }

@@ -20,7 +20,7 @@ public sealed class TestRunValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var group = createGroup(suite, false);
+        var group = createGroup(suite, false, null);
 
         // Act
         var testRun = createRun(group, endpoint);
