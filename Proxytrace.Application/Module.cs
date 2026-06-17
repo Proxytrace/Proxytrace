@@ -27,6 +27,7 @@ using Proxytrace.Application.Setup;
 using Proxytrace.Application.Setup.Internal;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Application.Streaming.Internal;
+using Proxytrace.Application.TestRun;
 using Proxytrace.Application.TestRun.Internal;
 using Proxytrace.Application.Tracey;
 using Proxytrace.Application.Tracey.Internal;
@@ -151,6 +152,32 @@ public sealed class Module : Autofac.Module
                     return kiosk.Enabled && !endpoint.IsConfigured
                         ? new NullHostedService()
                         : sc.GetRequiredService<TestRunnerService>();
+                }));
+        }
+
+        builder.RegisterInstance(new TestRunSchedulerConfiguration())
+            .IfNotRegistered(typeof(TestRunSchedulerConfiguration));
+
+        builder.RegisterType<TestRunSchedulerService>()
+            .AsSelf()
+            .SingleInstance()
+            .IfNotRegistered(typeof(TestRunSchedulerService));
+
+        const string testRunSchedulerHostedServiceKey = "Proxytrace.Application.TestRunSchedulerService.Registered";
+        if (!builder.Properties.ContainsKey(testRunSchedulerHostedServiceKey))
+        {
+            builder.Properties[testRunSchedulerHostedServiceKey] = true;
+            builder.RegisterServiceCollection(services
+                => services.AddSingleton<IHostedService>(sc =>
+                {
+                    var kiosk = sc.GetRequiredService<KioskOptions>();
+                    var endpoint = sc.GetRequiredService<KioskEndpointOptions>();
+
+                    // Disabled only in a read-only kiosk (no LLM endpoint). A configured
+                    // endpoint makes kiosk fully interactive, so scheduled runs execute.
+                    return kiosk.Enabled && !endpoint.IsConfigured
+                        ? new NullHostedService()
+                        : sc.GetRequiredService<TestRunSchedulerService>();
                 }));
         }
 
