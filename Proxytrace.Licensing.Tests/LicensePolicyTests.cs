@@ -13,6 +13,7 @@ public sealed class LicensePolicyTests
         var definition = LicensePolicy.For(LicenseTier.Free);
 
         definition.Features.Should().BeEmpty();
+        definition.Features.Should().NotContain(LicenseFeature.ScheduledTestRuns);
         definition.Limits[LicenseLimit.MaxProjects].Should().Be(1);
         definition.Limits[LicenseLimit.MaxUsers].Should().Be(1);
         definition.Limits[LicenseLimit.MaxAgents].Should().Be(1);
@@ -31,6 +32,8 @@ public sealed class LicensePolicyTests
         definition.Features.Should().Contain(LicenseFeature.CustomEvaluators);
         definition.Features.Should().Contain(LicenseFeature.SsoOidc);
         definition.Features.Should().Contain(LicenseFeature.AuditLog);
+        definition.Features.Should().Contain(LicenseFeature.Tracey);
+        definition.Features.Should().Contain(LicenseFeature.ScheduledTestRuns);
         definition.Limits[LicenseLimit.MaxProjects].Should().Be(long.MaxValue);
         definition.Limits[LicenseLimit.MaxUsers].Should().Be(long.MaxValue);
         definition.Limits[LicenseLimit.MaxAgents].Should().Be(long.MaxValue);
