@@ -103,6 +103,73 @@ public sealed class DashboardStatisticsTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task GetDashboardViewAsync_RunsIndependentQueriesConcurrently()
+    {
+        // The kiosk in-memory EF provider executes queries synchronously (no thread yield). This
+        // test reproduces that by making every reader block the calling thread synchronously, then
+        // asserts the dashboard fan-out still overlaps them. Before the Task.Run fan-out the queries
+        // ran strictly sequentially (max concurrency == 1); this guards that regression.
+        ThreadPool.GetMinThreads(out int minW, out int minIo);
+        ThreadPool.SetMinThreads(Math.Max(minW, 24), minIo);
+
+        int current = 0;
+        int max = 0;
+        object gate = new();
+        T Track<T>(T value)
+        {
+            lock (gate)
+            {
+                current++;
+                if (current > max) max = current;
+            }
+            Thread.Sleep(40);
+            lock (gate) { current--; }
+            return value;
+        }
+
+        var runStats = Substitute.For<IStatsReader<TestRunStats, TestRunStats.Filter>>();
+        var callStats = Substitute.For<IAgentCallStatsReader>();
+        var agents = Substitute.For<IAgentRepository>();
+        var agentCalls = Substitute.For<IAgentCallRepository>();
+        var ingestionStream = Substitute.For<IIngestionStream>();
+        var appVersion = Substitute.For<IAppVersion>();
+        appVersion.Version.Returns("0.0.0-dev");
+
+        runStats.QueryAsync(Arg.Any<TestRunStats.Filter>(), Arg.Any<CancellationToken>()).Returns([]);
+        callStats.GetSummaryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track(new StatisticsSummary(0, 0, 0, 0, null))));
+        callStats.GetLiveTelemetryAsync(Arg.Any<StatisticsFilter>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track(new LiveTelemetry(0, 0, 0, 0, 0, string.Empty))));
+        callStats.GetCallTrendsAsync(Arg.Any<StatisticsFilter>(), Arg.Any<int>(), Arg.Any<DateTimeOffset>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track(new CallTrends([], [], []))));
+        callStats.GetAgentBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<AgentBreakdownStat>>([])));
+        callStats.GetLatencyAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<LatencyStat>>([])));
+        callStats.GetModelBreakdownAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<ModelBreakdownStat>>([])));
+        callStats.GetEarliestCallAsync(Arg.Any<StatisticsFilter>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<DateTimeOffset?>(null)));
+        callStats.GetTokenUsageAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<TokenUsageStat>>([])));
+        callStats.GetTokenUsageByAgentAsync(Arg.Any<StatisticsFilter>(), Arg.Any<StatisticsBucket>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<AgentTokenUsageStat>>([])));
+        agentCalls.GetFilteredAsync(Arg.Any<AgentCallFilter>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<(IReadOnlyList<IAgentCall>, int)>(([], 0))));
+        agentCalls.GetLastCallTimesAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyDictionary<Guid, DateTimeOffset>>(new Dictionary<Guid, DateTimeOffset>())));
+        agents.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(Track<IReadOnlyList<IAgent>>([])));
+
+        var svc = new DashboardStatistics(runStats, callStats, agents, agentCalls, ingestionStream, appVersion);
+
+        var view = await svc.GetDashboardViewAsync(new StatisticsFilter(), recentTraceCount: 5, agentLimit: 5, CancellationToken);
+
+        view.Should().NotBeNull();
+        max.Should().BeGreaterThan(1, "independent dashboard queries must run concurrently, not sequentially");
+    }
+
+    [TestMethod]
     public async Task GetTokenUsage_DelegatesToCallStats()
     {
         var svc = Build(out _, out var callStats, out _);

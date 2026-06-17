@@ -55,6 +55,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **The dashboard loads much faster in kiosk/demo mode.** The dashboard's statistics aggregation
+  fans ~11 independent queries out concurrently, but the in-memory store used by kiosk mode runs
+  queries synchronously, which silently collapsed that fan-out into sequential execution — making
+  the dashboard (the landing page) take ~0.5s warm / ~2s cold while every other page stayed
+  instant. The queries now run concurrently again, cutting the dashboard load to roughly a single
+  query's time.
+
 - **Deleting a model provider no longer destroys its traces and test runs.** A provider delete used
   to cascade through its endpoints and silently hard-delete every `AgentCall`/`TestRun` that
   referenced them. Providers now archive (soft-delete) like endpoints do, so the history is preserved

@@ -34,30 +34,41 @@ internal class DashboardStatistics : IDashboardStatistics
 
     public async Task<DashboardView> GetDashboardViewAsync(StatisticsFilter filter, int recentTraceCount, int agentLimit, CancellationToken cancellationToken = default)
     {
-        Task<StatisticsSummary> summaryTask = GetSummaryAsync(filter, cancellationToken);
-        Task<LiveTelemetry> telemetryTask = GetLiveTelemetryAsync(filter, cancellationToken);
-        Task<DashboardTrends> trendsTask = GetDashboardTrendsAsync(filter, cancellationToken);
-        Task<IReadOnlyList<AgentBreakdownStat>> agentBreakdownTask = GetAgentBreakdownAsync(filter, cancellationToken);
-        Task<IReadOnlyList<LatencyStat>> latencyTask = GetLatencyAsync(filter, cancellationToken);
-        Task<IReadOnlyList<ModelBreakdownStat>> modelBreakdownTask = GetModelBreakdownAsync(filter, cancellationToken);
-        StatisticsBucket tokenBucket = await ResolveTokenBucketAsync(filter, cancellationToken);
-        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = GetTokenUsageAsync(filter, tokenBucket, cancellationToken);
-        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = GetTokenUsageByAgentAsync(filter, tokenBucket, cancellationToken);
-        Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = agentCalls.GetFilteredAsync(
+        // Every query below is independent and read-only. On a relational provider the awaits yield
+        // on real database I/O, so a plain Task.WhenAll fan-out genuinely overlaps them. The kiosk
+        // in-memory EF provider, however, executes queries synchronously (it never yields), which
+        // silently collapses the fan-out into sequential execution and turns a sub-100ms dashboard
+        // into a ~600ms one. Offloading each query to the thread pool restores the intended
+        // concurrency there; on relational the extra hop is negligible. The reads run on fresh
+        // per-call DbContexts (no ambient transaction on this path), so parallel execution is safe.
+        Task<StatisticsSummary> summaryTask = Task.Run(() => GetSummaryAsync(filter, cancellationToken), cancellationToken);
+        Task<LiveTelemetry> telemetryTask = Task.Run(() => GetLiveTelemetryAsync(filter, cancellationToken), cancellationToken);
+        Task<DashboardTrends> trendsTask = Task.Run(() => GetDashboardTrendsAsync(filter, cancellationToken), cancellationToken);
+        Task<IReadOnlyList<AgentBreakdownStat>> agentBreakdownTask = Task.Run(() => GetAgentBreakdownAsync(filter, cancellationToken), cancellationToken);
+        Task<IReadOnlyList<LatencyStat>> latencyTask = Task.Run(() => GetLatencyAsync(filter, cancellationToken), cancellationToken);
+        Task<IReadOnlyList<ModelBreakdownStat>> modelBreakdownTask = Task.Run(() => GetModelBreakdownAsync(filter, cancellationToken), cancellationToken);
+        // The two token-volume queries need the resolved bucket width, so they await the bucket task
+        // rather than blocking the fan-out on it up front.
+        Task<StatisticsBucket> tokenBucketTask = Task.Run(() => ResolveTokenBucketAsync(filter, cancellationToken), cancellationToken);
+        Task<IReadOnlyList<TokenUsageStat>> tokenUsageTask = Task.Run(async () => await GetTokenUsageAsync(filter, await tokenBucketTask, cancellationToken), cancellationToken);
+        Task<IReadOnlyList<AgentTokenUsageStat>> tokenByAgentTask = Task.Run(async () => await GetTokenUsageByAgentAsync(filter, await tokenBucketTask, cancellationToken), cancellationToken);
+        Task<(IReadOnlyList<IAgentCall> Items, int Total)> recentTask = Task.Run(() => agentCalls.GetFilteredAsync(
             new AgentCallFilter(ProjectId: filter.ProjectId, From: filter.From),
             page: 1,
             pageSize: recentTraceCount,
-            cancellationToken);
+            cancellationToken), cancellationToken);
         // Scope the agent load to the project when filtered, instead of loading every agent and
         // discarding the rest in memory. The unfiltered (global) dashboard still needs all agents.
-        Task<IReadOnlyList<IAgent>> agentsTask = filter.ProjectId is { } projectId
+        Task<IReadOnlyList<IAgent>> agentsTask = Task.Run(() => filter.ProjectId is { } projectId
             ? agents.GetByProjectAsync(projectId, cancellationToken)
-            : agents.GetAllAsync(cancellationToken);
-        Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTimesTask = agentCalls.GetLastCallTimesAsync(cancellationToken);
+            : agents.GetAllAsync(cancellationToken), cancellationToken);
+        Task<IReadOnlyDictionary<Guid, DateTimeOffset>> lastCallTimesTask = Task.Run(() => agentCalls.GetLastCallTimesAsync(cancellationToken), cancellationToken);
 
         await Task.WhenAll(
             summaryTask, telemetryTask, trendsTask, agentBreakdownTask, latencyTask,
-            modelBreakdownTask, tokenUsageTask, tokenByAgentTask, recentTask, agentsTask, lastCallTimesTask);
+            modelBreakdownTask, tokenBucketTask, tokenUsageTask, tokenByAgentTask, recentTask, agentsTask, lastCallTimesTask);
+
+        StatisticsBucket tokenBucket = tokenBucketTask.Result;
 
         IReadOnlyDictionary<Guid, DateTimeOffset> lastCallTimes = lastCallTimesTask.Result;
         IReadOnlyList<IAgent> topAgents = agentsTask.Result

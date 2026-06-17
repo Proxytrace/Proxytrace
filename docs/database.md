@@ -38,6 +38,13 @@ required and all data is lost when the process stops. Unit tests use the same in
 via `Proxytrace.Storage.Tests.Module`. The in-memory provider does not support migrations; the
 schema is created from the EF model via `EnsureCreatedAsync`.
 
+> **Gotcha — queries execute synchronously.** The in-memory provider runs `ToListAsync` /
+> `FirstOrDefaultAsync` inline without yielding the thread. Code that fans several independent
+> queries out with `Task.WhenAll` therefore runs them *sequentially* here (it overlaps only on a
+> relational provider that does real async I/O). Where that fan-out latency matters under in-memory
+> mode — e.g. the dashboard's ~11-query aggregation — offload each query with `Task.Run` to restore
+> concurrency; it is harmless on relational providers.
+
 ## Configuration file location
 
 Set the connection string in:
