@@ -95,7 +95,7 @@ public class TestRunGroupsController : ControllerBase
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 
         var group = await runner.RunInBackgroundAsync(
-            suite, endpointList, cancellationToken);
+            suite, endpointList, cancellationToken: cancellationToken);
 
         return AcceptedAtAction(nameof(Get), new { id = group.Id }, await ToDtoAsync(group, cancellationToken));
     }

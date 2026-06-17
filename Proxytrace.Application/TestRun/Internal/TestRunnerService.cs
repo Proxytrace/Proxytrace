@@ -83,7 +83,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         Func<ITestRunGroup, CancellationToken, Task>? onGroupCreated = null,
         CancellationToken cancellationToken = default)
     {
-        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemTestRun, cancellationToken);
+        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemTestRun, scheduleId: null, cancellationToken);
         if (onGroupCreated is not null)
             await onGroupCreated(group, cancellationToken);
         return await ExecuteGroupAsync(group, customAgent, isSystemTestRun, cancellationToken);
@@ -92,9 +92,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     public async Task<ITestRunGroup> RunInBackgroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
+        Guid? scheduleId = null,
         CancellationToken cancellationToken = default)
     {
-        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemRun: false, cancellationToken);
+        ITestRunGroup group = await CreateGroup(suite, endpoints, isSystemRun: false, scheduleId, cancellationToken);
         await channel.Writer.WriteAsync(group.Id, cancellationToken);
         return group;
     }
@@ -103,9 +104,10 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
         bool isSystemRun,
+        Guid? scheduleId,
         CancellationToken cancellationToken)
     {
-        ITestRunGroup group = createTestRunGroup(suite, isSystemRun);
+        ITestRunGroup group = createTestRunGroup(suite, isSystemRun, scheduleId);
         group = await testRunGroupRepository.AddAsync(group, cancellationToken);
 
         foreach (var endpoint in endpoints)
