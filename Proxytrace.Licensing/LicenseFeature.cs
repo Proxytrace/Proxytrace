@@ -11,4 +11,5 @@ public enum LicenseFeature
     SsoOidc,
     AuditLog,
     Tracey,
+    ScheduledTestRuns,
 }
