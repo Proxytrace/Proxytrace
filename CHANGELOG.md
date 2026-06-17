@@ -36,6 +36,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   calls in parallel (tunable via `Messaging:MaxConcurrency`, Redis deployments only) and reads the
   stream in larger batches. The dashboard's **Queue depth** now reflects the real ingestion backlog,
   so a consumer falling behind is visible before unprocessed traces are dropped.
+- **Test-run live updates scale with many concurrent runs.** The test-result event broadcaster now
+  routes each event directly to the subscribers of that run/group instead of scanning every live
+  subscriber on the instance, so a busy multi-run period no longer does work proportional to the
+  total number of open streams per event.
 
 ### Security
 
