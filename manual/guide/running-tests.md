@@ -38,6 +38,42 @@ by default to keep it focused on the runs you started. Toggle **A/B runs** above
 reveal them; revealed groups are tagged with an **A/B** badge. Opening a proposal's or
 theory's *View run* link also reveals the linked A/B run automatically and selects it.
 
+## Schedule periodic runs
+
+::: tip Enterprise feature
+Scheduling is part of the Enterprise tier. On the Free tier the scheduling controls are
+unavailable; existing schedules stay listable but do not run.
+:::
+
+Instead of starting every run by hand, you can have a suite run **automatically on a recurring
+interval** against a fixed set of model endpoints — for example, run your regression suite every
+6 hours, or once a day. Each scheduled run behaves exactly like a manual one: it produces a test
+run group, scores every case, and feeds the optimization loop.
+
+<!-- TODO: add screenshot of the Scheduled tab (needs Docker kiosk) -->
+
+Schedules live on the **Scheduled** tab of the Runs page:
+
+1. Open the Runs page and switch to the **Scheduled** tab.
+2. Click **New schedule** and fill in:
+   - a **name** for the schedule,
+   - the **suite** to run,
+   - the **endpoints** (models) to run it against,
+   - the **interval** — how often it runs (every N minutes, hours, or days),
+   - whether it starts **enabled**.
+3. Save. The schedule's card shows its cadence and the **next run** time.
+
+Each schedule appears as a card with:
+
+- a **toggle** to pause or resume it — pausing stops future runs without deleting the schedule, so
+  you can resume it later with the same configuration;
+- a **run now** action to trigger an immediate run without waiting for the next tick;
+- a **recent-runs** strip summarizing the schedule's latest runs at a glance, so you can spot a
+  schedule that has started failing without opening each run.
+
+If a scheduled run is still in progress when the next interval comes due, that tick is skipped —
+a schedule never stacks overlapping runs of the same suite.
+
 ## Reading results
 
 ### Test case matrix

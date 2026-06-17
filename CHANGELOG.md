@@ -12,10 +12,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 ### Added
 
 - **Periodic test-run scheduling (Enterprise).** Test suites can now be run automatically on a
-  recurring interval against a fixed set of model endpoints. Schedules are managed over a REST API
-  (list, create, update, delete, and run-now), with each schedule carrying a summary of its most
-  recent runs. Creating and managing schedules requires an Enterprise license; existing schedules
-  stay listable after a downgrade.
+  recurring interval (every N minutes/hours/days) against a fixed set of model endpoints. Schedules
+  are managed from the new **Scheduled** tab on the Runs page — create, edit, pause/resume, and
+  run-now — and each schedule card shows its cadence, next-run time, and a summary of its most
+  recent runs. Scheduled runs feed the optimization loop exactly like manual ones. Creating and
+  managing schedules requires an Enterprise license; existing schedules stay listable after a
+  downgrade but stop running until re-licensed.
 
 - **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
   an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start
