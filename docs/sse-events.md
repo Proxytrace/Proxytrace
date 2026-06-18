@@ -30,7 +30,9 @@ patches the selected group's **detail** query (`QUERY_KEYS.testRunGroup(id)`) �
 when a run is opened — via `setQueryData`, **not** the list cache. The patch no-ops until the detail
 query resolves (an SSE event can arrive before the detail GET). On the terminal event it invalidates
 the whole `test-run-groups` namespace (`testRunGroupsRoot`), healing both the detail matrix and the
-left-rail list (whose pass rates are static mid-run by design). See `frontend/src/features/runs/`.
+left-rail list (whose pass rates are static mid-run by design). It also invalidates
+`testRunSchedulesRoot` (a schedule's recent-runs change) and `testSuitesRoot` (the owning suite's
+aggregates and windowed run-stats change once a run finishes). See `frontend/src/features/runs/`.
 
 The Playground (`/api/playground/...`) and Tracey chat also stream over `text/event-stream`, but they
 stream raw model tokens for one request rather than domain broadcaster events — not part of this catalog.
