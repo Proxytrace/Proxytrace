@@ -17,8 +17,8 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   run-now — and each schedule card shows its cadence, next-run time, and a summary of its most
   recent runs. Scheduled runs feed the optimization loop exactly like manual ones. Creating and
   managing schedules requires an Enterprise license; existing schedules stay listable after a
-  downgrade but stop running until re-licensed. You can also start a schedule directly from a suite
-  card on the Suites page (a clock action opens the dialog with that suite preselected).
+  downgrade but stop running until re-licensed. You can also create and manage a suite's schedules
+  directly from its detail panel on the Suites page.
 
 - **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
   an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start
@@ -36,6 +36,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
 
 ### Changed
+
+- **The Test Suites page is now a master–detail view.** Instead of a grid of cards that each
+  opened an edit modal, the page mirrors the Test Runs layout: a suite list on the left and a
+  detail panel on the right. The detail shows the suite's test cases and evaluators (add, remove,
+  edit, attach/detach inline), bucket-selectable run statistics over a time window (Last run / last
+  7 days / last 30 days / all time — pass rate, run count, average run duration, total cost), and
+  full management of the suite's run schedules. Creating a new suite still uses the step wizard.
 
 - **The dashboard and traces views stay fast with very large trace volumes.** Trace statistics
   (token usage, latency percentiles, call trends, per-agent rollups, live telemetry) now aggregate

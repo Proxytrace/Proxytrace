@@ -5,10 +5,11 @@ import { ProxytraceApiClient } from '../helpers/api-client';
 // Test Suites / Test Cases coverage for the /suites page.
 //
 // Notes:
+//  - The /suites page is a master–detail view: a suite list on the left, a detail panel on the
+//    right (selected suite persisted in ?id=). Editing happens in the detail panel, not a modal.
 //  - There is NO suite-rename endpoint: PUT /api/test-suites/{id} ignores `name`. So we never
-//    assert a renamed suite name persists. The EditSuiteDialog only edits evaluators and test
-//    cases, so the "edit via EditSuiteDialog" item is folded into the evaluator attach/detach
-//    tests below (they drive the dialog and verify the change persists).
+//    assert a renamed suite name persists. Evaluator editing is folded into the attach/detach
+//    tests below (they drive the detail panel's Evaluators tab and verify the change persists).
 //  - The CreateSuiteWizard's Traces step needs agent calls to exist, so the wizard-driving test
 //    seeds an agent + a couple of agent calls before opening the wizard.
 
@@ -126,7 +127,30 @@ test.describe('Test Suites', () => {
     await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('1');
   });
 
-  test('attach an evaluator via EditSuiteDialog increments the evaluator count', async ({ page, request }) => {
+  test('selecting a suite opens its detail panel with the stats strip and schedules', async ({ page, request }) => {
+    const client = await makeClient(request);
+
+    const agentName = uniqueName('Detail Agent');
+    const { id: agentId } = await client.createAgent({ name: agentName, endpointId });
+    const call1 = await client.seedAgentCall({ agentId, userContent: 'detail', assistantContent: 'ok' });
+    const suiteName = uniqueName('Detail Suite');
+    const { id: suiteId } = await client.createSuiteFromTraces(suiteName, agentId, [call1.id], []);
+
+    await page.goto('/suites', { waitUntil: 'load' });
+    await page.getByTestId(`suite-select-${suiteId}`).click();
+
+    const detail = page.getByTestId('suite-detail');
+    await expect(detail).toBeVisible();
+    await expect(page.getByTestId('suite-detail-name')).toHaveText(suiteName);
+    await expect(page.getByTestId('suite-stats-strip')).toBeVisible();
+    await expect(page.getByTestId('suite-schedules-section')).toBeVisible();
+
+    // The bucket selector switches the window without error (stats strip stays present).
+    await detail.getByRole('button', { name: 'Last 7 days' }).click();
+    await expect(page.getByTestId('suite-stats-strip')).toBeVisible();
+  });
+
+  test('attach an evaluator from the detail panel increments the evaluator count', async ({ page, request }) => {
     const client = await makeClient(request);
 
     const agentName = uniqueName('Attach Agent');
@@ -141,17 +165,14 @@ test.describe('Test Suites', () => {
     await page.goto('/suites', { waitUntil: 'load' });
     await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('1');
 
-    await page.getByTestId(`suite-edit-btn-${suiteId}`).click();
-    const dialog = page.getByTestId('edit-suite-dialog');
-    await expect(dialog).toBeVisible();
+    await page.getByTestId(`suite-select-${suiteId}`).click();
+    const detail = page.getByTestId('suite-detail');
+    await expect(detail).toBeVisible();
 
-    // Switch to the Evaluators tab, then toggle the evaluator on.
-    await dialog.getByRole('button', { name: /Evaluators/ }).click();
+    // Switch to the Evaluators tab, then toggle the evaluator on and save.
+    await detail.getByRole('button', { name: /Evaluators/ }).click();
     await page.getByTestId(`edit-suite-evaluator-toggle-${evaluatorId}`).click();
     await page.getByTestId('edit-suite-save-btn').click();
-
-    // The dialog closes on save.
-    await expect(dialog).toBeHidden();
 
     // API read-back confirms the evaluator is attached (default + the newly attached one = 2).
     await expect.poll(
@@ -162,7 +183,7 @@ test.describe('Test Suites', () => {
     await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('2');
   });
 
-  test('detach an evaluator via EditSuiteDialog decrements the evaluator count', async ({ page, request }) => {
+  test('detach an evaluator from the detail panel decrements the evaluator count', async ({ page, request }) => {
     const client = await makeClient(request);
 
     const agentName = uniqueName('Detach Agent');
@@ -180,15 +201,14 @@ test.describe('Test Suites', () => {
     await page.goto('/suites', { waitUntil: 'load' });
     await expect(page.getByTestId(`suite-evaluator-count-${suiteId}`)).toHaveText('1');
 
-    await page.getByTestId(`suite-edit-btn-${suiteId}`).click();
-    const dialog = page.getByTestId('edit-suite-dialog');
-    await expect(dialog).toBeVisible();
+    await page.getByTestId(`suite-select-${suiteId}`).click();
+    const detail = page.getByTestId('suite-detail');
+    await expect(detail).toBeVisible();
 
-    await dialog.getByRole('button', { name: /Evaluators/ }).click();
+    await detail.getByRole('button', { name: /Evaluators/ }).click();
     // Toggling an attached evaluator detaches it.
     await page.getByTestId(`edit-suite-evaluator-toggle-${evaluatorId}`).click();
     await page.getByTestId('edit-suite-save-btn').click();
-    await expect(dialog).toBeHidden();
 
     await expect.poll(
       async () => (await client.getTestSuite(suiteId)).evaluators.length,
