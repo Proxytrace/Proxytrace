@@ -73,6 +73,33 @@ public sealed class TestSuiteDtoMapper
             s.UpdatedAt);
     }
 
+    /// <summary>
+    /// Aggregates a suite's finalized run rows (already filtered to the requested window) into the
+    /// bucket stats the suite detail strip shows. PassRate is total-passed / total-cases across the
+    /// window (null when no cases ran); AvgDurationMs is the mean of rows that recorded a duration;
+    /// TotalCost sums recorded costs. RunCount is the row count.
+    /// </summary>
+    public SuiteRunStatsDto ToRunStatsDto(IReadOnlyList<TestRunStats> runRows)
+    {
+        if (runRows.Count == 0)
+            return new SuiteRunStatsDto(0, null, null, null);
+
+        int totalCases = runRows.Sum(r => r.TestCases);
+        int totalPassed = runRows.Sum(r => r.Passed);
+        double? passRate = totalCases > 0 ? totalPassed / (double)totalCases * 100 : null;
+
+        double[] durations = runRows
+            .Where(r => r.TotalDuration.HasValue)
+            .Select(r => r.TotalDuration.GetValueOrDefault().TotalMilliseconds)
+            .ToArray();
+        double? avgDurationMs = durations.Length > 0 ? durations.Average() : null;
+
+        decimal[] costs = runRows.Where(r => r.Cost.HasValue).Select(r => r.Cost.GetValueOrDefault()).ToArray();
+        decimal? totalCost = costs.Length > 0 ? costs.Sum() : null;
+
+        return new SuiteRunStatsDto(runRows.Count, passRate, avgDurationMs, totalCost);
+    }
+
     /// <summary>Run-history aggregates (total runs, latest/prev pass rate, trend, last run) derived
     /// from a suite's finalized run rows. Shared by the fat and light suite projections.</summary>
     private readonly record struct RunAggregates(
