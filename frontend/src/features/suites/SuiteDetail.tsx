@@ -29,7 +29,10 @@ export function SuiteDetail({ suiteId, projectId, onRun, onDelete }: Props) {
   if (isLoading || !suite) {
     return <Card><SkeletonList rows={6} height={44} gap={10} /></Card>;
   }
-  return <SuiteDetailInner key={suite.id} suite={suite} projectId={projectId} onRun={onRun} onDelete={onDelete} />;
+  // Re-key on updatedAt so a post-save (or external) refetch remounts the editor with a fresh
+  // baseline — otherwise the staged add/remove/evaluator buffers would desync from the new suite
+  // and show phantom unsaved changes.
+  return <SuiteDetailInner key={`${suite.id}:${suite.updatedAt}`} suite={suite} projectId={projectId} onRun={onRun} onDelete={onDelete} />;
 }
 
 function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSuiteDto; projectId?: string; onRun: () => void; onDelete: () => void }) {
@@ -40,8 +43,8 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
   const [selectedEvalId, setSelectedEvalId] = useState<string | null>(suite.evaluators[0]?.id ?? null);
 
-  const window = useMemo(() => suiteWindowRange(windowKey, suite.lastRunAt), [windowKey, suite.lastRunAt]);
-  const { stats, isLoading: statsLoading } = useSuiteRunStats(suite.id, window);
+  const statsWindow = useMemo(() => suiteWindowRange(windowKey, suite.lastRunAt), [windowKey, suite.lastRunAt]);
+  const { stats, isLoading: statsLoading } = useSuiteRunStats(suite.id, statsWindow);
 
   const { evaluators } = useEditSuiteEvaluators(projectId);
   const { traces } = useEditSuiteTraces(suite.agentId);
