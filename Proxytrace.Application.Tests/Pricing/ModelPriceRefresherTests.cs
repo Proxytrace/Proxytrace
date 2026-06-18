@@ -63,6 +63,36 @@ public sealed class ModelPriceRefresherTests : BaseTest<Module>
         endpoint.OutputTokenCost.Should().Be(9.0m);
     }
 
+    [TestMethod]
+    public async Task RefreshProvider_WhenDiscoveredModelHasNonPositiveCost_SkipsItWithoutThrowing()
+    {
+        var client = Substitute.For<IProviderClient>();
+        IServiceProvider services = BuildServices(client);
+
+        var provider = await services.GetRequiredService<IDomainEntityGenerator<IModelProvider>>().CreateAsync(CancellationToken);
+        var modelRepo = services.GetRequiredService<IModelRepository>();
+        var priced = await modelRepo.GetOrCreateAsync("gpt-4o", CancellationToken);
+        var free = await modelRepo.GetOrCreateAsync("free-model", CancellationToken);
+        var refresher = services.GetRequiredService<IModelPriceRefresher>();
+
+        // A zero-cost model fails the endpoint's "must be positive" invariant. It used to surface as
+        // a 500 during setup (the activation validation throws); discovery must now skip it and still
+        // create the valid endpoint.
+        client.GetModelsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<PricedModel>>([
+                new PricedModel(free, new ModelPrice(0m, 0m)),
+                new PricedModel(priced, new ModelPrice(2.0m, 4.0m)),
+            ]));
+
+        await FluentActions
+            .Invoking(() => refresher.RefreshProviderAsync(provider, CancellationToken))
+            .Should().NotThrowAsync();
+
+        var endpoints = await services.GetRequiredService<IModelEndpointRepository>().GetByProviderAsync(provider.Id, CancellationToken);
+        endpoints.Should().ContainSingle(e => e.Model.Name == "gpt-4o" && e.OutputTokenCost == 4.0m);
+        endpoints.Should().NotContain(e => e.Model.Name == "free-model");
+    }
+
     private IServiceProvider BuildServices(IProviderClient client) =>
         GetServices(builder =>
         {

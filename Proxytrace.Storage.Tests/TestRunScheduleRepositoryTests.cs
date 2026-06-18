@@ -69,12 +69,13 @@ public sealed class TestRunScheduleRepositoryTests : BaseTest<Module>
 
         var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
         var schedule = await repo.AddAsync(
-            factory("Nightly", suite, [endpointA], TimeSpan.FromHours(1), isEnabled: true),
+            factory("Nightly", suite, [endpointA], TimeSpan.FromHours(1), isEnabled: true, anchorAt: DateTimeOffset.UtcNow),
             CancellationToken);
 
         // Swap the single endpoint for a different one.
         var updated = await schedule.Update(
-            "Nightly", [endpointB], TimeSpan.FromHours(1), isEnabled: true, CancellationToken);
+            "Nightly", [endpointB], TimeSpan.FromHours(1), isEnabled: true, schedule.AnchorAt, DateTimeOffset.UtcNow,
+            CancellationToken);
 
         var reloaded = await repo.GetAsync(updated.Id, CancellationToken);
 
@@ -94,11 +95,12 @@ public sealed class TestRunScheduleRepositoryTests : BaseTest<Module>
 
         var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
         var schedule = await repo.AddAsync(
-            factory("Nightly", suite, [endpointA], TimeSpan.FromHours(1), isEnabled: true),
+            factory("Nightly", suite, [endpointA], TimeSpan.FromHours(1), isEnabled: true, anchorAt: DateTimeOffset.UtcNow),
             CancellationToken);
 
         var updated = await schedule.Update(
-            "Nightly", [endpointA, endpointB], TimeSpan.FromHours(1), isEnabled: true, CancellationToken);
+            "Nightly", [endpointA, endpointB], TimeSpan.FromHours(1), isEnabled: true, schedule.AnchorAt,
+            DateTimeOffset.UtcNow, CancellationToken);
 
         var reloaded = await repo.GetAsync(updated.Id, CancellationToken);
 
@@ -127,6 +129,7 @@ public sealed class TestRunScheduleRepositoryTests : BaseTest<Module>
             persisted.Endpoints,
             persisted.Interval,
             isEnabled,
+            persisted.AnchorAt,
             nextRunAt,
             lastRunAt: null,
             existing: persisted);

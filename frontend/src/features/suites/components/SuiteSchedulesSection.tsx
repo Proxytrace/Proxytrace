@@ -27,6 +27,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
   const { create, update, remove } = useTestRunScheduleMutations();
 
   const suiteSchedules = schedules.filter(s => s.suiteId === suiteId);
+  const activeCount = suiteSchedules.filter(s => s.isEnabled).length;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TestRunScheduleDto | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TestRunScheduleDto | null>(null);
@@ -40,7 +41,7 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
   function submit(form: ScheduleFormValues) {
     if (editing) {
       update.mutate(
-        { id: editing.id, body: { name: form.name, modelEndpointIds: form.modelEndpointIds, intervalMinutes: form.intervalMinutes, enabled: form.enabled } },
+        { id: editing.id, body: { name: form.name, modelEndpointIds: form.modelEndpointIds, intervalMinutes: form.intervalMinutes, anchorAt: form.anchorAt, enabled: form.enabled } },
         { onSuccess: close },
       );
     } else {
@@ -54,7 +55,9 @@ export function SuiteSchedulesSection({ suiteId, suiteName, agentId }: Props) {
   return (
     <div className="flex flex-col gap-2" data-testid="suite-schedules-section">
       <div className="flex items-center justify-between">
-        <h3 className="text-title font-semibold">Schedules</h3>
+        <span className="text-[10.5px] font-semibold text-muted uppercase tracking-[0.08em]">
+          {activeCount} active · {suiteSchedules.length} total
+        </span>
         <Button
           variant="secondary"
           size="sm"

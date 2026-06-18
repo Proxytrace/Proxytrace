@@ -59,9 +59,11 @@ Schedules live on the **Scheduled** tab of the Runs page:
    - a **name** for the schedule,
    - the **suite** to run,
    - the **endpoints** (models) to run it against,
-   - the **interval** — how often it runs (every N minutes, hours, or days),
+   - the **frequency** — **Hourly** at a chosen minute, **Daily** or **Weekly** at a chosen time of
+     day, or a **Custom** "every N minutes/hours/days" interval. Times are **UTC**, and the dialog
+     **previews the exact next run** date and time as you choose so there are no surprises,
    - whether it starts **enabled**.
-3. Save. The schedule's card shows its cadence and the **next run** time.
+3. Save. The schedule's card shows its cadence and the **next run** date and time.
 
 Each schedule appears as a card with:
 

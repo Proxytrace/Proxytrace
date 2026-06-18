@@ -5,7 +5,8 @@ namespace Proxytrace.Domain.TestRunSchedule;
 
 /// <summary>
 /// A recurring schedule that runs a <see cref="ITestSuite"/> against a fixed set of endpoints
-/// every <see cref="Interval"/>. Polled by the scheduler background service.
+/// every <see cref="Interval"/>, phased to <see cref="AnchorAt"/>. Polled by the scheduler
+/// background service.
 /// </summary>
 public interface ITestRunSchedule : IDomainEntity<ITestRunSchedule>
 {
@@ -14,29 +15,43 @@ public interface ITestRunSchedule : IDomainEntity<ITestRunSchedule>
     IReadOnlyCollection<IModelEndpoint> Endpoints { get; }
     TimeSpan Interval { get; }
     bool IsEnabled { get; }
+
+    /// <summary>
+    /// The recurrence phase: the schedule fires at <c>AnchorAt + k·Interval</c> for integer k ≥ 0.
+    /// This is what gives time-of-day control — e.g. a daily schedule anchored to today 02:00 fires
+    /// every day at 02:00. <see cref="NextRunAt"/> is always the first such instant after "now".
+    /// </summary>
+    DateTimeOffset AnchorAt { get; }
+
     DateTimeOffset NextRunAt { get; }
     DateTimeOffset? LastRunAt { get; }
 
     public delegate ITestRunSchedule CreateNew(
         string name, ITestSuite suite, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled);
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt);
 
     public delegate ITestRunSchedule CreateExisting(
         string name, ITestSuite suite, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled, DateTimeOffset nextRunAt, DateTimeOffset? lastRunAt,
-        IDomainEntityData existing);
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt, DateTimeOffset nextRunAt,
+        DateTimeOffset? lastRunAt, IDomainEntityData existing);
 
     Task<ITestRunSchedule> Disable(CancellationToken cancellationToken = default);
     Task<ITestRunSchedule> Enable(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Records a fire at <paramref name="now"/>: sets LastRunAt and advances NextRunAt forward by
-    /// whole intervals until it is strictly after <paramref name="now"/> (missed ticks collapse —
-    /// no catch-up burst).
+    /// Records a fire at <paramref name="now"/>: sets LastRunAt and advances NextRunAt to the first
+    /// anchor-aligned instant strictly after <paramref name="now"/> (missed ticks collapse — no
+    /// catch-up burst).
     /// </summary>
     Task<ITestRunSchedule> RecordFired(DateTimeOffset now, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Updates the schedule's editable fields and re-derives <see cref="NextRunAt"/> from the new
+    /// <paramref name="anchorAt"/> + <paramref name="interval"/> relative to <paramref name="now"/>,
+    /// so changing the cadence or time-of-day reschedules the next run immediately.
+    /// </summary>
     Task<ITestRunSchedule> Update(
         string name, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled, CancellationToken cancellationToken = default);
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt, DateTimeOffset now,
+        CancellationToken cancellationToken = default);
 }

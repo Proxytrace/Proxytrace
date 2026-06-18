@@ -12,13 +12,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 ### Added
 
 - **Periodic test-run scheduling (Enterprise).** Test suites can now be run automatically on a
-  recurring interval (every N minutes/hours/days) against a fixed set of model endpoints. Schedules
-  are managed from the new **Scheduled** tab on the Runs page — create, edit, pause/resume, and
-  run-now — and each schedule card shows its cadence, next-run time, and a summary of its most
-  recent runs. Scheduled runs feed the optimization loop exactly like manual ones. Creating and
-  managing schedules requires an Enterprise license; existing schedules stay listable after a
-  downgrade but stop running until re-licensed. You can also create and manage a suite's schedules
-  directly from its detail panel on the Suites page.
+  recurring schedule against a fixed set of model endpoints. Pick a frequency — **hourly** at a
+  chosen minute, **daily** or **weekly** at a chosen time of day (UTC), or a **custom** every-N
+  minutes/hours/days interval — and the dialog **previews the exact next execution date/time** as
+  you choose. Schedules are managed from the new **Scheduled** tab on the Runs page — create, edit,
+  pause/resume, and run-now — and each schedule card shows its cadence, the next run's date/time, and
+  a summary of its most recent runs. Scheduled runs feed the optimization loop exactly like manual
+  ones. Creating and managing schedules requires an Enterprise license; existing schedules stay
+  listable after a downgrade but stop running until re-licensed. You can also create and manage a
+  suite's schedules directly from its detail panel on the Suites page.
 
 - **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
   an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start
@@ -38,11 +40,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 ### Changed
 
 - **The Test Suites page is now a master–detail view.** Instead of a grid of cards that each
-  opened an edit modal, the page mirrors the Test Runs layout: a suite list on the left and a
-  detail panel on the right. The detail shows the suite's test cases and evaluators (add, remove,
-  edit, attach/detach inline), bucket-selectable run statistics over a time window (Last run / last
-  7 days / last 30 days / all time — pass rate, run count, average run duration, total cost), and
-  full management of the suite's run schedules. Creating a new suite still uses the step wizard.
+  opened an edit modal, the page is a suite list on the left and a single workspace panel on the
+  right. The panel leads with the suite header (run / delete) and a performance strip —
+  bucket-selectable run statistics over a time window (Last run / last 7 days / last 30 days / all
+  time — pass rate, run count, average run duration, total cost) — then a tabbed editor for the
+  suite's **Test Cases**, **Evaluators**, and **Schedules** (add, remove, edit, attach/detach, and
+  schedule inline). Staged edits collect in a sticky **Save changes** bar at the foot of the panel.
+  Creating a new suite still uses the step wizard.
 
 - **The dashboard and traces views stay fast with very large trace volumes.** Trace statistics
   (token usage, latency percentiles, call trends, per-agent rollups, live telemetry) now aggregate
@@ -76,6 +80,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Setup no longer fails when a provider lists a zero-cost model.** Initial setup refreshes a
+  provider's model catalog and prices; a discovered model whose price was non-positive (e.g. a free
+  model listed at `0`) or inverted violated the model-endpoint price invariants and aborted the whole
+  setup with a 500. Such models are now skipped (logged) and the remaining priced models import
+  normally.
 - **The dashboard loads much faster in kiosk/demo mode.** The dashboard's statistics aggregation
   fans ~11 independent queries out concurrently, but the in-memory store used by kiosk mode runs
   queries synchronously, which silently collapsed that fan-out into sequential execution — making

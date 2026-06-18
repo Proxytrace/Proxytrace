@@ -1,6 +1,5 @@
 import type { SuiteRunStatsDto } from '../../../api/models';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
-import { AreaChart } from '../../../components/charts';
 import { fmtCost, fmtDuration, fmtPct100 } from '../../../lib/format';
 import { SUITE_WINDOW_KEYS, suiteWindowLabel, suiteWindowShortLabel, type SuiteWindowKey } from '../suiteWindow';
 import { passRateTextClass } from '../suitesMeta';
@@ -11,25 +10,20 @@ interface Props {
   isLoading: boolean;
   windowKey: SuiteWindowKey;
   onWindowChange: (k: SuiteWindowKey) => void;
-  /** Pass-rate trend across past runs (percentages, oldest→newest) for the sparkline area chart. */
-  trend: number[];
-  /** Agent accent colour for the trend chart. */
-  accentColor: string;
-  /** Stable id for the chart gradient. */
-  suiteId: string;
 }
 
-/** Performance card for the selected suite: window toggle, KPI strip, and a pass-rate trend chart —
- * the suites counterpart to the evaluator/agent performance panels. */
-export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, trend, accentColor, suiteId }: Props) {
-  const hasTrend = trend.length >= 2;
+/** Performance region inside the suite workspace card: a window toggle and a four-tile KPI strip
+ * (pass rate, runs, avg duration, total cost) for the selected window. Rendered flush — the
+ * enclosing workspace card owns the surface, so this only contributes hairline dividers. */
+export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }: Props) {
+  const runCount = stats?.runCount ?? 0;
 
   return (
-    <section className="bg-card rounded-lg shadow-[var(--shadow-card)]" data-testid="suite-stats-strip">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-hairline">
+    <section className="shrink-0 border-b border-hairline" data-testid="suite-stats-strip">
+      <div className="flex items-center gap-2.5 px-5 py-3">
         <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">Performance</span>
         <span className="text-[11px] text-muted font-mono">
-          {(stats?.runCount ?? 0).toLocaleString()} run{(stats?.runCount ?? 0) !== 1 ? 's' : ''} · {suiteWindowLabel(windowKey)}
+          {runCount.toLocaleString()} run{runCount !== 1 ? 's' : ''} · {suiteWindowLabel(windowKey)}
         </span>
         <SegmentedControl<SuiteWindowKey>
           className="ml-auto"
@@ -39,7 +33,7 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, t
         />
       </div>
 
-      <div className="grid grid-cols-4 border-b border-hairline">
+      <div className="grid grid-cols-4 border-t border-hairline">
         <StatCell
           label="Pass rate"
           value={stats?.passRate != null ? fmtPct100(stats.passRate) : '—'}
@@ -49,7 +43,7 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, t
         />
         <StatCell
           label="Runs"
-          value={(stats?.runCount ?? 0).toLocaleString()}
+          value={runCount.toLocaleString()}
           sub="completed"
           valueClass="text-primary"
         />
@@ -66,29 +60,6 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, t
           valueClass="text-warn"
           last
         />
-      </div>
-
-      <div className="px-[18px] py-3.5">
-        {/* Trend is the per-run pass-rate history (all runs), independent of the KPI window toggle —
-            the run-stats projection carries no time-bucketed series, so it isn't window-filtered. */}
-        <div className="flex items-baseline gap-1.5 mb-2">
-          <span className="text-[10px] text-muted uppercase tracking-[0.08em] font-semibold">Pass rate trend</span>
-          <span className="text-[10px] text-muted normal-case">· all runs</span>
-        </div>
-        {hasTrend ? (
-          <AreaChart
-            data={trend}
-            width={860}
-            height={120}
-            color={accentColor}
-            gradientId={`suiteTrend-${suiteId.slice(0, 8)}`}
-            showAxis={false}
-            showEndMarker
-            formatValue={fmtPct100}
-          />
-        ) : (
-          <div className="h-[120px] flex items-center justify-center text-muted text-[11.5px]">Not enough data</div>
-        )}
       </div>
     </section>
   );

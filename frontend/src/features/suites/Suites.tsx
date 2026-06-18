@@ -162,7 +162,7 @@ export default function Suites() {
       <div
         className={cn(
           'fade-up flex-1 min-h-0 [animation-delay:20ms]',
-          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,300px)_minmax(0,1fr)]',
+          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(248px,320px)_minmax(0,1fr)]',
         )}
       >
         {/* Left: suite list */}
@@ -188,7 +188,7 @@ export default function Suites() {
 
         {/* Right: detail */}
         {(!isMobile || selectedSuite) && (
-          <main className="min-w-0 min-h-0 overflow-y-auto pr-1 pb-6">
+          <main className="min-w-0 min-h-0 overflow-y-auto pb-6 md:overflow-hidden md:pb-0">
             {isMobile && selectedSuite && (
               <Button
                 variant="ghost"

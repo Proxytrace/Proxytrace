@@ -44,8 +44,8 @@ export function SuiteListCard({ suite, selected, highlight = false, onSelect, on
         </div>
 
         <div className="flex items-center gap-3 text-caption text-muted">
-          <span data-testid={`suite-case-count-${suite.id}`}>
-            {suite.testCaseCount} case{suite.testCaseCount !== 1 ? 's' : ''}
+          <span>
+            <span data-testid={`suite-case-count-${suite.id}`}>{suite.testCaseCount}</span> case{suite.testCaseCount !== 1 ? 's' : ''}
           </span>
           <span className="text-border">·</span>
           <span className="mono font-bold" style={{ color: prc }}>

@@ -68,6 +68,8 @@ The editor offers two mutually exclusive types:
 
 ## Attaching evaluators
 
+![A suite's Evaluators tab: the attach list on the left (a check marks an attached evaluator) and the selected evaluator's system prompt and judge model on the right.](/screenshots/suites/evaluators.png)
+
 A test suite has a many-to-many relationship with **evaluators**: one suite can score its
 cases with several evaluators, and an evaluator can be reused across suites. Choose the
 evaluators that express what "correct" means for the suite in the detail panel's
@@ -75,9 +77,9 @@ evaluators that express what "correct" means for the suite in the detail panel's
 
 ## Scheduling runs
 
-From the detail panel you can also configure the suite's **schedules** — recurring runs on
+The detail panel's **Schedules** tab configures the suite's **schedules** — recurring runs on
 a fixed interval against a chosen set of model endpoints. Create, edit, pause/resume, and
-delete a suite's schedules inline. Scheduled runs require an Enterprise license; see
+delete a suite's schedules there. Scheduled runs require an Enterprise license; see
 [Running tests](/guide/running-tests).
 
 ## Creating a suite

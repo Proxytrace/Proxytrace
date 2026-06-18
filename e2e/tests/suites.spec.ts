@@ -143,9 +143,13 @@ test.describe('Test Suites', () => {
     await expect(detail).toBeVisible();
     await expect(page.getByTestId('suite-detail-name')).toHaveText(suiteName);
     await expect(page.getByTestId('suite-stats-strip')).toBeVisible();
+
+    // Schedules now live in their own tab inside the workspace card.
+    await page.getByTestId('suite-tab-schedules').click();
     await expect(page.getByTestId('suite-schedules-section')).toBeVisible();
 
-    // The bucket selector switches the window without error (stats strip stays present).
+    // The bucket selector switches the window without error (stats strip stays present
+    // above the tabs, independent of the active tab).
     await detail.getByRole('button', { name: 'Last 7 days' }).click();
     await expect(page.getByTestId('suite-stats-strip')).toBeVisible();
   });
@@ -170,7 +174,7 @@ test.describe('Test Suites', () => {
     await expect(detail).toBeVisible();
 
     // Switch to the Evaluators tab, then toggle the evaluator on and save.
-    await detail.getByRole('button', { name: /Evaluators/ }).click();
+    await page.getByTestId('suite-tab-evaluators').click();
     await page.getByTestId(`edit-suite-evaluator-toggle-${evaluatorId}`).click();
     await page.getByTestId('edit-suite-save-btn').click();
 
@@ -205,7 +209,7 @@ test.describe('Test Suites', () => {
     const detail = page.getByTestId('suite-detail');
     await expect(detail).toBeVisible();
 
-    await detail.getByRole('button', { name: /Evaluators/ }).click();
+    await page.getByTestId('suite-tab-evaluators').click();
     // Toggling an attached evaluator detaches it.
     await page.getByTestId(`edit-suite-evaluator-toggle-${evaluatorId}`).click();
     await page.getByTestId('edit-suite-save-btn').click();
@@ -257,7 +261,8 @@ test.describe('Test Suites', () => {
     await page.getByTestId(`suite-delete-btn-${suiteId}`).click();
     // ConfirmDialog requires typing the suite name to enable the Delete button.
     await page.getByPlaceholder(suiteName).fill(suiteName);
-    await page.getByRole('button', { name: 'Delete', exact: true }).click();
+    // Scope to the dialog — the auto-selected suite's detail header also has a "Delete" button.
+    await page.getByTestId('modal-panel').getByRole('button', { name: 'Delete', exact: true }).click();
 
     await expect(page.getByTestId(`suite-card-${suiteId}`)).toBeHidden();
 

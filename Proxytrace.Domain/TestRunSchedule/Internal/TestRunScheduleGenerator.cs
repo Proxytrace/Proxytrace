@@ -39,6 +39,7 @@ internal class TestRunScheduleGenerator : DomainEntityGenerator<ITestRunSchedule
             suite: suite,
             endpoints: [endpoint],
             interval: TimeSpan.FromHours(24),
-            isEnabled: true);
+            isEnabled: true,
+            anchorAt: DateTimeOffset.UtcNow);
     }
 }
