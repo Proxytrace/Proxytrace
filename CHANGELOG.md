@@ -11,6 +11,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **A suite's run history at a glance.** The suite detail panel has a new **History** tab listing
+  that suite's previous runs (newest first, with per-model pass rates); clicking a run opens it on
+  the Runs page. The history is fetched suite-scoped, so it isn't diluted by other suites on the same
+  agent. The header's run button is now simply labelled **Run**.
+
 - **Periodic test-run scheduling (Enterprise).** Test suites can now be run automatically on a
   recurring schedule against a fixed set of model endpoints. Pick a frequency — **hourly** at a
   chosen minute, **daily** or **weekly** at a chosen time of day (UTC), or a **custom** every-N
@@ -38,6 +43,15 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
 
 ### Changed
+
+- **The Test Suites workspace is easier to scan and edit.** The performance strip is now a compact
+  single-line KPI row (no boxed dividers, roughly half the height). In the **Test Cases** tab, the
+  old Current / Add-from-traces tab chips are gone — current cases are always shown, and a single
+  **Add from traces** button opens a full picker (search, time-range filter, live conversation
+  preview); chosen traces stage inline as **Pending add** rows until you Save. In the **Evaluators**
+  tab, each evaluator now attaches/detaches with a slide **toggle** instead of a checkbox. The suite
+  list cards are more compact, mirroring the Agents list (avatar, agent subline, cases · pass rate ·
+  last run).
 
 - **The Test Suites page is now a master–detail view.** Instead of a grid of cards that each
   opened an edit modal, the page is a suite list on the left and a single workspace panel on the

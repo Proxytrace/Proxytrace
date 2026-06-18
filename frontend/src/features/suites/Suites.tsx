@@ -135,8 +135,8 @@ export default function Suites() {
         <TracesStep
           agentId={createAgentId}
           selected={selectedCalls}
-          onToggle={toggleSelectedCall}
-          onSelectAll={selectAllCalls}
+          onToggle={t => toggleSelectedCall(t.id)}
+          onSelectAll={traces => selectAllCalls(traces.map(t => t.id))}
           onClear={() => setSelectedCalls(new Set())}
         />
       ),

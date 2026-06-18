@@ -31,7 +31,7 @@ export function SuiteDetailHeader({ suite, onRun, onDelete }: { suite: TestSuite
 
       <div className="flex gap-1.5 shrink-0">
         <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onRun} data-testid="suite-run-btn">
-          {suite.totalRuns > 0 ? 'Run again' : 'Run now'}
+          Run
         </Button>
         <Button variant="dangerOutline" size="sm" onClick={onDelete} leftIcon={<TrashIcon size={13} />} data-testid="suite-detail-delete-btn">
           Delete

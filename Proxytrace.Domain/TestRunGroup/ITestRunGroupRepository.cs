@@ -22,6 +22,14 @@ public interface ITestRunGroupRepository : IRepository<ITestRunGroup>
         bool includeSystem = false,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Run groups for a single suite, newest first — backs the suite's run-history view.</summary>
+    Task<PagedResult<ITestRunGroup>> GetBySuitePagedAsync(
+        Guid suiteId,
+        int page,
+        int pageSize,
+        bool includeSystem = false,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Counts completed test-run groups against the given agent whose <c>CompletedAt</c>
     /// is strictly after the supplied threshold.

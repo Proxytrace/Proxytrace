@@ -11,6 +11,8 @@ import { useSuiteEditor } from './hooks/useSuiteEditor';
 import { useSaveSuite } from './hooks/useSaveSuite';
 import { suiteWindowRange, type SuiteWindowKey } from './suiteWindow';
 import { TestCasesPanel } from './components/TestCasesPanel';
+import { AddTracesModal } from './components/AddTracesModal';
+import { SuiteHistoryTab } from './components/SuiteHistoryTab';
 import { TraceConversationPreview, PreviewEmpty } from './components/TestCasePreview';
 import { EditableTestCasePreview } from './components/EditableTestCasePreview';
 import { EvaluatorsPanel } from './components/EvaluatorsPanel';
@@ -20,7 +22,7 @@ import { SuiteDetailHeader } from './components/SuiteDetailHeader';
 import { SuiteSchedulesSection } from './components/SuiteSchedulesSection';
 import { SuiteSaveBar } from './components/SuiteSaveBar';
 
-type Tab = 'cases' | 'evaluators' | 'schedules';
+type Tab = 'cases' | 'evaluators' | 'history' | 'schedules';
 
 /** List + preview split for the case/evaluator tabs. Always two columns (the suite list/preview are
  * narrow and compress via `minmax(0,1fr)`), so the pane never stacks inside the fixed-height,
@@ -48,6 +50,10 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(suite.testCases[0]?.id ?? null);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
   const [selectedEvalId, setSelectedEvalId] = useState<string | null>(suite.evaluators[0]?.id ?? null);
+  const [addOpen, setAddOpen] = useState(false);
+  // Trace payloads chosen in the add modal, cached here so staged-add rows + the preview resolve
+  // even though the picker reads a different (success-only, paged) query than `traces` below.
+  const [addedTraceObjs, setAddedTraceObjs] = useState<Map<string, AgentCallDto>>(new Map());
 
   const statsWindow = useMemo(() => suiteWindowRange(windowKey, suite.lastRunAt), [windowKey, suite.lastRunAt]);
   const { stats, isLoading: statsLoading } = useSuiteRunStats(suite.id, statsWindow);
@@ -58,7 +64,11 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
   const { schedules } = useTestRunSchedules(suite.agentId);
   const scheduleCount = useMemo(() => schedules.filter(s => s.suiteId === suite.id).length, [schedules, suite.id]);
 
-  const traceById = useMemo(() => new Map(traces.map(t => [t.id, t])), [traces]);
+  const traceById = useMemo(() => {
+    const m = new Map(traces.map(t => [t.id, t]));
+    addedTraceObjs.forEach((t, id) => m.set(id, t));
+    return m;
+  }, [traces, addedTraceObjs]);
   const agentTools = useMemo(() => [...new Map(traces.flatMap(t => t.tools).map(t => [t.name, t])).values()], [traces]);
   const evalById = useMemo(() => new Map(evaluators.map(e => [e.id, e])), [evaluators]);
 
@@ -71,11 +81,24 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
 
   function selectCase(id: string) { setSelectedCaseId(id); setSelectedTraceId(null); }
   function selectTrace(id: string) { setSelectedTraceId(id); setSelectedCaseId(null); }
-  function addTrace(id: string) { editor.toggleAddTrace(id); selectTrace(id); }
+
+  function addTraces(picked: AgentCallDto[]) {
+    if (picked.length === 0) return;
+    setAddedTraceObjs(prev => {
+      const next = new Map(prev);
+      picked.forEach(t => next.set(t.id, t));
+      return next;
+    });
+    picked.forEach(t => { if (!editor.pendingAddTraceIds.has(t.id)) editor.toggleAddTrace(t.id); });
+    selectTrace(picked[picked.length - 1].id);
+  }
+
+  function discard() { editor.reset(); setAddedTraceObjs(new Map()); }
 
   const tabItems: TabItem[] = [
     { value: 'cases', label: 'Test Cases', count: suite.testCases.length, 'data-testid': 'suite-tab-cases' },
     { value: 'evaluators', label: 'Evaluators', count: suite.evaluators.length, 'data-testid': 'suite-tab-evaluators' },
+    { value: 'history', label: 'History', count: suite.totalRuns || undefined, 'data-testid': 'suite-tab-history' },
     { value: 'schedules', label: 'Schedules', count: scheduleCount || undefined, 'data-testid': 'suite-tab-schedules' },
   ];
 
@@ -96,17 +119,16 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
         {tab === 'cases' && (
           <div className={SPLIT}>
             <TestCasesPanel
-              agentId={suite.agentId}
               cases={suite.testCases}
               pendingAddTraces={pendingAddTraces}
               pendingRemoveCaseIds={editor.pendingRemoveCaseIds}
-              pendingAddTraceIds={editor.pendingAddTraceIds}
               selectedCaseId={selectedCaseId}
               selectedTraceId={selectedTraceId}
               onSelectCase={selectCase}
               onSelectTrace={selectTrace}
               onToggleRemove={editor.toggleRemoveCase}
-              onToggleAddTrace={addTrace}
+              onUnstageAdd={editor.toggleAddTrace}
+              onOpenAdd={() => setAddOpen(true)}
             />
             <div className={PREVIEW}>
               {focusedTrace
@@ -134,6 +156,12 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
           </div>
         )}
 
+        {tab === 'history' && (
+          <div className="h-full min-h-0 overflow-y-auto p-5">
+            <SuiteHistoryTab suiteId={suite.id} />
+          </div>
+        )}
+
         {tab === 'schedules' && (
           <div className="h-full min-h-0 overflow-y-auto p-5">
             <SuiteSchedulesSection suiteId={suite.id} suiteName={suite.name} agentId={suite.agentId} />
@@ -144,7 +172,7 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
       <SuiteSaveBar
         count={editor.isDirty ? editor.dirtyCount : 0}
         saving={save.isPending}
-        onDiscard={editor.reset}
+        onDiscard={discard}
         onSave={() => save.mutate({
           suiteId: suite.id,
           pendingAddTraceIds: editor.pendingAddTraceIds,
@@ -153,6 +181,14 @@ function SuiteDetailInner({ suite, projectId, onRun, onDelete }: { suite: TestSu
           evaluatorsChanged: editor.evaluatorsChanged,
         })}
       />
+
+      {addOpen && (
+        <AddTracesModal
+          agentId={suite.agentId}
+          onClose={() => setAddOpen(false)}
+          onAdd={addTraces}
+        />
+      )}
     </div>
   );
 }

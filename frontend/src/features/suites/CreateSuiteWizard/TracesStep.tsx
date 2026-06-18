@@ -50,8 +50,10 @@ function fmtClock(iso: string): string {
 interface Props {
   agentId: string;
   selected: Set<string>;
-  onToggle: (id: string) => void;
-  onSelectAll: (ids: string[]) => void;
+  /** Receives the full trace so hosts outside the wizard (e.g. the edit-suite add modal) can stage
+   * the resolved object, not just an id whose payload may live in a different query. */
+  onToggle: (trace: AgentCallDto) => void;
+  onSelectAll: (traces: AgentCallDto[]) => void;
   onClear: () => void;
 }
 
@@ -112,7 +114,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
           size="sm"
           data-testid="wizard-trace-select-all"
           disabled={traces.length === 0}
-          onClick={() => (allVisibleSelected ? onClear() : onSelectAll(traces.map(t => t.id)))}
+          onClick={() => (allVisibleSelected ? onClear() : onSelectAll(traces))}
         >
           {allVisibleSelected ? 'Select none' : 'Select all'}
         </Button>
@@ -160,7 +162,7 @@ export function TracesStep({ agentId, selected, onToggle, onSelectAll, onClear }
                     <li
                       key={t.id}
                       data-testid={`wizard-trace-option-${t.id}`}
-                      onClick={() => { setFocusedId(t.id); onToggle(t.id); }}
+                      onClick={() => { setFocusedId(t.id); onToggle(t); }}
                       className={cn(
                         'cursor-pointer transition-colors duration-100',
                         'p-[10px_12px] border-l-[3px] border-b border-b-hairline -outline-offset-1',

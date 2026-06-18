@@ -124,6 +124,25 @@ public sealed class TestRunGroupsControllerTests : BaseTest<Module>
         result.Items.Should().BeEmpty();
     }
 
+    [TestMethod]
+    public async Task GetAll_FilteredBySuite_ReturnsOnlyThatSuitesGroups()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suiteGen = services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>();
+        var suiteA = await suiteGen.CreateAsync(CancellationToken);
+        var suiteB = await suiteGen.CreateAsync(CancellationToken);
+        await repo.AddAsync(factory(suiteA, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suiteB, isSystemRun: false, null), CancellationToken);
+
+        var result = await controller.GetAll(suiteId: suiteA.Id, cancellationToken: CancellationToken);
+
+        result.Items.Should().ContainSingle();
+        result.Items.Single().SuiteId.Should().Be(suiteA.Id);
+    }
+
     private static TestRunGroupsController ResolveController(IServiceProvider services) => new(
         services.GetRequiredService<ITestRunGroupRepository>(),
         services.GetRequiredService<ITestRunRepository>(),

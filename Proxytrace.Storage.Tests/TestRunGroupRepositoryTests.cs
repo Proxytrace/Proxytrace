@@ -85,6 +85,59 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         result.Select(g => g.Id).Should().Equal(newer.Id, older.Id);
     }
 
+    [TestMethod]
+    public async Task GetBySuitePaged_ReturnsOnlyGroupsForThatSuite()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suiteGen = services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>();
+        var suiteA = await suiteGen.CreateAsync(CancellationToken);
+        var suiteB = await suiteGen.CreateAsync(CancellationToken);
+
+        await repo.AddAsync(factory(suiteA, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suiteB, isSystemRun: false, null), CancellationToken);
+
+        var page = await repo.GetBySuitePagedAsync(suiteA.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
+
+        page.Items.Should().ContainSingle();
+        page.Items.Single().Suite.Id.Should().Be(suiteA.Id);
+        page.Total.Should().Be(1);
+    }
+
+    [TestMethod]
+    public async Task GetBySuitePaged_ByDefault_ExcludesSystemRuns()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suite = await GetSuite(services);
+
+        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
+
+        var page = await repo.GetBySuitePagedAsync(suite.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
+
+        page.Items.Should().ContainSingle();
+        page.Items.Single().IsSystemRun.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task GetBySuitePaged_OrdersNewestFirst()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suite = await GetSuite(services);
+
+        var older = await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+
+        var page = await repo.GetBySuitePagedAsync(suite.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
+
+        page.Items.Select(g => g.Id).Should().Equal(newer.Id, older.Id);
+    }
+
     private async Task<ITestSuite> GetSuite(IServiceProvider services)
         => await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().GetOrCreateAsync(CancellationToken);
 }

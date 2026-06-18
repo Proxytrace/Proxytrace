@@ -52,6 +52,10 @@ export const QUERY_KEYS = {
 
   testRunGroups: (agentFilter?: string, projectId?: string, includeSystem?: boolean) =>
     [TEST_RUN_GROUPS, agentFilter, projectId ?? null, includeSystem ?? false] as const,
+  /** Run groups for a single suite (suite detail's History tab). Shares the {@link TEST_RUN_GROUPS}
+   * prefix so {@link testRunGroupsRoot} invalidation also refreshes a suite's history. */
+  testRunGroupsBySuite: (suiteId: string, includeSystem?: boolean) =>
+    [TEST_RUN_GROUPS, 'suite', suiteId, includeSystem ?? false] as const,
   /** A single test-run group — used by Tracey's live run-progress card. */
   testRunGroup: (id: string) => [TEST_RUN_GROUPS, 'detail', id] as const,
   /** Prefix matching every test-run-groups query — use for invalidation. */

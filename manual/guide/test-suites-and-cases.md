@@ -42,10 +42,11 @@ Each test case captures the input to run and the expectation to check against. W
 an exact string, a number within tolerance, a JSON shape, a tool that should be called,
 and so on.
 
-In the detail panel's **Test Cases** tab you can curate the suite directly: switch to
-**Add from traces** to promote more agent calls into cases, remove a case, or select a
-case to edit its expected output. Edits are staged and applied together with **Save
-changes**.
+In the detail panel's **Test Cases** tab you can curate the suite directly: click
+**Add from traces** to open a picker (search, time-range filter, and a live conversation
+preview) and stage agent calls as new cases, remove a case, or select a case to edit its
+expected output. Staged additions appear in the list marked **Pending add**; all edits are
+applied together with **Save changes**.
 
 ## Editing the expected output
 
@@ -68,12 +69,13 @@ The editor offers two mutually exclusive types:
 
 ## Attaching evaluators
 
-![A suite's Evaluators tab: the attach list on the left (a check marks an attached evaluator) and the selected evaluator's system prompt and judge model on the right.](/screenshots/suites/evaluators.png)
+![A suite's Evaluators tab: the attach list on the left (a toggle marks each attached evaluator) and the selected evaluator's system prompt and judge model on the right.](/screenshots/suites/evaluators.png)
 
 A test suite has a many-to-many relationship with **evaluators**: one suite can score its
 cases with several evaluators, and an evaluator can be reused across suites. Choose the
 evaluators that express what "correct" means for the suite in the detail panel's
-**Evaluators** tab. See [Evaluators](/guide/evaluators).
+**Evaluators** tab — flip each evaluator's **toggle** to attach or detach it. See
+[Evaluators](/guide/evaluators).
 
 ## Scheduling runs
 
@@ -90,5 +92,13 @@ suite, and choose evaluators.
 ## Running a suite
 
 Once a suite has cases and evaluators, run it against an
-[agent](/guide/agents) version to produce a [test run](/guide/running-tests). **Run now**
-(or **Run again**) lives in the detail panel header.
+[agent](/guide/agents) version to produce a [test run](/guide/running-tests). The **Run**
+button lives in the detail panel header.
+
+## Run history
+
+![A suite's History tab: a list of the suite's previous runs, newest first, each showing the agent, when it ran, and per-model pass rates.](/screenshots/suites/history.png)
+
+The detail panel's **History** tab lists the suite's previous runs, newest first, each with
+its per-model pass rates. Clicking a run opens it on the [Test Runs](/guide/running-tests)
+page with that run selected, so you can drill into individual case results.

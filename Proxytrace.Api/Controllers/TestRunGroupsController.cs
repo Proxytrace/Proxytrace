@@ -51,6 +51,7 @@ public class TestRunGroupsController : ControllerBase
 
     [HttpGet]
     public async Task<PagedResult<TestRunGroupListItemDto>> GetAll(
+        [FromQuery] Guid? suiteId = null,
         [FromQuery] Guid? agentId = null,
         [FromQuery] Guid? projectId = null,
         [FromQuery] bool includeSystem = false,
@@ -59,7 +60,9 @@ public class TestRunGroupsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         PagedResult<ITestRunGroup> paged;
-        if (agentId.HasValue)
+        if (suiteId.HasValue)
+            paged = await groupRepository.GetBySuitePagedAsync(suiteId.Value, page, pageSize, includeSystem, cancellationToken);
+        else if (agentId.HasValue)
             paged = await groupRepository.GetByAgentPagedAsync(agentId.Value, page, pageSize, includeSystem, cancellationToken);
         else if (projectId.HasValue)
             paged = await groupRepository.GetByProjectPagedAsync(projectId.Value, page, pageSize, includeSystem, cancellationToken);

@@ -13,7 +13,8 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
   group: TestRunGroupListItemDto;
   isSelected: boolean;
   onSelect: () => void;
-  onDelete: () => void;
+  /** Omit to render the card read-only (no delete affordance) — e.g. a suite's run history. */
+  onDelete?: () => void;
 }) {
   const c = agentColor(group.agentId);
   const runCount = group.runs.length;
@@ -47,14 +48,16 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         <ModelStack runs={group.runs} />
       </RowButton>
 
-      <IconButton
-        danger
-        onClick={onDelete}
-        className={`absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
-        aria-label="Delete run group"
-      >
-        <TrashIcon size={13} />
-      </IconButton>
+      {onDelete && (
+        <IconButton
+          danger
+          onClick={onDelete}
+          className={`absolute top-2.5 right-2.5 opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover/card:opacity-100 focus-visible:opacity-100 ${FOCUS_RING}`}
+          aria-label="Delete run group"
+        >
+          <TrashIcon size={13} />
+        </IconButton>
+      )}
     </div>
   );
 }
