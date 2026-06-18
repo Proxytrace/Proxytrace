@@ -3,22 +3,22 @@ import { useSearchParams } from 'react-router-dom';
 import type { EvaluatorDetailDto, TestSuiteListItemDto } from '../../api/models';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
-import { Skeleton } from '../../components/ui/Skeleton';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { ChevronRightIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
+import { cn } from '../../lib/cn';
 import { useFilter } from '../../hooks/useFilter';
 import { useSelectedId } from '../../hooks/useSelectedId';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 import { RunConfirmModal } from './RunConfirmModal';
-import { EditSuiteDialog } from './EditSuiteDialog';
-import { SuiteCard } from './components/SuiteCard';
-import { ScheduleFormDialog } from '../runs/components/ScheduleFormDialog';
-import { useTestRunScheduleMutations } from '../runs/hooks/useTestRunScheduleMutations';
-import { useFeature } from '../../api/license';
-import { showUpgradeModal } from '../../components/license/UpgradeModal';
+import { SuiteListCard } from './components/SuiteListCard';
+import { SuiteDetail } from './SuiteDetail';
 import { useSuites, useSuiteAgents, useSuiteEvaluators } from './hooks/useSuiteQueries';
 import { useStartRun, useDeleteSuite, useCreateSuite } from './hooks/useSuiteMutations';
 import { useSuiteFocus } from './hooks/useSuiteFocus';
@@ -28,8 +28,6 @@ import { computeSuiteStats } from './suitesMeta';
 export default function Suites() {
   const [runSuite, setRunSuite] = useState<TestSuiteListItemDto | null>(null);
   const [runDone, setRunDone] = useState(false);
-  const [scheduleSuite, setScheduleSuite] = useState<TestSuiteListItemDto | null>(null);
-  const [editSuiteId, setEditSuiteId] = useState<string | null>(null);
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteListItemDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createStep, setCreateStep] = useState(0);
@@ -42,18 +40,16 @@ export default function Suites() {
   const { agents } = useSuiteAgents();
   const { evaluators } = useSuiteEvaluators();
 
-  const licensed = useFeature('ScheduledTestRuns');
-  const scheduleMutations = useTestRunScheduleMutations();
-
   // Deep-link from the agent detail view: ?agentId pre-filters, ?suiteId scrolls + highlights.
   const [searchParams] = useSearchParams();
   const initialAgentFilter = searchParams.get('agentId') ?? '';
   const highlightSuiteId = useSuiteFocus(!isLoading);
 
-  // Persisted selection: ?id= keeps the chosen suite highlighted across refresh / links,
-  // and is brought back on-screen on load.
+  // Persisted selection: ?id= keeps the chosen suite highlighted across refresh / links.
   const [selectedSuiteId, setSelectedSuiteId] = useSelectedId();
   useScrollToSelectedSuite(selectedSuiteId, !isLoading);
+
+  const isMobile = useIsMobile();
 
   const startRun = useStartRun(() => setRunDone(true));
   const delSuite = useDeleteSuite(() => setDeleteSuite(null));
@@ -66,6 +62,11 @@ export default function Suites() {
   );
 
   const { totalCases, totalRuns, avgPassRate } = computeSuiteStats(suites);
+
+  // Desktop selects the first suite by default; mobile lands on the list until one is chosen.
+  const selectedSuite =
+    visibleSuites.find(s => s.id === selectedSuiteId)
+    ?? (isMobile ? null : visibleSuites[0] ?? null);
 
   function resetCreate() {
     setCreateStep(0);
@@ -164,7 +165,7 @@ export default function Suites() {
   ];
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-4">
+    <div className="w-full min-w-0 flex flex-col gap-4 flex-1 min-h-0">
       {/* KPI row */}
       <div className="fade-up grid gap-3 [animation-delay:30ms] grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
         {kpiItems.map(k => (
@@ -209,33 +210,59 @@ export default function Suites() {
         </Button>
       </div>
 
-      {/* Loading skeletons */}
-      {isLoading && (
-        <div className="grid gap-[14px] grid-cols-[repeat(auto-fill,minmax(380px,1fr))]">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} height={220} className="rounded-lg" />
-          ))}
-        </div>
-      )}
+      {/* Master–detail */}
+      <div
+        className={cn(
+          'fade-up [animation-delay:100ms] flex-1 min-h-0',
+          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,300px)_minmax(0,1fr)]',
+        )}
+      >
+        {/* Left: suite list */}
+        {(!isMobile || !selectedSuite) && (
+          <div data-testid="suite-list" className="flex flex-col gap-2 min-w-0 min-h-0 overflow-y-auto pr-1 -mr-1">
+            {isLoading && <SkeletonList rows={6} height={84} gap={8} />}
+            {visibleSuites.map(suite => (
+              <SuiteListCard
+                key={suite.id}
+                suite={suite}
+                selected={selectedSuite?.id === suite.id}
+                highlight={highlightSuiteId === suite.id}
+                onSelect={() => setSelectedSuiteId(suite.id)}
+                onDelete={() => setDeleteSuite(suite)}
+              />
+            ))}
+            {!isLoading && visibleSuites.length === 0 && (
+              <div data-testid="suite-empty-state">
+                <EmptyState title="No test suites yet" description="Create one to start evaluating." />
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Suite grid */}
-      <div data-testid="suite-list" className="fade-up grid gap-[14px] [animation-delay:100ms] grid-cols-[repeat(auto-fill,minmax(380px,1fr))]">
-        {visibleSuites.map(suite => (
-          <SuiteCard
-            key={suite.id}
-            suite={suite}
-            highlight={highlightSuiteId === suite.id}
-            selected={selectedSuiteId === suite.id}
-            onSelect={() => setSelectedSuiteId(suite.id)}
-            onRun={() => { setRunSuite(suite); setRunDone(false); }}
-            onEdit={() => setEditSuiteId(suite.id)}
-            onDelete={() => setDeleteSuite(suite)}
-            onSchedule={() => licensed ? setScheduleSuite(suite) : showUpgradeModal({ errorType: 'FeatureNotLicensed' })}
-          />
-        ))}
-        {!isLoading && visibleSuites.length === 0 && (
-          <div className="col-span-full" data-testid="suite-empty-state">
-            <EmptyState title="No test suites yet" description="Create one to start evaluating." />
+        {/* Right: detail */}
+        {(!isMobile || selectedSuite) && (
+          <div className={cn('min-w-0 min-h-0', isMobile ? 'flex-1 overflow-y-auto flex flex-col gap-2' : 'overflow-y-auto')}>
+            {isMobile && selectedSuite && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="self-start shrink-0"
+                data-testid="suites-back-to-list"
+                onClick={() => setSelectedSuiteId(null)}
+                leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
+              >
+                All suites
+              </Button>
+            )}
+            {selectedSuite
+              ? <SuiteDetail
+                  key={selectedSuite.id}
+                  suiteId={selectedSuite.id}
+                  projectId={projectId}
+                  onRun={() => { setRunSuite(selectedSuite); setRunDone(false); }}
+                  onDelete={() => setDeleteSuite(selectedSuite)}
+                />
+              : <Card><div className="py-[60px] text-center text-muted text-body">Select a suite to see details.</div></Card>}
           </div>
         )}
       </div>
@@ -248,25 +275,6 @@ export default function Suites() {
           onSubmit={ids => startRun.mutate({ suiteId: runSuite.id, endpointIds: ids })}
           loading={startRun.isPending}
           done={runDone}
-        />
-      )}
-
-      {/* Create schedule from a suite */}
-      {scheduleSuite && (
-        <ScheduleFormDialog
-          lockedSuite={{ id: scheduleSuite.id, name: scheduleSuite.name }}
-          onClose={() => setScheduleSuite(null)}
-          onSubmit={form => scheduleMutations.create.mutate(form, { onSuccess: () => setScheduleSuite(null) })}
-          pending={scheduleMutations.create.isPending}
-        />
-      )}
-
-      {/* Edit dialog */}
-      {editSuiteId && (
-        <EditSuiteDialog
-          suiteId={editSuiteId}
-          projectId={projectId}
-          onClose={() => setEditSuiteId(null)}
         />
       )}
 
