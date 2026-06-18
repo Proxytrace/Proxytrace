@@ -2,7 +2,7 @@ import type { SuiteRunStatsDto } from '../../../api/models';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { AreaChart } from '../../../components/charts';
 import { fmtCost, fmtDuration, fmtPct100 } from '../../../lib/format';
-import { SUITE_WINDOW_KEYS, suiteWindowLabel, type SuiteWindowKey } from '../suiteWindow';
+import { SUITE_WINDOW_KEYS, suiteWindowLabel, suiteWindowShortLabel, type SuiteWindowKey } from '../suiteWindow';
 import { passRateTextClass } from '../suitesMeta';
 import { StatCell } from '../../evaluators/components/StatCell';
 
@@ -35,7 +35,7 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, t
           className="ml-auto"
           value={windowKey}
           onChange={onWindowChange}
-          segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowLabel(k) }))}
+          segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowShortLabel(k), ariaLabel: suiteWindowLabel(k) }))}
         />
       </div>
 
@@ -69,7 +69,12 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange, t
       </div>
 
       <div className="px-[18px] py-3.5">
-        <div className="text-[10px] text-muted uppercase tracking-[0.08em] font-semibold mb-2">Pass rate trend</div>
+        {/* Trend is the per-run pass-rate history (all runs), independent of the KPI window toggle —
+            the run-stats projection carries no time-bucketed series, so it isn't window-filtered. */}
+        <div className="flex items-baseline gap-1.5 mb-2">
+          <span className="text-[10px] text-muted uppercase tracking-[0.08em] font-semibold">Pass rate trend</span>
+          <span className="text-[10px] text-muted normal-case">· all runs</span>
+        </div>
         {hasTrend ? (
           <AreaChart
             data={trend}

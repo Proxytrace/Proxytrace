@@ -49,7 +49,12 @@ export default function Suites() {
   const isMobile = useIsMobile();
 
   const startRun = useStartRun(() => setRunDone(true));
-  const delSuite = useDeleteSuite(() => setDeleteSuite(null));
+  // Clearing the selection when the selected suite is deleted keeps ?id= from dangling on a gone
+  // suite (matches the Agents/Runs delete behaviour); the detail then falls back to the first suite.
+  const delSuite = useDeleteSuite(() => {
+    if (deleteSuite && deleteSuite.id === selectedSuiteId) setSelectedSuiteId(null);
+    setDeleteSuite(null);
+  });
   const createSuite = useCreateSuite(() => { setCreateOpen(false); resetCreate(); });
 
   const { filter: agentFilter, setFilter: setAgentFilter, filtered: visibleSuites } = useFilter(

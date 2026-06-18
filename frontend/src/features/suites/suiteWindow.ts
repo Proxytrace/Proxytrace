@@ -26,3 +26,11 @@ export function suiteWindowLabel(key: SuiteWindowKey): string {
   if (key === '30d') return 'Last 30 days';
   return 'All time';
 }
+
+/** Compact label for the segmented window toggle (the full phrase is shown beside it). */
+export function suiteWindowShortLabel(key: SuiteWindowKey): string {
+  if (key === 'last') return 'Last';
+  if (key === '7d') return '7d';
+  if (key === '30d') return '30d';
+  return 'All';
+}
