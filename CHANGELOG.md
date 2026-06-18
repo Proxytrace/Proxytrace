@@ -11,6 +11,14 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Anomaly alerts on the dashboard.** A new **Notifications** section on the dashboard surfaces
+  negative anomalies detected after each test run — a run that **failed** (e.g. the endpoint was
+  unavailable), a **drastic pass-rate drop**, or a **strong latency increase** versus the suite's
+  recent baseline. Alerts arrive live (no refresh), are colour-coded by severity, deep-link to the
+  affected run, and can be marked read or dismissed; an unread count shows at a glance. The section
+  is multi-purpose by design — the same surface will carry other notification kinds (such as a ready
+  optimization proposal) and, in a future release, additional delivery channels like email.
+
 - **A suite's run history at a glance.** The suite detail panel has a new **History** tab listing
   that suite's previous runs (newest first, with per-model pass rates); clicking a run opens it on
   the Runs page. The history is fetched suite-scoped, so it isn't diluted by other suites on the same

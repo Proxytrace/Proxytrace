@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading.Channels;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Proxytrace.Application.Anomaly;
 using Proxytrace.Application.Optimization;
 using Proxytrace.Application.Streaming;
 using Proxytrace.Common.Async;
@@ -32,6 +33,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
     private readonly IRepository<ITestResult> testResultRepository;
     private readonly ITestResultBroadcaster broadcaster;
     private readonly IOptimizerService optimizer;
+    private readonly IAnomalyDetectionService anomalyDetection;
     private readonly ILicenseService license;
     private readonly IAsyncLock asyncLock;
     private readonly ILogger<TestRunnerService> logger;
@@ -55,6 +57,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         IRepository<ITestResult> testResultRepository,
         ITestResultBroadcaster broadcaster,
         IOptimizerService optimizer,
+        IAnomalyDetectionService anomalyDetection,
         ILicenseService license,
         IAsyncLock asyncLock,
         ILogger<TestRunnerService> logger,
@@ -69,6 +72,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
         this.testResultRepository = testResultRepository;
         this.broadcaster = broadcaster;
         this.optimizer = optimizer;
+        this.anomalyDetection = anomalyDetection;
         this.license = license;
         this.asyncLock = asyncLock;
         this.logger = logger;
@@ -182,6 +186,7 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
             if (!isSystemTestRun)
             {
                 await optimizer.EnqueueAsync(group, cancellationToken);
+                await anomalyDetection.EnqueueAsync(group, cancellationToken);
             }
             return group;
         }
@@ -200,6 +205,13 @@ internal class TestRunnerService : BackgroundService, ITestRunnerService
                     group = await group.SetFailed(CancellationToken.None);
                 }
                 broadcaster.PublishGroupComplete(GroupRunCompleteEvent.Create(group));
+
+                // A failed group is the most important anomaly. The success-path enqueue above is
+                // skipped when we land here, so detect from the failure path too.
+                if (!isSystemTestRun)
+                {
+                    await anomalyDetection.EnqueueAsync(group, CancellationToken.None);
+                }
             }
             catch (Exception broadcastEx)
             {

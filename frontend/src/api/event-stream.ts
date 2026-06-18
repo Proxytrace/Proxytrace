@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { getAccessToken } from '../auth/token';
-import type { GroupRunCompleteEvent, ProposalEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
+import type { GroupRunCompleteEvent, NotificationEvent, ProposalEvent, TestRunEvent, TheoryStatusChangedEvent, TraceCreatedEvent } from './models';
 
 // EventSource can't set Authorization headers, so the credential must ride in the query
 // string. Prefer a short-lived, single-use stream ticket (passed as `stream_ticket`, which
@@ -83,6 +83,14 @@ export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {
     '/api/agent-calls/stream',
     ['trace-created'],
     onTrace,
+  );
+}
+
+export function useNotificationStream(onNotification: (e: NotificationEvent) => void) {
+  useEventStream<NotificationEvent>(
+    '/api/notifications/stream',
+    ['notification-created', 'notification-status-changed'],
+    onNotification,
   );
 }
 
