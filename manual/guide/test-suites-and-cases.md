@@ -18,14 +18,13 @@ matter.
 
 ## The suites page
 
-![The Test Suites page: summary totals across the top, a selectable suite list on the left, and the selected suite's detail panel on the right.](/screenshots/suites/overview.png)
+![The Test Suites page: a selectable suite list on the left and the selected suite's detail panel on the right.](/screenshots/suites/overview.png)
 
 The page is a **master–detail view**: a list of suites on the left and the selected
-suite's detail on the right. Summary totals sit across the top, and the **Agent** filter
-narrows the list to a single agent — it only lists agents that actually own a suite, so it
-stays usable no matter how many agents the project has. Each list entry shows the suite's
-case count, latest pass rate, and when it last ran. **+ New suite** opens the
-[creation wizard](#creating-a-suite).
+suite's detail on the right. The left column holds **New suite**, an **Agent** filter
+(it only lists agents that actually own a suite, so it stays usable no matter how many
+agents the project has), and a name search. Each list entry shows the suite's case count,
+latest pass rate, and when it last ran.
 
 ## Suite statistics
 

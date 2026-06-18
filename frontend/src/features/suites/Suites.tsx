@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { EvaluatorDetailDto, TestSuiteListItemDto } from '../../api/models';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { FilterDropdown, type FilterDropdownOption } from '../../components/ui/FilterDropdown';
-import { SkeletonList } from '../../components/ui/Skeleton';
+import type { FilterDropdownOption } from '../../components/ui/FilterDropdown';
 import { Modal } from '../../components/overlays/Modal';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
@@ -17,13 +15,12 @@ import { useSelectedId } from '../../hooks/useSelectedId';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWizard';
 import { RunConfirmModal } from './RunConfirmModal';
-import { SuiteListCard } from './components/SuiteListCard';
+import { SuiteList } from './components/SuiteList';
 import { SuiteDetail } from './SuiteDetail';
 import { useSuites, useSuiteAgents, useSuiteEvaluators } from './hooks/useSuiteQueries';
 import { useStartRun, useDeleteSuite, useCreateSuite } from './hooks/useSuiteMutations';
 import { useSuiteFocus } from './hooks/useSuiteFocus';
 import { useScrollToSelectedSuite } from './hooks/useScrollToSelectedSuite';
-import { computeSuiteStats } from './suitesMeta';
 
 export default function Suites() {
   const [runSuite, setRunSuite] = useState<TestSuiteListItemDto | null>(null);
@@ -60,8 +57,6 @@ export default function Suites() {
     (s, id: string) => !id || s.agentId === id,
     initialAgentFilter,
   );
-
-  const { totalCases, totalRuns, avgPassRate } = computeSuiteStats(suites);
 
   // Desktop selects the first suite by default; mobile lands on the list until one is chosen.
   const selectedSuite =
@@ -157,96 +152,43 @@ export default function Suites() {
     },
   ];
 
-  const kpiItems = [
-    { label: 'Total suites',  value: suites.length,                                  sub: `across ${new Set(suites.map(s => s.agentId)).size} agents`, color: 'var(--accent-primary)' },
-    { label: 'Total cases',   value: totalCases,                                      sub: 'test case inputs',                                           color: 'var(--teal)' },
-    { label: 'Total runs',    value: totalRuns,                                       sub: 'evaluations run',                                            color: 'var(--success)' },
-    { label: 'Avg pass rate', value: avgPassRate !== null ? `${avgPassRate}%` : '—', sub: 'across all suites',                                          color: 'var(--warn)' },
-  ];
-
   return (
-    <div className="w-full min-w-0 flex flex-col gap-4 flex-1 min-h-0">
-      {/* KPI row */}
-      <div className="fade-up grid gap-3 [animation-delay:30ms] grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
-        {kpiItems.map(k => (
-          <div key={k.label} className="bg-card rounded-[14px] px-[18px] py-4 flex items-center gap-[14px] shadow-[var(--shadow-card)]">
-            <div
-              className="w-10 h-10 rounded-[11px] flex items-center justify-center shrink-0"
-              style={{ background: `${k.color}18` }}
-            >
-              <span className="font-mono text-[18px] font-[800] tracking-[-0.04em]" style={{ color: k.color }}>
-                {k.value}
-              </span>
-            </div>
-            <div>
-              <div className="text-title font-semibold">{k.label}</div>
-              <div className="text-[11.5px] text-muted mt-[1px]">{k.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Agent filter */}
-      <div className="fade-up flex items-center gap-4 [animation-delay:60ms]">
-        <FilterDropdown
-          label="Agent"
-          value={agentFilter}
-          options={agentFilterOptions}
-          onChange={setAgentFilter}
-          active={!!agentFilter}
-          accent={agentFilter ? agentColor(agentFilter) : undefined}
-          width={240}
-        />
-        <span className="text-body text-muted">
-          {visibleSuites.length} suite{visibleSuites.length !== 1 ? 's' : ''}
-        </span>
-        <Button
-          variant="primary"
-          data-testid="suite-create-btn"
-          className="ml-auto"
-          onClick={() => { setCreateOpen(true); resetCreate(); }}
-        >
-          + New suite
-        </Button>
-      </div>
-
-      {/* Master–detail */}
+    <div className="w-full min-w-0 flex flex-col gap-3 h-full overflow-hidden">
       <div
         className={cn(
-          'fade-up [animation-delay:100ms] flex-1 min-h-0',
+          'fade-up flex-1 min-h-0 [animation-delay:20ms]',
           isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,300px)_minmax(0,1fr)]',
         )}
       >
         {/* Left: suite list */}
         {(!isMobile || !selectedSuite) && (
-          <div data-testid="suite-list" className="flex flex-col gap-2 min-w-0 min-h-0 overflow-y-auto pr-1 -mr-1">
-            {isLoading && <SkeletonList rows={6} height={84} gap={8} />}
-            {visibleSuites.map(suite => (
-              <SuiteListCard
-                key={suite.id}
-                suite={suite}
-                selected={selectedSuite?.id === suite.id}
-                highlight={highlightSuiteId === suite.id}
-                onSelect={() => setSelectedSuiteId(suite.id)}
-                onDelete={() => setDeleteSuite(suite)}
-              />
-            ))}
-            {!isLoading && visibleSuites.length === 0 && (
-              <div data-testid="suite-empty-state">
-                <EmptyState title="No test suites yet" description="Create one to start evaluating." />
-              </div>
-            )}
-          </div>
+          <aside className="min-h-0 flex flex-col">
+            <SuiteList
+              suites={visibleSuites}
+              isLoading={isLoading}
+              selectedId={selectedSuite?.id ?? null}
+              highlightId={highlightSuiteId}
+              onSelect={setSelectedSuiteId}
+              onDelete={setDeleteSuite}
+              onNew={() => { setCreateOpen(true); resetCreate(); }}
+              agentFilter={{
+                value: agentFilter,
+                options: agentFilterOptions,
+                accent: agentFilter ? agentColor(agentFilter) : undefined,
+                onChange: setAgentFilter,
+              }}
+            />
+          </aside>
         )}
 
         {/* Right: detail */}
         {(!isMobile || selectedSuite) && (
-          <div className={cn('min-w-0 min-h-0', isMobile ? 'flex-1 overflow-y-auto flex flex-col gap-2' : 'overflow-y-auto')}>
+          <main className="min-w-0 min-h-0 overflow-y-auto pr-1 pb-6">
             {isMobile && selectedSuite && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="self-start shrink-0"
+                className="mb-2"
                 data-testid="suites-back-to-list"
                 onClick={() => setSelectedSuiteId(null)}
                 leftIcon={<ChevronRightIcon size={14} className="rotate-180" />}
@@ -262,8 +204,10 @@ export default function Suites() {
                   onRun={() => { setRunSuite(selectedSuite); setRunDone(false); }}
                   onDelete={() => setDeleteSuite(selectedSuite)}
                 />
-              : <Card><div className="py-[60px] text-center text-muted text-body">Select a suite to see details.</div></Card>}
-          </div>
+              : !isLoading
+                ? <Card><div className="py-[60px] text-center text-muted text-body">Select a suite to see details.</div></Card>
+                : null}
+          </main>
         )}
       </div>
 
