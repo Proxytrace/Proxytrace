@@ -177,13 +177,14 @@ test.describe('@llm test run', () => {
       { userContent: 'Reply with exactly: pong', expectedContent: 'pong' },
     ]);
 
-    // Drive the /suites page: open the suite's run modal, pick the agent's endpoint, confirm.
-    // The suites feature exposes no run-specific testids, so we use the accessible
-    // card testid + button text the RunConfirmModal renders.
+    // Drive the /suites page: select the suite to open its detail panel, then open the run modal
+    // from the detail header, pick the agent's endpoint, and confirm.
     await page.goto('/suites', { waitUntil: 'load' });
     const suiteCard = page.getByTestId(`suite-card-${suiteId}`);
     await expect(suiteCard).toBeVisible({ timeout: 10_000 });
-    await suiteCard.getByRole('button', { name: /Run (now|again)/ }).click();
+    await page.getByTestId(`suite-select-${suiteId}`).click();
+    await expect(page.getByTestId('suite-detail')).toBeVisible();
+    await page.getByTestId('suite-run-btn').click();
 
     // RunConfirmModal: select the agent's model endpoint then start the run.
     const endpoint = (await api.listProviders())
