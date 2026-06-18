@@ -356,6 +356,14 @@ export interface TestSuiteListItemDto {
   updatedAt: string;
 }
 
+/** Aggregated run stats for a suite over a time window ("bucket"). See GET /api/test-suites/{id}/run-stats. */
+export interface SuiteRunStatsDto {
+  runCount: number;
+  passRate: number | null;
+  avgDurationMs: number | null;
+  totalCost: number | null;
+}
+
 /* ── Test Runs ── */
 export interface EvaluatorSummaryDto {
   totalEvaluations: number;
@@ -504,6 +512,8 @@ export interface TestRunScheduleDto {
   endpoints: ScheduleEndpointDto[];
   intervalMinutes: number;
   isEnabled: boolean;
+  /** Recurrence phase: the schedule fires at `anchorAt + k·interval`. Drives the time-of-day. */
+  anchorAt: string;
   nextRunAt: string;
   lastRunAt: string | null;
   recentRuns: TestRunGroupListItemDto[];
@@ -517,6 +527,8 @@ export interface CreateTestRunScheduleRequest {
   modelEndpointIds: string[];
   intervalMinutes: number;
   enabled: boolean;
+  /** ISO instant the recurrence is phased to (the run time). Omitted → server anchors to "now". */
+  anchorAt?: string;
 }
 
 export interface UpdateTestRunScheduleRequest {
@@ -524,6 +536,8 @@ export interface UpdateTestRunScheduleRequest {
   modelEndpointIds: string[];
   intervalMinutes: number;
   enabled: boolean;
+  /** ISO instant the recurrence is phased to (the run time). Omitted → keeps the current anchor. */
+  anchorAt?: string;
 }
 
 /* ── Evaluators ── */

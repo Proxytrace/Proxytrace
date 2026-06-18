@@ -1,28 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { passRateColor, computeSuiteStats } from './suitesMeta';
-import type { TestSuiteListItemDto } from '../../api/models';
-
-// Minimal stub satisfying the fields used by these helpers.
-function makeSuite(passRate: number | null, testCases: number, totalRuns: number): TestSuiteListItemDto {
-  return {
-    id: 'id',
-    name: 'Suite',
-    description: null,
-    agentId: 'agent-1',
-    agentName: 'Agent',
-    testCaseCount: testCases,
-    evaluators: [],
-    tags: [],
-    passRate,
-    prevPassRate: null,
-    passRateTrend: [],
-    totalRuns,
-    lastRunAt: null,
-    lastRunGroupId: null,
-    createdAt: '',
-    updatedAt: '',
-  } as unknown as TestSuiteListItemDto;
-}
+import { passRateColor, passRateTextClass } from './suitesMeta';
 
 describe('passRateColor', () => {
   it('returns muted for null', () => {
@@ -45,27 +22,12 @@ describe('passRateColor', () => {
   });
 });
 
-describe('computeSuiteStats', () => {
-  it('returns zeros for empty list', () => {
-    expect(computeSuiteStats([])).toEqual({ totalCases: 0, totalRuns: 0, avgPassRate: null });
-  });
-
-  it('sums cases and runs across suites', () => {
-    const suites = [makeSuite(100, 3, 5), makeSuite(60, 2, 10)];
-    const stats = computeSuiteStats(suites);
-    expect(stats.totalCases).toBe(5);
-    expect(stats.totalRuns).toBe(15);
-  });
-
-  it('averages pass rates, ignoring nulls', () => {
-    const suites = [makeSuite(100, 1, 1), makeSuite(null, 1, 0), makeSuite(50, 1, 1)];
-    const stats = computeSuiteStats(suites);
-    // (100 + 50) / 2 = 75
-    expect(stats.avgPassRate).toBe(75);
-  });
-
-  it('returns null avgPassRate when all suites have no pass rate', () => {
-    const suites = [makeSuite(null, 1, 0)];
-    expect(computeSuiteStats(suites).avgPassRate).toBeNull();
+describe('passRateTextClass', () => {
+  it('mirrors passRateColor thresholds as Tailwind classes', () => {
+    expect(passRateTextClass(null)).toBe('text-muted');
+    expect(passRateTextClass(75)).toBe('text-success');
+    expect(passRateTextClass(74)).toBe('text-warn');
+    expect(passRateTextClass(55)).toBe('text-warn');
+    expect(passRateTextClass(54)).toBe('text-danger');
   });
 });

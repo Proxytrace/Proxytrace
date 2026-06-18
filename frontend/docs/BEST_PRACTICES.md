@@ -25,7 +25,7 @@ Some features have their own architecture guide that this file does not duplicat
 
 The repo used to carry several monster files — `features/evaluators/Evaluators.tsx` was once **1432 lines** with 27 nested component functions and 185 inline `style={{}}` blocks; `Dashboard.tsx`, `Providers.tsx`, `Traces.tsx`, and `Setup.tsx` were all far over budget. Those have since been decomposed and now sit under the limits (e.g. `Evaluators.tsx` is ~190 lines orchestrating a `components/` + `hooks/` + `evaluatorMeta.ts` folder). **Don't regress them** — the way they look now is the bar.
 
-The well-structured examples to copy: `api/agents.ts`, `api/query-keys.ts`, `lib/cn.ts`, `components/ui/classes.ts`, and feature folders like `features/evaluators/`, `features/runs/`, and `features/playground/` that decompose into `components/`, `hooks/`, `state/`, `lib/`, `drawers/`. Copy *those*.
+The well-structured examples to copy: `api/agents.ts`, `api/query-keys.ts`, `lib/cn.ts`, `components/ui/classes.ts`, `components/ui/ListRail.tsx` (a pure presentational shell — the master/detail left column every view composes; data and selection stay in the page), and feature folders like `features/evaluators/`, `features/runs/`, and `features/playground/` that decompose into `components/`, `hooks/`, `state/`, `lib/`, `drawers/`. Copy *those*. (A master/detail view's left column is now `ListRail` — see DESIGN.md §4; don't re-implement a list header per feature.)
 
 ---
 

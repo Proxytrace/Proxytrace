@@ -45,6 +45,17 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
 
         foreach (PricedModel pm in discovered)
         {
+            if (!IsUsablePrice(pm.Price))
+            {
+                // Best-effort: a non-positive or inverted discovered price violates the endpoint's
+                // own invariants and would throw during activation — which, since this runs inside
+                // setup, would 500 the whole completion. Skip that model instead of bricking setup.
+                logger.LogWarning(
+                    "Skipping model {Model} from provider {ProviderId}: invalid discovered price (in={Input}, out={Output})",
+                    pm.Model.Name, provider.Id, pm.Price.InputTokenCost, pm.Price.OutputTokenCost);
+                continue;
+            }
+
             IModelEndpoint? existingEndpoint = existing.FirstOrDefault(
                 e => string.Equals(e.Model.Name, pm.Model.Name, StringComparison.OrdinalIgnoreCase));
 
@@ -62,6 +73,19 @@ internal sealed class ModelPriceRefresher : IModelPriceRefresher
                 await endpointRepository.AddAsync(endpoint, cancellationToken);
             }
         }
+    }
+
+    /// <summary>
+    /// Whether a discovered price can back a model endpoint. Unknown (null) costs are allowed — they
+    /// create an unpriced endpoint — but a present cost must satisfy the same invariants the endpoint
+    /// enforces (each positive, input ≤ output); otherwise activation validation throws.
+    /// </summary>
+    private static bool IsUsablePrice(ModelPrice price)
+    {
+        if (price.InputTokenCost is { } input && input <= 0) return false;
+        if (price.OutputTokenCost is { } output && output <= 0) return false;
+        if (price.InputTokenCost is { } i && price.OutputTokenCost is { } o && i > o) return false;
+        return true;
     }
 
     public async Task RefreshAllAsync(CancellationToken cancellationToken = default)

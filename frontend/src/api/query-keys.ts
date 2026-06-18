@@ -52,6 +52,10 @@ export const QUERY_KEYS = {
 
   testRunGroups: (agentFilter?: string, projectId?: string, includeSystem?: boolean) =>
     [TEST_RUN_GROUPS, agentFilter, projectId ?? null, includeSystem ?? false] as const,
+  /** Run groups for a single suite (suite detail's History tab). Shares the {@link TEST_RUN_GROUPS}
+   * prefix so {@link testRunGroupsRoot} invalidation also refreshes a suite's history. */
+  testRunGroupsBySuite: (suiteId: string, includeSystem?: boolean) =>
+    [TEST_RUN_GROUPS, 'suite', suiteId, includeSystem ?? false] as const,
   /** A single test-run group — used by Tracey's live run-progress card. */
   testRunGroup: (id: string) => [TEST_RUN_GROUPS, 'detail', id] as const,
   /** Prefix matching every test-run-groups query — use for invalidation. */
@@ -65,6 +69,9 @@ export const QUERY_KEYS = {
   testSuitesRoot: ['test-suites'] as const,
   /** A single (fat) test suite by id — full test cases for the edit dialog. 'detail' segment lets list invalidation cover it by prefix. */
   testSuite: (id: string) => ['test-suites', 'detail', id] as const,
+  /** Bucket-windowed run stats for a suite. */
+  testSuiteRunStats: (id: string, from?: string, to?: string) =>
+    ['test-suites', 'detail', id, 'run-stats', from ?? null, to ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,

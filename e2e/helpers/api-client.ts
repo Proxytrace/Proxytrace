@@ -32,6 +32,7 @@ export interface TestRunScheduleDto {
   endpoints: ScheduleEndpointDto[];
   intervalMinutes: number;
   isEnabled: boolean;
+  anchorAt: string;
   nextRunAt: string;
   lastRunAt: string | null;
   recentRuns: Array<{ id: string; status: string }>;

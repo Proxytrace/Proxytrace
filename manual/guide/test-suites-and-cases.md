@@ -16,14 +16,37 @@ The intended workflow is to **promote production traces** into durable benchmark
 Because cases come from real traffic, suites stay grounded in behaviors that actually
 matter.
 
+## The suites page
+
+![The Test Suites page: a selectable suite list on the left and the selected suite's detail panel on the right.](/screenshots/suites/overview.png)
+
+The page is a **master–detail view**: a list of suites on the left and the selected
+suite's detail on the right. The left column holds **New suite**, an **Agent** filter
+(it only lists agents that actually own a suite, so it stays usable no matter how many
+agents the project has), and a name search. Each list entry shows the suite's case count,
+latest pass rate, and when it last ran.
+
+## Suite statistics
+
+The detail panel reports the suite's run statistics for a selectable **time window**
+("bucket"): **Last run**, the **last 7 days**, the **last 30 days**, or **all time**.
+For the chosen window it shows the **pass rate**, the **number of runs**, the **average
+run duration**, and the **total cost**.
+
 ## Test cases
 
-![The Edit Suite dialog: the suite's test cases on the left, and the selected case's input with its editable expected output on the right.](/screenshots/suites/cases.png)
+![A suite's detail panel: its test cases on the left and the selected case's input with its editable expected output on the right.](/screenshots/suites/cases.png)
 
 Each test case captures the input to run and the expectation to check against. What
 "expected" means depends on the [evaluators](/guide/evaluators) attached to the suite —
 an exact string, a number within tolerance, a JSON shape, a tool that should be called,
 and so on.
+
+In the detail panel's **Test Cases** tab you can curate the suite directly: click
+**Add from traces** to open a picker (search, time-range filter, and a live conversation
+preview) and stage agent calls as new cases, remove a case, or select a case to edit its
+expected output. Staged additions appear in the list marked **Pending add**; all edits are
+applied together with **Save changes**.
 
 ## Editing the expected output
 
@@ -33,8 +56,8 @@ expected output directly:
 
 - **In the Promote dialog**, the *Expected output* section is editable before you add the
   case to a suite.
-- **In the Edit Suite dialog**, select a case and choose **Edit expected output** to revise
-  an existing case (saved immediately).
+- **In the suite detail panel**, select a case and choose **Edit expected output** to revise
+  an existing case.
 
 The editor offers two mutually exclusive types:
 
@@ -46,28 +69,36 @@ The editor offers two mutually exclusive types:
 
 ## Attaching evaluators
 
+![A suite's Evaluators tab: the attach list on the left (a toggle marks each attached evaluator) and the selected evaluator's system prompt and judge model on the right.](/screenshots/suites/evaluators.png)
+
 A test suite has a many-to-many relationship with **evaluators**: one suite can score its
 cases with several evaluators, and an evaluator can be reused across suites. Choose the
-evaluators that express what "correct" means for the suite. See
+evaluators that express what "correct" means for the suite in the detail panel's
+**Evaluators** tab — flip each evaluator's **toggle** to attach or detach it. See
 [Evaluators](/guide/evaluators).
+
+## Scheduling runs
+
+The detail panel's **Schedules** tab configures the suite's **schedules** — recurring runs on
+a fixed interval against a chosen set of model endpoints. Create, edit, pause/resume, and
+delete a suite's schedules there. Scheduled runs require an Enterprise license; see
+[Running tests](/guide/running-tests).
+
+## Creating a suite
+
+**+ New suite** opens a step wizard: pick the agent, select traces to seed cases, name the
+suite, and choose evaluators.
 
 ## Running a suite
 
 Once a suite has cases and evaluators, run it against an
-[agent](/guide/agents) version to produce a [test run](/guide/running-tests).
+[agent](/guide/agents) version to produce a [test run](/guide/running-tests). The **Run**
+button lives in the detail panel header.
 
-## The suites overview
+## Run history
 
-![The Test Suites overview: summary totals across the top and a grid of suite cards, each showing its latest pass rate, case count, and last-run time.](/screenshots/suites/overview.png)
+![A suite's History tab: a list of the suite's previous runs, newest first, each showing the agent, when it ran, and per-model pass rates.](/screenshots/suites/history.png)
 
-Each suite card surfaces its latest run data at a glance:
-
-- **Pass rate** — the pass rate of the most recent run, with the change versus the
-  previous run and a sparkline of the trend across past runs.
-- **Test cases** — case count and total number of runs executed.
-- **Last run** — when the suite last ran. Suites that have never run are flagged
-  *No runs yet*.
-
-Use the **Agent** filter at the top to narrow the list to a single agent. The filter only
-lists agents that actually own a suite, so it stays usable no matter how many agents the
-project has.
+The detail panel's **History** tab lists the suite's previous runs, newest first, each with
+its per-model pass rates. Clicking a run opens it on the [Test Runs](/guide/running-tests)
+page with that run selected, so you can drill into individual case results.

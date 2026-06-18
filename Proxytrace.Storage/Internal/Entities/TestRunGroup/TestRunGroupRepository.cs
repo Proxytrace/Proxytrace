@@ -122,6 +122,31 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
         return new PagedResult<ITestRunGroup>(await Map(stored, cancellationToken), total, page, pageSize);
     }
 
+    public async Task<PagedResult<ITestRunGroup>> GetBySuitePagedAsync(
+        Guid suiteId,
+        int page,
+        int pageSize,
+        bool includeSystem = false,
+        CancellationToken cancellationToken = default)
+    {
+        (page, pageSize) = Paging.Clamp(page, pageSize);
+        var context = contextFactory();
+        // The group entity carries the suite FK directly, so this needs no join.
+        var query = context
+            .Set<TestRunGroupEntity>()
+            .AsNoTracking()
+            .Where(g => g.Suite == suiteId && (includeSystem || !g.IsSystemRun));
+
+        int total = await query.CountAsync(cancellationToken);
+        var stored = await query
+            .OrderByDescending(g => g.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<ITestRunGroup>(await Map(stored, cancellationToken), total, page, pageSize);
+    }
+
     public async Task<int> CountCompletedSinceAsync(
         Guid agentId,
         DateTimeOffset since,

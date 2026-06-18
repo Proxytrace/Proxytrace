@@ -1,5 +1,6 @@
 import type { EvaluatorListItemDto } from '../../../api/models';
 import { TargetIcon } from '../../../components/icons';
+import { RailHeader, RAIL_CARD_CLS } from '../../../components/ui/ListRail';
 import { RailSection } from './RailSection';
 import { EvaluatorRailList } from './EvaluatorRailList';
 import { PastEvaluationList } from './PastEvaluationList';
@@ -21,18 +22,18 @@ export function SelectionRail({
 }: Props) {
   const selectedName = evaluators.find(e => e.id === selectedEvaluatorId)?.name ?? '';
   return (
-    <aside className="flex flex-col rounded-lg bg-card border border-border-subtle overflow-hidden min-h-0">
-      <div className="px-4 py-4 border-b border-hairline flex items-center gap-2.5 shrink-0">
-        <span className="w-8 h-8 rounded-md bg-accent-subtle text-accent inline-flex items-center justify-center shrink-0">
-          <TargetIcon size={16} />
-        </span>
-        <div className="min-w-0">
-          <div className="text-h2 font-bold tracking-[-0.01em]">Evaluator Playground</div>
-          <div className="text-[11px] text-muted">Pick a judge, then a case</div>
-        </div>
-      </div>
+    <aside className={RAIL_CARD_CLS}>
+      <RailHeader
+        leading={
+          <span className="w-8 h-8 rounded-md bg-accent-subtle text-accent inline-flex items-center justify-center shrink-0">
+            <TargetIcon size={16} />
+          </span>
+        }
+        title="Evaluator playground"
+        subtitle="Pick a judge, then a case"
+      />
 
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-5 min-h-0">
+      <div className="flex-1 min-h-0 p-3 flex flex-col gap-3">
         <RailSection title="Evaluator">
           <EvaluatorRailList
             evaluators={evaluators}

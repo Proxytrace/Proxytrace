@@ -21,11 +21,28 @@ export function fmtDate(iso: string): string {
   return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
+/** UTC sibling of {@link fmtDate}, "dd.MM.yyyy" in UTC — for UTC instants (e.g. schedule run-times). */
+export function fmtDateUtc(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()}`;
+}
+
 /** Date + 24h time to the minute, "dd.MM.yyyy HH:mm". For compact displays (chips, headers, pickers). */
 export function fmtDateTimeShort(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '—';
   return `${fmtDate(iso)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/**
+ * Date + 24h time to the minute in **UTC**, "dd.MM.yyyy HH:mm". For schedule run-times, which are
+ * UTC (the scheduler fires in UTC) — pair with a " UTC" label at the call site.
+ */
+export function fmtDateTimeShortUtc(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${pad2(d.getUTCDate())}.${pad2(d.getUTCMonth() + 1)}.${d.getUTCFullYear()} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
 }
 
 /** Date + 24h time with seconds, "dd.MM.yyyy HH:mm:ss". For log rows where exact time matters. */
@@ -52,7 +69,8 @@ export function fmtRelative(iso: string): string {
 /**
  * Future-facing counterpart to {@link fmtRelative}: formats how long *until* a timestamp,
  * e.g. "in 30m" / "in 2h" / "in 3d". Returns "due" when the time is already past (or now).
- * Mirrors `fmtRelative`'s unit thresholds; falls back to an absolute date beyond a week out.
+ * Mirrors `fmtRelative`'s unit thresholds; falls back beyond a week out to an absolute **UTC** date
+ * (it is used only for UTC schedule run-times, shown beside a UTC clock time — keep them consistent).
  */
 export function fmtUntil(iso: string): string {
   const diff = new Date(iso).getTime() - Date.now();
@@ -65,7 +83,7 @@ export function fmtUntil(iso: string): string {
   if (h < 24) return `in ${h}h`;
   const day = Math.floor(h / 24);
   if (day < 7) return `in ${day}d`;
-  return fmtDate(iso);
+  return fmtDateUtc(iso);
 }
 
 export function fmtDuration(ms: number | null | undefined): string {

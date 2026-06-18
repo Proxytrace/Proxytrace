@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { EvaluatorDetailDto } from '../../../api/models';
-import { EVALUATOR_KIND_COLOR, EVALUATOR_KIND_CATEGORY } from '../../../lib/colors';
+import { EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { Switch } from '../../../components/ui/Switch';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
 import { EmptyState } from '../../../components/ui/EmptyState';
-import { SearchIcon, CheckIcon, LockIcon } from '../../../components/icons';
+import { SearchIcon, LockIcon } from '../../../components/icons';
 import { useLicense } from '../../../api/license';
 
 interface Props {
@@ -58,7 +59,6 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
           <ul className="flex flex-col">
             {filtered.map(e => {
               const c = EVALUATOR_KIND_COLOR[e.kind];
-              const cat = EVALUATOR_KIND_CATEGORY[e.kind];
               const staged = stagedIds.has(e.id);
               const wasBaseline = baselineIds.has(e.id);
               const focused = selectedId === e.id;
@@ -81,41 +81,30 @@ export function EvaluatorsPanel({ evaluators, baselineIds, stagedIds, selectedId
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    {locked ? (
+                    <Switch
+                      checked={staged}
+                      disabled={locked}
+                      onChange={() => onToggle(e.id)}
+                      aria-label={`${staged ? 'Detach' : 'Attach'} ${e.name}`}
+                      data-testid={`edit-suite-evaluator-toggle-${e.id}`}
+                    />
+                    <span className="text-[13px] font-medium flex-1 min-w-0 truncate">{e.name}</span>
+                    {locked && (
                       <span
                         data-testid={`edit-suite-evaluator-lock-${e.id}`}
-                        className="shrink-0 inline-flex items-center justify-center text-muted"
-                        style={{ width: 16, height: 16 }}
+                        className="shrink-0 inline-flex items-center text-muted"
                         title="Agentic evaluators require a paid plan"
                       >
                         <LockIcon size={12} />
                       </span>
-                    ) : (
-                      /* eslint-disable-next-line no-restricted-syntax -- per-kind colored checkbox toggle (data-driven color) */
-                      <button
-                        type="button"
-                        data-testid={`edit-suite-evaluator-toggle-${e.id}`}
-                        onClick={ev => { ev.stopPropagation(); onToggle(e.id); }}
-                        className="shrink-0 inline-flex items-center justify-center cursor-pointer transition-colors"
-                        style={{
-                          width: 16, height: 16, borderRadius: 4,
-                          background: staged ? c : 'var(--bg-card-2)',
-                          border: `1px solid ${staged ? c : 'var(--border-color)'}`,
-                        }}
-                        title={staged ? 'Remove' : 'Attach'}
-                      >
-                        {staged && <CheckIcon size={11} className="text-white" strokeWidth={3} />}
-                      </button>
                     )}
-                    <ColoredBadge color={c} label={e.kind} />
-                    <span className="text-[10.5px] font-mono text-muted uppercase tracking-[0.06em]">{cat}</span>
-                    <span className="text-[13px] font-medium flex-1 min-w-0 truncate ml-1">{e.name}</span>
                     {dirtyState === 'added' && (
                       <span className="text-[10px] font-semibold text-accent uppercase tracking-[0.08em] shrink-0">+ Added</span>
                     )}
                     {dirtyState === 'removed' && (
                       <span className="text-[10px] font-semibold text-warn uppercase tracking-[0.08em] shrink-0">− Removed</span>
                     )}
+                    <ColoredBadge color={c} label={e.kind} />
                   </div>
                 </li>
               );

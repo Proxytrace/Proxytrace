@@ -1,5 +1,5 @@
 import { api, qs, type RequestOptions } from './client';
-import type { PagedResult, TestSuiteDto, TestSuiteListItemDto, TestSuiteMessageDto } from './models';
+import type { PagedResult, SuiteRunStatsDto, TestSuiteDto, TestSuiteListItemDto, TestSuiteMessageDto } from './models';
 
 export interface CreateTestSuitePayload {
   name: string;
@@ -12,6 +12,8 @@ export const testSuitesApi = {
   list: (params?: { agentId?: string; projectId?: string; page?: number; pageSize?: number }) =>
     api.get<PagedResult<TestSuiteListItemDto>>(`/api/test-suites${qs(params ?? {})}`),
   get: (id: string, opts?: RequestOptions) => api.get<TestSuiteDto>(`/api/test-suites/${id}`, opts),
+  runStats: (id: string, params?: { from?: string; to?: string }) =>
+    api.get<SuiteRunStatsDto>(`/api/test-suites/${id}/run-stats${qs(params ?? {})}`),
   create: (payload: CreateTestSuitePayload) =>
     api.post<TestSuiteDto>('/api/test-suites/from-traces', payload),
   updateEvaluators: (id: string, evaluatorIds: string[]) =>

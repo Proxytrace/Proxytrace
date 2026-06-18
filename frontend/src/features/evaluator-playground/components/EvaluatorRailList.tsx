@@ -1,5 +1,6 @@
 import { cn } from '../../../lib/cn';
-import { evaluatorColor, tint } from '../../../lib/colors';
+import { evaluatorColor } from '../../../lib/colors';
+import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
 import type { EvaluatorListItemDto } from '../../../api/models';
 import { RowButton } from '../../../components/ui/RowButton';
 import { RailMonogram } from './RailMonogram';
@@ -14,7 +15,7 @@ interface Props {
 /** Step-1 rail list: every evaluator as a selectable monogram row. */
 export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
   return (
-    <div data-testid="evaluator-rail-list" className="flex flex-col gap-0.5">
+    <div data-testid="evaluator-rail-list" className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-0.5 pr-1">
       {evaluators.map(ev => {
         const on = ev.id === selectedId;
         const color = evaluatorColor(ev.kind);
@@ -25,13 +26,13 @@ export function EvaluatorRailList({ evaluators, selectedId, onSelect }: Props) {
             aria-pressed={on}
             onClick={() => onSelect(ev.id)}
             className={cn(
-              'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-colors',
-              !on && 'hover:bg-card',
+              'relative flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left overflow-hidden transition-[box-shadow,background-color]',
+              !on && SELECTION_ROW_INACTIVE,
             )}
-            style={on ? { background: tint(color, 14) } : undefined}
+            style={on ? selectionRowStyle(color) : undefined}
           >
             {on && (
-              <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full" style={{ background: color }} />
+              <span className="absolute left-0 top-2 bottom-2 w-[2.5px] rounded-full" style={selectionBarStyle(color)} />
             )}
             <RailMonogram name={ev.name} kind={ev.kind} size={28} />
             <span className="flex-1 min-w-0">

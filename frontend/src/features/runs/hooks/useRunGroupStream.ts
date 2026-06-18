@@ -70,6 +70,9 @@ export function useRunGroupStream(groupId: string, active: boolean): LiveProgres
     setLive(liveRef.current);
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunGroupsRoot });
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.testRunSchedulesRoot });
+    // A finished run changes the owning suite's aggregates (pass rate, run count, last run, trend)
+    // and its windowed run-stats; the root prefix covers the list, the fat suite, and run-stats.
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.testSuitesRoot });
   }, [qc]);
 
   useEffect(() => () => {

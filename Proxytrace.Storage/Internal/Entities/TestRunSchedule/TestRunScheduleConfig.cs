@@ -58,6 +58,7 @@ internal class TestRunScheduleConfig : AbstractEntityConfiguration<TestRunSchedu
             endpoints: loadedEndpoints,
             interval: TimeSpan.FromMinutes(storedEntity.IntervalMinutes),
             isEnabled: storedEntity.IsEnabled,
+            anchorAt: storedEntity.AnchorAt,
             nextRunAt: storedEntity.NextRunAt,
             lastRunAt: storedEntity.LastRunAt,
             existing: storedEntity);
@@ -72,6 +73,7 @@ internal class TestRunScheduleConfig : AbstractEntityConfiguration<TestRunSchedu
             // Minute granularity: the scheduler polls per-minute, so sub-minute intervals are not representable.
             IntervalMinutes = (int)Math.Round(domainEntity.Interval.TotalMinutes),
             IsEnabled = domainEntity.IsEnabled,
+            AnchorAt = domainEntity.AnchorAt,
             NextRunAt = domainEntity.NextRunAt,
             LastRunAt = domainEntity.LastRunAt,
             CreatedAt = domainEntity.CreatedAt,

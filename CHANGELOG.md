@@ -11,14 +11,21 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **A suite's run history at a glance.** The suite detail panel has a new **History** tab listing
+  that suite's previous runs (newest first, with per-model pass rates); clicking a run opens it on
+  the Runs page. The history is fetched suite-scoped, so it isn't diluted by other suites on the same
+  agent. The header's run button is now simply labelled **Run**.
+
 - **Periodic test-run scheduling (Enterprise).** Test suites can now be run automatically on a
-  recurring interval (every N minutes/hours/days) against a fixed set of model endpoints. Schedules
-  are managed from the new **Scheduled** tab on the Runs page — create, edit, pause/resume, and
-  run-now — and each schedule card shows its cadence, next-run time, and a summary of its most
-  recent runs. Scheduled runs feed the optimization loop exactly like manual ones. Creating and
-  managing schedules requires an Enterprise license; existing schedules stay listable after a
-  downgrade but stop running until re-licensed. You can also start a schedule directly from a suite
-  card on the Suites page (a clock action opens the dialog with that suite preselected).
+  recurring schedule against a fixed set of model endpoints. Pick a frequency — **hourly** at a
+  chosen minute, **daily** or **weekly** at a chosen time of day (UTC), or a **custom** every-N
+  minutes/hours/days interval — and the dialog **previews the exact next execution date/time** as
+  you choose. Schedules are managed from the new **Scheduled** tab on the Runs page — create, edit,
+  pause/resume, and run-now — and each schedule card shows its cadence, the next run's date/time, and
+  a summary of its most recent runs. Scheduled runs feed the optimization loop exactly like manual
+  ones. Creating and managing schedules requires an Enterprise license; existing schedules stay
+  listable after a downgrade but stop running until re-licensed. You can also create and manage a
+  suite's schedules directly from its detail panel on the Suites page.
 
 - **The Traces page empty state now shows how to ingest.** Instead of only a link to the manual,
   an empty Traces view displays the project's actual OpenAI `base_url` and a copy-paste quick-start
@@ -36,6 +43,30 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   chat. She can also **cancel an in-progress test run**. All are confirmation-gated writes.
 
 ### Changed
+
+- **One consistent left-hand list across the workspace.** Agents, Evaluators, Test Suites, Test
+  Runs, and the Evaluator Playground now share a single left-column design — the same framed panel,
+  the same header layout (title, count, create, search, filters), the same column width, and the
+  same selected-row highlight everywhere. Previously each page styled its list differently; the
+  views now feel like one product.
+
+- **The Test Suites workspace is easier to scan and edit.** The performance strip is now a compact
+  single-line KPI row (no boxed dividers, roughly half the height). In the **Test Cases** tab, the
+  old Current / Add-from-traces tab chips are gone — current cases are always shown, and a single
+  **Add from traces** button opens a full picker (search, time-range filter, live conversation
+  preview); chosen traces stage inline as **Pending add** rows until you Save. In the **Evaluators**
+  tab, each evaluator now attaches/detaches with a slide **toggle** instead of a checkbox. The suite
+  list cards are more compact, mirroring the Agents list (avatar, agent subline, cases · pass rate ·
+  last run).
+
+- **The Test Suites page is now a master–detail view.** Instead of a grid of cards that each
+  opened an edit modal, the page is a suite list on the left and a single workspace panel on the
+  right. The panel leads with the suite header (run / delete) and a performance strip —
+  bucket-selectable run statistics over a time window (Last run / last 7 days / last 30 days / all
+  time — pass rate, run count, average run duration, total cost) — then a tabbed editor for the
+  suite's **Test Cases**, **Evaluators**, and **Schedules** (add, remove, edit, attach/detach, and
+  schedule inline). Staged edits collect in a sticky **Save changes** bar at the foot of the panel.
+  Creating a new suite still uses the step wizard.
 
 - **The dashboard and traces views stay fast with very large trace volumes.** Trace statistics
   (token usage, latency percentiles, call trends, per-agent rollups, live telemetry) now aggregate
@@ -69,6 +100,11 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Setup no longer fails when a provider lists a zero-cost model.** Initial setup refreshes a
+  provider's model catalog and prices; a discovered model whose price was non-positive (e.g. a free
+  model listed at `0`) or inverted violated the model-endpoint price invariants and aborted the whole
+  setup with a 500. Such models are now skipped (logged) and the remaining priced models import
+  normally.
 - **The dashboard loads much faster in kiosk/demo mode.** The dashboard's statistics aggregation
   fans ~11 independent queries out concurrently, but the in-memory store used by kiosk mode runs
   queries synchronously, which silently collapsed that fan-out into sequential execution — making

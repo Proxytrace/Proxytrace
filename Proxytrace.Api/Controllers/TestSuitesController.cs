@@ -118,6 +118,26 @@ public class TestSuitesController : ControllerBase
             statsBySuite.TryGetValue(id, out var rows) ? rows : []);
     }
 
+    /// <summary>
+    /// Bucket (time-window) run statistics for a suite: run count, pass rate, average run duration,
+    /// and total cost over the optional [from, to] window. Reuses the per-run stats projection — no
+    /// per-test-case aggregation. Omitting both bounds yields all-time stats.
+    /// </summary>
+    [HttpGet("{id:guid}/run-stats")]
+    public async Task<ActionResult<SuiteRunStatsDto>> GetRunStats(
+        Guid id,
+        [FromQuery] DateTimeOffset? from = null,
+        [FromQuery] DateTimeOffset? to = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await suiteRepository.ContainsAsync(id, cancellationToken))
+            return NotFound();
+
+        var rows = await runStats.QueryAsync(
+            new TestRunStats.Filter(SuiteId: id, From: from, To: to), cancellationToken);
+        return mapper.ToRunStatsDto(rows);
+    }
+
     [HttpPost]
     public async Task<ActionResult<TestSuiteDto>> Create(
         [FromBody] CreateTestSuiteRequest request,

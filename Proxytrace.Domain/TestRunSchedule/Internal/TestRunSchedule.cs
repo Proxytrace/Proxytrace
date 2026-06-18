@@ -13,34 +13,54 @@ internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedu
     public IReadOnlyCollection<IModelEndpoint> Endpoints { get; private init; }
     public TimeSpan Interval { get; private init; }
     public bool IsEnabled { get; private init; }
+    public DateTimeOffset AnchorAt { get; private init; }
     public DateTimeOffset NextRunAt { get; private init; }
     public DateTimeOffset? LastRunAt { get; private init; }
 
     public TestRunSchedule(
         string name, ITestSuite suite, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled, IRepository<ITestRunSchedule> repository) : base(repository)
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt,
+        IRepository<ITestRunSchedule> repository) : base(repository)
     {
         Name = name;
         Suite = suite;
         Endpoints = endpoints.ToArray();
         Interval = interval;
         IsEnabled = isEnabled;
-        NextRunAt = CreatedAt + interval;
+        AnchorAt = anchorAt;
+        // First fire is the earliest anchor-aligned instant strictly after creation.
+        NextRunAt = AlignForward(anchorAt, interval, CreatedAt);
         LastRunAt = null;
     }
 
     public TestRunSchedule(
         string name, ITestSuite suite, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled, DateTimeOffset nextRunAt, DateTimeOffset? lastRunAt,
-        IDomainEntityData existing, IRepository<ITestRunSchedule> repository) : base(existing, repository)
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt, DateTimeOffset nextRunAt,
+        DateTimeOffset? lastRunAt, IDomainEntityData existing, IRepository<ITestRunSchedule> repository)
+        : base(existing, repository)
     {
         Name = name;
         Suite = suite;
         Endpoints = endpoints.ToArray();
         Interval = interval;
         IsEnabled = isEnabled;
+        AnchorAt = anchorAt;
         NextRunAt = nextRunAt;
         LastRunAt = lastRunAt;
+    }
+
+    /// <summary>
+    /// The earliest anchor-aligned instant (<c>anchor + k·interval</c>, k ≥ 0) strictly after
+    /// <paramref name="after"/>. Returns <paramref name="anchor"/> when it is already in the future,
+    /// or when the interval is non-positive (left for validation to reject without dividing by zero).
+    /// </summary>
+    private static DateTimeOffset AlignForward(DateTimeOffset anchor, TimeSpan interval, DateTimeOffset after)
+    {
+        if (interval <= TimeSpan.Zero || anchor > after)
+            return anchor;
+
+        long steps = (after.Ticks - anchor.Ticks) / interval.Ticks + 1;
+        return anchor + TimeSpan.FromTicks(interval.Ticks * steps);
     }
 
     public Task<ITestRunSchedule> Disable(CancellationToken cancellationToken = default)
@@ -50,24 +70,29 @@ internal record TestRunSchedule : DomainEntity<ITestRunSchedule>, ITestRunSchedu
         => ApplyAsync(this with { IsEnabled = true }, cancellationToken);
 
     public Task<ITestRunSchedule> RecordFired(DateTimeOffset now, CancellationToken cancellationToken = default)
-    {
-        var next = NextRunAt;
-        // Validation guarantees a positive (>= 1 minute) interval, so this loop always terminates.
-        while (next <= now)
-            next += Interval;
-
-        return ApplyAsync(this with { LastRunAt = now, NextRunAt = next }, cancellationToken);
-    }
+        => ApplyAsync(this with
+        {
+            LastRunAt = now,
+            NextRunAt = AlignForward(AnchorAt, Interval, now),
+        }, cancellationToken);
 
     public Task<ITestRunSchedule> Update(
         string name, IReadOnlyCollection<IModelEndpoint> endpoints,
-        TimeSpan interval, bool isEnabled, CancellationToken cancellationToken = default)
+        TimeSpan interval, bool isEnabled, DateTimeOffset anchorAt, DateTimeOffset now,
+        CancellationToken cancellationToken = default)
         => ApplyAsync(this with
         {
             Name = name,
             Endpoints = endpoints.ToArray(),
             Interval = interval,
             IsEnabled = isEnabled,
+            AnchorAt = anchorAt,
+            // Re-derive the next fire only when the cadence (anchor or interval) actually changes, so
+            // a rename or an enable/disable toggle — both of which route through this Update — never
+            // advances (and thereby drops) an imminent or already-overdue run.
+            NextRunAt = anchorAt != AnchorAt || interval != Interval
+                ? AlignForward(anchorAt, interval, now)
+                : NextRunAt,
         }, cancellationToken);
 
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

@@ -47,6 +47,17 @@ public record TestSuiteListItemDto(
 
 public record EvaluatorDto(Guid Id, EvaluatorKind Kind);
 
+/// <summary>
+/// Aggregated run statistics for a suite over a time window ("bucket"): how many runs completed,
+/// the pass rate across them, mean run duration, and total cost. Derived from finalized
+/// <see cref="Proxytrace.Application.Statistics.TestRun.TestRunStats"/> rows.
+/// </summary>
+public record SuiteRunStatsDto(
+    int RunCount,
+    double? PassRate,
+    double? AvgDurationMs,
+    decimal? TotalCost);
+
 public record TestCaseDto(
     Guid Id,
     IReadOnlyList<TestSuiteMessageDto> Input,

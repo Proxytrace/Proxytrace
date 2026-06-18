@@ -55,7 +55,8 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var schedule = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true);
+        var anchor = DateTimeOffset.UtcNow;
+        var schedule = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true, anchor);
 
         schedule.Should().NotBeNull();
         schedule.Name.Should().Be("Nightly");
@@ -63,11 +64,45 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         schedule.Endpoints.Should().ContainSingle().Which.Should().Be(endpoint);
         schedule.Interval.Should().Be(TimeSpan.FromHours(1));
         schedule.IsEnabled.Should().BeTrue();
+        schedule.AnchorAt.Should().Be(anchor);
         schedule.LastRunAt.Should().BeNull();
         schedule.NextRunAt.Should().BeCloseTo(schedule.CreatedAt + TimeSpan.FromHours(1), TimeSpan.FromSeconds(5));
         schedule.Id.Should().NotBe(Guid.Empty);
         schedule.CreatedAt.Should().NotBe(default);
         schedule.UpdatedAt.Should().NotBe(default);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_WithFutureAnchor_FirstRunIsTheAnchor()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
+        // Anchor three hours out, daily cadence → the first fire is exactly the anchor (k = 0).
+        var anchor = DateTimeOffset.UtcNow.AddHours(3);
+        var schedule = factory("Nightly", suite, [endpoint], TimeSpan.FromDays(1), true, anchor);
+
+        schedule.NextRunAt.Should().Be(anchor);
+    }
+
+    [TestMethod]
+    public async Task CreateNew_WithPastAnchor_AlignsNextRunToTheAnchorTimeOfDay()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
+        // Anchor 25h in the past with a daily cadence: the next fire is a whole number of days after
+        // the anchor (so the same clock time) and strictly in the future.
+        var anchor = DateTimeOffset.UtcNow.AddHours(-25);
+        var day = TimeSpan.FromDays(1);
+        var schedule = factory("Nightly", suite, [endpoint], day, true, anchor);
+
+        schedule.NextRunAt.Should().BeAfter(DateTimeOffset.UtcNow);
+        ((schedule.NextRunAt - anchor).Ticks % day.Ticks).Should().Be(0);
     }
 
     [TestMethod]
@@ -78,8 +113,9 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var first = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true);
-        var second = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true);
+        var now = DateTimeOffset.UtcNow;
+        var first = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true, now);
+        var second = factory("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true, now);
 
         first.Id.Should().NotBe(second.Id);
     }
@@ -92,17 +128,18 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var createExisting = services.GetRequiredService<ITestRunSchedule.CreateExisting>();
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
-        var original = createNew("Nightly", suite, [endpoint], TimeSpan.FromHours(2), true);
+        var original = createNew("Nightly", suite, [endpoint], TimeSpan.FromHours(2), true, DateTimeOffset.UtcNow);
 
         var schedule = createExisting(
             original.Name, original.Suite, original.Endpoints, original.Interval, original.IsEnabled,
-            original.NextRunAt, original.LastRunAt, original);
+            original.AnchorAt, original.NextRunAt, original.LastRunAt, original);
 
         schedule.Id.Should().Be(original.Id);
         schedule.Name.Should().Be(original.Name);
         schedule.Suite.Should().Be(original.Suite);
         schedule.Interval.Should().Be(original.Interval);
         schedule.IsEnabled.Should().Be(original.IsEnabled);
+        schedule.AnchorAt.Should().Be(original.AnchorAt);
         schedule.NextRunAt.Should().Be(original.NextRunAt);
         schedule.LastRunAt.Should().Be(original.LastRunAt);
         schedule.CreatedAt.Should().Be(original.CreatedAt);
@@ -119,7 +156,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var action = () => factory("   ", suite, [endpoint], TimeSpan.FromHours(1), true);
+        var action = () => factory("   ", suite, [endpoint], TimeSpan.FromHours(1), true, DateTimeOffset.UtcNow);
 
         action.Should().Throw<Exception>();
     }
@@ -132,7 +169,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var action = () => factory("Nightly", suite, [endpoint], TimeSpan.FromSeconds(30), true);
+        var action = () => factory("Nightly", suite, [endpoint], TimeSpan.FromSeconds(30), true, DateTimeOffset.UtcNow);
 
         action.Should().Throw<Exception>();
     }
@@ -144,7 +181,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var factory = services.GetRequiredService<ITestRunSchedule.CreateNew>();
         var suite = await GetOrCreate<ITestSuite>(services);
 
-        var action = () => factory("Nightly", suite, [], TimeSpan.FromHours(1), true);
+        var action = () => factory("Nightly", suite, [], TimeSpan.FromHours(1), true, DateTimeOffset.UtcNow);
 
         action.Should().Throw<Exception>();
     }
@@ -220,11 +257,58 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
         var schedule = await CreateSchedule(services, interval: TimeSpan.FromHours(1));
 
-        var updated = await schedule.Update("Renamed", [endpoint], TimeSpan.FromHours(6), false, CancellationToken);
+        var updated = await schedule.Update(
+            "Renamed", [endpoint], TimeSpan.FromHours(6), false, schedule.AnchorAt, DateTimeOffset.UtcNow,
+            CancellationToken);
 
         updated.Name.Should().Be("Renamed");
         updated.Interval.Should().Be(TimeSpan.FromHours(6));
         updated.IsEnabled.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task Update_WithNewAnchor_RecomputesNextRunToTheNewAnchor()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+        var schedule = await CreateSchedule(services, interval: TimeSpan.FromHours(1));
+
+        // Re-anchor to two hours out with a daily cadence → next run is exactly the new anchor.
+        var newAnchor = DateTimeOffset.UtcNow.AddHours(2);
+        var updated = await schedule.Update(
+            "Nightly", [endpoint], TimeSpan.FromDays(1), true, newAnchor, DateTimeOffset.UtcNow, CancellationToken);
+
+        updated.AnchorAt.Should().Be(newAnchor);
+        updated.NextRunAt.Should().Be(newAnchor);
+    }
+
+    [TestMethod]
+    public async Task Update_WhenCadenceUnchanged_PreservesOverdueNextRun()
+    {
+        IServiceProvider services = GetServicesWithRepository();
+        var createNew = services.GetRequiredService<ITestRunSchedule.CreateNew>();
+        var createExisting = services.GetRequiredService<ITestRunSchedule.CreateExisting>();
+        var suite = await GetOrCreate<ITestSuite>(services);
+        var endpoint = await GetOrCreate<IModelEndpoint>(services);
+
+        var anchor = DateTimeOffset.UtcNow.AddHours(-2);
+        var original = createNew("Nightly", suite, [endpoint], TimeSpan.FromHours(1), true, anchor);
+
+        // Reconstitute with an OVERDUE NextRunAt — a fire is due but the tick hasn't run, or a prior
+        // run is still in flight (same anchor + interval).
+        var overdueNext = DateTimeOffset.UtcNow.AddMinutes(-30);
+        var overdue = createExisting(
+            original.Name, original.Suite, original.Endpoints, original.Interval, original.IsEnabled,
+            original.AnchorAt, overdueNext, original.LastRunAt, original);
+
+        // A rename / enable-toggle (cadence unchanged) must NOT advance the overdue NextRunAt — else
+        // the pending fire is silently dropped.
+        var renamed = await overdue.Update(
+            "Renamed", [endpoint], original.Interval, true, original.AnchorAt, DateTimeOffset.UtcNow,
+            CancellationToken);
+
+        renamed.Name.Should().Be("Renamed");
+        renamed.NextRunAt.Should().Be(overdueNext);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -236,7 +320,7 @@ public sealed class TestRunScheduleValidationTests : DomainTest<Module>
         var suite = await GetOrCreate<ITestSuite>(services);
         var endpoint = await GetOrCreate<IModelEndpoint>(services);
 
-        var schedule = factory("Nightly", suite, [endpoint], interval, true);
+        var schedule = factory("Nightly", suite, [endpoint], interval, true, DateTimeOffset.UtcNow);
         return await repo.AddAsync(schedule, CancellationToken);
     }
 }

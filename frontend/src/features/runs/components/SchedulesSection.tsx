@@ -48,7 +48,7 @@ export function SchedulesSection({ agentFilter, onSelectRun }: {
   function handleSubmit(form: ScheduleFormValues) {
     if (editing) {
       update.mutate(
-        { id: editing.id, body: { name: form.name, modelEndpointIds: form.modelEndpointIds, intervalMinutes: form.intervalMinutes, enabled: form.enabled } },
+        { id: editing.id, body: { name: form.name, modelEndpointIds: form.modelEndpointIds, intervalMinutes: form.intervalMinutes, anchorAt: form.anchorAt, enabled: form.enabled } },
         { onSuccess: closeDialog },
       );
     } else {

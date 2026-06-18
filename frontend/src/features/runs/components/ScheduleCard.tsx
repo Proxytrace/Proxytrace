@@ -1,6 +1,6 @@
 import type { TestRunScheduleDto } from '../../../api/models';
 import { agentColor } from '../../../lib/colors';
-import { fmtUntil } from '../../../lib/format';
+import { fmtUntil, fmtDateTimeShortUtc } from '../../../lib/format';
 import { formatInterval } from '../../../lib/interval';
 import { EditIcon, TrashIcon, ClockIcon } from '../../../components/icons';
 import { Card } from '../../../components/ui/Card';
@@ -42,9 +42,14 @@ export function ScheduleCard({ schedule, onToggle, onEdit, onDelete, onSelectRun
               {formatInterval(schedule.intervalMinutes)}
             </span>
             <span aria-hidden>·</span>
-            <span>
-              {schedule.isEnabled ? `Next ${fmtUntil(schedule.nextRunAt)}` : 'Paused'}
-            </span>
+            {schedule.isEnabled ? (
+              <span data-testid={`schedule-next-run-${schedule.id}`}>
+                Next {fmtDateTimeShortUtc(schedule.nextRunAt)} UTC
+                <span className="text-muted"> · {fmtUntil(schedule.nextRunAt)}</span>
+              </span>
+            ) : (
+              <span>Paused</span>
+            )}
           </div>
         </div>
 

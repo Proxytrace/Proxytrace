@@ -6,10 +6,11 @@ import type {
 } from '../../../api/models';
 import { modelColor } from '../../../lib/colors';
 import {
-  fromIntervalMinutes,
-  toIntervalMinutes,
-  type IntervalUnit,
-} from '../../../lib/interval';
+  cadenceToSchedule,
+  scheduleToCadence,
+  initialCadence,
+  type CadenceState,
+} from '../../../lib/scheduleCadence';
 import useModelEndpoints from '../../../hooks/useModelEndpoints';
 import { useSuites } from '../../suites/hooks/useSuiteQueries';
 import { Modal, ModalFooter } from '../../../components/overlays/Modal';
@@ -18,6 +19,7 @@ import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Switch } from '../../../components/ui/Switch';
 import { RowButton } from '../../../components/ui/RowButton';
+import { ScheduleCadenceField } from './ScheduleCadenceField';
 
 interface Props {
   /** When set, the dialog edits this schedule; otherwise it creates a new one. */
@@ -34,21 +36,16 @@ export interface ScheduleFormValues {
   testSuiteId: string;
   modelEndpointIds: string[];
   intervalMinutes: number;
+  /** ISO instant the recurrence is phased to (the run time). */
+  anchorAt: string;
   enabled: boolean;
 }
-
-const UNIT_OPTIONS: { value: IntervalUnit; label: string }[] = [
-  { value: 'minutes', label: 'minutes' },
-  { value: 'hours', label: 'hours' },
-  { value: 'days', label: 'days' },
-];
 
 export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, pending }: Props) {
   const isEdit = schedule !== undefined;
   const { suites } = useSuites();
   const { data: endpoints = [] } = useModelEndpoints();
 
-  const initialInterval = fromIntervalMinutes(schedule?.intervalMinutes ?? 1440);
   const [name, setName] = useState(schedule?.name ?? '');
   // On edit the suite is fixed (the backend's UpdateRequest carries no suite); create-from-suite seeds
   // a locked suite; only the open create picker leaves it empty for the user to choose.
@@ -56,8 +53,9 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(schedule?.endpoints.map(e => e.id) ?? []),
   );
-  const [value, setValue] = useState(initialInterval.value);
-  const [unit, setUnit] = useState<IntervalUnit>(initialInterval.unit);
+  const [cadence, setCadence] = useState<CadenceState>(() =>
+    schedule ? scheduleToCadence(schedule.intervalMinutes, schedule.anchorAt) : initialCadence(),
+  );
   const [enabled, setEnabled] = useState(schedule?.isEnabled ?? true);
 
   function toggle(id: string) {
@@ -73,16 +71,17 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
   const valid =
     trimmedName.length > 0 &&
     (isEdit || lockedSuite !== undefined || suiteId.length > 0) &&
-    selected.size > 0 &&
-    value > 0;
+    selected.size > 0;
 
   function submit() {
     if (!valid) return;
+    const { intervalMinutes, anchorAt } = cadenceToSchedule(cadence, new Date());
     onSubmit({
       name: trimmedName,
       testSuiteId: suiteId,
       modelEndpointIds: Array.from(selected),
-      intervalMinutes: toIntervalMinutes(value, unit),
+      intervalMinutes,
+      anchorAt,
       enabled,
     });
   }
@@ -173,25 +172,7 @@ export function ScheduleFormDialog({ schedule, lockedSuite, onClose, onSubmit, p
           </div>
         </FormField>
 
-        <FormField label="Run every">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min={1}
-              value={value}
-              onChange={e => setValue(Math.max(1, Math.floor(Number(e.target.value) || 0)))}
-              className="w-24"
-              data-testid="schedule-interval-value"
-            />
-            <div className="w-36">
-              <Select value={unit} onValueChange={v => setUnit(v as IntervalUnit)} data-testid="schedule-interval-unit">
-                {UNIT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </Select>
-            </div>
-          </div>
-        </FormField>
+        <ScheduleCadenceField cadence={cadence} onChange={setCadence} />
 
         <div className="flex items-center justify-between">
           <span className="text-title font-medium text-secondary">Enabled</span>

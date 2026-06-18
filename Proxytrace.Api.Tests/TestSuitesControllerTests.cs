@@ -489,6 +489,61 @@ public sealed class TestSuitesControllerTests : BaseTest<Module>
         dto.LastRunAt.Should().NotBeNull();
     }
 
+    [TestMethod]
+    public async Task GetRunStats_MissingSuite_ReturnsNotFound()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+
+        var result = await controller.GetRunStats(Guid.NewGuid(), cancellationToken: CancellationToken);
+
+        result.Result.Should().BeOfType<NotFoundResult>();
+    }
+
+    [TestMethod]
+    public async Task GetRunStats_NoRuns_ReturnsZeroedStats()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+
+        var result = await controller.GetRunStats(suite.Id, cancellationToken: CancellationToken);
+
+        var dto = result.Value ?? throw new InvalidOperationException("Expected DTO.");
+        dto.RunCount.Should().Be(0);
+        dto.PassRate.Should().BeNull();
+        dto.AvgDurationMs.Should().BeNull();
+        dto.TotalCost.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetRunStats_WithRuns_AggregatesPassRateDurationAndCost()
+    {
+        IServiceProvider services = GetServices();
+        var controller = ResolveController(services);
+        var suite = await services.GetRequiredService<IDomainEntityGenerator<ITestSuite>>().CreateAsync(CancellationToken);
+        var writer = services.GetRequiredService<IStatsWriter<TestRunStats>>();
+
+        await writer.UpsertAsync(new TestRunStats(
+            TestRunId: Guid.NewGuid(), AgentId: suite.Agent.Id, EndpointId: Guid.NewGuid(),
+            GroupId: Guid.NewGuid(), SuiteId: suite.Id, TestCases: 4, Passed: 3,
+            TotalDuration: TimeSpan.FromSeconds(2), Usage: null, Cost: 0.10m,
+            RunCompletedAt: DateTimeOffset.UtcNow), CancellationToken);
+        await writer.UpsertAsync(new TestRunStats(
+            TestRunId: Guid.NewGuid(), AgentId: suite.Agent.Id, EndpointId: Guid.NewGuid(),
+            GroupId: Guid.NewGuid(), SuiteId: suite.Id, TestCases: 6, Passed: 6,
+            TotalDuration: TimeSpan.FromSeconds(4), Usage: null, Cost: 0.20m,
+            RunCompletedAt: DateTimeOffset.UtcNow), CancellationToken);
+
+        var result = await controller.GetRunStats(suite.Id, cancellationToken: CancellationToken);
+
+        var dto = result.Value ?? throw new InvalidOperationException("Expected DTO.");
+        dto.RunCount.Should().Be(2);
+        dto.PassRate.Should().Be(90);            // (3+6)/(4+6) = 0.9
+        dto.AvgDurationMs.Should().Be(3000);     // (2000+4000)/2
+        dto.TotalCost.Should().Be(0.30m);
+    }
+
     private static TestSuitesController ResolveController(
         IServiceProvider services, ILicenseService? license = null) =>
         new(

@@ -97,7 +97,8 @@ public class TestRunSchedulesController : ControllerBase
             request.ModelEndpointIds.Select(id => endpoints.GetAsync(id, cancellationToken)));
 
         var schedule = createSchedule(
-            request.Name, suite, endpointList, TimeSpan.FromMinutes(request.IntervalMinutes), request.Enabled);
+            request.Name, suite, endpointList, TimeSpan.FromMinutes(request.IntervalMinutes), request.Enabled,
+            request.AnchorAt ?? DateTimeOffset.UtcNow);
         schedule = await scheduleRepository.AddAsync(schedule, cancellationToken);
 
         return CreatedAtAction(nameof(Get), new { id = schedule.Id }, await ToDtoAsync(schedule, cancellationToken));
@@ -125,7 +126,7 @@ public class TestRunSchedulesController : ControllerBase
 
         schedule = await schedule.Update(
             request.Name, endpointList, TimeSpan.FromMinutes(request.IntervalMinutes), request.Enabled,
-            cancellationToken);
+            request.AnchorAt ?? schedule.AnchorAt, DateTimeOffset.UtcNow, cancellationToken);
 
         return await ToDtoAsync(schedule, cancellationToken);
     }
@@ -172,6 +173,7 @@ public class TestRunSchedulesController : ControllerBase
             Endpoints: schedule.Endpoints.Select(e => new ScheduleEndpointDto(e.Id, e.Model.Name)).ToArray(),
             IntervalMinutes: (int)schedule.Interval.TotalMinutes,
             IsEnabled: schedule.IsEnabled,
+            AnchorAt: schedule.AnchorAt,
             NextRunAt: schedule.NextRunAt,
             LastRunAt: schedule.LastRunAt,
             RecentRuns: recentRuns,

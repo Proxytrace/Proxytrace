@@ -8,7 +8,9 @@ import { SelectionRail } from './components/SelectionRail';
 import { BenchPane } from './components/BenchPane';
 import { VerdictColumn } from './components/VerdictColumn';
 
-const GRID = 'flex-1 min-h-0 grid grid-cols-[300px_minmax(0,1fr)_360px] gap-3';
+// First column shares the locked ListRail left bound (minmax(248px,320px)); the playground keeps
+// its own 3-column page (rail · bench · verdict) — see DESIGN.md "List rail" exception.
+const GRID = 'flex-1 min-h-0 grid grid-cols-[minmax(248px,320px)_minmax(0,1fr)_360px] gap-3';
 
 /**
  * Evaluator Playground — "Guided Rail": pick a judge and one of its past

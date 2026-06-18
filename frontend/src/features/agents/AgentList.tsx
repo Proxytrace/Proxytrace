@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import type { AgentListItemDto } from '../../api/models';
-import { SearchIcon, XIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
+import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../lib/selectionRow';
 import { cn } from '../../lib/cn';
 import { fmtRelative } from '../../lib/format';
-import { IconButton } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { ListRail } from '../../components/ui/ListRail';
 import { RowButton } from '../../components/ui/RowButton';
-import { SkeletonList } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 interface Props {
   agents: AgentListItemDto[];
@@ -31,18 +30,12 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
     : agents;
 
   return (
-    <div className="flex flex-col gap-3 min-h-0">
-      <Input
-        leftAddon={<SearchIcon size={13} />}
-        rightAddon={search ? (
-          <IconButton size="sm" onClick={() => setSearch('')} aria-label="Clear search"><XIcon size={12} /></IconButton>
-        ) : undefined}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        placeholder="Search agents…"
-      />
-
-      {onToggleSystem && (
+    <ListRail
+      listTestId="agent-list"
+      title="Agents"
+      count={agents.length}
+      search={{ value: search, onChange: setSearch, placeholder: 'Search agents…' }}
+      filter={onToggleSystem ? (
         // eslint-disable-next-line no-restricted-syntax -- bespoke labeled switch-pill (track + inline label in one tinted control)
         <button
           type="button"
@@ -51,10 +44,10 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           onClick={onToggleSystem}
           title={showSystem ? 'Hide system agents' : 'Show system agents'}
           className={cn(
-            'self-start inline-flex items-center gap-2 px-3 py-2 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
+            'inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] text-[12.5px] font-medium cursor-pointer transition-colors duration-200 border-none',
             showSystem
-              ? 'text-accent bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent-primary),var(--shadow-pill)]'
-              : 'text-secondary bg-card shadow-[var(--shadow-pill)]',
+              ? 'text-accent bg-accent-subtle shadow-[inset_0_0_0_1px_var(--accent-primary)]'
+              : 'text-secondary bg-card-2',
           )}
         >
           <span
@@ -70,17 +63,12 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           </span>
           System Agents
         </button>
-      )}
-
-      <div data-testid="agent-list" className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
-        {isLoading && (
-          <SkeletonList rows={6} height={64} gap={6} />
-        )}
-        {!isLoading && filtered.length === 0 && (
-          <div className="text-body text-muted px-2 py-3 italic">
-            {search ? 'No matches' : 'No agents yet'}
-          </div>
-        )}
+      ) : undefined}
+      loading={isLoading}
+      isEmpty={filtered.length === 0}
+      empty={<EmptyState title={search ? 'No matches' : 'No agents yet'} description={search ? 'Clear the search to see all agents.' : undefined} />}
+    >
+      <div className="flex flex-col gap-1.5">
         {filtered.map(a => (
           <AgentRow
             key={a.id}
@@ -90,7 +78,7 @@ export function AgentList({ agents, selectedId, onSelect, isLoading, showSystem,
           />
         ))}
       </div>
-    </div>
+    </ListRail>
   );
 }
 
@@ -103,23 +91,12 @@ function AgentRow({ agent, selected, onClick }: { agent: AgentListItemDto; selec
       onClick={onClick}
       data-testid={`agent-card-${agent.id}`}
       className={`rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] ${
-        selected ? '' : 'bg-card hover:bg-card-2 shadow-[var(--shadow-card)]'
+        selected ? '' : SELECTION_ROW_INACTIVE
       }`}
-      style={
-        selected
-          ? {
-              background: `linear-gradient(120deg, color-mix(in srgb, ${c} 10%, transparent), transparent 70%), var(--bg-card)`,
-              boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${c} 45%, transparent), 0 6px 22px -10px color-mix(in srgb, ${c} 32%, transparent)`,
-            }
-          : undefined
-      }
+      style={selected ? selectionRowStyle(c) : undefined}
     >
       {selected && (
-        <div
-          aria-hidden
-          className="absolute left-0 top-0 bottom-0 w-[3px]"
-          style={{ background: c }}
-        />
+        <div aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={selectionBarStyle(c)} />
       )}
       <div className="flex items-center gap-2.5 min-w-0">
         <div
