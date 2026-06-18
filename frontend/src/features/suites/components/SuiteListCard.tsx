@@ -2,6 +2,7 @@ import type { TestSuiteListItemDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
 import { agentColor } from '../../../lib/colors';
+import { selectionRowStyle, selectionBarStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
 import { TrashIcon } from '../../../components/icons';
 import { IconButton } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
@@ -33,18 +34,11 @@ export function SuiteListCard({ suite, selected, highlight = false, onSelect, on
         aria-label={`Select suite ${suite.name}`}
         data-testid={`suite-select-${suite.id}`}
         className={`rounded-lg relative overflow-hidden transition-[box-shadow,background-color] duration-150 px-3 py-2.5 pl-[14px] ${FOCUS_RING} ${
-          active ? '' : 'bg-card hover:bg-card-2 shadow-[var(--shadow-card)]'
+          active ? '' : SELECTION_ROW_INACTIVE
         }`}
-        style={
-          active
-            ? {
-                background: `linear-gradient(120deg, color-mix(in srgb, ${c} 10%, transparent), transparent 70%), var(--bg-card)`,
-                boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${c} 45%, transparent), 0 6px 22px -10px color-mix(in srgb, ${c} 32%, transparent)`,
-              }
-            : undefined
-        }
+        style={active ? selectionRowStyle(c) : undefined}
       >
-        {active && <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: c }} />}
+        {active && <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px]" style={selectionBarStyle(c)} />}
 
         <div className="flex items-center gap-2.5 min-w-0">
           <div

@@ -8,12 +8,9 @@ import { Button } from '../../components/ui/Button';
 import { ChevronRightIcon } from '../../components/icons';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { Card } from '../../components/ui/Card';
-import { FilterDropdown } from '../../components/ui/FilterDropdown';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { SkeletonList } from '../../components/ui/Skeleton';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { Tabs } from '../../components/ui/Tabs';
-import { FOCUS_RING } from '../../lib/constants';
-import { GroupListCard } from './components/GroupListCard';
+import { RunList } from './components/RunList';
 import { SchedulesSection } from './components/SchedulesSection';
 import { GroupDetail } from './GroupDetail';
 import { useTestRunGroups } from './hooks/useTestRunGroups';
@@ -92,55 +89,27 @@ export default function Runs() {
       <div
         className={cn(
           'fade-up [animation-delay:40ms] flex-1 min-h-0',
-          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,280px)_minmax(0,1fr)]',
+          isMobile ? 'flex flex-col' : `grid gap-4 ${LIST_RAIL_COLS}`,
         )}
       >
         {/* Left: group list — scrolls independently of the detail panel.
             On mobile it is the landing screen and hides once a group is opened. */}
         {(!isMobile || !selectedGroup) && (
-        <div className="flex flex-col gap-2 min-w-0 min-h-0 overflow-y-auto pr-1 -mr-1">
-          <div className="flex items-center gap-2">
-            <FilterDropdown
-              label="Agent"
-              value={agentFilter}
-              options={agentOptions}
-              onChange={setAgentFilter}
-              active={agentFilter !== ''}
-              accent={agentFilter ? agentColor(agentFilter) : undefined}
-              width={240}
-            />
-            {/* eslint-disable-next-line no-restricted-syntax -- single bespoke filter toggle pill */}
-            <button
-              type="button"
-              onClick={() => setShowSystem(v => !v)}
-              aria-pressed={showSystem}
-              title="Show ephemeral A/B validation runs"
-              className={`shrink-0 rounded-lg px-2.5 py-[7px] text-body-sm font-medium cursor-pointer transition-colors duration-[var(--motion-fast)] ${FOCUS_RING} ${
-                showSystem
-                  ? 'bg-accent-subtle text-accent'
-                  : 'bg-card-2 text-muted hover:text-secondary'
-              }`}
-            >
-              A/B runs
-            </button>
-          </div>
-
-          {isLoading && <SkeletonList rows={5} height={110} gap={8} />}
-
-          {groups.map(group => (
-            <GroupListCard
-              key={group.id}
-              group={group}
-              isSelected={selectedGroup?.id === group.id}
-              onSelect={() => setSelectedGroupId(group.id, ['run'])}
-              onDelete={() => setDeleteGroupId(group.id)}
-            />
-          ))}
-
-          {!isLoading && groups.length === 0 && (
-            <EmptyState title="No test runs yet" description="Run a suite to get started." />
-          )}
-        </div>
+          <RunList
+            groups={groups}
+            isLoading={isLoading}
+            selectedId={selectedGroup?.id ?? null}
+            onSelect={id => setSelectedGroupId(id, ['run'])}
+            onDelete={id => setDeleteGroupId(id)}
+            agentFilter={{
+              value: agentFilter,
+              options: agentOptions,
+              accent: agentFilter ? agentColor(agentFilter) : undefined,
+              onChange: setAgentFilter,
+            }}
+            showSystem={showSystem}
+            onToggleSystem={() => setShowSystem(v => !v)}
+          />
         )}
 
         {/* Right: detail — on mobile a full-screen view with a back affordance */}

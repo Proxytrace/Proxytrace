@@ -44,6 +44,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **One consistent left-hand list across the workspace.** Agents, Evaluators, Test Suites, Test
+  Runs, and the Evaluator Playground now share a single left-column design — the same framed panel,
+  the same header layout (title, count, create, search, filters), the same column width, and the
+  same selected-row highlight everywhere. Previously each page styled its list differently; the
+  views now feel like one product.
+
 - **The Test Suites workspace is easier to scan and edit.** The performance strip is now a compact
   single-line KPI row (no boxed dividers, roughly half the height). In the **Test Cases** tab, the
   old Current / Add-from-traces tab chips are gone — current cases are always shown, and a single

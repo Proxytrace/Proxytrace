@@ -1,7 +1,8 @@
 import type { TestRunGroupListItemDto } from '../../../api/models';
 import { FOCUS_RING } from '../../../lib/constants';
 import { fmtRelative } from '../../../lib/format';
-import { agentColor, modelColor, tint } from '../../../lib/colors';
+import { agentColor, modelColor } from '../../../lib/colors';
+import { selectionRowStyle, SELECTION_ROW_INACTIVE } from '../../../lib/selectionRow';
 import { TrashIcon, TargetIcon } from '../../../components/icons';
 import { Pill } from '../../../components/ui/Pill';
 import { IconButton } from '../../../components/ui/Button';
@@ -27,8 +28,10 @@ export function GroupListCard({ group, isSelected, onSelect, onDelete }: {
         onClick={onSelect}
         aria-pressed={isSelected}
         data-testid={`group-list-card-btn-${group.id}`}
-        className={`relative rounded-lg bg-card overflow-hidden pl-[17px] pr-3.5 py-3 shadow-[var(--shadow-card)] transition-[box-shadow] duration-[var(--motion-base)] ${FOCUS_RING}`}
-        style={isSelected ? { boxShadow: `0 0 0 1.5px ${tint(c, 45)}, var(--shadow-card)` } : undefined}
+        className={`relative rounded-lg overflow-hidden pl-[17px] pr-3.5 py-3 transition-[box-shadow,background-color] duration-[var(--motion-base)] ${FOCUS_RING} ${
+          isSelected ? '' : SELECTION_ROW_INACTIVE
+        }`}
+        style={isSelected ? selectionRowStyle(c) : undefined}
       >
         <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg" style={{ background: c }} />
 

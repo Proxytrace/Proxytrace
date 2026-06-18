@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { SkeletonList } from '../../../components/ui/Skeleton';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
+import { ListRail } from '../../../components/ui/ListRail';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
-import { PlusIcon, SearchLineIcon } from '../../../components/icons';
+import { EmptyState } from '../../../components/ui/EmptyState';
 import type { EvaluatorDetailDto } from '../../../api/models';
 import {
   KIND_CATEGORY,
@@ -48,32 +46,13 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
     .filter(g => g.items.length > 0);
 
   return (
-    <aside data-testid="evaluator-rail" className="flex flex-col min-h-0 overflow-hidden bg-card rounded-lg shadow-[var(--shadow-card)]">
-      <div className="flex flex-col gap-[9px] px-3.5 pt-3.5 pb-2.5 border-b border-hairline">
-        <div className="flex items-center justify-between">
-          <span className="text-[14px] font-bold tracking-[-0.015em]">Evaluators</span>
-          <span className="text-[10.5px] text-muted font-mono">{evaluators.length}</span>
-        </div>
-        <Button
-          variant="primary"
-          size="sm"
-          fullWidth
-          data-testid="evaluator-create-btn"
-          leftIcon={<PlusIcon size={12} />}
-          onClick={onNew}
-        >
-          New evaluator
-        </Button>
-        <Input
-          leftAddon={<SearchLineIcon size={12} />}
-          inputSize="sm"
-          value={q}
-          onChange={ev => setQ(ev.target.value)}
-          placeholder="Search…"
-        />
-      </div>
-
-      <div className="px-2.5 py-2 border-b border-hairline">
+    <ListRail
+      railTestId="evaluator-rail"
+      title="Evaluators"
+      count={evaluators.length}
+      create={{ onClick: onNew, label: 'New evaluator', testId: 'evaluator-create-btn' }}
+      search={{ value: q, onChange: setQ }}
+      filter={
         <SegmentedControl
           className="w-full"
           value={typeFilter}
@@ -89,41 +68,42 @@ export function EvalRail({ evaluators, isLoading, selectedId, onSelect, onNew, s
               : undefined,
           }))}
         />
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-2 py-2.5 flex flex-col gap-2.5">
-        {isLoading ? (
-          <SkeletonList rows={6} height={48} gap={4} />
-        ) : groups.length === 0 ? (
-          <div className="p-5 text-center text-muted text-[12px]">
-            {evaluators.length === 0 ? 'No evaluators yet.' : 'No matches.'}
-          </div>
-        ) : (
-          groups.map(g => (
-            <div key={g.type} className="flex flex-col gap-[3px]">
-              <div className="flex items-center gap-2 px-1 mb-0.5">
-                <span className={cn('w-[5px] h-[5px] rounded-[1px]', categoryBg[g.type])} />
-                <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">
-                  {TYPE_META[g.type].short}
-                </span>
-                <span className="text-[9.5px] text-muted font-mono ml-auto">{g.items.length}</span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                {g.items.map(e => (
-                  <EvaluatorRow
-                    key={e.id}
-                    evaluator={e}
-                    isSelected={e.id === selectedId}
-                    onSelect={onSelect}
-                    sparkline={sparklineById.get(e.id)}
-                    avgScore={avgScoreById.get(e.id) ?? null}
-                  />
-                ))}
-              </div>
+      }
+      loading={isLoading}
+      skeletonHeight={48}
+      isEmpty={groups.length === 0}
+      empty={
+        <EmptyState
+          title={evaluators.length === 0 ? 'No evaluators yet' : 'No matches'}
+          description={evaluators.length === 0 ? 'Create one to start scoring runs.' : 'Clear the filters to see all evaluators.'}
+        />
+      }
+    >
+      <div className="flex flex-col gap-2.5">
+        {groups.map(g => (
+          <div key={g.type} className="flex flex-col gap-[3px]">
+            <div className="flex items-center gap-2 px-1 mb-0.5">
+              <span className={cn('w-[5px] h-[5px] rounded-[1px]', categoryBg[g.type])} />
+              <span className="text-[10px] text-muted uppercase tracking-[0.09em] font-semibold">
+                {TYPE_META[g.type].short}
+              </span>
+              <span className="text-[9.5px] text-muted font-mono ml-auto">{g.items.length}</span>
             </div>
-          ))
-        )}
+            <div className="flex flex-col gap-0.5">
+              {g.items.map(e => (
+                <EvaluatorRow
+                  key={e.id}
+                  evaluator={e}
+                  isSelected={e.id === selectedId}
+                  onSelect={onSelect}
+                  sparkline={sparklineById.get(e.id)}
+                  avgScore={avgScoreById.get(e.id) ?? null}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
-    </aside>
+    </ListRail>
   );
 }

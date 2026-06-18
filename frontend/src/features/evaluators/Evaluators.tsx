@@ -7,6 +7,7 @@ import { Modal, ModalFooter } from '../../components/overlays/Modal';
 import { type RangeKey } from '../../lib/time-range';
 import { META, initForm, type EvaluatorFormState } from './evaluatorMeta';
 import { EvaluatorForm } from './EvaluatorForm';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { EvalRail } from './components/EvalRail';
 import { EvaluatorDetail } from './components/EvaluatorDetail';
 import { EmptyDetail } from './components/EmptyDetail';
@@ -105,7 +106,7 @@ export default function Evaluators() {
 
   return (
     <div className="h-full flex flex-col min-h-0">
-      <div className="flex-1 grid grid-cols-[288px_1fr] gap-3.5 min-h-0">
+      <div className={`flex-1 grid ${LIST_RAIL_COLS} gap-3.5 min-h-0`}>
         <EvalRail
           evaluators={evaluators}
           isLoading={isLoading}

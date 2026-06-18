@@ -36,11 +36,16 @@ export const categoryTint18: Record<TypeCategory, string> = {
   numeric: 'bg-[color-mix(in_srgb,var(--teal)_18%,transparent)]',
 };
 
-/** Selected-row wash (12%) + inset ring (35%). */
+/**
+ * Canonical selected-row treatment — the class-based twin of `lib/selectionRow.ts`
+ * (which the runtime-hex rails use): a category-colored gradient wash + inset ring +
+ * soft drop shadow. Token color ⇒ static classes per DESIGN.md §6. Locked in the
+ * "List rail" pattern so evaluator rows match agents/suites/runs.
+ */
 export const categorySelectedRow: Record<TypeCategory, string> = {
-  llm: 'bg-[color-mix(in_srgb,var(--accent-primary)_12%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_35%,transparent)]',
-  rule: 'bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_35%,transparent)]',
-  numeric: 'bg-[color-mix(in_srgb,var(--teal)_12%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_35%,transparent)]',
+  llm: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--accent-primary)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--accent-primary)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--accent-primary)_32%,transparent)]',
+  rule: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--teal)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--teal)_32%,transparent)]',
+  numeric: 'bg-[linear-gradient(120deg,color-mix(in_srgb,var(--teal)_10%,transparent),transparent_70%),var(--bg-card)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--teal)_45%,transparent),0_6px_22px_-10px_color-mix(in_srgb,var(--teal)_32%,transparent)]',
 };
 
 /** Header gradient wash (12% in top-left corner). */

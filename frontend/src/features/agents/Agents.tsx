@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/Button';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { ChevronRightIcon } from '../../components/icons';
 import { cn } from '../../lib/cn';
 import { useSelectedId } from '../../hooks/useSelectedId';
@@ -61,11 +62,10 @@ export default function Agents() {
         <div
           className={cn(
             'fade-up flex-1 min-h-0 [animation-delay:20ms]',
-            isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(232px,300px)_minmax(0,1fr)]',
+            isMobile ? 'flex flex-col' : `grid gap-4 ${LIST_RAIL_COLS}`,
           )}
         >
           {(!isMobile || !selected) && (
-          <aside className="min-h-0 flex flex-col">
             <AgentList
               agents={agents}
               selectedId={selected?.id ?? null}
@@ -74,7 +74,6 @@ export default function Agents() {
               showSystem={showSystem}
               onToggleSystem={hasSystemAgents ? () => setShowSystem(v => !v) : undefined}
             />
-          </aside>
           )}
 
           {(!isMobile || selected) && (

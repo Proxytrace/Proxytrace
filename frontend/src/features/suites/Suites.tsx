@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../../components/overlays/ConfirmDialog';
 import { StepWizard } from '../../components/overlays/StepWizard';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { LIST_RAIL_COLS } from '../../components/ui/ListRail';
 import { ChevronRightIcon } from '../../components/icons';
 import { agentColor } from '../../lib/colors';
 import { cn } from '../../lib/cn';
@@ -162,28 +163,26 @@ export default function Suites() {
       <div
         className={cn(
           'fade-up flex-1 min-h-0 [animation-delay:20ms]',
-          isMobile ? 'flex flex-col' : 'grid gap-4 grid-cols-[minmax(248px,320px)_minmax(0,1fr)]',
+          isMobile ? 'flex flex-col' : `grid gap-4 ${LIST_RAIL_COLS}`,
         )}
       >
         {/* Left: suite list */}
         {(!isMobile || !selectedSuite) && (
-          <aside className="min-h-0 flex flex-col">
-            <SuiteList
-              suites={visibleSuites}
-              isLoading={isLoading}
-              selectedId={selectedSuite?.id ?? null}
-              highlightId={highlightSuiteId}
-              onSelect={setSelectedSuiteId}
-              onDelete={setDeleteSuite}
-              onNew={() => { setCreateOpen(true); resetCreate(); }}
-              agentFilter={{
-                value: agentFilter,
-                options: agentFilterOptions,
-                accent: agentFilter ? agentColor(agentFilter) : undefined,
-                onChange: setAgentFilter,
-              }}
-            />
-          </aside>
+          <SuiteList
+            suites={visibleSuites}
+            isLoading={isLoading}
+            selectedId={selectedSuite?.id ?? null}
+            highlightId={highlightSuiteId}
+            onSelect={setSelectedSuiteId}
+            onDelete={setDeleteSuite}
+            onNew={() => { setCreateOpen(true); resetCreate(); }}
+            agentFilter={{
+              value: agentFilter,
+              options: agentFilterOptions,
+              accent: agentFilter ? agentColor(agentFilter) : undefined,
+              onChange: setAgentFilter,
+            }}
+          />
         )}
 
         {/* Right: detail */}
