@@ -92,6 +92,11 @@ dotnet ef database update --project Proxytrace.Storage --startup-project Proxytr
 To regenerate the consolidated history from scratch, delete `Proxytrace.Storage/Migrations/*.cs`
 and run `dotnet ef migrations add Initial` with the env-var connection string above.
 
+The `AddTestRunScheduling` migration adds the `TestRunScheduleEntity` table and its
+`TestRunScheduleEndpointEntity` join table (the endpoints a schedule runs against), plus a nullable
+`TestRunGroupEntity.ScheduleId` column + FK (`OnDelete(Restrict)`) linking a run group back to the
+schedule that triggered it.
+
 ## Quick start
 
 Bring up a PostgreSQL instance (the repo's `docker-compose.yml` ships one) and run the API:

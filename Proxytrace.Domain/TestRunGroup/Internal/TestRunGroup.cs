@@ -13,10 +13,12 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
     public TestRunStatus Status { get; private init; }
     public DateTimeOffset? CompletedAt { get; private init; }
     public bool IsSystemRun { get; }
+    public Guid? ScheduleId { get; }
 
     public TestRunGroup(
         ITestSuite suite,
         bool isSystemRun,
+        Guid? scheduleId,
         IRepository<ITestRunGroup> repository,
         ITestRunRepository testRuns) : base(repository)
     {
@@ -25,6 +27,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         Status = TestRunStatus.Pending;
         CompletedAt = null;
         IsSystemRun = isSystemRun;
+        ScheduleId = scheduleId;
     }
 
     public TestRunGroup(
@@ -32,6 +35,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         TestRunStatus status,
         DateTimeOffset? completedAt,
         bool isSystemRun,
+        Guid? scheduleId,
         IDomainEntityData existing,
         IRepository<ITestRunGroup> repository,
         ITestRunRepository testRuns) : base(existing, repository)
@@ -41,6 +45,7 @@ internal record TestRunGroup : DomainEntity<ITestRunGroup>, ITestRunGroup
         Status = status;
         CompletedAt = completedAt;
         IsSystemRun = isSystemRun;
+        ScheduleId = scheduleId;
     }
 
     public Task<IReadOnlyList<ITestRun>> GetTestRuns(CancellationToken cancellationToken = default)

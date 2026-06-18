@@ -142,4 +142,16 @@ internal class TestRunGroupRepository : AbstractRepository<ITestRunGroup, TestRu
                 && x.Group.CompletedAt > since)
             .CountAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ITestRunGroup>> GetByScheduleAsync(Guid scheduleId, int take, CancellationToken cancellationToken = default)
+    {
+        var stored = await contextFactory()
+            .Set<TestRunGroupEntity>()
+            .AsNoTracking()
+            .Where(e => e.ScheduleId == scheduleId)
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+        return await Map(stored, cancellationToken);
+    }
 }

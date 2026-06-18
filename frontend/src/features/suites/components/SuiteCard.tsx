@@ -2,7 +2,7 @@ import type { TestSuiteListItemDto } from '../../../api/models';
 import { agentColor, EVALUATOR_KIND_COLOR } from '../../../lib/colors';
 import { fmtRelative, fmtDate } from '../../../lib/format';
 import { ColoredBadge } from '../../../components/ui/ColoredBadge';
-import { EditIcon, TrashIcon, PlayFilledIcon } from '../../../components/icons';
+import { EditIcon, TrashIcon, PlayFilledIcon, ClockIcon } from '../../../components/icons';
 import { Button, IconButton } from '../../../components/ui/Button';
 import { RowButton } from '../../../components/ui/RowButton';
 import { sparklinePath } from '../../../lib/charts';
@@ -16,13 +16,15 @@ interface Props {
   onEdit: () => void;
   onDelete: () => void;
   onSelect: () => void;
+  /** When provided, a Schedule action is shown that opens the create-from-suite dialog. */
+  onSchedule?: () => void;
   /** Persistent URL-driven selection ring. */
   selected?: boolean;
   /** Transient deep-link focus flash. */
   highlight?: boolean;
 }
 
-export function SuiteCard({ suite, onRun, onEdit, onDelete, onSelect, selected = false, highlight = false }: Props) {
+export function SuiteCard({ suite, onRun, onEdit, onDelete, onSelect, onSchedule, selected = false, highlight = false }: Props) {
   const c = agentColor(suite.agentId);
   const hasRuns = suite.totalRuns > 0;
   const passColor = passRateColor(suite.passRate);
@@ -86,6 +88,11 @@ export function SuiteCard({ suite, onRun, onEdit, onDelete, onSelect, selected =
             <Button variant="primary" size="sm" leftIcon={<PlayFilledIcon size={11} />} onClick={onRun}>
               {hasRuns ? 'Run again' : 'Run now'}
             </Button>
+            {onSchedule && (
+              <IconButton onClick={onSchedule} data-write data-testid={`suite-schedule-btn-${suite.id}`} aria-label="Schedule runs">
+                <ClockIcon size={13} />
+              </IconButton>
+            )}
             <IconButton onClick={onEdit} data-write data-testid={`suite-edit-btn-${suite.id}`} aria-label="Edit suite">
               <EditIcon size={13} />
             </IconButton>

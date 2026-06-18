@@ -17,6 +17,28 @@ export interface SetupCompleteResponse {
   projectId: string;
 }
 
+export interface ScheduleEndpointDto {
+  id: string;
+  name: string;
+}
+
+export interface TestRunScheduleDto {
+  id: string;
+  name: string;
+  suiteId: string;
+  suiteName: string;
+  agentId: string;
+  agentName: string;
+  endpoints: ScheduleEndpointDto[];
+  intervalMinutes: number;
+  isEnabled: boolean;
+  nextRunAt: string;
+  lastRunAt: string | null;
+  recentRuns: Array<{ id: string; status: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TheoryDto {
   id: string;
   kind: string;
@@ -923,6 +945,42 @@ export class ProxytraceApiClient {
     }>;
   }> {
     return this.getList('/api/error-log', params);
+  }
+
+  // ── Test-run schedules ───────────────────────────────────────────────────
+  // Periodic test-run schedules. Creation/management is gated behind the ScheduledTestRuns
+  // (Enterprise) license feature — the controller's [RequiresFeature] gate 402s on the Free tier
+  // — so seed/assert against the default (Enterprise) e2e stack. The request body mirrors
+  // CreateTestRunScheduleRequest: { name, testSuiteId, modelEndpointIds, intervalMinutes, enabled }.
+  async createTestRunSchedule(opts: {
+    name: string;
+    testSuiteId: string;
+    modelEndpointIds: string[];
+    intervalMinutes: number;
+    enabled?: boolean;
+  }): Promise<TestRunScheduleDto> {
+    const res = await this.request.post('/api/test-run-schedules', {
+      headers: this.headers(),
+      data: {
+        name: opts.name,
+        testSuiteId: opts.testSuiteId,
+        modelEndpointIds: opts.modelEndpointIds,
+        intervalMinutes: opts.intervalMinutes,
+        enabled: opts.enabled ?? true,
+      },
+    });
+    if (!res.ok()) throw new Error(`create schedule failed: ${res.status()} ${await res.text()}`);
+    return res.json();
+  }
+
+  async listTestRunSchedules(params?: { agentId?: string; projectId?: string }): Promise<TestRunScheduleDto[]> {
+    const qs = new URLSearchParams();
+    if (params?.agentId) qs.set('agentId', params.agentId);
+    if (params?.projectId) qs.set('projectId', params.projectId);
+    const query = qs.toString() ? `?${qs}` : '';
+    const res = await this.request.get(`/api/test-run-schedules${query}`, { headers: this.headers() });
+    if (!res.ok()) throw new Error(`list schedules failed: ${res.status()} ${await res.text()}`);
+    return res.json();
   }
 
   private async getList<T>(path: string, params: Record<string, string | number | undefined>): Promise<T> {

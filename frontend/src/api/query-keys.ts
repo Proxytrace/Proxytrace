@@ -56,6 +56,10 @@ export const QUERY_KEYS = {
   testRunGroup: (id: string) => [TEST_RUN_GROUPS, 'detail', id] as const,
   /** Prefix matching every test-run-groups query — use for invalidation. */
   testRunGroupsRoot: [TEST_RUN_GROUPS] as const,
+  testRunSchedules: (agentFilter?: string, projectId?: string) =>
+    ['test-run-schedules', agentFilter, projectId ?? null] as const,
+  /** Prefix matching every test-run-schedules query — use for invalidation. */
+  testRunSchedulesRoot: ['test-run-schedules'] as const,
   testSuites: (agentFilter?: string, projectId?: string) => ['test-suites', agentFilter, projectId ?? null] as const,
   /** Prefix matching every test-suites query — use for invalidation. */
   testSuitesRoot: ['test-suites'] as const,

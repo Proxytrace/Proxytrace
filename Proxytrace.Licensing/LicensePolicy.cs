@@ -29,6 +29,7 @@ public static class LicensePolicy
             LicenseFeature.SsoOidc,
             LicenseFeature.AuditLog,
             LicenseFeature.Tracey,
+            LicenseFeature.ScheduledTestRuns,
         },
         new Dictionary<LicenseLimit, long>
         {

@@ -19,7 +19,8 @@ public interface ILicenseService
 
 - **Gate every premium capability through `ILicenseService`.** Before exposing or executing a gated
   feature, check `IsFeatureEnabled(...)` / `GetLimit(...)`. Current gated features:
-  `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`, `Tracey`.
+  `OptimizationProposals`, `AgenticEvaluators`, `CustomEvaluators`, `SsoOidc`, `AuditLog`, `Tracey`,
+  `ScheduledTestRuns`.
 - **`Current` is never null** and defaults to the **Free** tier — write code that degrades to Free,
   never code that assumes a paid tier or null-guards the snapshot.
 - **Treat `long.MaxValue` from `GetLimit` as unlimited** — do not cap or special-case it elsewhere.
@@ -67,3 +68,9 @@ everything and is not user-manageable.
   feature is disabled — they are silently not run, never errored, so the pass rate is computed over
   judged evaluators; (2) the suite editor (`EvaluatorsPanel`) locks unattached agentic evaluators on
   the frontend. An agentic evaluator attached while licensed simply stops running after a downgrade.
+- **`ScheduledTestRuns`** (Enterprise) is enforced both at *creation* and at *use*. The
+  `TestRunSchedulesController` decorates create/update/delete/run-now with
+  `[RequiresFeature(LicenseFeature.ScheduledTestRuns)]` (returns **402** when unlicensed); listing
+  stays ungated so existing schedules remain visible. At use time `TestRunSchedulerService` skips
+  unlicensed schedules without deleting them, so a downgrade pauses scheduled runs and a re-upgrade
+  resumes them — the feature degrades gracefully rather than destroying configuration.

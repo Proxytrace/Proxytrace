@@ -47,9 +47,18 @@ A **`TestSuite`** holds curated **`TestCase`** inputs and an N:M set of **`IEval
 - Each `TestCase` produces a **`TestResult`** scored by the suite's evaluators. Live progress
   streams over SSE via `ITestResultBroadcaster`.
 
+Runs can be kicked off **manually** (the API/UI) or on a **schedule**. A `TestRunSchedule` (a
+domain entity binding a suite to a fixed set of endpoints + a cadence) is polled by
+`TestRunSchedulerService` — a `BackgroundService` on a ~60s `PeriodicTimer`, disabled in kiosk —
+which fires `RunInBackgroundAsync(suite, endpoints, scheduleId)` for each due/enabled/licensed
+schedule (skipping any whose prior run is still in flight, then advancing `NextRunAt` so missed
+ticks collapse). The resulting `TestRunGroup` therefore carries a `ScheduleId`; scheduled runs
+feed every downstream stage of this loop exactly like manual ones.
+
 | Concern | File |
 |---|---|
 | Run orchestration | `Proxytrace.Application/TestRun/Internal/TestRunnerService.cs` (`ITestRunnerService`) |
+| Scheduled triggers | `Proxytrace.Application/TestRun/Internal/TestRunSchedulerService.cs` (`BackgroundService`) |
 | Run config (concurrency etc.) | `Proxytrace.Application/TestRun/TestRunnerConfiguration.cs` |
 | Live results SSE | `Proxytrace.Application/Streaming/Internal/TestResultBroadcaster.cs` |
 | Aggregate stats | `Proxytrace.Application/Statistics/TestRun/Internal/TestRunStatsProjector.cs` |

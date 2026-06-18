@@ -26,6 +26,7 @@ public interface ITestRunnerService
     Task<ITestRunGroup> RunInBackgroundAsync(
         ITestSuite suite,
         IReadOnlyList<IModelEndpoint> endpoints,
+        Guid? scheduleId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

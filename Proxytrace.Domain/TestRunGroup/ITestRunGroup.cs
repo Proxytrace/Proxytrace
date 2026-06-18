@@ -23,8 +23,11 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
     /// </summary>
     bool IsSystemRun { get; }
 
+    /// <summary>The schedule that triggered this group, or null for a manual/system run.</summary>
+    Guid? ScheduleId { get; }
+
     /// <summary>Factory delegate for creating a new test run group.</summary>
-    public delegate ITestRunGroup CreateNew(ITestSuite suite, bool isSystemRun);
+    public delegate ITestRunGroup CreateNew(ITestSuite suite, bool isSystemRun, Guid? scheduleId);
 
     /// <summary>Factory delegate for reconstituting an existing test run group from persistence.</summary>
     public delegate ITestRunGroup CreateExisting(
@@ -32,6 +35,7 @@ public interface ITestRunGroup : IDomainEntity<ITestRunGroup>
         TestRunStatus status,
         DateTimeOffset? completedAt,
         bool isSystemRun,
+        Guid? scheduleId,
         IDomainEntityData existing);
 
     Task<ITestRunGroup> SetRunning(CancellationToken cancellationToken = default);

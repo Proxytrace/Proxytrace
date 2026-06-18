@@ -2,6 +2,7 @@ using AwesomeAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Proxytrace.Domain;
 using Proxytrace.Domain.TestRunGroup;
+using Proxytrace.Domain.TestRunSchedule;
 using Proxytrace.Domain.TestSuite;
 using Proxytrace.Testing;
 
@@ -18,8 +19,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: false), CancellationToken);
-        await repo.AddAsync(factory(suite, isSystemRun: true), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
 
         var page = await repo.GetByProjectPagedAsync(suite.Agent.Project.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
 
@@ -35,8 +36,8 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: false), CancellationToken);
-        await repo.AddAsync(factory(suite, isSystemRun: true), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
 
         var page = await repo.GetByProjectPagedAsync(suite.Agent.Project.Id, page: 1, pageSize: 50, includeSystem: true, CancellationToken);
 
@@ -52,13 +53,36 @@ public sealed class TestRunGroupRepositoryTests : BaseTest<Module>
         var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
         var suite = await GetSuite(services);
 
-        await repo.AddAsync(factory(suite, isSystemRun: true), CancellationToken);
+        await repo.AddAsync(factory(suite, isSystemRun: true, null), CancellationToken);
 
         var excluded = await repo.GetByAgentPagedAsync(suite.Agent.Id, page: 1, pageSize: 50, cancellationToken: CancellationToken);
         var included = await repo.GetByAgentPagedAsync(suite.Agent.Id, page: 1, pageSize: 50, includeSystem: true, CancellationToken);
 
         excluded.Items.Should().BeEmpty();
         included.Items.Should().ContainSingle(g => g.IsSystemRun);
+    }
+
+    [TestMethod]
+    public async Task GetBySchedule_ReturnsOnlyTaggedGroups_NewestFirst()
+    {
+        IServiceProvider services = GetServices();
+        var repo = services.GetRequiredService<ITestRunGroupRepository>();
+        var factory = services.GetRequiredService<ITestRunGroup.CreateNew>();
+        var suite = await GetSuite(services);
+        var schedule = await services
+            .GetRequiredService<IDomainEntityGenerator<ITestRunSchedule>>()
+            .CreateAsync(CancellationToken);
+
+        var older = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id), CancellationToken);
+        var newer = await repo.AddAsync(factory(suite, isSystemRun: false, schedule.Id), CancellationToken);
+        // An untagged manual run that must be excluded.
+        await repo.AddAsync(factory(suite, isSystemRun: false, null), CancellationToken);
+
+        var result = await repo.GetByScheduleAsync(schedule.Id, take: 5, CancellationToken);
+
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(g => g.ScheduleId == schedule.Id);
+        result.Select(g => g.Id).Should().Equal(newer.Id, older.Id);
     }
 
     private async Task<ITestSuite> GetSuite(IServiceProvider services)

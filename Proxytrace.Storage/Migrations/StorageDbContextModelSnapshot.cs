@@ -909,6 +909,9 @@ namespace Proxytrace.Storage.Migrations
                     b.Property<bool>("IsSystemRun")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("ScheduleId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -920,9 +923,66 @@ namespace Proxytrace.Storage.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ScheduleId");
+
                     b.HasIndex("Suite");
 
                     b.ToTable("TestRunGroupEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEndpointEntity", b =>
+                {
+                    b.Property<Guid>("ScheduleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EndpointId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ScheduleId", "EndpointId");
+
+                    b.HasIndex("EndpointId");
+
+                    b.ToTable("TestRunScheduleEndpointEntity");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("IntervalMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("NextRunAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Suite")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Suite");
+
+                    b.HasIndex("IsEnabled", "NextRunAt");
+
+                    b.ToTable("TestRunScheduleEntity");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>
@@ -1204,6 +1264,35 @@ namespace Proxytrace.Storage.Migrations
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunGroup.TestRunGroupEntity", b =>
                 {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
+                        .WithMany()
+                        .HasForeignKey("Suite")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEndpointEntity", b =>
+                {
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.ModelEndpoint.ModelEndpointEntity", null)
+                        .WithMany()
+                        .HasForeignKey("EndpointId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", null)
+                        .WithMany("ScheduleEndpoints")
+                        .HasForeignKey("ScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", b =>
+                {
                     b.HasOne("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", null)
                         .WithMany()
                         .HasForeignKey("Suite")
@@ -1238,6 +1327,11 @@ namespace Proxytrace.Storage.Migrations
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.Project.ProjectEntity", b =>
                 {
                     b.Navigation("ProjectUsers");
+                });
+
+            modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestRunSchedule.TestRunScheduleEntity", b =>
+                {
+                    b.Navigation("ScheduleEndpoints");
                 });
 
             modelBuilder.Entity("Proxytrace.Storage.Internal.Entities.TestSuite.TestSuiteEntity", b =>

@@ -18,7 +18,8 @@ export type LicenseFeature =
   | 'CustomEvaluators'
   | 'SsoOidc'
   | 'AuditLog'
-  | 'Tracey';
+  | 'Tracey'
+  | 'ScheduledTestRuns';
 
 /** Quantitative caps a license may impose. Mirrors backend `LicenseLimit`. */
 export type LicenseLimit =

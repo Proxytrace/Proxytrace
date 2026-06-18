@@ -486,6 +486,46 @@ export interface TestRunGroupListItemDto {
   updatedAt: string;
 }
 
+/* ── Test-run schedules ── */
+/** A model endpoint referenced by a schedule (id + display name only). */
+export interface ScheduleEndpointDto {
+  id: string;
+  name: string;
+}
+
+/** A periodic test-run schedule. `recentRuns` are the light run-group rows the schedule has produced. */
+export interface TestRunScheduleDto {
+  id: string;
+  name: string;
+  suiteId: string;
+  suiteName: string;
+  agentId: string;
+  agentName: string;
+  endpoints: ScheduleEndpointDto[];
+  intervalMinutes: number;
+  isEnabled: boolean;
+  nextRunAt: string;
+  lastRunAt: string | null;
+  recentRuns: TestRunGroupListItemDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTestRunScheduleRequest {
+  name: string;
+  testSuiteId: string;
+  modelEndpointIds: string[];
+  intervalMinutes: number;
+  enabled: boolean;
+}
+
+export interface UpdateTestRunScheduleRequest {
+  name: string;
+  modelEndpointIds: string[];
+  intervalMinutes: number;
+  enabled: boolean;
+}
+
 /* ── Evaluators ── */
 /** Lightweight evaluator projection for pickers / select lists (id, kind, name only). */
 export interface EvaluatorListItemDto {

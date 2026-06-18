@@ -15,6 +15,10 @@ import { AgentStep, NameStep, TracesStep, EvaluatorsStep } from './CreateSuiteWi
 import { RunConfirmModal } from './RunConfirmModal';
 import { EditSuiteDialog } from './EditSuiteDialog';
 import { SuiteCard } from './components/SuiteCard';
+import { ScheduleFormDialog } from '../runs/components/ScheduleFormDialog';
+import { useTestRunScheduleMutations } from '../runs/hooks/useTestRunScheduleMutations';
+import { useFeature } from '../../api/license';
+import { showUpgradeModal } from '../../components/license/UpgradeModal';
 import { useSuites, useSuiteAgents, useSuiteEvaluators } from './hooks/useSuiteQueries';
 import { useStartRun, useDeleteSuite, useCreateSuite } from './hooks/useSuiteMutations';
 import { useSuiteFocus } from './hooks/useSuiteFocus';
@@ -24,6 +28,7 @@ import { computeSuiteStats } from './suitesMeta';
 export default function Suites() {
   const [runSuite, setRunSuite] = useState<TestSuiteListItemDto | null>(null);
   const [runDone, setRunDone] = useState(false);
+  const [scheduleSuite, setScheduleSuite] = useState<TestSuiteListItemDto | null>(null);
   const [editSuiteId, setEditSuiteId] = useState<string | null>(null);
   const [deleteSuite, setDeleteSuite] = useState<TestSuiteListItemDto | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -36,6 +41,9 @@ export default function Suites() {
   const { suites, isLoading, projectId } = useSuites();
   const { agents } = useSuiteAgents();
   const { evaluators } = useSuiteEvaluators();
+
+  const licensed = useFeature('ScheduledTestRuns');
+  const scheduleMutations = useTestRunScheduleMutations();
 
   // Deep-link from the agent detail view: ?agentId pre-filters, ?suiteId scrolls + highlights.
   const [searchParams] = useSearchParams();
@@ -222,6 +230,7 @@ export default function Suites() {
             onRun={() => { setRunSuite(suite); setRunDone(false); }}
             onEdit={() => setEditSuiteId(suite.id)}
             onDelete={() => setDeleteSuite(suite)}
+            onSchedule={() => licensed ? setScheduleSuite(suite) : showUpgradeModal({ errorType: 'FeatureNotLicensed' })}
           />
         ))}
         {!isLoading && visibleSuites.length === 0 && (
@@ -239,6 +248,16 @@ export default function Suites() {
           onSubmit={ids => startRun.mutate({ suiteId: runSuite.id, endpointIds: ids })}
           loading={startRun.isPending}
           done={runDone}
+        />
+      )}
+
+      {/* Create schedule from a suite */}
+      {scheduleSuite && (
+        <ScheduleFormDialog
+          lockedSuite={{ id: scheduleSuite.id, name: scheduleSuite.name }}
+          onClose={() => setScheduleSuite(null)}
+          onSubmit={form => scheduleMutations.create.mutate(form, { onSuccess: () => setScheduleSuite(null) })}
+          pending={scheduleMutations.create.isPending}
         />
       )}
 
