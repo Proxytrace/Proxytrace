@@ -356,6 +356,14 @@ export interface TestSuiteListItemDto {
   updatedAt: string;
 }
 
+/** Aggregated run stats for a suite over a time window ("bucket"). See GET /api/test-suites/{id}/run-stats. */
+export interface SuiteRunStatsDto {
+  runCount: number;
+  passRate: number | null;
+  avgDurationMs: number | null;
+  totalCost: number | null;
+}
+
 /* ── Test Runs ── */
 export interface EvaluatorSummaryDto {
   totalEvaluations: number;

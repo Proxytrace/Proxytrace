@@ -4,11 +4,11 @@ import type { AgentCallDto, EvaluatorDetailDto, TestSuiteDto } from '../../../ap
 import { FilterTabs } from '../../../components/ui/FilterTabs';
 import { SkeletonList } from '../../../components/ui/Skeleton';
 import { agentColor } from '../../../lib/colors';
-import { TestCasesPanel } from './TestCasesPanel';
-import { TraceConversationPreview, PreviewEmpty } from './TestCasePreview';
-import { EditableTestCasePreview } from './EditableTestCasePreview';
-import { EvaluatorsPanel } from './EvaluatorsPanel';
-import { EvaluatorPreview } from './EvaluatorPreview';
+import { TestCasesPanel } from '../components/TestCasesPanel';
+import { TraceConversationPreview, PreviewEmpty } from '../components/TestCasePreview';
+import { EditableTestCasePreview } from '../components/EditableTestCasePreview';
+import { EvaluatorsPanel } from '../components/EvaluatorsPanel';
+import { EvaluatorPreview } from '../components/EvaluatorPreview';
 import { useEditSuiteEvaluators, useEditSuiteTraces } from '../hooks/useEditSuiteQueries';
 import { useSuiteDetail } from '../hooks/useSuiteQueries';
 import { useSaveSuite } from '../hooks/useSaveSuite';

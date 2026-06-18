@@ -65,6 +65,9 @@ export const QUERY_KEYS = {
   testSuitesRoot: ['test-suites'] as const,
   /** A single (fat) test suite by id — full test cases for the edit dialog. 'detail' segment lets list invalidation cover it by prefix. */
   testSuite: (id: string) => ['test-suites', 'detail', id] as const,
+  /** Bucket-windowed run stats for a suite. */
+  testSuiteRunStats: (id: string, from?: string, to?: string) =>
+    ['test-suites', 'detail', id, 'run-stats', from ?? null, to ?? null] as const,
   proposals: (agentId?: string, projectId?: string) => ['proposals', agentId, projectId ?? null] as const,
   theories: (agentId?: string, projectId?: string, status?: string) => ['theories', agentId, projectId ?? null, status ?? null] as const,
   theory: (id: string) => ['theory', id] as const,
