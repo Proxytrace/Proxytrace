@@ -66,7 +66,7 @@ export function SuiteList({ suites, isLoading, selectedId, highlightId, onSelect
       />
 
       <div data-testid="suite-list" className="flex-1 min-h-0 overflow-y-auto pr-[2px] flex flex-col gap-1.5">
-        {isLoading && <SkeletonList rows={6} height={84} gap={6} />}
+        {isLoading && <SkeletonList rows={6} height={64} gap={6} />}
         {!isLoading && filtered.length === 0 && (
           <div data-testid="suite-empty-state">
             <EmptyState
