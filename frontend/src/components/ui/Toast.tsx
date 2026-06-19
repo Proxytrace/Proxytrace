@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal } from '../overlays/Modal';
-import { XIcon } from '../icons';
-import { Button } from './Button';
-import { FormField } from './FormField';
-import { Textarea } from './Textarea';
+import { XIcon, ArrowUpRightIcon } from '../icons';
 import ToastContext, { type ErrorToastOptions, type ToastItem } from '../../contexts/ToastContext';
 import { cn } from '../../lib/cn';
+import { canViewErrorLog, navigateToErrorLog } from '../../lib/errorLogNav';
 
 type ToastType = ToastItem['type'];
 
@@ -55,52 +52,32 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const isDev = import.meta.env.DEV;
 
-  // Error report modal state
-  const [reportTarget, setReportTarget] = useState<{
-    toastId: number;
-    message: string;
-    stacktrace?: string;
-    errorType?: string;
-    url?: string;
-    sendReport?: (details: { description: string; timestamp: string }) => void;
-  } | null>(null);
-
-  const [description, setDescription] = useState('');
-  const [sending, setSending] = useState(false);
-
-  const handleSend = async () => {
-    if (!reportTarget) return;
-    setSending(true);
-    await reportTarget.sendReport?.({ description, timestamp: new Date().toISOString() });
-    setSending(false);
-    setReportTarget(null);
-    setDescription('');
-    dismiss(reportTarget.toastId);
-  };
-
-  const openReport = (t: ToastItem) => {
-    setReportTarget({
-      toastId: t.id,
-      message: t.message,
-      stacktrace: t.stacktrace,
-      errorType: t.errorType,
-      url: t.url,
-      sendReport: t.sendReport,
-    });
-    setDescription('');
-  };
-
-  const closeReport = () => {
-    setReportTarget(null);
-    setDescription('');
-  };
-
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
       <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[100] pointer-events-none">
-        {toasts.map(t =>
-          t.type === 'error' ? (
+        {toasts.map(t => {
+          if (t.type !== 'error') {
+            return (
+              <div
+                key={t.id}
+                className={cn(
+                  'fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
+                  TOAST_BORDER[t.type],
+                  TOAST_TEXT[t.type],
+                )}
+              >
+                {t.message}
+              </div>
+            );
+          }
+
+          // The message becomes a deep-link into the Error Log when the backend captured this
+          // error (errorId) and the current user can view the Error Log (an admin navigator is
+          // registered). Otherwise it's plain text.
+          const deepLinkId = t.errorId && canViewErrorLog() ? t.errorId : null;
+
+          return (
             <div
               key={t.id}
               className={cn(
@@ -109,26 +86,37 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               )}
             >
               <div className="flex items-start gap-2">
-                <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[t.type])}>
-                  {t.message}
-                </span>
-                <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                  {t.sendReport && (
-                    <button
-                      onClick={() => openReport(t)}
-                      className="px-2 py-0.5 text-title font-medium text-muted hover:text-primary rounded-md hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
-                    >
-                      Send
-                    </button>
-                  )}
+                {deepLinkId ? (
                   <button
-                    onClick={() => dismiss(t.id)}
-                    className="text-muted hover:text-primary transition-colors leading-none cursor-pointer"
-                    aria-label="Dismiss"
+                    type="button"
+                    onClick={() => {
+                      navigateToErrorLog(deepLinkId);
+                      dismiss(t.id);
+                    }}
+                    data-testid="error-toast-view-btn"
+                    aria-label="View this error in the Error Log"
+                    className={cn(
+                      'flex-1 min-w-0 text-left inline-flex items-start gap-1.5 text-[14px] font-semibold leading-snug cursor-pointer',
+                      'rounded-sm hover:underline underline-offset-2 transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]',
+                      TOAST_TEXT[t.type],
+                    )}
                   >
-                    <XIcon size={16} strokeWidth={1.5} />
+                    <span className="min-w-0">{t.message}</span>
+                    <ArrowUpRightIcon size={13} strokeWidth={1.75} className="shrink-0 mt-0.5" />
                   </button>
-                </div>
+                ) : (
+                  <span className={cn('flex-1 text-[14px] font-semibold min-w-0 leading-snug', TOAST_TEXT[t.type])}>
+                    {t.message}
+                  </span>
+                )}
+                <button
+                  onClick={() => dismiss(t.id)}
+                  className="text-muted hover:text-primary transition-colors leading-none cursor-pointer shrink-0 mt-0.5"
+                  aria-label="Dismiss"
+                >
+                  <XIcon size={16} strokeWidth={1.5} />
+                </button>
               </div>
               {isDev && t.stacktrace && (
                 <details className="mt-2">
@@ -141,85 +129,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 </details>
               )}
             </div>
-          ) : (
-            <div
-              key={t.id}
-              className={cn(
-                'fade-up bg-card rounded-md px-4 py-2.5 text-[13px] font-medium max-w-[320px] shadow-[var(--shadow-float)] border',
-                TOAST_BORDER[t.type],
-                TOAST_TEXT[t.type],
-              )}
-            >
-              {t.message}
-            </div>
-          ),
-        )}
+          );
+        })}
       </div>
-
-      {reportTarget && (
-        <Modal title="Report error" onClose={closeReport} size="sm">
-          <div className="flex flex-col gap-3">
-            <FormField label="Error message">
-              <div className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary">
-                {reportTarget.message}
-              </div>
-            </FormField>
-
-            <div className="grid grid-cols-2 gap-3">
-              {reportTarget.errorType && (
-                <FormField label="Type">
-                  <div className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary">
-                    {reportTarget.errorType}
-                  </div>
-                </FormField>
-              )}
-              {reportTarget.url && (
-                <FormField label="URL">
-                  <div className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary truncate">
-                    {reportTarget.url}
-                  </div>
-                </FormField>
-              )}
-            </div>
-
-            <FormField label="Timestamp">
-              <div className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-title text-primary">
-                {new Date().toISOString()}
-              </div>
-            </FormField>
-
-            {isDev && reportTarget.stacktrace && (
-              <FormField label="Stacktrace">
-                <pre className="w-full px-3 py-2 bg-card-2 border border-border rounded-md text-body-sm text-muted font-mono whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-                  {reportTarget.stacktrace}
-                </pre>
-              </FormField>
-            )}
-
-            <FormField label="Description">
-              <Textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="What were you doing when this error occurred?"
-                rows={3}
-                className="resize-none"
-              />
-            </FormField>
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="ghost" onClick={closeReport}>Cancel</Button>
-            <Button
-              variant="primary"
-              onClick={handleSend}
-              loading={sending}
-              disabled={!description.trim()}
-            >
-              Send report
-            </Button>
-          </div>
-        </Modal>
-      )}
     </ToastContext.Provider>
   );
 }

@@ -11,6 +11,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Added
 
+- **Jump from an error toast to the captured error.** When a backend request fails, the red error
+  toast is now clickable for admins — selecting it opens the **Error Log** with that exact error
+  already selected, so you go straight from "something broke" to its full stacktrace. The toast
+  carries the captured error's id; non-admins (who can't see the Error Log) get the plain,
+  non-clickable toast as before.
+
 - **Notifications inbox in the top bar.** A new bell icon in the top bar — with an unread badge —
   opens a notifications inbox available on every page. It surfaces negative anomalies detected after
   each test run — a run that **failed** (e.g. the endpoint was unavailable), a **drastic pass-rate
@@ -101,6 +107,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   routes each event directly to the subscribers of that run/group instead of scanning every live
   subscriber on the instance, so a busy multi-run period no longer does work proportional to the
   total number of open streams per event.
+
+### Removed
+
+- **Error-report dialog removed from the error toast.** The "Send" action on error toasts and its
+  report dialog have been retired — they posted a one-off server log line and nothing more. Errors
+  are still surfaced as toasts and logged server-side; a proper error-reporting flow will be built
+  from scratch in a future release.
 
 ### Security
 

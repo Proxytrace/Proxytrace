@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SearchIcon } from '../../components/icons';
 import { Input } from '../../components/ui/Input';
 import { SegmentedControl, type Segment } from '../../components/ui/SegmentedControl';
@@ -7,7 +8,7 @@ import { Pagination } from '../../components/ui/Pagination';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import { ApplicationErrorLevel, type ApplicationErrorDto } from '../../api/models';
-import { useErrorLogQuery, PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useErrorLogQueries';
+import { useErrorLogQuery, useErrorLogEntry, PAGE_SIZE, PAGE_SIZE_OPTIONS } from './hooks/useErrorLogQueries';
 import { ErrorLogTable } from './components/ErrorLogTable';
 import { ErrorLogDetail } from './components/ErrorLogDetail';
 import { TimeRangePicker } from '../../components/ui/TimeRangePicker';
@@ -30,6 +31,22 @@ export default function ErrorLog() {
   const [search, setSearch] = useState('');
   const [timeRange, setTimeRange] = useState<TimeRange>(ALL_TIME);
   const [selected, setSelected] = useState<ApplicationErrorDto | null>(null);
+
+  // Deep link from an error toast: `?error=<id>` fetches that captured error and pre-selects it.
+  // A manual row click (`selected`) always wins; closing the detail clears both.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLinkId = searchParams.get('error');
+  const { data: deepLinkedError } = useErrorLogEntry(selected ? null : deepLinkId);
+  const activeError = selected ?? deepLinkedError ?? null;
+
+  function closeDetail() {
+    setSelected(null);
+    if (deepLinkId) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('error');
+      setSearchParams(next, { replace: true });
+    }
+  }
 
   const debouncedSearch = useDebounce(search, 200);
   const trimmedSearch = debouncedSearch.trim();
@@ -91,7 +108,7 @@ export default function ErrorLog() {
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <ErrorLogTable
           errors={errors}
-          selectedId={selected?.id ?? null}
+          selectedId={activeError?.id ?? null}
           onSelect={setSelected}
           isFetching={isFetching}
         />
@@ -111,7 +128,7 @@ export default function ErrorLog() {
         <span className="text-xs text-muted whitespace-nowrap">{total.toLocaleString()} {total === 1 ? 'error' : 'errors'}</span>
       </footer>
 
-      {selected && <ErrorLogDetail error={selected} onClose={() => setSelected(null)} />}
+      {activeError && <ErrorLogDetail error={activeError} onClose={closeDetail} />}
     </div>
   );
 }

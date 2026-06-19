@@ -39,6 +39,8 @@ The Providers page (`src/features/providers/`) is a left-rail list (`ProviderLis
 
 The time-range filter UI is shared: the `TimeRange` model (`all` / `preset` / `absolute`) lives in `src/lib/timeRange.ts` and the popover control in `src/components/ui/TimeRangePicker.tsx` (`testId` prop for per-page e2e hooks). Both the Error Log and Traces use it. Note the separate, simpler `src/lib/time-range.ts` (`RANGE_KEYS`) used by the dashboard/agents segmented tabs — different concern, don't conflate.
 
+**Error-toast deep-link → Error Log.** A failed API request surfaces the global error toast (`components/ui/Toast.tsx`, fed by `api/client.ts`). When the backend captured the error it tags the response body with an `errorId` (the captured `ApplicationError`'s primary key — see the exception middleware + `ErrorLogScope` on the backend), which rides through to the toast. The toast becomes clickable and navigates to `/settings/error-log?error=<id>`, where `ErrorLog.tsx` fetches that single entry (`useErrorLogEntry`, silent-404 + brief retry to absorb the async capture lag) and pre-selects it. Because `ToastProvider` is mounted **above** the Router and the current-user context, it can't use `useNavigate`/`useCurrentUser` directly — navigation goes through a module-level bridge (`lib/errorLogNav.ts`, same shape as `auth/token.ts`) that `App.tsx`'s `ErrorLogNavBridge` registers **only while an admin is viewing**. So non-admins (and OIDC/kiosk sessions, where no role is decoded) never get a navigator and the toast stays plain text.
+
 ## Commands
 
 - `npm run build` — build the frontend, use this to verify there are no typing issues (output in `dist/`)

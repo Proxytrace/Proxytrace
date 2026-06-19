@@ -112,6 +112,73 @@ public sealed class ErrorLogCaptureTests : BaseTest<Module>
     }
 
     [TestMethod]
+    public async Task Logger_LogError_WithErrorIdScope_StampsEntryWithThatId()
+    {
+        var channel = new ErrorLogChannel();
+        var scopeProvider = new LoggerExternalScopeProvider();
+        ILogger logger = new ErrorLogChannelLogger("Cat", channel, () => scopeProvider);
+
+        var errorId = Guid.NewGuid();
+        using (scopeProvider.Push(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId }))
+        {
+            logger.LogError(new InvalidOperationException("bang"), "boom");
+        }
+
+        var entries = await DrainAsync(channel);
+
+        entries.Should().ContainSingle();
+        entries[0].Id.Should().Be(errorId);
+    }
+
+    [TestMethod]
+    public async Task Logger_LogError_WithoutScope_LeavesEntryIdNull()
+    {
+        var channel = new ErrorLogChannel();
+        var scopeProvider = new LoggerExternalScopeProvider();
+        ILogger logger = new ErrorLogChannelLogger("Cat", channel, () => scopeProvider);
+
+        logger.LogError(new InvalidOperationException("bang"), "boom");
+
+        var entries = await DrainAsync(channel);
+
+        entries.Should().ContainSingle();
+        entries[0].Id.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task Writer_EntryWithPreassignedId_PersistsErrorFindableByThatId()
+    {
+        var services = GetServices();
+        var channel = services.GetRequiredService<IErrorLogChannel>();
+        var writer = services.GetRequiredService<ErrorLogWriter>();
+        var repository = services.GetRequiredService<IApplicationErrorRepository>();
+
+        var errorId = Guid.NewGuid();
+        channel.TryWrite(new ErrorLogEntry(
+            "scoped boom", ApplicationErrorLevel.Error, "Cat", "System.Exception", "stack", errorId));
+
+        await writer.StartAsync(CancellationToken);
+        try
+        {
+            for (var i = 0; i < 100 && await repository.CountAsync(CancellationToken) == 0; i++)
+            {
+                await Task.Delay(20, CancellationToken);
+            }
+        }
+        finally
+        {
+            await writer.StopAsync(CancellationToken);
+        }
+
+        // The captured row's primary key is the id we supplied — this is the deep-link contract:
+        // the API returns this id and GET /api/error-log/{id} resolves the same row.
+        var stored = await repository.FindAsync(errorId, CancellationToken);
+        stored.Should().NotBeNull();
+        stored?.Id.Should().Be(errorId);
+        stored?.Message.Should().Be("scoped boom");
+    }
+
+    [TestMethod]
     public async Task Writer_DrainsChannel_AndPersistsError()
     {
         var services = GetServices();

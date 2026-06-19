@@ -2,9 +2,9 @@ import { createContext } from "react";
 
 export interface ErrorToastOptions {
   stacktrace?: string;
-  errorType?: string;
-  url?: string;
-  sendReport?: (details: { description: string; timestamp: string }) => void;
+  /** Id of the captured Error Log entry, when the backend persisted one — enables an admin
+   *  deep-link from the toast into the Error Log. */
+  errorId?: string;
 }
 
 export interface ToastItem {
@@ -12,9 +12,7 @@ export interface ToastItem {
   message: string;
   type: "success" | "error" | "info";
   stacktrace?: string;
-  errorType?: string;
-  url?: string;
-  sendReport?: (details: { description: string; timestamp: string }) => void;
+  errorId?: string;
 }
 
 export interface ToastContextValue {

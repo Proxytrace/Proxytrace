@@ -60,6 +60,7 @@ async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions
     let message = `${res.status} ${res.statusText}`;
     let stacktrace: string | undefined;
     let type: string | undefined;
+    let errorId: string | undefined;
 
     try {
       const body = await res.json();
@@ -67,6 +68,8 @@ async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions
         message = body.error.message;
         stacktrace = body.error.stacktrace;
         type = body.error.type;
+        // Present when the backend captured this error to the Error Log; lets an admin deep-link to it.
+        if (typeof body.error.errorId === 'string') errorId = body.error.errorId;
       }
     } catch {
       const text = await res.text().catch(() => '');
@@ -91,34 +94,10 @@ async function request<T>(url: string, init?: RequestInit, opts?: RequestOptions
       throw error;
     }
 
-    const errMessage = message;
-    const errStacktrace = stacktrace;
-    const errType = type;
-    const errUrl = window.location.href;
-
-    showToast(errMessage, 'error', {
+    showToast(message, 'error', {
       // Don't surface server stacktraces to users in production builds.
-      stacktrace: import.meta.env.DEV ? errStacktrace : undefined,
-      errorType: errType,
-      url: errUrl,
-      sendReport: async ({ description, timestamp }) => {
-        const token = getAccessToken();
-        await fetch('/api/errors', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            message: errMessage,
-            stacktrace: errStacktrace,
-            type: errType,
-            url: errUrl,
-            description,
-            timestamp,
-          }),
-        }).catch(() => {});
-      },
+      stacktrace: import.meta.env.DEV ? stacktrace : undefined,
+      errorId,
     });
 
     throw error;

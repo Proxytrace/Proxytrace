@@ -45,11 +45,6 @@ issue, include the Proxytrace version alongside the stacktrace — together they
 location.
 :::
 
-::: tip Client-side error reports are separate
-The in-app "report this error" action (`POST /api/errors`) logs a **warning**, not an error,
-so client-reported issues do not appear in the Error Log.
-:::
-
 ## Using the page
 
 - The list is newest-first and paginated. Use the **Per page** selector to change how many
@@ -67,6 +62,13 @@ so client-reported issues do not appear in the Error Log.
 - The **When** column shows the absolute date and time the error occurred.
 - Selecting a row opens a detail panel with the full stacktrace (copyable).
 - The page refetches when you return to the tab; there is no live stream.
+
+::: tip Jump straight here from an error toast
+When a request fails anywhere in the app, the red error toast in the corner is **clickable** for
+admins. Selecting it opens this page with that exact error already selected, so you go straight
+from the failure to its stacktrace. (The toast is only clickable for errors the backend captured,
+and only for users who can see the Error Log.)
+:::
 
 ## Automatic rotation & cleanup
 

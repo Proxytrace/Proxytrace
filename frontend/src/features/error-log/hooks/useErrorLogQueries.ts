@@ -29,3 +29,28 @@ export function useErrorLogQuery(filter: ApplicationErrorFilter) {
     isLoading: query.isLoading,
   };
 }
+
+function isNotFound(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status?: unknown }).status === 404
+  );
+}
+
+/**
+ * A single captured error by id — the deep-link target when an admin clicks an error toast.
+ * 404s are silent (no error toast — that would loop) and briefly retried: error capture is async,
+ * so the row may not be persisted in the instant the toast is clicked. A non-404 failure surfaces
+ * normally and is not retried.
+ */
+export function useErrorLogEntry(id: string | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.errorLogEntry(id ?? ''),
+    queryFn: () => errorLogApi.get(id ?? '', { silentStatuses: [404] }),
+    enabled: !!id,
+    retry: (failureCount, error) => isNotFound(error) && failureCount < 5,
+    retryDelay: 400,
+  });
+}

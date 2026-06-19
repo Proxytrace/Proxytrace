@@ -178,6 +178,29 @@ public sealed class ExceptionHandlingMiddlewareTests
     }
 
     [TestMethod]
+    public async Task InvokeAsync_CapturedException_IncludesParsableErrorId()
+    {
+        var middleware = Create(_ => throw new InvalidOperationException("boom"));
+
+        var (_, body) = await InvokeAsync(middleware);
+
+        // The errorId is the captured Error Log row's id — an admin deep-links to it from the toast.
+        var raw = Error(body).GetProperty("errorId").GetString();
+        Guid.TryParse(raw, out _).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task InvokeAsync_NotImplemented_OmitsErrorId()
+    {
+        // 501 stubs are logged at Information, never captured — so there is nothing to link to.
+        var middleware = Create(_ => throw new NotImplementedException());
+
+        var (_, body) = await InvokeAsync(middleware);
+
+        Error(body).GetProperty("errorId").ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [TestMethod]
     public async Task InvokeAsync_OperationCanceled_Propagates()
     {
         var middleware = Create(_ => throw new OperationCanceledException());

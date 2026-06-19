@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from 'react-oidc-context';
 import { lazy, Suspense, useEffect } from 'react';
@@ -22,6 +22,7 @@ import useLocalAuth from './hooks/useLocalAuth';
 import { useAppConfig } from './hooks/useAppConfig';
 import { RequiresFeature } from './components/license/RequiresFeature';
 import { UpgradePlaceholder } from './components/license/UpgradePlaceholder';
+import { setErrorLogNavigator } from './lib/errorLogNav';
 // Settings sections are small and admin-only — eagerly imported (no separate chunk needed).
 import { GeneralSection } from './features/settings/sections/GeneralSection';
 import { MembersSection } from './features/settings/sections/MembersSection';
@@ -159,6 +160,22 @@ function EvaluatorDeepLinkRedirect() {
   return <Navigate to={id ? `/evaluators?id=${encodeURIComponent(id)}` : '/evaluators'} replace />;
 }
 
+// Registers a deep-link navigator (used by error toasts to jump to the captured error in the
+// Error Log) only while an admin is viewing — the Error Log is admin-only. Lives inside the
+// Router so it can use `useNavigate`; the ToastProvider above the Router reads it via the bridge.
+function ErrorLogNavBridge({ enabled }: { enabled: boolean }) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!enabled) {
+      setErrorLogNavigator(null);
+      return;
+    }
+    setErrorLogNavigator(id => navigate(`/settings/error-log?error=${encodeURIComponent(id)}`));
+    return () => setErrorLogNavigator(null);
+  }, [enabled, navigate]);
+  return null;
+}
+
 function AppRoutes() {
   const { data: setupStatus } = useQuery({
     queryKey: QUERY_KEYS.setupStatus,
@@ -180,6 +197,8 @@ function AppRoutes() {
   const setupNeeded = !setupStatus.isConfigured || (authMode.mode === 'local' && authMode.setupRequired);
 
   return (
+    <>
+    <ErrorLogNavBridge enabled={isAdmin} />
     <Routes>
       {authMode.mode === 'local' && <Route path="/signup" element={wrap(<Signup />)} />}
       <Route
@@ -232,6 +251,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Proxytrace.Domain;
 using Proxytrace.Domain.ApplicationError;
 
 namespace Proxytrace.Application.ErrorLog.Internal;
@@ -13,15 +14,18 @@ internal sealed class ErrorLogWriter : BackgroundService
 {
     private readonly IErrorLogChannel channel;
     private readonly IApplicationError.CreateNew createError;
+    private readonly IApplicationError.CreateExisting createErrorWithId;
     private readonly IApplicationErrorRepository repository;
 
     public ErrorLogWriter(
         IErrorLogChannel channel,
         IApplicationError.CreateNew createError,
+        IApplicationError.CreateExisting createErrorWithId,
         IApplicationErrorRepository repository)
     {
         this.channel = channel;
         this.createError = createError;
+        this.createErrorWithId = createErrorWithId;
         this.repository = repository;
     }
 
@@ -60,12 +64,7 @@ internal sealed class ErrorLogWriter : BackgroundService
     {
         try
         {
-            IApplicationError error = createError(
-                entry.Message,
-                entry.Level,
-                entry.Category,
-                entry.ExceptionType,
-                entry.StackTrace);
+            IApplicationError error = BuildError(entry);
             await repository.AddAsync(error, cancellationToken);
         }
         catch (Exception ex)
@@ -74,4 +73,31 @@ internal sealed class ErrorLogWriter : BackgroundService
             Console.Error.WriteLine($"[ErrorLogWriter] failed to persist captured error: {ex}");
         }
     }
+
+    private IApplicationError BuildError(ErrorLogEntry entry)
+    {
+        // A caller may pre-assign the row's id (ErrorLogScope.ErrorIdKey) so the API can deep-link
+        // to it. Build the row with that exact id; otherwise let a fresh one be generated.
+        if (entry.Id is { } id)
+        {
+            var now = DateTimeOffset.UtcNow;
+            return createErrorWithId(
+                entry.Message,
+                entry.Level,
+                entry.Category,
+                entry.ExceptionType,
+                entry.StackTrace,
+                new CapturedErrorData(id, now, now));
+        }
+
+        return createError(
+            entry.Message,
+            entry.Level,
+            entry.Category,
+            entry.ExceptionType,
+            entry.StackTrace);
+    }
+
+    private sealed record CapturedErrorData(Guid Id, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
+        : IDomainEntityData;
 }

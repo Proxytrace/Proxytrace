@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Proxytrace.Api.Middleware.Exceptions;
+using Proxytrace.Application.ErrorLog;
 
 namespace Proxytrace.Api.Middleware;
 
@@ -30,12 +31,27 @@ internal sealed class ExceptionHandlingMiddleware
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Pre-assign the captured error's id so it can be returned to the client (for an
+            // admin deep-link into the Error Log). Only meaningful when we actually capture, i.e.
+            // the Error/Critical branch below — a not-implemented stub is logged at Information.
+            Guid? errorId = null;
+
             // NotImplementedException marks an intentional stub — surface it as 501
             // without the alarming error-level log.
             if (ex is NotImplementedException)
+            {
                 logger.LogInformation("Not-implemented endpoint called: {Path}", context.Request.Path);
+            }
             else
-                logger.LogError(ex, "Unhandled exception");
+            {
+                errorId = Guid.NewGuid();
+                // The scope carries the id into the error-log capture pipeline so the persisted
+                // row's primary key matches the id we return below.
+                using (logger.BeginScope(new Dictionary<string, object> { [ErrorLogScope.ErrorIdKey] = errorId.Value }))
+                {
+                    logger.LogError(ex, "Unhandled exception");
+                }
+            }
 
             context.Response.ContentType = "application/json";
 
@@ -47,6 +63,7 @@ internal sealed class ExceptionHandlingMiddleware
                 ["message"] = mapping.Message ?? ex.Message,
                 ["type"] = mapping.TypeName,
                 ["stacktrace"] = isDevelopment ? ex.ToString() : null,
+                ["errorId"] = errorId,
             };
 
             if (mapping.AdditionalFields is not null)
