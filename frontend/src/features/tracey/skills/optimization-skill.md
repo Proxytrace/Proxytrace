@@ -33,7 +33,9 @@ relevant prior attempts in your rationale.
 
 ## Ground the theory in evidence
 
-Don't guess. Look at how the agent is actually doing before proposing a change:
+Don't guess. Look at how the agent is actually doing before proposing a change. These are
+investigative reads for YOUR reasoning — keep them silent (no `present`); the user doesn't need a
+card for every lookup, just your grounded conclusion and the theory card at the end:
 
 - `list_runs({ agentId })` → pick the latest completed run, then `get_run_failures` — the failing cases with
   each evaluator's verdict and reasoning. This is your primary evidence: read the actual

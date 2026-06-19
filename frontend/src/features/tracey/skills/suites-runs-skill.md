@@ -17,9 +17,10 @@ Work with the project's benchmark suites and their executions.
 - `compare_runs` — case-by-case movement between two runs (fixed / regressed / unchanged). Use it
   for any before/after question ("did the change help?").
 
-Render results, don't narrate them: a single suite or run → its entity card (`get_suite` /
-`get_run` render clickable cards); a comparison of runs or pass rates over time → `show_chart` /
-`show_table`. Add at most a sentence of insight.
+Present the answer, don't narrate it: a single suite or run the user asked to see → its entity
+card (`get_suite` / `get_run` with `present: true`); a comparison of runs or pass rates over time →
+`show_chart` / `show_table`. Keep the reads you do to reach the answer silent (no `present`). Add at
+most a sentence of insight.
 
 To *build or edit* a suite (turn captured traces into test cases), load the `suite-curation` skill.
 

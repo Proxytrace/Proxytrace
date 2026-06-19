@@ -104,10 +104,13 @@ Tracey renders rich UI **directly in the chat thread** rather than dumping raw n
 
 ## Tool calls
 
-For tools without a dedicated component (such as navigation), the call appears as a collapsed
-row showing the **tool name**, its **execution duration**, and a **status** — *Running*
-(pulsing), *Done*, or *Failed*. Click the row to expand it and inspect the tool's **Input** and
-its **Output** (or **Error** if it failed), each with a copy button.
+Tracey doesn't show a card for everything she looks up. When she's gathering information on the way
+to an answer — listing your runs, checking a failure, comparing two runs — those reads appear as a
+quiet **collapsed row** showing the **tool name**, its **execution duration**, and a **status** —
+*Running* (pulsing), *Done*, or *Failed*. A full card appears only when that card *is* the answer
+you asked to see, so the thread stays clean instead of stacking a card per step. Click any collapsed
+row to expand it and inspect the tool's **Input** and its **Output** (or **Error** if it failed),
+each with a copy button. (Navigation and other plumbing tools always show as this collapsed row.)
 
 ## Running actions
 

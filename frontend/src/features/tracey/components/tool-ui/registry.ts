@@ -22,6 +22,7 @@ import { RunFailuresToolUI } from './RunFailuresToolUI';
 import { RunComparisonToolUI } from './RunComparisonToolUI';
 import { TraceListToolUI } from './TraceListToolUI';
 import { TheoryListToolUI } from './TheoryListToolUI';
+import { presentGate } from './present-gate';
 
 /** Renders nothing — for plumbing tools (e.g. `load_skill`) whose calls are noise in the thread. */
 const HiddenToolUI: ToolCallMessagePartComponent = () => null;
@@ -30,33 +31,44 @@ const HiddenToolUI: ToolCallMessagePartComponent = () => null;
  * Maps a Tracey tool name to the React component that renders its result inline in the chat
  * thread (assistant-ui `MessagePrimitive.Parts` `tools.by_name`). Tools absent here fall back
  * to the diagnostic {@link ToolCallCard} (e.g. `navigate`).
+ *
+ * **Read tools are wrapped in {@link presentGate}**: they render their full card only when the
+ * model set `present: true` (the card *is* the answer the user asked to see); otherwise the call
+ * collapses to the slim `ToolCallCard` trace row, so intermediate reads the model did for its own
+ * reasoning don't spam the thread. The genuinely purposeful tools — explicit viz (`show_*`), the
+ * live actions, the wait/interactive tools, and the mutations — are NOT gated: they always render
+ * because they are never noise. Note `get_suite` is gated while the suite *writes*
+ * (`create_suite`/`add_to_suite`/`remove_test_case`, same card) are not — a mutation result is a
+ * real event worth showing.
  */
 export const TRACEY_TOOL_UI: Record<string, ToolCallMessagePartComponent> = {
   load_skill: HiddenToolUI,
+  // Always-on: explicit presentation + live/interactive + mutations.
   show_chart: ChartToolUI,
   show_table: TableToolUI,
   show_text: TextToolUI,
-  get_agent: AgentCardToolUI,
-  get_suite: SuiteCardToolUI,
   create_suite: SuiteCardToolUI,
   add_to_suite: SuiteCardToolUI,
   remove_test_case: SuiteCardToolUI,
-  get_run: RunCardToolUI,
   start_test_run: StartTestRunToolUI,
-  get_proposal: ProposalCardToolUI,
-  get_provider: ProviderCardToolUI,
-  get_trace: TraceCardToolUI,
-  ask_questions: AskQuestionsToolUI,
-  list_agents: AgentListToolUI,
-  list_suites: SuiteListToolUI,
-  list_runs: RunListToolUI,
-  list_proposals: ProposalListToolUI,
-  get_dashboard_stats: DashboardStatsToolUI,
-  get_agent_stats: AgentStatsToolUI,
   submit_optimization_theory: TheoryToolUI,
   await_actions: AwaitActionsToolUI,
-  get_run_failures: RunFailuresToolUI,
-  compare_runs: RunComparisonToolUI,
-  find_traces: TraceListToolUI,
-  list_theories: TheoryListToolUI,
+  ask_questions: AskQuestionsToolUI,
+  // Gated reads: full card only when the model opts in with `present: true`.
+  get_agent: presentGate(AgentCardToolUI),
+  get_suite: presentGate(SuiteCardToolUI),
+  get_run: presentGate(RunCardToolUI),
+  get_proposal: presentGate(ProposalCardToolUI),
+  get_provider: presentGate(ProviderCardToolUI),
+  get_trace: presentGate(TraceCardToolUI),
+  list_agents: presentGate(AgentListToolUI),
+  list_suites: presentGate(SuiteListToolUI),
+  list_runs: presentGate(RunListToolUI),
+  list_proposals: presentGate(ProposalListToolUI),
+  list_theories: presentGate(TheoryListToolUI),
+  get_dashboard_stats: presentGate(DashboardStatsToolUI),
+  get_agent_stats: presentGate(AgentStatsToolUI),
+  get_run_failures: presentGate(RunFailuresToolUI),
+  compare_runs: presentGate(RunComparisonToolUI),
+  find_traces: presentGate(TraceListToolUI),
 };

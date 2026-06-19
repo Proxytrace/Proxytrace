@@ -11,8 +11,9 @@ Optimization proposals are suggested agent improvements awaiting a decision.
 ## Read
 
 - `list_proposals` — proposals in the project (filter mentally by status when the user asks for
-  "waiting for review"). Render as a list/table, or a single proposal via `get_proposal` (a
-  clickable card). Don't dump the rationale as prose when a card shows it.
+  "waiting for review"). Present the list (`present: true`) when the user wants to see it, or a
+  single proposal via `get_proposal` (a clickable card, `present: true`). Don't dump the rationale
+  as prose when a card shows it; keep reads you only need for your own reasoning silent.
 
 ## Decide
 

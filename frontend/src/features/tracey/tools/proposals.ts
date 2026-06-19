@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { proposalsApi } from '../../../api/proposals';
 import { theoriesApi } from '../../../api/theories';
 import { Priority, ProposalStatus, TheorySource } from '../../../api/models';
-import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest, presentArg } from './shared';
 import { clip } from './run-analysis';
 
 /** Seed-style proposed-change payloads accepted by `submit_optimization_theory`. */
@@ -37,6 +37,7 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         'index (id, kind, status, priority, agent) plus a reference; the full list is rendered to ' +
         'the user. To inspect one, call get_proposal.',
       parameters: z.object({
+        present: presentArg,
         agentId: z.string().optional().describe('Restrict to the proposals for this agent (an id from list_agents).'),
       }),
       confirm: false,
@@ -52,7 +53,7 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
       description:
         'Get a single optimization proposal by id. Returns a curated summary (kind, status, ' +
         'priority, expected pass-rate delta) plus a reference; the full proposal is rendered to the user.',
-      parameters: z.object({ proposalId: z.string().describe('The id of the optimization proposal to fetch.') }),
+      parameters: z.object({ present: presentArg, proposalId: z.string().describe('The id of the optimization proposal to fetch.') }),
       confirm: false,
       execute: async ({ proposalId }) => {
         const proposal = await ignore404(() => proposalsApi.get(proposalId, { silentStatuses: [404] }));
@@ -74,6 +75,7 @@ export const createProposalTools: ToolFactory = (ctx, store) => {
         'rationale. Check this BEFORE forming a new hypothesis — do not re-submit an idea that ' +
         'was already invalidated, and build on what won. Rendered to the user as a card.',
       parameters: z.object({
+        present: presentArg,
         agentId: z.string().optional().describe('Only theories for this agent.'),
       }),
       confirm: false,

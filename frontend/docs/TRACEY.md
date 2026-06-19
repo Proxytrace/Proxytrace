@@ -189,6 +189,25 @@ column is which bundle activates the tool (`core` = always available).
 | `submit_optimization_theory` | write | **yes** | `optimize-agent` | `TheoryToolUI` (live) |
 | `await_actions` | wait | no | `test-suites-and-runs`, `optimize-agent` | `AwaitActionsToolUI` |
 
+## Card density: reads render on demand (`present`)
+
+A multi-step turn would otherwise stack a full card per read even though only the last is the
+answer. So **the model decides what becomes a card.** Every gated read tool (`list_*`, `get_*`,
+`find_traces`, the stats/analysis reads) carries an optional `present: boolean` arg (`presentArg`,
+`tools/shared.ts`); it is purely presentational — `execute` ignores it, the digest the model
+receives is identical. In the registry the read entries' cards are wrapped in
+`presentGate(Card)` (`tool-ui/present-gate.tsx`): `present === true` renders the rich card,
+otherwise the call collapses to the slim, expandable `ToolCallCard` trace row. So an intermediate
+lookup stays a quiet one-liner and only the answer card shows. The decision logic (`isPresented`)
+is unit-tested. The prompt's "card economy" rules tell the model to keep reads silent and set
+`present: true` only when the card *is* the answer.
+
+**Not gated (always render):** the explicit renderers (`show_*`), the live actions
+(`start_test_run`, `submit_optimization_theory`), `await_actions`, `ask_questions`, and the suite
+**writes** (`create_suite`/`add_to_suite`/`remove_test_case`) — a mutation result is a real event,
+so `get_suite` is gated while those writes (same `SuiteCardToolUI`) are not. The gate is applied
+per registry entry, so the same component is gated for a read yet full for a write.
+
 ## Tools: read, write, render, wait, interactive
 
 `TraceyToolContext` (`{ projectId, artifactScope, navigate, confirm }`, `tools/shared.ts`) is
@@ -196,9 +215,11 @@ built in `useTraceyChat` and passed to both `createTraceyTools` (for `execute`) 
 adapter. Each domain factory also receives a `StoreFn` bound to the artifact store.
 
 - **Read tools** (`list_*`, `get_*`, `get_*_stats`) call `src/api/*.ts`, push the full payload to
-  the artifact store, and return only a compact digest + reference. `confirm: false`. The
-  single-entity gets (`get_agent`, `get_run`, `get_proposal`, `get_provider`, `get_trace`,
-  `get_suite`) each have a dedicated card in `tool-ui/`. Digests deliberately carry enough to
+  the artifact store, and return only a compact digest + reference. `confirm: false`. They carry
+  the optional `present` flag and are `presentGate`-wrapped (see "Card density") — silent by
+  default, full card when the model opts in. The single-entity gets (`get_agent`, `get_run`,
+  `get_proposal`, `get_provider`, `get_trace`, `get_suite`) each have a dedicated card in
+  `tool-ui/`. Digests deliberately carry enough to
   answer follow-ups without more cards: list digests include the key row fields **but are capped**
   (`listDigest` in `tools/shared.ts` — first 20–25 rows + total count + a truncation note; the
   card always shows everything), and
@@ -237,7 +258,9 @@ adapter. Each domain factory also receives a `StoreFn` bound to the artifact sto
 A tool gets inline UI by adding its component to `tool-ui/registry.ts` (keyed by tool name);
 unmapped tools render with `ToolCallCard` (fine for `navigate`, `search_docs`,
 `set_proposal_status`). `load_skill` is mapped to a hidden component (`HiddenToolUI`, renders
-nothing) — it's plumbing, not something the user should see in the thread. The runtime's tool adapter omits `execute` for interactive tools so the
+nothing) — it's plumbing, not something the user should see in the thread. Read-tool entries are
+wrapped in `presentGate(Card)` so they render that card only when the model set `present: true`,
+else the slim `ToolCallCard` (see "Card density"). The runtime's tool adapter omits `execute` for interactive tools so the
 SDK treats them as frontend tools, and passes the SDK abort signal into `execute` so long-running
 tools stop when the user stops the turn.
 

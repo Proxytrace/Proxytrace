@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testCasesApi } from '../../../api/test-cases';
-import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest, presentArg } from './shared';
 
 /** The compact suite digest returned by the read + curation tools (the card shows everything). */
 const suiteDigest = (suite: { id: string; name: string; agentName: string; testCases: unknown[]; passRate: number | null }) => ({
@@ -22,6 +22,7 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
         'optimizing or curating for a specific agent); omit it for all of the project\'s suites. Returns a ' +
         'compact index — each row carries the suite\'s agent — and the full list renders to the user.',
       parameters: z.object({
+        present: presentArg,
         agentId: z.string().optional().describe('Restrict to the suites that benchmark this agent.'),
       }),
       confirm: false,
@@ -39,7 +40,7 @@ export const createSuiteTools: ToolFactory = (ctx, store) => {
       description:
         'Get one test suite by id. Returns a summary (name, case count, pass rate); the full suite ' +
         'renders as a card. Each test case carries its own id — use those with remove_test_case / update_expected_output.',
-      parameters: z.object({ suiteId: z.string().describe('The id of the test suite to fetch.') }),
+      parameters: z.object({ present: presentArg, suiteId: z.string().describe('The id of the test suite to fetch.') }),
       confirm: false,
       execute: async ({ suiteId }) => {
         const suite = await ignore404(() => testSuitesApi.get(suiteId, { silentStatuses: [404] }));

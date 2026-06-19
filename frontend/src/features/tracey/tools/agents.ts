@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentsApi } from '../../../api/agents';
-import { type ToolFactory, tool, empty, ignore404, listDigest } from './shared';
+import { type ToolFactory, tool, presentArg, ignore404, listDigest } from './shared';
 
 export const createAgentTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -11,7 +11,7 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
         'model endpoint, tool count) plus a reference; the full list is rendered to the user as a ' +
         'card. Use this index directly — only call get_agent when the user asks about one ' +
         'specific agent in detail.',
-      parameters: empty,
+      parameters: z.object({ present: presentArg }),
       confirm: false,
       execute: async () => {
         const items = (await agentsApi.list({ projectId })).items;
@@ -28,6 +28,7 @@ export const createAgentTools: ToolFactory = (ctx, store) => {
         'Get a single agent by id. Returns a curated summary (name, endpoint, tool count, system ' +
         'prompt preview) plus a reference; the full agent is rendered to the user as a card.',
       parameters: z.object({
+        present: presentArg,
         agentId: z.string().describe(
           'The id of the agent to fetch — an id from list_agents, NOT the agent\'s name. ' +
           'If you only have a name, call list_agents first and use the matching row\'s id.',

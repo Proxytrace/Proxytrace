@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { statisticsApi } from '../../../api/statistics';
-import { type ToolFactory, tool, empty, ignore404 } from './shared';
+import { type ToolFactory, tool, ignore404, presentArg } from './shared';
 
 export const createStatsTools: ToolFactory = (ctx, store) => {
   const projectId = ctx.projectId;
@@ -11,7 +11,7 @@ export const createStatsTools: ToolFactory = (ctx, store) => {
         'headline summary plus per-agent and per-model usage breakdowns (calls, tokens) — use it ' +
         'to chart or compare usage across agents instead of fetching each agent individually. ' +
         'The full dashboard is rendered to the user as a card.',
-      parameters: empty,
+      parameters: z.object({ present: presentArg }),
       confirm: false,
       execute: async () => {
         const view = await statisticsApi.dashboard({ projectId });
@@ -47,7 +47,7 @@ export const createStatsTools: ToolFactory = (ctx, store) => {
       description:
         'Get statistics for a single agent (token usage, costs, latencies) over the last 30 days. ' +
         'Returns the headline summary plus a reference; the full stats are rendered to the user as a card.',
-      parameters: z.object({ agentId: z.string().describe('The id of the agent to fetch statistics for.') }),
+      parameters: z.object({ present: presentArg, agentId: z.string().describe('The id of the agent to fetch statistics for.') }),
       confirm: false,
       execute: async ({ agentId }) => {
         const to = new Date();

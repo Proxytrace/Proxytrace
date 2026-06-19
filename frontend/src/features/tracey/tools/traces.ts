@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { agentCallsApi } from '../../../api/agent-calls';
-import { type ToolFactory, tool, ignore404 } from './shared';
+import { type ToolFactory, tool, ignore404, presentArg } from './shared';
 import { clip } from './run-analysis';
 
 export const createTraceTools: ToolFactory = (ctx, store) => ({
@@ -11,6 +11,7 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
       'actually said: find failing or suspicious calls, then `get_trace` one for full detail. ' +
       'The matching traces are rendered to the user as a card.',
     parameters: z.object({
+      present: presentArg,
       agentId: z.string().optional().describe('Only traces of this agent.'),
       query: z.string().optional().describe('Free-text search over the captured request/response.'),
       httpStatus: z.number().int().optional()
@@ -46,7 +47,7 @@ export const createTraceTools: ToolFactory = (ctx, store) => ({
     description:
       'Get a single captured trace (agent call) by id. Returns a curated summary (model, status, ' +
       'token usage, latency, cost) plus a reference; the full trace is rendered to the user as a card.',
-    parameters: z.object({ traceId: z.string().describe('The id of the trace / agent call to fetch.') }),
+    parameters: z.object({ present: presentArg, traceId: z.string().describe('The id of the trace / agent call to fetch.') }),
     confirm: false,
     execute: async ({ traceId }) => {
       const call = await ignore404(() => agentCallsApi.get(traceId, { silentStatuses: [404] }));

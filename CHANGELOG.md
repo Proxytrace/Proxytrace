@@ -66,6 +66,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Changed
 
+- **Tracey shows cards on demand instead of one per tool call.** A multi-step answer used to stack
+  a full card for every lookup Tracey did on the way to the result. Now Tracey decides what's worth
+  showing: the reads she does for her own reasoning collapse to a quiet, expandable one-line trace,
+  and a full card appears only when that card *is* the answer you asked to see. Charts, tables, the
+  entity you asked about, live test-run/optimization cards, and confirmations still render in full —
+  the change only quiets the intermediate lookups, so the thread reads cleaner.
+
 - **A suite now runs against at most three model endpoints at once.** Both manual runs and
   scheduled runs are capped at three endpoints per run, so a model comparison stays focused (and
   bounded in cost). Endpoints are now picked from a **searchable multi-select** (replacing the old

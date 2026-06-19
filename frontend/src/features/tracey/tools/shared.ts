@@ -46,8 +46,20 @@ export interface TraceyTool<TArgs = Record<string, unknown>> {
   execute?: (args: TArgs, ctx: TraceyToolContext, signal?: AbortSignal) => Promise<unknown>;
 }
 
-/** Parameter schema for tools that take no arguments. */
-export const empty = z.object({});
+/**
+ * Optional flag a *read* tool exposes so the model controls whether its result renders as a full
+ * card. Default (omitted/false): the call collapses to a quiet, expandable one-line trace, keeping
+ * intermediate reads out of the user's way. The model sets it `true` only when showing the card
+ * *is* the answer. Purely presentational — `execute` ignores it (the digest the model receives is
+ * identical either way); the registry's `presentGate` reads it at render time (see
+ * `components/tool-ui/present-gate.tsx`). Spread into a gated tool's schema:
+ * `z.object({ present: presentArg, … })`. The wire description stays terse on purpose — the
+ * prompt's "card economy" rules carry the full when-to-present nuance.
+ */
+export const presentArg = z.boolean().optional().describe(
+  'Render this result as a card for the user. Default false: a quiet one-line trace. Set true only ' +
+  'when this card is the answer the user asked to see — never for intermediate reads.',
+);
 
 /** Result a write tool returns when the user declines the confirmation. */
 export const CANCELLED = { cancelled: true } as const;

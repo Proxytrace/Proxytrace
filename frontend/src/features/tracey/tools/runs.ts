@@ -3,7 +3,7 @@ import { agentsApi } from '../../../api/agents';
 import { testSuitesApi } from '../../../api/test-suites';
 import { testRunsApi } from '../../../api/test-runs';
 import { testRunGroupsApi } from '../../../api/test-run-groups';
-import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest } from './shared';
+import { type ToolFactory, tool, CANCELLED, ignore404, isEntityId, listDigest, presentArg } from './shared';
 import { clip, compareRuns, failingResults } from './run-analysis';
 import { isRunTerminal } from './await';
 
@@ -15,6 +15,7 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       'index (id, suite, agent, status, pass rate) plus a reference; the full list is rendered to ' +
       'the user. To inspect one run, call get_run.',
     parameters: z.object({
+      present: presentArg,
       agentId: z.string().optional().describe('Restrict to the runs of this agent (an id from list_agents).'),
     }),
     confirm: false,
@@ -30,7 +31,7 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
     description:
       'Get a single test run by id. Returns a curated summary (suite, agent, status, pass/fail ' +
       'counts) plus a reference; the full run is rendered to the user as a card.',
-    parameters: z.object({ runId: z.string().describe('The id of the test run to fetch.') }),
+    parameters: z.object({ present: presentArg, runId: z.string().describe('The id of the test run to fetch.') }),
     confirm: false,
     execute: async ({ runId }) => {
       const run = await ignore404(() => testRunsApi.get(runId, { silentStatuses: [404] }));
@@ -54,6 +55,7 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       'before forming a hypothesis about why an agent fails. The failing cases are rendered to ' +
       'the user as a card.',
     parameters: z.object({
+      present: presentArg,
       runId: z.string().describe('The id of the test run to analyze.'),
       limit: z.number().int().min(1).max(20).optional()
         .describe('Max failing cases in the digest (default 8); the card always shows all of them.'),
@@ -97,6 +99,7 @@ export const createRunTools: ToolFactory = (_ctx, store) => ({
       'vs the latest, or two agents on one suite). Pass the older/baseline run first. The ' +
       'comparison is rendered to the user as a card.',
     parameters: z.object({
+      present: presentArg,
       baselineRunId: z.string().describe('The id of the baseline (earlier) run.'),
       candidateRunId: z.string().describe('The id of the candidate (later) run to compare against it.'),
     }),
