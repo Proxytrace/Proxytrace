@@ -54,7 +54,14 @@ export class TraceyTransport implements ChatTransport<UIMessage> {
       fetch: async (input, init) => {
         const token = getAccessToken();
         const headers = new Headers(init?.headers);
+        // The AI SDK pre-fills `Authorization: Bearer <apiKey>` from the placeholder above. Use the
+        // real in-memory app JWT when we have one; otherwise DROP the header so the same-origin
+        // session cookie authenticates. After a page reload the JWT is gone (it lives in memory
+        // only — LocalAuthProvider restores the session from the cookie, not the token), and
+        // leaving the bogus `app-jwt` bearer makes the backend reject it with 401 instead of
+        // falling back to the cookie — i.e. Tracey gets no response on every post-reload turn.
         if (token) headers.set('Authorization', `Bearer ${token}`);
+        else headers.delete('Authorization');
         if (this.currentTurnId) headers.set('x-proxytrace-session-id', this.currentTurnId);
         return fetch(input, { ...init, headers });
       },

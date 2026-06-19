@@ -120,6 +120,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Tracey no longer goes silent after a page reload.** The in-app assistant kept the app's JWT in
+  memory only, but its chat transport sent a placeholder `Authorization` header when that token was
+  absent — which is the case after every browser reload (the session is restored from the cookie, not
+  the token). The backend rejected the bogus bearer with a 401 instead of falling back to the valid
+  session cookie, so every message sent after a reload produced no response. The transport now drops
+  the placeholder header when there is no token, letting the same-origin session cookie authenticate
+  the call exactly like every other request.
 - **The dashboard no longer hangs for ~5 seconds when Redis is unreachable.** The dashboard reads the
   ingestion queue depth on every load; with the Redis transport configured but Redis down, that read
   blocked on the connection timeout (~5s) before quietly giving up, making the whole dashboard crawl
