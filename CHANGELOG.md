@@ -112,6 +112,13 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **Test-run statistics no longer fail to project on a startup insert race.** When the statistics
+  backfill (run at startup) and the live projector both computed stats for the same just-finished
+  run, one lost the insert race and the recovery retry — sharing the same transactional context —
+  replayed the orphaned insert, hitting the unique `TestRunId` constraint again and logging a
+  `duplicate key value violates unique constraint "IX_TestRunStatsEntity_TestRunId"` error while
+  leaving that run's stats unprojected. The failed insert is now discarded before the retry, so it
+  correctly falls back to an update.
 - **Setup no longer fails when a provider lists a zero-cost model.** Initial setup refreshes a
   provider's model catalog and prices; a discovered model whose price was non-positive (e.g. a free
   model listed at `0`) or inverted violated the model-endpoint price invariants and aborted the whole

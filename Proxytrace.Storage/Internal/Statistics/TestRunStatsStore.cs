@@ -52,14 +52,26 @@ internal class TestRunStatsStore : IStatsReader<TestRunStats, TestRunStats.Filte
         if (existing is null)
         {
             TestRunStatsEntity entity = ToEntity(stats, id: Guid.NewGuid(), createdAt: now, updatedAt: now);
-            set.Add(entity);
-        }
-        else
-        {
-            TestRunStatsEntity updated = ToEntity(stats, id: existing.Id, createdAt: existing.CreatedAt, updatedAt: now);
-            context.Entry(existing).CurrentValues.SetValues(updated);
+            var entry = set.Add(entity);
+            try
+            {
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            catch
+            {
+                // A failed SaveChanges leaves the insert tracked as Added. The ambient context is
+                // shared with the retry in UpsertAsync, so detach the orphan here — otherwise the
+                // retry's SaveChanges replays this insert and re-hits the unique TestRunId
+                // constraint, turning a recoverable insert race into a hard failure.
+                entry.State = EntityState.Detached;
+                throw;
+            }
+
+            return;
         }
 
+        TestRunStatsEntity updated = ToEntity(stats, id: existing.Id, createdAt: existing.CreatedAt, updatedAt: now);
+        context.Entry(existing).CurrentValues.SetValues(updated);
         await context.SaveChangesAsync(cancellationToken);
     }
 
