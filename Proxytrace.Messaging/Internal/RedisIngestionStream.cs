@@ -95,6 +95,15 @@ internal sealed class RedisIngestionStream : IIngestionStream
 
     public async Task<long> GetQueueDepthAsync(CancellationToken cancellationToken = default)
     {
+        // Depth is observability-only and runs on the hot dashboard path. The multiplexer is
+        // configured with AbortOnConnectFail=false, so when Redis is down a command does not fail
+        // fast — it blocks until ConnectTimeout (~5s) before throwing. Bail out the moment the
+        // multiplexer reports no connection so a Redis outage never stalls every dashboard load.
+        if (!connection.IsConnected)
+        {
+            return 0L;
+        }
+
         try
         {
             StreamGroupInfo[] groups = await Database.StreamGroupInfoAsync(configuration.Stream);

@@ -113,6 +113,12 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
 
 ### Fixed
 
+- **The dashboard no longer hangs for ~5 seconds when Redis is unreachable.** The dashboard reads the
+  ingestion queue depth on every load; with the Redis transport configured but Redis down, that read
+  blocked on the connection timeout (~5s) before quietly giving up, making the whole dashboard crawl
+  on every refresh even though no other page was affected. The queue-depth read now bails out
+  immediately when the connection is unavailable, so a Redis outage degrades only the depth figure
+  (shown as 0) instead of stalling the page.
 - **Test-run statistics no longer fail to project on a startup insert race.** When the statistics
   backfill (run at startup) and the live projector both computed stats for the same just-finished
   run, one lost the insert race and the recovery retry — sharing the same transactional context —
