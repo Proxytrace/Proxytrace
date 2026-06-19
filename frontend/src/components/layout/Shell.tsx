@@ -15,6 +15,7 @@ import { IconButton } from '../ui/Button';
 import { Menu } from '../ui/Menu';
 import { BrandMark } from '../ui/BrandMark';
 import { ProjectSelector } from './ProjectSelector';
+import { NotificationsMenu } from '../../features/notifications/NotificationsMenu';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useKiosk } from '../../contexts/KioskContext';
@@ -218,6 +219,8 @@ export function Shell() {
           </div>
 
           <span className="hidden sm:contents"><LicenseBadge /></span>
+
+          <NotificationsMenu />
 
           <Menu
             trigger={

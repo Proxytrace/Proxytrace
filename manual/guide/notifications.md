@@ -1,10 +1,12 @@
 # Notifications
 
-The **Notifications** section on the [Dashboard](/guide/dashboard) surfaces alerts and
-updates for the current project in one place. Today it is driven by **anomaly detection** —
-Proxytrace automatically watches your test runs and raises an alert when something goes
-wrong — but the section is multi-purpose and will carry other kinds of notifications over
-time.
+Open the **Notifications** inbox from the bell icon in the top bar — a badge shows the unread
+count, and clicking it opens a panel listing alerts and updates for the current project in one
+place. Today it is driven by **anomaly detection** — Proxytrace automatically watches your test
+runs and raises an alert when something goes wrong — but the inbox is multi-purpose and will
+carry other kinds of notifications over time.
+
+![The notifications inbox open from the top-bar bell icon, listing anomaly alerts and a ready optimization proposal](/screenshots/notifications/inbox.png)
 
 ## Anomaly alerts
 
@@ -31,8 +33,11 @@ reported.
 - **Mark as read** keeps a notification in the list but clears it from the unread count.
 - **Dismiss** removes it from the list.
 
-An unread count is shown on the section header so you can see at a glance whether anything
-needs attention.
+An unread count is shown on the bell badge and the panel header so you can see at a glance
+whether anything needs attention. When there's nothing to report the panel shows a short
+placeholder explaining where notifications will appear.
+
+![Close-up of the notifications panel — severity-coded alerts, relative timestamps, and per-item mark-read and dismiss actions](/screenshots/notifications/inbox-panel.png)
 
 ## Scope
 
@@ -42,6 +47,6 @@ notifications.
 
 ::: tip Coming soon
 The notification system is built to be extendable. Future releases will surface additional
-notification kinds (such as a ready optimization proposal) in this same section, and add
-delivery channels beyond the dashboard — for example email.
+notification kinds in this same inbox, and add delivery channels beyond the in-app inbox —
+for example email.
 :::

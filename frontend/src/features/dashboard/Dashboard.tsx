@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNotificationStream, useTraceStream } from '../../api/event-stream';
+import { useTraceStream } from '../../api/event-stream';
 import { QUERY_KEYS } from '../../api/query-keys';
 import useCurrentProject from '../../hooks/useCurrentProject';
 import { bucketFor, rangeFromOpt, RANGE_KEYS, type RangeKey } from '../../lib/time-range';
@@ -23,7 +23,6 @@ import { PassRateGauge } from './components/PassRateGauge';
 import { TokenByAgentSection } from './components/TokenByAgentSection';
 import { LatencySection } from './components/LatencySection';
 import { AgentsSection } from './components/AgentsSection';
-import { NotificationsSection } from './components/NotificationsSection';
 
 export default function Dashboard() {
   const qc = useQueryClient();
@@ -52,12 +51,6 @@ export default function Dashboard() {
 
   useTraceStream(() => {
     qc.invalidateQueries({ queryKey: QUERY_KEYS.statisticsDashboard(from, projectId) });
-  });
-
-  // ── SSE: refresh notifications on new/updated alerts ──────────────────────────
-
-  useNotificationStream(projectId, () => {
-    qc.invalidateQueries({ queryKey: QUERY_KEYS.notificationsRoot });
   });
 
   // ── Derived data ────────────────────────────────────────────────────────────
@@ -98,9 +91,6 @@ export default function Dashboard() {
 
       {/* Telemetry strip */}
       <TelemetryStrip telemetry={telemetry} latencyStats={latencyStats} />
-
-      {/* Notifications: alerts & updates across the project */}
-      <NotificationsSection projectId={projectId} enabled={enabled} />
 
       {/* Hero bento: token card + 2×2 stat tiles */}
       <div

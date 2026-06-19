@@ -15,8 +15,9 @@ of your agents at a glance and links out to the detailed views.
   refresh or navigating away and back.
 - **Recent activity** — the latest traces, test runs, and proposals, updated live via
   Server-Sent Events.
-- **Notifications** — alerts and updates for the project, including automatically detected
-  anomalies from your test runs. See [Notifications](/guide/notifications).
+- **Notifications** — the bell icon in the top bar opens an inbox of alerts and updates for
+  the project, including automatically detected anomalies from your test runs. It's available
+  on every page, not just the dashboard. See [Notifications](/guide/notifications).
 - **Quick links** — jump into [Traces](/guide/capturing-traces),
   [Agents](/guide/agents), [Test Runs](/guide/running-tests), and
   [Proposals](/guide/optimization-proposals).
