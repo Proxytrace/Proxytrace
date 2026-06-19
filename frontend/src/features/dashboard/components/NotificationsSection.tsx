@@ -1,6 +1,5 @@
 import { NotificationStatus } from '../../../api/models';
 import { Card } from '../../../components/ui/Card';
-import { EmptyState } from '../../../components/ui/EmptyState';
 import { Skeleton } from '../../../components/ui/Skeleton';
 import { BellIcon } from '../../../components/icons';
 import { useNotifications, useNotificationMutations } from '../hooks/useNotifications';
@@ -8,13 +7,19 @@ import { NotificationRow } from './NotificationRow';
 
 interface NotificationsSectionProps {
   projectId?: string;
+  enabled?: boolean;
 }
 
-export function NotificationsSection({ projectId }: NotificationsSectionProps) {
-  const { data: notifications, isLoading } = useNotifications(projectId);
+export function NotificationsSection({ projectId, enabled = true }: NotificationsSectionProps) {
+  const { data: notifications, isLoading } = useNotifications(projectId, enabled);
   const { markRead, dismiss } = useNotificationMutations();
   const isBusy = markRead.isPending || dismiss.isPending;
   const unreadCount = notifications?.filter((n) => n.status === NotificationStatus.Unread).length ?? 0;
+
+  // Nothing to show and not loading — hide the section entirely rather than render an empty card.
+  if (!isLoading && (!notifications || notifications.length === 0)) {
+    return null;
+  }
 
   return (
     <Card padding="md" data-testid="notifications-section">
@@ -43,13 +48,9 @@ export function NotificationsSection({ projectId }: NotificationsSectionProps) {
             <Skeleton height={48} />
             <Skeleton height={48} />
           </div>
-        ) : !notifications || notifications.length === 0 ? (
-          <div data-testid="notifications-empty-state">
-            <EmptyState title="No notifications" description="Anomaly alerts and updates will appear here." />
-          </div>
         ) : (
           <div data-testid="notifications-list" className="max-h-[320px] overflow-y-auto">
-            {notifications.map((n) => (
+            {notifications?.map((n) => (
               <NotificationRow
                 key={n.id}
                 notification={n}

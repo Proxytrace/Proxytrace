@@ -100,7 +100,6 @@ export const QUERY_KEYS = {
   errorLogRoot: ['error-log'] as const,
 
   notifications: (projectId?: string) => ['notifications', projectId ?? null] as const,
-  notificationsUnread: (projectId?: string) => ['notifications', 'unread', projectId ?? null] as const,
   /** Prefix matching every notifications query — use for invalidation. */
   notificationsRoot: ['notifications'] as const,
 };

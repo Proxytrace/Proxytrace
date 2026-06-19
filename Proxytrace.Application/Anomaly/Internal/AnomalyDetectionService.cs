@@ -115,6 +115,7 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
     private async Task<AnomalyInput> BuildInputAsync(ITestRunGroup group, CancellationToken cancellationToken)
     {
         var runs = await testRuns.GetByGroupAsync(group.Id, cancellationToken);
+        var testCaseCount = group.Suite.TestCases.Count;
         var runInputs = new List<AnomalyRunInput>(runs.Count);
 
         foreach (var run in runs)
@@ -126,6 +127,8 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
                 EndpointId: run.Endpoint.Id,
                 EndpointName: run.Endpoint.Model.Name,
                 RunFailed: run.Status == TestRunStatus.Failed,
+                TestCaseCount: testCaseCount,
+                ResultCount: run.TestResults.Count,
                 CurrentPassRate: current?.PassRate,
                 CurrentAverageLatency: AverageLatency(current),
                 BaselinePassRate: baseline.PassRate,

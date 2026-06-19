@@ -20,7 +20,7 @@ hooks in `frontend/src/api/event-stream.ts`.
 | `/api/agents/{id}/theories/stream` | one agent | `theory-changed` | `TheoryStatusChangedEvent` | Theory moves through Proposed→Validating→Validated/Invalidated → board columns |
 | `/api/test-runs/{id}/stream` | one run | `test-case-started`, `inference-done`, `evaluation-arrived`, `test-result-arrived`, `run-complete`* | `TestRunEvent` subtypes | Live single-run progress (per-case, per-evaluator) |
 | `/api/test-run-groups/{id}/stream` | one group (all its runs) | the five run events above + `group-run-complete`* | `TestRunEvent` subtypes | Live multi-endpoint comparison run |
-| `/api/notifications/stream` | global (all projects) | `notification-created`, `notification-status-changed` | `NotificationEvent` subtypes | Anomaly detection raised an alert / a notification was read or dismissed → dashboard Notifications section. The stream is global; the client filters to the current project (global, null-project notifications show everywhere). |
+| `/api/notifications/stream?projectId=` | per project (global broadcaster, server-filtered per connection) | `notification-created`, `notification-status-changed` | `NotificationEvent` subtypes | Anomaly detection raised an alert / a notification was read or dismissed → dashboard Notifications section. The broadcaster is global, but the controller writes a frame only when `evt.ProjectId == projectId` or the event is global (null project), so another project's notification content never reaches the connection. |
 
 `*` = **terminal** event. The client closes the `EventSource` on the terminal event and the run/group
 views are **pure-SSE (no polling)**; on terminal they invalidate the relevant TanStack queries to

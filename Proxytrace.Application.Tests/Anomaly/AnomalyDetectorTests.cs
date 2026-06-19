@@ -13,6 +13,8 @@ public sealed class AnomalyDetectorTests
 
     private static AnomalyRunInput Run(
         bool failed = false,
+        int testCaseCount = 5,
+        int resultCount = 5,
         double? currentPassRate = null,
         TimeSpan? currentLatency = null,
         double? baselinePassRate = null,
@@ -22,6 +24,8 @@ public sealed class AnomalyDetectorTests
             EndpointId: Guid.NewGuid(),
             EndpointName: "gpt-4o",
             RunFailed: failed,
+            TestCaseCount: testCaseCount,
+            ResultCount: resultCount,
             CurrentPassRate: currentPassRate,
             CurrentAverageLatency: currentLatency,
             BaselinePassRate: baselinePassRate,
@@ -48,6 +52,19 @@ public sealed class AnomalyDetectorTests
 
         result.Should().ContainSingle();
         result[0].Severity.Should().Be(NotificationSeverity.Critical);
+    }
+
+    [TestMethod]
+    public void Detect_WhenARunProducedNoResults_RaisesCritical_WithoutBaseline()
+    {
+        // The common "endpoint unavailable" shape: every case errored and was skipped, so the run
+        // produced no results and never reached Failed status, and there is no baseline.
+        var result = Detector().Detect(Input(false,
+            Run(testCaseCount: 5, resultCount: 0, baselineSamples: 0)));
+
+        result.Should().ContainSingle();
+        result[0].Severity.Should().Be(NotificationSeverity.Critical);
+        result[0].TargetKind.Should().Be(NotificationTargetKind.TestRunGroup);
     }
 
     [TestMethod]

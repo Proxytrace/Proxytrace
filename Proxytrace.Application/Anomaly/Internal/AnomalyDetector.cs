@@ -14,13 +14,17 @@ internal sealed class AnomalyDetector : IAnomalyDetector
 
     public IReadOnlyList<DetectedAnomaly> Detect(AnomalyInput input)
     {
-        // Rule 1 (hard): the group, or any of its runs, failed — most likely an unavailable endpoint.
-        // No baseline required; highest severity.
-        var failedRuns = input.Runs.Where(r => r.RunFailed).Select(r => r.EndpointName).ToList();
-        if (input.GroupFailed || failedRuns.Count > 0)
+        // Rule 1 (hard): the group failed, a run failed, or a run produced no results at all — the
+        // last is the common shape of an unavailable endpoint (every case errors and is skipped, so
+        // the run never completes and no stats are projected). No baseline required; highest severity.
+        var downRuns = input.Runs
+            .Where(r => r.RunFailed || (r.TestCaseCount > 0 && r.ResultCount == 0))
+            .Select(r => r.EndpointName)
+            .ToList();
+        if (input.GroupFailed || downRuns.Count > 0)
         {
-            var detail = failedRuns.Count > 0
-                ? $" Failed endpoint(s): {string.Join(", ", failedRuns)}."
+            var detail = downRuns.Count > 0
+                ? $" Affected endpoint(s) (no results — endpoint may be unavailable): {string.Join(", ", downRuns)}."
                 : string.Empty;
             return
             [

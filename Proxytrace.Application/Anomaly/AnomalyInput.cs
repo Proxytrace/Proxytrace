@@ -17,6 +17,8 @@ public record AnomalyRunInput(
     Guid EndpointId,
     string EndpointName,
     bool RunFailed,
+    int TestCaseCount,
+    int ResultCount,
     double? CurrentPassRate,
     TimeSpan? CurrentAverageLatency,
     double? BaselinePassRate,

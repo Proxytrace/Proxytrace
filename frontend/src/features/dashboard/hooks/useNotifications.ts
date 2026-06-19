@@ -3,10 +3,11 @@ import { notificationsApi } from '../../../api/notifications';
 import { QUERY_KEYS } from '../../../api/query-keys';
 
 /** Non-dismissed notifications for the current project scope (newest first). */
-export function useNotifications(projectId?: string) {
+export function useNotifications(projectId?: string, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEYS.notifications(projectId),
     queryFn: () => notificationsApi.list({ projectId, includeRead: true }),
+    enabled,
   });
 }
 

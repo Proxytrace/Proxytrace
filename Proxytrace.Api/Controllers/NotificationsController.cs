@@ -36,12 +36,6 @@ public class NotificationsController : ControllerBase
         return notifications.Select(mapper.ToDto).ToList();
     }
 
-    [HttpGet("unread-count")]
-    public async Task<UnreadCountDto> GetUnreadCount(
-        [FromQuery] Guid? projectId = null,
-        CancellationToken cancellationToken = default)
-        => new(await repository.CountUnreadAsync(projectId, cancellationToken));
-
     [HttpPatch("{id:guid}/read")]
     public async Task<ActionResult<NotificationDto>> MarkRead(Guid id, CancellationToken cancellationToken)
     {
@@ -53,7 +47,8 @@ public class NotificationsController : ControllerBase
             return Conflict(new { error = "Cannot mark a dismissed notification read." });
 
         var updated = await existing.MarkRead(cancellationToken);
-        broadcaster.Publish(NotificationStatusChangedEvent.Create(updated));
+        if (updated.Status != existing.Status)
+            broadcaster.Publish(NotificationStatusChangedEvent.Create(updated));
         return Ok(mapper.ToDto(updated));
     }
 
@@ -65,12 +60,13 @@ public class NotificationsController : ControllerBase
             return NotFound();
 
         var updated = await existing.Dismiss(cancellationToken);
-        broadcaster.Publish(NotificationStatusChangedEvent.Create(updated));
+        if (updated.Status != existing.Status)
+            broadcaster.Publish(NotificationStatusChangedEvent.Create(updated));
         return Ok(mapper.ToDto(updated));
     }
 
     [HttpGet("stream")]
-    public async Task Stream(CancellationToken cancellationToken)
+    public async Task Stream([FromQuery] Guid? projectId = null, CancellationToken cancellationToken = default)
     {
         Response.Headers.Append("Content-Type", "text/event-stream");
         Response.Headers.Append("Cache-Control", "no-cache");
@@ -79,6 +75,11 @@ public class NotificationsController : ControllerBase
         var reader = broadcaster.Subscribe(cancellationToken);
         await foreach (var evt in reader.ReadAllAsync(cancellationToken))
         {
+            // The broadcaster is global; scope each connection to its project so another project's
+            // notification content never crosses the wire. Global (null-project) events always pass.
+            if (evt.ProjectId is { } eventProject && eventProject != projectId)
+                continue;
+
             string eventName = evt switch
             {
                 NotificationCreatedEvent => "notification-created",

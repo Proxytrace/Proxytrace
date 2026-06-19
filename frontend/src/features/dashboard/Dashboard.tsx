@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   // ── SSE: refresh notifications on new/updated alerts ──────────────────────────
 
-  useNotificationStream(() => {
+  useNotificationStream(projectId, () => {
     qc.invalidateQueries({ queryKey: QUERY_KEYS.notificationsRoot });
   });
 
@@ -100,7 +100,7 @@ export default function Dashboard() {
       <TelemetryStrip telemetry={telemetry} latencyStats={latencyStats} />
 
       {/* Notifications: alerts & updates across the project */}
-      <NotificationsSection projectId={projectId} />
+      <NotificationsSection projectId={projectId} enabled={enabled} />
 
       {/* Hero bento: token card + 2×2 stat tiles */}
       <div

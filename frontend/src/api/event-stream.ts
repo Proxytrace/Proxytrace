@@ -86,9 +86,12 @@ export function useTraceStream(onTrace: (e: TraceCreatedEvent) => void) {
   );
 }
 
-export function useNotificationStream(onNotification: (e: NotificationEvent) => void) {
+export function useNotificationStream(
+  projectId: string | undefined,
+  onNotification: (e: NotificationEvent) => void,
+) {
   useEventStream<NotificationEvent>(
-    '/api/notifications/stream',
+    `/api/notifications/stream${projectId ? `?projectId=${projectId}` : ''}`,
     ['notification-created', 'notification-status-changed'],
     onNotification,
   );
