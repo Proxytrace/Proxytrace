@@ -59,5 +59,8 @@ internal record ToolUpdateTheory : OptimizationTheory, IToolUpdateTheory
     {
         foreach (var result in base.Validate(validationContext))
             yield return result;
+
+        foreach (var result in ProposedTools.SelectMany(tool => tool.Validate(validationContext)))
+            yield return result;
     }
 }

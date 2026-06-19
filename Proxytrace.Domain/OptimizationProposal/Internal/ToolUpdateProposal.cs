@@ -132,6 +132,12 @@ internal record ToolUpdateProposal : DomainEntity<IOptimizationProposal>, IToolU
         foreach (var result in Agent.Validate(validationContext))
             yield return result;
 
+        foreach (var result in ABTestRun.Validate(validationContext))
+            yield return result;
+
+        foreach (var result in ProposedTools.SelectMany(tool => tool.Validate(validationContext)))
+            yield return result;
+
         if (string.IsNullOrWhiteSpace(Rationale))
             yield return Validation.NotNullOrWhiteSpace(Rationale);
 

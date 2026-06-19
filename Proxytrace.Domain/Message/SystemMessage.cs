@@ -32,6 +32,13 @@ public sealed record SystemMessage : Message
     /// <inheritdoc />
     public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        // base (Message.Validate) already cascades into each Content; layer only the
+        // SystemMessage-specific "must be text" rule on top.
+        foreach (var result in base.Validate(validationContext))
+        {
+            yield return result;
+        }
+
         foreach (Content content in Contents)
         {
             if (content.Kind != ContentKind.Text)
@@ -39,11 +46,6 @@ public sealed record SystemMessage : Message
                 yield return new ValidationResult(
                     $"SystemMessage content must be of kind Text. Found content with kind {content.Kind}.",
                     [nameof(Contents)]);
-            }
-            
-            foreach (var validationResult in content.Validate(validationContext))
-            {
-                yield return validationResult;
             }
         }
     }

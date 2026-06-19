@@ -93,8 +93,18 @@ public abstract record Message : IDomainObject
            Contents.SequenceEqual(other.Contents);
 
     /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine(Role, Contents);
+    public override int GetHashCode()
+    {
+        // Fold the elements, not the list reference, so a value-equal message (Equals uses
+        // SequenceEqual) hashes equally — otherwise the Equals/GetHashCode contract is violated.
+        var hash = new HashCode();
+        hash.Add(Role);
+        foreach (Content content in Contents)
+        {
+            hash.Add(content);
+        }
+        return hash.ToHashCode();
+    }
 
     public override string ToString()
         => $"{Role}: {string.Join(Environment.NewLine, Contents.Select(c => c.ToString()))}";

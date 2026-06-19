@@ -6,7 +6,6 @@ namespace Proxytrace.Domain.Notification.Internal;
 internal class NotificationGenerator : DomainEntityGenerator<INotification>
 {
     private readonly INotification.CreateNew factory;
-    private readonly IRandom random;
 
     public NotificationGenerator(
         INotification.CreateNew factory,
@@ -14,7 +13,6 @@ internal class NotificationGenerator : DomainEntityGenerator<INotification>
         IRandom random) : base(repository, random)
     {
         this.factory = factory;
-        this.random = random;
     }
 
     public override Task<INotification> GenerateAsync(CancellationToken cancellationToken = default)

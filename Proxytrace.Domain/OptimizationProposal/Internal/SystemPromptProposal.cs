@@ -131,6 +131,9 @@ internal record SystemPromptProposal : DomainEntity<IOptimizationProposal>, ISys
         foreach (var result in Agent.Validate(validationContext))
             yield return result;
 
+        foreach (var result in ABTestRun.Validate(validationContext))
+            yield return result;
+
         if (string.IsNullOrWhiteSpace(Rationale))
             yield return Validation.NotNullOrWhiteSpace(Rationale);
 

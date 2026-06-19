@@ -50,6 +50,6 @@ internal sealed record JsonToolArgument : IToolArgument
     {
         yield return Validation.NotNullOrWhiteSpace(Name);
         yield return Validation.NotNullOrWhiteSpace(JsonSchema);
-        JsonDocument.Parse(JsonSchema).Dispose();
+        yield return Validation.Json(JsonSchema);
     }
 }

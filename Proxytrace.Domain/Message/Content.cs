@@ -66,8 +66,10 @@ public sealed record Content : IDomainObject
             (Data?.ToArray() ?? []).SequenceEqual(other.Data?.ToArray() ?? []));
 
     /// <inheritdoc />
-    public override int GetHashCode() 
-        => HashCode.Combine((int)Kind, Text, Data);
+    public override int GetHashCode()
+        // Hash Data by length, not reference: Equals compares the bytes, so equal content (same bytes
+        // ⇒ same length) hashes equally; differing bytes of equal length may collide, which is allowed.
+        => HashCode.Combine((int)Kind, Text, Data?.Length);
 
     public override string ToString()
         => Kind switch

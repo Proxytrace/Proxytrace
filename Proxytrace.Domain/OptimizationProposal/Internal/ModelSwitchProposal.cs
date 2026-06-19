@@ -145,6 +145,9 @@ internal record ModelSwitchProposal : DomainEntity<IOptimizationProposal>, IMode
         foreach (var result in ProposedEndpoint.Validate(validationContext))
             yield return result;
 
+        foreach (var result in ABTestRun.Validate(validationContext))
+            yield return result;
+
         if (string.IsNullOrWhiteSpace(Rationale))
             yield return Validation.NotNullOrWhiteSpace(Rationale);
 

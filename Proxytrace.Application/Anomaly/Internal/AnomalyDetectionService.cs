@@ -166,13 +166,11 @@ internal sealed class AnomalyDetectionService : BackgroundService, IAnomalyDetec
 
         var passRates = priorRuns
             .Select(s => s.PassRate)
-            .Where(p => p.HasValue)
-            .Select(p => p.Value)
+            .OfType<double>()
             .ToList();
         var latencies = priorRuns
             .Select(AverageLatency)
-            .Where(l => l.HasValue)
-            .Select(l => l.Value)
+            .OfType<TimeSpan>()
             .ToList();
 
         double? passRate = passRates.Count > 0 ? passRates.Average() : null;

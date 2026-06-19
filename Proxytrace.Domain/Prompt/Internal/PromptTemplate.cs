@@ -67,8 +67,10 @@ internal record PromptTemplate : IPromptTemplate
         foreach (var variable in Variables)
         {
             yield return Validation.NotNullOrWhiteSpace(variable);
+            // Require at least one letter (rejects purely numeric/underscore names like {{1}});
+            // single-letter names such as {{x}} are valid and must pass.
             var letterCount = variable.Count(char.IsLetter);
-            yield return Validation.GreaterThan(letterCount, 1);
+            yield return Validation.GreaterThan(letterCount, 0);
         }
     }
 }

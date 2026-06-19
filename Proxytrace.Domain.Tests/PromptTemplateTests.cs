@@ -486,11 +486,25 @@ public class PromptTemplateTests : DomainTest<Module>
         var promptTemplate = new PromptTemplate("test", template);
 
         // Assert
-        // validation should fail
+        // validation should fail — a purely numeric variable name has no letters
         FluentActions.Invoking(() => promptTemplate.Validate())
             .Should()
             .Throw<ValidationException>()
-            .WithMessage("*must be greater than 1*");
+            .WithMessage("*must be greater than 0*");
+    }
+
+    [TestMethod]
+    public void Variables_WithSingleLetter_ShouldBeValid()
+    {
+        // Arrange — a one-letter variable name is legal and must not be rejected.
+        const string template = "Value: {{x}}";
+        var promptTemplate = new PromptTemplate("test", template);
+
+        // Act
+        var rendered = promptTemplate.Render(new Dictionary<string, string> { ["x"] = "42" });
+
+        // Assert
+        rendered.ToPromptString().Should().Be("Value: 42");
     }
 
     [TestMethod]

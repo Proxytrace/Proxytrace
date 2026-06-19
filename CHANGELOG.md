@@ -105,6 +105,10 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   long-lived session token is accepted in the `?access_token` URL only on SSE (`…/stream`) routes
   rather than on every request — closing a token-in-URL leakage path. Client error reporting
   (`POST /api/errors`) now requires authentication.
+- **Upstream provider API keys are no longer rendered in diagnostics.** `ModelProvider` is a record
+  whose compiler-generated `ToString()` printed every property, so a configured upstream credential
+  could surface in a log line, exception message, or debugger string. The key is now redacted from the
+  record's string representation.
 
 ### Fixed
 
@@ -143,6 +147,27 @@ follow [Semantic Versioning](https://semver.org). Ongoing work is collected unde
   from a suite via the assistant dropped the updated suite returned by the backend (the API call
   was typed as returning nothing), so the follow-up card showed empty. The updated suite is now
   carried through and rendered correctly.
+- **An unevaluated test result is no longer counted as a pass.** A test result's `Passed` flag used a
+  vacuous "all evaluations passed" check that was true when there were *no* evaluations, disagreeing
+  with the canonical pass rule used by the optimization loop; both now agree — a result passes only
+  with at least one evaluation, all passing.
+- **The exact-match evaluator now fails when the response has a different number of content parts.**
+  It compared parts pairwise with `Zip`, which silently truncated to the shorter sequence, so a
+  partial or padded response could score as an acceptable match. A differing part count is now a
+  mismatch.
+- **A cancelled or failed test run can no longer be revived by a late result.** A result arriving
+  in-flight after a run reached a terminal state transitioned it back to running/completed and
+  overwrote its completion time; such late results are now ignored.
+- **Valid configurations are no longer rejected by domain validation.** A numeric-match evaluator with
+  a tolerance of `0` (exact numeric match) and prompt-template variables with a single letter (e.g.
+  `{{x}}`) were incorrectly rejected; both are now accepted, while a purely numeric variable name (no
+  letters) is still rejected.
+- **Domain hardening.** Invalid tool JSON schemas are now surfaced as validation errors instead of
+  throwing out of validation; referenced entities/values (A/B run, proposed tools, evaluator project,
+  schedule endpoints) are validated consistently; entity identity and value-object hashing were
+  corrected (identity by id; collection-backed value objects now hash by content); an agentic
+  evaluator no longer records run cancellation as an evaluation error; and token-usage subtraction is
+  clamped at zero so it can never underflow.
 
 - Listing models through the proxy against an **Azure OpenAI** upstream
   (`GET /openai/v1/models`, e.g. `client.models.list()`) returned an empty list, because Azure
