@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
+import { i18n } from '../../i18n';
 import { SUITE_WINDOW_KEYS, suiteWindowLabel, suiteWindowRange } from './suiteWindow';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 describe('suiteWindow', () => {
   it('exposes the four bucket keys in order', () => {
@@ -24,6 +28,6 @@ describe('suiteWindow', () => {
   });
 
   it('labels every key', () => {
-    SUITE_WINDOW_KEYS.forEach(k => expect(suiteWindowLabel(k).length).toBeGreaterThan(0));
+    SUITE_WINDOW_KEYS.forEach(k => expect(i18n._(suiteWindowLabel(k)).length).toBeGreaterThan(0));
   });
 });

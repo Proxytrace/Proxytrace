@@ -70,7 +70,7 @@ export function ScheduleCadenceField({ cadence, onChange }: { cadence: CadenceSt
           {cadence.frequency === 'weekly' && (
             <div className="w-36">
               <Select value={String(cadence.weekday)} onValueChange={v => set({ weekday: Number(v) })} data-testid="schedule-weekday">
-                {WEEKDAY_LABELS.map((label, i) => <option key={i} value={String(i)}>{label}</option>)}
+                {WEEKDAY_LABELS.map((label, i) => <option key={i} value={String(i)}>{i18n._(label)}</option>)}
               </Select>
             </div>
           )}

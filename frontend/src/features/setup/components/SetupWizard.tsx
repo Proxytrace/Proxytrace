@@ -10,7 +10,7 @@ import { ProjectStep } from './ProjectStep';
 import { GetStartedStep } from './GetStartedStep';
 
 export function SetupWizard() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const wiz = useSetupWizard();
 
   const steps = [
@@ -108,10 +108,10 @@ export function SetupWizard() {
                 <Trans>Step {wiz.currentStep + 1}</Trans>
               </div>
               <h1 className="text-[20px] font-bold text-primary leading-snug tracking-[-0.01em]">
-                {heading.title}
+                {i18n._(heading.title)}
               </h1>
               <p className="text-[13px] text-secondary mt-1.5 leading-relaxed">
-                {heading.subtitle}
+                {i18n._(heading.subtitle)}
               </p>
             </div>
           )}

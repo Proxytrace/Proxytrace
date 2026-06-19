@@ -18,7 +18,7 @@ interface Props {
  * flush — the enclosing workspace card owns the surface, so this only contributes a hairline divider.
  * Metrics are separated by spacing, not borders, and kept to two tight lines to stay shallow. */
 export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }: Props) {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const runCount = stats?.runCount ?? 0;
   const dash = isLoading ? '…' : '—';
 
@@ -49,10 +49,10 @@ export function SuiteStatsStrip({ stats, isLoading, windowKey, onWindowChange }:
           <SegmentedControl<SuiteWindowKey>
             value={windowKey}
             onChange={onWindowChange}
-            segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowShortLabel(k), ariaLabel: suiteWindowLabel(k) }))}
+            segments={SUITE_WINDOW_KEYS.map(k => ({ value: k, label: suiteWindowShortLabel(k), ariaLabel: i18n._(suiteWindowLabel(k)) }))}
           />
           <span className="text-caption text-muted font-mono">
-            {runCount.toLocaleString()} <Plural value={runCount} one="run" other="runs" /> · {suiteWindowLabel(windowKey)}
+            {runCount.toLocaleString()} <Plural value={runCount} one="run" other="runs" /> · {i18n._(suiteWindowLabel(windowKey))}
           </span>
         </div>
       </div>

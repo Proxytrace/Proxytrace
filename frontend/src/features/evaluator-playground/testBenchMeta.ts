@@ -58,9 +58,9 @@ export function scoreDelta(
 }
 
 /** Label for the run button given the in-flight and prior-result state. */
-export function runLabel(pending: boolean, hasResult: boolean): string {
-  if (pending) return 'Running…';
-  return hasResult ? 'Re-run' : 'Run evaluator';
+export function runLabel(pending: boolean, hasResult: boolean): MessageDescriptor {
+  if (pending) return msg`Running…`;
+  return hasResult ? msg`Re-run` : msg`Run evaluator`;
 }
 
 /**

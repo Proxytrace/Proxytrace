@@ -1,3 +1,5 @@
+import { msg } from '@lingui/core/macro';
+import type { MessageDescriptor } from '@lingui/core';
 import { UNIT_MINUTES, fromIntervalMinutes, type IntervalUnit } from './interval';
 
 /**
@@ -13,9 +15,9 @@ export const HOURLY_MINUTES = 60;
 export const DAILY_MINUTES = 1440;
 export const WEEKLY_MINUTES = 10080;
 
-export const WEEKDAY_LABELS = [
-  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
-] as const;
+export const WEEKDAY_LABELS: readonly MessageDescriptor[] = [
+  msg`Sunday`, msg`Monday`, msg`Tuesday`, msg`Wednesday`, msg`Thursday`, msg`Friday`, msg`Saturday`,
+];
 
 /** Editable form state for the cadence picker. Only the fields relevant to the active frequency are read. */
 export interface CadenceState {

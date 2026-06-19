@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Trans, useLingui } from '@lingui/react/macro';
+import type { I18n } from '@lingui/core';
 import { ArrowUpRightIcon, ExternalLinkIcon, ResetIcon } from '../../../components/icons';
 import { Button } from '../../../components/ui/Button';
 import type { OptimizationProposalDto, TheoryDto } from '../../../api/models';
@@ -194,7 +195,8 @@ function OutcomeBody({
   actionPending: boolean;
   resetPending: boolean;
 }) {
-  const context = outcomeContext(theory, proposal);
+  const { i18n } = useLingui();
+  const context = outcomeContext(theory, proposal, i18n);
   const reviewable = theory.status === TheoryStatus.Validated && proposal?.status === ProposalStatus.Draft;
   // A reset re-runs validation from scratch; refused server-side once a proposal is promoted or
   // adopted, so hide it there.
@@ -242,13 +244,13 @@ function OutcomeBody({
   );
 }
 
-function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | null): React.ReactNode {
+function outcomeContext(theory: TheoryDto, proposal: OptimizationProposalDto | null, i18n: I18n): React.ReactNode {
   if (theory.status === TheoryStatus.Invalidated) {
     return <Trans>The A/B test found no improvement, so the theory was rejected automatically — no review needed.</Trans>;
   }
   if (theory.status === TheoryStatus.Validated) {
     if (proposal?.status === ProposalStatus.Accepted) return <Trans>Promoted — awaiting adoption in your agent.</Trans>;
-    if (proposal?.status === ProposalStatus.Adopted) return <Trans>{adoptionLabel(proposal)} — the change is live in the agent.</Trans>;
+    if (proposal?.status === ProposalStatus.Adopted) return <Trans>{i18n._(adoptionLabel(proposal))} — the change is live in the agent.</Trans>;
     if (proposal?.status === ProposalStatus.Rejected) return <Trans>Dismissed — a reviewer chose not to apply this change.</Trans>;
     return <Trans>The change beat the baseline. Promote it to get the handoff package, or dismiss it.</Trans>;
   }

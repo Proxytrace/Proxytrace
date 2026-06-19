@@ -105,12 +105,12 @@ export function LicenseSection() {
             </div>
           )}
 
-          {sourceNote && <p className="text-body-sm text-muted m-0">{sourceNote}</p>}
+          {sourceNote && <p className="text-body-sm text-muted m-0">{i18n._(sourceNote)}</p>}
 
           {license.features.length > 0 && (
             <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 border-t border-hairline">
               {license.features.map(f => (
-                <span key={f} className="text-body-sm text-secondary">{FEATURE_LABELS[f]}</span>
+                <span key={f} className="text-body-sm text-secondary">{i18n._(FEATURE_LABELS[f])}</span>
               ))}
             </div>
           )}

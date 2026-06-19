@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import type { UpgradeErrorType } from '../../api/client';
 import { Modal } from '../overlays/Modal';
 import { Button } from '../ui/Button';
@@ -31,6 +31,7 @@ export function showUpgradeModal(prompt: UpgradePrompt) {
  * Mount once near the app root, beside ToastProvider.
  */
 export function UpgradeModalProvider({ children }: { children: React.ReactNode }) {
+  const { i18n } = useLingui();
   const [prompt, setPrompt] = useState<UpgradePrompt | null>(null);
 
   const show = useCallback((next: UpgradePrompt) => setPrompt(next), []);
@@ -45,7 +46,7 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
   if (!prompt) return <>{children}</>;
 
   const copy = upgradeCopy(prompt.errorType);
-  const body = prompt.message?.trim() || copy.fallback;
+  const body = prompt.message?.trim() || i18n._(copy.fallback);
 
   return (
     <>
@@ -56,7 +57,7 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
             <LockIcon size={22} />
           </div>
           <div>
-            <h2 className="text-h1 font-semibold text-primary">{copy.title}</h2>
+            <h2 className="text-h1 font-semibold text-primary">{i18n._(copy.title)}</h2>
             <p className="mt-2 text-body text-secondary">{body}</p>
           </div>
           <div className="mt-1 flex items-center gap-2">

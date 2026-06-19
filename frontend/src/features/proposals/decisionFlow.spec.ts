@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { i18n } from '../../i18n';
 import type { OptimizationProposalDto, TheoryDto } from '../../api/models';
 import { Priority, ProposalKind, ProposalStatus, TheorySource, TheoryStatus } from '../../api/models';
 import { buildDecisionFlow, type FlowStageKey, type FlowState } from './decisionFlow';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 function theory(overrides: Partial<TheoryDto> = {}): TheoryDto {
   return {
@@ -45,7 +49,7 @@ describe('buildDecisionFlow', () => {
   it('Validating: A/B is current', () => {
     const f = buildDecisionFlow(theory({ status: TheoryStatus.Validating }), null);
     expect(state(f, 'abTest')).toBe('current');
-    expect(f.find(s => s.key === 'abTest')!.statusLabel).toBe('In flight');
+    expect(i18n._(f.find(s => s.key === 'abTest')!.statusLabel)).toBe('In flight');
   });
 
   it('Invalidated: A/B + proposal + outcome all rejected (auto)', () => {
@@ -53,7 +57,7 @@ describe('buildDecisionFlow', () => {
     expect(state(f, 'abTest')).toBe('rejected');
     expect(state(f, 'proposal')).toBe('rejected');
     expect(state(f, 'outcome')).toBe('rejected');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Auto-rejected by A/B');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Auto-rejected by A/B');
   });
 
   it('Validated + Draft proposal: outcome awaits user review', () => {
@@ -61,29 +65,29 @@ describe('buildDecisionFlow', () => {
     expect(state(f, 'abTest')).toBe('complete');
     expect(state(f, 'proposal')).toBe('complete');
     expect(state(f, 'outcome')).toBe('current');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Pending review');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Pending review');
   });
 
   it('Validated + Accepted proposal: promoted, awaiting adoption', () => {
     const f = buildDecisionFlow(theory({ status: TheoryStatus.Validated }), proposal(ProposalStatus.Accepted));
     expect(state(f, 'outcome')).toBe('current');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Awaiting adoption');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Awaiting adoption');
   });
 
   it('Validated + Adopted proposal: complete', () => {
     const f = buildDecisionFlow(theory({ status: TheoryStatus.Validated }), proposal(ProposalStatus.Adopted));
     expect(state(f, 'outcome')).toBe('complete');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Adopted');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Adopted');
   });
 
   it('Validated + Rejected proposal: dismissed by user', () => {
     const f = buildDecisionFlow(theory({ status: TheoryStatus.Validated }), proposal(ProposalStatus.Rejected));
     expect(state(f, 'outcome')).toBe('rejected');
-    expect(f.find(s => s.key === 'outcome')!.statusLabel).toBe('Dismissed');
+    expect(i18n._(f.find(s => s.key === 'outcome')!.statusLabel)).toBe('Dismissed');
   });
 
   it('reports evidence count, or direct submission when none', () => {
-    expect(buildDecisionFlow(theory({ evidenceTestRunIds: ['r1', 'r2'] }), null)[0].statusLabel).toBe('2 failing runs');
-    expect(buildDecisionFlow(theory({ evidenceTestRunIds: [] }), null)[0].statusLabel).toBe('Submitted directly');
+    expect(i18n._(buildDecisionFlow(theory({ evidenceTestRunIds: ['r1', 'r2'] }), null)[0].statusLabel)).toBe('2 failing runs');
+    expect(i18n._(buildDecisionFlow(theory({ evidenceTestRunIds: [] }), null)[0].statusLabel)).toBe('Submitted directly');
   });
 });

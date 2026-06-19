@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { i18n } from '../../i18n';
 import type { UserDto } from '../../api/models';
 import { adminCount, authSourceLabel, isLastAdmin } from './users';
+
+// Activate an empty catalog so i18n._() resolves MessageDescriptors to their source strings.
+beforeAll(() => i18n.loadAndActivate({ locale: 'en', messages: {} }));
 
 function user(overrides: Partial<UserDto>): UserDto {
   return {
@@ -40,7 +44,7 @@ describe('isLastAdmin', () => {
 
 describe('authSourceLabel', () => {
   it('labels external users SSO and local users Local', () => {
-    expect(authSourceLabel({ isExternal: true })).toBe('SSO');
-    expect(authSourceLabel({ isExternal: false })).toBe('Local');
+    expect(i18n._(authSourceLabel({ isExternal: true }))).toBe('SSO');
+    expect(i18n._(authSourceLabel({ isExternal: false }))).toBe('Local');
   });
 });

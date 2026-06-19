@@ -44,31 +44,32 @@ const TONE_CLS: Record<TierTone, string> = {
  * that links to the upgrade page so the current tier is always communicated.
  */
 export function LicenseBadge() {
-  const { t } = useLingui();
+  const { t, i18n } = useLingui();
   const { data } = useLicense();
   if (!data) return null;
 
   const badge = tierBadge(data.status, data.tier);
+  const label = i18n._(badge.label);
   // Free carries the "upgrade" sparkle; every licensed tier wears the crown.
   const Icon = badge.linkToUpgrade ? SparklesIcon : CrownIcon;
 
   const chip = (
     <span className={cn(CHIP_BASE, TONE_CLS[badge.tone])}>
       <Icon size={13} aria-hidden />
-      {badge.label}
+      {label}
     </span>
   );
 
   if (badge.linkToUpgrade) {
     return (
-      <Link to="/upgrade" data-testid="license-badge" aria-label={t`${badge.label} tier — upgrade`}>
+      <Link to="/upgrade" data-testid="license-badge" aria-label={t`${label} tier — upgrade`}>
         {chip}
       </Link>
     );
   }
 
   return (
-    <span data-testid="license-badge" aria-label={t`${badge.label} tier`}>
+    <span data-testid="license-badge" aria-label={t`${label} tier`}>
       {chip}
     </span>
   );

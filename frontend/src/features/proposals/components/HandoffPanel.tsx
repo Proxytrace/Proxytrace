@@ -27,7 +27,7 @@ export function HandoffPanel({ proposal }: Props) {
   if (proposal.status === ProposalStatus.Adopted) {
     return (
       <p className="text-body-sm text-success m-0" data-testid="proposal-adoption-summary">
-        {adoptionLabel(proposal)}
+        {i18n._(adoptionLabel(proposal))}
         {proposal.adoptedAt ? ` · ${new Date(proposal.adoptedAt).toLocaleString()}` : ''}
       </p>
     );
