@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { PlayIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
@@ -10,18 +11,19 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_runs` tool result. */
 export const RunListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('run-list', result, status, isError);
   const runs = data ?? [];
   return (
     <ListCard
       state={state}
       icon={<PlayIcon size={14} />}
-      title="Test runs"
+      title={t`Test runs`}
       count={runs.length}
       shown={Math.min(runs.length, LIST_CARD_MAX)}
       viewAllTo="/runs"
-      pendingLabel="Loading runs…"
-      emptyLabel="No test runs yet."
+      pendingLabel={t`Loading runs…`}
+      emptyLabel={t`No test runs yet.`}
       testId="tracey-run-list"
     >
       {runs.slice(0, LIST_CARD_MAX).map((run) => (
@@ -29,8 +31,8 @@ export const RunListToolUI: ToolCallMessagePartComponent = ({ result, status, is
           key={run.id}
           to={`/runs?run=${run.id}`}
           color={agentColor(run.agentId)}
-          title={`${run.suiteName ?? 'Suite'} → ${run.agentName}`}
-          subtitle={`${run.passedCases}/${run.totalCases} passed · ${fmtPct100(run.passRate)}`}
+          title={`${run.suiteName ?? t`Suite`} → ${run.agentName}`}
+          subtitle={t`${run.passedCases}/${run.totalCases} passed · ${fmtPct100(run.passRate)}`}
           right={<Badge label={run.status} variant={RUN_STATUS_VARIANT[run.status]} size="sm" />}
         />
       ))}

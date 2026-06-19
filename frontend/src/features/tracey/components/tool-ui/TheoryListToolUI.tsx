@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { TargetIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { fmtPct } from '../../../../lib/format';
@@ -8,18 +9,19 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_theories` tool result: past hypotheses + their A/B outcomes. */
 export const TheoryListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('theory-list', result, status, isError);
   const theories = data ?? [];
   return (
     <ToolUIFrame
       state={state}
       icon={<TargetIcon size={14} />}
-      title="Optimization theories"
-      pendingLabel="Loading theories…"
+      title={t`Optimization theories`}
+      pendingLabel={t`Loading theories…`}
       testId="tracey-theory-list"
     >
       {theories.length === 0 ? (
-        <div className="text-body-sm text-muted">No theories tried yet.</div>
+        <div className="text-body-sm text-muted"><Trans>No theories tried yet.</Trans></div>
       ) : (
         <div className="flex flex-col divide-y divide-border-subtle">
           {theories.map((theory) => (

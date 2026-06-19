@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { EditIcon } from '../../../../components/icons';
 import { Button } from '../../../../components/ui/Button';
 import { RowButton } from '../../../../components/ui/RowButton';
@@ -82,6 +83,7 @@ function OptionRow({ badge, label, muted, selected, multiple, last, onSelect, te
  * message). Once resolved it collapses into a read-only Q&A summary driven by the tool result.
  */
 export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result, addResult }) => {
+  const { t, i18n } = useLingui();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const { questions } = args as AskQuestionsArgs;
@@ -89,7 +91,7 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
   const done = submitted != null;
 
   if (!questions || questions.length === 0) {
-    return <ToolUIFrame state="pending" pendingLabel="Preparing questions…" testId="tracey-questions" />;
+    return <ToolUIFrame state="pending" pendingLabel={t`Preparing questions…`} testId="tracey-questions" />;
   }
 
   const total = questions.length;
@@ -159,11 +161,11 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
             <div className="flex flex-col gap-0.5">
               {total > 1 && (
                 <div className="text-caption font-medium uppercase tracking-wide text-muted">
-                  Step {step + 1} of {total}
+                  <Trans>Step {step + 1} of {total}</Trans>
                 </div>
               )}
               <div className="text-h2 font-semibold text-primary">{current.question}</div>
-              {current.multiple && <div className="text-body-sm text-muted">Select all that apply.</div>}
+              {current.multiple && <div className="text-body-sm text-muted"><Trans>Select all that apply.</Trans></div>}
             </div>
 
             <div
@@ -191,7 +193,7 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
 
               <OptionRow
                 badge={<EditIcon size={13} />}
-                label={FREE_TEXT_LABEL}
+                label={i18n._(FREE_TEXT_LABEL)}
                 muted
                 selected={currentAnswer?.mode === 'free'}
                 multiple={current.multiple ?? false}
@@ -206,7 +208,7 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
                 rows={3}
                 autoFocus
                 value={currentAnswer.text}
-                placeholder="Type your answer…"
+                placeholder={t`Type your answer…`}
                 onChange={(e) =>
                   setAnswers((prev) => ({ ...prev, [current.id]: { mode: 'free', text: e.target.value } }))
                 }
@@ -222,7 +224,7 @@ export const AskQuestionsToolUI: ToolCallMessagePartComponent = ({ args, result,
                   onClick={() => goNext(answers)}
                   data-testid="tracey-question-next"
                 >
-                  {isLast ? 'Submit' : 'Next'}
+                  {isLast ? t`Submit` : t`Next`}
                 </Button>
               </div>
             )}

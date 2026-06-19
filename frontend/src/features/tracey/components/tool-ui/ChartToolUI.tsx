@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon } from '../../../../components/icons';
 import { Skeleton } from '../../../../components/ui/Skeleton';
 import { ChartArtifact } from '../artifacts/ChartArtifact';
@@ -21,12 +22,13 @@ function ChartSkeleton() {
 
 /** Inline renderer for the `show_chart` tool. */
 export const ChartToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('chart', result, status, isError);
   if (state !== 'ready' || !data) {
     return (
       <ToolUIFrame
         state={state}
-        pendingLabel="Building chart…"
+        pendingLabel={t`Building chart…`}
         pendingSkeleton={<ChartSkeleton />}
         testId="tracey-chart"
       />

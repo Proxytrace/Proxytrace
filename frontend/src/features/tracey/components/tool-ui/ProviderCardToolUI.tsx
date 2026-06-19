@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { ServerIcon } from '../../../../components/icons';
 import { Pill } from '../../../../components/ui/Pill';
 import { providerColor } from '../../../../lib/colors';
@@ -7,6 +8,7 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `get_provider` tool result. */
 export const ProviderCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data: provider } = useArtifactResult('provider', result, status, isError);
   return (
     <EntityCardLink
@@ -16,7 +18,7 @@ export const ProviderCardToolUI: ToolCallMessagePartComponent = ({ result, statu
       icon={<ServerIcon size={14} />}
       color={providerColor(provider?.name ?? '')}
       testId="tracey-provider-card"
-      pendingLabel="Loading provider…"
+      pendingLabel={t`Loading provider…`}
     >
       {provider && (
         <div className="flex flex-col gap-2">

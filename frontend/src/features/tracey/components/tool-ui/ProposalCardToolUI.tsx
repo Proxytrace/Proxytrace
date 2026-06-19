@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { SparklesIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { agentColor } from '../../../../lib/colors';
@@ -14,23 +15,24 @@ function isProposal(value: unknown): value is OptimizationProposalDto {
 
 /** Inline renderer for the `get_proposal` tool result. */
 export const ProposalCardToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('proposal', result, status, isError);
   if (state !== 'ready') {
-    return <ToolUIFrame state={state} pendingLabel="Loading proposal…" testId="tracey-proposal-card" />;
+    return <ToolUIFrame state={state} pendingLabel={t`Loading proposal…`} testId="tracey-proposal-card" />;
   }
   if (!isProposal(data)) {
-    return <ToolUIFrame state="error" errorLabel="Proposal not found." testId="tracey-proposal-card" />;
+    return <ToolUIFrame state="error" errorLabel={t`Proposal not found.`} testId="tracey-proposal-card" />;
   }
   const proposal = data;
   return (
     <EntityCardLink
       state="ready"
       to={`/proposals?agentId=${proposal.agentId}`}
-      title={`${proposal.kind} for ${proposal.agentName}`}
+      title={t`${proposal.kind} for ${proposal.agentName}`}
       icon={<SparklesIcon size={14} />}
       color={agentColor(proposal.agentId)}
       testId="tracey-proposal-card"
-      pendingLabel="Loading proposal…"
+      pendingLabel={t`Loading proposal…`}
     >
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-1.5">

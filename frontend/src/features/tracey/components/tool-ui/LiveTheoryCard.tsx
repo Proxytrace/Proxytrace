@@ -1,4 +1,7 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
+import { msg } from '@lingui/core/macro';
+import { type MessageDescriptor } from '@lingui/core';
 import { CheckIcon, SparklesIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { Spinner } from '../../../../components/ui/Spinner';
@@ -9,17 +12,17 @@ import { PRIORITY_VARIANT, THEORY_STATUS_VARIANT } from './badge-variants';
 import { TheoryChangePreview } from './TheoryChangePreview';
 import { useLiveTheory } from './useLiveTheory';
 
-const KIND_LABEL: Record<ProposalKind, string> = {
-  [ProposalKind.SystemPrompt]: 'System prompt',
-  [ProposalKind.Tool]: 'Tool update',
-  [ProposalKind.ModelSwitch]: 'Model switch',
+const KIND_LABEL: Record<ProposalKind, MessageDescriptor> = {
+  [ProposalKind.SystemPrompt]: msg`System prompt`,
+  [ProposalKind.Tool]: msg`Tool update`,
+  [ProposalKind.ModelSwitch]: msg`Model switch`,
 };
 
-const STATUS_LABEL: Record<TheoryStatus, string> = {
-  [TheoryStatus.Proposed]: 'Queued',
-  [TheoryStatus.Validating]: 'A/B testing',
-  [TheoryStatus.Validated]: 'Improved',
-  [TheoryStatus.Invalidated]: 'Rejected',
+const STATUS_LABEL: Record<TheoryStatus, MessageDescriptor> = {
+  [TheoryStatus.Proposed]: msg`Queued`,
+  [TheoryStatus.Validating]: msg`A/B testing`,
+  [TheoryStatus.Validated]: msg`Improved`,
+  [TheoryStatus.Invalidated]: msg`Rejected`,
 };
 
 /**
@@ -28,23 +31,25 @@ const STATUS_LABEL: Record<TheoryStatus, string> = {
  * proposal the theory spawned.
  */
 export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
+  const { t, i18n } = useLingui();
   const theory = useLiveTheory(initial);
   const color = agentColor(theory.agentId);
   const isRunning = theory.status === TheoryStatus.Proposed || theory.status === TheoryStatus.Validating;
+  const kindLabel = i18n._(KIND_LABEL[theory.kind]);
 
   return (
     <ToolUIFrame
       state="ready"
-      title={`${KIND_LABEL[theory.kind]} for ${theory.agentName}`}
+      title={t`${kindLabel} for ${theory.agentName}`}
       icon={<SparklesIcon size={14} />}
       accentBar={color}
       testId="tracey-theory-card"
     >
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge label={STATUS_LABEL[theory.status]} variant={THEORY_STATUS_VARIANT[theory.status]} size="sm" />
+          <Badge label={i18n._(STATUS_LABEL[theory.status])} variant={THEORY_STATUS_VARIANT[theory.status]} size="sm" />
           <Badge label={theory.priority} variant={PRIORITY_VARIANT[theory.priority]} size="sm" />
-          <span className="text-body-sm text-muted">via Tracey AI</span>
+          <span className="text-body-sm text-muted"><Trans>via Tracey AI</Trans></span>
         </div>
 
         <p className="line-clamp-2 text-body-sm text-secondary">{theory.rationale}</p>
@@ -55,24 +60,24 @@ export function LiveTheoryCard({ initial }: { initial: TheoryDto }) {
           {isRunning && (
             <>
               <Spinner size={12} />
-              <span className="text-secondary">Running A/B test…</span>
+              <span className="text-secondary"><Trans>Running A/B test…</Trans></span>
             </>
           )}
           {theory.status === TheoryStatus.Validated && (
             <>
               <span className="text-success"><CheckIcon size={14} /></span>
-              <span className="text-secondary">Improved the pass rate.</span>
+              <span className="text-secondary"><Trans>Improved the pass rate.</Trans></span>
               <Link
                 to={`/proposals?agentId=${theory.agentId}`}
                 data-testid="tracey-theory-proposal-link"
                 className="ml-auto font-medium text-accent hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
               >
-                View proposal
+                <Trans>View proposal</Trans>
               </Link>
             </>
           )}
           {theory.status === TheoryStatus.Invalidated && (
-            <span className="text-muted">No improvement — theory rejected.</span>
+            <span className="text-muted"><Trans>No improvement — theory rejected.</Trans></span>
           )}
         </div>
       </div>

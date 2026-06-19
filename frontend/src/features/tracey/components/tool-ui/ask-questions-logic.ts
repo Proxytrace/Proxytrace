@@ -3,6 +3,7 @@
  * tested without a DOM. Covers the per-question answer model, validity, the read-only summary
  * text, and the combined message sent back to the model.
  */
+import { msg } from '@lingui/core/macro';
 
 export interface QuestionOption {
   label: string;
@@ -20,7 +21,7 @@ export type Answer =
   | { mode: 'options'; values: string[] }
   | { mode: 'free'; text: string };
 
-export const FREE_TEXT_LABEL = 'Something else…';
+export const FREE_TEXT_LABEL = msg`Something else…`;
 
 /** Whether the answer is complete enough to advance (≥1 option, or non-blank free text). */
 export function isAnswered(answer: Answer | undefined): boolean {

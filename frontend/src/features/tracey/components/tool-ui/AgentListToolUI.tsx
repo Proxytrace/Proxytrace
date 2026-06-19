@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { Plural, useLingui } from '@lingui/react/macro';
 import { CpuIcon } from '../../../../components/icons';
 import { agentColor, modelColor } from '../../../../lib/colors';
 import { fmtRelative } from '../../../../lib/format';
@@ -8,18 +9,19 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `list_agents` tool result. */
 export const AgentListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('agent-list', result, status, isError);
   const agents = data ?? [];
   return (
     <ListCard
       state={state}
       icon={<CpuIcon size={14} />}
-      title="Agents"
+      title={t`Agents`}
       count={agents.length}
       shown={Math.min(agents.length, LIST_CARD_MAX)}
       viewAllTo="/agents"
-      pendingLabel="Loading agents…"
-      emptyLabel="No agents in this project yet."
+      pendingLabel={t`Loading agents…`}
+      emptyLabel={t`No agents in this project yet.`}
       testId="tracey-agent-list"
     >
       {agents.slice(0, LIST_CARD_MAX).map((agent) => (
@@ -34,12 +36,12 @@ export const AgentListToolUI: ToolCallMessagePartComponent = ({ result, status, 
                 {agent.endpointName}
               </span>
               {' · '}
-              {agent.toolCount} {agent.toolCount === 1 ? 'tool' : 'tools'}
+              <Plural value={agent.toolCount} one="# tool" other="# tools" />
             </>
           }
           right={
             <span className="font-mono text-body-sm tabular-nums text-muted">
-              {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : 'never'}
+              {agent.lastUsedAt ? fmtRelative(agent.lastUsedAt) : t`never`}
             </span>
           }
         />

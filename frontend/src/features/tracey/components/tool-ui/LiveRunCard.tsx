@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { CheckIcon, PlayIcon, XIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { Spinner } from '../../../../components/ui/Spinner';
@@ -18,6 +19,7 @@ const ACCENT = 'var(--accent-primary)';
  * cases finish (queued → running → completed/failed/cancelled) and, once done, links to the run.
  */
 export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
+  const { t } = useLingui();
   const group = useLiveTestRunGroup(initial);
   const { total, completed, passed, failed, passPercent } = groupProgress(group);
   const running = isActive(group.status);
@@ -35,9 +37,9 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge label={group.status} variant={RUN_STATUS_VARIANT[group.status]} size="sm" />
-          <Badge label={`${completed}/${total} cases`} variant="neutral" size="sm" />
+          <Badge label={t`${completed}/${total} cases`} variant="neutral" size="sm" />
           {passPercent !== null && (
-            <Badge label={`${passPercent}% pass`} variant="neutral" size="sm" />
+            <Badge label={t`${passPercent}% pass`} variant="neutral" size="sm" />
           )}
         </div>
 
@@ -56,7 +58,7 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
             <>
               <Spinner size={12} />
               <span className="text-secondary">
-                Running… {completed}/{total} cases
+                <Trans>Running… {completed}/{total} cases</Trans>
               </span>
             </>
           )}
@@ -64,18 +66,20 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
             <>
               <span className="text-success"><CheckIcon size={14} /></span>
               <span className="text-secondary">
-                {passed}/{total} passed{failed > 0 ? ` · ${failed} failed` : ''}
+                {failed > 0
+                  ? t`${passed}/${total} passed · ${failed} failed`
+                  : t`${passed}/${total} passed`}
               </span>
             </>
           )}
           {group.status === TestRunStatus.Failed && (
             <>
               <span className="text-danger"><XIcon size={14} /></span>
-              <span className="text-secondary">Run failed.</span>
+              <span className="text-secondary"><Trans>Run failed.</Trans></span>
             </>
           )}
           {group.status === TestRunStatus.Cancelled && (
-            <span className="text-muted">Run cancelled.</span>
+            <span className="text-muted"><Trans>Run cancelled.</Trans></span>
           )}
           {primaryRun && (
             <Link
@@ -83,7 +87,7 @@ export function LiveRunCard({ initial }: { initial: TestRunGroupDto }) {
               data-testid="tracey-run-progress-link"
               className="ml-auto font-medium text-accent hover:text-[var(--accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--accent-primary)_60%,transparent)]"
             >
-              {running ? 'Open run' : 'View run'}
+              {running ? t`Open run` : t`View run`}
             </Link>
           )}
         </div>

@@ -1,4 +1,5 @@
 import type { ToolCallMessagePartComponent } from '@assistant-ui/react';
+import { useLingui } from '@lingui/react/macro';
 import { ActivityIcon } from '../../../../components/icons';
 import { Badge } from '../../../../components/ui/Badge';
 import { modelColor } from '../../../../lib/colors';
@@ -9,18 +10,19 @@ import { useArtifactResult } from '../../useArtifact';
 
 /** Inline renderer for the `find_traces` tool result. */
 export const TraceListToolUI: ToolCallMessagePartComponent = ({ result, status, isError }) => {
+  const { t } = useLingui();
   const { state, data } = useArtifactResult('trace-list', result, status, isError);
   const traces = data ?? [];
   return (
     <ListCard
       state={state}
       icon={<ActivityIcon size={14} />}
-      title="Traces"
+      title={t`Traces`}
       count={traces.length}
       shown={Math.min(traces.length, LIST_CARD_MAX)}
       viewAllTo="/traces"
-      pendingLabel="Searching traces…"
-      emptyLabel="No traces matched."
+      pendingLabel={t`Searching traces…`}
+      emptyLabel={t`No traces matched.`}
       testId="tracey-trace-list"
     >
       {traces.slice(0, LIST_CARD_MAX).map((trace) => (
